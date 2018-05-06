@@ -1,3 +1,13 @@
+"""
+This core4 test runner executes each test script located in the same
+directory as the script itself. In contrast to Python standard unittest
+execution with `python -m unittest discover` this runner executes each
+test script in isolation by starting a new Python interpreter process.
+
+See for example https://github.com/cztomczak/pycef/blob/master/unittests/_runner.py
+for a similar approach.
+"""
+
 import collections
 import datetime
 import io
