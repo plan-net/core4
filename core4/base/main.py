@@ -1,5 +1,7 @@
+from core4.base.root import Root
 
-class Base():
+
+class Base(Root):
 
     def __init__(self):
         self.account = None
@@ -9,15 +11,13 @@ class Base():
         pass
 
     def _init_logging(self):
-        pass
+        return None
 
     def _init_config(self):
-        pass
+        return None
 
     def qual_name(self):
         pass
 
     def identifier(self):
         pass
-
-

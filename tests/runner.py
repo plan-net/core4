@@ -1,15 +1,24 @@
 import collections
 import datetime
+import io
+import itertools
 import os
 import re
 import subprocess
 import sys
+import tempfile
+import time
 
-Result = collections.namedtuple('Result', 'package tests runtime')
+Result = collections.namedtuple('Result', 'package tests runtime exit_code '
+                                          'output')
+PROGRESS = itertools.cycle('┃/━\\')
+HEAD_LINE = "  {:40s} {:16s} {:5s}"
+REPORT_LINE = "  {:40s} {:16s} {:5d}"
+TOTAL_LINE = "  {:>40s} {:16s} {:5d}\n"
 
 
 def line():
-    print("  {:40s} {:16s} {:4s}".format("-" * 40, "-" * 16, "-" * 4))
+    print(HEAD_LINE.format("-" * 40, "-" * 16, "-" * 5))
 
 
 def headline(s):
@@ -17,46 +26,87 @@ def headline(s):
     print("=" * len(s) + "\n")
 
 
-path = os.path.abspath(os.path.dirname(sys.argv[0]))
-result = []
+def discover():
+    path = os.path.abspath(os.path.dirname(sys.argv[0]))
+    for test in sorted(os.listdir(path)):
+        if test.startswith('test_') and test.endswith('.py'):
+            (pkg, ext) = os.path.splitext(test)
+            yield pkg
 
-headline("core4 isolated regression tests")
-for test in sorted(os.listdir(path)):
-    if test.startswith('test_') and test.endswith('.py'):
-        (pkg, ext) = os.path.splitext(test)
-        t0 = datetime.datetime.now()
-        cmd = ["python", "-m", "unittest", "-v", "-f", "tests." + pkg]
-        print(" ", pkg, end=(52 - len(pkg)) * " ")
-        try:
-            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
-            exit_code = 0
-        except subprocess.CalledProcessError as exc:
-            output = exc.output
-            exit_code = exc.returncode
-        # If tests failed parse output for errors/failures
-        output = output.decode()
-        if exit_code:
-            print("[ FAILED ]\n\nDETAILS:\n\n" + output)
-            raise SystemExit(1)
+
+def run(logfile, pkg):
+    t0 = datetime.datetime.now()
+    cmd = ["python", "-m", "unittest", "-v", "-f", "tests." + pkg]
+    fmt = " " + pkg + (53 - len(pkg)) * " "
+    output = ""
+    with io.open(logfile, 'w', encoding='utf-8') as writer, io.open(
+            logfile, 'r', encoding='utf-8') as reader:
+        process = subprocess.Popen(cmd, stdout=writer, stderr=writer)
+        while process.poll() is None:
+            delta = datetime.datetime.now() - t0
+            delta = delta - datetime.timedelta(
+                microseconds=delta.microseconds)
+            pro = next(PROGRESS) + fmt + "[{:>8s}]\r".format(str(delta))
+            sys.stdout.write(pro)
+            sys.stdout.flush()
+            buf = reader.read()
+            output += buf
+            time.sleep(0.1)
+        buf = str(reader.read())
+        output += buf
+        exit_code = process.returncode
+        print(" ", pkg, end=(53 - len(pkg)) * " ")
+    found = re.search('Ran (\d+) tests? in .+?(OK|FAILED)', output,
+                      flags=re.DOTALL)
+    if found:
+        found = int(found.groups()[0])
+    else:
+        found = 0
+    return Result(
+        exit_code=exit_code,
+        package=pkg,
+        runtime=datetime.datetime.now() - t0,
+        tests=found,
+        output=output
+    )
+
+
+def main():
+    sys.stdout.write("\033[?25l")
+    headline("core4 isolated regression tests")
+    logfile = tempfile.mktemp()
+    result = []
+
+    ret = None
+    for pkg in discover():
+        ret = run(logfile, pkg)
+        result.append(ret)
+        if ret.exit_code:
+            print("[ FAILED ]\n")
+            headline("DETAILS on failed {}".format(ret.package))
+            print(ret.output)
+            break
         else:
             print("[   OK   ]")
-        found = re.search('Ran (\d+) tests? in .+?OK', output, flags=re.DOTALL)
-        result.append(Result(
-            package=pkg,
-            runtime=datetime.datetime.now() - t0,
-            tests=int(found.groups()[0])
-        ))
 
-headline("regression test results")
-print("  {:40s} {:16s} {:4s}".format('test', 'runtime', 'test'))
-line()
-runtime = 0
-tests = 0
-for test in result:
-    runtime += test.runtime.total_seconds()
-    tests += test.tests
-    print("  {:40s} {:16s} {:4d}".format(
-        test.package, str(test.runtime), test.tests))
-line()
-print("  {:>40s} {:16s} {:4d}\n".format(
-    'total', str(datetime.timedelta(seconds=runtime)), tests))
+    headline("regression test results")
+    print(HEAD_LINE.format('test script', 'runtime', 'tests'))
+    line()
+    for test in result:
+        print(REPORT_LINE.format(
+            test.package, str(test.runtime), test.tests))
+    line()
+    runtime = sum([r.runtime.total_seconds() for r in result])
+    tests = sum([r.tests for r in result])
+    print(TOTAL_LINE.format(
+        'total', str(datetime.timedelta(seconds=runtime)), tests))
+    sys.stdout.write("\033[?25h")
+    os.unlink(logfile)
+    if ret and ret.exit_code:
+        print("tests FAIL ({})".format(ret.package))
+        raise SystemExit(ret.exit_code)
+    print("tests SUCCEED")
+
+
+if __name__ == '__main__':
+    main()
