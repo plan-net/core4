@@ -21,7 +21,7 @@ import time
 
 Result = collections.namedtuple('Result', 'package tests runtime exit_code '
                                           'output')
-PROGRESS = itertools.cycle('┃/━\\')
+PROGRESS = itertools.cycle('|/━\\')
 HEAD_LINE = "  {:40s} {:16s} {:5s}"
 REPORT_LINE = "  {:40s} {:16s} {:5d}"
 TOTAL_LINE = "  {:>40s} {:16s} {:5d}\n"
