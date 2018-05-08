@@ -154,10 +154,18 @@ class CoreConfig:
         return self._path
 
     def __getattr__(self, item):
-        # wrap methods add_section (1), has_section (1), options (1),
-        #   get (2: section, option), dito getint, getfloat, getboolean,
-        #   has_option
+        """
+        Delegates all methods and attributes to configparser.ConfigParser object
+        at self.config.
+
+        :param item: requested
+        :return: value, raises AttributeError if not found
+        """
+
+        # wrap methods has_section (1), options (1), get (2: section,
+        #   option), dito getint, getfloat, getboolean, has_option
         # forward methods: defaults, sections
+
         if item in self._WRAP:
 
             def mywrapper(method):

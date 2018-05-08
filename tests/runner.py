@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextlib import contextmanager
 
 Result = collections.namedtuple('Result', 'package tests runtime exit_code '
                                           'output')
@@ -27,6 +28,26 @@ PROGRESS = itertools.cycle('|/━\\')
 HEAD_LINE = "  {:40s} {:16s} {:5s}"
 REPORT_LINE = "  {:40s} {:16s} {:5d}"
 TOTAL_LINE = "  {:>40s} {:16s} {:5d}\n"
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+@contextmanager
+def warn():
+    if istty():
+        print(bcolors.WARNING)
+    yield
+    if istty():
+        print(bcolors.ENDC)
 
 
 def line():
@@ -101,8 +122,9 @@ def main():
         result.append(ret)
         if ret.exit_code:
             print("[ FAILED ]\n")
-            headline("DETAILS on failed {}".format(ret.package))
-            print(ret.output)
+            with warn():
+                headline("DETAILS on failed {}".format(ret.package))
+                print(ret.output)
             break
         else:
             print("[   OK   ]")
@@ -122,7 +144,8 @@ def main():
         sys.stdout.write("\033[?25h")
     os.unlink(logfile)
     if ret and ret.exit_code:
-        print("tests FAIL ({})".format(ret.package))
+        with warn():
+            print("tests FAIL ({})".format(ret.package))
         raise SystemExit(ret.exit_code)
     print("tests SUCCEED")
 
