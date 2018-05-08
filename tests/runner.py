@@ -46,6 +46,10 @@ def discover():
             yield pkg
 
 
+def istty():
+    return os.isatty(sys.stdout.fileno())
+
+
 def run(logfile, pkg):
     t0 = datetime.datetime.now()
     cmd = ["python", "-m", "unittest", "-v", "-f", "tests." + pkg]
@@ -59,7 +63,7 @@ def run(logfile, pkg):
             delta = delta - datetime.timedelta(
                 microseconds=delta.microseconds)
             pro = next(PROGRESS) + fmt + "[{:>8s}]\r".format(str(delta))
-            if os.isatty(sys.stdout.fileno()):
+            if istty():
                 sys.stdout.write(pro)
                 sys.stdout.flush()
             buf = reader.read()
@@ -85,7 +89,8 @@ def run(logfile, pkg):
 
 
 def main():
-    sys.stdout.write("\033[?25l")
+    if istty():
+        sys.stdout.write("\033[?25l")
     headline("core4 isolated regression tests")
     logfile = tempfile.mktemp()
     result = []
@@ -113,7 +118,8 @@ def main():
     tests = sum([r.tests for r in result])
     print(TOTAL_LINE.format(
         'total', str(datetime.timedelta(seconds=runtime)), tests))
-    sys.stdout.write("\033[?25h")
+    if istty():
+        sys.stdout.write("\033[?25h")
     os.unlink(logfile)
     if ret and ret.exit_code:
         print("tests FAIL ({})".format(ret.package))

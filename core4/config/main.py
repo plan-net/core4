@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import configparser
-import datetime
 import os
 
+import dateutil.parser
 import pkg_resources
 
 # todo: implement special getters
@@ -36,8 +36,8 @@ class CoreConfig:
     behavior to ExtendedInterpolation with the extended parameter.
     """
 
-    _WRAP = ['add_section', 'options', 'get', 'getint', 'getfloat',
-             'getboolean', 'has_option', 'set']
+    _WRAP = ['has_section', 'options', 'get', 'getint', 'getfloat',
+             'getboolean', 'has_option']
     _FORWARD = ['defaults', 'sections']
 
     default_config = DEFAULT_CONFIG
@@ -154,14 +154,21 @@ class CoreConfig:
         return self._path
 
     def __getattr__(self, item):
+        # wrap methods add_section (1), has_section (1), options (1),
+        #   get (2: section, option), dito getint, getfloat, getboolean,
+        #   has_option
+        # forward methods: defaults, sections
         if item in self._WRAP:
             def mywrapper(method):
                 def methodWrapper(*args, **kwargs):
+                    if len(args) > 1:
+                        # there is the section
+                        kwargs['section'] = args[1]
+                        args = list(args)[:-1]
                     nargs = (kwargs.get('section', self.primary), *args)
                     if 'section' in kwargs:
                         del (kwargs['section'])
                     return method(*nargs, **kwargs)
-
                 return methodWrapper
 
             return mywrapper(getattr(self.config, item))
@@ -169,59 +176,45 @@ class CoreConfig:
             return getattr(self.config, item)
         raise AttributeError
 
-    def get_datetime(self, option, section=None):
+    def get_datetime(self, option, *args, **kwargs):
         """
-        parses date/time as defined by DEFAULT.datetime_long_format,
-        DEFAULT.datetime_short_format and DEFAULT.date_format.
+        Parses the option into a ``datetime`` object using dateutil.parser.
+        With this datetime parser we are able to "read" the following example
+        dates:
 
-        :return: datetime.datetime object
-        """
-        return self.config.get(section or self.primary, option)
+        * 2018-01-28
+        * 2018-01-32
+        * 2018 01 28 3:59
+        * 2018-05-08T13:50:33
+        * 20180128
+        * 20180128111213
+        * 2018.01.28 3:59
+        * 2018/01/28 3:59
 
-    def parse_date_flex(self, value):
-        """
-        Parses the passed value into a ``datetime`` object using the
-        short or long datetime, the date or iso format
-
-        :param value: string representing a date/time
+        :param option: string representing the option
+        :param *args: further args to be passed to .get()
         :return: datetime object
         """
-        valid = [self._format('datetime_short_format'),
-                 self._format('datetime_long_format'),
-                 self._format('date_format'),
-                 self._format('isoformat')]
-        for fmt in valid:
-            try:
-                return datetime.datetime.strptime(value, fmt)
-            except ValueError:
-                continue
-        raise ValueError('datetime data [%s] does not match any of [%s]', value,
-                         ', '.join(valid))
 
-    #
-    # def get_time(self):
-    #     """
-    #     parses time as defined by DEFAULT.time_long_format or
-    #     DEFAULT.time_short_format
-    #
-    #     :return: datetime.time object
-    #     """
-    #     pass
-    #
-    # def get_regex(self):
-    #     """
-    #     parses regular expression using the slash delimiter as in ``/regex/mod``
-    #     where _regex_ represents the regular expression and _mod_ represents
-    #     regular expression modifiers. Valid modifiers are the letters
-    #
-    #     * ``i`` - for case-insensitive match
-    #     * ``m`` - for multiple lines match
-    #     * ``s`` - for dot matching newlines
-    #
-    #     :return: re object
-    #     """
-    #     pass
-    #
+        value = self.get(option, *args, **kwargs)
+        dt = dateutil.parser.parse(value, yearfirst=True)
+        return dt
+
+    def get_regex(self, option, *args, **kwargs):
+        """
+        parses regular expression using the slash delimiter as in ``/regex/mod``
+        where _regex_ represents the regular expression and _mod_ represents
+        regular expression modifiers. Valid modifiers are the letters
+
+        * ``i`` - for case-insensitive match
+        * ``m`` - for multiple lines match
+        * ``s`` - for dot matching newlines
+
+        :return: re object
+        """
+        value = self.get(option, *args, **kwargs)
+        return value
+
     # def get_collection(self):
     #     """
     #     parses a MongoDB connection string into connection settings

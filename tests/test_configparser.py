@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import configparser
+import datetime
 import os
 import unittest
 
@@ -55,8 +56,8 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual(os.path.basename(config.path[1]), 'simple.conf')
         self.assertEqual('mongodb://localhost:27018', config.get('mongo_url'))
         self.assertEqual('test_database', config.get('mongo_database'))
-        self.assertEqual(config.sections(),
-                         ['bitbucket.org', 'topsecret.server.com'])
+        self.assertEqual(config.sections(), ['bitbucket.org',
+                                             'topsecret.server.com'])
         self.assertTrue(config.has_option('mongo_url'))
         self.assertFalse(config.has_option('bla_bla'))
         self.assertTrue(config.has_option('test_default'))
@@ -124,8 +125,26 @@ class TestConfigParser(unittest.TestCase):
     def test_getter(self):
         config = TestUserConfig('format')
         self.assertEqual("2018-01-28", config.get('test_date1'))
-        print(config.get_datetime("test_date1"))
+        v = config.get_datetime("test_date1")
+        self.assertEqual(datetime.datetime(2018, 1, 28), v)
+        self.assertRaises(ValueError, config.get_datetime, "test_date2")
+        v = config.get_datetime("test_date3")
+        self.assertEqual(datetime.datetime(2018, 1, 28, 3, 59), v)
+        v = config.get_datetime("test_date4")
+        self.assertEqual(datetime.datetime(2018, 5, 8, 13, 50, 33), v)
+        v = config.get_datetime("test_date5")
+        self.assertEqual(datetime.datetime(2018, 1, 28), v)
+        v = config.get_datetime("test_date6")
+        self.assertEqual(datetime.datetime(2018, 1, 28, 11, 12, 13), v)
+        v = config.get_datetime("test_date7")
+        self.assertEqual(datetime.datetime(2018, 1, 28, 3, 59), v)
+        v = config.get_datetime("test_date8")
+        self.assertEqual(datetime.datetime(2018, 1, 28, 3, 59), v)
+        v = config.get_datetime("test_time1")
+        v = datetime.time(v.hour, v.minute, v.second, v.microsecond)
+        self.assertEqual(datetime.time(3, 59), v)
 
+        print(v)
 
 if __name__ == '__main__':
     unittest.main()
