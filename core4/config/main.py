@@ -159,21 +159,17 @@ class CoreConfig:
         #   has_option
         # forward methods: defaults, sections
         if item in self._WRAP:
+
             def mywrapper(method):
-                def methodWrapper(*args, **kwargs):
-                    if len(args) > 1:
-                        # there is the section
-                        kwargs['section'] = args[1]
-                        args = list(args)[:-1]
-                    nargs = (kwargs.get('section', self.primary), *args)
-                    if 'section' in kwargs:
-                        del (kwargs['section'])
-                    return method(*nargs, **kwargs)
+                def methodWrapper(option, *, section=None, **kwargs):
+                    return method(section or self.primary, option, **kwargs)
                 return methodWrapper
 
             return mywrapper(getattr(self.config, item))
+
         if item in self._FORWARD:
             return getattr(self.config, item)
+
         raise AttributeError
 
     def get_datetime(self, option, *args, **kwargs):

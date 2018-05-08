@@ -144,7 +144,6 @@ class TestConfigParser(unittest.TestCase):
         v = datetime.time(v.hour, v.minute, v.second, v.microsecond)
         self.assertEqual(datetime.time(3, 59), v)
 
-        print(v)
 
 if __name__ == '__main__':
     unittest.main()
