@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from core4.base.root import Root
 
 

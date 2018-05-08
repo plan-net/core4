@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 This core4 test runner executes each test script located in the same
 directory as the script itself. In contrast to Python standard unittest
@@ -57,8 +59,9 @@ def run(logfile, pkg):
             delta = delta - datetime.timedelta(
                 microseconds=delta.microseconds)
             pro = next(PROGRESS) + fmt + "[{:>8s}]\r".format(str(delta))
-            sys.stdout.write(pro)
-            sys.stdout.flush()
+            if os.isatty(sys.stdout.fileno()):
+                sys.stdout.write(pro)
+                sys.stdout.flush()
             buf = reader.read()
             output += buf
             time.sleep(0.1)
