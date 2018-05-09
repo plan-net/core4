@@ -1,5 +1,60 @@
 # -*- coding: utf-8 -*-
 
+"""
+# todo: requires documentation; the follwoing text has been copied from core3
+# core/docs/configuration.rst:
+
+configuration principles
+========================
+
+There are six places where core is looking for configuration options and their
+values. Environment variables prefixed with ``CORE_OPION`` take precedence over
+the following core configuration files:
+
+#. the default configuration in ``conf/conf.core``
+#. the account configuration for account specific classes and jobs in
+   ``<account>/<account>.conf``
+#. a local configuration located by the environment variable ``$CORE_CONFIG``
+#. the user specific configuration in ``~/.core/local.conf``
+#. the system wide local configuration in ``/etc/core/local.conf``
+
+Option 3 takes precedence over option 4 which takes precedence over option 5.
+
+This boils down into the following tactic:
+
+* default variables are set by core
+* account specific default variables are set by the account plugin`s
+  configuration file
+* for each account exists one and only one account specific configuration file
+* a local configuration file can always be enforced with the ``CORE_CONFIG``
+  environment variables
+* a user-specific configuration file located at ``~/.core/local.conf``
+  takes precedence over a system-specific configuration file located at
+  ``/etc/core/local.conf``
+* finally the user always has the chance to enforce individual configuration
+  option values
+
+The next section explains the structure of environment configuration options and their values.
+
+environment configuration options and values
+--------------------------------------------
+
+You can enforce core configuration option values by defining operating system variables. The structure of these
+environment variables needs to be::
+
+    CORE_OPTION_[section]__[option]
+
+or::
+
+    CORE_OPTION_[option]
+
+Please note the **double** underscore characters seperating the configuration section from the option. If no section
+is provided as in the second example, then the ``DEFAULT`` section applies.
+
+
+For further details of the core :class:`.Config` class.
+"""
+
 import configparser
 import os
 
@@ -7,8 +62,6 @@ import dateutil.parser
 import pkg_resources
 
 import core4.util
-
-# todo: implement special getters
 
 # config locations, see https://pypi.org/project/appdirs/1.4.0/
 EXTENDED_INTERPOLATION = False
@@ -169,10 +222,10 @@ class CoreConfig:
         # forward methods: defaults, sections
 
         if item in self._WRAP:
-
             def mywrapper(method):
                 def methodWrapper(option, *, section=None, **kwargs):
                     return method(section or self.primary, option, **kwargs)
+
                 return methodWrapper
 
             return mywrapper(getattr(self.config, item))
@@ -216,15 +269,16 @@ class CoreConfig:
         * ``m`` - for multiple lines match
         * ``s`` - for dot matching newlines
 
-        :return: re object
+        :return: compiled re object
         """
         regex = self.get(option, *args, **kwargs)
         return core4.util.parse_regex(regex)
 
-    # def get_collection(self):
-    #     """
-    #     parses a MongoDB connection string into connection settings
-    #
-    #     :return: dict
-    #     """
-    #     pass
+    def get_collection(self):
+        """
+        parses a MongoDB connection string into connection settings
+
+        :return: dict
+        """
+        # todo: requires implementation
+        pass
