@@ -144,6 +144,24 @@ class TestConfigParser(unittest.TestCase):
         v = datetime.time(v.hour, v.minute, v.second, v.microsecond)
         self.assertEqual(datetime.time(3, 59), v)
 
+    def test_regex(self):
+        config = TestUserConfig('format')
+
+        v = config.get_regex("test_regex1")
+        t = v.search('business intelligence')
+        self.assertEqual('.*intelli.*', t.re.pattern)
+        self.assertIsNotNone(t)
+
+        t = v.search('Business Intelligence')
+        self.assertIsNone(t)
+
+        v = config.get_regex("test_regex2")
+        t = v.search('Business Intelligence')
+        self.assertEqual('.*intelli.*', t.re.pattern)
+        self.assertIsNotNone(t)
+
+    # def test_fail(self):
+    #     self.assertTrue(False)
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,6 +6,8 @@ import os
 import dateutil.parser
 import pkg_resources
 
+import core4.util
+
 # todo: implement special getters
 
 # config locations, see https://pypi.org/project/appdirs/1.4.0/
@@ -216,8 +218,8 @@ class CoreConfig:
 
         :return: re object
         """
-        value = self.get(option, *args, **kwargs)
-        return value
+        regex = self.get(option, *args, **kwargs)
+        return core4.util.parse_regex(regex)
 
     # def get_collection(self):
     #     """
