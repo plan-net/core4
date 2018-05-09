@@ -3,6 +3,7 @@
 import configparser
 import datetime
 import os
+import re
 import unittest
 
 import core4.config
@@ -160,7 +161,9 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual('.*intelli.*', t.re.pattern)
         self.assertIsNotNone(t)
 
-    # def test_fail(self):
+        self.assertRaises(re.error, config.get_regex, "test_regex3")
+
+    # def test_fail(self):y
     #     self.assertTrue(False)
 
 if __name__ == '__main__':

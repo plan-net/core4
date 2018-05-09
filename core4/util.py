@@ -35,7 +35,8 @@ def parse_regex(regex):
         pattern = "/".join(parts[1:-1])
         for f in parts[-1].lower():
             flags = flags | REGEX_MODIFIER[f]
-    except:
+        return re.compile(pattern, flags)
+    except Exception as exc:
         raise re.error(
-            'invalid regular expression or option [{}]'.format(regex))
-    return re.compile(pattern, flags)
+            "invalid regular expression or option [{}]:\n{}".format(
+                regex, exc))
