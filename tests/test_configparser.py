@@ -6,6 +6,8 @@ import os
 import re
 import unittest
 
+import pymongo
+
 import core4.config
 import tests.util
 
@@ -35,6 +37,12 @@ class TestConfigParser(unittest.TestCase):
         for cls in [core4.config.main.CoreConfig, TestConfig,
                     TestSystemConfig, TestUserConfig]:
             cls.purge_cache()
+        self.mongo.drop_database('core4test')
+        self.mongo.drop_database('core4test1')
+
+    @property
+    def mongo(self):
+        return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
 
     def test_orig(self):
         # test plain configparser and test-internal asset method
@@ -55,9 +63,10 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual(len(config.path), 2)
         self.assertEqual(os.path.basename(config.path[0]), 'core.conf')
         self.assertEqual(os.path.basename(config.path[1]), 'simple.conf')
-        self.assertEqual('mongodb://localhost:27018', config.get('mongo_url'))
+        self.assertEqual('mongodb://core:654321@localhost:27017',
+                         config.get('mongo_url'))
         self.assertEqual('test_database', config.get('mongo_database'))
-        self.assertEqual(config.sections(), ['bitbucket.org',
+        self.assertEqual(config.sections(), ['kernel', 'bitbucket.org',
                                              'topsecret.server.com'])
         self.assertTrue(config.has_option('mongo_url'))
         self.assertFalse(config.has_option('bla_bla'))
@@ -69,7 +78,8 @@ class TestConfigParser(unittest.TestCase):
         # no system config
         # only default
         config = TestConfig()
-        self.assertEqual('core4dev', config.get('mongo_database'))
+        value = config.get('mongo_database')
+        self.assertEqual('core4dev', value)
 
     def test_system(self):
         # no user config
@@ -163,8 +173,99 @@ class TestConfigParser(unittest.TestCase):
 
         self.assertRaises(re.error, config.get_regex, "test_regex3")
 
+    def test_connection(self):
+        config = TestUserConfig('format')
+        v = config.get_collection('test_conn1')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='None', database='db', collection='c.d.e')",
+        )
+
+        v = config.get_collection('test_conn2')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='admin', database='db2', collection='coll')",
+        )
+
+        self.assertRaises(ValueError, config.get_collection, 'test_conn3')
+
+        v = config.get_collection('test_conn4')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='core3', database='db1', collection='c1')",
+        )
+
+        v = config.get_collection('test_conn5')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='admin', database='db3', collection='c1')",
+        )
+
+        v = config.get_collection('test_conn6')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='core3', database='db2', collection='c3')",
+        )
+        self.assertEqual(v.info_url, "core3@localhost:27017/db2/c3")
+
+    def test_access(self):
+        config = TestUserConfig('connect')
+        coll = config.get_collection('test_conn1')
+        self.assertEqual(0, coll.count())
+        for i in range(1, 100):
+            coll.insert_one({'no': i})
+        self.assertEqual(99, coll.count())
+        self.assertEqual("CoreConnection("
+                         "scheme='mongodb', "
+                         "hostname='localhost:27017', "
+                         "username='core', "
+                         "database='core4test', "
+                         "collection='collection')",
+                         str(coll))
+
+    def test_db_conf(self):
+        config = TestConfig('test1', config_file=tests.util.asset(
+            'configparser/db.conf'))
+        self.assertTrue("coll1" in config.options("test1"))
+        self.assertTrue(config.has_section("test1"))
+        self.assertFalse(config.has_section("test2"))
+        # make some db config
+        db_conf = config.get_collection('sys.conf', 'kernel')
+        db_conf.insert_one({
+            '_id': 'test2',
+            'option': {
+                'coll1': 'test2coll1'
+            }
+        })
+        db_conf.insert_one({
+            '_id': 'test1',
+            'option': {
+                'coll1': 'test1coll1'
+            }
+        })
+        config = TestConfig('test1', config_file=tests.util.asset(
+            'configparser/db.conf'))
+        self.assertTrue("coll1" in config.options("test1"))
+        self.assertTrue(config.has_section("test1"))
+        self.assertFalse(config.has_section("test2"))
+
+        TestConfig.purge_cache()
+        config = TestConfig('test1', config_file=tests.util.asset(
+            'configparser/db.conf'))
+        self.assertTrue("coll1" in config.options("test1"))
+        self.assertTrue(config.has_section("test1"))
+        self.assertTrue(config.has_section("test2"))
+        self.assertEqual("test1coll1", config.get("coll1"))
+        self.assertEqual("test2coll1", config.get("coll1", "test2"))
+
     # def test_fail(self):y
     #     self.assertTrue(False)
+
 
 if __name__ == '__main__':
     unittest.main()

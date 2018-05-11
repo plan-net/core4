@@ -1,0 +1,78 @@
+# -*- coding: utf-8 -*-
+
+import pymongo
+
+
+def mongodb_connect(connection):
+    url = 'mongodb://'
+    if connection.username:
+        url += connection.username
+        if connection.password:
+            url += ":" + connection.password
+        url += "@"
+    url += connection.hostname
+    return pymongo.MongoClient(
+        url, tz_aware=False, connect=False)
+
+
+def postgres_connect(connection):
+    raise NotImplementedError
+
+
+DEFAULT_SCHEME = 'mongodb'
+SCHEME = {
+    'mongodb': {
+        'database': 'mongo_database',
+        'url': 'mongo_url',
+        'connector': mongodb_connect
+    },
+    'postgres': {
+        'database': 'postgres_database',
+        'url': 'postgres_url',
+        'connector': postgres_connect
+    }
+}
+
+
+class CoreConnection:
+
+    def __init__(self, scheme, hostname, database, collection, username=None,
+            password=None):
+        self.scheme = scheme
+        self.hostname = hostname
+        self.database = database
+        self.collection = collection
+        self.username = username
+        self.password = password
+        self._connection = None
+
+    def __repr__(self):
+        return "CoreConnection(" \
+               "scheme='{scheme}', " \
+               "hostname='{hostname}', " \
+               "username='{username}', " \
+               "database='{database}', " \
+               "collection='{collection}'" \
+               ")".format(**self.__dict__)
+
+    @property
+    def connection(self):
+        if self._connection is None:
+            connector = SCHEME[self.scheme]['connector']
+            self._connection = connector(self)
+        return self._connection
+
+    @property
+    def info_url(self):
+        loc = ""
+        if self.username:
+            loc += self.username + "@"
+        loc += self.hostname
+        if self.database:
+            loc += "/" + self.database
+        if self.collection:
+            loc += "/" + self.collection
+        return loc
+
+    def __getattr__(self, item):
+        return getattr(self.connection[self.database][self.collection], item)
