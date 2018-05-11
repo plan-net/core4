@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# see ./__init__.py
 
 import configparser
 import os
@@ -8,9 +9,9 @@ import urllib.parse
 import dateutil.parser
 import pkg_resources
 
-import core4.config.connection
+import core4.config.collection
 import core4.util
-from core4.config.connection import DEFAULT_SCHEME, SCHEME
+from core4.config.collection import DEFAULT_SCHEME, SCHEME
 
 # config locations, see https://pypi.org/project/appdirs/1.4.0/
 EXTENDED_INTERPOLATION = False
@@ -46,7 +47,9 @@ class CoreConfig:
     """
 
     _WRAP = ["get", "getint", "getfloat", "getboolean", "has_option"]
-    _FORWARD = ["defaults", "sections", "has_section", "options"]
+    _FORWARD = ["defaults", "sections"]
+
+    # special implement with .options(), .has_section()
 
     default_config = DEFAULT_CONFIG
     user_config = LOCAL_USER_CONFIG
@@ -93,6 +96,9 @@ class CoreConfig:
                ``CORE4_[SECTION]__[OPTION]`` (watch the double
                underscore between section and option) are applied as the
                final step to load core4 configuration.
+
+            Raises FileNotFoundError if an expected configuration file
+            has not been found.
 
             :return: configparser.ConfigParser object
         """
@@ -189,7 +195,8 @@ class CoreConfig:
         if item in self._WRAP:
             def section_wrapper(method):
                 def config_wrapper(option, section=None, **kwargs):
-                    return method(section or self.primary, option, **kwargs)
+                    return method(section or self.primary, option,
+                                  **kwargs)
 
                 return config_wrapper
 
@@ -199,6 +206,12 @@ class CoreConfig:
             return getattr(self.config, item)
 
         raise AttributeError
+
+    def options(self, section=None):
+        return self.config.options(section or self.primary)
+
+    def has_section(self, section=None):
+        return self.config.has_section(section or self.primary)
 
     def get_datetime(self, option, *args, **kwargs):
         """
@@ -273,6 +286,8 @@ class CoreConfig:
         * ``postgres://database/table`` - use default ``postgres_url``,
           including authentication to access ``table`` in ``database``.
 
+        Raises ValueError if the option is malformed.
+
         :return: CoreConnection object
         """
         conn = self.config.get(section or self.primary, option)
@@ -310,4 +325,4 @@ class CoreConfig:
         else:
             opts["database"] = default_database
             opts["collection"] = _db
-        return core4.config.connection.CoreConnection(**opts)
+        return core4.config.collection.CoreCollection(**opts)

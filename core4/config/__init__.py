@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 
 """
+core4 configuration management
+==============================
+
+All core4 components have access to core4 configuraiton management with
+class CoreConfig in core4.config.main.
+
+
 configuration principles
 ========================
 
@@ -18,8 +25,8 @@ operations activities. The core4.config package primary concerns are:
 #. To make the lifes of data scientists and developers easy. The config
    system supports cross-database application development, local and
    remote sources, and a hierarchical connection configuration mechanic
-   which speeds up the most critical ingridient to efficient programming:
-   access to real data.
+   which speeds up the most critical ingridient to efficient
+   programming: access to real data.
 
 
 sources of configuration
@@ -61,6 +68,7 @@ This boils down into the following tactic:
 The next section explains the structure of environment configuration
 options and their values.
 
+
 environment options and values
 ------------------------------
 
@@ -77,7 +85,33 @@ Please note the **double** underscore characters seperating the
 configuration section from the option. If no section is provided as in
 the second example, then the ``DEFAULT`` section applies.
 
-For further details of the core :class:`.Config` class.
+
+option types
+------------
+
+Access to configuration options is provided with configparser standard
+methods:
+
+* .get(option, section=None)
+* .getint(option, section=None)
+* .getfloat(option, section=None)
+* .getboolean(option, section=None)
+
+CoreConfig class adds the following extra access methods:
+
+* .get_datetime(option, section=None) - returns datetime.datetime
+* .get_regex(option, section=None) - return re object
+* .get_collection(option, section=None) - returns CoreCollection
+
+CoreConfig delegates the following methods to the internal ConfigParser
+object, with section default to primary section of the config. For
+further details of the core :class:`.Config` class:
+
+* .has_section(section=None)
+* .has_option(section=None)
+* .sections()
+* .defaults()
+* .options(section=None)
 """
 
 from core4.config.main import CoreConfig

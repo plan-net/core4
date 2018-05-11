@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from core4.config.connector.mongo import connect as mongo_connect
-from core4.config.connector.postgres import connect as postgres_connect
+
+# from core4.config.connector.postgres import connect as postgres_connect
 
 DEFAULT_SCHEME = 'mongodb'
 SCHEME = {
@@ -10,15 +11,18 @@ SCHEME = {
         'url': 'mongo_url',
         'connector': mongo_connect
     },
-    'postgres': {
-        'database': 'postgres_database',
-        'url': 'postgres_url',
-        'connector': postgres_connect
-    }
+    # 'postgres': {
+    #     'database': 'postgres_database',
+    #     'url': 'postgres_url',
+    #     'connector': postgres_connect
+    # }
 }
 
 
-class CoreConnection:
+class CoreCollection:
+    """
+    This class encapsulates data access to MongoDB collections.
+    """
 
     def __init__(
             self, scheme, hostname, database, collection, username=None,

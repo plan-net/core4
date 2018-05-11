@@ -296,6 +296,23 @@ class TestConfigParser(unittest.TestCase):
         config = TestUserConfig("connect")
         self.assertEqual("connect1 in section", config.get("test_conn1"))
 
+    def test_has_option(self):
+        config = TestUserConfig()
+        self.assertTrue(config.has_option('mongo_url', 'DEFAULT'))
+        self.assertTrue(config.has_option('mongo_url'))
+        self.assertTrue(config.has_option('test_conn1', 'connect'))
+        self.assertEqual("DEFAULT", config.primary)
+        config = TestUserConfig("connect")
+        self.assertTrue(config.has_option('test_conn1'))
+        self.assertFalse(config.has_option('test_conn2'))
+        self.assertEqual(3, sum([1 for i in ["test_conn1", "mongo_url",
+                                             "mongo_database"]
+                                 if i in config.options()]))
+        self.assertEqual("connect", config.primary)
+
+    def test_no_section(self):
+        config = TestUserConfig("nonexist")
+        self.assertFalse(config.has_section())
 
     # def test_fail(self):
     #     self.assertTrue(False)
