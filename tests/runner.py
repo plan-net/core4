@@ -6,8 +6,9 @@ directory as the script itself. In contrast to Python standard unittest
 execution with `python -m unittest discover` this runner executes each
 test script in isolation by starting a new Python interpreter process.
 
-See for example https://github.com/cztomczak/pycef/blob/master/unittests/_runner.py
-for a similar approach.
+See for example
+https://github.com/cztomczak/pycef/blob/master/unittests/_runner.py for
+a similar approach.
 """
 
 import collections
@@ -30,7 +31,7 @@ REPORT_LINE = "  {:40s} {:16s} {:5d}"
 TOTAL_LINE = "  {:>40s} {:16s} {:5d}\n"
 
 
-class bcolors:
+class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKGREEN = '\033[92m'
@@ -44,10 +45,10 @@ class bcolors:
 @contextmanager
 def warn():
     if istty():
-        print(bcolors.WARNING)
+        print(Colors.WARNING)
     yield
     if istty():
-        print(bcolors.ENDC)
+        print(Colors.ENDC)
 
 
 def line():

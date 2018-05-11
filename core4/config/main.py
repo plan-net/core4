@@ -1,59 +1,5 @@
 # -*- coding: utf-8 -*-
 
-"""
-# todo: requires documentation; the follwoing text has been copied from core3
-# core/docs/configuration.rst:
-
-configuration principles
-========================
-
-There are six places where core is looking for configuration options and their
-values. Environment variables prefixed with ``CORE_OPION`` take precedence over
-the following core configuration files:
-
-#. the default configuration in ``conf/conf.core``
-#. the account configuration for account specific classes and jobs in
-   ``<account>/<account>.conf``
-#. a local configuration located by the environment variable ``$CORE_CONFIG``
-#. the user specific configuration in ``~/.core/local.conf``
-#. the system wide local configuration in ``/etc/core/local.conf``
-
-Option 3 takes precedence over option 4 which takes precedence over option 5.
-
-This boils down into the following tactic:
-
-* default variables are set by core
-* account specific default variables are set by the account plugin`s
-  configuration file
-* for each account exists one and only one account specific configuration file
-* a local configuration file can always be enforced with the ``CORE_CONFIG``
-  environment variables
-* a user-specific configuration file located at ``~/.core/local.conf``
-  takes precedence over a system-specific configuration file located at
-  ``/etc/core/local.conf``
-* finally the user always has the chance to enforce individual configuration
-  option values
-
-The next section explains the structure of environment configuration options and their values.
-
-environment configuration options and values
---------------------------------------------
-
-You can enforce core configuration option values by defining operating system variables. The structure of these
-environment variables needs to be::
-
-    CORE_OPTION_[section]__[option]
-
-or::
-
-    CORE_OPTION_[option]
-
-Please note the **double** underscore characters seperating the configuration section from the option. If no section
-is provided as in the second example, then the ``DEFAULT`` section applies.
-
-
-For further details of the core :class:`.Config` class.
-"""
 
 import configparser
 import os
@@ -104,7 +50,8 @@ class CoreConfig:
     _cache = {}
     _db_cache = None
 
-    def __init__(self, section="DEFAULT", extra_config=None, config_file=None,
+    def __init__(
+            self, section="DEFAULT", extra_config=None, config_file=None,
             extended=EXTENDED_INTERPOLATION):
         self._config_file = config_file
         self.extra_config = extra_config
@@ -235,13 +182,13 @@ class CoreConfig:
         # forward methods: defaults, sections
 
         if item in self._WRAP:
-            def mywrapper(method):
-                def methodWrapper(option, section=None, **kwargs):
+            def section_wrapper(method):
+                def config_wrapper(option, section=None, **kwargs):
                     return method(section or self.primary, option, **kwargs)
 
-                return methodWrapper
+                return config_wrapper
 
-            return mywrapper(getattr(self.config, item))
+            return section_wrapper(getattr(self.config, item))
 
         if item in self._FORWARD:
             return getattr(self.config, item)
@@ -264,7 +211,6 @@ class CoreConfig:
         * 2018/01/28 3:59
 
         :param option: string representing the option
-        :param *args: further args to be passed to .get()
         :return: datetime object
         """
 
@@ -288,7 +234,7 @@ class CoreConfig:
         regex = self.get(option, *args, **kwargs)
         return core4.util.parse_regex(regex)
 
-    def get_collection(self, option, section=None, **kwargs):
+    def get_collection(self, option, section=None):
         """
         parses an option into a CoreConnection object. The following
         option string format facilitates cross-database access
@@ -328,7 +274,7 @@ class CoreConfig:
         if not conn:
             return None
         split = urllib.parse.urlsplit(conn)
-        opts = {}
+        opts = dict()
         opts["scheme"] = getattr(split, "scheme") or DEFAULT_SCHEME
         default_url = self.config.get(section or self.primary,
                                       SCHEME[opts["scheme"]]["url"])

@@ -3,7 +3,6 @@
 from core4.config.connector.mongo import connect as mongo_connect
 from core4.config.connector.postgres import connect as postgres_connect
 
-
 DEFAULT_SCHEME = 'mongodb'
 SCHEME = {
     'mongodb': {
@@ -21,7 +20,8 @@ SCHEME = {
 
 class CoreConnection:
 
-    def __init__(self, scheme, hostname, database, collection, username=None,
+    def __init__(
+            self, scheme, hostname, database, collection, username=None,
             password=None):
         self.scheme = scheme
         self.hostname = hostname
