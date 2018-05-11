@@ -263,6 +263,40 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual("test1coll1", config.get("coll1"))
         self.assertEqual("test2coll1", config.get("coll1", "test2"))
 
+    def test_env_missing(self):
+        os.environ["CORE4_CONFIG"] = "/tmp/__not_exists__"
+        config = TestConfig()
+        self.assertRaises(FileNotFoundError, lambda: config.get("mongo_url"))
+
+    def test_extra_missing(self):
+        config = TestConfig(extra_config="/tmp/__not_exists__")
+        self.assertRaises(FileNotFoundError, lambda: config.get("mongo_url"))
+
+    def test_config_missing(self):
+        config = TestConfig(config_file="/tmp/__not_exists__")
+        self.assertRaises(FileNotFoundError, lambda: config.get("mongo_url"))
+
+    def test_setter(self):
+        config = TestConfig()
+        self.assertRaises(AttributeError,
+                          lambda: config.set("mongo_url", "foo"))
+
+    def test_env_var(self):
+        config = TestUserConfig()
+        self.assertEqual("mongo in user", config.get("mongo_database"))
+        os.environ["CORE4_OPTION_mongo_database"] = "mongo in env"
+        TestUserConfig.purge_cache()
+        config = TestUserConfig()
+        self.assertEqual("mongo in env", config.get("mongo_database"))
+        self.assertEqual(
+            config.get("test_conn1", "connect"),
+            "mongodb://core:654321@localhost:27017/core4test/collection")
+        os.environ["CORE4_OPTION_connect__test_conn1"] = "connect1 in section"
+        TestUserConfig.purge_cache()
+        config = TestUserConfig("connect")
+        self.assertEqual("connect1 in section", config.get("test_conn1"))
+
+
     # def test_fail(self):
     #     self.assertTrue(False)
 

@@ -38,6 +38,11 @@ class CoreConfig:
 
     By default the config object uses BasicInterpolation. You can change
     this behavior to ExtendedInterpolation with the extended parameter.
+    Thie feature is considered experimental.
+
+    CoreConfig implements class-level caching of plugin based
+    configuration and mongo config collection. Purge the cache with the
+    class method .purge_cache().
     """
 
     _WRAP = ["get", "getint", "getfloat", "getboolean", "has_option"]
@@ -97,6 +102,7 @@ class CoreConfig:
             if cache_item in self.__class__._cache:
                 return self.__class__._cache[cache_item]
             if self._extended:
+                # todo: not tested, yet
                 self._config = configparser.ConfigParser(
                     interpolation=configparser.ExtendedInterpolation())
             else:
@@ -111,8 +117,7 @@ class CoreConfig:
                 self._read_file(self._config_file)
             elif self.env_config:
                 # by OS environment variable CORE_CONFIG
-                if os.path.exists(self.env_config):
-                    self._read_file(self.env_config)
+                self._read_file(self.env_config)
             elif os.path.exists(self.user_config):
                 # in user's home directory ~/
                 self._read_file(self.user_config)
