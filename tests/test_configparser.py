@@ -263,7 +263,7 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual("test1coll1", config.get("coll1"))
         self.assertEqual("test2coll1", config.get("coll1", "test2"))
 
-    # def test_fail(self):y
+    # def test_fail(self):
     #     self.assertTrue(False)
 
 
