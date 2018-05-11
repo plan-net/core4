@@ -1,22 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import pymongo
-
-
-def mongodb_connect(connection):
-    url = 'mongodb://'
-    if connection.username:
-        url += connection.username
-        if connection.password:
-            url += ":" + connection.password
-        url += "@"
-    url += connection.hostname
-    return pymongo.MongoClient(
-        url, tz_aware=False, connect=False)
-
-
-def postgres_connect(connection):
-    raise NotImplementedError
+from core4.config.connector.mongo import connect as mongo_connect
+from core4.config.connector.postgres import connect as postgres_connect
 
 
 DEFAULT_SCHEME = 'mongodb'
@@ -24,7 +9,7 @@ SCHEME = {
     'mongodb': {
         'database': 'mongo_database',
         'url': 'mongo_url',
-        'connector': mongodb_connect
+        'connector': mongo_connect
     },
     'postgres': {
         'database': 'postgres_database',
