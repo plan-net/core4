@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from core4.base.root import Root
 
-
-class Base(Root):
+class Base:
 
     def __init__(self):
         self.account = None
         self.config = self._init_config()
         self.logger = self._init_logging()
         self.section = self.account or 'DEFAULT'
-        pass
 
     def _init_logging(self):
         return None
