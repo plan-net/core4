@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from core4.config.connector.mongo import connect as mongo_connect
-
-# from core4.config.connector.postgres import connect as postgres_connect
+from core4.base.connector.mongo import connect as mongo_connect
 
 DEFAULT_SCHEME = 'mongodb'
 SCHEME = {

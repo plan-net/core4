@@ -21,12 +21,14 @@ def parse_regex(regex):
     """
     Translates the passed string into a Python compiled re (regular
     expression). String format is using the slash delimiter with
-    attached regular expression modifies i (case-insensitive), m
-    (multi-lines match) and s (dot matching newlines). A string not
+    attached regular expression modifies ``i`` (case-insensitive), ``m``
+    (multi-lines match) and ``s`` (dot matching newlines). A string not
     following this form is translated into /string/.
 
     :param regex: regular expression string
     :return: Python compiled re object
+
+    Raises :class:`re.error` with invalid regular expressions
     """
     if not regex.startswith('/'):
         regex = "/" + regex + "/"

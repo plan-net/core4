@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# see ./__init__.py
-
 import configparser
 import os
 import urllib.parse
@@ -9,9 +7,9 @@ import urllib.parse
 import dateutil.parser
 import pkg_resources
 
-import core4.config.collection
+import core4.base.collection
 import core4.util
-from core4.config.collection import DEFAULT_SCHEME, SCHEME
+from core4.base.collection import DEFAULT_SCHEME, SCHEME
 
 # config locations, see https://pypi.org/project/appdirs/1.4.0/
 EXTENDED_INTERPOLATION = False
@@ -22,28 +20,35 @@ SYSTEM_CONFIG = "/etc/core4"
 
 class CoreConfig:
     """
-    The CoreConfig class is the gateway into core4 configuration. It is
-    implemented as a proxy into configparser.ConfigParser() with a
-    defined set of configuration sources and the concept of a primary
-    section.
+    This class is the gateway into core4 configuration. It is implemented as a
+    proxy to :class:`configparser.ConfigParser` with a defined set of
+    configuration sources and a primary section.
 
     The proxy object
 
-    # forward methods .defaults(), .sections(), .has_section() and
-      .options()
-    # wrap methods .get(), .getint(), .getfloat(), .getboolean(),
-      .has_option() with the primary section
-    # extends the standard parser with method .get_datetime(),
-      .get_regex(), and .get_collection()
-    # hide all other methods and attributes
+    #. forwards methods :meth:`~configparser.ConfigParser.defaults`,
+       :meth:`~configparser.ConfigParser.sections`,
+       :meth:`~configparser.ConfigParser.has_section` and
+       :meth:`~configparser.ConfigParser.options`
+    #. wraps methods :meth:`~configparser.ConfigParser.get`,
+       :meth:`~configparser.ConfigParser.getint`,
+       :meth:`~configparser.ConfigParser.getfloat`,
+       :meth:`~configparser.ConfigParser.getboolean`,
+       :meth:`~configparser.ConfigParser.has_option`
+       with the specified section or the :ref:`primary_section`
+    #. extends the standard parser with methods
+       :meth:`~.CoreConfig.get_datetime`, :meth:`~.CoreConfig.get_regex`, and
+       :meth:`~.CoreConfig.get_collection`
+    #. hides all other methods
 
-    By default the config object uses BasicInterpolation. You can change
-    this behavior to ExtendedInterpolation with the extended parameter.
-    Thie feature is considered experimental.
+    By default the :class:`CoreConfig` object uses
+    :class:`~configparser.BasicInterpolation`. You can change this behavior to
+    :class:`~configparser.ExtendedInterpolation` with the ``extended``
+    parameter. This feature is considered experimental.
 
-    CoreConfig implements class-level caching of plugin based
+    :class:`.CoreConfig` implements class-level caching of plugin based
     configuration and mongo config collection. Purge the cache with the
-    class method .purge_cache().
+    class method :meth:`~.CoreConfig.purge_cache`.
     """
 
     _WRAP = ["get", "getint", "getfloat", "getboolean", "has_option"]
@@ -61,6 +66,34 @@ class CoreConfig:
     def __init__(
             self, section="DEFAULT", extra_config=None, config_file=None,
             extended=EXTENDED_INTERPOLATION):
+        """
+        Creates the config object loaded from
+
+        #. core4's **default** configuration file (./core4/config/core.yaml)
+        #. an **extra** configuration file (defaults to None)
+        #. a **local** configuration file (by OS environment
+           variable ``CORE4_CONFIG``, or from the user's home
+           directory ``~/.core/local.yaml``, or from the system
+           directory ``/etc/core/local.yaml``, or from collection
+           ``core4.sys.config``. The first existing config provider
+           wins and local configuration processing stops.
+        #. OS environment variables following the naming convention
+           ``CORE4_[SECTION]__[OPTION]`` (watch the double
+           underscore between section and option) are applied as the
+           final step to load core4 configuration.
+
+        Raises FileNotFoundError if an expected configuration file
+        has not been found.
+
+        :param section: :ref:`primary_section`, defaults to ``DEFAULT``
+        :param extra_config: extra configuration file
+        :param config_file: forced configuration file; if defined skips the
+                            cascade of ``CORE4_CONFIG`` variable, the user's
+                            and the system`s configuration file
+        :param extended: uses :class:`configparser.ExtendedInterpolation`
+                         instead of the default
+                         :class:`configparser.BasicInterpolation`
+        """
         self._config_file = config_file
         self.extra_config = extra_config
         self.primary = section
@@ -80,27 +113,9 @@ class CoreConfig:
     @property
     def config(self):
         """
-            provides lazy access to configparser ConfigParser object
-            loaded from
+        provides lazy access to :class:`~configparser.ConfigParser`
 
-            #. core's **default** configuration file
-               (./core4/config/core.conf)
-            #. an **extra** configuration file (defaults to None)
-            #. a **local** configuration file (by OS environment
-               variable ``CORE4_CONFIG``, or in the user's home
-               directory ``~/.core/local.conf``, or in the system
-               directory ``/etc/core/local.conf``, or in collection
-               ``core4.sys.config``. The first existing config provider
-               wins and local configuration processing stops.
-            #. OS environment variables following the naming convention
-               ``CORE4_[SECTION]__[OPTION]`` (watch the double
-               underscore between section and option) are applied as the
-               final step to load core4 configuration.
-
-            Raises FileNotFoundError if an expected configuration file
-            has not been found.
-
-            :return: configparser.ConfigParser object
+        :return: :class:`~configparser.ConfigParser` object
         """
         if self._config is None:
             # extra_config only drives the caching
@@ -171,8 +186,8 @@ class CoreConfig:
     @property
     def path(self):
         """
-        This method triggers lazy load of ``.config`` and returns the
-        processed local filenames.
+        Returns the processed local filenames. This attribute triggers
+        lazy load of ``.config`` if not done, yet.
 
         :return: list of file locations
         """
@@ -182,16 +197,11 @@ class CoreConfig:
     def __getattr__(self, item):
         """
         Delegates all methods and attributes to
-        configparser.ConfigParser object at self.config.
+        :class:`configparser.ConfigParser` object
 
         :param item: requested
-        :return: value, raises AttributeError if not found
+        :return: value, raises ``AttributeError`` if not found
         """
-
-        # wrap methods has_section (1), options (1), get (2: section,
-        #   option), dito getint, getfloat, getboolean, has_option
-        # forward methods: defaults, sections
-
         if item in self._WRAP:
             def section_wrapper(method):
                 def config_wrapper(option, section=None, **kwargs):
@@ -199,7 +209,6 @@ class CoreConfig:
                                   **kwargs)
 
                 return config_wrapper
-
             return section_wrapper(getattr(self.config, item))
 
         if item in self._FORWARD:
@@ -215,23 +224,22 @@ class CoreConfig:
 
     def get_datetime(self, option, *args, **kwargs):
         """
-        Parses the option into a ``datetime`` object using
-        dateutil.parser. With this datetime parser we are able to "read"
-        the following example dates:
+        Parses the option into a :class:`~datetime.datetime` object using
+        :mod:`dateutil.parser`. With this parser we are able to "read" the
+        following example dates::
 
-        * 2018-01-28
-        * 2018-01-32
-        * 2018 01 28 3:59
-        * 2018-05-08T13:50:33
-        * 20180128
-        * 20180128111213
-        * 2018.01.28 3:59
-        * 2018/01/28 3:59
+            2018-01-28
+            2018-01-32
+            2018 01 28 3:59
+            2018-05-08T13:50:33
+            20180128
+            20180128111213
+            2018.01.28 3:59
+            2018/01/28 3:59
 
         :param option: string representing the option
-        :return: datetime object
+        :return: :class:`datetime.datetime` object
         """
-
         value = self.get(option, *args, **kwargs)
         dt = dateutil.parser.parse(value, yearfirst=True)
         return dt
@@ -254,41 +262,43 @@ class CoreConfig:
 
     def get_collection(self, option, section=None):
         """
-        parses an option into a CoreConnection object. The following
-        option string format facilitates cross-database access
-        patterns::
+        parses an option into a :class:`.CoreCollection` object. The following
+        option string format facilitates cross-database access patterns::
 
-            [scheme://][username][:password]@[netloc]/[database]/(collection)
+            [scheme://][username][:password]@[netloc]/[database]/[collection]
 
-        The only mandatory part is the collection. The database name
-        defaults to the scheme's default database option
-        (``mongo_database``, ``postgres_database``). The location and
-        optional authentication data  default to the scheme's default
-        url option (``mongo_url``, ``postgres_url``). Valid schemes
-        are ``mongodb://`` and ``postgres:``.
+        The only mandatory part is the collection. The database name defaults to
+        the scheme's default database option (``mongo_database``). The location
+        and optional authentication data default to the scheme's default
+        url option (``mongo_url``). Supported scheme is ``mongodb://``.
 
         This mechanic supports the following connection string examples::
 
-        * ``mongodb://user:pass@localhost:27027/dbname/collname`` -
-          fully qualified connection with location, database, collection
-        * ``mongodb://user:pass@localhost:27027/collname`` - default
-          database with given scheme if exists, ``mongo_database``
-          config option in this concrete example
-        * ``mongodb://user:pass@/dbname/collname`` and
-          ``mongodb://user:pass@/collname`` - with default ``mongo_url``
-           using the passed authentication (``user:pass``) and
-           ``mongo_database`` in the second example
-        * ``postgres:///table`` - use ``postgres_url`` including
-          its authentication data, and ``postgres_database`` to access
-          ``table``
-        * ``mongodb://collname`` - use default ``mongo_url``, including
-          authentication, and ``mongo_database`` to access ``collname``
-        * ``postgres://database/table`` - use default ``postgres_url``,
-          including authentication to access ``table`` in ``database``.
+            # fully qualified connection with location, database, collection
 
-        Raises ValueError if the option is malformed.
+            mongodb://user:pass@localhost:27027/dbname/collname
 
-        :return: CoreConnection object
+            # default database with given scheme if exists, mongo_database
+            # config option in this concrete example
+
+            mongodb://user:pass@localhost:27027/collname
+
+            # with default mongo_url using the passed authentication (user:pass)
+
+            mongodb://user:pass@/dbname/collname
+
+            # with default mongo_url, authentication and mongo_database
+
+            mongodb://user:pass@/collname
+
+            # use default mongo_url, including authentication, and
+            # mongo_database to access collname
+
+            mongodb://collname
+
+        Raises ``ValueError`` if the option is malformed.
+
+        :return: :class:`.CoreCollection` object
         """
         conn = self.config.get(section or self.primary, option)
         if not conn:
@@ -325,4 +335,4 @@ class CoreConfig:
         else:
             opts["database"] = default_database
             opts["collection"] = _db
-        return core4.config.collection.CoreCollection(**opts)
+        return core4.base.collection.CoreCollection(**opts)
