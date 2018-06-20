@@ -144,7 +144,7 @@ class CoreConfig:
                 return self.__class__._cache[cache_item]
             kwargs = dict(allow_no_value=True)
             if self._extended:
-                kwargs["interpolation"] = configparser.ExtendedInterpolation()
+                kwargs["interpolation"] = configparser.ExtendedInterpolation()  # pragma: no cover
             self._config = configparser.ConfigParser(**kwargs)
             # step #1: core configuration
             self._read_file(self.default_config)

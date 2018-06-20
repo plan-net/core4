@@ -30,7 +30,7 @@ class TestSystemYaml(TestConfig):
 
 
 class TestUserYaml(TestSystemConfig):
-    system_config = (tests.util.asset('configparser'), "user2")
+    user_config = (tests.util.asset('configparser'), "user2")
 
 
 class TestConfigParser(unittest.TestCase):
@@ -375,7 +375,6 @@ class TestConfigParser(unittest.TestCase):
         )
         self.assertEqual(v.info_url, "core3@localhost:27017/db2/c3")
 
-
     def test_yaml(self):
         config = TestUserConfig(
             config_file=tests.util.asset("configparser/test.yaml"))
@@ -386,8 +385,15 @@ class TestConfigParser(unittest.TestCase):
         coll = config.get_collection("o1", "s1")
         self.assertEqual("core4dev", coll.database)
 
-    # def test_fail(self):
-    #     self.assertTrue(False)
+    def test_invalid_extension(self):
+        config = TestUserConfig(
+            config_file=tests.util.asset("configparser/test.invalid"))
+        self.assertRaises(KeyError, lambda: config.path)
+
+    def test_user_yaml(self):
+        config = TestUserYaml('format')
+        self.assertEqual("2018-01-28", config.get('test_date1'))
+        v = config.get_datetime("test_date1")
 
 
 

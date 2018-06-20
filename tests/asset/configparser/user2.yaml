@@ -9,7 +9,7 @@ bitbucket.org:
 
 format:
   test_date1: 2018-01-28
-  test_date2: 2018-01-32
+  test_date2: "2018-01-32"
   test_date3: 2018 01 28 3:59
   test_date4: 2018-05-08T13:50:33
   test_date5: 20180128
