@@ -1,0 +1,10 @@
+DEFAULT:
+  mongo_url:
+  mongo_database: mongo in system
+
+kernel:
+  sys.conf:
+
+bitbucket.org:
+  User: mb
+

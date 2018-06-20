@@ -1,0 +1,41 @@
+DEFAULT:
+  mongo_database: mongo in user
+
+kernel:
+  sys.conf:
+
+bitbucket.org:
+  User: mb
+
+format:
+  test_date1: 2018-01-28
+  test_date2: 2018-01-32
+  test_date3: 2018 01 28 3:59
+  test_date4: 2018-05-08T13:50:33
+  test_date5: 20180128
+  test_date6: 20180128111213
+  test_date7: 2018.01.28 3:59
+  test_date8: 2018/01/28 3:59
+
+  test_time1: 3:59
+
+  test_regex1: .*intelli.*
+  test_regex2: /.*intelli.*/i
+  test_regex3: /bla ((bli.*)/i
+
+  mongo_url: mongodb://core3:654321@localhost:27017
+  mongo_database: db2
+
+  test_conn1: mongodb://localhost:27017/db/c/d/e
+  test_conn2: mongodb://admin:hans@localhost:27017/coll
+  test_conn3: mongodb://localhost:27017 # error
+  test_conn4: db1/c1
+  test_conn5: mongodb://admin:hans@/db3/c1
+  test_conn6: c3
+  test_conn7: mongodb://core:654321@localhost:27017/core4test/test/collection
+
+kernel:
+  sys.conf:
+
+connet:
+  test_conn1: mongodb://core:654321@localhost:27017/core4test/collection

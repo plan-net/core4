@@ -13,16 +13,24 @@ import tests.util
 
 
 class TestConfig(core4.config.CoreConfig):
-    user_config = tests.util.asset('__NO_FILE__', exists=False)
-    system_config = tests.util.asset('__NO_FILE__', exists=False)
+    user_config = (tests.util.asset('configparser', exists=False), "__NO_FILE__")
+    system_config = (tests.util.asset('configparser', exists=False), "__NO_FILE__")
 
 
 class TestSystemConfig(TestConfig):
-    system_config = tests.util.asset('configparser/system.conf')
+    system_config = (tests.util.asset('configparser'), "system")
 
 
 class TestUserConfig(TestSystemConfig):
-    user_config = tests.util.asset('configparser/user.conf')
+    system_config = (tests.util.asset('configparser'), "user")
+
+
+class TestSystemYaml(TestConfig):
+    system_config = (tests.util.asset('configparser'), "system2")
+
+
+class TestUserYaml(TestSystemConfig):
+    system_config = (tests.util.asset('configparser'), "user2")
 
 
 class TestConfigParser(unittest.TestCase):
@@ -61,7 +69,7 @@ class TestConfigParser(unittest.TestCase):
         config = TestConfig(config_file=tests.util.asset(
             'configparser/simple.conf'))
         self.assertEqual(len(config.path), 2)
-        self.assertEqual(os.path.basename(config.path[0]), 'core.conf')
+        self.assertEqual(os.path.basename(config.path[0]), 'core.yaml')
         self.assertEqual(os.path.basename(config.path[1]), 'simple.conf')
         self.assertEqual('mongodb://core:654321@localhost:27017',
                          config.get('mongo_url'))
@@ -314,8 +322,63 @@ class TestConfigParser(unittest.TestCase):
         config = TestUserConfig("nonexist")
         self.assertFalse(config.has_section())
 
+    def test_yaml_blending(self):
+        # fixed system config
+        config = TestSystemYaml()
+        self.assertEqual('mongo in system', config.get('mongo_database'))
+        self.assertEqual('mb', config.get('User', section='bitbucket.org'))
+        self.assertFalse(config.has_option('User1'))
+        # fixed system config and extra config
+        config = TestSystemYaml(
+            extra_config=tests.util.asset('configparser/simple2.yaml'))
+        self.assertEqual('mongo in system', config.get('mongo_database'))
+        self.assertEqual('mb', config.get('User', section='bitbucket.org'))
+        self.assertEqual('mr', config.get('User1', section='bitbucket.org'))
+
+    def test_yaml_connection(self):
+        config = TestUserConfig('format')
+        v = config.get_collection('test_conn1')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='None', database='db', collection='c.d.e')",
+        )
+
+        v = config.get_collection('test_conn2')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='admin', database='db2', collection='coll')",
+        )
+
+        self.assertRaises(ValueError, config.get_collection, 'test_conn3')
+
+        v = config.get_collection('test_conn4')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='core3', database='db1', collection='c1')",
+        )
+
+        v = config.get_collection('test_conn5')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='admin', database='db3', collection='c1')",
+        )
+
+        v = config.get_collection('test_conn6')
+        self.assertEqual(
+            str(v),
+            "CoreConnection(scheme='mongodb', hostname='localhost:27017', "
+            "username='core3', database='db2', collection='c3')",
+        )
+        self.assertEqual(v.info_url, "core3@localhost:27017/db2/c3")
+
+
     # def test_fail(self):
     #     self.assertTrue(False)
+
 
 
 if __name__ == '__main__':

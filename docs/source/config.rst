@@ -9,15 +9,15 @@ configuration principles
 ------------------------
 
 core4 configuration is considered a key feature of the framework. System
-configuration of all shape are the bridge between development and
+configuration of various kind are the bridge between development and
 operations activities. The :mod:`core4.config` package primary concerns are:
 
 #. To keep sensitive data safe and keep naive staff and smart hackers out.
 #. To make the life of system administrators easy. The config system supports
-   various configuration sources, e.g. a ``local.conf`` file , a central mongodb
-   ``sys.conf`` collection, user configuration files, default values, OS
-   environment variables as well as plugin specific config files. Administrators
-   choose their weapons.
+   various configuration sources, e.g. a ``local.conf`` or ``local.yaml`` file,
+   a central mongodb ``sys.conf`` collection, user configuration files, default
+   values, OS environment variables as well as account specific config files.
+   Administrators choose their weapons.
 #. To make the life of data scientists and developers easy. The config system
    supports cross-database application development, local and remote sources,
    and a hierarchical connection configuration mechanic which speed up the most
@@ -29,7 +29,7 @@ sources of configuration
 
 There are six places where core4 is looking for configuration sections
 and their options. Environment variables prefixed with ``CORE4_OPTION_``
-take precedence over the following core4 configuration source:
+take precedence over the following core4 configuration sources:
 
 #. the default configuration in ``config/conf.yaml``
 #. the plugin configuration for plugin specific settings in
@@ -51,10 +51,10 @@ This boils down into the following tactic:
 * A user-specific configuration file located at ``~/core4/local.yaml`` takes
   precedence over a system-specific configuration file located at
   ``/etc/core4/local.yaml``.
-* If ``sys.conf`` is defined in section ``[kernel]`` then a central MongoDB
-  collection is merged.
+* If ``sys.conf`` is defined in section ``[kernel]`` then all options and values
+  of a MongoDB collection is merged.
 * Finally the user always has the chance to enforce individual
-  configuration option values with environment variables of the operating
+  configuration options and values with environment variables of the operating
   system.
 
 The next section explains the structure of OS environment configuration options
@@ -69,6 +69,7 @@ standard library. It supports the `INI file structure`_ as well as a YAML file
 structure depending on the file extension ``.ini``, ``.conf``, ``.yml`` and
 ``.yaml``.
 
+Our preferred configuration format is yaml.
 
 environment options and values
 ------------------------------

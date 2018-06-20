@@ -3,6 +3,7 @@
 import configparser
 import os
 import urllib.parse
+import oyaml
 
 import dateutil.parser
 import pkg_resources
@@ -13,9 +14,22 @@ from core4.base.collection import DEFAULT_SCHEME, SCHEME
 
 # config locations, see https://pypi.org/project/appdirs/1.4.0/
 EXTENDED_INTERPOLATION = False
-LOCAL_USER_CONFIG = os.path.expanduser("core4/local.conf")
-DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core.conf")
-SYSTEM_CONFIG = "/etc/core4"
+DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core.yaml")
+LOCAL_USER_BASENAME = (os.path.expanduser("core4"), "local")
+SYSTEM_BASENAME = ("/etc/core4", "local")
+CONFIG_EXTENSION = {
+    (".ini", ".conf"): "ini",
+    (".yaml", ".yml"): "yaml"
+}
+
+
+def find_config_file(dir, basename):
+    for (extlist, ty) in CONFIG_EXTENSION.items():
+        for e in extlist:
+            fn = os.path.join(dir, basename + e)
+            if os.path.exists(fn):
+                return (fn, ty)
+    return None
 
 
 class CoreConfig:
@@ -57,8 +71,8 @@ class CoreConfig:
     # special implement with .options(), .has_section()
 
     default_config = DEFAULT_CONFIG
-    user_config = LOCAL_USER_CONFIG
-    system_config = SYSTEM_CONFIG
+    user_config = LOCAL_USER_BASENAME
+    system_config = SYSTEM_BASENAME
 
     _cache = {}
     _db_cache = None
@@ -122,12 +136,10 @@ class CoreConfig:
             cache_item = str(self.extra_config)
             if cache_item in self.__class__._cache:
                 return self.__class__._cache[cache_item]
+            kwargs = dict(allow_no_value=True)
             if self._extended:
-                # todo: not tested, yet
-                self._config = configparser.ConfigParser(
-                    interpolation=configparser.ExtendedInterpolation())
-            else:
-                self._config = configparser.ConfigParser()
+                kwargs["interpolation"] = configparser.ExtendedInterpolation()
+            self._config = configparser.ConfigParser(**kwargs)
             # step #1: core configuration
             self._read_file(self.default_config)
             # step #2: extra configuration
@@ -139,12 +151,16 @@ class CoreConfig:
             elif self.env_config:
                 # by OS environment variable CORE_CONFIG
                 self._read_file(self.env_config)
-            elif os.path.exists(self.user_config):
-                # in user's home directory ~/
-                self._read_file(self.user_config)
-            elif os.path.exists(self.system_config):
-                # in system configuration directory /etc
-                self._read_file(self.system_config)
+            else:
+                user_config = find_config_file(*self.user_config)
+                if user_config:
+                    # in user's home directory ~/
+                    self._read_file(user_config[0])
+                else:
+                    system_config = find_config_file(*self.system_config)
+                    if system_config:
+                        # in system configuration directory /etc
+                        self._read_file(system_config[0])
             # in core4 system collection sys.config
             self._read_db()
             # post process single OS environment variables
@@ -154,7 +170,16 @@ class CoreConfig:
 
     def _read_file(self, filename):
         if os.path.exists(filename):
-            self._config.read(filename)
+            ext = os.path.splitext(filename)[1]
+            found = [j for i, j in CONFIG_EXTENSION.items() if ext in i]
+            if not found:
+                raise KeyError("unknown file type of {}".format(filename))
+            if found[0] == "yaml":
+                with open(filename, 'r', encoding='utf-8') as stream:
+                    data = oyaml.load(stream)
+                    self._config.read_dict(data)
+            else:
+                self._config.read(filename)
             self._path.append(filename)
         else:
             raise FileNotFoundError(filename)
