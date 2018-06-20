@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+This module implements CoreCollection, featuring database access.
+"""
+
 from core4.base.connector.mongo import connect as mongo_connect
 
 DEFAULT_SCHEME = 'mongodb'
@@ -44,6 +48,13 @@ class CoreCollection:
 
     @property
     def connection(self):
+        """
+        Database connection factory, featuring the following protocols:
+
+        #. MongoDB
+
+        :return: database connection
+        """
         if self._connection is None:
             connector = SCHEME[self.scheme]['connector']
             self._connection = connector(self)
@@ -51,6 +62,12 @@ class CoreCollection:
 
     @property
     def info_url(self):
+        """
+        human-readable connection string hiding sensitive data, e.g.
+        password, from inquisitive eyes.
+
+        :return: connection URL information (str)
+        """
         loc = ""
         if self.username:
             loc += self.username + "@"
@@ -62,4 +79,7 @@ class CoreCollection:
         return loc
 
     def __getattr__(self, item):
+        """
+        Delegates all methods and attributes to the database object.
+        """
         return getattr(self.connection[self.database][self.collection], item)

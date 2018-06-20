@@ -10,10 +10,7 @@ import re
 REGEX_MODIFIER = {
     u'i': re.I,
     u'm': re.M,
-    u's': re.S,
-    # u'l': re.L,
-    # u'x': re.X,
-    # u'u': re.U
+    u's': re.S
 }
 
 

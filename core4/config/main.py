@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 
+"""
+This module implements CoreConfig class and a .find_config() helper
+method do support YAML (.yml, .yaml) and windows-like INI (.ini, .conf)
+files.
+"""
+
 import configparser
 import os
 import urllib.parse
@@ -242,9 +248,17 @@ class CoreConfig:
         raise AttributeError
 
     def options(self, section=None):
+        """
+        :param section: defaults to primary
+        :return: list of option names for the given section name
+        """
         return self.config.options(section or self.primary)
 
     def has_section(self, section=None):
+        """
+        :param section: defaults to primary
+        :return: True if the section is present
+        """
         return self.config.has_section(section or self.primary)
 
     def get_datetime(self, option, *args, **kwargs):
