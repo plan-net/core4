@@ -376,6 +376,16 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual(v.info_url, "core3@localhost:27017/db2/c3")
 
 
+    def test_yaml(self):
+        config = TestUserConfig(
+            config_file=tests.util.asset("configparser/test.yaml"))
+        self.assertTrue("s1" in config.sections())
+        self.assertEqual("mongodb://localhost:27017", config.get("mongo_url"))
+        self.assertEqual("mongodb://localhost:27017",
+                         config.get("mongo_url", "DEFAULT"))
+        coll = config.get_collection("o1", "s1")
+        self.assertEqual("core4dev", coll.database)
+
     # def test_fail(self):
     #     self.assertTrue(False)
 

@@ -1,0 +1,4 @@
+
+s1:
+  mongo_url: mongodb://core:654321@localhost:27017
+  o1: hello.world

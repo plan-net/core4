@@ -11,6 +11,7 @@ https://github.com/cztomczak/pycef/blob/master/unittests/_runner.py for
 a similar approach.
 """
 
+import argparse
 import collections
 import datetime
 import io
@@ -22,13 +23,20 @@ import sys
 import tempfile
 import time
 from contextlib import contextmanager
+from subprocess import PIPE
 
 Result = collections.namedtuple('Result', 'package tests runtime exit_code '
                                           'output')
 PROGRESS = itertools.cycle('|/━\\')
 HEAD_LINE = "  {:40s} {:16s} {:5s}"
 REPORT_LINE = "  {:40s} {:16s} {:5d}"
-TOTAL_LINE = "  {:>40s} {:16s} {:5d}\n"
+TOTAL_LINE = "  {:>40s} {:16s} {:5d}"
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "-c", "--coverage", help="run test coverage",
+    action="store_true")
+args = parser.parse_args()
 
 
 class Colors:
@@ -74,7 +82,11 @@ def istty():
 
 def run(logfile, pkg):
     t0 = datetime.datetime.now()
-    cmd = ["python", "-m", "unittest", "-v", "-f", "tests." + pkg]
+    if args.coverage:
+        cmd = ["coverage", "run", "--append", "--source", "core4", "-m",
+               "unittest", "-v", "-f", "tests." + pkg]
+    else:
+        cmd = ["python", "-m", "unittest", "-v", "-f", "tests." + pkg]
     fmt = " " + pkg + (53 - len(pkg)) * " "
     output = ""
     with io.open(logfile, 'w', encoding='utf-8') as writer, io.open(
@@ -113,7 +125,16 @@ def run(logfile, pkg):
 def main():
     if istty():
         sys.stdout.write("\033[?25l")
-    headline("core4 isolated regression tests")
+
+    if args.coverage:
+        headline("core4 test coverage")
+        cmd = ["coverage", "erase"]
+        pre_proc = subprocess.Popen(cmd)
+        pre_proc.wait()
+        if pre_proc.returncode != 0:
+            raise SystemExit(pre_proc.returncode)
+    else:
+        headline("core4 isolated regression tests")
     logfile = tempfile.mktemp()
     result = []
 
@@ -141,14 +162,27 @@ def main():
     tests = sum([r.tests for r in result])
     print(TOTAL_LINE.format(
         'total', str(datetime.timedelta(seconds=runtime)), tests))
-    if istty():
-        sys.stdout.write("\033[?25h")
     os.unlink(logfile)
+
     if ret and ret.exit_code:
         with warn():
             print("tests FAIL ({})".format(ret.package))
         raise SystemExit(ret.exit_code)
-    print("tests SUCCEED")
+
+    if args.coverage:
+        cmd = ["coverage", "report", "-m"]
+        post_proc = subprocess.Popen(cmd, stdout=PIPE)
+        post_proc.wait()
+        if post_proc.returncode != 0:
+            raise SystemExit(post_proc.returncode)
+        headline("test coverage report")
+        print("  ", end="")
+        output = post_proc.stdout.read().decode().strip()
+        print("\n  ".join(output.split("\n")))
+
+    print("\ntests SUCCEED")
+    if istty():
+        sys.stdout.write("\033[?25h")
 
 
 if __name__ == '__main__':
