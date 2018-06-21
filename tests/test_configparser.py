@@ -74,7 +74,8 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual('mongodb://core:654321@localhost:27017',
                          config.get('mongo_url'))
         self.assertEqual('test_database', config.get('mongo_database'))
-        self.assertEqual(config.sections(), ['kernel', 'bitbucket.org',
+        self.assertEqual(config.sections(), ['kernel', 'logging',
+                                             'bitbucket.org',
                                              'topsecret.server.com'])
         self.assertTrue(config.has_option('mongo_url'))
         self.assertFalse(config.has_option('bla_bla'))
@@ -394,7 +395,6 @@ class TestConfigParser(unittest.TestCase):
         config = TestUserYaml('format')
         self.assertEqual("2018-01-28", config.get('test_date1'))
         v = config.get_datetime("test_date1")
-
 
 
 if __name__ == '__main__':

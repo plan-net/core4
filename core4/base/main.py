@@ -47,10 +47,6 @@ class CoreBase:
         self.config = core4.config.CoreConfig(self.section, **kwargs)
         # attach logging
         self.logger_name = self.qual_name()
-        if not self.logger_name.startswith(core4.logger.CORE4_PREFIX + "."):
-            self.logger_name = ".".join([core4.logger.CORE4_PREFIX,
-                                         core4.logger.ACCOUNT_PREFIX,
-                                         self.qual_name()])
         self.logger = logging.getLogger(self.logger_name)
         nh = logging.NullHandler()
         self.logger.addHandler(nh)
