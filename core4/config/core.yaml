@@ -6,3 +6,6 @@ DEFAULT:
 kernel:
   sys.conf:
 
+logging:
+  console_log_level: INFO
+  console_log_format: '%%(asctime)s - %%(levelname)-8s - %%(message)s'

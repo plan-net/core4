@@ -81,7 +81,7 @@ class CoreConfig:
     system_config = SYSTEM_BASENAME
 
     _cache = {}
-    _db_cache = None
+    _db_conf = None
 
     def __init__(
             self, section="DEFAULT", extra_config=None, config_file=None,
@@ -245,7 +245,7 @@ class CoreConfig:
         if item in self._FORWARD:
             return getattr(self.config, item)
 
-        raise AttributeError
+        raise AttributeError(item)
 
     def options(self, section=None):
         """

@@ -12,15 +12,20 @@ import core4.config
 import core4.logger
 
 
+CORE4 = "core4"
+PLUGIN = ["core4", "account"]
+
+
 class CoreBase:
     """
-    This is the base class to all core4 classes. CoreBase ships with
+    This is the base class to all core4 classes. :class:`CoreBase` ships with
 
-    * access to configuration sections and options
-      * account based extra configuration
+    * access to configuration sections and options including account based extra
+      configuration
     * standard logging batteries included
     * a distinct qual_name based on module path and class name
-    * a unique object identifier, i.e. job, worker or request id
+    * a unique object identifier, i.e. the job id, the request id or the name of
+      the worker
     """
     account = None
     section = None
@@ -32,9 +37,13 @@ class CoreBase:
         module = sys.modules.get(self.account)
         kwargs = {}
         if module:
-            extra_dir = os.path.dirname(module.__file__)
-            extra_conf = os.path.join(extra_dir, self.account + '.yaml')
-            kwargs["extra_config"] = core4.config.find_config(extra_conf)
+            if hasattr(module, "__project__"):
+                if module.__project__ == CORE4:
+                    extra_conf = core4.config.main.find_config_file(
+                        os.path.dirname(module.__file__),
+                        self.account)
+                    if extra_conf:
+                        kwargs["extra_config"] = extra_conf[0]
         self.config = core4.config.CoreConfig(self.section, **kwargs)
         # attach logging
         self.logger_name = self.qual_name()
@@ -55,6 +64,9 @@ class CoreBase:
         :return: distinct qual_name, the fully qualified module and
                  class name
         """
+        plugin = cls.__module__.split('.')[0]
+        if plugin != CORE4 and not short:
+            return '.'.join(PLUGIN + [cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
 
     @property
