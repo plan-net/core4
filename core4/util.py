@@ -6,6 +6,11 @@ core4 packages and modules.
 """
 
 import re
+import socket
+import os
+from flask_login import current_user
+import getpass
+
 
 REGEX_MODIFIER = {
     u'i': re.I,
@@ -40,3 +45,21 @@ def parse_regex(regex):
         raise re.error(
             "invalid regular expression or option [{}]:\n{}".format(
                 regex, exc))
+
+
+def get_hostname():
+    """
+    :return: hostname
+    """
+    return socket.gethostname()
+
+
+def get_username():
+    """
+    :return: current login's user name
+    """
+    if 'SUDO_USER' in os.environ:
+        return os.environ['SUDO_USER']
+    if current_user and hasattr(current_user, 'username'):
+        return current_user.username
+    return getpass.getuser()

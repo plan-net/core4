@@ -22,6 +22,8 @@ class TestLogging(unittest.TestCase):
         if os.path.exists("test.log"):
             os.unlink("test.log")
         core4.config.CoreConfig.purge_cache()
+        mongo = tests.util.mongo_connect()
+        mongo["sys.log"].delete_many({})
 
     def setUp(self):
         if "CORE4_OPTION_logging__config" in os.environ:
@@ -59,6 +61,21 @@ class TestLogging(unittest.TestCase):
 
         a = A()
         self.assertRaises(core4.error.Core4SetupError, a.setup_logging)
+
+    def test_mongo(self):
+
+        class A(CoreBase, CoreLoggerMixin):
+            pass
+
+        a = A()
+        a.setup_logging()
+        a.logger.info("hello world")
+        a.logger.warning("warning")
+        a.logger.debug("hidden debug message")
+
+        mongo = tests.util.mongo_connect()
+        self.assertEqual(2, mongo.sys.log.count())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,6 +10,7 @@ import sys
 
 import core4.config
 import core4.logger
+import core4.util
 
 
 CORE4 = "core4"
@@ -47,9 +48,18 @@ class CoreBase:
         self.config = core4.config.CoreConfig(self.section, **kwargs)
         # attach logging
         self.logger_name = self.qual_name()
-        self.logger = logging.getLogger(self.logger_name)
+        logger = logging.getLogger(self.logger_name)
         nh = logging.NullHandler()
-        self.logger.addHandler(nh)
+        logger.addHandler(nh)
+        self.logger = core4.logger.CustomAdapter(logger, self._extra_log())
+
+    def _extra_log(self):
+        return {
+            "identifier": self.identifier,
+            "hostname": core4.util.get_hostname(),
+            "username": core4.util.get_username(),
+            "qual_name": self.qual_name(short=True)
+        }
 
     def __repr__(self):
         return "{}()".format(self.qual_name())
