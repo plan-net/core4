@@ -33,10 +33,6 @@ class CustomAdapter(logging.LoggerAdapter):
 # see https://fangpenlin.com/posts/2012/08/26/good-logging-practice-in-python/
 
 
-class UTCFormatter(logging.Formatter):
-    converter = time.gmtime
-
-
 class MongoLoggingHandler(logging.Handler):
     """
     This class implements mongo logging initialised with a
@@ -62,7 +58,11 @@ class MongoLoggingHandler(logging.Handler):
 
 class CoreLoggerMixin:
 
+    completed = False
+
     def setup_logging(self):
+        if self.completed:
+            return
         logger = logging.getLogger(CORE4_PREFIX)
         self._shutdown_logging(logger)
         logger.setLevel(logging.DEBUG)
@@ -70,6 +70,7 @@ class CoreLoggerMixin:
         self._setup_mongodb(logger)
         self._setup_extra_logging(logger)
         self.logger.debug("logging setup complete")
+        CoreLoggerMixin.completed = True
 
     def _shutdown_logging(self, logger):
         logger.handlers = []
@@ -81,7 +82,7 @@ class CoreLoggerMixin:
             if level:
                 handler = logging.StreamHandler()
                 handler.setLevel(getattr(logging, level))
-                formatter = UTCFormatter(log_format)
+                formatter = logging.Formatter(log_format)
                 handler.setFormatter(formatter)
                 logger.addHandler(handler)
                 self.logger.debug(
