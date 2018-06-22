@@ -5,12 +5,12 @@ core4.util provides various support and helper methods used by various
 core4 packages and modules.
 """
 
+import getpass
+import os
 import re
 import socket
-import os
-from flask_login import current_user
-import getpass
 
+from flask_login import current_user
 
 REGEX_MODIFIER = {
     u'i': re.I,

@@ -23,6 +23,7 @@ class MongoAdapter(logging.LoggerAdapter):
     This adapter passes all extra key/value pairs and creates an
     ``_id`` of type :class:`.ObjectId`.
     """
+
     def process(self, msg, kwargs):
         kwargs["extra"] = self.extra
         kwargs['extra']['_id'] = ObjectId()
@@ -77,7 +78,6 @@ class MongoLoggingHandler(logging.Handler):
 
 
 class CoreLoggerMixin:
-
     completed = False
 
     def setup_logging(self):
