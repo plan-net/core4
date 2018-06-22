@@ -51,7 +51,7 @@ class CoreBase:
         logger = logging.getLogger(self.logger_name)
         nh = logging.NullHandler()
         logger.addHandler(nh)
-        self.logger = core4.logger.CustomAdapter(logger, self._extra_log())
+        self.logger = core4.logger.MongoAdapter(logger, self._extra_log())
 
     def _extra_log(self):
         return {

@@ -9,6 +9,7 @@ important right here and provide links to the canonical documentation.
 .. toctree::
    base/index
    config
+   logger
    util
 
 

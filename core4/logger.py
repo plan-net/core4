@@ -1,28 +1,27 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import time
-import os
 import logging.config
-from core4.error import Core4SetupError
-from core4.config.main import DEFAULT_CONFIG
-import oyaml
-import datetime
-import core4.logger
+import os
 import time
+
+import datetime
+import oyaml
 from bson.objectid import ObjectId
 
+from core4.config.main import DEFAULT_CONFIG
+from core4.error import Core4SetupError
 
-CORE4_PREFIX = "core4"
-ACCOUNT_PREFIX = "account"
+CORE4_PREFIX = "core4"  # top logger "core4"
+ACCOUNT_PREFIX = "account"  # plugin logger beneath "core4.account"
 
-logging.Formatter.converter = time.gmtime
+logging.Formatter.converter = time.gmtime  # log in UTC
 
 
-class CustomAdapter(logging.LoggerAdapter):
+class MongoAdapter(logging.LoggerAdapter):
     """
-    This example adapter expects the passed in dict-like object to have a
-    'connid' key, whose value in brackets is prepended to the log message.
+    This adapter passes all extra key/value pairs and creates an
+    ``_id`` of type :class:`.ObjectId`.
     """
     def process(self, msg, kwargs):
         kwargs["extra"] = self.extra
@@ -30,21 +29,42 @@ class CustomAdapter(logging.LoggerAdapter):
         return msg, kwargs
 
 
-# see https://fangpenlin.com/posts/2012/08/26/good-logging-practice-in-python/
-
-
 class MongoLoggingHandler(logging.Handler):
     """
-    This class implements mongo logging initialised with a
-    :class:`core.main.CoreCollection` defined by settings as delivered by
-    :meth:`core.config.get_collection()` method.
+    This class implements mongo logging.
     """
 
     def __init__(self, connection):
+        """
+        Connects the logging handler with the passed MongoDB connection.
+
+        :param connection: :class:`pymongo.collection.Collection` object
+        """
         super(MongoLoggingHandler, self).__init__()
         self._collection = connection
 
     def handle(self, record):
+        """
+        Handles the logging record by translating it into a mongo database
+        document. The following attributes are saved for each
+        :class:`logging.LogRecord`.
+
+        * ``_id`` - the document id as created by
+          :class:`core4.logger.MongoAdapter`
+        * ``created`` - the logging datetime in UTC
+        * ``level`` - the log level as string (``DEBUG``, ``INFO``, ``WARNING``,
+          ``ERROR``, ``CRITICAL``)
+        * ``hostname`` - the name of the host sending the message
+        * ``user`` - the name of the user sending
+        * ``qual_name`` - the qualified name of the class as created by
+          :meth:`.CoreBase.qual_name`
+        * ``identifier`` - the core object identifier; this identifier qualifies
+          core workers with the worker name, core jobs with the worker and
+          job id and API requests with its request id
+        * ``message`` - the log message
+
+        :param record: the log record (:class:`logging.LogRecord`)
+        """
         ts = time.gmtime(record.created)
         doc = {}
         doc['created'] = datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
@@ -61,6 +81,10 @@ class CoreLoggerMixin:
     completed = False
 
     def setup_logging(self):
+        """
+        setup logging as specified in configuration. See configuration section
+        ``logging`` for further details.
+        """
         if self.completed:
             return
         logger = logging.getLogger(CORE4_PREFIX)
