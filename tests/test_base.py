@@ -9,7 +9,7 @@ import core4.logger
 os.environ["CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
 
 
-class TestRootBase(unittest.TestCase):
+class TestBase(unittest.TestCase):
 
     # def test_something(self):
     #     import time
@@ -48,7 +48,9 @@ class TestRootBase(unittest.TestCase):
             pass
 
         app = App()
-        app.start_logging()
+        app.setup_logging()
+        app.logger.info('hello world')
+        app.logger.debug('here are the details')
 
     def test_plugin_conf(self):
         import plugin.test

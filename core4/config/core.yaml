@@ -1,11 +1,21 @@
 
 DEFAULT:
-  mongo_url: mongodb://localhost:27017
-  mongo_database: core4dev
+  mongo_url: mongodb://localhost:27017  # default mongo connection
+  mongo_database: core4dev  # default core4 system mongo database
 
 kernel:
-  sys.conf:
+  sys.conf:  # configuration collection
+  sys.log: sys.log  # logging collection
 
 logging:
-  console_log_level: INFO
-  console_log_format: '%%(asctime)s - %%(levelname)-8s - %%(message)s'
+  stderr: INFO
+  stdout: 
+  format: "%%(asctime)s - %%(levelname)-8s: %%(message)s"
+  mongodb: DEBUG
+  memory:
+    capacity: 1000000  # log message stack
+    flush: ERROR  # if this level is logged, then flush memory
+    emit: DEBUG  # spit out all log messages with this level and above
+  config: ./logging.yaml  # extra yaml file for additional logging configuration
+
+  

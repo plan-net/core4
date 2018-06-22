@@ -6,17 +6,8 @@ method do support YAML (.yml, .yaml) and windows-like INI (.ini, .conf)
 files.
 """
 
-import configparser
-import os
-import urllib.parse
-import oyaml
-
-import dateutil.parser
 import pkg_resources
-
-import core4.base.collection
-import core4.util
-from core4.base.collection import DEFAULT_SCHEME, SCHEME
+import os
 
 # config locations, see https://pypi.org/project/appdirs/1.4.0/
 EXTENDED_INTERPOLATION = False
@@ -27,6 +18,17 @@ CONFIG_EXTENSION = {
     (".ini", ".conf"): "ini",
     (".yaml", ".yml"): "yaml"
 }
+
+
+import configparser
+import urllib.parse
+import oyaml
+
+import dateutil.parser
+
+import core4.base.collection
+import core4.util
+from core4.base.collection import DEFAULT_SCHEME, SCHEME
 
 
 def find_config_file(dir, basename):
@@ -375,3 +377,17 @@ class CoreConfig:
             opts["database"] = default_database
             opts["collection"] = _db
         return core4.base.collection.CoreCollection(**opts)
+
+    def as_dict(self):
+        """
+        Converts the configuration object into a dictionary.
+
+        The resulting dictionary has sections as keys which point to a dict of
+        the sections options as key => value pairs.
+        """
+        the_dict = {}
+        for section in self.config.sections():
+            the_dict[section] = {}
+            for key, val in self.config.items(section):
+                the_dict[section][key] = val
+        return the_dict

@@ -396,6 +396,10 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual("2018-01-28", config.get('test_date1'))
         v = config.get_datetime("test_date1")
 
+    def test_as_dict(self):
+        config = TestUserYaml('format')
+        self.assertEqual(type(config.as_dict()), dict)
+
 
 if __name__ == '__main__':
     unittest.main()
