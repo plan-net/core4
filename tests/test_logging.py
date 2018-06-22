@@ -24,6 +24,7 @@ class TestLogging(unittest.TestCase):
         core4.config.CoreConfig.purge_cache()
         mongo = tests.util.mongo_connect()
         mongo["sys.log"].delete_many({})
+        core4.logger.CoreLoggerMixin.completed = False
 
     def setUp(self):
         if "CORE4_OPTION_logging__config" in os.environ:
@@ -42,6 +43,7 @@ class TestLogging(unittest.TestCase):
         os.environ["CORE4_OPTION_logging__config"] = tests.util.asset(
             'logging', 'logging1.yaml')
         a.setup_logging()
+        a.setup_logging()
         a.logger.info("info level log message")
         a.logger.debug("debug level log message")
         a.logger.warning("warning level log message")
@@ -50,6 +52,9 @@ class TestLogging(unittest.TestCase):
         with open("test.log", "r") as f:
             body = f.read()
         self.assertEqual(7, len([s for s in body.split("\n") if s]))
+
+    def test_simple2(self):
+        self.test_simple()
 
     def test_logging_not_found(self):
 
