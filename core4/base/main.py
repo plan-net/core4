@@ -11,6 +11,7 @@ import re
 
 import core4.config.main
 import core4.util
+import core4.logger
 
 
 CORE4 = "core4"
@@ -56,7 +57,7 @@ class CoreBase:
         if "bind" in kwargs:
             self.identifier = kwargs["bind"].identifier
         self.config = self._open_config()
-        #self._open_logging()
+        self.logger = self._open_logging()
 
     def bind(self, obj):
         obj.identifier = self.identifier
@@ -95,7 +96,7 @@ class CoreBase:
         extra_conf = self.account_conf()
         if extra_conf and os.path.exists(extra_conf):
             kwargs["extra_config"] = extra_conf
-        return core4.config.CoreConfig(self.section, **kwargs)
+        return core4.config.CoreConfig(**kwargs)
 
     def account_conf(self):
         module = sys.modules.get(self.account)
@@ -113,9 +114,6 @@ class CoreBase:
         logger = logging.getLogger(self.logger_name)
         nh = logging.NullHandler()
         logger.addHandler(nh)
-        return core4.logger.CoreLoggingAdapter(logger, self._extra_log())
-
-    def _extra_log(self):
-        return self  # pass object reference into logging and enable lazy
-                     # property access
-
+        # pass object reference into logging and enable lazy property access
+        #   and late binding
+        return core4.logger.CoreLoggingAdapter(logger, self)

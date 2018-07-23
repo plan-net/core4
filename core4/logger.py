@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import logging
 import logging.config
-import os
 import time
-
-import datetime
-import oyaml
+import core4.util
 from bson.objectid import ObjectId
+import core4.error
 
-from core4.config import DEFAULT_CONFIG
-from core4.error import Core4SetupError
 
 CORE4_PREFIX = "core4"  # top logger "core4"
 ACCOUNT_PREFIX = "account"  # plugin logger beneath "core4.account"
@@ -25,8 +22,10 @@ class CoreLoggingAdapter(logging.LoggerAdapter):
     """
 
     def process(self, msg, kwargs):
-        kwargs["extra"] = self.extra
-        kwargs['extra']['_id'] = ObjectId()
+        kwargs["extra"] = {
+            "obj": self.extra,
+            "_id": ObjectId()
+        }
         return msg, kwargs
 
 
@@ -67,13 +66,22 @@ class MongoLoggingHandler(logging.Handler):
         :param record: the log record (:class:`logging.LogRecord`)
         """
         ts = time.gmtime(record.created)
-        doc = {}
-        doc['created'] = datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
-                                           ts.tm_hour, ts.tm_min, ts.tm_sec)
-        for attr in ["message", "username", "identifier", "hostname",
-                     "qual_name", "_id"]:
-            doc[attr] = record.__dict__.get(attr, None)
-        doc['level'] = record.levelname
+        doc = {
+            "created": datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
+                                         ts.tm_hour, ts.tm_min, ts.tm_sec),
+            "username": core4.util.get_username(),
+            "hostname": core4.util.get_hostname(),
+            "identifier": record.obj.identifier,
+            "qual_name": record.obj.qual_name(),
+            "_id": record._id,
+            "msg": record.msg,
+            "level": record.levelname
+        }
+        if record.exc_info or record.exc_text:
+            doc["exception"] = {
+                "info": repr(record.exc_info[1]),
+                "text": record.exc_text
+            }
         self._collection.insert_one(doc)
 
 
@@ -85,7 +93,7 @@ class CoreLoggerMixin:
         setup logging as specified in configuration. See configuration section
         ``logging`` for further details.
         """
-        if self.completed:
+        if CoreLoggerMixin.completed:
             return
         logger = logging.getLogger(CORE4_PREFIX)
         self._shutdown_logging(logger)
@@ -100,9 +108,9 @@ class CoreLoggerMixin:
         logger.handlers = []
 
     def _setup_console(self, logger):
-        log_format = self.config.get('format', 'logging')
+        log_format = self.config.logging.format
         for name in ("stdout", "stderr"):
-            level = self.config.get(name, "logging")
+            level = self.config.logging[name]
             if level:
                 handler = logging.StreamHandler()
                 handler.setLevel(getattr(logging, level))
@@ -113,24 +121,22 @@ class CoreLoggerMixin:
                     "{} logging setup complete, level {}".format(name, level))
 
     def _setup_mongodb(self, logger):
-        mongodb = self.config.get("mongodb", "logging")
+        mongodb = self.config.logging.mongodb
         if mongodb:
-            conn = self.config.get_collection('sys.log', 'kernel')
-            handler = MongoLoggingHandler(conn)
-            handler.setLevel(getattr(logging, mongodb))
-            logger.addHandler(handler)
-            self.logger.debug(
-                "mongodb logging setup complete, level {}".format(mongodb))
+            conn = self.config.kernel["sys.log"]
+            if conn:
+                handler = MongoLoggingHandler(conn)
+                handler.setLevel(getattr(logging, mongodb))
+                logger.addHandler(handler)
+                self.logger.debug(
+                    "mongodb logging setup complete, level {}".format(mongodb))
+            else:
+                raise core4.error.Core4SetupError(
+                    "config.logging.mongodb set, "
+                    "but config.kernel.sys.log is None")
 
     def _setup_extra_logging(self, logger):
-        config = self.config.get("config", "logging")
-        if config:
-            fullname = os.path.join(os.path.dirname(DEFAULT_CONFIG), config)
-            if not os.path.exists(fullname):
-                raise Core4SetupError("file {} not found".format(fullname))
-            with open(fullname, 'rt') as f:
-                config = oyaml.safe_load(f.read())
-            if config:
-                logging.config.dictConfig(config)
-                self.logger.debug(
-                    "extra logging setup complete from {}".format(fullname))
+        extra = self.config.logging.extra
+        if extra:
+            logging.config.dictConfig(extra)
+            self.logger.debug("extra logging setup complete from")

@@ -76,6 +76,7 @@ class TestBase(unittest.TestCase):
         self.assertTrue(t.account_conf().endswith("core4/plugin/plugin.py"))
         self.assertEqual(t.config.mongo_database, "core4test")
         self.assertEqual(repr(t), "plugin.test.Test()")
+        #print(t.config)
         test = eval(repr(t.config))
         self.assertEqual(test, t.config)
 

@@ -27,10 +27,9 @@ class CoreConfig(collections.MutableMapping):
     _db_conn = None
     _cache = {}
 
-    def __init__(self, section="DEFAULT", extra_config=None, config_file=None):
+    def __init__(self, extra_config=None, config_file=None):
         self._config_file = config_file
         self.extra_config = extra_config
-        self.section = section
         self.env_config = os.getenv("CORE4_CONFIG", None)
         self._config = None
         self._loaded = False
