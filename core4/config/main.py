@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import collections
 import os
 import pprint
-
+import collections
 import pkg_resources
 
 import core4.base.collection
 import core4.error
 import core4.util
-from core4.base.collection import SCHEME
+import core4.config.map
+import core4.config.tool
+
 
 CONFIG_EXTENSION = ".py"
 DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core"
@@ -17,79 +18,6 @@ DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core"
 USER_CONFIG = os.path.expanduser("core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
-
-
-class connect:
-
-    def __init__(self, conn_str):
-        self.conn_str = conn_str
-
-        """
-        hostname/database/collection
-        database/collection
-        collection
-        """
-
-    def render(self, config):
-
-        conn = self.conn_str
-        if conn.count("://") == 0:
-            raise core4.error.Core4ConfigurationError(
-                "malformed collection connection string [{}]".format(conn))
-
-        (protocol, *specs) = conn.split("://")
-        specs = specs[0]
-        opts = dict()
-        opts["scheme"] = protocol
-
-        default_url = config[SCHEME[opts["scheme"]]["url"]][len(protocol) + 3:]
-        default_database = config[SCHEME[opts["scheme"]]["database"]]
-
-        level = specs.count("/")
-        if level == 2:
-            (hostname, database, *collection) = specs.split("/")
-        elif level == 1:
-            (database, *collection) = specs.split("/")
-            hostname = default_url
-        elif level == 0:
-            collection = [specs]
-            database = default_database
-            hostname = default_url
-        elif level > 2:
-            raise core4.error.Core4ConfigurationError(
-                "malformed collection connection string [{}]".format(conn))
-
-        if hostname.count("@") > 0:
-            (auth, *address) = hostname.split("@")
-            (username, *password) = auth.split(":")
-            opts["username"] = username
-            opts["password"] = ":".join(password)
-            hostname = "@".join(address)
-
-        opts["hostname"] = hostname
-        opts["database"] = database
-        opts["collection"] = "/".join(collection)
-
-        return core4.base.collection.CoreCollection(**opts)
-
-
-class Map(dict):
-    """
-    a dictionary that supports dot notation
-    as well as dictionary access notation
-    usage: d = DotDict() or d = DotDict({'val1':'first'})
-    set attributes: d.val2 = 'second' or d['val2'] = 'second'
-    get attributes: d.val2 or d['val2']
-    """
-
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-
-    def __init__(self, dct):
-        for key, value in dct.items():
-            if isinstance(value, collections.MutableMapping):
-                value = Map(value)
-            self[key] = value
 
 
 class CoreConfig(collections.MutableMapping):
@@ -187,7 +115,7 @@ class CoreConfig(collections.MutableMapping):
         # recursively render and cleanse dict
         self._config = self._explode(self._config)
         # convert, cache and return
-        self._config = Map(self._config)
+        self._config = core4.config.map.Map(self._config)
         self._debug("added {} at [{}]", self.path, id(self._config))
         if self.__class__._cache is not None:
             self.__class__._cache[self.path] = self._config
@@ -222,7 +150,7 @@ class CoreConfig(collections.MutableMapping):
             if isinstance(v, dict):
                 self._debug("exploding [{}]", ".".join(np))
                 self._explode(v, np)
-            elif isinstance(v, connect):
+            elif isinstance(v, core4.config.tool.connect):
                 self._debug("connecting [{}]", ".".join(np))
                 dct[k] = v.render(dct)
             elif callable(v):
@@ -241,7 +169,6 @@ class CoreConfig(collections.MutableMapping):
             elif k == "trace":
                 raise core4.error.Core4ConfigurationError(
                     "reserved top-level key/section [{}]".format(k))
-
 
     def _read_file(self, filename, add_keys=False):
         if os.path.exists(filename):
