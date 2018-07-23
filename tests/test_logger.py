@@ -103,5 +103,6 @@ class TestBase(unittest.TestCase):
         self.assertEqual(2, len(data["errors"]))
         self.assertEqual(5, len(data["info"]))
 
+
 if __name__ == '__main__':
     unittest.main()
