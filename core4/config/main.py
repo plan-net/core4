@@ -1,393 +1,301 @@
 # -*- coding: utf-8 -*-
 
-"""
-This module implements CoreConfig class and a .find_config() helper
-method do support YAML (.yml, .yaml) and windows-like INI (.ini, .conf)
-files.
-"""
+import collections
+import os
+import pprint
 
 import pkg_resources
-import os
-
-# config locations, see https://pypi.org/project/appdirs/1.4.0/
-EXTENDED_INTERPOLATION = False
-DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core.yaml")
-LOCAL_USER_BASENAME = (os.path.expanduser("core4"), "local")
-SYSTEM_BASENAME = ("/etc/core4", "local")
-CONFIG_EXTENSION = {
-    (".ini", ".conf"): "ini",
-    (".yaml", ".yml"): "yaml"
-}
-
-
-import configparser
-import urllib.parse
-import oyaml
-
-import dateutil.parser
 
 import core4.base.collection
+import core4.error
 import core4.util
-from core4.base.collection import DEFAULT_SCHEME, SCHEME
+from core4.base.collection import SCHEME
+
+CONFIG_EXTENSION = ".py"
+DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core"
+                                                 + CONFIG_EXTENSION)
+USER_CONFIG = os.path.expanduser("core4/local" + CONFIG_EXTENSION)
+SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
+ENV_PREFIX = "CORE4_OPTION_"
 
 
-def find_config_file(dir, basename):
-    for (extlist, ty) in CONFIG_EXTENSION.items():
-        for e in extlist:
-            fn = os.path.join(dir, basename + e)
-            if os.path.exists(fn):
-                return (fn, ty)
-    return None
+class connect:
+
+    def __init__(self, conn_str):
+        self.conn_str = conn_str
+
+        """
+        hostname/database/collection
+        database/collection
+        collection
+        """
+
+    def render(self, config):
+
+        conn = self.conn_str
+        if conn.count("://") == 0:
+            raise core4.error.Core4ConfigurationError(
+                "malformed collection connection string [{}]".format(conn))
+
+        (protocol, *specs) = conn.split("://")
+        specs = specs[0]
+        opts = dict()
+        opts["scheme"] = protocol
+
+        default_url = config[SCHEME[opts["scheme"]]["url"]][len(protocol) + 3:]
+        default_database = config[SCHEME[opts["scheme"]]["database"]]
+
+        level = specs.count("/")
+        if level == 2:
+            (hostname, database, *collection) = specs.split("/")
+        elif level == 1:
+            (database, *collection) = specs.split("/")
+            hostname = default_url
+        elif level == 0:
+            collection = [specs]
+            database = default_database
+            hostname = default_url
+        elif level > 2:
+            raise core4.error.Core4ConfigurationError(
+                "malformed collection connection string [{}]".format(conn))
+
+        if hostname.count("@") > 0:
+            (auth, *address) = hostname.split("@")
+            (username, *password) = auth.split(":")
+            opts["username"] = username
+            opts["password"] = ":".join(password)
+            hostname = "@".join(address)
+
+        opts["hostname"] = hostname
+        opts["database"] = database
+        opts["collection"] = "/".join(collection)
+
+        return core4.base.collection.CoreCollection(**opts)
 
 
-class CoreConfig:
+class Map(dict):
     """
-    This class is the gateway into core4 configuration. It is implemented as a
-    proxy to :class:`configparser.ConfigParser` with a defined set of
-    configuration sources and a primary section.
-
-    The proxy object
-
-    #. forwards methods :meth:`~configparser.ConfigParser.defaults`,
-       :meth:`~configparser.ConfigParser.sections`,
-       :meth:`~configparser.ConfigParser.has_section` and
-       :meth:`~configparser.ConfigParser.options`
-    #. wraps methods :meth:`~configparser.ConfigParser.get`,
-       :meth:`~configparser.ConfigParser.getint`,
-       :meth:`~configparser.ConfigParser.getfloat`,
-       :meth:`~configparser.ConfigParser.getboolean`,
-       :meth:`~configparser.ConfigParser.has_option`
-       with the specified section or the :ref:`primary_section`
-    #. extends the standard parser with methods
-       :meth:`~.CoreConfig.get_datetime`, :meth:`~.CoreConfig.get_regex`, and
-       :meth:`~.CoreConfig.get_collection`
-    #. hides all other methods
-
-    By default the :class:`CoreConfig` object uses
-    :class:`~configparser.BasicInterpolation`. You can change this behavior to
-    :class:`~configparser.ExtendedInterpolation` with the ``extended``
-    parameter. This feature is considered experimental.
-
-    :class:`.CoreConfig` implements class-level caching of plugin based
-    configuration and mongo config collection. Purge the cache with the
-    class method :meth:`~.CoreConfig.purge_cache`.
+    a dictionary that supports dot notation
+    as well as dictionary access notation
+    usage: d = DotDict() or d = DotDict({'val1':'first'})
+    set attributes: d.val2 = 'second' or d['val2'] = 'second'
+    get attributes: d.val2 or d['val2']
     """
 
-    _WRAP = ["get", "getint", "getfloat", "getboolean", "has_option"]
-    _FORWARD = ["defaults", "sections"]
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
 
-    # special implement with .options(), .has_section()
+    def __init__(self, dct):
+        for key, value in dct.items():
+            if isinstance(value, collections.MutableMapping):
+                value = Map(value)
+            self[key] = value
 
+
+class CoreConfig(collections.MutableMapping):
     default_config = DEFAULT_CONFIG
-    user_config = LOCAL_USER_BASENAME
-    system_config = SYSTEM_BASENAME
-
+    user_config = USER_CONFIG
+    system_config = SYSTEM_CONFIG
+    _db_conn = None
     _cache = {}
-    _db_conf = None
 
-    def __init__(
-            self, section="DEFAULT", extra_config=None, config_file=None,
-            extended=EXTENDED_INTERPOLATION):
-        """
-        Creates the config object loaded from
-
-        #. core4's **default** configuration file (./core4/config/core.yaml)
-        #. an **extra** configuration file (defaults to None)
-        #. a **local** configuration file (by OS environment
-           variable ``CORE4_CONFIG``, or from the user's home
-           directory ``~/.core/local.yaml``, or from the system
-           directory ``/etc/core/local.yaml``, or from collection
-           ``core4.sys.config``. The first existing config provider
-           wins and local configuration processing stops.
-        #. OS environment variables following the naming convention
-           ``CORE4_[SECTION]__[OPTION]`` (watch the double
-           underscore between section and option) are applied as the
-           final step to load core4 configuration.
-
-        Raises FileNotFoundError if an expected configuration file
-        has not been found.
-
-        :param section: :ref:`primary_section`, defaults to ``DEFAULT``
-        :param extra_config: extra configuration file
-        :param config_file: forced configuration file; if defined skips the
-                            cascade of ``CORE4_CONFIG`` variable, the user's
-                            and the system`s configuration file
-        :param extended: uses :class:`configparser.ExtendedInterpolation`
-                         instead of the default
-                         :class:`configparser.BasicInterpolation`
-        """
+    def __init__(self, section="DEFAULT", extra_config=None, config_file=None):
         self._config_file = config_file
         self.extra_config = extra_config
-        self.primary = section
+        self.section = section
         self.env_config = os.getenv("CORE4_CONFIG", None)
-        self._extended = extended
         self._config = None
-        self._path = []
+        self._loaded = False
+        self.path = None
+        self._trace = []
 
-    @classmethod
-    def purge_cache(cls):
-        """
-        purges and class-level cache
-        """
-        cls._cache = {}
-        cls._db_conf = None
+    def _debug(self, str, *args, **kwargs):
+        msg = "{}: ".format(id(self)) + str.format(*args, **kwargs)
+        self._trace.append(msg)
 
     @property
-    def config(self):
-        """
-        provides lazy access to :class:`~configparser.ConfigParser`
+    def trace(self):
+        return "\n".join(self._trace)
 
-        :return: :class:`~configparser.ConfigParser` object
-        """
-        if self._config is None:
-            # extra_config only drives the caching
-            cache_item = str(self.extra_config)
-            if cache_item in self.__class__._cache:
-                return self.__class__._cache[cache_item]
-            kwargs = dict(allow_no_value=True)
-            if self._extended:
-                kwargs["interpolation"] = configparser.ExtendedInterpolation()  # pragma: no cover
-            self._config = configparser.ConfigParser(**kwargs)
-            # step #1: core configuration
-            self._read_file(self.default_config)
-            # step #2: extra configuration
-            if self.extra_config:
-                self._read_file(self.extra_config)
-            # step #3: local configuration
-            if self._config_file:
-                self._read_file(self._config_file)
-            elif self.env_config:
-                # by OS environment variable CORE_CONFIG
-                self._read_file(self.env_config)
+    def __getitem__(self, key):
+        self._load()
+        return self._config[key]
+
+    def __setitem__(self, key, value):
+        self._config[key] = value
+
+    def __delitem__(self, key):
+        del self._config[key]
+
+    def __iter__(self):
+        self._load()
+        return iter(self._config)
+
+    def __len__(self):
+        self._load()
+        return len(self._config)
+
+    def _load(self):
+        if self._loaded:
+            self._debug("retrieve [{}] from memory at [{}]", self.path,
+                        id(self._config))
+            return
+
+        self._config = {}
+        # collect configuration files
+        proc = []
+        # step #1: core configuration
+        proc.append((self.default_config, True))
+        # step #2: extra configuration
+        if self.extra_config and os.path.exists(self.extra_config):
+            proc.append((self.extra_config, True))
+        # step #3: enfoced local configuration
+        if self._config_file:
+            proc.append((self._config_file, False))
+        # by OS environment variable CORE_CONFIG
+        elif self.env_config:
+            proc.append((self.env_config, False))
+        else:
+            if self.user_config and os.path.exists(self.user_config):
+                # in user's home directory ~/
+                proc.append((self.user_config, False))
             else:
-                user_config = find_config_file(*self.user_config)
-                if user_config:
-                    # in user's home directory ~/
-                    self._read_file(user_config[0])
-                else:
-                    system_config = find_config_file(*self.system_config)
-                    if system_config:
-                        # in system configuration directory /etc
-                        self._read_file(system_config[0])
-            # in core4 system collection sys.config
-            self._read_db()
-            # post process single OS environment variables
-            self._read_environment()
-            self.__class__._cache[cache_item] = self._config
+                if self.system_config and os.path.exists(self.system_config):
+                    proc.append((self.system_config, False))
+
+        self._loaded = True
+
+        # retrieve from cache
+        self.path = tuple(p[0] for p in proc)
+        if self.__class__._cache is not None:
+            if self.path in self.__class__._cache:
+                self._config = self.__class__._cache[self.path]
+                self._debug("retrieve [{}] from cache", self.path)
+                return self._config
+
+        # load files
+        for path, add_key in proc:
+            self._debug("parsing [{}]", path)
+            self._read_file(path, add_keys=add_key)
+
+        # load from sys.config
+        self._read_db()
+        # post process single OS environment variables
+        self._read_env()
+        # cascade top-level keys/values into other sections
+        self._cascade()
+        # recursively render and cleanse dict
+        self._config = self._explode(self._config)
+        # convert, cache and return
+        self._config = Map(self._config)
+        self._debug("added {} at [{}]", self.path, id(self._config))
+        if self.__class__._cache is not None:
+            self.__class__._cache[self.path] = self._config
+
         return self._config
 
-    def _read_file(self, filename):
+    def __getattr__(self, item):
+        self._load()
+        return self._config[item]
+
+    def __repr__(self):
+        self._load()
+        return pprint.pformat(self._config)
+
+    def _cascade(self):
+        default = {}
+        for k, v in self._config.items():
+            if not isinstance(v, dict):
+                default[k] = v
+        for k, v in self._config.items():
+            if isinstance(v, dict):
+                self._debug("merging [{}]", k)
+                self._config[k] = core4.util.dict_merge(
+                    default, v)
+
+    def _explode(self, dct, parent=None):
+        if parent is None:
+            parent = []
+        dels = set()
+        for k, v in dct.items():
+            np = parent + [k]
+            if isinstance(v, dict):
+                self._debug("exploding [{}]", ".".join(np))
+                self._explode(v, np)
+            elif isinstance(v, connect):
+                self._debug("connecting [{}]", ".".join(np))
+                dct[k] = v.render(dct)
+            elif callable(v):
+                self._debug("removing [{}]", ".".join(np))
+                dels.add(k)
+        for k in dels:
+            del dct[k]
+        return dct
+
+    def _verify_key(self, dct):
+        for k in dct.keys():
+            if k.startswith("_"):
+                raise core4.error.Core4ConfigurationError(
+                    "top-level key/section "
+                    "must not start with underscore [{}]".format(k))
+            elif k == "trace":
+                raise core4.error.Core4ConfigurationError(
+                    "reserved top-level key/section [{}]".format(k))
+
+
+    def _read_file(self, filename, add_keys=False):
         if os.path.exists(filename):
-            ext = os.path.splitext(filename)[1]
-            found = [j for i, j in CONFIG_EXTENSION.items() if ext in i]
-            if not found:
-                raise KeyError("unknown file type of {}".format(filename))
-            if found[0] == "yaml":
-                with open(filename, 'r', encoding='utf-8') as stream:
-                    data = oyaml.load(stream)
-                    self._config.read_dict(data)
-            else:
-                self._config.read(filename)
-            self._path.append(filename)
+            with open(filename, "r", encoding="utf-8") as f:
+                body = f.read()
+            gns = {}
+            lns = {}
+            exec(body, gns, lns)
+            self._verify_key(lns)
+            self._config = core4.util.dict_merge(
+                self._config, lns, add_keys)
         else:
             raise FileNotFoundError(filename)
 
-    def _read_environment(self):
-        for e in os.environ:
-            if e.startswith("CORE4_OPTION_"):
-                value = os.environ[e]
-                if e.find("__") >= 0:
-                    (section, option) = e[len("CORE4_OPTION_"):].split(
-                        "__")[0:2]
-                else:
-                    section = "DEFAULT"
-                    option = e[len("CORE4_OPTION_"):]
-                self._config.set(section, option, value)
-
     def _read_db(self):
-        if self._db_conf is None:
-            self._db_conf = {}
-            coll = self.get_collection("sys.conf", "kernel")
-            if coll:
-                for doc in coll.find(sort=[("_id", 1)]):
-                    if doc["_id"] not in self._db_conf:
-                        self._db_conf[doc["_id"]] = {}
-                    self._db_conf[doc["_id"]].update(doc["option"])
-        if self._db_conf:
-            self.config.read_dict(self._db_conf)
+        conn = self._config["kernel"]["sys.conf"]
+        if conn:
+            coll = conn.render(self._config)
+            conf = {}
+            n = 0
+            self._debug("retrieving configurations from [{}]", coll.info_url)
+            for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
+                conf = core4.util.dict_merge(conf, doc)
+                n += 1
+            self._debug("retrieved [{}] configurations ", n)
+            self._verify_key(conf)
+            self._config = core4.util.dict_merge(
+                self._config, conf, add_keys=False)
+        return None
 
-    @property
-    def path(self):
-        """
-        Returns the processed local filenames. This attribute triggers
-        lazy load of ``.config`` if not done, yet.
-
-        :return: list of file locations
-        """
-        _ = self.config
-        return self._path
-
-    def __getattr__(self, item):
-        """
-        Delegates all methods and attributes to
-        :class:`configparser.ConfigParser` object
-
-        :param item: requested
-        :return: value, raises ``AttributeError`` if not found
-        """
-        if item in self._WRAP:
-            def section_wrapper(method):
-                def config_wrapper(option, section=None, **kwargs):
-                    return method(section or self.primary, option,
-                                  **kwargs)
-
-                return config_wrapper
-            return section_wrapper(getattr(self.config, item))
-
-        if item in self._FORWARD:
-            return getattr(self.config, item)
-
-        raise AttributeError(item)
-
-    def options(self, section=None):
-        """
-        :param section: defaults to primary
-        :return: list of option names for the given section name
-        """
-        return self.config.options(section or self.primary)
-
-    def has_section(self, section=None):
-        """
-        :param section: defaults to primary
-        :return: True if the section is present
-        """
-        return self.config.has_section(section or self.primary)
-
-    def get_datetime(self, option, *args, **kwargs):
-        """
-        Parses the option into a :class:`~datetime.datetime` object using
-        :mod:`dateutil.parser`. With this parser we are able to "read" the
-        following example dates::
-
-            2018-01-28
-            2018-01-32
-            2018 01 28 3:59
-            2018-05-08T13:50:33
-            20180128
-            20180128111213
-            2018.01.28 3:59
-            2018/01/28 3:59
-
-        :param option: string representing the option
-        :return: :class:`datetime.datetime` object
-        """
-        value = self.get(option, *args, **kwargs)
-        dt = dateutil.parser.parse(value, yearfirst=True)
-        return dt
-
-    def get_regex(self, option, *args, **kwargs):
-        """
-        parses regular expression using the slash delimiter as in
-        ``/regex/mod`` where _regex_ represents the regular expression
-        and _mod_ represents regular expression modifiers. Valid
-        modifiers are the letters
-
-        * ``i`` - for case-insensitive match
-        * ``m`` - for multiple lines match
-        * ``s`` - for dot matching newlines
-
-        :return: compiled re object
-        """
-        regex = self.get(option, *args, **kwargs)
-        return core4.util.parse_regex(regex)
-
-    def get_collection(self, option, section=None):
-        """
-        parses an option into a :class:`.CoreCollection` object. The following
-        option string format facilitates cross-database access patterns::
-
-            [scheme://][username][:password]@[netloc]/[database]/[collection]
-
-        The only mandatory part is the collection. The database name defaults to
-        the scheme's default database option (``mongo_database``). The location
-        and optional authentication data default to the scheme's default
-        url option (``mongo_url``). Supported scheme is ``mongodb://``.
-
-        This mechanic supports the following connection string examples::
-
-            # fully qualified connection with location, database, collection
-
-            mongodb://user:pass@localhost:27027/dbname/collname
-
-            # default database with given scheme if exists, mongo_database
-            # config option in this concrete example
-
-            mongodb://user:pass@localhost:27027/collname
-
-            # with default mongo_url using the passed authentication (user:pass)
-
-            mongodb://user:pass@/dbname/collname
-
-            # with default mongo_url, authentication and mongo_database
-
-            mongodb://user:pass@/collname
-
-            # use default mongo_url, including authentication, and
-            # mongo_database to access collname
-
-            mongodb://collname
-
-        Raises ``ValueError`` if the option is malformed.
-
-        :return: :class:`.CoreCollection` object
-        """
-        conn = self.config.get(section or self.primary, option)
-        if not conn:
-            return None
-        split = urllib.parse.urlsplit(conn)
-        opts = dict()
-        opts["scheme"] = getattr(split, "scheme") or DEFAULT_SCHEME
-        default_url = self.config.get(section or self.primary,
-                                      SCHEME[opts["scheme"]]["url"])
-        default_database = self.config.get(section or self.primary,
-                                           SCHEME[opts["scheme"]]["database"])
-        opts["username"] = split.username
-        opts["password"] = split.password
-        if split.hostname:
-            (auth, *hostname) = split.netloc.split("@")
-        else:
-            default_split = urllib.parse.urlsplit(default_url)
-            if not opts["username"] and not opts["password"]:
-                opts["username"] = default_split.username
-                opts["password"] = default_split.password
-            (auth, *hostname) = default_split.netloc.split("@")
-        if hostname:
-            opts["hostname"] = hostname[0]
-        else:
-            opts["hostname"] = auth
-        if not split.path:
-            raise ValueError(
-                "missing database/collection configuration with [{}]".format(
-                    conn))
-        (_db, *_coll) = [p for p in split.path.split("/") if p]
-        if _db and _coll:
-            opts["database"] = _db
-            opts["collection"] = ".".join(_coll)
-        else:
-            opts["database"] = default_database
-            opts["collection"] = _db
-        return core4.base.collection.CoreCollection(**opts)
-
-    def as_dict(self):
-        """
-        Converts the configuration object into a dictionary.
-
-        The resulting dictionary has sections as keys which point to a dict of
-        the sections options as key => value pairs.
-        """
-        the_dict = {}
-        for section in self.config.sections():
-            the_dict[section] = {}
-            for key, val in self.config.items(section):
-                the_dict[section][key] = val
-        return the_dict
+    def _read_env(self):
+        for k, v in os.environ.items():
+            if k.startswith(ENV_PREFIX):
+                ref = self._config
+                levels = k[len(ENV_PREFIX):].split("__")
+                self._verify_key({levels[0]: v})
+                for lev in levels[:-1]:
+                    if lev in ref:
+                        if not isinstance(ref[lev], collections.MutableMapping):
+                            ref[lev] = {}
+                    else:
+                        ref[lev] = {}
+                    ref = ref[lev]
+                if levels[-1] in ref:
+                    old_val = ref[levels[-1]]
+                else:
+                    old_val = None
+                if type(old_val) in (bool, int, float, str):
+                    new_val = type(old_val)(v)
+                else:
+                    new_val = v
+                if isinstance(new_val, str):
+                    if new_val.strip() == "":
+                        new_val = None
+                self._debug("set [{}] = [{}] ({})", ".".join(levels), new_val,
+                            type(new_val).__name__)
+                ref[levels[-1]] = new_val

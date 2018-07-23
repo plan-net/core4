@@ -33,10 +33,21 @@ REPORT_LINE = "  {:40s} {:16s} {:5d}"
 TOTAL_LINE = "  {:>40s} {:16s} {:5d}"
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-c", "--coverage", help="run test coverage",
-    action="store_true")
+parser.add_argument("-c", "--coverage", help="run test coverage",
+                    action="store_true")
+parser.add_argument("-s", "--start", help="test script starts with filter",
+                    action="store_true")
+parser.add_argument("-m", "--match", help="test script matches filter",
+                    action="store_true")
+parser.add_argument("filter", help="test script filter",
+                    action="store", nargs="?")
 args = parser.parse_args()
+
+if args.match and args.start:
+    raise SyntaxError("--match and --start are exclusive options")
+if args.match or args.start:
+    if args.filter is None:
+        raise SyntaxError("--match and --start require argument")
 
 
 class Colors:
@@ -73,7 +84,12 @@ def discover():
     for test in sorted(os.listdir(path)):
         if test.startswith('test_') and test.endswith('.py'):
             (pkg, ext) = os.path.splitext(test)
-            yield pkg
+            if args.start and test.startswith(args.filter):
+                yield pkg
+            elif args.match and re.match(args.filter, test):
+                yield pkg
+            elif not (args.start or args.match):
+                yield pkg
 
 
 def istty():

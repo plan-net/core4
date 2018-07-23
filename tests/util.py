@@ -3,7 +3,6 @@
 import os
 import pymongo
 
-
 ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4dev'
@@ -19,3 +18,4 @@ def asset(*filename, exists=True):
 def mongo_connect():
     mongo = pymongo.MongoClient(MONGO_URL)
     return mongo[MONGO_DATABASE]
+

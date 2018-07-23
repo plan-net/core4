@@ -9,7 +9,7 @@ import datetime
 import oyaml
 from bson.objectid import ObjectId
 
-from core4.config.main import DEFAULT_CONFIG
+from core4.config import DEFAULT_CONFIG
 from core4.error import Core4SetupError
 
 CORE4_PREFIX = "core4"  # top logger "core4"
@@ -18,7 +18,7 @@ ACCOUNT_PREFIX = "account"  # plugin logger beneath "core4.account"
 logging.Formatter.converter = time.gmtime  # log in UTC
 
 
-class MongoAdapter(logging.LoggerAdapter):
+class CoreLoggingAdapter(logging.LoggerAdapter):
     """
     This adapter passes all extra key/value pairs and creates an
     ``_id`` of type :class:`.ObjectId`.
