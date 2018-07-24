@@ -4,7 +4,6 @@ pymongo==3.6.1
 python-dateutil==2.7.2
 Sphinx==1.7.5
 sphinx-rtd-theme==0.3.1
-oyaml==0.4
 coverage
 Flask==1.0.2
 Flask-Login==0.4.1

@@ -40,3 +40,9 @@
    * - sphinx
      - MIT
      - https://sphinx-rtd-theme.readthedocs.io/en/latest/
+   * - Flask
+     - Three clause BSD License
+     - http://flask.pocoo.org/docs/1.0/license/
+   * - Flask-Login
+     - MIT
+     - https://github.com/maxcountryman/flask-login/blob/master/LICENSE
