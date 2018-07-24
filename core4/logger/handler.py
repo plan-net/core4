@@ -1,9 +1,31 @@
 import datetime
 import logging.config
 import time
+import traceback
 
 import core4.error
 import core4.util
+
+
+def make_record(record):
+    ts = time.gmtime(record.created)
+    doc = {
+        "created": datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
+                                     ts.tm_hour, ts.tm_min, ts.tm_sec),
+        "username": core4.util.get_username(),
+        "hostname": core4.util.get_hostname(),
+        "identifier": record.obj.identifier,
+        "qual_name": record.obj.qual_name(),
+        "_id": record._id,
+        "msg": record.msg,
+        "level": record.levelname
+    }
+    if record.exc_info or record.exc_text:
+        doc["exception"] = {
+            "info": repr(record.exc_info[1]),
+            "text": traceback.format_exception(*record.exc_info)
+        }
+    return doc
 
 
 class MongoLoggingHandler(logging.Handler):
@@ -42,22 +64,6 @@ class MongoLoggingHandler(logging.Handler):
 
         :param record: the log record (:class:`logging.LogRecord`)
         """
-        ts = time.gmtime(record.created)
-        doc = {
-            "created": datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
-                                         ts.tm_hour, ts.tm_min, ts.tm_sec),
-            "username": core4.util.get_username(),
-            "hostname": core4.util.get_hostname(),
-            "identifier": record.obj.identifier,
-            "qual_name": record.obj.qual_name(),
-            "_id": record._id,
-            "msg": record.msg,
-            "level": record.levelname
-        }
-        if record.exc_info or record.exc_text:
-            doc["exception"] = {
-                "info": repr(record.exc_info[1]),
-                "text": record.exc_text
-            }
+        doc = make_record(record)
         self._collection.insert_one(doc)
 

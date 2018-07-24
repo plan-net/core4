@@ -25,10 +25,8 @@ logging = {
     "stdout": None,
     "mongodb": "DEBUG",
     "format": "%(asctime)s - %(levelname)-8s: %(message)s",
-    "memory": {
-        "capacity": 1000000,  # log message stack
-        "flush": "ERROR",  # if this level is logged, then flush memory
-        "emit": "DEBUG"  # spit out all log messages with this level and above
+    "exception": {
+        "capacity": 1000
     },
     "extra": None
 }

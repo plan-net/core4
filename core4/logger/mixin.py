@@ -8,6 +8,7 @@ import core4.error
 import core4.util
 import core4.logger
 import core4.logger.handler
+import core4.logger.exception
 
 
 logging.Formatter.converter = time.gmtime  # log in UTC
@@ -27,6 +28,7 @@ class CoreLoggerMixin:
         self._shutdown_logging(logger)
         logger.setLevel(logging.DEBUG)
         self._setup_console(logger)
+        self._setup_exception_logger(logger)
         self._setup_mongodb(logger)
         self._setup_extra_logging(logger)
         self.logger.debug("logging setup complete")
@@ -68,3 +70,21 @@ class CoreLoggerMixin:
         if extra:
             logging.config.dictConfig(extra)
             self.logger.debug("extra logging setup complete from")
+
+    def _setup_exception_logger(self, logger):
+        mongodb = getattr(logging, self.config.logging.mongodb)
+        if mongodb:
+            if mongodb > logging.DEBUG:
+                handler = core4.logger.exception.ExceptionHandler(
+                    level=self.config.logging.mongodb,
+                    size=self.config.logging.exception.capacity,
+                    target=self.config.kernel["sys.log"])
+                handler.setLevel(logging.DEBUG)
+                logger.addHandler(handler)
+                self.logger.debug("exception logging setup complete")
+            else:
+                self.logger.warning(
+                    "exception logging skipped "
+                    "with mongodb loglevel [{}]".format(self.config.logging.mongodb))
+        else:
+            self.logger.warning("exception logging disabled")

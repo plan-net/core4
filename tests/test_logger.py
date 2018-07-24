@@ -57,6 +57,8 @@ class TestBase(unittest.TestCase):
         b.logger.error("this is ERROR")
         b.logger.critical("this is CRITICAL")
         data = list(self.mongo.core4test.sys.log.find())
+        # import pandas as pd
+        # print(pd.DataFrame(data).to_string())
         self.assertEqual(3, sum([1 for i in data if i["level"] == "DEBUG"]))
         self.assertEqual(1, sum([1 for i in data if i["level"] == "INFO"]))
         self.assertEqual(1, sum([1 for i in data if i["level"] == "WARNING"]))
@@ -73,7 +75,23 @@ class TestBase(unittest.TestCase):
         data = list(self.mongo.core4test.sys.log.find(
             {"exception": {"$ne": None}}))
         self.assertEqual(1, len(data))
-        self.assertIn("division by zero", data[0]["exception"]["text"])
+        out = "\n".join(data[0]["exception"]["text"])
+        self.assertIn("division by zero", out)
+
+    def test_exception2(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        b = LogOn()
+        try:
+            raise RuntimeError("this is a manual runtime error")
+        except:
+            b.logger.critical("this is so critical", exc_info=True)
+        data = list(self.mongo.core4test.sys.log.find(
+            {"exception": {"$ne": None}}))
+        self.assertEqual(1, len(data))
+        self.assertEqual(data[0]["exception"]["info"],
+                         "RuntimeError('this is a manual runtime error',)")
+        out = "\n".join(data[0]["exception"]["text"])
+        self.assertIn("RuntimeError: this is a manual runtime error", out)
 
     def test_inconsistent_setup(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("logger/error.py")
@@ -103,6 +121,55 @@ class TestBase(unittest.TestCase):
         self.assertEqual(2, len(data["errors"]))
         self.assertEqual(5, len(data["info"]))
 
+    def test_exception_logging(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"
+        # os.environ["CORE4_OPTION_logging__exception__capacity"] = "2"
+        b = LogOn()
+        b.logger.debug("this is a DEBUG message")
+        b.logger.info("this is an INFO message")
+        b.logger.warning("this is a WARNING message")
+        b.logger.error("this is an ERROR message")
+        b.logger.critical("this is a CRITICAL error message")
+        data = list(self.mongo.core4test.sys.log.find(sort=[("_id", 1)]))
+        # import pandas as pd
+        # print(pd.DataFrame(data).to_string())
+        self.assertEqual({"DEBUG"}, set([d["level"] for d in data[:4]]))
+        self.assertEqual(4, sum([1 for d in data if d["level"] == "DEBUG"]))
+
+    def test_exception_fifo(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"
+        os.environ["CORE4_OPTION_logging__exception__capacity"] = "2"
+        b = LogOn()
+        b.logger.debug("this is a DEBUG message")
+        b.logger.info("this is an INFO message")
+        b.logger.warning("this is a WARNING message")
+        b.logger.error("this is an ERROR message")
+        b.logger.critical("this is a CRITICAL error message")
+        data = list(self.mongo.core4test.sys.log.find(sort=[("_id", 1)]))
+        # import pandas as pd
+        # print(pd.DataFrame(data).to_string())
+        self.assertEqual({"DEBUG"}, set([d["level"] for d in data[:2]]))
+        self.assertEqual(2, sum([1 for d in data if d["level"] == "DEBUG"]))
+        self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
+
+    def test_exception_in_debug(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+        os.environ["CORE4_OPTION_logging__stdout"] = "DEBUG"
+        os.environ["CORE4_OPTION_logging__stderr"] = ""
+        os.environ["CORE4_OPTION_logging__exception__capacity"] = "2"
+        b = LogOn()
+        b.logger.debug("this is a DEBUG message")
+        b.logger.info("this is an INFO message")
+        b.logger.warning("this is a WARNING message")
+        b.logger.error("this is an ERROR message")
+        b.logger.critical("this is a CRITICAL error message")
+        data = list(self.mongo.core4test.sys.log.find(sort=[("_id", 1)]))
+        self.assertEqual({"DEBUG"}, set([d["level"] for d in data[:2]]))
+        self.assertEqual(3, sum([1 for d in data if d["level"] == "DEBUG"]))
+        self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
 
 if __name__ == '__main__':
     unittest.main()

@@ -5,6 +5,7 @@ This module features CoreBase, the base class to all core4 classes.
 """
 
 import logging
+import logging.handlers
 import os
 import sys
 import re
