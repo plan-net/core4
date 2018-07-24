@@ -5,14 +5,13 @@ core4.util provides various support and helper methods used by various
 core4 packages and modules.
 """
 
+import collections
 import getpass
 import os
 import re
 import socket
-import collections
 
 from flask_login import current_user
-
 
 REGEX_MODIFIER = {
     u'i': re.I,
@@ -110,4 +109,3 @@ def dict_merge(dct, merge_dct, add_keys=True, ignore_error=True):
             dct[k] = merge_dct[k]
 
     return dct
-

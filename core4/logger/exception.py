@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import collections
+import logging
+
 import core4.logger.handler
 
 FLUSH_LEVEL = logging.CRITICAL
@@ -47,4 +48,3 @@ class ExceptionHandler(logging.Handler):
     #     Flush, set the target to None and lose the buffer.
     #     """
     #     self.flush()
-

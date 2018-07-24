@@ -1,6 +1,3 @@
-
-from core4.config import connect
-
 mongo_url = "mongodb://localhost:27017"  # default mongo connection
 mongo_database = "core4dev"  # default core4 system mongo database
 

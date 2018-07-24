@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 
 import logging
+
 import core4.util
 
 

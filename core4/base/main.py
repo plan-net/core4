@@ -19,6 +19,7 @@ following features:
   * access to core4 central logging
 """
 
+import inspect
 import logging
 import logging.handlers
 import os
@@ -27,10 +28,8 @@ import sys
 
 import core4.config.main
 import core4.logger
-import core4.util
 import core4.logger.filter
-import inspect
-
+import core4.util
 
 CORE4 = "core4"
 PLUGIN = ["core4", "account"]

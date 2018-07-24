@@ -3,9 +3,6 @@ import logging.config
 import time
 import traceback
 
-import core4.error
-import core4.util
-
 
 def make_record(record):
     ts = time.gmtime(record.created)
@@ -66,4 +63,3 @@ class MongoLoggingHandler(logging.Handler):
         """
         doc = make_record(record)
         self._collection.insert_one(doc)
-

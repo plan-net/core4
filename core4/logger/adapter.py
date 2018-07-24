@@ -1,8 +1,6 @@
+# -*- coding: utf-8 -*-
+
 import logging.config
-from bson.objectid import ObjectId
-import logging.config
-import core4.util
-import datetime
 
 from bson.objectid import ObjectId
 
@@ -19,4 +17,3 @@ class CoreLoggingAdapter(logging.LoggerAdapter):
             "_id": ObjectId()
         }
         return msg, kwargs
-

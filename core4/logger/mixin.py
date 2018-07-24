@@ -5,11 +5,10 @@ import logging.config
 import time
 
 import core4.error
-import core4.util
 import core4.logger
-import core4.logger.handler
 import core4.logger.exception
-
+import core4.logger.handler
+import core4.util
 
 logging.Formatter.converter = time.gmtime  # log in UTC
 
@@ -85,6 +84,7 @@ class CoreLoggerMixin:
             else:
                 self.logger.warning(
                     "exception logging skipped "
-                    "with mongodb loglevel [{}]".format(self.config.logging.mongodb))
+                    "with mongodb loglevel [{}]".format(
+                        self.config.logging.mongodb))
         else:
             self.logger.warning("exception logging disabled")

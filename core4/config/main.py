@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
+import collections
 import os
 import pprint
-import collections
+
 import pkg_resources
 
 import core4.base.collection
-import core4.error
-import core4.util
 import core4.config.map
 import core4.config.tool
-
+import core4.error
+import core4.util
 
 CONFIG_EXTENSION = ".py"
 DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core"
