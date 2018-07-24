@@ -50,18 +50,26 @@ class CoreBase:
 
     BINDING!
     """
-    account = None
     _qual_name = None
+    account = None
     identifier = None
 
     def __init__(self):
-        of = inspect.currentframe().f_back.f_locals
-        for n, v in of.items():
+
+        # set identifier
+        frame = inspect.currentframe().f_back.f_locals
+        for n, v in frame.items():
             if hasattr(v, "qual_name"):
-                i = getattr(v, "identifier", None)
-                if not isinstance(i, property):
-                    if i is not None:
-                        self.identifier = i
+                ident = getattr(v, "identifier", None)
+                if not isinstance(ident, property):
+                    if ident is not None:
+                        self.identifier = ident
+
+        self._set_account()
+        self._open_config()
+        self._open_logging()
+
+    def _set_account(self):
         self.account = self.__class__.__module__.split('.')[0]
         # the following is a hack
         if self.account == '__main__':  # pragma: no cover
@@ -80,8 +88,6 @@ class CoreBase:
                             + [self.__class__.__name__])
                         self.account = pathname.pop(-1)
                         break
-        self.config = self._open_config()
-        self.logger = self._open_logging()
 
     def __repr__(self):
         return "{}()".format(self.qual_name())
@@ -99,17 +105,6 @@ class CoreBase:
             return '.'.join(PLUGIN + [cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
 
-    # @property
-    # def identifier(self):
-    #     """
-    #     :return: unique object identifier
-    #     """
-    #     return self._identifier
-    #
-    # @identifier.setter
-    # def identifier(self, value):
-    #     self._identifier = value
-
     def account_conf(self):
         module = sys.modules.get(self.account)
         if module:
@@ -126,7 +121,7 @@ class CoreBase:
         extra_conf = self.account_conf()
         if extra_conf and os.path.exists(extra_conf):
             kwargs["extra_config"] = extra_conf
-        return core4.config.CoreConfig(**kwargs)
+        self.config = core4.config.CoreConfig(**kwargs)
 
     def _open_logging(self):
         # attach logging
@@ -138,4 +133,4 @@ class CoreBase:
         logger.addFilter(f)
         # pass object reference into logging and enable lazy property access
         #   and late binding
-        return core4.logger.CoreLoggingAdapter(logger, self)
+        self.logger = core4.logger.CoreLoggingAdapter(logger, self)

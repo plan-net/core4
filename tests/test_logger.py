@@ -198,6 +198,7 @@ class TestBase(unittest.TestCase):
         m.execute()
         data = list(m.config.sys.log.find())
         idented = sum([1 for i in data if i["identifier"] == "0815"])
+        #print(idented)
         self.assertEqual(700, idented)
 
 if __name__ == '__main__':
