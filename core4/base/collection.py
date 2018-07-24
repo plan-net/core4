@@ -4,14 +4,14 @@
 This module implements CoreCollection, featuring database access.
 """
 
-from core4.base.connector.mongo import connect as mongo_connect
+from core4.base.connector.mongo import make_connection as make_mongo_connection
 
 DEFAULT_SCHEME = 'mongodb'
 SCHEME = {
     'mongodb': {
         'database': 'mongo_database',
         'url': 'mongo_url',
-        'connector': mongo_connect
+        'connector': make_mongo_connection
     },
     # 'postgres': {
     #     'database': 'postgres_database',

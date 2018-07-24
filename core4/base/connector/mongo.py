@@ -3,7 +3,7 @@
 import pymongo
 
 
-def connect(connection):
+def make_connection(connection):
     url = 'mongodb://'
     if connection.username:
         url += connection.username
