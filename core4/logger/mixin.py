@@ -53,7 +53,7 @@ class CoreLoggerMixin:
     def _setup_mongodb(self, logger):
         mongodb = self.config.logging.mongodb
         if mongodb:
-            conn = self.config.kernel["sys.log"]
+            conn = self.config.sys.log
             if conn:
                 handler = core4.logger.handler.MongoLoggingHandler(conn)
                 handler.setLevel(getattr(logging, mongodb))
@@ -62,8 +62,7 @@ class CoreLoggerMixin:
                     "mongodb logging setup complete, level {}".format(mongodb))
             else:
                 raise core4.error.Core4SetupError(
-                    "config.logging.mongodb set, "
-                    "but config.kernel.sys.log is None")
+                    "config.logging.mongodb set, but config.sys.log is None")
 
     def _setup_extra_logging(self, logger):
         extra = self.config.logging.extra
@@ -79,7 +78,7 @@ class CoreLoggerMixin:
                 handler = core4.logger.exception.ExceptionHandler(
                     level=self.config.logging.mongodb,
                     size=self.config.logging.exception.capacity,
-                    target=self.config.kernel["sys.log"])
+                    target=self.config.sys.log)
                 handler.setLevel(logging.DEBUG)
                 logger.addHandler(handler)
                 self.logger.debug("exception logging setup complete")

@@ -183,7 +183,7 @@ class CoreConfig(collections.MutableMapping):
             raise FileNotFoundError(filename)
 
     def _read_db(self):
-        conn = self._config["kernel"]["sys.conf"]
+        conn = self._config["sys"]["conf"]
         if conn:
             coll = conn.render(self._config)
             conf = {}

@@ -44,6 +44,6 @@ logging = {
     }
 }
 
-kernel = {
-    "sys.log": connect("mongodb://sys.log")
+sys = {
+    "log": connect("mongodb://sys.log")
 }

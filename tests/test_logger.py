@@ -196,7 +196,7 @@ class TestBase(unittest.TestCase):
         LogOn()
         m = plugin.ident.Massive()
         m.execute()
-        data = list(m.config.kernel["sys.log"].find())
+        data = list(m.config.sys.log.find())
         idented = sum([1 for i in data if i["identifier"] == "0815"])
         self.assertEqual(700, idented)
 

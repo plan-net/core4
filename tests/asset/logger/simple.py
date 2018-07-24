@@ -6,6 +6,6 @@ logging = {
     "mongodb": "DEBUG"
 }
 
-kernel = {
-    "sys.log": connect("mongodb://sys.log")
+sys = {
+    "log": connect("mongodb://sys.log")
 }

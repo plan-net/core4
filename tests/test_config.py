@@ -99,7 +99,7 @@ class TestConfig(unittest.TestCase):
         local = tests.util.asset("config/local1.py")
         conf = MyConfig(extra_config=extra, config_file=local)
         self.assertEqual(conf.account1.mongo_url, "from local1")
-        self.assertEqual(conf.account1["sys.log"], "this no good")
+        self.assertEqual(conf.account1.sys.log, "this no good")
         self.assertEqual(conf.account1["s p"], "service plan")
         self.assertEqual(conf.account1.datetime,
                          datetime.datetime(2018, 1, 14))
@@ -437,11 +437,11 @@ class TestConfig(unittest.TestCase):
         extra = tests.util.asset("config/extra2.py")
         local = tests.util.asset("config/local6.py")
         conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertIn("username", repr(conf.kernel["sys.conf"]))
-        self.assertIn("collection", repr(conf.kernel["sys.conf"]))
-        self.assertIn("sys.conf", repr(conf.kernel["sys.conf"]))
-        self.assertIn("core4test", repr(conf.kernel["sys.conf"]))
-        self.assertNotIn("password", repr(conf.kernel["sys.conf"]))
+        self.assertIn("username", repr(conf.sys.conf))
+        self.assertIn("collection", repr(conf.sys.conf))
+        self.assertIn("sys.conf", repr(conf.sys.conf))
+        self.assertIn("core4test", repr(conf.sys.conf))
+        self.assertNotIn("password", repr(conf.sys.conf))
 
 if __name__ == '__main__':
     unittest.main()

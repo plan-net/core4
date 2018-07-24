@@ -6,6 +6,6 @@ logging = {
     "mongodb": "DEBUG"
 }
 
-kernel = {
-    "sys.log": None
+sys = {
+    "log": None
 }
