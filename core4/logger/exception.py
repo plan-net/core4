@@ -16,12 +16,6 @@ class ExceptionHandler(logging.Handler):
         self.target = target
         self.flush()
 
-    def trace(self):
-        pass
-
-    def no_trace(self):
-        pass
-
     def emit(self, record):
         """
         Emit a record.
@@ -48,11 +42,9 @@ class ExceptionHandler(logging.Handler):
         """
         self.queue = collections.deque(maxlen=self.size)
 
-    def close(self):
-        """
-        Flush, set the target to None and lose the buffer.
-        """
-        self.flush()
-        # self.acquire()
-        # self.release()
+    # def close(self):
+    #     """
+    #     Flush, set the target to None and lose the buffer.
+    #     """
+    #     self.flush()
 

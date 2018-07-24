@@ -11,6 +11,8 @@ from pprint import pprint
 import core4.error
 import logging
 import glob
+import plugin.ident
+
 
 class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
 
@@ -154,6 +156,12 @@ class TestBase(unittest.TestCase):
         self.assertEqual(2, sum([1 for d in data if d["level"] == "DEBUG"]))
         self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
 
+    def test_exception_dsiabled(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_OPTION_logging__mongodb"] = ""
+        b = LogOn()
+        b.logger.debug("this is a DEBUG message")
+
     def test_exception_in_debug(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
@@ -170,6 +178,27 @@ class TestBase(unittest.TestCase):
         self.assertEqual({"DEBUG"}, set([d["level"] for d in data[:2]]))
         self.assertEqual(3, sum([1 for d in data if d["level"] == "DEBUG"]))
         self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
+
+    def test_identifier(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+        b = LogOn()
+        b.logger.debug("*** START ***")
+        ident = plugin.ident.Controller()
+        ident.execute()
+        b.logger.debug("*** END ***")
+
+    def test_massive(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+        os.environ["CORE4_OPTION_logging__stderr"] = ""
+        os.environ["CORE4_OPTION_logging__stdout"] = ""
+        LogOn()
+        m = plugin.ident.Massive()
+        m.execute()
+        data = list(m.config.kernel["sys.log"].find())
+        idented = sum([1 for i in data if i["identifier"] == "0815"])
+        self.assertEqual(700, idented)
 
 if __name__ == '__main__':
     unittest.main()

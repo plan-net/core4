@@ -21,10 +21,10 @@ folder = {
 }
 
 logging = {
-    "stderr": "INFO",
+    "stderr": "DEBUG",
     "stdout": None,
-    "mongodb": "DEBUG",
-    "format": "%(asctime)s - %(levelname)-8s: %(message)s",
+    "mongodb": None,
+    "format": "%(asctime)s - %(levelname)-8s [%(qual_name)s/%(identifier)s] %(message)s",
     "exception": {
         "capacity": 1000
     },

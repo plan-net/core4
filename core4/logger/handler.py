@@ -12,10 +12,10 @@ def make_record(record):
     doc = {
         "created": datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
                                      ts.tm_hour, ts.tm_min, ts.tm_sec),
-        "username": core4.util.get_username(),
-        "hostname": core4.util.get_hostname(),
-        "identifier": record.obj.identifier,
-        "qual_name": record.obj.qual_name(),
+        "username": record.username,
+        "hostname": record.hostname,
+        "identifier": record.identifier,
+        "qual_name": record.qual_name,
         "_id": record._id,
         "msg": record.msg,
         "level": record.levelname

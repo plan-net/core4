@@ -72,9 +72,10 @@ class CoreLoggerMixin:
             self.logger.debug("extra logging setup complete from")
 
     def _setup_exception_logger(self, logger):
-        mongodb = getattr(logging, self.config.logging.mongodb)
+        mongodb = self.config.logging.mongodb
         if mongodb:
-            if mongodb > logging.DEBUG:
+            mongo_level = getattr(logging, mongodb)
+            if mongo_level > logging.DEBUG:
                 handler = core4.logger.exception.ExceptionHandler(
                     level=self.config.logging.mongodb,
                     size=self.config.logging.exception.capacity,
