@@ -2,12 +2,20 @@
 
 
 class Core4Error(Exception):
-    pass
+    """
+    This is the base class of all core4 exceptions.
+    """
 
 
 class Core4SetupError(Core4Error):
-    pass
+    """
+    This exception is raised if core4 is not properly configured. Further
+    details are available in the exception message.
+    """
 
 
 class Core4ConfigurationError(Core4Error):
-    pass
+    """"
+    This exception is raised if core4 configuration cannot be parsed. Further
+    details are available in the exception message.
+    """

@@ -1,4 +1,4 @@
-from core4.config.tool import connect
+from core4.config.pragma import connect
 
 mongo_database = "core4test"
 

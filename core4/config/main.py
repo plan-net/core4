@@ -8,19 +8,25 @@ import pkg_resources
 
 import core4.base.collection
 import core4.config.map
-import core4.config.tool
+import core4.config.pragma
 import core4.error
 import core4.util
 
 CONFIG_EXTENSION = ".py"
-DEFAULT_CONFIG = pkg_resources.resource_filename("core4", "config/core"
-                                                 + CONFIG_EXTENSION)
+DEFAULT_CONFIG = pkg_resources.resource_filename(
+    "core4", "config/core" + CONFIG_EXTENSION)
 USER_CONFIG = os.path.expanduser("core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
 
 
 class CoreConfig(collections.MutableMapping):
+    """
+    :class:`CoreConfig` is the gateway into core4 configuration. Please note
+    that you normally do not instantiate this class yourself, since
+    :class:`.CoreBase` carries a property ``.config`` which provides access to
+    the context specific configuration cascade.
+    """
     default_config = DEFAULT_CONFIG
     user_config = USER_CONFIG
     system_config = SYSTEM_CONFIG
@@ -37,11 +43,18 @@ class CoreConfig(collections.MutableMapping):
         self._trace = []
 
     def _debug(self, str, *args, **kwargs):
+        """
+        Internal method used to keep early startup debug message. Access this
+        trace with :attr:`.trace`.
+        """
         msg = "{}: ".format(id(self)) + str.format(*args, **kwargs)
         self._trace.append(msg)
 
     @property
     def trace(self):
+        """
+        Trace with debug messages from :meth:`.debug`.
+        """
         return "\n".join(self._trace)
 
     def __getitem__(self, key):
@@ -52,6 +65,7 @@ class CoreConfig(collections.MutableMapping):
         self._config[key] = value
 
     def __delitem__(self, key):
+        self._load()
         del self._config[key]
 
     def __iter__(self):
@@ -63,6 +77,17 @@ class CoreConfig(collections.MutableMapping):
         return len(self._config)
 
     def _load(self):
+        """
+        Internal method used to load configuration from
+
+        # core4 default options,
+        # plugin specific, extra options,
+        # configuration file specified by OS environment variables,
+        # user specific options,
+        # system-wide options,
+        # a MongoDB collection with configuration options,
+        # OS environment variables to overwrite specific options/values
+        """
         if self._loaded:
             self._debug("retrieve [{}] from memory at [{}]", self.path,
                         id(self._config))
@@ -130,6 +155,11 @@ class CoreConfig(collections.MutableMapping):
         return pprint.pformat(self._config)
 
     def _cascade(self):
+        """
+        Internal method used to cascade from top level configuration options and
+        their values (default values) down into dictionaries encapsulating
+        different configuration sections.
+        """
         default = {}
         for k, v in self._config.items():
             if not isinstance(v, dict):
@@ -141,6 +171,14 @@ class CoreConfig(collections.MutableMapping):
                     default, v)
 
     def _explode(self, dct, parent=None):
+        """
+        Internal method used to translate configuration statements into Python
+        objects and to hide all callables from the parsed configuration file.
+
+        At the moment, the following extra statements are supported:
+
+        * :class:`core4.config.pragma.connect`
+        """
         if parent is None:
             parent = []
         dels = set()
@@ -149,7 +187,7 @@ class CoreConfig(collections.MutableMapping):
             if isinstance(v, dict):
                 self._debug("exploding [{}]", ".".join(np))
                 self._explode(v, np)
-            elif isinstance(v, core4.config.tool.connect):
+            elif isinstance(v, core4.config.pragma.connect):
                 self._debug("connecting [{}]", ".".join(np))
                 dct[k] = v.render(dct)
             elif callable(v):
@@ -160,6 +198,12 @@ class CoreConfig(collections.MutableMapping):
         return dct
 
     def _verify_key(self, dct):
+        """
+        Confirm naming convention for all top-level keys/options which
+
+        # must not start with underscore (``_``)
+        # must not be any reserved word (``trace``)
+        """
         for k in dct.keys():
             if k.startswith("_"):
                 raise core4.error.Core4ConfigurationError(
@@ -170,6 +214,9 @@ class CoreConfig(collections.MutableMapping):
                     "reserved top-level key/section [{}]".format(k))
 
     def _read_file(self, filename, add_keys=False):
+        """
+        Internal method used to parse a Python configuration file.
+        """
         if os.path.exists(filename):
             with open(filename, "r", encoding="utf-8") as f:
                 body = f.read()
@@ -183,6 +230,10 @@ class CoreConfig(collections.MutableMapping):
             raise FileNotFoundError(filename)
 
     def _read_db(self):
+        """
+        Internal method used to parse all MongoDB document of the collection
+        specified in ``config.sys.conf``.
+        """
         conn = self._config["sys"]["conf"]
         if conn:
             coll = conn.render(self._config)
@@ -199,6 +250,10 @@ class CoreConfig(collections.MutableMapping):
         return None
 
     def _read_env(self):
+        """
+        Internal method used to overwrite configuration options with values
+        from OS environment variables.
+        """
         for k, v in os.environ.items():
             if k.startswith(ENV_PREFIX):
                 ref = self._config

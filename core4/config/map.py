@@ -7,9 +7,21 @@ class Map(dict):
     """
     a dictionary that supports dot notation
     as well as dictionary access notation
-    usage: d = DotDict() or d = DotDict({'val1':'first'})
-    set attributes: d.val2 = 'second' or d['val2'] = 'second'
-    get attributes: d.val2 or d['val2']
+
+    usage::
+
+      d = DotDict()
+      d = DotDict({'val1':'first'})
+
+    set attributes::
+
+      d.val2 = 'second'
+      d['val2'] = 'second'
+
+    get attributes::
+
+      d.val2
+      d['val2']
     """
 
     __getattr__ = dict.__getitem__

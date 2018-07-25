@@ -229,19 +229,24 @@ class TestConfig(unittest.TestCase):
     def test_cache(self):
         extra = tests.util.asset("config/extra2.py")
         local = tests.util.asset("config/local4.py")
+
         conf = core4.config.CoreConfig(extra_config=extra, config_file=local)
         k1 = list(conf.keys())
         self.assertTrue("mongo_url" in k1)
         self.assertTrue("env1" in k1)
         self.assertFalse("from cache" in conf.trace)
+        # pprint(conf)
+        # print(conf.trace)
 
         conf2 = core4.config.CoreConfig(extra_config=extra, config_file=local)
         k2 = list(conf2.keys())
-        #pprint(conf2)
+        # pprint(conf2)
+        # print(conf2.trace)
         self.assertTrue("mongo_url" in k2)
         self.assertTrue("env1" in k2)
 
         self.assertTrue("from cache" in conf2.trace)
+        #print(conf2.trace)
 
     def test_setter(self):
         extra = tests.util.asset("config/extra2.py")

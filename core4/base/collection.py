@@ -5,6 +5,8 @@ This module implements CoreCollection, featuring database access.
 """
 
 from core4.base.connector.mongo import make_connection as make_mongo_connection
+import core4.error
+
 
 DEFAULT_SCHEME = 'mongodb'
 SCHEME = {
@@ -12,23 +14,28 @@ SCHEME = {
         'database': 'mongo_database',
         'url': 'mongo_url',
         'connector': make_mongo_connection
-    },
-    # 'postgres': {
-    #     'database': 'postgres_database',
-    #     'url': 'postgres_url',
-    #     'connector': postgres_connect
-    # }
+    }
 }
 
 
 class CoreCollection:
     """
-    This class encapsulates data access to MongoDB collections.
+    This class encapsulates data access.
     """
 
     def __init__(
             self, scheme, hostname, database, collection, username=None,
             password=None):
+        """
+        Instantiates a CoreCollection object with
+
+        :param scheme: at the moment only mongodb is supported
+        :param hostname: (str)
+        :param database: name (str)
+        :param collection: name (str)
+        :param username: (str)
+        :param password: (str)
+        """
         self.scheme = scheme
         self.hostname = hostname
         self.database = database
@@ -36,6 +43,9 @@ class CoreCollection:
         self.username = username
         self.password = password
         self._connection = None
+        if self.scheme not in SCHEME:
+            raise core4.error.Core4ConfigurationError(
+                "unknown scheme [{}]".format(self.scheme))
 
     def __repr__(self):
         return "CoreConnection(" \
@@ -51,7 +61,7 @@ class CoreCollection:
         """
         Database connection factory, featuring the following protocols:
 
-        #. MongoDB
+        #. ``mongodb://`` with MongoDB
 
         :return: database connection
         """

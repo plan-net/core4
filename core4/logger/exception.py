@@ -10,6 +10,12 @@ FLUSH_LEVEL = logging.CRITICAL
 
 class ExceptionHandler(logging.Handler):
 
+    """
+    This handler stacks all :attr:`logging.DEBUG` log records. If a log record
+    with log level :attr:`logging.CRITICAL` appears, then all memorised log
+    records are fed into ``sys.log`` MongoDB collection.
+    """
+
     def __init__(self, *args, level, size, target, **kwargs):
         super().__init__(size, *args, **kwargs)
         self.mongo_level = getattr(logging, level)
@@ -19,10 +25,8 @@ class ExceptionHandler(logging.Handler):
 
     def emit(self, record):
         """
-        Emit a record.
-
-        Append the record. If shouldFlush() tells us to, call flush() to process
-        the buffer.
+        Emit a record and :meth:`.flush` if a log level of
+        :attr:`logging.CRITICAL` or above appears.
         """
         if record.levelno < self.mongo_level:
             doc = core4.logger.handler.make_record(record)
@@ -42,9 +46,3 @@ class ExceptionHandler(logging.Handler):
         Truncates the buffer of log records
         """
         self.queue = collections.deque(maxlen=self.size)
-
-    # def close(self):
-    #     """
-    #     Flush, set the target to None and lose the buffer.
-    #     """
-    #     self.flush()

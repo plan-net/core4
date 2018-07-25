@@ -5,6 +5,25 @@ import traceback
 
 
 def make_record(record):
+    """
+    Internal method to translate a :class:`logging.LogRecord` into a Python dict
+    ready to feed.
+
+    The document carries the following keys:
+
+    * _id
+    * created
+    * username
+    * hostname
+    * qual_name
+    * msg
+    * level
+    * exception.info (``repr`` string of :class:`Exception`)
+    * exception.text (traceback)
+
+    :param record: :class:`logging.LogRecord`
+    :return: dic
+    """
     ts = time.gmtime(record.created)
     doc = {
         "created": datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
@@ -27,7 +46,7 @@ def make_record(record):
 
 class MongoLoggingHandler(logging.Handler):
     """
-    This class implements mongo logging.
+    This class implements logging into a MongoDB database/collection.
     """
 
     def __init__(self, connection):

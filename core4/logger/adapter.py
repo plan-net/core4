@@ -7,8 +7,8 @@ from bson.objectid import ObjectId
 
 class CoreLoggingAdapter(logging.LoggerAdapter):
     """
-    This adapter passes all extra key/value pairs and creates an
-    ``_id`` of type :class:`.ObjectId`.
+    This adapter passes the object and creates an ``_id`` of type
+    :class:`.ObjectId`.
     """
 
     def process(self, msg, kwargs):
