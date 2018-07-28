@@ -19,3 +19,10 @@ class Core4ConfigurationError(Core4Error):
     This exception is raised if core4 configuration cannot be parsed. Further
     details are available in the exception message.
     """
+
+
+class Core4ConflictError(Core4Error):
+    """"
+    """
+
+
