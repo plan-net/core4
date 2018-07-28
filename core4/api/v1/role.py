@@ -44,9 +44,6 @@ class Role(core4.base.CoreBase):
             "_id": None,
             "rolename": None,
             "realname": None,
-            "password": None,
-            "password_hash": None,
-            "email": None,
             "is_active": True,
             "created": None,
             "updated": None,
@@ -81,18 +78,18 @@ class Role(core4.base.CoreBase):
             raise TypeError("etag requires bson.objectid.ObjectId")
         if not isinstance(self.perm, list):
             raise TypeError("perm requires list")
-        if self.password is not None:
-            if not isinstance(self.password, str):
-                raise TypeError("password requires str")
-            if self.email is None:
-                raise AttributeError("password requires an email, too")
-        if self.email is not None:
-            if not isinstance(self.email, str):
-                raise TypeError("email requires str")
-            if EMAIL.match(self.email) is None:
-                raise TypeError("invalid email address")
-            if self.password is None:
-                raise AttributeError("email requires a password, too")
+        # if self.password is not None:
+        #     if not isinstance(self.password, str):
+        #         raise TypeError("password requires str")
+        #     if self.email is None:
+        #         raise AttributeError("password requires an email, too")
+        # if self.email is not None:
+        #     if not isinstance(self.email, str):
+        #         raise TypeError("email requires str")
+        #     if EMAIL.match(self.email) is None:
+        #         raise TypeError("invalid email address")
+        #     if self.password is None:
+        #         raise AttributeError("email requires a password, too")
         for p in self.perm:
             passed = False
             for t in PROTO:
@@ -156,9 +153,9 @@ class Role(core4.base.CoreBase):
         _id = doc["_id"]
         del doc["_id"]
         doc["role"] = ids
-        if doc["password"] is not None:
-            doc["password"] = generate_password_hash(doc["password"])
-        del doc["password_hash"]
+        # if doc["password"] is not None:
+        #     doc["password"] = generate_password_hash(doc["password"])
+        # del doc["password_hash"]
         return doc
 
     def _update(self, ids):
@@ -181,8 +178,8 @@ class Role(core4.base.CoreBase):
     def load(self, **kwargs):
         cur = self.config.sys.role.find(filter=kwargs, sort=[("rolename", 1)])
         for rec in cur:
-            rec["password_hash"] = rec["password"]
-            del rec["password"]
+            # rec["password_hash"] = rec["password"]
+            # del rec["password"]
             yield Role(**rec)
 
     def _resolve(self, role):
@@ -217,16 +214,16 @@ class Role(core4.base.CoreBase):
         # mark deleted
         self.data["_id"] = None
 
-    @property
-    def is_authenticated(self):
-        return True
-
-    @property
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return str(self._id)
+    # @property
+    # def is_authenticated(self):
+    #     return True
+    #
+    # @property
+    # def is_anonymous(self):
+    #     return False
+    #
+    # def get_id(self):
+    #     return str(self._id)
 
     def __getattr__(self, item):
         if item in self.data:
@@ -246,11 +243,11 @@ class Role(core4.base.CoreBase):
             del other_doc[k]
         return self_doc == other_doc
 
-    def is_admin(self):
-        """
-        :return: ``True`` if the role has admin rights
-        """
-        return self.is_active and (COP in self.perm)
+    # def is_admin(self):
+    #     """
+    #     :return: ``True`` if the role has admin rights
+    #     """
+    #     return self.is_active and (COP in self.perm)
 
     def __setattr__(self, key, value):
         if "data" in self.__dict__:
@@ -259,21 +256,21 @@ class Role(core4.base.CoreBase):
                 return
         super().__setattr__(key, value)
 
-    def login(self):
-        """
-        :return: ``True`` for success, else ``False``
-        """
-        # token = current_app.api.serializer.dumps(
-        #     {
-        #         'username': self.username,
-        #         'random': str(uuid.uuid4())
-        #     }
-        # )
-        # self.token = token
-        # self.save()
-        return login_user(self, remember=False)
-
-    def verify_password(self, password):
-        if self.password_hash is not None:
-            return check_password_hash(self.password_hash, password)
-        return False
+    # def login(self):
+    #     """
+    #     :return: ``True`` for success, else ``False``
+    #     """
+    #     # token = current_app.api.serializer.dumps(
+    #     #     {
+    #     #         'username': self.username,
+    #     #         'random': str(uuid.uuid4())
+    #     #     }
+    #     # )
+    #     # self.token = token
+    #     # self.save()
+    #     return login_user(self, remember=False)
+    #
+    # def verify_password(self, password):
+    #     if self.password_hash is not None:
+    #         return check_password_hash(self.password_hash, password)
+    #     return False
