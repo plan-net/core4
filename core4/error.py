@@ -26,3 +26,8 @@ class Core4ConflictError(Core4Error):
     """
 
 
+class Core4RoleNotFound(Core4Error):
+    """"
+    """
+
+

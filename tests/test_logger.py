@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 
+import glob
+import logging
 import os
 import unittest
+
 import pymongo
+
 import core4.base
-import core4.logger
 import core4.config
-import tests.util
-from pprint import pprint
 import core4.error
-import logging
-import glob
+import core4.logger
 import plugin.ident
+import tests.util
 
 
 class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
@@ -43,7 +44,7 @@ class TestBase(unittest.TestCase):
 
     def tearDown(self):
         for fn in glob.glob("*.log*"):
-            #print("removed", fn)
+            # print("removed", fn)
             os.unlink(fn)
 
     @property
@@ -71,7 +72,7 @@ class TestBase(unittest.TestCase):
         os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
         b = LogOn()
         try:
-            x = 1/ 0
+            x = 1 / 0
         except:
             b.logger.critical("this is so critical", exc_info=True)
         data = list(self.mongo.core4test.sys.log.find(
@@ -198,8 +199,9 @@ class TestBase(unittest.TestCase):
         m.execute()
         data = list(m.config.sys.log.find())
         idented = sum([1 for i in data if i["identifier"] == "0815"])
-        #print(idented)
+        # print(idented)
         self.assertEqual(700, idented)
+
 
 if __name__ == '__main__':
     unittest.main()
