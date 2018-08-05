@@ -7,9 +7,12 @@ import unittest
 import pymongo
 import pymongo.errors
 from bson.objectid import ObjectId
+from flask import Flask
+from flask_login import LoginManager
 
 import core4.api.v1.role.main
 import core4.error
+import core4.util
 from tests.test_logger import LogOn
 
 
@@ -321,15 +324,14 @@ class TestRole(unittest.TestCase):
         self.assertNotEqual(test1, test2)
         self.assertRaises(core4.error.Core4ConflictError, test1.delete)
 
-    # def test_create(self):
-    #     role1 = core4.api.v1.role_OLD.Role(rolename="test",
-    #                                        realname="test role")
-    #     role1.save()
-    #     role2 = core4.api.v1.role_OLD.Role(rolename="another",
-    #                                        realname="another test role")
-    #     role2.save()
-    #     self.assertNotEqual(role1, role2)
-    #
+    def test_create(self):
+        role1 = core4.api.v1.role.main.Role(name="test", realname="test role")
+        role1.save()
+        role2 = core4.api.v1.role.main.Role(name="another",
+                                            realname="another test role")
+        role2.save()
+        self.assertNotEqual(role1, role2)
+
     def test_find(self):
         role1 = core4.api.v1.role.main.Role(name="test1",
                                             realname="test role 1   ")
@@ -496,23 +498,22 @@ class TestRole(unittest.TestCase):
                 "mongodb://abc"]
         )
 
-    #
-    # def test_login(self):
-    #     role = core4.api.v1.role_OLD.Role(rolename="test", realname="test role")
-    #     role.save()
-    #     self.assertTrue(role.is_active)
-    #     role.is_active = False
-    #     self.assertFalse(role.is_active)
-    #     role.is_active = True
-    #     self.assertTrue(role.is_active)
-    #     #self.assertEqual(role.get_id(), str(role._id))
-    #     #self.assertFalse(role.is_admin())
-    #     role.perm = ["cop"]
-    #     role.save()
-    #     #self.assertTrue(role.is_admin())
-    #     #self.assertFalse(role.is_anonymous)
-    #     #self.assertTrue(role.is_authenticated)
-    #
+    def test_login(self):
+        role = core4.api.v1.role.main.Role(name="test", realname="test role")
+        role.save()
+        self.assertTrue(role.is_active)
+        role.is_active = False
+        self.assertFalse(role.is_active)
+        role.is_active = True
+        self.assertTrue(role.is_active)
+        self.assertEqual(role.get_id(), str(role._id))
+        self.assertFalse(role.is_admin)
+        role.perm = ["cop"]
+        role.save()
+        self.assertTrue(role.is_admin)
+        self.assertFalse(role.is_anonymous)
+        self.assertFalse(role.is_authenticated)
+
     def test_repr(self):
         test1 = core4.api.v1.role.main.Role(name="test1", realname="test role")
         self.assertTrue(repr(test1).startswith("core4.api.v1.role.main.Role("))
@@ -528,10 +529,10 @@ class TestRole(unittest.TestCase):
             name="1234", realname="123", is_active=True, perm=[
                 "cop"]
         )
-        self.assertTrue(t1.is_admin())
+        self.assertTrue(t1.is_admin)
         t2 = core4.api.v1.role.main.Role(
             name="1234", realname="123", is_active=True)
-        self.assertFalse(t2.is_admin())
+        self.assertFalse(t2.is_admin)
 
     def test_job_access(self):
         t1 = core4.api.v1.role.main.Role(
@@ -572,6 +573,68 @@ class TestRole(unittest.TestCase):
         )
         self.assertTrue(t1.has_api_access("test.job.read.TestJob"))
         self.assertFalse(t1.has_api_access("test.job.other.No"))
+
+    def test_last_login(self):
+        role = core4.api.v1.role.main.Role(
+            name="test", realname="test_role", perm=["cop"])
+
+        def load_user(self, id):
+            _id = ObjectId(id)
+            return core4.api.v1.role.main.Role().load_one(id=_id)
+
+        role.save()
+        app = Flask(__name__)
+        login_manager = LoginManager()
+        login_manager.init_app(app)
+        login_manager.user_loader(load_user)
+        app.config.update(SECRET_KEY="test key")
+
+        self.assertIsNone(role.last_login)
+        with app.app_context():
+            with app.test_request_context():
+                role.login()
+        self.assertIsNotNone(role.last_login)
+
+    def test_limit(self):
+        core4.api.v1.role.main.Role(
+            name="test", realname="test_role", quota="1:123")
+        self.assertRaises(TypeError, core4.api.v1.role.main.Role, **dict(
+            name="test", realname="test_role", quota="a"))
+        self.assertRaises(TypeError, core4.api.v1.role.main.Role, **dict(
+            name="test", realname="test_role", quota="a:abc"))
+        self.assertRaises(TypeError, core4.api.v1.role.main.Role, **dict(
+            name="test", realname="test_role", quota="a:abc:123"))
+        test = core4.api.v1.role.main.Role(
+            name="test", realname="test_role", quota="1/60")
+        test.save()
+        test.save()
+        core4.api.v1.role.main.Role(
+            name="test", realname="test_role", quota=" 1 / 60 ")
+
+    def test_limit_counter(self):
+        role = core4.api.v1.role.main.Role(
+            name="test", realname="test_role", quota="10:1")
+        role.save()
+        for i in range(0, 5):
+            t0 = core4.util.now()
+            for i in range(10):
+                role.dec_quota()
+            self.assertFalse(role.dec_quota())
+            while not role.dec_quota():
+                t1 = core4.util.now()
+            self.assertAlmostEqual((t1 - t0).total_seconds(), 1, 0)
+
+    def test_limit_time(self):
+        role = core4.api.v1.role.main.Role(
+            name="test", realname="test_role", quota="1:1")
+        role.save()
+        t0 = core4.util.now()
+        success = 5
+        while success > 0:
+            if role.dec_quota():
+                success -= 1
+        self.assertAlmostEqual((core4.util.now() - t0).total_seconds(), 4, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
