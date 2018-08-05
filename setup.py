@@ -19,12 +19,6 @@ class MyTestCommand(TestCommand):
         check_call([sys.executable, "tests/runner.py"])
 
 
-class MyCoverageCommand(TestCommand):
-
-    def run_tests(self):
-        check_call([sys.executable, "tests/runner.py", "-c"])
-
-
 class MySphinxCommand(TestCommand):
 
     def run_tests(self):
@@ -59,8 +53,10 @@ setup(
     package_data={
         '': package_files('core4/api', ['.+\.(html|js|css|tmpl)$'])
     },
-    install_requires=[
+    tests_require=[
         "coverage>=4.0, <5.0",
+    ],
+    install_requires=[
         "numpy>=1.14, <1.15",
         "pandas>=0.22, <0.23",
         "pymongo>=3.6, <3.7",
@@ -72,8 +68,7 @@ setup(
     zip_safe=False,
     cmdclass={
         'test': MyTestCommand,
-        'coverage': MyCoverageCommand,
-        'sphinx': MySphinxCommand,
+        'sphinx': MySphinxCommand
     },
     classifiers=(
         'Development Status :: 3 - Alpha',
