@@ -5,7 +5,6 @@ The :mod:`core4.config.pragma` module implements the following helpers with
 core4 configuration management:
 
 * :class:`connect` to specify :class:`.CoreCollection` connection settings
-
 """
 
 
@@ -35,12 +34,12 @@ class connect:
 
         from core4.config import connect
 
-        mongo_url = "mongodb://user:pwd@localhost:27017"
-        mongo_database = "testdb"
+        mongo_url = "mongodb://usr:pwd@localhost:27017"
+        mongo_database = "db"
 
         section1 = {
-            result1 = connect("mongodb://user:pwd@localhost:27017/testdb/result")
-            result2 = connect("mongodb://testdb/result")
+            result1 = connect("mongodb://usr:pwd@localhost:27017/db/result")
+            result2 = connect("mongodb://db/result")
             result3 = connect("mongodb://result")
         }
 

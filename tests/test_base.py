@@ -54,8 +54,8 @@ class TestBase(unittest.TestCase):
         t = plugin.test.Test()
         self.assertEqual("plugin.test.Test()", repr(t))
 
-    def test_binding(self):
-        pass
+    # def test_binding(self):
+    #     self.assertEqual(1, 0)
 
     def _test_binding(self):
 

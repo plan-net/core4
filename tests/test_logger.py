@@ -120,7 +120,7 @@ class TestBase(unittest.TestCase):
             k = fn.split(".")[0]
             if not k in data:
                 data[k] = []
-            data[k] += body.strip().split("\n")
+            data[k] += body.strip().splitlines()
         self.assertEqual(2, len(data["errors"]))
         self.assertEqual(5, len(data["info"]))
 

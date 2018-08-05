@@ -16,9 +16,9 @@ logging.Formatter.converter = time.gmtime  # log in UTC
 class CoreLoggerMixin:
 
     """
-    If your application wants to enable logging, mixin :class:`.CoreLoggerMixin`
-    and call :meth:`.setup_logging`. This will instantiate your logging needs
-    as defined in core4 cascading configuration.
+    If your application wants to enable logging, mixin
+    :class:`.CoreLoggerMixin` and call :meth:`.setup_logging`. This will
+    instantiate your logging needs as defined in core4 cascading configuration.
     """
 
     completed = False

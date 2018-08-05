@@ -156,8 +156,8 @@ class CoreConfig(collections.MutableMapping):
 
     def _cascade(self):
         """
-        Internal method used to cascade from top level configuration options and
-        their values (default values) down into dictionaries encapsulating
+        Internal method used to cascade from top level configuration options
+        and their values (default values) down into dictionaries encapsulating
         different configuration sections.
         """
         default = {}
@@ -261,7 +261,8 @@ class CoreConfig(collections.MutableMapping):
                 self._verify_key({levels[0]: v})
                 for lev in levels[:-1]:
                     if lev in ref:
-                        if not isinstance(ref[lev], collections.MutableMapping):
+                        if not isinstance(
+                                ref[lev], collections.MutableMapping):
                             ref[lev] = {}
                     else:
                         ref[lev] = {}

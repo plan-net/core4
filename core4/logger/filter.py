@@ -8,7 +8,8 @@ import core4.util
 class CoreLoggingFilter(logging.Filter):
 
     """
-    This filter adds the following properties to the :class:`logging.LogRecord`:
+    This filter adds the following properties to the
+    :class:`logging.LogRecord`:
 
     * username
     * hostname

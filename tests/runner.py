@@ -11,9 +11,7 @@ https://github.com/cztomczak/pycef/blob/master/unittests/_runner.py for
 a similar approach.
 """
 
-import argparse
 import collections
-import datetime
 import io
 import itertools
 import os
@@ -21,9 +19,12 @@ import re
 import subprocess
 import sys
 import tempfile
-import time
 from contextlib import contextmanager
 from subprocess import PIPE
+
+import argparse
+import datetime
+import time
 
 Result = collections.namedtuple('Result', 'package tests runtime exit_code '
                                           'output')
@@ -142,43 +143,47 @@ def main():
     if istty():
         sys.stdout.write("\033[?25l")
 
-    if args.coverage:
-        headline("core4 test coverage")
-        cmd = ["coverage", "erase"]
-        pre_proc = subprocess.Popen(cmd)
-        pre_proc.wait()
-        if pre_proc.returncode != 0:
-            raise SystemExit(pre_proc.returncode)
-    else:
-        headline("core4 isolated regression tests")
-    logfile = tempfile.mktemp()
-    result = []
-
-    ret = None
-    for pkg in discover():
-        ret = run(logfile, pkg)
-        result.append(ret)
-        if ret.exit_code:
-            print("[ FAILED ]\n")
-            with warn():
-                headline("DETAILS on failed {}".format(ret.package))
-                print(ret.output)
-            break
+    try:
+        if args.coverage:
+            headline("core4 test coverage")
+            cmd = ["coverage", "erase"]
+            pre_proc = subprocess.Popen(cmd)
+            pre_proc.wait()
+            if pre_proc.returncode != 0:
+                raise SystemExit(pre_proc.returncode)
         else:
-            print("[   OK   ]")
+            headline("core4 isolated regression tests")
+        logfile = tempfile.mktemp()
+        result = []
 
-    headline("regression test results")
-    print(HEAD_LINE.format('test script', 'runtime', 'tests'))
-    line()
-    for test in result:
-        print(REPORT_LINE.format(
-            test.package, str(test.runtime), test.tests))
-    line()
-    runtime = sum([r.runtime.total_seconds() for r in result])
-    tests = sum([r.tests for r in result])
-    print(TOTAL_LINE.format(
-        'total', str(datetime.timedelta(seconds=runtime)), tests))
-    os.unlink(logfile)
+        ret = None
+        for pkg in discover():
+            ret = run(logfile, pkg)
+            result.append(ret)
+            if ret.exit_code:
+                print("[ FAILED ]\n")
+                with warn():
+                    headline("DETAILS on failed {}".format(ret.package))
+                    print(ret.output)
+                break
+            else:
+                print("[   OK   ]")
+
+        headline("regression test results")
+        print(HEAD_LINE.format('test script', 'runtime', 'tests'))
+        line()
+        for test in result:
+            print(REPORT_LINE.format(
+                test.package, str(test.runtime), test.tests))
+        line()
+        runtime = sum([r.runtime.total_seconds() for r in result])
+        tests = sum([r.tests for r in result])
+        print(TOTAL_LINE.format(
+            'total', str(datetime.timedelta(seconds=runtime)), tests))
+        os.unlink(logfile)
+    finally:
+        if istty():
+            sys.stdout.write("\033[?25h")
 
     if ret and ret.exit_code:
         with warn():
@@ -194,11 +199,9 @@ def main():
         headline("test coverage report")
         print("  ", end="")
         output = post_proc.stdout.read().decode().strip()
-        print("\n  ".join(output.split("\n")))
+        print("\n  ".join(output.splitlines()))
 
     print("\ntests SUCCEED")
-    if istty():
-        sys.stdout.write("\033[?25h")
 
 
 if __name__ == '__main__':

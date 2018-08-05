@@ -74,15 +74,6 @@ def dict_merge(dct, merge_dct, add_keys=True):
     return dct
 
 
-def package_files(directory, pattern):
-    paths = []
-    for (path, directories, filenames) in os.walk(directory):
-        for filename in filenames:
-            if sum([1 for p in pattern
-                    if re.match(p, filename) is not None]) > 0:
-                paths.append(os.path.join('..', path, filename))
-    return paths
-
 def now():
     """
     :return: current core4 system time (in UTC)

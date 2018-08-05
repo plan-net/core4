@@ -23,11 +23,12 @@ class Core4ConfigurationError(Core4Error):
 
 class Core4ConflictError(Core4Error):
     """"
+    This exception is raised if core4 encounters an update conflict, i.e. if
+    the etag does not match current document status.
     """
 
 
 class Core4RoleNotFound(Core4Error):
     """"
+    This exception is raised if a role/user does not exist.
     """
-
-

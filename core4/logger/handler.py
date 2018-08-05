@@ -6,8 +6,8 @@ import traceback
 
 def make_record(record):
     """
-    Internal method to translate a :class:`logging.LogRecord` into a Python dict
-    ready to feed.
+    Internal method to translate a :class:`logging.LogRecord` into a Python
+    dict ready to feed.
 
     The document carries the following keys:
 
@@ -67,15 +67,15 @@ class MongoLoggingHandler(logging.Handler):
         * ``_id`` - the document id as created by
           :class:`core4.logger.MongoAdapter`
         * ``created`` - the logging datetime in UTC
-        * ``level`` - the log level as string (``DEBUG``, ``INFO``, ``WARNING``,
-          ``ERROR``, ``CRITICAL``)
+        * ``level`` - the log level as string (``DEBUG``, ``INFO``,
+          ``WARNING``, ``ERROR``, ``CRITICAL``)
         * ``hostname`` - the name of the host sending the message
         * ``user`` - the name of the user sending
         * ``qual_name`` - the qualified name of the class as created by
           :meth:`.CoreBase.qual_name`
-        * ``identifier`` - the core object identifier; this identifier qualifies
-          core workers with the worker name, core jobs with the worker and
-          job id and API requests with its request id
+        * ``identifier`` - the core object identifier; this identifier
+          qualifies core workers with the worker name, core jobs with the
+          worker and job id and API requests with its request id
         * ``message`` - the log message
 
         :param record: the log record (:class:`logging.LogRecord`)
