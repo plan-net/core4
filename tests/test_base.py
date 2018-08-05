@@ -111,9 +111,13 @@ class TestBase(unittest.TestCase):
     def test_main(self):
         import plugin.test
         from subprocess import check_output
-        pp = os.path.dirname(core4.__file__) + "/.."
         environ = os.environ
-        os.environ["PYTHONPATH"] = pp
+        if "PYTHONPATH" in os.environ:
+            pp = os.environ["PYTHONPATH"].split(":")
+        else:
+            pp = []
+        pp.append(os.path.dirname(core4.__file__) + "/..")
+        os.environ["PYTHONPATH"] = ":".join(pp)
         out = check_output([sys.executable, plugin.test.__file__], env=environ)
         self.assertEqual(out.decode("utf-8").strip(),
                          'core4.base.main.CoreBase plugin.test.Test')
