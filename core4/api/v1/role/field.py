@@ -10,15 +10,15 @@ import core4.util
 
 COP = "cop"
 PROTO = [
-    re.compile("^" + COP + "$"),
-    re.compile("^job://[^\s\/]+/[xr]$"),
-    re.compile("^api://[^\s\/]+$"),
-    re.compile("^app://[^\s]+$"),
-    re.compile("^mongodb://[^\s]+$")
+    re.compile(r"^" + COP + "$"),
+    re.compile(r"^job://[^\s\/]+/[xr]$"),
+    re.compile(r"^api://[^\s\/]+$"),
+    re.compile(r"^app://[^\s]+$"),
+    re.compile(r"^mongodb://[^\s]+$")
 ]
 JOB_EXECUTION_RIGHT = 'x'
 JOB_READ_RIGHT = 'r'
-LIMIT = re.compile("^\s*(\d+)\s*\D\s*(\d+)\s*$")
+LIMIT = re.compile(r"^\s*(\d+)\s*\D\s*(\d+)\s*$")
 
 
 class Field:

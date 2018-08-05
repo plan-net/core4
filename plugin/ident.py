@@ -41,5 +41,3 @@ class Massive(core4.base.CoreBase):
         self.logger.warning("done preps, start execution")
         for d in data:
             d.execute()
-
-

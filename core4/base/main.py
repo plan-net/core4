@@ -80,7 +80,8 @@ class CoreBase:
                 if os.path.exists(init_file):
                     body = open(init_file, 'r').read()
                     if re.match(
-                            '.*\_\_project\_\_\s*\=\s*[\"\']{}[\"\'].*'.format(
+                            r'.*\_\_project\_\_\s*'
+                            r'\=\s*[\"\']{}[\"\'].*'.format(
                                 CORE4), body, re.DOTALL):
                         self.__class__._qual_name = ".".join(
                             list(reversed(pathname))

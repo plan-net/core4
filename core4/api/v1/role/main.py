@@ -7,9 +7,9 @@ import core4.base
 import core4.error
 from core4.api.v1.role.field import *
 
-ALPHANUM = re.compile('^[a-zA-Z0-9_.-]+$')
-EMAIL = re.compile('^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
-                   '@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$')
+ALPHANUM = re.compile(r'^[a-zA-Z0-9_.-]+$')
+EMAIL = re.compile(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
+                   r'@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$')
 
 
 class RoleField(Field):
