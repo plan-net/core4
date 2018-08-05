@@ -24,6 +24,7 @@ class MySphinxCommand(TestCommand):
     def run_tests(self):
         check_call(
             ["sphinx-build", "-a", "-q", "docs/source", "docs/build/html"])
+        print("\nopen core4 documentation at docs/build/html/index.html")
 
 
 def package_files(directory, pattern):
@@ -63,6 +64,7 @@ setup(
         "python-dateutil>=2.7, <2.8",
         "Sphinx>=1.7, <1.8",
         "sphinx-rtd-theme==0.3, <0.4",
+        "Flask>=1.0, <2.0",
         "Flask-Login>=0.4, <1.0"
     ],
     zip_safe=False,

@@ -103,7 +103,7 @@ def run(logfile, pkg):
         cmd = ["coverage", "run", "--append", "--source", "core4", "-m",
                "unittest", "-v", "-f", "tests." + pkg]
     else:
-        cmd = ["python", "-m", "unittest", "-v", "-f", "tests." + pkg]
+        cmd = [sys.executable, "-m", "unittest", "-v", "-f", "tests." + pkg]
     fmt = " " + pkg + (53 - len(pkg)) * " "
     output = ""
     with io.open(logfile, 'w', encoding='utf-8') as writer, io.open(
