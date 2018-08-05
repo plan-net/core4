@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import re
-
 import pymongo
+from flask_login import login_user
 
 import core4.base
 import core4.error
@@ -67,8 +66,8 @@ class RoleField(Field):
 
 class Role(core4.base.CoreBase):
     """
-    Access to core API, core jobs, databases and applications is managed through
-    roles. Role data resides in core4 system collection ``sys.role``.
+    Access to core API, core jobs, databases and applications is managed
+    through roles. Role data resides in core4 system collection ``sys.role``.
     """
 
     def __init__(self, **kwargs):
@@ -86,17 +85,16 @@ class Role(core4.base.CoreBase):
             StringField("email", required=False, regex=EMAIL, **kwargs),
             PasswordField("password", **kwargs),
             PermField("perm", **kwargs),
-            # ("perm", PermField(_get("perm", []))),
-            # ("last_login", TimestampField(_get("last_login"))),
-            # ("token", TokenField(_get("token"))),
-            # ("limit", LimitField(_get("limit")))
+            TimestampField("last_login", **kwargs),
+            QuotaField("quota", **kwargs),
         ]
 
         self.data = dict([(f.key, f) for f in fields])
-
         for field in kwargs:
             if ((field not in self.data) and (field != "password_hash")):
                 raise TypeError("unknown field [{}]".format(field))
+        self.is_authenticated = False
+        self.is_anonymous = False
 
     def __repr__(self):
         return "{}({})".format(
@@ -129,9 +127,12 @@ class Role(core4.base.CoreBase):
         self._check_circle()
         self._check_user()
         if self._id is None:
-            return self._create()
+            saved = self._create()
         else:
-            return self._update()
+            saved = self._update()
+        if saved:
+            self.data["quota"].save(self.config.sys.quota, self._id)
+        return saved
 
     def _check_user(self):
         have_password = self.password is not None
@@ -162,7 +163,8 @@ class Role(core4.base.CoreBase):
         self.data["etag"].value = ObjectId()
         ret = self.config.sys.role.insert_one(self._doc())
         self.data["_id"].value = ret.inserted_id
-        self.logger.info("created role [%s] with _id [%s]", self.name, self._id)
+        self.logger.info("created role [%s] with _id [%s]", self.name,
+                         self._id)
         return True
 
     def _update(self):
@@ -186,7 +188,8 @@ class Role(core4.base.CoreBase):
             raise core4.error.Core4ConflictError(
                 "update [{}] with etag [{}] failed".format(
                     self._id, curr_etag))
-        self.logger.info("updated role [%s] with _id [%s]", self.name, self._id)
+        self.logger.info("updated role [%s] with _id [%s]", self.name,
+                         self._id)
         return True
 
     def load(self, user=None, role=None, **kwargs):
@@ -240,15 +243,17 @@ class Role(core4.base.CoreBase):
                 "role": self._id
             }
         })
-        self.logger.info("deleted role [%s] with _id [%s]", self.name, self._id)
+        self.logger.info("deleted role [%s] with _id [%s]", self.name,
+                         self._id)
         self._id = None
         self.etag = None
 
+    @property
     def is_admin(self):
         return COP in self.perm
 
     def _job_access(self, qual_name):
-        if self.is_admin():
+        if self.is_admin:
             return True
         for p in self.perm:
             (*proto, qn, marker) = p.split("/")
@@ -263,10 +268,73 @@ class Role(core4.base.CoreBase):
         return self._job_access(qual_name) == JOB_EXECUTION_RIGHT
 
     def has_api_access(self, qual_name):
-        if self.is_admin():
+        if self.is_admin:
             return True
         for p in self.perm:
             (*proto, qn) = p.split("/")
             if re.match(qn, qual_name):
                 return True
         return False
+
+    def login(self):
+        """
+        :return: ``True`` for success, else ``False``
+        """
+        self.last_login = core4.util.now()
+        self.config.sys.role.update_one(
+            {"_id": self._id}, {"$set": {"last_login": self.last_login}})
+        self.logger.info("login user [%s] with _id [%s]", self.name, self._id)
+        return login_user(self, remember=False)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password, password)
+
+    def get_id(self):
+        return str(self._id)
+
+    def dec_quota(self):
+        # regular quota update
+        now = core4.util.now()
+        upd = self.config.sys.quota.update_one(
+            filter={
+                "_id": self._id,
+                "timestamp": {
+                    "$gt": now
+                },
+                "current": {
+                    "$gt": 0
+                }
+            },
+            update={
+                "$inc": {
+                    "current": -1
+                }
+            }
+        )
+        if upd.modified_count == 0:
+            # next interval
+            upd = self.config.sys.quota.update_one(
+                filter={
+                    "_id": self._id,
+                    "$or": [
+                        {
+                            "timestamp": None
+                        },
+                        {
+                            "timestamp": {
+                                "$lt": now
+                            }
+                        }
+                    ]
+                },
+                update={
+                    "$set": {
+                        "current": self.data["quota"].limit - 1,
+                        "timestamp": now + datetime.timedelta(
+                            seconds=self.data["quota"].seconds)
+                    }
+                }
+            )
+            if upd.modified_count == 0:
+                return False
+        return True

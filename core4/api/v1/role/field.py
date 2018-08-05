@@ -16,9 +16,9 @@ PROTO = [
     re.compile("^app://[^\s]+$"),
     re.compile("^mongodb://[^\s]+$")
 ]
-
 JOB_EXECUTION_RIGHT = 'x'
 JOB_READ_RIGHT = 'r'
+LIMIT = re.compile("^\s*(\d+)\s*\D\s*(\d+)\s*$")
 
 
 class Field:
@@ -85,6 +85,7 @@ class BoolField(Field):
             raise TypeError("field [{}] requires bool".format(self.key))
         return value
 
+
 class TimestampField(Field):
 
     def transform(self, value):
@@ -133,14 +134,37 @@ class PasswordField(Field):
             return None
         return generate_password_hash(value)
 
-    # def to_mongo(self):
-    #     if self.value is not None:
-    #         self.password_hash = generate_password_hash(self.value)
-    #         return self.password_hash
-
     def verify_password(self, password):
         return check_password_hash(self.value, password)
 
 
-class LimitField(Field):
-    pass
+class QuotaField(Field):
+    default = None
+
+    def transform(self, value):
+        if value:
+            quota = self._split(value)
+            self.limit = quota["limit"]
+            self.seconds = quota["seconds"]
+        return value
+
+    def _split(self, value):
+        match = LIMIT.match(value)
+        if match is None:
+            raise TypeError(
+                "invalid quota protocol [{}], "
+                "expected 'limit/seconds'".format(value))
+        (limit, seconds) = match.groups()
+        return {
+            "timestamp": None,
+            "seconds": int(seconds),
+            "limit": int(limit),
+            "current": int(limit)
+        }
+
+    def save(self, collection, _id):
+        if self.value:
+            collection.delete_many({"_id": _id})
+            quota = self._split(self.value)
+            quota["_id"] = _id
+            collection.insert_one(quota)
