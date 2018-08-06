@@ -652,7 +652,27 @@ class TestRole(unittest.TestCase):
             role=[role1, role2])
         role3.save()
         self.assertEqual(role3.perm, ["app://3"])
-        self.assertEqual(role3.casc_perm, ["app://1", "app://2", "app://3"])
+        self.assertEqual(role3._casc_perm, ["app://1", "app://2", "app://3"])
+
+    def test_perm_recursion(self):
+        role1 = core4.api.v1.role.main.Role(
+            name="test1", realname="test_role", perm=["app://1"])
+        role1.save()
+        role2 = core4.api.v1.role.main.Role(
+            name="test2", realname="test_role", perm=["app://2"],
+            role=[role1])
+        role2.save()
+        role3 = core4.api.v1.role.main.Role(
+            name="test3", realname="test_role", perm=["app://3"],
+            role=[role2])
+        role3.save()
+        self.assertEqual(role3._casc_perm, ["app://1", "app://2", "app://3"])
+        role3.role = [role1]
+        self.assertEqual(role3._casc_perm, ["app://1", "app://3"])
+        role3.save()
+        test = core4.api.v1.role.main.Role().load_one(name="test3")
+        self.assertEqual(test._casc_perm, ["app://1", "app://3"])
+
 
 if __name__ == '__main__':
     unittest.main()

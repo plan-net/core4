@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""
+This module provides class :class:`.Role` featuring authorisation and access
+management to core4 API, jobs, databases and applications.
+"""
+
 import pymongo
 from flask_login import login_user
 
@@ -12,62 +17,26 @@ EMAIL = re.compile(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
                    r'@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$')
 
 
-class RoleField(Field):
-    default = []
-
-    def __init__(self, key, collection, **kwargs):
-        self.collection = collection
-        self.instance_id = []
-        super().__init__(key, **kwargs)
-
-    def _resolve(self, rid):
-        doc = self.collection.find_one({"_id": rid})
-        if doc is None:
-            raise core4.error.Core4RoleNotFound(rid)
-        return Role(**doc)
-
-    def transform(self, value):
-        error = False
-        if not isinstance(value, list):
-            error = True
-        else:
-            ids = []
-            obj = []
-            for r in value:
-                i = None
-                o = None
-                if isinstance(r, ObjectId):
-                    i = r
-                    o = self._resolve(r)
-                elif isinstance(r, Role):
-                    i = r._id
-                    o = r
-                else:
-                    error = True
-                if i not in ids:
-                    if not self._exists(i):
-                        error = True
-                    else:
-                        ids.append(i)
-                        obj.append(o)
-        if error:
-            raise TypeError(
-                "field [{}] requires list of existing ObjectId".format(
-                    self.key))
-        self.instance_id = ids
-        return obj
-
-    def to_mongo(self):
-        return self.instance_id
-
-    def _exists(self, _id):
-        return self.collection.count({"_id": _id}) == 1
-
-
 class Role(core4.base.CoreBase):
     """
-    Access to core API, core jobs, databases and applications is managed
+    Access to core API, core4 jobs, databases and applications is managed
     through roles. Role data resides in core4 system collection ``sys.role``.
+
+    Each role has the following attributes:
+
+    * ``._id`` (:class:`.ObjectId`) mongo database identifier
+    * ``.name`` (str)
+    * ``.realname`` (str)
+    * ``.is_active`` (bool)
+    * ``.created`` (:class:`.datetime`), automatically injected
+    * ``.updated`` (:class:`.datetime`), automatically injected
+    * ``.etag`` (:class:`.ObjectId`) for concurrency control
+    * ``.role`` (list of :class:`.Role`)
+    * ``.email`` (str)
+    * ``.password`` (str)
+    * ``.perm`` (list of str)
+    * ``.last_login`` (:class:`.datetime`), automatically injected
+    * ``.quota`` (str in format ``limit:seconds``
     """
 
     def __init__(self, **kwargs):
@@ -105,25 +74,46 @@ class Role(core4.base.CoreBase):
         )
 
     def __getattr__(self, item):
+        """
+        forward role attribute getter to fields
+        """
         if item in self.data:
             self.data.get(item).validate()
             return self.data.get(item).value
         return super().__getattribute__(item)
 
     def __setattr__(self, key, value):
+        """
+        forward role attribute setter to fields
+        """
         if "data" in self.__dict__:
             if key in self.__dict__["data"]:
                 self.data[key].value = value
-                if key == "perm":
+                if key in ["perm", "role"]:
                     self._perm = None
                 return
         super().__setattr__(key, value)
 
     def create_index(self):
+        """
+        Internal method used to create a unique index on the ``name``
+        attribute
+        """
         self.config.sys.role.create_index(
             [("name", pymongo.ASCENDING)], unique=True)
 
     def save(self):
+        """
+        Create and update the role. Please note that a role is only
+        materialised, if one or more attributes have changed.
+
+        This method raises :class:`.Core4ConflictError` if the role has been
+        updated in between, :class:`RuntimeError` in case of circular roles,
+        :class:`AttributeError` if an email but no password has been specified
+        (and vice verse) or any field validation failed.
+
+        :return: ``True`` if the role has been updated, else ``False``.
+        """
         self.create_index()
         for field in self.data.values():
             field.validate()
@@ -134,10 +124,14 @@ class Role(core4.base.CoreBase):
         else:
             saved = self._update()
         if saved:
-            self.data["quota"].save(self.config.sys.quota, self._id)
+            self.data["quota"].insert(self.config.sys.quota, self._id)
         return saved
 
     def _check_user(self):
+        """
+        :return: verify a valid role (no email and password) or a valid
+                 user role (email and password)
+        """
         have_password = self.password is not None
         have_email = self.email is not None
         if ((not (have_password and have_email))
@@ -145,6 +139,10 @@ class Role(core4.base.CoreBase):
             raise AttributeError("user role requires email and password")
 
     def _check_circle(self):
+        """
+        Verify no circular roles are defined, raises :class:`RuntimeError`.
+        """
+
         def traverse(r):
             for i in r:
                 if i._id == self._id:
@@ -154,6 +152,9 @@ class Role(core4.base.CoreBase):
         traverse(self.role)
 
     def _doc(self):
+        """
+        Transforms the role object into a valid MongoDB document.
+        """
         doc = {}
         for k, f in self.data.items():
             val = f.to_mongo()
@@ -162,6 +163,9 @@ class Role(core4.base.CoreBase):
         return doc
 
     def _create(self):
+        """
+        Internal method used to create the role.
+        """
         self.data["created"].update()
         self.data["etag"].value = ObjectId()
         ret = self.config.sys.role.insert_one(self._doc())
@@ -171,6 +175,9 @@ class Role(core4.base.CoreBase):
         return True
 
     def _update(self):
+        """
+        Internal method used to update the role.
+        """
         try:
             test = self.load_one(_id=self._id)
         except StopIteration:
@@ -196,6 +203,17 @@ class Role(core4.base.CoreBase):
         return True
 
     def load(self, user=None, role=None, **kwargs):
+        """
+        Generator loading the roles from the mongo database.
+
+        :param user: if ``True``, then only roles with an email will be
+                     retrieved
+        :param role: if ``True`` then only roles without email will be
+                     retrieved
+        :param kwargs: query parameters to filter role retrieval
+
+        :return: generator of :class:`Role`
+        """
         if ((user or role) and (not (user and role))):
             if user:
                 kwargs["email"] = {"$exists": True}
@@ -209,13 +227,20 @@ class Role(core4.base.CoreBase):
             yield Role(**rec)
 
     def load_one(self, *args, **kwargs):
+        """
+        Loads the first matching role from the mongo database. For ``*args``
+        and ``**kwargs`` see :meth:`.load`.
+
+        :return: first :class:`.Role` matching the search criteria
+        """
         ret = self.load(*args, **kwargs)
         return next(ret)
 
-    def verify_password(self, password):
-        return self.data["password"].verify_password(password)
-
     def __eq__(self, other):
+        """
+        Compares the role with the passed ``other`` role. Two roles are equal
+        if all attributes are equal.
+        """
         if other is None:
             return False
         self_doc = self._doc()
@@ -228,9 +253,19 @@ class Role(core4.base.CoreBase):
         return self_doc == other_doc
 
     def __lt__(self, other):
+        """
+        Compares the role with the passed ``other`` role. This comparison
+        operation is solely based on the ``.name`` attribute of the two roles.
+        """
         return self.name < other.name
 
     def delete(self):
+        """
+        Deletes the role.
+
+        This method raises :class:`.Core4ConflictError` if the role has been
+        updated in between.
+        """
         if not self._id:
             raise RuntimeError("Role object not loaded")
         # delete the role
@@ -252,38 +287,64 @@ class Role(core4.base.CoreBase):
         self.etag = None
 
     @property
-    def casc_perm(self):
+    def _casc_perm(self):
+        """
+        Internal method to recurively collect all permissions
+        (:class:`.PermField`).
+        """
         if self._perm is None:
-            self._perm = self.perm
-            for role in self.role:
-                self._perm += role.perm
-            self._perm = list(set(self._perm))
-            self._perm.sort()
+
+            def traverse(role):
+                p = role.perm[:]
+                for i in role.role:
+                    p += traverse(i)
+                return p
+
+            perm = traverse(self)
+            perm = list(set(perm))
+            perm.sort()
+            self._perm = perm
         return self._perm
 
     @property
     def is_admin(self):
-        return COP in self.casc_perm
+        """
+        :return: ``True`` if the role as a ``perm`` record of ``cop``.
+        """
+        return COP in self._casc_perm
 
     def _job_access(self, qual_name):
+        """
+        Internal method to check job access permissions.
+        """
         if self.is_admin:
             return True
-        for p in self.casc_perm:
+        for p in self._casc_perm:
             (*proto, qn, marker) = p.split("/")
             if re.match(qn, qual_name):
                 return marker
         return None
 
     def has_job_access(self, qual_name):
+        """
+        :param qual_name: of the job, see :meth:`.qual_name`
+        :return: ``True`` if the role has read and/or execution access
+                 permissions, else ``False``
+        """
         return self._job_access(qual_name) is not None
 
     def has_job_exec_access(self, qual_name):
+        """
+        :param qual_name: of the job, see :meth:`.qual_name`
+        :return: ``True`` if the role has execution access permissions, else
+                 ``False``
+        """
         return self._job_access(qual_name) == JOB_EXECUTION_RIGHT
 
     def has_api_access(self, qual_name):
         if self.is_admin:
             return True
-        for p in self.casc_perm:
+        for p in self._casc_perm:
             (*proto, qn) = p.split("/")
             if re.match(qn, qual_name):
                 return True
@@ -300,12 +361,25 @@ class Role(core4.base.CoreBase):
         return login_user(self, remember=False)
 
     def verify_password(self, password):
-        return check_password_hash(self.password, password)
+        """
+        :param password: in clear text
+        :return: ``True`` if the password matches the stored password hash
+        """
+        return self.data["password"].verify_password(password)
 
     def get_id(self):
+        """
+        :return: role ``_id`` as str
+        """
         return str(self._id)
 
     def dec_quota(self):
+        """
+        This method decreases the role`s rate limit.
+
+        :return: ``True`` if the role is in the defined rate limit, else
+                 ``False``
+        """
         # regular quota update
         now = core4.util.now()
         upd = self.config.sys.quota.update_one(
@@ -351,3 +425,75 @@ class Role(core4.base.CoreBase):
             if upd.modified_count == 0:
                 return False
         return True
+
+
+class RoleField(Field):
+    """
+    This class handles the ``role`` attribute of a role. By assigning one or
+    more roles to a role, the permissions of these roles (see
+    :class:`.PermField`) are inherited. This allows to define hierarchical
+    access permissions.
+    """
+    default = []
+
+    def __init__(self, key, collection, **kwargs):
+        self.collection = collection
+        self.instance_id = []
+        super().__init__(key, **kwargs)
+
+    def _resolve(self, rid):
+        """
+        Internal method to load roles by the role ``_id``.
+        """
+        doc = self.collection.find_one({"_id": rid})
+        if doc is None:
+            raise core4.error.Core4RoleNotFound(rid)
+        return Role(**doc)
+
+    def transform(self, value):
+        """
+        Verify the value type as a list of role ``_id`` or :class:`.Role`
+        objects.
+        """
+        error = False
+        if not isinstance(value, list):
+            error = True
+        else:
+            ids = []
+            obj = []
+            for r in value:
+                i = None
+                o = None
+                if isinstance(r, ObjectId):
+                    i = r
+                    o = self._resolve(r)
+                elif isinstance(r, Role):
+                    i = r._id
+                    o = r
+                else:
+                    error = True
+                if i not in ids:
+                    if not self._exists(i):
+                        error = True
+                    else:
+                        ids.append(i)
+                        obj.append(o)
+        if error:
+            raise TypeError(
+                "field [{}] requires list of existing ObjectId".format(
+                    self.key))
+        self.instance_id = ids
+        return obj
+
+    def to_mongo(self):
+        """
+        This method is executed to translate the role objects into valid
+        :class:`.ObjectId`.
+        """
+        return self.instance_id
+
+    def _exists(self, _id):
+        """
+        Internal method used to check if the role ``_id`` exists.
+        """
+        return self.collection.count({"_id": _id}) == 1

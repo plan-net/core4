@@ -42,12 +42,12 @@ class CoreBase:
     * a unique object identifier, i.e. the job id, the request id or the name
       of the worker with :attr:`.identifier`.
 
-    ..note:: Please note that :class:`.CoreBase` replicates the identifier of
-             the class in which scope the object is created. If an object _A_
-             derived from  :class:`.CoreBase` has an :attr:`.identifer` not
-             ``None`` and creates another object _B_ which inherits from
-             :class:`.CoreBase`, too, then the :attr:`.identifier` is passed
-             from object _A_ to object _B_.
+    .. note:: Please note that :class:`.CoreBase` replicates the identifier of
+              the class in which scope the object is created. If an object _A_
+              derived from  :class:`.CoreBase` has an :attr:`.identifer` not
+              ``None`` and creates another object _B_ which inherits from
+              :class:`.CoreBase`, too, then the :attr:`.identifier` is passed
+              from object _A_ to object _B_.
     """
     _qual_name = None
     plugin = None
