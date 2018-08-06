@@ -77,7 +77,8 @@ class TestRole(unittest.TestCase):
         self.assertRaises(AttributeError, lambda: r1.bla)
 
     def test_conflict(self):
-        role1 = core4.api.v1.role.main.Role(name="test", realname="test role 1")
+        role1 = core4.api.v1.role.main.Role(name="test",
+                                            realname="test role 1")
         role1.save()
 
         role2 = core4.api.v1.role.main.Role().load_one(name="test")
@@ -115,9 +116,11 @@ class TestRole(unittest.TestCase):
                                         password="hello")
         r.save()
         self.assertRaises(TypeError, core4.api.v1.role.main.Role,
-                          **dict(name="role1", email="a@b.c", password="hello"))
+                          **dict(name="role1", email="a@b.c",
+                                 password="hello"))
         self.assertRaises(TypeError, core4.api.v1.role.main.Role,
-                          **dict(name="role1", email="@b.cd", password="hello"))
+                          **dict(name="role1", email="@b.cd",
+                                 password="hello"))
         # self.assertRaises(TypeError, r.save)
         # self.assertRaises(TypeError, r.save)
 
@@ -145,7 +148,8 @@ class TestRole(unittest.TestCase):
                                  password=True))
 
     def test_load_one(self):
-        self.assertRaises(StopIteration, core4.api.v1.role.main.Role().load_one)
+        self.assertRaises(StopIteration,
+                          core4.api.v1.role.main.Role().load_one)
 
     def test_password(self):
         r = core4.api.v1.role.main.Role(name="role1", email="a@b.cd",
@@ -518,7 +522,8 @@ class TestRole(unittest.TestCase):
         test1 = core4.api.v1.role.main.Role(name="test1", realname="test role")
         self.assertTrue(repr(test1).startswith("core4.api.v1.role.main.Role("))
         self.assertRaises(RuntimeError, test1.delete)
-        self.assertRaises(StopIteration, core4.api.v1.role.main.Role().load_one,
+        self.assertRaises(StopIteration,
+                          core4.api.v1.role.main.Role().load_one,
                           name="test1")
         test1.save()
         test = core4.api.v1.role.main.Role().load_one(name="test1")
@@ -635,6 +640,19 @@ class TestRole(unittest.TestCase):
                 success -= 1
         self.assertAlmostEqual((core4.util.now() - t0).total_seconds(), 4, 0)
 
+    def test_perm_cascade(self):
+        role1 = core4.api.v1.role.main.Role(
+            name="test1", realname="test_role", perm=["app://1"])
+        role1.save()
+        role2 = core4.api.v1.role.main.Role(
+            name="test2", realname="test_role", perm=["app://2", "app://1"])
+        role2.save()
+        role3 = core4.api.v1.role.main.Role(
+            name="test3", realname="test_role", perm=["app://3"],
+            role=[role1, role2])
+        role3.save()
+        self.assertEqual(role3.perm, ["app://3"])
+        self.assertEqual(role3.casc_perm, ["app://1", "app://2", "app://3"])
 
 if __name__ == '__main__':
     unittest.main()

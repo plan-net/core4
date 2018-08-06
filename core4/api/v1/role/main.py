@@ -95,6 +95,7 @@ class Role(core4.base.CoreBase):
                 raise TypeError("unknown field [{}]".format(field))
         self.is_authenticated = False
         self.is_anonymous = False
+        self._perm = None
 
     def __repr__(self):
         return "{}({})".format(
@@ -113,6 +114,8 @@ class Role(core4.base.CoreBase):
         if "data" in self.__dict__:
             if key in self.__dict__["data"]:
                 self.data[key].value = value
+                if key == "perm":
+                    self._perm = None
                 return
         super().__setattr__(key, value)
 
@@ -249,13 +252,23 @@ class Role(core4.base.CoreBase):
         self.etag = None
 
     @property
+    def casc_perm(self):
+        if self._perm is None:
+            self._perm = self.perm
+            for role in self.role:
+                self._perm += role.perm
+            self._perm = list(set(self._perm))
+            self._perm.sort()
+        return self._perm
+
+    @property
     def is_admin(self):
-        return COP in self.perm
+        return COP in self.casc_perm
 
     def _job_access(self, qual_name):
         if self.is_admin:
             return True
-        for p in self.perm:
+        for p in self.casc_perm:
             (*proto, qn, marker) = p.split("/")
             if re.match(qn, qual_name):
                 return marker
@@ -270,7 +283,7 @@ class Role(core4.base.CoreBase):
     def has_api_access(self, qual_name):
         if self.is_admin:
             return True
-        for p in self.perm:
+        for p in self.casc_perm:
             (*proto, qn) = p.split("/")
             if re.match(qn, qual_name):
                 return True
