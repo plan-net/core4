@@ -16,7 +16,7 @@ operations activities. The :mod:`core4.config` package primary concerns are:
 #. To make the life of system administrators easy. The config system supports
    various configuration sources, e.g. a ``local.conf`` or ``local.yaml`` file,
    a central mongodb ``sys.conf`` collection, user configuration files, default
-   values, OS environment variables as well as account specific config files.
+   values, OS environment variables as well as plugin specific config files.
    Administrators choose their weapons.
 #. To make the life of data scientists and developers easy. The config system
    supports cross-database application development, local and remote sources,

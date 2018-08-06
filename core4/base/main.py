@@ -27,7 +27,7 @@ import core4.logger.filter
 import core4.util
 
 CORE4 = "core4"
-PLUGIN = ["core4", "account"]
+PLUGIN = ["core4", "plugin"]
 
 
 class CoreBase:
@@ -50,7 +50,7 @@ class CoreBase:
              from object _A_ to object _B_.
     """
     _qual_name = None
-    account = None
+    plugin = None
     identifier = None
 
     def __init__(self):
@@ -64,14 +64,14 @@ class CoreBase:
                     if ident is not None:
                         self.identifier = ident
 
-        self._set_account()
+        self._set_plugin()
         self._open_config()
         self._open_logging()
 
-    def _set_account(self):
-        self.account = self.__class__.__module__.split('.')[0]
+    def _set_plugin(self):
+        self.plugin = self.__class__.__module__.split('.')[0]
         # the following is a hack
-        if self.account == '__main__':  # pragma: no cover
+        if self.plugin == '__main__':  # pragma: no cover
             dirname = os.path.dirname(sys.argv[0]).split('/')
             pathname = [os.path.splitext(sys.argv[0].split('/')[-1])[0]]
             while dirname:
@@ -86,7 +86,7 @@ class CoreBase:
                         self.__class__._qual_name = ".".join(
                             list(reversed(pathname))
                             + [self.__class__.__name__])
-                        self.account = pathname.pop(-1)
+                        self.plugin = pathname.pop(-1)
                         break
 
     def __repr__(self):
@@ -96,7 +96,7 @@ class CoreBase:
     def qual_name(cls, short=True):
         """
         Returns the distinct ``qual_name``, the fully qualified module and
-        class name. With ``short=False`` the prefix ``core4.account`` is
+        class name. With ``short=False`` the prefix ``core4.plugin`` is
         put in front of all plugin classes.
 
         :param short: defaults to ``False``
@@ -109,26 +109,26 @@ class CoreBase:
             return '.'.join(PLUGIN + [cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
 
-    def account_conf(self):
+    def plugin_conf(self):
         """
         Returns the expected path and file name of the plugin configuration.
         Note that this method does not verify that the file actually exists.
 
         :return: str
         """
-        module = sys.modules.get(self.account)
+        module = sys.modules.get(self.plugin)
         if module:
             if hasattr(module, "__project__"):
                 if module.__project__ == CORE4:
                     return os.path.join(
                         os.path.dirname(module.__file__),
-                        self.account + core4.config.main.CONFIG_EXTENSION)
+                        self.plugin + core4.config.main.CONFIG_EXTENSION)
         return None
 
     def _open_config(self):
         # internal method to open and attach core4 cascading configuration
         kwargs = {}
-        extra_conf = self.account_conf()
+        extra_conf = self.plugin_conf()
         if extra_conf and os.path.exists(extra_conf):
             kwargs["extra_config"] = extra_conf
         self.config = core4.config.CoreConfig(**kwargs)

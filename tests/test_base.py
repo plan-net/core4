@@ -45,10 +45,10 @@ class TestBase(unittest.TestCase):
     def test_plugin(self):
         import plugin.test
         t = plugin.test.Test()
-        self.assertEqual("plugin", t.account)
+        self.assertEqual("plugin", t.plugin)
         # self.assertEqual("plugin", t.section)
         self.assertEqual("plugin.test.Test", t.qual_name())
-        self.assertEqual("core4.account.plugin.test.Test", t.qual_name(
+        self.assertEqual("core4.plugin.plugin.test.Test", t.qual_name(
             short=False))
         self.assertEqual("plugin.test.Test()", "{}".format(t))
         t = plugin.test.Test()
@@ -100,7 +100,7 @@ class TestBase(unittest.TestCase):
     def test_plugin_conf(self):
         import plugin.test
         t = plugin.test.Test()
-        self.assertTrue(t.account_conf().endswith("core4/plugin/plugin.py"))
+        self.assertTrue(t.plugin_conf().endswith("core4/plugin/plugin.py"))
         self.assertEqual(t.config.mongo_database, "core4test")
         self.assertEqual(repr(t), "plugin.test.Test()")
         # print(t.config)
