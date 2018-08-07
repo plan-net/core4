@@ -122,7 +122,7 @@ Option 6 is applied, if ``sys.conf`` is not ``None``.
 
 This boils down to the configuration flow outlined in the following diagram:
 
-.. figure:: assets/config.png
+.. figure:: _static/config.png
    :scale: 100 %
    :alt: configuration flow
 

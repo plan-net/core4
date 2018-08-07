@@ -8,6 +8,7 @@ Welcome to core4's documentation!
 
    config
    logging
+   tools
    core4/index
 
 
