@@ -10,7 +10,7 @@ implement access to core4 configuration data.
 
    main
    map
-   pragma
+   directive
    default
 
 

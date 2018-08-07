@@ -6,6 +6,8 @@ Welcome to core4's documentation!
    :caption: Contents:
    :maxdepth: 1
 
+   config
+   logging
    core4/index
 
 

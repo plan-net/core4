@@ -1,4 +1,8 @@
-from core4.config.pragma import connect
+# -*- coding: utf-8 -*-
+
+# core4 default configuration file
+
+from core4.config.directive import connect
 
 
 mongo_url = "mongodb://localhost:27017"  # default mongo connection
@@ -18,9 +22,6 @@ folder = {
     'transfer': 'transfer',
     'process': 'proc',
     'archive': 'arch',
-    'location': 'api/location',
-    'upstream': 'api/upstream',
-    'vassal': 'api/vassal',
     'temp': 'temp'
 }
 

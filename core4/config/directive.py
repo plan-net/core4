@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-The :mod:`core4.config.pragma` module implements the following helpers with
+The :mod:`core4.config.directive` module implements the following helpers with
 core4 configuration management:
 
 * :class:`connect` to specify :class:`.CoreCollection` connection settings
@@ -37,11 +37,11 @@ class connect:
         mongo_url = "mongodb://usr:pwd@localhost:27017"
         mongo_database = "db"
 
-        section1 = {
-            result1 = connect("mongodb://usr:pwd@localhost:27017/db/result")
-            result2 = connect("mongodb://db/result")
+        section1 = dict(
+            result1 = connect("mongodb://usr:pwd@localhost:27017/db/result"),
+            result2 = connect("mongodb://db/result"),
             result3 = connect("mongodb://result")
-        }
+        )
 
     Access to this configuration example proofs that all three
     :class:`.CoreCollection` objects constructed with the :class:`.connect`

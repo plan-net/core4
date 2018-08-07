@@ -8,7 +8,7 @@ import pkg_resources
 
 import core4.base.collection
 import core4.config.map
-import core4.config.pragma
+import core4.config.directive
 import core4.error
 import core4.util
 
@@ -177,7 +177,7 @@ class CoreConfig(collections.MutableMapping):
 
         At the moment, the following extra statements are supported:
 
-        * :class:`core4.config.pragma.connect`
+        * :class:`core4.config.directive.connect`
         """
         if parent is None:
             parent = []
@@ -187,7 +187,7 @@ class CoreConfig(collections.MutableMapping):
             if isinstance(v, dict):
                 self._debug("exploding [{}]", ".".join(np))
                 self._explode(v, np)
-            elif isinstance(v, core4.config.pragma.connect):
+            elif isinstance(v, core4.config.directive.connect):
                 self._debug("connecting [{}]", ".".join(np))
                 dct[k] = v.render(dct)
             elif callable(v):
