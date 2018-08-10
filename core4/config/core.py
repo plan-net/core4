@@ -39,3 +39,9 @@ logging = {
     },
     "extra": None
 }
+
+# job defaults
+job = {
+    "defer_time": 60,
+    "defer_max": 3600
+}
