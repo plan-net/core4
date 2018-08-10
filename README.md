@@ -28,7 +28,7 @@ create Python virtual environment
 
 Create a Python virtual environment with::
 
-    $ mkvirtualenv core4
+    $ mkvirtualenv core4 --python=python3.5
     
 
 regression tests
