@@ -38,6 +38,53 @@ The following arguments led us to chose Python as the configuration format:
   to the programmer and operator.
 
 
+sources of configuration
+------------------------
+
+There are six places where core4 is looking for configuration sections
+and their options. Environment variables prefixed with ``CORE4_OPTION_``
+take precedence over the following core4 configuration sources:
+
+#. the default configuration in ``config/core.py``
+#. the plugin configuration for plugin specific settings in
+   ``[PLUGIN]/[PLUGIN].py``. This plugin configuration is part of the plugin
+   repository and is considered to provide plugin specific default values.
+#. a local configuration located by the environment variable ``CORE4_CONFIG``
+#. the user specific configuration in his or her home ``~/core4/local.py``
+#. the system wide local configuration in ``/etc/core4/local.py``
+#. the central configuration database collection ``sys.conf``
+
+Option 3 takes precedence over option 4 which takes precedence over option 5.
+Option 6 is applied, if ``sys.conf`` is not ``None``.
+
+This boils down to the configuration flow outlined in the following diagram:
+
+.. figure:: _static/config.png
+   :scale: 100 %
+   :alt: configuration flow
+
+Default values are set in ``core.py``. Plugin specific variables and values are
+set in the plugin configuratio file. For each plugin exists one and only one
+plugin specific configuration file. A local configuration file can be enforced
+with the ``CORE4_CONFIG`` environment variables. If ``CORE4_CONFIG`` is
+defined, then the processing of the user configuration file and the system
+configuration file is skipped. If ``CORE4_CONFIG`` is not defined, then the
+system joins the user configuration file if it exists. If no user configuration
+file exists, then the system configuration file is joined if it exists. If the
+MongoDB collection ``sys.conf`` is defined, then all options and their values
+are joined. Finally all configuration options from the operating system
+environment variables overwrite existing values (see :ref:`env_config`).
+
+.. important:: **Outer versus inner configuration join**. The core4 default
+               configuration and additionally for plugin classes the plugin
+               configuration options define the scope of configuration options
+               (**outer join** statement in the diagram). All settings in the
+               other configuration sources (``CORE4_CONFIG``, user
+               configuration, system configuration, ``sys.conf`` and OS
+               environment variables) which are not in this scope scope are
+               ignored (**inner join** statement in the diagram).
+
+
 configuration structure
 -----------------------
 
@@ -101,53 +148,7 @@ Configuration access snippt::
     456
 
 
-sources of configuration
-------------------------
-
-There are six places where core4 is looking for configuration sections
-and their options. Environment variables prefixed with ``CORE4_OPTION_``
-take precedence over the following core4 configuration sources:
-
-#. the default configuration in ``config/core.py``
-#. the plugin configuration for plugin specific settings in
-   ``[PLUGIN]/[PLUGIN].py``. This plugin configuration is part of the plugin
-   repository and is considered to provide plugin specific default values.
-#. a local configuration located by the environment variable ``CORE4_CONFIG``
-#. the user specific configuration in his or her home ``~/core4/local.py``
-#. the system wide local configuration in ``/etc/core4/local.py``
-#. the central configuration database collection ``sys.conf``
-
-Option 3 takes precedence over option 4 which takes precedence over option 5.
-Option 6 is applied, if ``sys.conf`` is not ``None``.
-
-This boils down to the configuration flow outlined in the following diagram:
-
-.. figure:: _static/config.png
-   :scale: 100 %
-   :alt: configuration flow
-
-Default values are set in ``core.py``. Plugin specific variables and values are
-set in the plugin configuratio file. For each plugin exists one and only one
-plugin specific configuration file. A local configuration file can be enforced
-with the ``CORE4_CONFIG`` environment variables. If ``CORE4_CONFIG`` is
-defined, then the processing of the user configuration file and the system
-configuration file is skipped. If ``CORE4_CONFIG`` is not defined, then the
-system joins the user configuration file if it exists. If no user configuration
-file exists, then the system configuration file is joined if it exists. If the
-MongoDB collection ``sys.conf`` is defined, then all options and their values
-are joined. Finally all configuration options from the operating system
-environment variables overwrite existing values. The next section explains the
-structure of OS environment configuration options and their values.
-
-.. important:: **Outer versus inner configuration join**. The core4 default
-               configuration and additionally for plugin classes the plugin
-               configuration options define the scope of configuration options
-               (**outer join** statement in the diagram). All settings in the
-               other configuration sources (``CORE4_CONFIG``, user
-               configuration, system configuration, ``sys.conf`` and OS
-               environment variables) which are not in this scope scope are
-               ignored (**inner join** statement in the diagram).
-
+.. _env_config:
 
 environment options and values
 ------------------------------

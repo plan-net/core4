@@ -49,6 +49,25 @@ core4 defines the following additional logging attributes:
 * ``identifier``
 * ``qual_name``
 
+These special attributes are supposed to facilitate the filtering of logging
+messages while reviewing core4 activities in operations (see :ref:`chist`).
+
+Use ``qual_name`` to filter all log messages which have been created by a
+class inherited from :class:`.CoreBase`.
+
+The special attribute ``identifier`` encapsulates all log messages of the
+following objects:
+
+#. core4 jobs - the ``identifier`` represents the ``job_id``
+#. core4 API resources - the ``identifier`` represents the ``request_id``
+#. core4 workers - the ``identifier`` represents the worker's ``hostname``
+#. core4 scheduler - the ``identifier`` represents the scheduler`s ``hostname``
+
+.. note:: All objects created in the namespace of a job, API resource, worker
+          or scheduler automatically inherit the identifier from these objects.
+          This behavior ensures that a log filter captures all activities
+          which occured during execution.
+
 
 logging of exceptions
 ---------------------
