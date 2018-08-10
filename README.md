@@ -55,12 +55,12 @@ Test coverage is reported with
 installation
 ------------
 
-Install core4 using pip::
+Install core4 and Python dependencies using pip::
 
     $ pip install .
     
 
-or directly execute core4's ``setup.py`` script::
+or directly execute  ``setup.py`` with::
 
     $ python setup.py install
 
