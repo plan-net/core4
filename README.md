@@ -37,6 +37,8 @@ regression tests
 The execution of regression tests require a MongoDB user ``core`` with password
 ``654321``.
 
+    $ mongo admin --eval "db.createUser({'user': 'core', 'pwd': '654321', 'roles': [{'role': 'root', 'db': 'admin'}]})"
+
 Change into core4 directory and execute regression tests with::
 
     $ cd core4
