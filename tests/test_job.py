@@ -38,6 +38,7 @@ class TestBase(unittest.TestCase):
 
     def test_base(self):
         j = CoreJob()
+        g = CoreJob()
         self.assertEqual("core4.base.job.CoreJob", j.qual_name())
         self.assertEqual("core4.base.job.CoreJob", j.qual_name(short=False))
     #
