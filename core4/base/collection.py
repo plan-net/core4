@@ -81,7 +81,7 @@ class CoreCollection:
         loc = ""
         if self.username:
             loc += self.username + "@"
-        loc += self.hostname
+        loc += str(self.hostname)
         if self.database:
             loc += "/" + self.database
         if self.collection:

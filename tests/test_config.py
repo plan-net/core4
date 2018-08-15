@@ -2,18 +2,17 @@
 
 import os
 import unittest
-from pprint import pprint
-import pymongo
 import tests.util
+import pymongo
+from pprint import pprint
 import core4.config
 import core4.error
-import datetime
-
+import pymongo.errors
 
 os.environ["CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
 
-class MyConfig(core4.config.CoreConfig):
 
+class MyConfig(core4.config.CoreConfig):
     _cache = None
 
 
@@ -26,427 +25,564 @@ class TestConfig(unittest.TestCase):
                 dels.append(k)
         for k in dels:
             del os.environ[k]
-        self.mongo.drop_database('core4test')
+        for db in ("", "1", "2"):
+            self.mongo.drop_database('core4test' + db)
 
     @property
     def mongo(self):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
 
-    def test_eval(self):
-        with open(tests.util.asset("config/extra.py"),
-                  "r", encoding="utf-8") as f:
-            code = f.read()
-        globals = {}
-        locals = {}
-        exec(code, globals, locals)
+    def test_yaml(self):
+        conf = MyConfig()
+        test = conf._read_yaml(conf.standard_config)
+        self.assertEqual(test["DEFAULT"]["mongo_database"], "test")
+        self.assertEqual(test["logging"]["stderr"], "DEBUG")
 
-    def test_illegal(self):
-        extra = tests.util.asset("config/extra.py")
-        local = tests.util.asset("config/local.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        conf._load()
-        #self.assertRaises(KeyError, conf._load)
-        #self.assertIsNone(conf._config)
-        #print(conf)
+    def test_parse1(self):
+        standard_config = {
+            'DEFAULT': {
+                'mongo_url': None,
+                'mongo_database': 'test'
+            },
+            'sys': {
+                'log': 'mongodb://sys.log',
+                'role': 'mongodb://role.log'
+            }
+        }
+        plugin_config = {
+            'DEFAULT': {
+                'mongo_database': 'mediaplus'
+            },
+            'tv': {
+                'report_collection': 'mongodb://report',
+                'agf_collection': 'mongodb://agf',
+                'edi': {
+                    'mongo_database': 'edidb',
+                    'edi_collection': 'mongodb://data'
+                }
+            }
+        }
+        local_config = {
+            'DEFAULT': {
+                'mongo_url': 'mongodb://dev:27017'
+            },
+            'sys': {
+                'mongo_database': 'core4'
+            },
+            'mediaplus': {
+                'DEFAULT': {
+                    'mongo_database': 'mediaplus_dev',
+                    'mongo_url': 'mongodb://dev:27018'
+                },
+                'tv': {
+                    'agf_collection': 'mongodb://prod:27017/mediaplus/agf'
+                }
+            }
+        }
+        conf = MyConfig()
+        ret = conf._parse(standard_config, ("mediaplus", plugin_config),
+                          local_config)
+        self.assertEqual({
+            'mediaplus': {
+                'mongo_database': 'mediaplus_dev',
+                'mongo_url': 'mongodb://dev:27018',
+                'tv': {
+                    'agf_collection': 'mongodb://prod:27017/mediaplus/agf',
+                    'edi': {
+                        'edi_collection': 'mongodb://data',
+                        'mongo_database': 'edidb',
+                        'mongo_url': 'mongodb://dev:27018'
+                    },
+                    'mongo_database': 'mediaplus_dev',
+                    'mongo_url': 'mongodb://dev:27018',
+                    'report_collection': 'mongodb://report'
+                }
+            },
+            'mongo_database': 'test',
+            'mongo_url': 'mongodb://dev:27017',
+            'sys': {'log': 'mongodb://sys.log',
+                    'mongo_database': 'core4',
+                    'mongo_url': 'mongodb://dev:27017',
+                    'role': 'mongodb://role.log'
+                    }
+        }, ret)
 
-    def test_overload(self):
-        extra = tests.util.asset("config/extra.py")
-        local = tests.util.asset("config/local1.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        conf._load()
-        self.assertEqual(1, sum([1 for p in conf.path
-                                 if p.endswith("core4/config/core.py")]))
-        self.assertEqual(1, sum([1 for p in conf.path
-                                 if p.endswith("asset/config/extra.py")]))
-        self.assertEqual(1, sum([1 for p in conf.path
-                                 if p.endswith("asset/config/local1.py")]))
-        self.assertEqual(3, len(conf.path))
-        self.assertEqual("from local1", conf._config["mongo_url"])
-        conf = MyConfig(extra_config=extra)
-        conf._load()
-        self.assertEqual(1, sum([1 for p in conf.path
-                                 if p.endswith("core4/config/core.py")]))
-        self.assertEqual(1, sum([1 for p in conf.path
-                                 if p.endswith("asset/config/extra.py")]))
-        self.assertEqual("from extra", conf._config["mongo_url"])
-        self.assertEqual(2, len(conf.path))
+    def test_parse2(self):
+        standard_config = {
+            'DEFAULT': {
+                'mongo_url': None,
+                'mongo_database': 'test'
+            },
+            'sys': {
+                'log': 'mongodb://sys.log',
+                'role': 'mongodb://role.log'
+            }
+        }
+        plugin_config = {
+            'tv': {
+                'agf_collection': 'mongodb://agf',
+                'report_collection': 'mongodb://report',
+                'edi': {
+                    'mongo_database': 'edidb'
+                }
+            }
+        }
+        local_config = {
+            'DEFAULT': {
+                'mongo_url': 'mongodb://dev:27017'
+            },
+            'mediaplus': {
+                'DEFAULT': {
+                    'mongo_url': 'mongodb://host:27017'
+                },
+            }
+        }
+        conf = MyConfig()
+        ret = conf._parse(standard_config, ("mediaplus", plugin_config),
+                          local_config)
+        self.assertEqual(
+            {
+                'mediaplus': {
+                    'mongo_database': 'test',
+                    'mongo_url': 'mongodb://host:27017',
+                    'tv': {
+                        'agf_collection': 'mongodb://agf',
+                        'edi': {
+                            'mongo_database': 'edidb',
+                            'mongo_url': 'mongodb://host:27017'
+                        },
+                        'mongo_database': 'test',
+                        'mongo_url': 'mongodb://host:27017',
+                        'report_collection': 'mongodb://report'
+                    }
+                },
+                'mongo_database': 'test',
+                'mongo_url': 'mongodb://dev:27017',
+                'sys': {
+                    'log': 'mongodb://sys.log',
+                    'mongo_database': 'test',
+                    'mongo_url': 'mongodb://dev:27017',
+                    'role': 'mongodb://role.log'
+                }
+            }, ret)
 
-    def test_cascade(self):
-        extra = tests.util.asset("config/extra.py")
-        local = tests.util.asset("config/local1.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        conf._load()
-        conf._cascade()
-        self.assertEqual(conf._config["mongo_url"], "from local1")
-        self.assertEqual(conf._config["mongo_database"], "core4dev")
-        self.assertEqual(conf._config["account1"]["mongo_url"], "from local1")
-        self.assertEqual(conf._config["account1"]["mongo_database"], "account-1-database")
-        #pprint(conf._config)
-        self.assertEqual(conf._config["account2"]["var1"], 1)
-        self.assertEqual(conf._config["account2"]["var2"], 2)
-        self.assertEqual(conf._config["account2"]["var3"], 333)
+    def test_parse3(self):
+        standard_config = {
+            'DEFAULT': {
+                'mongo_url': None,
+                'mongo_database': 'test'
+            },
+            'sys': {
+                'log': 'mongodb://sys.log',
+                'role': 'mongodb://role.log'
+            }
+        }
+        local_config = {
+            'DEFAULT': {
+                'mongo_url': 'mongodb://dev:27017',
+                'mongo_database': 'core4test'
+            },
+            'sys': {
+                'log': 'mongodb://sys-test.log'
+            }
+        }
+        conf = MyConfig()
+        ret = conf._parse(standard_config, None, local_config)
+        self.assertEqual({
+            'mongo_database': 'core4test',
+            'mongo_url': 'mongodb://dev:27017',
+            'sys': {
+                'log': 'mongodb://sys-test.log',
+                'mongo_database': 'core4test',
+                'mongo_url': 'mongodb://dev:27017',
+                'role': 'mongodb://role.log'
+            }
+        }, ret)
 
-    def test_cascade_fail(self):
-        extra = tests.util.asset("config/extra.py")
-        local = tests.util.asset("config/local2.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        #self.assertRaises(KeyError, conf._load)
-        #self.assertIsNone(conf._config)
-        #print(conf)
+    def test_intersection1(self):
+        standard_config = {
+            'DEFAULT': {
+                'mongo_url': None,
+                'mongo_database': 'test'
+            },
+            'sys': {
+                'log': 'mongodb://sys1.log'
+            }
+        }
+        local_config = {
+            'sys': {
+                'log': 'mongodb://sys2.log',
+                'unknown': 'mongodb://unknown'
+            }
+        }
+        conf = MyConfig()
+        ret = conf._parse(standard_config, None, local_config)
+        self.assertNotIn("unknown", ret["sys"])
 
-    def test_g(self):
-        extra = tests.util.asset("config/extra.py")
-        local = tests.util.asset("config/local1.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertEqual(conf.account1.mongo_url, "from local1")
-        self.assertEqual(conf.account1.sys.log, "this no good")
-        self.assertEqual(conf.account1["s p"], "service plan")
-        self.assertEqual(conf.account1.datetime,
-                         datetime.datetime(2018, 1, 14))
+    def test_retype(self):
+        standard_config = {
+            'DEFAULT': {
+                'int': 1,
+                'float': 1.2,
+                'bool': True,
+                'list': [1, 2, 3],
+                'dict': {"a": 5},
+                'null': None
+            },
+            'section': {
+                'log': 'mongodb://sys1.log'
+            }
+        }
+        conf = MyConfig()
+
+        def setter(k, v):
+            c = conf._parse(standard_config, None, {'section': {k: v}})
+            return c["section"][k]
+
+        def raiser(*args):
+            self.assertRaises(core4.error.Core4ConfigurationError,
+                              setter, *args)
+
+        self.assertEqual(2, setter("int", 2))
+        self.assertIsNone(setter("int", None))
+        self.assertEqual(2.1, setter("int", 2.1))
+        raiser("int", True)
+        raiser("int", "bla")
+
+        self.assertEqual(2, setter("float", 2))
+        self.assertIsNone(setter("float", None))
+        self.assertEqual(2.1, setter("float", 2.1))
+        raiser("float", [1, 2, 3])
+        raiser("float", {})
+
+        self.assertFalse(setter("bool", False))
+        self.assertIsNone(setter("bool", None))
+        raiser("bool", [1, 2, 3])
+        raiser("bool", "")
+        raiser("bool", -1)
+
+        self.assertEqual(setter("list", [9, 8, 7]), [9, 8, 7])
+        self.assertIsNone(setter("list", None))
+        raiser("list", "")
+        raiser("list", {})
+        raiser("list", -1)
+
+        self.assertEqual(setter("dict", {"a": 8}), {"a": 8})
+        self.assertIsNone(setter("dict", None))
+        raiser("dict", "")
+        raiser("dict", [])
+        raiser("dict", -1)
+
+        self.assertEqual(setter("null", 1), 1)
+        self.assertEqual(setter("null", "abc"), "abc")
+        self.assertEqual(setter("null", True), True)
+        self.assertEqual(setter("null", [1, 2, 3]), [1, 2, 3])
+
+    def test_syntax(self):
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/local4.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf._load)
+
+
+    def test_default_type(self):
+        standard_config = {
+            'section': {
+                'test': True
+            }
+        }
+        conf = MyConfig()
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf._parse, standard_config,
+                          ('test', {'DEFAULT': 1, 'abc': True}))
+        standard_config = {
+            'DEFAULT': [],
+            'section': {
+                'test': True
+            }
+        }
+        conf = MyConfig()
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf._parse, standard_config,
+                          ('test', {'abc': True}))
+        standard_config = {
+            'section': {
+                'test': True
+            }
+        }
+        conf = MyConfig()
+        conf._parse(standard_config, ('test', {'abc': True}),
+                    {"section": {"test": False}})
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf._parse, standard_config,
+                          ('test', {'abc': True}),
+                          {"section": {"test": False}, "DEFAULT": ""})
 
     def test_connect(self):
-        extra = tests.util.asset("config/extra1.py")
-        local = tests.util.asset("config/local3.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertEqual(conf.mongo_database, "local3db")
-        #print(conf.account1.coll1)
-        #print(conf.account1.coll2)
-
-    def test_split(self):
-        extra = tests.util.asset("config/extra1.py")
-        local = tests.util.asset("config/local3.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        c = core4.config.connect(
-            "mongodb://user:pwd@testfile:27017/filedb/filecoll1").render(conf)
-        self.assertEqual("user@testfile:27017/filedb/filecoll1", c.info_url)
-        c = core4.config.connect(
-            "mongodb://filedb/filecoll2").render(conf)
-        self.assertEqual("admin@local3:27017/filedb/filecoll2", c.info_url)
-        c = core4.config.connect(
-            "mongodb://filecoll3").render(conf)
-        self.assertEqual("admin@local3:27017/local3db/filecoll3", c.info_url)
-
-    def test_malformed(self):
-        extra = tests.util.asset("config/extra1.py")
-        local = tests.util.asset("config/local3.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertRaises(
-            core4.error.Core4ConfigurationError,
-            core4.config.connect(
-                "user:pwd@testfile:27017/filedb/filecoll1").render,
-            conf
-        )
-        self.assertRaises(
-            core4.error.Core4ConfigurationError,
-            core4.config.connect(
-                "mongodb://testfile/a/b/c").render,
-            conf
-        )
-        self.assertRaises(
-            core4.error.Core4ConfigurationError,
-            core4.config.connect(
-                "mongodb:/a/b/c").render,
-            conf
-        )
-
-    def test_use(self):
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertEqual(conf.account1.coll1.name, "coll1")
-        self.assertEqual(conf.account1.coll1.database, "core4test")
-        self.assertEqual(0, conf.account1.coll1.count())
-        conf.account1.coll1.insert_one({"name": "test"})
-        self.assertEqual(1, conf.account1.coll1.count())
-        self.assertEqual(conf.account2.coll1.info_url,
-                         "core:654321localhost:27018/extra2db3/coll3")
-        self.assertEqual(conf.account2.coll2.info_url,
-                         "core:654321localhost:27018/extra2db3/coll5")
-
-    def test_env(self):
-        os.environ["CORE4_OPTION_extra_global"] = "777"
-        os.environ["CORE4_OPTION_env1__k1"] = "def"
-        os.environ["CORE4_OPTION_env1__k2"] = "ok"
-        os.environ["CORE4_OPTION_env1__k4"] = ""
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertEqual(conf.extra_global, 777)
-        self.assertEqual(conf.env1.k1, "def")
-        self.assertEqual(conf.env1.k2, "ok")
-        self.assertIsNone(conf.env1.k3)
-        self.assertIsNone(conf.env1.k4)
-
-    def test_use(self):
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertEqual(conf.account1.coll1.name, "coll1")
-        self.assertEqual(conf.account1.coll1.database, "core4test")
-        self.assertEqual(0, conf.account1.coll1.count())
-        conf.account1.coll1.insert_one({"name": "test"})
-        self.assertEqual(1, conf.account1.coll1.count())
-        self.assertEqual(conf.account2.coll1.info_url,
-                         "core:654321localhost:27018/extra2db3/coll3")
-        self.assertEqual(conf.account2.coll2.info_url,
-                         "core:654321localhost:27018/extra2db3/coll5")
-        k = list(conf.keys())
-        self.assertTrue("mongo_url" in k)
-        self.assertTrue("env1" in k)
-
-    def test_missing(self):
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local5.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        #self.assertRaises(KeyError, conf._load)
-        #print(conf)
-
-    def test_env_missing1(self):
-        os.environ["CORE4_OPTION_env1__k1__x1"] = "xxx"
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/local1.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
         conf._load()
-        self.assertEqual(conf.env1.k1.x1, "xxx")
+        self.assertEqual(conf["sys"]["log"].info_url,
+                         "core@localhost:27017/core4test1/sys.log")
+        self.assertEqual(conf["sys"]["log"].count(), 0)
+        coll = conf["sys"]["log"]
+        coll.insert_one({})
+        self.assertEqual(conf["sys"]["log"].count(), 1)
+        self.assertEqual(1, self.mongo.core4test1.sys.log.count())
 
-    def test_env_missing3(self):
-        os.environ["CORE4_OPTION_env1__k1"] = "xxx"
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
+    def test_connect2(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        local = tests.util.asset("config/local3.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
         conf._load()
-        self.assertEqual(conf.env1.k1, "xxx")
+        self.assertEqual(conf["sys"]["log"].info_url,
+                         "core@localhost:27017/core4test/sys.log")
+        self.assertRaises(pymongo.errors.OperationFailure,
+                          conf["sys"]["log"].count)
 
-    def test_env_missing2(self):
-        os.environ["CORE4_OPTION_env1__k5"] = "xxx"
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        #self.assertRaises(KeyError, conf._load)
-        conf._load()
-        #print(conf)
+        self.assertEqual(conf.test.coll1.info_url,
+                         "core@localhost:27017/core4test2/coll1")
+        self.assertEqual(0, conf.test.coll1.count())
+        conf.test.coll1.insert_one({})
+        self.assertEqual(1, conf.test.coll1.count())
+        self.assertEqual(1, self.mongo.core4test2.coll1.count())
+        self.assertEqual(conf.test.coll2.info_url,
+                         "core@localhost:27017/core4test/coll2")
+        conf.test.coll2.insert_one({})
+        self.assertEqual(1, conf.test.coll2.count())
+        self.assertEqual(1, self.mongo.core4test.coll2.count())
+        self.assertEqual(0, self.mongo.core4test1.coll2.count())
+        self.assertEqual(0, self.mongo.core4test2.coll2.count())
+        self.assertEqual(
+            "!connect "
+            "'mongodb://core:654321@localhost:27017/core4test/coll2/collx'",
+            repr(conf.test.coll3))
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf.test.coll3._connect)
 
-    def test_cache(self):
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-
-        conf = core4.config.CoreConfig(extra_config=extra, config_file=local)
-        k1 = list(conf.keys())
-        self.assertTrue("mongo_url" in k1)
-        self.assertTrue("env1" in k1)
-        self.assertFalse("from cache" in conf.trace)
-        # pprint(conf)
-        # print(conf.trace)
-
-        conf2 = core4.config.CoreConfig(extra_config=extra, config_file=local)
-        k2 = list(conf2.keys())
-        # pprint(conf2)
-        # print(conf2.trace)
-        self.assertTrue("mongo_url" in k2)
-        self.assertTrue("env1" in k2)
-
-        self.assertTrue("from cache" in conf2.trace)
-        #print(conf2.trace)
-
-    def test_setter(self):
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local4.py")
-        conf = core4.config.CoreConfig(extra_config=extra, config_file=local)
-        # print(conf)
-        self.assertEqual(conf.account1.a, 1)
-        conf.account1.a = 12
-        self.assertEqual(conf.account1.a, 12)
-        #print(conf.account1.a)
-        #print(conf["account1"]["a"])
-        self.assertEqual(conf["account1"]["a"], 12)
-        conf["account1"]["a"] = 24
-        #print(conf.account1.a)
-        self.assertEqual(conf.account1.a, 24)
-        #print(conf["account1"]["a"])
-        self.assertEqual(conf["account1"]["a"], 24)
-
-    def test_db(self):
-        doc = {
-            "_id": "1.global",
-            "folder": {
-                "root": "/tmp/core4test.tester"
-            }
-        }
-        self.mongo.core4test.sys.conf.insert_one(doc)
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local6.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        conf._load()
-        #print(conf.get_trace())
-        self.assertEqual(conf.folder.root, "/tmp/core4test.tester")
-        self.assertTrue("retrieved [1] configurations from "
-                        "[core@localhost:27017/core4test/sys.conf]",
-                        conf.trace)
-        #print(conf.get_trace())
-
-    def test_illegal_db(self):
-        doc = {
-            "_id": "1.global",
-            "folder": {
-                "root_X": "/tmp/core4test.tester"
-            }
-        }
-        self.mongo.core4test.sys.conf.insert_one(doc)
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local6.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        #self.assertRaises(KeyError, conf.load)
-        conf._load()
-        #print(conf.get_trace())
-
-    def test_multi_db(self):
-        doc = {
-            "_id": "1.global",
-            "folder": {
-                "root": "/tmp/core4test.tester2"
-            }
-        }
-        self.mongo.core4test.sys.conf.insert_one(doc)
-        doc = {
-            "_id": "2.special",
-            "folder": {
-                "temp": "/tmp"
-            }
-        }
-        self.mongo.core4test.sys.conf.insert_one(doc)
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local6.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        #print(conf.folder.root)
-        #print(conf.folder.temp)
-        self.assertEqual(conf.folder.root, "/tmp/core4test.tester2")
-        self.assertEqual(conf.folder.temp, "/tmp")
-
-    def test_cache2(self):
-        doc = {
-            "_id": "1.global",
-            "folder": {
-                "root": "/tmp/core4test.tester2"
-            }
-        }
-        self.mongo.core4test.sys.conf.insert_one(doc)
-        doc = {
-            "_id": "2.special",
-            "folder": {
-                "temp": "/tmp"
-            }
-        }
-        self.mongo.core4test.sys.conf.insert_one(doc)
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local6.py")
-
-        conf1 = core4.config.CoreConfig(extra_config=extra, config_file=local)
-        conf1._load()
-        self.assertFalse("from cache" in conf1.trace)
-        #print(conf1.get_trace())
-
-        conf2 = core4.config.CoreConfig(extra_config=extra, config_file=local)
-        conf2._load()
-        #self.assertFalse("from cache" in conf.get_trace())
-        self.assertTrue("from cache" in conf2.trace)
-
-    def test_env_first(self):
-
-        class SystemConfig(MyConfig):
-            user_config = tests.util.asset("config/user.py")
-            system_config = tests.util.asset("config/system.py")
-
-        os.environ["CORE4_CONFIG"] = tests.util.asset("config/env.py")
-        conf = SystemConfig()
-        conf._load()
-        self.assertEqual(conf.folder.root, "/tmp/core4test.env")
-
-    def test_user(self):
-
-        class SystemConfig(MyConfig):
-            user_config = tests.util.asset("config/user.py")
-            system_config = tests.util.asset("config/system.py")
-
-        conf = SystemConfig()
-        conf._load()
-        self.assertEqual(conf.folder.root, "/tmp/core4test.user")
-
-    def test_system(self):
-
-        class SystemConfig(MyConfig):
-            user_config = tests.util.asset("config/_not_found_", exists=False)
-            system_config = tests.util.asset("config/system.py")
-
-        conf = SystemConfig()
-        conf._load()
-        self.assertEqual(conf.folder.root, "/tmp/core4test.system")
-
-    def test_reserved(self):
-        extra = tests.util.asset("config/extra3.py")
-        local = tests.util.asset("config/local4.py")
-        conf = core4.config.CoreConfig(extra_config=extra, config_file=local)
-        self.assertRaises(core4.error.Core4ConfigurationError, conf._load)
+    def test_env_file(self):
+        extra = tests.util.asset("config/empty.yaml")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/local1.yaml")
+        conf = MyConfig(extra_config=("test", extra))
+        self.assertEqual(conf["sys"]["log"].info_url,
+                         "core@localhost:27017/core4test1/sys.log")
+        self.assertEqual(conf["sys"]["log"].count(), 0)
+        coll = conf["sys"]["log"]
+        coll.insert_one({})
+        self.assertEqual(conf["sys"]["log"].count(), 1)
+        self.assertEqual(1, self.mongo.core4test1.sys.log.count())
 
     def test_not_found(self):
-        class SystemConfig(MyConfig):
-            user_config = tests.util.asset("config/user.py")
-            system_config = tests.util.asset("config/system.py")
+        extra = tests.util.asset("config/nf", exists=False)
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/local1.yaml")
+        conf = MyConfig(extra_config=("test", extra))
+        self.assertEqual(repr(conf.sys.log), "!connect 'mongodb://sys.log'")
 
-        os.environ["CORE4_CONFIG"] = tests.util.asset("_NOT_FOUND_",
+        extra = tests.util.asset("config/empty.yaml")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/nf",
                                                       exists=False)
-        conf = SystemConfig()
+        conf = MyConfig(extra_config=("test", extra))
         self.assertRaises(FileNotFoundError, conf._load)
+        #self.assertEqual(repr(conf.sys.log), "!connect 'mongodb://sys.log'")
 
-    def test_reserved2(self):
-        extra = tests.util.asset("config/extra4.py")
-        local = tests.util.asset("config/local4.py")
-        conf = core4.config.CoreConfig(extra_config=extra, config_file=local)
-        self.assertRaises(core4.error.Core4ConfigurationError, conf._load)
+    def test_user_file(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        user_file = tests.util.asset("config/user.yaml")
+        system_file = tests.util.asset("config/system.yaml")
 
-    def test_file_mapping(self):
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local7.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
+        class Config(core4.config.CoreConfig):
+            user_config = user_file
+            system_config = system_file
+
+        conf = Config(extra_config=("test", extra))
+        self.assertEqual(conf["sys"]["log"].info_url,
+                         "core@localhost:27017/core4test1/sys.log")
+        self.assertEqual(conf["sys"]["log"].count(), 0)
+        coll = conf["sys"]["log"]
+        coll.insert_one({})
+        self.assertEqual(conf["sys"]["log"].count(), 1)
+        self.assertEqual(1, self.mongo.core4test1.sys.log.count())
+        self.assertEqual(conf.test.value, 2)
+
+    def test_system_file(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        user_file = tests.util.asset("config/nf", exists=False)
+        system_file = tests.util.asset("config/system.yaml")
+
+        class Config(core4.config.CoreConfig):
+            user_config = user_file
+            system_config = system_file
+
+        conf = Config(extra_config=("test", extra))
+        self.assertEqual(conf["sys"]["log"].info_url,
+                         "core@localhost:27017/core4test2/sys.log")
+        self.assertEqual(conf["sys"]["log"].count(), 0)
+        coll = conf["sys"]["log"]
+        coll.insert_one({})
+        self.assertEqual(conf["sys"]["log"].count(), 1)
+        self.assertEqual(1, self.mongo.core4test2.sys.log.count())
+        self.assertEqual(conf.test.value, 4)
+
+    def test_no_default_connect(self):
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/local2.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
         conf._load()
-        self.assertEqual(conf.account1.deep.deeper.deepest.too_much, 987)
+        self.assertEqual(conf["sys"]["log"].info_url,
+                         "core@localhost:27017/core4test/sys.log")
+        self.assertEqual(conf["sys"]["log"].count(), 0)
+        coll = conf["sys"]["log"]
+        coll.insert_one({})
+        self.assertEqual(conf["sys"]["log"].count(), 1)
 
-    def test_env_mapping(self):
-        os.environ["CORE4_OPTION_account1__deep__deeper__deepest"] = "777"
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local7.py")
-        conf = core4.config.CoreConfig(extra_config=extra, config_file=local)
+    def test_empty_connect(self):
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
         conf._load()
-        self.assertEqual(conf.account1.deep.deeper.deepest, "777")
+        self.assertIsNone(conf.sys.log._connect())
 
-    def test_env_mapping1(self):
-        os.environ["CORE4_OPTION_account1"] = "777"
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local7.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
+    def test_readonly(self):
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        self.assertEqual(conf.mongo_database, "test")
+        def set1():
+            conf["mongo_url"] = "xyz"
+        self.assertRaises(core4.error.Core4ConfigurationError, set1)
+        def del1():
+            del conf["mongo_url"]
+        self.assertRaises(core4.error.Core4ConfigurationError, del1)
+        def set2():
+            conf.logging.stderr = "ERROR"
+        self.assertRaises(core4.error.Core4ConfigurationError, set2)
+        def set3():
+            conf["logging"]["stderr"] = "CRITICAL"
+        self.assertRaises(core4.error.Core4ConfigurationError, set3)
+        self.assertRaises(core4.error.Core4ConfigurationError, conf.pop,
+                          "logging")
+        self.assertRaises(core4.error.Core4ConfigurationError, conf.popitem)
+        self.assertRaises(core4.error.Core4ConfigurationError, conf.clear)
+        self.assertRaises(core4.error.Core4ConfigurationError, conf.update,
+                          {"a": 1})
+        self.assertRaises(core4.error.Core4ConfigurationError, conf.setdefault,
+                          "a", "abc")
+
+    def test_iter(self):
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        self.assertIn("mongo_database", conf.keys())
+        self.assertIn("sys", conf.keys())
+        self.assertIn("logging", conf.keys())
+        self.assertIn("mongo_url", conf.keys())
+        self.assertIn("folder", conf.keys())
+        t1 = list(conf.items())
+        t2 = list(iter(conf))
+        self.assertIn(("mongo_database", "test"), t1)
+        self.assertIn(("mongo_database", "test"), t2)
+
+    def test_values(self):
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        v = conf.values()
+        self.assertEqual(v._mapping.mongo_database, "test")
+        self.assertEqual(len(v), len(conf))
+
+    def test_dot(self):
+        extra = tests.util.asset("config/empty.yaml")
+        local = tests.util.asset("config/local1.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
         conf._load()
-        self.assertEqual(conf.account1, "777")
+        conf.sys.log.insert_one({})
+        self.assertEqual(1, conf.sys.log.count())
 
-    def test_env_mapping2(self):
-        os.environ["CORE4_OPTION_account1__deep__deeper__deepest__another"] = "777"
-        os.environ["CORE4_OPTION_account1__deep__deeper__hello__ciao"] = "123"
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local7.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
+    def test_extra_no_plugin(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        conf = MyConfig(extra_config=("test", extra))
+        self.assertEqual(conf.folder.archive, "arch")
+
+    def test_reserved_word(self):
+        standard_config = {
+            'DEFAULT': {
+                '!c': "mongodb://core4test:27017"
+            },
+            'section': {
+                'log': 'mongodb://sys1.log'
+            }
+        }
+        conf = MyConfig()
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf._parse, standard_config, None, None)
+
+        standard_config = {
+            'DEFAULT': {
+                'c': "mongodb://core4test:27017"
+            },
+            'section': {
+                '!log': 'mongodb://sys1.log'
+            }
+        }
+        conf = MyConfig()
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf._parse, standard_config, None, None)
+        standard_config = {
+            '_DEFAULT': {
+                'c': "mongodb://core4test:27017"
+            },
+        }
+        conf = MyConfig()
+        self.assertRaises(core4.error.Core4ConfigurationError,
+                          conf._parse, standard_config, None, None)
+
+    def test_read_db(self):
+        self.mongo.core4test.sys.conf.insert_one({
+            "folder": {
+                "transfer": "/tmp"
+            },
+            "logging": {
+                "exception": {
+                    "capacity": 1,
+                    "irrelevant": 42
+                },
+                "stderr": "WARNING"
+            }
+        })
+        local = tests.util.asset("config/local3.yaml")
+        conf = MyConfig(extra_config=None, config_file=local)
         conf._load()
-        #self.assertEqual(conf.account1, "777")
-        #self.assertEqual(conf.account1.deep.deeper.deepest.too_much, 987)
-        #self.assertEqual(conf.account1.deep.deeper.deepest.another, "777")
-        #pprint(conf)
+        self.assertEqual(conf.folder.transfer, "/tmp")
+        self.assertEqual(conf.logging.exception.capacity, 1)
+        self.assertEqual(conf.logging.stderr, "WARNING")
+        self.assertNotIn("irrelevant", conf.logging.exception)
 
-    def test_collection(self):
-        extra = tests.util.asset("config/extra2.py")
-        local = tests.util.asset("config/local6.py")
-        conf = MyConfig(extra_config=extra, config_file=local)
-        self.assertIn("username", repr(conf.sys.conf))
-        self.assertIn("collection", repr(conf.sys.conf))
-        self.assertIn("sys.conf", repr(conf.sys.conf))
-        self.assertIn("core4test", repr(conf.sys.conf))
-        self.assertNotIn("password", repr(conf.sys.conf))
+        self.mongo.core4test.sys.conf.insert_one({
+            "logging": {
+                "exception": {
+                    "capacity": 42,
+                },
+                "stderr": "INFO"
+            }
+        })
+        conf = MyConfig(extra_config=None, config_file=local)
+        conf._load()
+        self.assertEqual(conf.folder.transfer, "/tmp")
+        self.assertEqual(conf.logging.exception.capacity, 42)
+        self.assertEqual(conf.logging.stderr, "INFO")
+        self.assertNotIn("irrelevant", conf.logging.exception)
+
+    def test_repr(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        conf = MyConfig(extra_config=("test", extra))
+        _ = repr(conf)
+
 
 if __name__ == '__main__':
     unittest.main()
+
+# todo: caching
+# todo: ENV variable overwrite
+# todo: hide all sections but plugin section in plugin classes

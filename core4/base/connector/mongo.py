@@ -17,5 +17,5 @@ def make_connection(connection):
         if connection.password:
             url += ":" + connection.password
         url += "@"
-    url += connection.hostname
+    url += str(connection.hostname)
     return pymongo.MongoClient(url, tz_aware=False, connect=False)

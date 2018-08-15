@@ -1,0 +1,28 @@
+DEFAULT:
+  mongo_url: ~
+  mongo_database: test
+
+# system collections
+sys:
+  conf: ~
+  log: !connect mongodb://sys.log
+  role: !connect mongodb://sys.role
+  quota: !connect mongodb://sys.quota
+
+# system folders
+folder:
+  root: /srv/core4
+  transfer: transfer
+  process: proc
+  archive: arch
+  temp: temp
+
+# logging setup
+logging:
+  stderr: DEBUG
+  stdout: ~
+  mongodb: INFO
+  format: "%(asctime)s - %(levelname)-8s [%(qual_name)s/%(identifier)s] %(message)s"
+  exception:
+    capacity: 1000
+  extra: ~
