@@ -11,8 +11,8 @@ import yaml
 import core4.base.collection
 import core4.config.directive
 import core4.config.map
-from core4.error import Core4ConfigurationError
 import core4.util
+from core4.error import Core4ConfigurationError
 
 CONFIG_EXTENSION = ".yaml"
 STANDARD_CONFIG = pkg_resources.resource_filename(
@@ -147,16 +147,16 @@ class CoreConfig(collections.MutableMapping):
                     "top-level key/section "
                     "must not start with underscore [{}]".format(k))
 
-        def traverse(d):
-            for k, v in d.items():
-                if k.startswith("!"):
-                    if not ((k == "!connect") and (isinstance(v, str))):
-                        raise Core4ConfigurationError(
-                            "keys must not start with '!'")
-                if isinstance(v, dict):
-                    traverse(v)
-
-        traverse(dct)
+        # def traverse(d):
+        #     for k, v in d.items():
+        #         if k.startswith("!"):
+        #             if not ((k == "!connect") and (isinstance(v, str))):
+        #                 raise Core4ConfigurationError(
+        #                     "keys must not start with '!'")
+        #         if isinstance(v, dict):
+        #             traverse(v)
+        #
+        # traverse(dct)
 
     def _cleanup(self, config, schema):
         def traverse(c, s, r):
@@ -209,14 +209,34 @@ class CoreConfig(collections.MutableMapping):
 
     def _apply_tags(self, config):
 
-        def traverse(config):
-            for k, v in config.items():
+        def traverse(dct):
+            for k, v in dct.items():
                 if isinstance(v, dict):
                     traverse(v)
                 elif isinstance(v, core4.config.directive.ConnectTag):
-                    v.set_config(config)
+                    v.set_config(dct)
 
         traverse(config)
+
+    def _resolve_directive(self, config):
+
+        def traverse(dct, update):
+            for k, v in dct.items():
+                update[k] = {}
+                if isinstance(v, dict):
+                    traverse(v, update[k])
+                    continue
+                elif isinstance(v, str):
+                    if v.startswith("!connect "):
+                        tag = core4.config.directive.ConnectTag(
+                            v[len("!connect "):])
+                        # tag.set_config(dct)
+                        v = tag
+                update[k] = v
+
+        temp = {}
+        traverse(config, temp)
+        return temp
 
     def _load(self):
         """
@@ -250,13 +270,16 @@ class CoreConfig(collections.MutableMapping):
         else:
             local_data = {}
 
+        # merge sys.conf
         local_data = core4.util.dict_merge(
             local_data, self._read_db(standard_data, local_data))
+        # merge OS environ
+        e = self._read_env()
+        local_data = core4.util.dict_merge(
+            local_data, e)
 
         self._config.update(
             self._parse(standard_data, extra, local_data))
-
-        self._read_env()
 
         self._config = core4.config.map.Map(self._config)
         return self._config
@@ -285,6 +308,7 @@ class CoreConfig(collections.MutableMapping):
                 else:
                     continue  # if inner loop did not break
                 break  # the outer loop if inner loop was broken
+
         local_sys = local_data.get("sys", {}).get("conf")
         standard_sys = standard_data.get("sys", {}).get("conf")
         connect = local_sys or standard_sys
@@ -294,42 +318,8 @@ class CoreConfig(collections.MutableMapping):
                 connect.conn_str, **opts)
             for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
                 conf = core4.util.dict_merge(conf, doc)
-            return conf
+            return self._resolve_directive(conf)
         return {}
-
-    def _read_env(self):
-        pass
-
-    # self._loaded = True
-    #
-    # # retrieve from cache
-    # self.path = tuple(p[0] for p in proc)
-    # if self.__class__._cache is not None:
-    #     if self.path in self.__class__._cache:
-    #         self._config = self.__class__._cache[self.path]
-    #         self._debug("retrieve [{}] from cache", self.path)
-    #         return self._config
-    #
-    # # load files
-    # for path, add_key in proc:
-    #     self._debug("parsing [{}]", path)
-    #     self._read_file(path, add_keys=add_key)
-    #
-    # # load from sys.config
-    # self._read_db()
-    # # post process single OS environment variables
-    # self._read_env()
-    # # cascade top-level keys/values into other sections
-    # self._cascade()
-    # # recursively render and cleanse dict
-    # self._config = self._explode(self._config)
-    # # convert, cache and return
-    # self._config = core4.config.map.Map(self._config)
-    # self._debug("added {} at [{}]", self.path, id(self._config))
-    # if self.__class__._cache is not None:
-    #     self.__class__._cache[self.path] = self._config
-    #
-    # return self._config
 
     def __getattr__(self, item):
         return self._c[item]
@@ -337,98 +327,21 @@ class CoreConfig(collections.MutableMapping):
     def __repr__(self):
         return pprint.pformat(self._c)
 
-    # def _cascade(self):
-    #     """
-    #     Internal method used to cascade from top level configuration options
-    #     and their values (default values) down into dictionaries encapsulating
-    #     different configuration sections.
-    #     """
-    #     default = {}
-    #     for k, v in self._config.items():
-    #         if not isinstance(v, dict):
-    #             default[k] = v
-    #     for k, v in self._config.items():
-    #         if isinstance(v, dict):
-    #             self._debug("merging [{}]", k)
-    #             self._config[k] = core4.util.dict_merge(
-    #                 default, v)
-    #
-    # def _explode(self, dct, parent=None):
-    #     """
-    #     Internal method used to translate configuration statements into Python
-    #     objects and to hide all callables from the parsed configuration file.
-    #
-    #     At the moment, the following extra statements are supported:
-    #
-    #     * :class:`core4.config.directive.connect`
-    #     """
-    #     if parent is None:
-    #         parent = []
-    #     dels = set()
-    #     for k, v in dct.items():
-    #         np = parent + [k]
-    #         if isinstance(v, dict):
-    #             self._debug("exploding [{}]", ".".join(np))
-    #             self._explode(v, np)
-    #         elif isinstance(v, core4.config.directive.connect):
-    #             self._debug("connecting [{}]", ".".join(np))
-    #             dct[k] = v.render(dct)
-    #         elif callable(v):
-    #             self._debug("removing [{}]", ".".join(np))
-    #             dels.add(k)
-    #     for k in dels:
-    #         del dct[k]
-    #     return dct
-
-    # def _read_db(self):
-    #     """
-    #     Internal method used to parse all MongoDB document of the collection
-    #     specified in ``config.sys.conf``.
-    #     """
-    #     conn = self._config["sys"]["conf"]
-    #     if conn:
-    #         coll = conn.render(self._config)
-    #         conf = {}
-    #         n = 0
-    #         self._debug("retrieving configurations from [{}]", coll.info_url)
-    #         for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
-    #             conf = core4.util.dict_merge(conf, doc)
-    #             n += 1
-    #         self._debug("retrieved [{}] configurations ", n)
-    #         self._verify_key(conf)
-    #         self._config = core4.util.dict_merge(
-    #             self._config, conf, add_keys=False)
-    #     return None
-    #
-    # def _read_env(self):
-    #     """
-    #     Internal method used to overwrite configuration options with values
-    #     from OS environment variables.
-    #     """
-    #     for k, v in os.environ.items():
-    #         if k.startswith(ENV_PREFIX):
-    #             ref = self._config
-    #             levels = k[len(ENV_PREFIX):].split("__")
-    #             self._verify_key({levels[0]: v})
-    #             for lev in levels[:-1]:
-    #                 if lev in ref:
-    #                     if not isinstance(
-    #                             ref[lev], collections.MutableMapping):
-    #                         ref[lev] = {}
-    #                 else:
-    #                     ref[lev] = {}
-    #                 ref = ref[lev]
-    #             if levels[-1] in ref:
-    #                 old_val = ref[levels[-1]]
-    #             else:
-    #                 old_val = None
-    #             if type(old_val) in (bool, int, float, str):
-    #                 new_val = type(old_val)(v)
-    #             else:
-    #                 new_val = v
-    #             if isinstance(new_val, str):
-    #                 if new_val.strip() == "":
-    #                     new_val = None
-    #             self._debug("set [{}] = [{}] ({})", ".".join(levels), new_val,
-    #                         type(new_val).__name__)
-    #             ref[levels[-1]] = new_val
+    def _read_env(self):
+        """
+        Internal method used to overwrite configuration options with values
+        from OS environment variables.
+        """
+        env = {}
+        for k, v in os.environ.items():
+            if k.startswith(ENV_PREFIX):
+                levels = k[len(ENV_PREFIX):].split("__")
+                ref = env
+                if v.strip() == "":
+                    v = None
+                for lev in levels[:-1]:
+                    if lev not in ref:
+                        ref[lev] = {}
+                    ref = ref[lev]
+                ref[levels[-1]] = v
+        return self._resolve_directive(env)

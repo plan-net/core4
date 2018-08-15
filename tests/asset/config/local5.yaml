@@ -1,0 +1,3 @@
+
+sys:
+  conf: !connect mongodb://core:654321@localhost:27017/core4test/sys.conf

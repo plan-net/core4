@@ -46,6 +46,7 @@ import core4.base.collection
 import core4.error
 import core4.util
 from core4.base.collection import SCHEME
+import os
 
 
 def connect_mongodb(conn_str, **kwargs):
@@ -53,7 +54,6 @@ def connect_mongodb(conn_str, **kwargs):
     specs = specs[0]
     opts = dict()
     opts["scheme"] = protocol
-
     default_url = kwargs.get(SCHEME[opts["scheme"]]["url"])
     if default_url is not None and default_url.startswith(protocol):
         default_url = default_url[len(protocol) + 3:]

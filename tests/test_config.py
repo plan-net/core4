@@ -9,8 +9,6 @@ import core4.config
 import core4.error
 import pymongo.errors
 
-os.environ["CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
-
 
 class MyConfig(core4.config.CoreConfig):
     _cache = None
@@ -334,7 +332,7 @@ class TestConfig(unittest.TestCase):
 
     def test_connect2(self):
         extra = tests.util.asset("config/extra1.yaml")
-        local = tests.util.asset("config/local3.yaml")
+        local = tests.util.asset("config/local6.yaml")
         conf = MyConfig(extra_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
@@ -507,29 +505,6 @@ class TestConfig(unittest.TestCase):
 
     def test_reserved_word(self):
         standard_config = {
-            'DEFAULT': {
-                '!c': "mongodb://core4test:27017"
-            },
-            'section': {
-                'log': 'mongodb://sys1.log'
-            }
-        }
-        conf = MyConfig()
-        self.assertRaises(core4.error.Core4ConfigurationError,
-                          conf._parse, standard_config, None, None)
-
-        standard_config = {
-            'DEFAULT': {
-                'c': "mongodb://core4test:27017"
-            },
-            'section': {
-                '!log': 'mongodb://sys1.log'
-            }
-        }
-        conf = MyConfig()
-        self.assertRaises(core4.error.Core4ConfigurationError,
-                          conf._parse, standard_config, None, None)
-        standard_config = {
             '_DEFAULT': {
                 'c': "mongodb://core4test:27017"
             },
@@ -574,15 +549,139 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf.logging.stderr, "INFO")
         self.assertNotIn("irrelevant", conf.logging.exception)
 
+    def test_extra_read_db(self):
+        self.mongo.core4test.sys.conf.insert_one({
+            "folder": {
+                "transfer": "/tmp"
+            },
+            "logging": {
+                "exception": {
+                    "capacity": 1,
+                    "irrelevant": 42
+                },
+                "stderr": "WARNING"
+            },
+            "test": {
+                "value": 66
+            }
+        })
+        local = tests.util.asset("config/local3.yaml")
+        extra = tests.util.asset("config/extra1.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf._load()
+        self.assertEqual(conf.folder.transfer, "/tmp")
+        self.assertEqual(conf.logging.exception.capacity, 1)
+        self.assertEqual(conf.logging.stderr, "WARNING")
+        self.assertNotIn("irrelevant", conf.logging.exception)
+        self.assertEqual(conf.test.value, 66)
+
     def test_repr(self):
         extra = tests.util.asset("config/extra1.yaml")
         conf = MyConfig(extra_config=("test", extra))
         _ = repr(conf)
 
+    def test_env(self):
+        os.environ[
+            "CORE4_OPTION_DEFAULT__mongo_url"] = \
+            "mongodb://core:654321@localhost:27017"
+        os.environ[
+            "CORE4_OPTION_sys__mongo_database"] = "core4test2"
+        local = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual("test", conf.mongo_database)
+        self.assertEqual('mongodb://core:654321@localhost:27017',
+                         conf.mongo_url)
+        self.assertEqual("test", conf.logging.mongo_database)
+        self.assertEqual('mongodb://core:654321@localhost:27017',
+                         conf.logging.mongo_url)
+        self.assertEqual("core4test2", conf.sys.mongo_database)
+        self.assertEqual('mongodb://core:654321@localhost:27017',
+                         conf.sys.mongo_url)
+
+    def test_env_connect(self):
+        os.environ[
+            "CORE4_OPTION_DEFAULT__mongo_url"] = \
+            "mongodb://core:654321@localhost:27017"
+        os.environ[
+            "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
+        os.environ[
+            "CORE4_OPTION_sys__log"] = "!connect mongodb://coll1"
+        empty = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(config_file=empty)
+        self.assertEqual(0, conf.sys.log.count())
+        for i in range(10):
+            conf.sys.log.insert_one({})
+        self.assertEqual(10, self.mongo.core4test.coll1.count())
+
+    def test_env_db(self):
+        pass
+        # self.mongo.core4test.sys.conf.insert_one({
+        #     "sys": {
+        #         "log": "!connect mongodb://core:654321@localhost:27017/core4test1/coll1"
+        #     }
+        # })
+        # empty = tests.util.asset("config/empty.yaml")
+        # conf = MyConfig(config_file=empty)
+        # self.assertEqual(0, conf.sys.log.count())
+        # for i in range(5):
+        #     self.mongo.core4test1.coll1.insert_one({})
+        # self.assertEqual(5, conf.sys.log.count())
+        # todo: test that DEFAULT__mongo_url, DEFAULT_:mongo_database
+        # todo: and even sys__mongo_url, sys__mongo_database
+        # todo: are used to look ahead sys.conf !!!
+
+    def test_db_connect(self):
+        os.environ[
+            "CORE4_OPTION_DEFAULT__mongo_url"] = \
+            "mongodb://core:654321@localhost:27017"
+        os.environ[
+            "CORE4_OPTION_sys__mongo_database"] = "core4test"
+        self.mongo.core4test.sys.conf.insert_one({
+            "sys": {
+                "log": "!connect mongodb://core4test1/coll1"
+            }
+        })
+        local = tests.util.asset("config/local3.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual(0, conf.sys.log.count())
+        for i in range(5):
+            self.mongo.core4test1.coll1.insert_one({})
+        self.assertEqual(5, conf.sys.log.count())
+
+    def test_db_connect1(self):
+        os.environ[
+            "CORE4_OPTION_sys__mongo_url"] = \
+            "mongodb://core:654321@localhost:27017"
+        os.environ[
+            "CORE4_OPTION_sys__mongo_database"] = "core4test"
+        self.mongo.core4test.sys.conf.insert_one({
+            "sys": {
+                "log": "!connect mongodb://core4test1/coll1"
+            }
+        })
+        local = tests.util.asset("config/local3.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual(0, conf.sys.log.count())
+        for i in range(5):
+            self.mongo.core4test1.coll1.insert_one({})
+        self.assertEqual(5, conf.sys.log.count())
+
+    def test_db_connect2(self):
+        self.mongo.core4test.sys.conf.insert_one({
+            "sys": {
+                "log": "!connect mongodb://core:654321@localhost:27017/"
+                       "core4test1/coll1"
+            }
+        })
+        local = tests.util.asset("config/local5.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual(0, conf.sys.log.count())
+        for i in range(5):
+            self.mongo.core4test1.coll1.insert_one({})
+        self.assertEqual(5, conf.sys.log.count())
+
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(exit=False)
 
 # todo: caching
-# todo: ENV variable overwrite
-# todo: hide all sections but plugin section in plugin classes
