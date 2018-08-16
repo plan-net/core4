@@ -1,7 +1,7 @@
 import core4.base.main
 
 
-class Cookie(core4.main.Base):
+class Cookie(core4.base.main.CoreBase):
 
     section = "job"
 

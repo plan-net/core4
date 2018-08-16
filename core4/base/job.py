@@ -29,21 +29,32 @@ Class-Defaults
 
 class CoreJob(CoreBase):
 
+
+    job_args = {}
+    nodes = None
+    priority = None
+    chain = None
+    tags = []
+    adhoc = False
+    defer_max = 36000
+    defer_time = 600
+    error_time = 3600
+    dependency = None
+    max_parallel = None
+    wall_at = 0
+    wall_time = 0
+
+
+
     def __init__(self, **kwargs):
 
         self._cookie = None
-
         self.author = "mkr"
         self.section = "job"
 
-        # default_values
-        self.defer_time = 600
-        self.defer_max = 36000
-        self.error_time = 3600
-        self.adhoc = False
-        # this syntax change in python3
 
         super().__init__()
+
 
         # defaults from the config take preceedence over class-defaults.
         self.load_config()
@@ -53,21 +64,47 @@ class CoreJob(CoreBase):
             for key, value in kwargs.items():
                 setattr(self, key, value)
 
+        # these vars are written by the queue-only.
+        self.equeued = None
+        self.enqueued_at = None
+        self.enqueued_hostname = None
+        self.enqueued_parent = None
+        self.enqueued_username = None
+        self.error_time = None
+        self.attempts_left = None
+        self.query_at = None
+        self.runtime = None
+        self.job_id = None
+        self.started = None
+        self.finished = None
+        self.runtime = None
+        self.status = None
 
+    '''
+    look for config-values
+    '''
     def load_config(self):
-
-        do_not_modify = ["config", "plugin", "identifier", "_qual_name"]
         for i in self.__dict__.keys():
-            if i not in do_not_modify:
-            # we do have to make a distinction between explicit None in the config and None as no such key present.
-            # try:
+            try:
                 n = self.config.job.get(i)
                 setattr(self, i, n)
+            except:
+                pass
+
 
     def serialize(self):
-        tmp = self.__dict__
-        tmp.pop('config')
+        serialize_args = ["job_args","nodes","priority","chain","tags","adhoc","defer_max",
+                          "defer_time","error_time","dependency","max_parallel","wall_at","wall_time"]
+
+        tmp = {}
+
+        for i in serialize_args:
+            tmp[i] = self.__getattribute__(i)
+
+
         return tmp
+        # also do this explezitly
+
         #return tmp.pop('config')
 
     def deserialize(self, args={}):
@@ -78,6 +115,16 @@ class CoreJob(CoreBase):
                 setattr(self, key, value)
         else:
             raise KeyError
+
+    def __eq__(self, obj):
+        if isinstance(obj, CoreJob):
+            ret = self.serialize() == obj.serialize()
+        elif isinstance(obj, dict):
+            ret = self.serialize() == obj
+        else:
+            ret = False
+
+        return ret
 
 
 
@@ -97,65 +144,3 @@ class CoreJob(CoreBase):
         if not self._cookie:
             self._cookie = core4.base.cookie.Cookie(self.qual_name())
         return self._cookie
-
-
-    # do we want this here or should this be done within the queue?
-    def chain(self, job=[]):
-        pass
-
-    # will be set directly on __init__
-    #def tag(self, tags=[]):
-
-
-    nodes(Nodelist): set
-    nodes
-    to
-    run
-    on.
-        setup_logger(Logger): specify
-
-
-
-    # collection may not be needed as we would access it directly from within the config:
-    # connect(mongodb://testcoll)
-
-    # def collection(self, option=None, source=None, section=None, ro=False,
-    #                setting=None, *args, **kwargs):
-    #     """
-    #     This method returns a mongo collection access object.
-    #
-    #     :param option: configuration option specifying the mongo collection uri
-    #     :param source: source descriptor, mandatory for r/w access
-    #     :param section: configuration section specifying the mongo collection uri
-    #     :param ro: *True* for read-only access, *False* for read-/write access
-    #     :return: :class:`.CoreJobCollection` object
-    #     """
-    #     if setting is None:
-    #         if option is None:
-    #             raise JobRuntimeError(
-    #                 'job requires either config option or setting')
-    #         setting = self.config.get_collection(option, section)
-    #     coll = None
-    #     if setting:
-    #         # self.logger.debug('connecting to [mongodb://%s/%s/%s]',
-    #         #                   ','.join(['%s:%d' % (k, v) for (k, v) in
-    #         #                             setting['host']]),
-    #         #                   setting['database'],
-    #         #                   setting['collection'])
-    #         if ro:
-    #             coll = core.main.CoreCollection(setting, *args, **kwargs)
-    #         else:
-    #             if source is None or source.strip() == '':
-    #                 raise JobRuntimeError, 'missing collection source'
-    #             elif self.job_id is None:
-    #                 raise JobStartupError, 'missing job id'
-    #             ret = self.queue.add_source(self.job_id, source)
-    #             coll = CoreJobCollection(setting, ret['source'], self.job_id,
-    #                                      *args, **kwargs)
-    #             if ret['modified']:
-    #                 self.logger.debug('successfully assigned source [%s]',
-    #                                   ret['source'])
-    #             else:
-    #                 self.logger.debug('source [%s] already assigned',
-    #                                   ret['source'])
-    #     return coll

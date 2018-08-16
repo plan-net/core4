@@ -31,19 +31,15 @@ class TestBase(unittest.TestCase):
     def mongo(self):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
 
-    # def test_something(self):
-    #     import time
-    #     time.sleep(1)
-    #     self.assertEqual(True, True)
 
     def test_base(self):
         j = CoreJob()
         g = CoreJob()
         self.assertEqual("core4.base.job.CoreJob", j.qual_name())
         self.assertEqual("core4.base.job.CoreJob", j.qual_name(short=False))
-    #
+
     # def test_OS_environ(self):
-    #     os.environ["CORE4_OPTION_job_max_defertime"] = "20"
+    #     os.environ["CORE4_OPTION_job_defer_time"] = "20"
     #     j = CoreJob()
     #     self.assertEqual(20, j.defer_time)
 
@@ -60,9 +56,23 @@ class TestBase(unittest.TestCase):
         self.assertEqual(10, j.defer_time)
 
     def test_serialize(self):
-        j = CoreJob()
+        j = CoreJob(defer_time=60)
         tmp = j.serialize()
         self.assertEqual(60, tmp['defer_time'])
+
+    def test_eq(self):
+        j = CoreJob(defer_time=60)
+        f = CoreJob(defer_time=60)
+        g = CoreJob(defer_time=20)
+
+
+        self.assertEqual(j,f)
+        self.assertEqual(j,f.serialize())
+        self.assertNotEqual(j, g)
+        self.assertNotEqual(j, g.serialize())
+
+
+
 
 
 
