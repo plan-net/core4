@@ -70,9 +70,12 @@ class TestBase(unittest.TestCase):
         self.assertNotEqual(j, g.serialize())
 
     def test_dummy(self):
-        dummy = DummyJob(sleep=60)
-        dummyt = DummyJob(sleep=60)
-        print(dummy == dummyt)
+        for i in range(20):
+            dummy = DummyJob(sleep=60)
+            dummyt = DummyJob(sleep=60)
+            print(dummy == dummyt)
+            print(dummy.__dict__.values())
+            print(dummyt.__dict__.values())
 
             #self.assertEqual(dummy,dummyt)
 

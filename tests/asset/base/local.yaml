@@ -1,0 +1,3 @@
+DEFAULT:
+  mongo_url: mongodb://core:654321@localhost:27017
+  mongo_database: core4test

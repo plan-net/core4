@@ -27,9 +27,9 @@ class TestRole(unittest.TestCase):
             del os.environ[k]
         self.mongo.drop_database('core4test')
         os.environ[
-            "CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
+            "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@localhost:27017"
         os.environ[
-            "CORE4_OPTION_mongo_database"] = "core4test"
+            "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
         LogOn()
 
     @property

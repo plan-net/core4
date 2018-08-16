@@ -25,7 +25,7 @@ class CoreLoggerMixin:
 
     def setup_logging(self):
         """
-        setup logging as specified in configuration. See :ref:`core_py_config`
+        setup logging as specified in configuration. See :ref:`core_config`
         ``logging`` for further details.
         """
         if CoreLoggerMixin.completed:
@@ -72,6 +72,7 @@ class CoreLoggerMixin:
 
     def _setup_extra_logging(self, logger):
         extra = self.config.logging.extra
+        print(self.config)
         if extra:
             logging.config.dictConfig(extra)
             self.logger.debug("extra logging setup complete from")

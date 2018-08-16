@@ -36,7 +36,7 @@ class Role(core4.base.CoreBase):
     * ``.password`` (str)
     * ``.perm`` (list of str)
     * ``.last_login`` (:class:`.datetime`), automatically injected
-    * ``.quota`` (str in format ``limit:seconds``
+    * ``.quota`` (str in format ``limit:seconds``)
     """
 
     def __init__(self, **kwargs):

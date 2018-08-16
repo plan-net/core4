@@ -46,7 +46,6 @@ import core4.base.collection
 import core4.error
 import core4.util
 from core4.base.collection import SCHEME
-import os
 
 
 def connect_mongodb(conn_str, **kwargs):

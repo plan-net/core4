@@ -26,3 +26,8 @@ logging:
   exception:
     capacity: 1000
   extra: ~
+
+# job defaults
+job:
+  defer_time: 60
+  defer_max: 3600

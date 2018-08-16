@@ -130,7 +130,7 @@ class CoreBase:
         kwargs = {}
         extra_conf = self.plugin_conf()
         if extra_conf and os.path.exists(extra_conf):
-            kwargs["extra_config"] = (extra_conf, self.plugin)
+            kwargs["extra_config"] = (self.plugin, extra_conf)
         self.config = core4.config.CoreConfig(**kwargs)
 
     def _open_logging(self):

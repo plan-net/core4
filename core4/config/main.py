@@ -4,7 +4,8 @@ import collections
 import collections.abc
 import os
 import pprint
-
+from datetime import datetime, date
+import dateutil.parser
 import pkg_resources
 import yaml
 
@@ -21,6 +22,24 @@ USER_CONFIG = os.path.expanduser("core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
 DEFAULT = "DEFAULT"
+
+
+def parse_boolean(value):
+    if value.lower() in ("yes", "y", "on", "1", "true", "t"):
+        return True
+    elif value.lower() in ("no", "n", "off", "0", "false", "f"):
+        return False
+    return value
+
+
+def type_ident(a, b):
+    if ((type(a) != type(b))
+            and (not ((type(a) in (int, float)
+                       and type(b) in (int, float))
+                      or (type(a) in (datetime, date)
+                          and type(b) in (datetime, date))))):
+        return False
+    return True
 
 
 class CoreConfig(collections.MutableMapping):
@@ -147,32 +166,21 @@ class CoreConfig(collections.MutableMapping):
                     "top-level key/section "
                     "must not start with underscore [{}]".format(k))
 
-        # def traverse(d):
-        #     for k, v in d.items():
-        #         if k.startswith("!"):
-        #             if not ((k == "!connect") and (isinstance(v, str))):
-        #                 raise Core4ConfigurationError(
-        #                     "keys must not start with '!'")
-        #         if isinstance(v, dict):
-        #             traverse(v)
-        #
-        # traverse(dct)
-
     def _cleanup(self, config, schema):
         def traverse(c, s, r):
+            if s is None:
+                return {}
+            if not isinstance(s, dict):
+                raise Core4ConfigurationError(
+                    "invalid type cast {}, expected dict".format(s))
             for k, v in c.items():
-                if not isinstance(s, dict):
-                    raise Core4ConfigurationError(
-                        "invalid type cast [{}], expected dict".format(k))
                 if k in s:
                     if isinstance(v, dict):
                         r[k] = {}
                         traverse(v, s[k], r[k])
                     else:
                         if not ((v is None) or (s[k] is None)):
-                            if ((type(v) != type(s[k])
-                                 and (not (type(v) in (int, float)
-                                           and type(s[k]) in (int, float))))):
+                            if not type_ident(v, s[k]):
                                 raise Core4ConfigurationError(
                                     "invalid type cast [{}] "
                                     "from [{}] to [{}]".format(
@@ -182,6 +190,9 @@ class CoreConfig(collections.MutableMapping):
 
         ret = {}
         traverse(config, schema, ret)
+        # fix logging.extra schema constraints
+        if "logging" in config and "extra" in config["logging"]:
+            ret["logging"]["extra"] = config["logging"]["extra"]
         return ret
 
     def _apply_default(self, config, default, plugin_name=None,
@@ -205,6 +216,9 @@ class CoreConfig(collections.MutableMapping):
         # project standard defaults
         temp = {}
         traverse(config, default, temp)
+        # fix logging.extra schema constraints
+        if "logging" in temp and "extra" in temp["logging"]:
+            temp["logging"]["extra"] = config["logging"]["extra"]
         return temp
 
     def _apply_tags(self, config):
@@ -270,13 +284,14 @@ class CoreConfig(collections.MutableMapping):
         else:
             local_data = {}
 
+        # read OS environment variables
+        environ = self._read_env()
+
         # merge sys.conf
         local_data = core4.util.dict_merge(
             local_data, self._read_db(standard_data, local_data))
         # merge OS environ
-        e = self._read_env()
-        local_data = core4.util.dict_merge(
-            local_data, e)
+        local_data = core4.util.dict_merge(local_data, environ)
 
         self._config.update(
             self._parse(standard_data, extra, local_data))
@@ -297,9 +312,20 @@ class CoreConfig(collections.MutableMapping):
         Internal method used to parse all MongoDB document of the collection
         specified in ``config.sys.conf``.
         """
+        # build OS environ lookup
+        environ = {
+            "DEFAULT": {},
+            "sys": {}
+        }
+        for k in ("DEFAULT", "sys"):
+            for opt in ("mongo_url", "mongo_database"):
+                os_key = "{}{}__{}".format(ENV_PREFIX, k, opt)
+                if os_key in os.environ:
+                    environ[k][opt] = os.getenv(os_key)
+        # make defaults for mongo_url and mongo_database
         opts = {}
         for attr in ("mongo_url", "mongo_database"):
-            for config in (local_data, standard_data):
+            for config in (environ, local_data, standard_data):
                 for section in ("sys", DEFAULT):
                     data = config.get(section, {})
                     if attr in data:
@@ -311,14 +337,21 @@ class CoreConfig(collections.MutableMapping):
 
         local_sys = local_data.get("sys", {}).get("conf")
         standard_sys = standard_data.get("sys", {}).get("conf")
+        env_sys = os.getenv("CORE4_OPTION_sys__conf")
+
         connect = local_sys or standard_sys
-        if connect:
+        if connect or env_sys:
+            if env_sys:
+                conn_str = env_sys[len("!connect "):]
+            else:
+                conn_str = connect.conn_str
             conf = {}
             coll = core4.config.directive.connect_mongodb(
-                connect.conn_str, **opts)
+                conn_str, **opts)
             for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
                 conf = core4.util.dict_merge(conf, doc)
             return self._resolve_directive(conf)
+
         return {}
 
     def __getattr__(self, item):
@@ -337,11 +370,28 @@ class CoreConfig(collections.MutableMapping):
             if k.startswith(ENV_PREFIX):
                 levels = k[len(ENV_PREFIX):].split("__")
                 ref = env
-                if v.strip() == "":
+                if v.strip() == "~":
                     v = None
                 for lev in levels[:-1]:
                     if lev not in ref:
                         ref[lev] = {}
                     ref = ref[lev]
-                ref[levels[-1]] = v
+                ref[levels[-1]] = self._env_convert(v)
         return self._resolve_directive(env)
+
+    def _env_convert(self, value):
+        if value is None:
+            return None
+        converter = {
+            "!!bool": lambda r: parse_boolean(r),
+            "!!float": lambda r: float(r),
+            "!!int": lambda r: int(r),
+            "!!str": lambda r: str(r),
+            "!!timestamp": lambda r: dateutil.parser.parse(r)
+            ,
+        }
+        for typ, conv in converter.items():
+            if value.startswith(typ + " "):
+                upd = value[len(typ) + 1:]
+                return conv(upd)
+        return value

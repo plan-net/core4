@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import collections
+
 import core4.error
+
 
 class Map(dict):
     """

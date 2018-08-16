@@ -2,12 +2,14 @@
 
 import os
 import unittest
-import tests.util
+
+import datetime
 import pymongo
+import pymongo.errors
 from pprint import pprint
 import core4.config
 import core4.error
-import pymongo.errors
+import tests.util
 
 
 class MyConfig(core4.config.CoreConfig):
@@ -215,6 +217,7 @@ class TestConfig(unittest.TestCase):
         }
         conf = MyConfig()
         ret = conf._parse(standard_config, None, local_config)
+        #pprint(ret)
         self.assertNotIn("unknown", ret["sys"])
 
     def test_retype(self):
@@ -282,7 +285,6 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(extra_config=("test", extra), config_file=local)
         self.assertRaises(core4.error.Core4ConfigurationError,
                           conf._load)
-
 
     def test_default_type(self):
         standard_config = {
@@ -383,7 +385,7 @@ class TestConfig(unittest.TestCase):
                                                       exists=False)
         conf = MyConfig(extra_config=("test", extra))
         self.assertRaises(FileNotFoundError, conf._load)
-        #self.assertEqual(repr(conf.sys.log), "!connect 'mongodb://sys.log'")
+        # self.assertEqual(repr(conf.sys.log), "!connect 'mongodb://sys.log'")
 
     def test_user_file(self):
         extra = tests.util.asset("config/extra1.yaml")
@@ -447,17 +449,25 @@ class TestConfig(unittest.TestCase):
         local = tests.util.asset("config/empty.yaml")
         conf = MyConfig(extra_config=("test", extra), config_file=local)
         self.assertEqual(conf.mongo_database, "test")
+
         def set1():
             conf["mongo_url"] = "xyz"
+
         self.assertRaises(core4.error.Core4ConfigurationError, set1)
+
         def del1():
             del conf["mongo_url"]
+
         self.assertRaises(core4.error.Core4ConfigurationError, del1)
+
         def set2():
             conf.logging.stderr = "ERROR"
+
         self.assertRaises(core4.error.Core4ConfigurationError, set2)
+
         def set3():
             conf["logging"]["stderr"] = "CRITICAL"
+
         self.assertRaises(core4.error.Core4ConfigurationError, set3)
         self.assertRaises(core4.error.Core4ConfigurationError, conf.pop,
                           "logging")
@@ -614,21 +624,47 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(10, self.mongo.core4test.coll1.count())
 
     def test_env_db(self):
-        pass
-        # self.mongo.core4test.sys.conf.insert_one({
-        #     "sys": {
-        #         "log": "!connect mongodb://core:654321@localhost:27017/core4test1/coll1"
-        #     }
-        # })
-        # empty = tests.util.asset("config/empty.yaml")
-        # conf = MyConfig(config_file=empty)
+        os.environ[
+            "CORE4_OPTION_sys__conf"] = "!connect mongodb://core:654321@localhost:27017/core4test2/sysconf"
+        self.mongo.core4test2.sysconf.insert_one({
+            "sys": {
+                "log": "!connect mongodb://core:654321@localhost:27017/"
+                       "core4test1/coll1"
+            }
+        })
+        empty = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(config_file=empty)
+        conf._load()
+        self.assertEqual(0, conf.sys.log.count())
+        for i in range(5):
+            self.mongo.core4test1.coll1.insert_one({})
+        self.assertEqual(5, conf.sys.log.count())
+
+    def test_env_db2(self):
+        os.environ[
+            "CORE4_OPTION_sys__mongo_url"] = "mongodb://core:654321@localhost:27017"
+        os.environ[
+            "CORE4_OPTION_sys__mongo_database"] = "core4test"
+        os.environ[
+            "CORE4_OPTION_sys__conf"] = "!connect mongodb://sys.conf"
+        self.mongo.core4test.sys.conf.insert_one({
+            "sys": {
+                "log": "!connect mongodb://core:654321@localhost:27017/"
+                       "core4test1/coll1"
+            }
+        })
+        empty = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(config_file=empty)
+        # conf._load()
+        self.assertEqual(conf["sys"]["conf"].info_url,
+                         "core@localhost:27017/core4test/sys.conf")
+        self.assertEqual(conf["sys"]["log"].info_url,
+                         "core@localhost:27017/core4test1/coll1")
+
         # self.assertEqual(0, conf.sys.log.count())
         # for i in range(5):
         #     self.mongo.core4test1.coll1.insert_one({})
         # self.assertEqual(5, conf.sys.log.count())
-        # todo: test that DEFAULT__mongo_url, DEFAULT_:mongo_database
-        # todo: and even sys__mongo_url, sys__mongo_database
-        # todo: are used to look ahead sys.conf !!!
 
     def test_db_connect(self):
         os.environ[
@@ -679,6 +715,52 @@ class TestConfig(unittest.TestCase):
         for i in range(5):
             self.mongo.core4test1.coll1.insert_one({})
         self.assertEqual(5, conf.sys.log.count())
+
+    def test_tag(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        empty = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        self.assertEqual(conf.test.v1, 3)
+        self.assertIsInstance(conf.test.v1, float)
+        self.assertTrue(conf.test.v2)
+        self.assertIsInstance(conf.test.v2, bool)
+
+    def test_env_tag(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        empty = tests.util.asset("config/empty.yaml")
+        os.environ["CORE4_OPTION_test__coll1"] = "~"
+        os.environ["CORE4_OPTION_test__v1"] = "!!float 33.5"
+        os.environ["CORE4_OPTION_test__v2"] = "!!bool off"
+        os.environ["CORE4_OPTION_test__v3"] = "!!int 10"
+        os.environ["CORE4_OPTION_test__v4"] = "!!str 456"
+        os.environ["CORE4_OPTION_test__v5"] = "!!timestamp 2014-04-14"
+        os.environ["CORE4_OPTION_test__v6"] = "!!timestamp 2014-04-14 12:23"
+        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        conf._load()
+        self.assertIsInstance(conf.test.v5, datetime.datetime)
+        self.assertIsInstance(conf.test.v6, datetime.date)
+        self.assertIsNone(conf["test"]["coll1"])
+        self.assertEqual(conf["test"]["v1"], 33.5)
+        self.assertEqual(conf["test"]["v4"], "456")
+        self.assertFalse(conf["test"]["v2"])
+
+    def test_tag_timestamp(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        empty = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        conf._load()
+        self.assertIsInstance(conf.test.v5, datetime.datetime)
+        self.assertIsInstance(conf.test.v6, datetime.date)
+
+    def test_env_tag_invalid(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        empty = tests.util.asset("config/empty.yaml")
+        os.environ["CORE4_OPTION_test__v2"] = "!!bool 123"
+        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        self.assertRaises(core4.error.Core4ConfigurationError, conf._load)
+        #self.assertFalse(conf["test"]["v2"])
+
+        # pprint(conf.test.v1)
 
 
 if __name__ == '__main__':

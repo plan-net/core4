@@ -66,7 +66,8 @@ setup(
         "Sphinx>=1.7, <1.8",
         "sphinx-rtd-theme==0.3, <0.4",
         "Flask>=1.0, <2.0",
-        "Flask-Login>=0.4, <1.0"
+        "Flask-Login>=0.4, <1.0",
+        "PyYaml>=3.12, <4"
     ],
     zip_safe=False,
     cmdclass={

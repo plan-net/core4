@@ -3,15 +3,13 @@
 import os
 import sys
 import unittest
-
+import tests.util
 import pymongo
 
 import core4.base
 # import core4.logger
 import core4.base.collection
 import core4.error
-
-os.environ["CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
 
 
 class TestBase(unittest.TestCase):
@@ -27,15 +25,11 @@ class TestBase(unittest.TestCase):
         os.environ[
             "CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
         os.environ["CORE4_OPTION_mongo_database"] = "core4test"
+        os.environ["CORE4_CONFIG"] = tests.util.asset("base/local.yaml")
 
     @property
     def mongo(self):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
-
-    # def test_something(self):
-    #     import time
-    #     time.sleep(1)
-    #     self.assertEqual(True, True)
 
     def test_base(self):
         b = core4.base.CoreBase()
@@ -46,65 +40,18 @@ class TestBase(unittest.TestCase):
         import plugin.test
         t = plugin.test.Test()
         self.assertEqual("plugin", t.plugin)
-        # self.assertEqual("plugin", t.section)
         self.assertEqual("plugin.test.Test", t.qual_name())
         self.assertEqual("core4.plugin.plugin.test.Test", t.qual_name(
             short=False))
-        self.assertEqual("plugin.test.Test()", "{}".format(t))
-        t = plugin.test.Test()
         self.assertEqual("plugin.test.Test()", repr(t))
-
-    # def test_binding(self):
-    #     self.assertEqual(1, 0)
-
-    # def test_binding(self):
-    #
-    #     class A(core4.base.CoreBase):
-    #
-    #         def ok(s):
-    #             return "OK A"
-    #
-    #     class B(A):
-    #
-    #         def ok(s):
-    #             s.a = A()
-    #             return "OK B - " + s.a.ok()
-    #
-    #     b = B()
-    #     self.assertEqual("OK B - OK A", b.ok())
-    #
-    #     # self.assertNotEqual(b.identifier, b.a.identifier)
-    #
-    #     class C(core4.base.CoreBase):
-    #
-    #         def ok(s):
-    #             return "OK C"
-    #
-    #     class D(C):
-    #
-    #         def ok(s):
-    #             s.identifier = "123"
-    #             # s.c = s.bind(C())
-    #             s.c = C()
-    #             return "OK D - " + s.c.ok()
-    #
-    #         # def extend(s):
-    #         #     s.e = C(bind=s)
-    #
-    #     d = D()
-    #     self.assertEqual("OK D - OK C", d.ok())
-    #     self.assertEqual(d.identifier, d.c.identifier)
-    #     self.assertEqual(d.e.identifier, d.identifier)
 
     def test_plugin_conf(self):
         import plugin.test
         t = plugin.test.Test()
-        self.assertTrue(t.plugin_conf().endswith("core4/plugin/plugin.py"))
+        self.assertTrue(t.plugin_conf().endswith("core4/plugin/plugin.yaml"))
         self.assertEqual(t.config.mongo_database, "core4test")
         self.assertEqual(repr(t), "plugin.test.Test()")
-        # print(t.config)
-        # test = eval(repr(t.config), {"CoreConnection": core4.base.collection.CoreCollection})
-        self.assertIn("/core4test/sys.role", t.config.sys.role.info_url)
+        #self.assertIn("/core4test/sys.role", t.config.sys.role.info_url)
         # self.assertEqual(test, t.config)
 
     def test_main(self):

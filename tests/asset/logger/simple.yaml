@@ -1,0 +1,8 @@
+DEFAULT:
+  mongo_database: core4test
+
+logging:
+  mongodb: DEBUG
+
+sys:
+  log: !connect mongodb://sys.log

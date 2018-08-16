@@ -33,8 +33,9 @@ class TestBase(unittest.TestCase):
             del os.environ[k]
         self.mongo.drop_database('core4test')
         os.environ[
-            "CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
-        os.environ["CORE4_OPTION_mongo_database"] = "core4test"
+            "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
+                                                 "localhost:27017"
+        os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
         core4.config.CoreConfig._cache = {}
 
         logger = logging.getLogger(core4.logger.CORE4_PREFIX)
@@ -44,7 +45,8 @@ class TestBase(unittest.TestCase):
 
     def tearDown(self):
         for fn in glob.glob("*.log*"):
-            # print("removed", fn)
+            pass
+            print("removed", fn)
             os.unlink(fn)
 
     @property
@@ -52,7 +54,7 @@ class TestBase(unittest.TestCase):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
 
     def test_log(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         b = LogOn()
         b.logger.debug("this is DEBUG")
         b.logger.info("this is INFO")
@@ -69,7 +71,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(1, sum([1 for i in data if i["level"] == "CRITICAL"]))
 
     def test_exception(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         b = LogOn()
         try:
             x = 1 / 0
@@ -82,7 +84,7 @@ class TestBase(unittest.TestCase):
         self.assertIn("division by zero", out)
 
     def test_exception2(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         b = LogOn()
         try:
             raise RuntimeError("this is a manual runtime error")
@@ -97,16 +99,16 @@ class TestBase(unittest.TestCase):
         self.assertIn("RuntimeError: this is a manual runtime error", out)
 
     def test_inconsistent_setup(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/error.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/error.yaml")
         self.assertRaises(core4.error.Core4SetupError, lambda: LogOn())
 
     def test_cache(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         b = LogOn()
         c = LogOn()
 
     def test_extra_logging(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/extra.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/extra.yaml")
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
         b.logger.info("this is an INFO message")
@@ -125,7 +127,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(5, len(data["info"]))
 
     def test_exception_logging(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"
         # os.environ["CORE4_OPTION_logging__exception__capacity"] = "2"
         b = LogOn()
@@ -141,9 +143,9 @@ class TestBase(unittest.TestCase):
         self.assertEqual(4, sum([1 for d in data if d["level"] == "DEBUG"]))
 
     def test_exception_fifo(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"
-        os.environ["CORE4_OPTION_logging__exception__capacity"] = "2"
+        os.environ["CORE4_OPTION_logging__exception__capacity"] = "!!int 2"
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
         b.logger.info("this is an INFO message")
@@ -158,17 +160,17 @@ class TestBase(unittest.TestCase):
         self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
 
     def test_exception_dsiabled(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = ""
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
 
     def test_exception_in_debug(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__stdout"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__stderr"] = ""
-        os.environ["CORE4_OPTION_logging__exception__capacity"] = "2"
+        os.environ["CORE4_OPTION_logging__exception__capacity"] = "!!int 2"
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
         b.logger.info("this is an INFO message")
@@ -181,7 +183,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
 
     def test_identifier(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         b = LogOn()
         b.logger.debug("*** START ***")
@@ -190,7 +192,7 @@ class TestBase(unittest.TestCase):
         b.logger.debug("*** END ***")
 
     def test_massive(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.py")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__stderr"] = ""
         os.environ["CORE4_OPTION_logging__stdout"] = ""
