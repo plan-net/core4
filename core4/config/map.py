@@ -7,8 +7,8 @@ import core4.error
 
 class Map(dict):
     """
-    A dictionary that supports dot notation as well as dictionary access
-    notation.
+    A read-only dictionary that supports dot notation as well as dictionary
+    access notation.
     """
 
     __getattr__ = dict.__getitem__

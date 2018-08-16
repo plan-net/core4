@@ -4,40 +4,8 @@
 The :mod:`core4.config.directive` module implements the following helpers with
 core4 configuration management:
 
-* :class:`connect` to specify :class:`.CoreCollection` connection settings
-
-Use the ``connect(conn_str)`` statement to spefify :class:`.CoreCollection`
-connections. The ``connect`` statement parses authentication/hostname
-information, database and collection name.
-
-A fully qualified connection string to a MongoDB database ``testdb``,
-collection ``result`` at ``localhost``, port ``27017``, authenticated with
-username ``user`` and password ``pwd`` is::
-
-    target = connect("mongodb://user:pwd@localhost:27017/testdb/result")
-
-If no hostname is specified, then the connection URL is taken from variable
-``mongo_url``. If no database name is specified, then it is taken from
-variable ``mongo_database``. Therefore, the following three examples all
-cascade to the same connection settings::
-
-    from core4.config import connect
-
-    mongo_url = "mongodb://usr:pwd@localhost:27017"
-    mongo_database = "db"
-
-    section1 = dict(
-        result1 = connect("mongodb://usr:pwd@localhost:27017/db/result"),
-        result2 = connect("mongodb://db/result"),
-        result3 = connect("mongodb://result")
-    )
-
-Access to this configuration example proofs that all three
-:class:`.CoreCollection` objects constructed with the :class:`.connect`
-statement point to the same MongoDB collection::
-
-    c = conf.section1
-    c.result1.info_url == c.result2.info_url == c.result3.info_url
+* :func:`connect_mongodb` to create :class:`.CoreCollection` object
+* :class:`ConnectTag` to support the custom YAML tag `!!connect`
 """
 
 import yaml
@@ -49,6 +17,22 @@ from core4.base.collection import SCHEME
 
 
 def connect_mongodb(conn_str, **kwargs):
+    """
+    This function parses ``conn_str`` parameter and ``kwargs`` default
+    parameters and returns :class:`.CoreCollection`. The format of the
+    connection string is::
+
+        mongodb://[USERNAME]:[PASSWORD]@<HOSTNAME>:<PORT>/[DATABASE]/<COLLECTION>
+
+    The username, password, hostname, port and database are optional
+    parameters. Default parameters for these are expected in ``kwargs``.
+    The collection parameter is mandatory.
+
+    :param conn_str: connection string
+    :param mongo_url: default ``mongo_url``
+    :param mongo_database: default ``mongo_database``
+    :return: :class:`.CoreCollection` object
+    """
     (protocol, *specs) = conn_str.split("://")
     specs = specs[0]
     opts = dict()
@@ -88,9 +72,23 @@ def connect_mongodb(conn_str, **kwargs):
 
 
 class ConnectTag(yaml.YAMLObject):
+    """
+    This class implements the custom YAML tag ``!connect``. See
+    :func:`connect_mongodb` about the format of the connection string.
+
+    This method implements the delegation pattern and passes all non-owned
+    methods and properties to :class:`.CoreCollection`.
+    """
     yaml_tag = u'!connect'
 
     def __init__(self, conn_str):
+        """
+        Initialises the MongoDB connection. The connection is instantiated
+        after complete core4 configuration is provided with
+        :meth:`.set_config`.
+
+        :param conn_str: connection string, see :func:`connect_mongodb``
+        """
         if conn_str.count("://") == 0:
             raise core4.error.Core4ConfigurationError(
                 "malformed connection string [{}]".format(conn_str))
@@ -98,12 +96,28 @@ class ConnectTag(yaml.YAMLObject):
         self._mongo = None
 
     def __repr__(self):
+        """
+        :return: string representation of the tag
+        """
         return "!connect '" + self.conn_str + "'"
 
     def set_config(self, config):
+        """
+        Passes the current core4 configuration to lazily establish the
+        MongoDB connection
+
+        :param config: core4 configuration dict
+        """
         self.config = config
 
-    def _connect(self):
+    def connect(self):
+        """
+        Internal methods used to lazily establish the MongoDB connection when
+        requsted. Uses :func:`connect_mongodb` to connect.
+
+        :return: :class:`.CoreCollection`
+        """
+
         if self._mongo is None:
             kwargs = {
                 "mongo_url": self.config.get("mongo_url"),
@@ -113,16 +127,15 @@ class ConnectTag(yaml.YAMLObject):
         return self._mongo
 
     def __getattr__(self, item):
-        return getattr(self._connect(), item)
+        return getattr(self.connect(), item)
 
     @classmethod
     def from_yaml(cls, loader, node):
-        return ConnectTag(node.value)
+        """
+        Class method used to parse the `!connect` YAML tag.
 
-# def load_yaml(stream, config):
-#     loader = SafeLoader(stream)
-#     loader._config = config
-#     try:
-#         return loader.get_single_data()
-#     finally:
-#         loader.dispose()
+        :param loader: YAML loader, see :mod:`yaml`
+        :param node: current YAML node
+        :return: :class:`.ConnectTag`
+        """
+        return ConnectTag(node.value)
