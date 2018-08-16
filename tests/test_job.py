@@ -69,6 +69,7 @@ class TestBase(unittest.TestCase):
         self.assertNotEqual(j, g)
         self.assertNotEqual(j, g.serialize())
 
+    @unittest.skip
     def test_dummy(self):
         for i in range(20):
             dummy = DummyJob(sleep=60)
