@@ -168,5 +168,6 @@ texinfo_documents = [
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 todo_include_todos = True
+todo_link_only = True
 
 autodoc_member_order = 'bysource'

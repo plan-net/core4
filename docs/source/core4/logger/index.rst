@@ -19,7 +19,7 @@ custom logging handler :class:`.MongoLoggingHandler`.
 All classes inherited from :class:`.CoreBase` feature this logging. All
 application objects need to mixin :class:`.CoreLoggerMixin` and call
 :meth:`.CoreLoggerMixin.setup_logging` to start logging as specified in section
-``logging`` (see :ref:`core_py_config`).
+``logging`` (see :ref:`core_config`).
 
 .. toctree::
 

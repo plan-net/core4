@@ -1,17 +1,8 @@
 configuration
 =============
 
-All core4 components based on :class:`.CoreBase` have access to core4
-configuraiton management with class :class:`.CoreConfig` in
-:mod:`core4.config.main`.
-
-
-configuration principles
-------------------------
-
-core4 configuration is considered a key feature of the framework. System
-configuration of various kind are the bridge between development and
-operations activities. The key elements are:
+System configuration of various kind are the bridge between core4 development
+and operations activities. Key features of core4 configuration are:
 
 #. to keep sensitive data safe and keep naive staff and smart hackers out.
 #. to make the life of system administrators easy. The config system supports
@@ -22,40 +13,38 @@ operations activities. The key elements are:
 #. to make the life of data scientists and developers easy. The config system
    supports cross-database application development, local and remote sources,
    and a hierarchical connection configuration mechanic which speed up the most
-   critical ingridient to efficient programming: data access.
-
-core4 configuration format is pure Python code. The discussion about the pros
-and cons of the various configuration formats can be found all over the place
-(see for example `Python as configuration files`_ and especially
-`Matteo's comment`_).
-
-The following arguments led us to chose Python as the configuration format:
-
-* Python is easy.
-* We do not consider Python code a security thread because if a user can modify
-  a configuration file he/she can already do whatever the application can do.
-* To follow a declarative or procedural structure of the configuration is left
-  to the programmer and operator.
+   critical ingredient to efficient programming: data access.
 
 
 sources of configuration
 ------------------------
 
-There are six places where core4 is looking for configuration sections
-and their options. Environment variables prefixed with ``CORE4_OPTION_``
-take precedence over the following core4 configuration sources:
+There are multiple places where core4 is looking for configuration.
 
-#. the default configuration in ``config/core.py``
-#. the plugin configuration for plugin specific settings in
-   ``[PLUGIN]/[PLUGIN].py``. This plugin configuration is part of the plugin
-   repository and is considered to provide plugin specific default values.
-#. a local configuration located by the environment variable ``CORE4_CONFIG``
-#. the user specific configuration in his or her home ``~/core4/local.py``
-#. the system wide local configuration in ``/etc/core4/local.py``
-#. the central configuration database collection ``sys.conf``
+#. The **core4 configuration** file ``config/core.yaml``, see
+   :ref:`core_config`. This file provides standard values.
+#. The **plugin configuration** file for plugin specific settings in
+   ``[PLUGIN]/[PLUGIN].yaml``. This file is part of the plugin repository and
+   is considered to provide plugin specific default values.
+#. The optional **local configuration file**. If the special environment
+   variable ``CORE4_CONFIG`` locates an existing file, then this file is
+   processed. If the variable is not defined, then the user file
+   ``~/core4/local.yaml`` is processed if it exists (*local user
+   configuration*). If this file does not exist, then the local system
+   configuration file ``/etc/core4/local.yaml`` is parsed if it exists.
+   If none of these options apply, then local configuration is skipped.
+#. The optional **MongoDB configuration** documents in collection ``sys.conf``
+   are processed if defined. If the MongoDB collection ``sys.conf`` is
+   specified in any of the previous locations, then any existing keys/values
+   are overwritten.
+#. **Environment variables** ``CORE4_OPTION_foo__bar`` can be defined to set
+   configuration values (see :ref:`env_config`).
 
-Option 3 takes precedence over option 4 which takes precedence over option 5.
-Option 6 is applied, if ``sys.conf`` is not ``None``.
+If more than one source specifies a configuration key, then the last value
+wins. Local configuration takes precedence over standard core4 and plugin
+values. Collection ``sys.conf`` takes precedence over local configruation.
+Finally environment variables have the top most priority to set configuration
+values.
 
 This boils down to the configuration flow outlined in the following diagram:
 
@@ -63,89 +52,115 @@ This boils down to the configuration flow outlined in the following diagram:
    :scale: 100 %
    :alt: configuration flow
 
-Default values are set in ``core.py``. Plugin specific variables and values are
-set in the plugin configuratio file. For each plugin exists one and only one
-plugin specific configuration file. A local configuration file can be enforced
-with the ``CORE4_CONFIG`` environment variables. If ``CORE4_CONFIG`` is
-defined, then the processing of the user configuration file and the system
-configuration file is skipped. If ``CORE4_CONFIG`` is not defined, then the
-system joins the user configuration file if it exists. If no user configuration
-file exists, then the system configuration file is joined if it exists. If the
-MongoDB collection ``sys.conf`` is defined, then all options and their values
-are joined. Finally all configuration options from the operating system
-environment variables overwrite existing values (see :ref:`env_config`).
-
-.. important:: **Outer versus inner configuration join**. The core4 default
-               configuration and additionally for plugin classes the plugin
-               configuration options define the scope of configuration options
-               (**outer join** statement in the diagram). All settings in the
-               other configuration sources (``CORE4_CONFIG``, user
-               configuration, system configuration, ``sys.conf`` and OS
-               environment variables) which are not in this scope scope are
-               ignored (**inner join** statement in the diagram).
+.. warning:: Administrators and operators often take the application's
+             configuration file and copy&paste the whole content into the
+             concrete system configuration file. **This is not the intended
+             mechanic of core4 configuration**. The configuration sources
+             described above represent a cascade. Specify only those
+             configuration settings for your local setup which are different
+             to the standard configuration as defined in core4 and plugin
+             configuration. Use local configuration files or the MongoDB
+             collection ``sys.conf`` for your specific settings.
 
 
-configuration structure
------------------------
+configuration language and format
+---------------------------------
 
-core4 configuration is implemented with pure Python code and the configuration
-is evaluated at runtime. This applies to all file based configuration sources.
-It does not apply to MongoDB collection ``sys.conf``. All fields of all
-documents of collection ``sys.conf`` overwrite existing configuration
-settings with their values. Non-existing fields are ignored.
+core4 configuration uses YAML as the configuration language (see
+http://yaml.org/) and the PyYaml Python package supporting YAML version 1.1.
 
-.. note:: The documents in ``sys.conf`` are processed in alphabetical order.
+YAML is a human-readable data serialization language using both Python-style
+indentation to indicate nesting, and a compact format that uses ``[]`` for
+lists and ``{}`` for maps.
 
-The configuration is to be structured in sections. Top level dict variables
-represent sections. The ``logging`` dict in the default configuration file
-``core.py`` is such a section::
+YAML natively encodes scalars (such as strings, integers, floats and boolean),
+lists, and dictionaries. Lists and hashes can contain nested lists and hashes,
+forming a tree structure.
 
-    logging = {
-        "stderr": "DEBUG",
-        "stdout": None,
-        "mongodb": "INFO",
-        "format": "%(asctime)s "
-                  "- %(levelname)-8s "
-                  "[%(qual_name)s/%(identifier)s] "
-                  "%(message)s",
-        "exception": {
-            "capacity": 1000
-        },
-        "extra": None
-    }
+YAML parses the type of configuration values. All quoted values represent
+strings. Non-quoted values are parsed into integers, floats, booleans and
+dates. Use YAML default tags to explicitely define the value type (see for
+example http://sweetohm.net/article/introduction-yaml.en.html).
+
+core4 implements a custom tag ``!connect`` to express database access. See for
+example an excerpt from ``core.yaml`` standard configuration file::
+
+    sys:
+      log: !connect mongodb://sys.log
+      role: !connect mongodb://sys.role
 
 
-In contrast to Python dictionaries all top-level primitive variables represent
-default values. Variables with primitive data type are copied to all sections
-if not defined in the section dictionary and therefore represent default
-values. The following configuration example demonstrates this behavior::
+.. note:: The YAML syntax only applies to file based configuration, i.e. the
+          configuration file specified in the environment variable
+          ``CORE4_CONFIG``, the user configuration file as well as the system
+          configuration file. All configuration specified by environment
+          variables (``CORE4_CONFIG_...``) as well as the bodies in
+          MongoDB collection ``sys.conf`` represent the configuration keys and
+          values. Still the :ref:`connect_directive` is processed.
 
-    my_value = 123
 
-    sect1 = {
-        "my_string": "hello world"
-    }
+plugin configuration
+--------------------
 
-    sect2 = {
-        "my_value": 456
-    }
+All plugin configuration is wrapped in a dictionary with the key equal to the
+plugin name.
 
-Configuration access snippt::
+Example plugin configuration file ``test.yaml`` for plugin ``test``::
 
-    >>> import core4.base
+    username: peter
+    password: ~
 
-    >>> example = core4.base.CoreBase()
-    >>> print(example.config.my_value)
-    123
+To access the username and password use::
 
-    >>> print(example.config.sect1.my_string)
-    "hello world"
+    config.test.username == "peter"  # True
+    config.test.password is None  # True
 
-    >>> print(example.config.sect1.my_value)
-    123
 
-    >>> print(example.config.sect2.my_value)
-    456
+DEFAULT values
+--------------
+
+The ``DEFAULT`` dictionary defines default keys/values. These default values
+are forwarded into all configuration dictionaries::
+
+    DEFAULT:
+       mongo_database: core4
+       mongo_url: mongodb://localhost:27017
+
+    sys:
+       mongo_databaes: section1db
+
+
+This YAML example implements the following configuration values::
+
+    config.mongo_database == "core4"  # True
+    config.mongo_url == "mongodb://localhost:27017"  # True
+    config.sys.mongo_database == "section1db"  # True
+    config.sys.mongo_url == config.mongo_url  # True
+    config.sys.mongo_url == "mongodb://localhost:27017"  # True
+
+
+Plugin configuration features a ``DEFAULT`` dictionary, too. The default keys
+and values defined in the plugin configuration apply to the plugin
+configuration only. Consequently, if a plugin key in a section is not defined,
+then the plugin default value applies if it is defined. If the plugin
+configuration does not define a default value and a standard value is
+defined, then this global default value is forwarded.
+
+.. note:: The configuration cascade from standard values through plugin
+          default values down to sub level plugin values applies only to
+          keys/values defined in core4`s configuration file. At the moment
+          only the configuration keys ``mongo_database`` and ``mongo_url``
+          exist to facilitate MongoDB collection access (see
+          :ref:`core_config` and the :ref:`connect_directive`).
+
+
+local configuration
+-------------------
+
+The local configuration is used to overwrite core4 standard and plugin
+configuration keys/values for your concrete system setup. You can only specify
+keys which are either present in core4 standard  (``config/core.yaml``) or
+plugin configuration. All other keys/values are silently ignored.
 
 
 .. _env_config:
@@ -153,15 +168,79 @@ Configuration access snippt::
 environment options and values
 ------------------------------
 
-The developer/operator can enforce core configuration option values by defining
-operating system variables. The structure of these environment variables is::
+As an administrator you can enforce configuration option values by defining
+environment variables. The structure is::
 
-    CORE4_OPTION_[section]__[option]
-    CORE4_OPTION_[option]
+    CORE4_OPTION_[key]__[value]
+    CORE4_OPTION_[key]__[sub_key]__[value]
 
-Please note the **double** underscore characters separating the configuration
-section from the option. If no section is provided as in the second example,
-then the top section applies.
+Note the **double** underscore characters separating the keys and the value.
+There can be multiple keys.
+
+Parsing of environment variables uses the YAML default tags ``!!int``,
+``!!float``, ``!!bool``, ``!!timestamp``, ``!!str`` to parse type information.
+Furthermore the custom ``!connect`` tag is available (see
+:ref:`connect_directive`).
+
+
+
+Example::
+
+    CORE4_OPTION_logging__stderr="INFO"
+    CORE4_OPTION_logging__exception__capacity="!!int 5000"
+
+
+Use ``~`` to set a value to ``None``::
+
+    CORE4_OPTION_logging__stderr="~"
+
+
+.. _connect_directive:
+
+``!connect`` directive
+----------------------
+
+core4 configuration provides a special directive ``!connect`` to manage
+database connection settings. This statement parses authentication/hostname
+information, database and collection name::
+
+    coll: !connect mongodb://user:pwd@localhost:27017/testdb/result
+
+If no hostname is specified, then the connection URL is taken from variable
+``mongo_url``. If no database name is specified, then it is taken from variable
+``mongo_database``. Therefore, the following configuration examples all
+cascade to the same connection settings::
+
+    DEFAULT:
+      mongo_url: mongodb://usr:pwd@localhost:27017
+      mongo_database: test
+
+    section1:
+        mongo_database: db
+        result1: mongodb://usr:pwd@localhost:27017/db/result
+        result2: mongodb://db/result
+        result3: mongodb://result
+
+
+MongoDB collection ``sys.conf``
+-------------------------------
+
+If you prefer to use a central MongoDB database collection to setup your
+system, then you will have to provide the connection string. The standard
+core4 configuration disables the ``sys.conf`` setting (see :ref:`core_config`).
+
+Either setup a local configuration file like this::
+
+    sys:
+      conf: !connect mongodb://hostname:port/database/collection
+
+Beware to replace hostname, port, database and collection with your actual
+settings and provide credentials to access the database if necessary.
+
+Alternatively you can define the environment variable
+``CORE4_OPTION_sys__conf`` with the above connect statement::
+
+    CORE4_OPTION_sys__conf="!connect mongodb://hostname:port/database/collection"
 
 
 configuration access
@@ -170,73 +249,33 @@ configuration access
 All classes based on :class:`.CoreBase` have configuration access via the
 ``self.config`` attribute. To access configuration options and values you can
 either use plain dictionary syntax as in ``self.config["mongo_database"]`` or
-dot notation as in ``self.config.mongo_database``.
-
-
-connect directive
------------------
-
-core4 configuration provides a special directive ``connect`` to manage database
-connection settings. This statement parses authentication/hostname information,
-database and collection name::
-
-    coll = connect("mongodb://user:pwd@localhost:27017/testdb/result")
-
-If no hostname is specified, then the connection URL is taken from variable
-``mongo_url``. If no database name is specified, then it is taken from variable
-``mongo_database``. Therefore, the following configuration examples all
-cascade to the same connection settings::
-
-    from core4.config import connect
-
-    mongo_url = "mongodb://usr:pwd@localhost:27017"
-    mongo_database = "db"
-
-    section1 = {
-        "result1": connect("mongodb://usr:pwd@localhost:27017/db/result"),
-        "result2": connect("mongodb://db/result"),
-        "result3": connect("mongodb://result")
-    }
-
-Access to this configuration example proofs that all three collection objects
-constructed with the :class:`.connect` statement point to the same MongoDB
-collection::
-
-    import core4.base
-
-    example = core4.base.CoreBase()
-    c = example.config.section1
-    c.result1.info_url == c.result2.info_url == c.result3.info_url
+by dot notation as in ``self.config.mongo_database``.
 
 
 example
 -------
 
-The power of core4 configuration principles is best described with an example.
-In this scenario a plugin has been created for an account named ``account1``.
-As part of the automation workflow for this account some 3rd party web API is
+core4 configuration principles are best described by example.
+In this scenario a plugin has been created for an plugin named ``plugin1``.
+As part of the automation workflow for this plugin some 3rd party web API is
 used to download data on a regular basis. The plugin configuration is supposed
 to provide API authorisation data, the URL for the web service as well as the
 target database and collection to store the downloaded data.
 
-Therefore the plugin developer has created a section ``api`` in the plugin
-configuration file ``account1.py`` located in the root package directory.
+Therefore the plugin developer has created a dictionary ``api`` in the plugin
+configuration file ``plugin1.yaml`` located in the package directory.
 Furthermore the developer directs all database access to the default database
 for this plugin ``db1``::
 
-    # file: account1/account1.py
+    # file: plugin1/plugin1.yaml
 
-    from core4.config.directive import connect
-
-    account1 = {
-        "api": {
-            "username": "prod-user",
-            "password": None,
-            "url": "https://example.org/api/v1/download"
-        },
-        "mongo_database": "db1",
-        "download_collection": connect("mongodb://download")
-    }
+    DEFAULT:
+      mongo_database: db1
+    api:
+      url: https://example.org/api/v1/download
+      username: prod-user
+      password: ~  # to be defined by local setup
+      download_collection: !connect mongodb://download
 
 
 Since the plugin configuration is version controlled and part of the code
@@ -244,37 +283,38 @@ repository, the developer provides the (default) API user, but no sensitive
 data, e.g. the API password.
 
 During development of the plugin, the developer works with the following user
-configuration file located at ``~/core4/local.py``::
+configuration file located at ``~/core4/local.yaml``::
 
-    # file: ~/core4/local.py
+    # file: ~/core4/local.yaml
 
-    mongo_url = "mongodb://localhost:27017"
+    DEFAULT:
+      mongo_url: mongodb://localhost:27017
 
-    account1 = {
-        "api": {
-            "username": "test-user",
-            "password": "123456"
-        }
-    }
+    plugin1:
+      api:
+        username: test-user
+        password: 123456
 
 
 This setup allows the developer to use his or her ``test-user`` with valid
 credentials during implementation and to address the local MongoDB instance at
-``mongodb://localhost:27017/db1/download``.
+``mongodb://localhost:27017/db1/download``. Please note that the hostname/port
+comes from ``~/core4/local.yaml` while the database ``db1`` and the collection
+``download`` comes from the plugin configuration in ``plugin1.yaml``.
 
-After implementation is complete and during deployment the operator extends the
-core4 system configuration in production located at ``/etc/core4/local.py``
+After implementation is complete and during deployment the operator extends
+core4 system configuration in production located at ``/etc/core4/local.yaml``
 with::
 
-    # file: /etc/core4/local.py (excerpt)
+    # file: /etc/core4/local.yaml (excerpt)
 
-    mongo_url = "mongodb://core:mongosecret@mongodb.prod:27017"
+    DEFAULT:
+      mongo_url = mongodb://core:mongosecret@mongodb.prod:27017
 
-    account1 = {
-        "api": {
-            "password": "secret"
-        }
-    }
+    plugin1:
+      api:
+        password: secret
+
 
 This production setup provides actual credentials for the (default) API user
 ``prod-user`` and the production database located on server ``mongodb.prod``.
@@ -284,39 +324,39 @@ The fully qualified download collection now points to
 
 After several weeks with downloaded data the need arises to aggregate the data
 into a reporting collection. The developer, who has read-only access grants at
-``mongodb.prod`` extends the plugin configuration ``account1.py`` with::
+``mongodb.prod`` (username ``pete``, password ``mysecret``) extends the plugin
+configuration ``plugin1.py`` with::
 
-    # file: account1/account1.py
+    # file: plugin1/plugin1.yaml
 
-    from core4.config.directive import connect
+    DEFAULT:
+      mongo_database: db1
+    api:
+      url: https://example.org/api/v1/download
+      username: prod-user
+      password: ~  # to be defined by local setup
+      download_collection: !connect mongodb://download
+      report_collection: !connect mongodb://report
 
-    account1 = {
-        "api": {
-            "username": "prod-user",
-            "password": None,
-            "url": "https://example.org/api/v1/download"
-        },
-        "mongo_database": "db1",
-        "download_collection": connect("mongodb://download"),
-        "report_collection": connect("mongodb://report")
-    }
+To facilitate implementation activities and to work with actual production data
+the developer extends his ``~/core4/local.yaml`` to read (only) the downloaded
+data from production with::
 
+    # file: ~/core4/local.yaml
 
-To simplify implementation activities the developer extends his
-``~/core4/local.py`` to read (only) the downloaded data from production with::
+    DEFAULT:
+      mongo_url: mongodb://localhost:27017
 
-    # file: ~/core4/local.py
+    plugin1:
+      api:
+        username: test-user
+        password: 123456
+        download_collection: connect mongodb://pete:mysecret@mongodb.prod/db1/data
 
-    mongo_url = "mongodb://localhost:27017"
-
-    account1 = {
-        "api": {
-            "username": "test-user",
-            "password": "123456"
-        },
-        "download_collection": connect("mongodb://pete:pwd@mongodb.prod/db1/report")
-    }
-
+Now the report collection addresses ``mongodb://localhost:27017/db1/report``
+with hostname/port coming from ``local.yaml`` and database and collection
+coming from ``plugin.yaml``. The developer can read-only access production
+data by overwriting ``download_collection`` in his ``local.yaml``.
 
 This example show, how to create valid plugin configuration settings which can
 be overwritten easily for development as well as production needs. With the
@@ -324,10 +364,9 @@ be overwritten easily for development as well as production needs. With the
 database connections which simplifies implementation activities if the
 developer has for example read-only access to production data.
 
-All configuration files - ``account1.py``, ``~/core4/local.py`` and
-``/etc/core4/local.py`` in this example - can be created and maintained
+All configuration files - ``plugin1.yaml``, ``~/core4/local.yaml`` and
+``/etc/core4/local.yaml`` in this example - can be created and maintained
 independent of each other.
 
 
-.. _Python as configuration files: https://softwareengineering.stackexchange.com/questions/351126/how-bad-of-an-idea-is-it-to-use-python-files-as-configuration-files
-.. _Matteo's comment: https://softwareengineering.stackexchange.com/a/351167
+.. _ISO format: https://en.wikipedia.org/wiki/ISO_8601
