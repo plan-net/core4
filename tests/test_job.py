@@ -7,7 +7,7 @@ import unittest
 import pymongo
 
 import core4.base
-from core4.base.job import CoreJob
+from core4.base.job import CoreJob, DummyJob
 
 # import core4.logger
 os.environ["CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
@@ -34,7 +34,6 @@ class TestBase(unittest.TestCase):
 
     def test_base(self):
         j = CoreJob()
-        g = CoreJob()
         self.assertEqual("core4.base.job.CoreJob", j.qual_name())
         self.assertEqual("core4.base.job.CoreJob", j.qual_name(short=False))
 
@@ -65,11 +64,17 @@ class TestBase(unittest.TestCase):
         f = CoreJob(defer_time=60)
         g = CoreJob(defer_time=20)
 
-
         self.assertEqual(j,f)
         self.assertEqual(j,f.serialize())
         self.assertNotEqual(j, g)
         self.assertNotEqual(j, g.serialize())
+
+    def test_dummy(self):
+        dummy = DummyJob(sleep=60)
+        dummyt = DummyJob(sleep=60)
+        print(dummy == dummyt)
+
+            #self.assertEqual(dummy,dummyt)
 
 
 
