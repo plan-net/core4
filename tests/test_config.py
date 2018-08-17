@@ -391,7 +391,7 @@ class TestConfig(unittest.TestCase):
         user_file = tests.util.asset("config/user.yaml")
         system_file = tests.util.asset("config/system.yaml")
 
-        class Config(core4.config.CoreConfig):
+        class Config(MyConfig):
             user_config = user_file
             system_config = system_file
 
@@ -410,7 +410,7 @@ class TestConfig(unittest.TestCase):
         user_file = tests.util.asset("config/nf", exists=False)
         system_file = tests.util.asset("config/system.yaml")
 
-        class Config(core4.config.CoreConfig):
+        class Config(MyConfig):
             user_config = user_file
             system_config = system_file
 
@@ -757,12 +757,7 @@ class TestConfig(unittest.TestCase):
         os.environ["CORE4_OPTION_test__v2"] = "!!bool 123"
         conf = MyConfig(extra_config=("test", extra), config_file=empty)
         self.assertRaises(core4.error.Core4ConfigurationError, conf._load)
-        #self.assertFalse(conf["test"]["v2"])
-
-        # pprint(conf.test.v1)
 
 
 if __name__ == '__main__':
     unittest.main(exit=False)
-
-# todo: caching

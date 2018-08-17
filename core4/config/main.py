@@ -80,13 +80,12 @@ class CoreConfig(collections.MutableMapping):
     standard_config = STANDARD_CONFIG
     user_config = USER_CONFIG
     system_config = SYSTEM_CONFIG
+    _cache = {}
 
     def __init__(self, extra_config=None, config_file=None):
         self._config_file = config_file
         self.extra_config = extra_config
         self.env_config = os.getenv("CORE4_CONFIG", None)
-        self.data = None
-        self.path = None
 
     def __getitem__(self, key):
         """
@@ -166,8 +165,7 @@ class CoreConfig(collections.MutableMapping):
 
         :return: :class:`.ConfigMap`
         """
-        self._load()
-        return self.data
+        return self._load()
 
     def _verify_dict(self, variable, message):
         """
@@ -513,16 +511,20 @@ class CoreConfig(collections.MutableMapping):
 
         :return: :class:`.ConfigMap`
         """
-        self.data = {}
-        # standard config
-        standard_data = self._read_yaml(self.standard_config)
-
         # extra config
         if self.extra_config and os.path.exists(self.extra_config[1]):
-            extra = (self.extra_config[0],
-                     self._read_yaml(self.extra_config[1]))
+            lookup = self.extra_config[0]
         else:
-            extra = None
+            extra = lookup = None
+
+        if self.__class__._cache and lookup in self.__class__._cache:
+            return self.__class__._cache[lookup]
+
+        if lookup is not None:
+            extra = (lookup, self._read_yaml(self.extra_config[1]))
+
+        # standard config
+        standard_data = self._read_yaml(self.standard_config)
 
         # local config
         local_config = None
@@ -550,8 +552,9 @@ class CoreConfig(collections.MutableMapping):
         # merge OS environ
         local_data = core4.util.dict_merge(local_data, environ)
 
-        self.data.update(
-            self._parse(standard_data, extra, local_data))
-
-        self.data = core4.config.map.ConfigMap(self.data)
-        return self.data
+        data = core4.config.map.ConfigMap(
+            self._parse(standard_data, extra, local_data)
+        )
+        if self.__class__._cache is not None:
+            self.__class__._cache[lookup] = data
+        return data
