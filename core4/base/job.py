@@ -88,15 +88,12 @@ class CoreJob(CoreBase):
         self.status = None
 
     '''
-    look for config-values
+    look and load config-values
     '''
     def load_config(self):
-        for i in self.__dict__.keys():
-            try:
-                n = self.config.job.get(i)
-                setattr(self, i, n)
-            except:
-                pass
+        for i in self.config.job:
+            n = self.config.job.get(i)
+            setattr(self, i, n)
 
 
     def serialize(self):
