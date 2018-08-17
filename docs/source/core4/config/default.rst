@@ -3,6 +3,6 @@
 standard configuration
 ======================
 
-File ``core4.config.core.yaml`` carries core4's default configuration.
+File ``core4/config/core.yaml`` carries core4 standard configuration.
 
 .. literalinclude:: ../../../../core4/config/core.yaml

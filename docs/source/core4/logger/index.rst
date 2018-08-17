@@ -7,19 +7,20 @@ logging system.
 core4 uses the Python standard :mod:`logging` module to deliver the following
 features:
 
-* simple configuration of a console log handler (STDERR and STDOUT)
-* simple configuration of centralised logging into MongoDB collection
-  ``sys.log`` (see :class:`.MongoLoggingHandler`)
-* simple custom configuration of all package and module logging
+* configuration of a console log handler (STDERR and STDOUT)
+* configuration of centralised logging into MongoDB collection ``sys.log`` (see
+  :class:`.MongoLoggingHandler`)
+* custom configuration of package and module logging
 
 There are various extra attributes passed by a custom logging adapter
 :class:`.CoreLoggingAdapter` and saved into MongoDB collection ``sys.log`` by a
-custom logging handler :class:`.MongoLoggingHandler`.
+custom logging handler :class:`.MongoLoggingHandler`. See
+:class:`.MongoLoggingHandler` for a list of attributes.
 
 All classes inherited from :class:`.CoreBase` feature this logging. All
 application objects need to mixin :class:`.CoreLoggerMixin` and call
 :meth:`.CoreLoggerMixin.setup_logging` to start logging as specified in section
-``logging`` (see :ref:`core_config`).
+``logging`` (see :ref:`logging`).
 
 .. toctree::
 

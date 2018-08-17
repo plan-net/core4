@@ -9,8 +9,8 @@ implement access to core4 configuration data.
    :caption: Table of Contents
 
    main
+   tag
    map
-   directive
    default
 
 

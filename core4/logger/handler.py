@@ -22,7 +22,7 @@ def make_record(record):
     * exception.text (traceback)
 
     :param record: :class:`logging.LogRecord`
-    :return: dic
+    :return: dict
     """
     ts = time.gmtime(record.created)
     doc = {

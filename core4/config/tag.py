@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-The :mod:`core4.config.directive` module implements the following helpers with
-core4 configuration management:
+The :mod:`core4.config.tag` module implements the following helpers with core4
+configuration management:
 
 * :func:`connect_mongodb` to create :class:`.CoreCollection` object
 * :class:`ConnectTag` to support the custom YAML tag `!!connect`
@@ -134,7 +134,7 @@ class ConnectTag(yaml.YAMLObject):
         """
         Class method used to parse the `!connect` YAML tag.
 
-        :param loader: YAML loader, see :mod:`yaml`
+        :param loader: YAML loader, see :mod:`PyYAML`
         :param node: current YAML node
         :return: :class:`.ConnectTag`
         """

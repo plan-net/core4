@@ -1,3 +1,5 @@
+.. _config:
+
 configuration
 =============
 
@@ -46,11 +48,16 @@ values. Collection ``sys.conf`` takes precedence over local configruation.
 Finally environment variables have the top most priority to set configuration
 values.
 
+
+.. note:: Expected file extension for all YAML files is lower case ``.yaml``.
+
+
 This boils down to the configuration flow outlined in the following diagram:
 
 .. figure:: _static/config.png
    :scale: 100 %
    :alt: configuration flow
+
 
 .. warning:: Administrators and operators often take the application's
              configuration file and copy&paste the whole content into the
@@ -96,7 +103,7 @@ example an excerpt from ``core.yaml`` standard configuration file::
           configuration file. All configuration specified by environment
           variables (``CORE4_CONFIG_...``) as well as the bodies in
           MongoDB collection ``sys.conf`` represent the configuration keys and
-          values. Still the :ref:`connect_directive` is processed.
+          values. Still the :ref:`connect_tag` is processed.
 
 
 plugin configuration
@@ -151,7 +158,7 @@ defined, then this global default value is forwarded.
           keys/values defined in core4`s configuration file. At the moment
           only the configuration keys ``mongo_database`` and ``mongo_url``
           exist to facilitate MongoDB collection access (see
-          :ref:`core_config` and the :ref:`connect_directive`).
+          :ref:`core_config` and the :ref:`connect_tag`).
 
 
 local configuration
@@ -180,8 +187,7 @@ There can be multiple keys.
 Parsing of environment variables uses the YAML default tags ``!!int``,
 ``!!float``, ``!!bool``, ``!!timestamp``, ``!!str`` to parse type information.
 Furthermore the custom ``!connect`` tag is available (see
-:ref:`connect_directive`).
-
+:ref:`connect_tag`).
 
 
 Example::
@@ -195,20 +201,25 @@ Use ``~`` to set a value to ``None``::
     CORE4_OPTION_logging__stderr="~"
 
 
-.. _connect_directive:
+.. _connect_tag:
 
-``!connect`` directive
-----------------------
+``!connect`` tag
+----------------
 
-core4 configuration provides a special directive ``!connect`` to manage
-database connection settings. This statement parses authentication/hostname
-information, database and collection name::
+core4 configuration provides a special tag ``!connect`` to manage database
+connection settings. This tag parses authentication/hostname information,
+database and collection name::
+
+A fully qualified connection string to a MongoDB database ``testdb``,
+collection ``result`` at ``localhost``, port ``27017``, authenticated with
+username ``user`` and password ``pwd`` is::
 
     coll: !connect mongodb://user:pwd@localhost:27017/testdb/result
 
+
 If no hostname is specified, then the connection URL is taken from variable
-``mongo_url``. If no database name is specified, then it is taken from variable
-``mongo_database``. Therefore, the following configuration examples all
+``mongo_url``. If no database name is specified, then it is taken from
+variable ``mongo_database``. Therefore, the following three examples all
 cascade to the same connection settings::
 
     DEFAULT:
@@ -233,6 +244,7 @@ Either setup a local configuration file like this::
 
     sys:
       conf: !connect mongodb://hostname:port/database/collection
+
 
 Beware to replace hostname, port, database and collection with your actual
 settings and provide credentials to access the database if necessary.
@@ -360,7 +372,7 @@ data by overwriting ``download_collection`` in his ``local.yaml``.
 
 This example show, how to create valid plugin configuration settings which can
 be overwritten easily for development as well as production needs. With the
-``connect`` directive the developer furthermore can easily create cross
+``!connect`` tag the developer furthermore can easily create cross
 database connections which simplifies implementation activities if the
 developer has for example read-only access to production data.
 

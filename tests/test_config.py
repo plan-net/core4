@@ -358,9 +358,9 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(
             "!connect "
             "'mongodb://core:654321@localhost:27017/core4test/coll2/collx'",
-            repr(conf.test.coll3))
+            str(conf.test.coll3))
         self.assertRaises(core4.error.Core4ConfigurationError,
-                          conf.test.coll3._connect)
+                          conf.test.coll3.connect)
 
     def test_env_file(self):
         extra = tests.util.asset("config/empty.yaml")
@@ -378,14 +378,13 @@ class TestConfig(unittest.TestCase):
         extra = tests.util.asset("config/nf", exists=False)
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/local1.yaml")
         conf = MyConfig(extra_config=("test", extra))
-        self.assertEqual(repr(conf.sys.log), "!connect 'mongodb://sys.log'")
+        self.assertEqual(str(conf.sys.log), "!connect 'mongodb://sys.log'")
 
         extra = tests.util.asset("config/empty.yaml")
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/nf",
                                                       exists=False)
         conf = MyConfig(extra_config=("test", extra))
         self.assertRaises(FileNotFoundError, conf._load)
-        # self.assertEqual(repr(conf.sys.log), "!connect 'mongodb://sys.log'")
 
     def test_user_file(self):
         extra = tests.util.asset("config/extra1.yaml")
@@ -442,7 +441,7 @@ class TestConfig(unittest.TestCase):
         local = tests.util.asset("config/empty.yaml")
         conf = MyConfig(extra_config=("test", extra), config_file=local)
         conf._load()
-        self.assertIsNone(conf.sys.log._connect())
+        self.assertIsNone(conf.sys.log.connect())
 
     def test_readonly(self):
         extra = tests.util.asset("config/empty.yaml")
@@ -588,7 +587,7 @@ class TestConfig(unittest.TestCase):
     def test_repr(self):
         extra = tests.util.asset("config/extra1.yaml")
         conf = MyConfig(extra_config=("test", extra))
-        _ = repr(conf)
+        _ = str(conf)
 
     def test_env(self):
         os.environ[

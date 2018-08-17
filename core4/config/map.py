@@ -5,7 +5,7 @@ import collections
 import core4.error
 
 
-class Map(dict):
+class ConfigMap(dict):
     """
     A read-only dictionary that supports dot notation as well as dictionary
     access notation.
@@ -17,7 +17,7 @@ class Map(dict):
         self.__dict__["__ro__"] = False
         for key, value in dct.items():
             if isinstance(value, collections.MutableMapping):
-                value = Map(value)
+                value = ConfigMap(value)
             self[key] = value
         self.__dict__["__ro__"] = True
 

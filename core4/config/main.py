@@ -4,13 +4,14 @@ import collections
 import collections.abc
 import os
 import pprint
-from datetime import datetime, date
+
 import dateutil.parser
 import pkg_resources
 import yaml
+from datetime import datetime, date
 
 import core4.base.collection
-import core4.config.directive
+import core4.config.tag
 import core4.config.map
 import core4.util
 from core4.error import Core4ConfigurationError
@@ -25,6 +26,14 @@ DEFAULT = "DEFAULT"
 
 
 def parse_boolean(value):
+    """
+    Translates the passed value into a bool. If not pattern for ``True`` or
+    ``False`` matches the passed value, then the actual value is returned.
+
+    :param value: string representing ``True`` or ``False``
+    :return: evaluated string as ``True`` or ``False`` or the original string
+             value no pattern matches.
+    """
     if value.lower() in ("yes", "y", "on", "1", "true", "t"):
         return True
     elif value.lower() in ("no", "n", "off", "0", "false", "f"):
@@ -33,6 +42,18 @@ def parse_boolean(value):
 
 
 def type_ident(a, b):
+    """
+    Internal helper method to verify that ``a`` and ``b`` are of the same type.
+    If ``a`` or ``b`` is ``None``, this method returns ``True`` since the
+    comparison is not possible.
+
+    This method treats the following types as equal:
+
+    * ``int`` and ``float``
+    * ``datetime.datetime`` and ``datetime.date``, see :mod:`datetime`
+
+    :return: `True` if ``a`` and ``b`` are considered equal, else ``False``
+    """
     if ((type(a) != type(b))
             and (not ((type(a) in (int, float)
                        and type(b) in (int, float))
@@ -44,10 +65,17 @@ def type_ident(a, b):
 
 class CoreConfig(collections.MutableMapping):
     """
-    :class:`CoreConfig` is the gateway into core4 configuration. Please note
+    :class:`.CoreConfig` is the gateway into core4 configuration. Please note
     that you normally do not instantiate this class yourself, since
     :class:`.CoreBase` carries a property ``.config`` which provides access to
     the context specific configuration cascade.
+
+    See :ref:`config` about core4 configuration principles.
+
+    This class implements the delegation pattern and forwards all property
+    access to configuration data stored in the ``._data`` attribute,
+    accessible through :meth:`._config`. This attribute implements the
+    :class:`.ConfigMap`.
     """
     standard_config = STANDARD_CONFIG
     user_config = USER_CONFIG
@@ -57,50 +85,112 @@ class CoreConfig(collections.MutableMapping):
         self._config_file = config_file
         self.extra_config = extra_config
         self.env_config = os.getenv("CORE4_CONFIG", None)
-        self._config = None
+        self.data = None
         self.path = None
 
-    @property
-    def _c(self):
-        self._load()
-        return self._config
-
     def __getitem__(self, key):
-        return self._c[key]
+        """
+        Delegates all property access to :meth:`._config`.
+        """
+        return self._config[key]
 
     def __setitem__(self, key, value):
+        """
+        Raises :class:`.Core4ConfigurationError` and implements
+        a read-only configuration map with :class:`.ConfigMap`.
+        """
         raise core4.error.Core4ConfigurationError(
             "core4.config.main.CoreConfig is readonly")
 
     def __delitem__(self, key):
+        """
+        Read-only core4 configuration, see :meth:`__setitem__`
+        """
         raise core4.error.Core4ConfigurationError(
             "core4.config.main.CoreConfig is readonly")
 
     def __iter__(self):
-        return iter(self._c.items())
+        """
+        Implements an iterator on :meth:`_config` items.
+        """
+        return iter(self._config.items())
+
+    def __getattr__(self, item):
+        """
+        See :meth:`.__getitem__`.
+        """
+        return self._config[item]
+
+    def __repr__(self):
+        """
+        :return: string representation of configuration data
+        """
+        return pprint.pformat(self._config)
+
+    def __len__(self):
+        """
+        :return: length of configuration data
+        """
+        return len(self._config)
 
     def items(self):
-        return collections.abc.ItemsView(self._c)
+        """
+        :return: :class:`collections.abc.ItemsView` of configuration data
+        """
+        return collections.abc.ItemsView(self._config)
 
     def popitem(self):
+        """
+        Raises :class:`.Core4ConfigurationError` and implements
+        a read-only configuration map with :class:`.ConfigMap`.
+        """
         raise core4.error.Core4ConfigurationError(
             "core4.config.main.CoreConfig is readonly")
 
     def values(self):
-        return collections.abc.ValuesView(self._c)
+        """
+        :return: :class:`collections.abc.ValuesView` of configuration data
+        """
+        return collections.abc.ValuesView(self._config)
 
     def keys(self):
-        return self._c.keys()
+        """
+        :return: keys of configuration data
+        """
+        return self._config.keys()
 
-    def __len__(self):
-        return len(self._c)
+    @property
+    def _config(self):
+        """
+        Loads and returns configuration data lazily.
 
-    def _verify_dict(self, dct, msg):
-        if not isinstance(dct, dict):
+        :return: :class:`.ConfigMap`
+        """
+        self._load()
+        return self.data
+
+    def _verify_dict(self, variable, message):
+        """
+        Verifies the passed variable is a Python dict. Raises
+        :class:`.Core4ConfigurationError` if not.
+
+        :param variable: to test if it is of type dict
+        :param message: to raise if test failed
+        """
+        if not isinstance(variable, dict):
             raise Core4ConfigurationError(
-                "expected dict with " + msg)
+                "expected dict with " + message)
 
     def _parse(self, config, plugin=None, local=None):
+        """
+        Parses and merges the passed standard configuration, plugin
+        configuration and local configuration sources.
+
+        :param config: dict with standard configuration
+        :param plugin: tuple with plugin name and plugin configuration dict
+        :param local: dict with local configuration
+        :return: dict
+        """
         # collect standard config and standard DEFAULT
         standard_config = config.copy()
         self._verify_dict(standard_config, "standard config")
@@ -141,7 +231,7 @@ class CoreConfig(collections.MutableMapping):
             schema = standard_config
         # merge config with local config
         result = core4.util.dict_merge(schema, local_config)
-        # recursively forward DEFAULT into all dicts and into directives
+        # recursively forward DEFAULT into all dicts and into tags
         result = self._apply_default(result, default, plugin_name,
                                      plugin_default)
         # apply yaml tags
@@ -151,14 +241,13 @@ class CoreConfig(collections.MutableMapping):
         # finalise the schema to cleanup local config with non existing keys
         schema = self._apply_default(schema, default, plugin_name,
                                      plugin_default)
-        return self._cleanup(result, schema)
+        return self._apply_schema(result, schema)
 
     def _verify(self, dct):
         """
         Confirm naming convention:
 
-        # all top-level keys/options must not start with underscore (``_``)
-        # all keys must not start with ``!`` except custom directives
+        * all top-level keys/options must not start with underscore (``_``)
         """
         for k in dct.keys():
             if k.startswith("_"):
@@ -166,27 +255,41 @@ class CoreConfig(collections.MutableMapping):
                     "top-level key/section "
                     "must not start with underscore [{}]".format(k))
 
-    def _cleanup(self, config, schema):
-        def traverse(c, s, r):
-            if s is None:
+    def _apply_schema(self, config, schema):
+        """
+        Verifies that the top-level configuration variable is a Python
+        dict and applies the passed schema: all configuration keys which do not
+        exist in ``schema`` are silently ignored and not returned.
+
+        Please note that the configuration key ``logging.extra`` is handled
+        differently. This configuration key/value is forced to remain in the
+        passed config.
+
+        :param data: passed configuration data
+        :param schema: configuration schema
+        :return: updated configuration dict
+        """
+
+        def traverse(data, tmpl, result):
+            if tmpl is None:
                 return {}
-            if not isinstance(s, dict):
+            if not isinstance(tmpl, dict):
                 raise Core4ConfigurationError(
-                    "invalid type cast {}, expected dict".format(s))
-            for k, v in c.items():
-                if k in s:
+                    "invalid type cast {}, expected dict".format(tmpl))
+            for k, v in data.items():
+                if k in tmpl:
                     if isinstance(v, dict):
-                        r[k] = {}
-                        traverse(v, s[k], r[k])
+                        result[k] = {}
+                        traverse(v, tmpl[k], result[k])
                     else:
-                        if not ((v is None) or (s[k] is None)):
-                            if not type_ident(v, s[k]):
+                        if not ((v is None) or (tmpl[k] is None)):
+                            if not type_ident(v, tmpl[k]):
                                 raise Core4ConfigurationError(
                                     "invalid type cast [{}] "
                                     "from [{}] to [{}]".format(
-                                        k, type(s[k]).__name__,
+                                        k, type(tmpl[k]).__name__,
                                         type(v).__name__))
-                        r[k] = v
+                        result[k] = v
 
         ret = {}
         traverse(config, schema, ret)
@@ -197,6 +300,20 @@ class CoreConfig(collections.MutableMapping):
 
     def _apply_default(self, config, default, plugin_name=None,
                        plugin_default=None):
+        """
+        This method applies the passed standard ``default`` and plugin
+        ``default``data to ``config``,
+
+        Please not special handloing of configuration key
+        ``logging.extra`` which is not processed by this method.
+
+        :param config: dict of configuration data
+        :param default: dict of standard default values
+        :param plugin_name: string representing the plugin name and top-level
+                            dictionary
+        :param plugin_default: dict of plugin default values
+        :return: updated dict of configuration data
+        """
 
         def traverse(wlk, dflt, rslt):
             for k, v in dflt.items():
@@ -222,17 +339,114 @@ class CoreConfig(collections.MutableMapping):
         return temp
 
     def _apply_tags(self, config):
+        """
+        This method passes the configuration data to :class:`.ConnectTag`
+        objects. These objects need the configuration settings to instantiate
+        a :class:`.CoreCollection` object given their connection string and the
+        default ``mongo_url`` and ``mongo_database``.
+
+        :param config: dict
+        """
 
         def traverse(dct):
             for k, v in dct.items():
                 if isinstance(v, dict):
                     traverse(v)
-                elif isinstance(v, core4.config.directive.ConnectTag):
+                elif isinstance(v, core4.config.tag.ConnectTag):
                     v.set_config(dct)
 
         traverse(config)
 
-    def _resolve_directive(self, config):
+    def _read_yaml(self, filename):
+        """
+        Parses the passed file.
+
+        :param filename: to parse
+        :return: YAML structure in Python dict format
+        """
+        if os.path.exists(filename):
+            with open(filename, "r", encoding="utf-8") as f:
+                body = f.read()
+            return yaml.safe_load(body) or {}
+        else:
+            raise FileNotFoundError(filename)
+
+    def _read_db(self, standard_data, local_data):
+        """
+        Parses all MongoDB document of collection specified in
+        ``config.sys.conf``. The documents from ``sys.conf`` are read and
+        parsed in alphabetic order. The last configuration key/value overwrites
+        existing values.
+        """
+        # build OS environ lookup
+        environ = {
+            "DEFAULT": {},
+            "sys": {}
+        }
+        for k in ("DEFAULT", "sys"):
+            for opt in ("mongo_url", "mongo_database"):
+                os_key = "{}{}__{}".format(ENV_PREFIX, k, opt)
+                if os_key in os.environ:
+                    environ[k][opt] = os.getenv(os_key)
+        # make defaults for mongo_url and mongo_database
+        opts = {}
+        for attr in ("mongo_url", "mongo_database"):
+            for config in (environ, local_data, standard_data):
+                for section in ("sys", DEFAULT):
+                    data = config.get(section, {})
+                    if attr in data:
+                        opts[attr] = data[attr]
+                        break  # the inner loop
+                else:
+                    continue  # if inner loop did not break
+                break  # the outer loop if inner loop was broken
+
+        local_sys = local_data.get("sys", {}).get("conf")
+        standard_sys = standard_data.get("sys", {}).get("conf")
+        env_sys = os.getenv("CORE4_OPTION_sys__conf")
+
+        connect = local_sys or standard_sys
+        if connect or env_sys:
+            if env_sys:
+                conn_str = env_sys[len("!connect "):]
+            else:
+                conn_str = connect.conn_str
+            conf = {}
+            coll = core4.config.tag.connect_mongodb(
+                conn_str, **opts)
+            for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
+                conf = core4.util.dict_merge(conf, doc)
+            return self._resolve_tags(conf)
+
+        return {}
+
+    def _read_env(self):
+        """
+        Overwrite configuration options with values from OS environment
+        variables.
+        """
+        env = {}
+        for k, v in os.environ.items():
+            if k.startswith(ENV_PREFIX):
+                levels = k[len(ENV_PREFIX):].split("__")
+                ref = env
+                if v.strip() == "~":
+                    v = None
+                for lev in levels[:-1]:
+                    if lev not in ref:
+                        ref[lev] = {}
+                    ref = ref[lev]
+                ref[levels[-1]] = self._env_convert(v)
+        return self._resolve_tags(env)
+
+    def _resolve_tags(self, config):
+        """
+        This method implements the ``!connect`` tag for core4 environment
+        variables and documents from ``sys.conf``.
+
+        :param config: current config data before custom tag processing
+        :return: updated config dict
+        """
 
         def traverse(dct, update):
             for k, v in dct.items():
@@ -242,7 +456,7 @@ class CoreConfig(collections.MutableMapping):
                     continue
                 elif isinstance(v, str):
                     if v.startswith("!connect "):
-                        tag = core4.config.directive.ConnectTag(
+                        tag = core4.config.tag.ConnectTag(
                             v[len("!connect "):])
                         # tag.set_config(dct)
                         v = tag
@@ -252,11 +466,54 @@ class CoreConfig(collections.MutableMapping):
         traverse(config, temp)
         return temp
 
+    def _env_convert(self, value):
+        """
+        Converts the following type tags when parsing environment variables:
+
+        * ``!!bool``
+        * ``!!float``
+        * ``!!int``
+        * ``!!str``
+        * ``!!timestamp``
+
+        The tag ``!!timestamp`` uses :mod:`python-dateutil` to parse date/time
+        strings.
+
+        :param value: to parse
+        :return: parsed value if any of the listed tags applies, else the
+                 original value is returned
+        """
+        if value is None:
+            return None
+        converter = {
+            "!!bool": lambda r: parse_boolean(r),
+            "!!float": lambda r: float(r),
+            "!!int": lambda r: int(r),
+            "!!str": lambda r: str(r),
+            "!!timestamp": lambda r: dateutil.parser.parse(r)
+            ,
+        }
+        for typ, conv in converter.items():
+            if value.startswith(typ + " "):
+                upd = value[len(typ) + 1:]
+                return conv(upd)
+        return value
+
     def _load(self):
         """
-        Internal method used to load configuration.
+        Loads the configuration from
+
+        #. core4 standard configuration file
+        #. plugin configuration file
+        #. local configuration defined in environment variable
+           ``CORE4_CONFIG``, in user's home, or the system folder
+           ``/etc/core``
+        #. MongoDB collection ``sys.conf``
+        #. environment variables
+
+        :return: :class:`.ConfigMap`
         """
-        self._config = {}
+        self.data = {}
         # standard config
         standard_data = self._read_yaml(self.standard_config)
 
@@ -293,105 +550,8 @@ class CoreConfig(collections.MutableMapping):
         # merge OS environ
         local_data = core4.util.dict_merge(local_data, environ)
 
-        self._config.update(
+        self.data.update(
             self._parse(standard_data, extra, local_data))
 
-        self._config = core4.config.map.Map(self._config)
-        return self._config
-
-    def _read_yaml(self, filename):
-        if os.path.exists(filename):
-            with open(filename, "r", encoding="utf-8") as f:
-                body = f.read()
-            return yaml.safe_load(body) or {}
-        else:
-            raise FileNotFoundError(filename)
-
-    def _read_db(self, standard_data, local_data):
-        """
-        Internal method used to parse all MongoDB document of the collection
-        specified in ``config.sys.conf``.
-        """
-        # build OS environ lookup
-        environ = {
-            "DEFAULT": {},
-            "sys": {}
-        }
-        for k in ("DEFAULT", "sys"):
-            for opt in ("mongo_url", "mongo_database"):
-                os_key = "{}{}__{}".format(ENV_PREFIX, k, opt)
-                if os_key in os.environ:
-                    environ[k][opt] = os.getenv(os_key)
-        # make defaults for mongo_url and mongo_database
-        opts = {}
-        for attr in ("mongo_url", "mongo_database"):
-            for config in (environ, local_data, standard_data):
-                for section in ("sys", DEFAULT):
-                    data = config.get(section, {})
-                    if attr in data:
-                        opts[attr] = data[attr]
-                        break  # the inner loop
-                else:
-                    continue  # if inner loop did not break
-                break  # the outer loop if inner loop was broken
-
-        local_sys = local_data.get("sys", {}).get("conf")
-        standard_sys = standard_data.get("sys", {}).get("conf")
-        env_sys = os.getenv("CORE4_OPTION_sys__conf")
-
-        connect = local_sys or standard_sys
-        if connect or env_sys:
-            if env_sys:
-                conn_str = env_sys[len("!connect "):]
-            else:
-                conn_str = connect.conn_str
-            conf = {}
-            coll = core4.config.directive.connect_mongodb(
-                conn_str, **opts)
-            for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
-                conf = core4.util.dict_merge(conf, doc)
-            return self._resolve_directive(conf)
-
-        return {}
-
-    def __getattr__(self, item):
-        return self._c[item]
-
-    def __repr__(self):
-        return pprint.pformat(self._c)
-
-    def _read_env(self):
-        """
-        Internal method used to overwrite configuration options with values
-        from OS environment variables.
-        """
-        env = {}
-        for k, v in os.environ.items():
-            if k.startswith(ENV_PREFIX):
-                levels = k[len(ENV_PREFIX):].split("__")
-                ref = env
-                if v.strip() == "~":
-                    v = None
-                for lev in levels[:-1]:
-                    if lev not in ref:
-                        ref[lev] = {}
-                    ref = ref[lev]
-                ref[levels[-1]] = self._env_convert(v)
-        return self._resolve_directive(env)
-
-    def _env_convert(self, value):
-        if value is None:
-            return None
-        converter = {
-            "!!bool": lambda r: parse_boolean(r),
-            "!!float": lambda r: float(r),
-            "!!int": lambda r: int(r),
-            "!!str": lambda r: str(r),
-            "!!timestamp": lambda r: dateutil.parser.parse(r)
-            ,
-        }
-        for typ, conv in converter.items():
-            if value.startswith(typ + " "):
-                upd = value[len(typ) + 1:]
-                return conv(upd)
-        return value
+        self.data = core4.config.map.ConfigMap(self.data)
+        return self.data
