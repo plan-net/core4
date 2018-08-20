@@ -2,7 +2,6 @@ import core4.base.main
 
 
 class Cookie(core4.base.main.CoreBase):
-
     section = "job"
 
     def __init__(self, name=None):
@@ -11,7 +10,7 @@ class Cookie(core4.base.main.CoreBase):
         self.name = name
 
     def set(self, *args, **kwargs):
-         """
+        """
          Sets the cookie option to the passed value.
 
          :param option: of the cookie
@@ -19,14 +18,14 @@ class Cookie(core4.base.main.CoreBase):
          :param kwargs: dictionary of options
          :return:
          """
-         if args:
-             if len(kwargs) > 0:
-                 raise (RuntimeError, 'you cannot combine *args with **kwargs')
-             kwargs[args[0]] = args[1]
-         result = self.cookie_collection.update_one(filter={'_id': self.name},
-                                                     update={'$set': kwargs},
-                                                     upsert=True)
-         return result.raw_result['n'] > 0
+        if args:
+            if len(kwargs) > 0:
+                raise (RuntimeError, 'you cannot combine *args with **kwargs')
+            kwargs[args[0]] = args[1]
+        result = self.cookie_collection.update_one(filter={'_id': self.name},
+                                                   update={'$set': kwargs},
+                                                   upsert=True)
+        return result.raw_result['n'] > 0
 
     def inc(self, field, value=1):
         """
@@ -37,9 +36,9 @@ class Cookie(core4.base.main.CoreBase):
         :return: True in case of success, else False
         """
         result = self.cookie_collection.update_one(filter={'_id': self.name},
-                                                    update={'$inc': {
-                                                        field: value
-                                                    }}, upsert=False)
+                                                   update={'$inc': {
+                                                       field: value
+                                                   }}, upsert=False)
         return result.raw_result['n'] > 0
 
     def dec(self, field, value=1):
@@ -50,11 +49,13 @@ class Cookie(core4.base.main.CoreBase):
         :param value: decrement value, defautls to 1
         :return: True in case of success, else False
         """
-        return self.inc(field, -1*value)
+        return self.inc(field, -1 * value)
 
     def max(self, field, value, **kwargs):
         """
         Sets the cookie option to the maximum current value.
+        Compares the current value to the given value and sets the greater.
+
 
         :param field: field name
         :param value: value to compare
@@ -67,6 +68,7 @@ class Cookie(core4.base.main.CoreBase):
     def min(self, field, value, **kwargs):
         """
         Sets the cookie option to the minimum current value.
+        Compares the current value to the given value and sets the lower.
 
         :param field: field name
         :param value: value to compare
