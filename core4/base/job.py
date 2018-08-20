@@ -22,6 +22,8 @@ It is only a container holding options.
 delegation of options:
 enqueue
 |
+environment-variables
+|
 config
 |
 Class-Defaults
@@ -68,7 +70,6 @@ class CoreJob(CoreBase):
                 if key in self.__dict__.keys() and key is not "config":
                     setattr(self, key, value)
                 else:
-                    print(self.job_args is None, key)
                     self.job_args[key] = value
 
         # these vars are written by the queue-only.
@@ -95,8 +96,11 @@ class CoreJob(CoreBase):
             n = self.config.job.get(i)
             setattr(self, i, n)
 
-
     def serialize(self):
+        """
+        serialize a job for manifestating it within the mongo or any other document-store
+        :returns json
+        """
         serialize_args = ["job_args","nodes","priority","chain","tags","adhoc","defer_max",
                           "defer_time","error_time","dependency","max_parallel","wall_at","wall_time"]
 
@@ -111,7 +115,11 @@ class CoreJob(CoreBase):
 
         #return tmp.pop('config')
 
+
     def deserialize(self, args={}):
+        """
+        Create a job out of a json document.
+        """
         if args:
             for key, value in args.items():
                 if key == '_id':
@@ -130,8 +138,6 @@ class CoreJob(CoreBase):
 
         return ret
 
-
-
     def execute(self, *args, **kwargs):
         """
         This is the actual task processing. The method needs to be overwritten
@@ -148,6 +154,11 @@ class CoreJob(CoreBase):
         if not self._cookie:
             self._cookie = core4.base.cookie.Cookie(self.qual_name())
         return self._cookie
+
+
+    def progress(self):
+        # trigger update of progress from queue/worker
+        pass
 
 
 

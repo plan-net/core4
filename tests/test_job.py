@@ -45,8 +45,9 @@ class TestBase(unittest.TestCase):
 
    # thy do options not show up in __init__ as kwargs?
     def test_enqueue_options(self):
-        f = CoreJob(defer_max=20, defer_time=10)
+        f = CoreJob(defer_max=20, defer_time=10, custom=10)
         self.assertEqual(20, f.defer_max)
+        self.assertEqual(10, f.job_args['custom'])
 
     def test_deserialize_default(self):
         j = CoreJob()
