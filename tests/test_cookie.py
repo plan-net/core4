@@ -27,8 +27,8 @@ class TestCookie(unittest.TestCase):
         self.assertEqual(cookie.get("second"), 2)
         self.assertEqual(cookie.get("third"), 3)
 
-        #with self.assertRaises(RuntimeError):
-        #    cookie.set("z", 2, kwargs={"a": "No kwargs allowed."})
+        with self.assertRaises(RuntimeError):
+            cookie.set("z", 2, kwargs={"a": "No kwargs allowed."})
 
 
 

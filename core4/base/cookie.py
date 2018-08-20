@@ -20,7 +20,7 @@ class Cookie(core4.base.main.CoreBase):
          """
         if args:
             if len(kwargs) > 0:
-                raise (RuntimeError, 'you cannot combine *args with **kwargs')
+                raise RuntimeError('you cannot combine *args with **kwargs')
             kwargs[args[0]] = args[1]
         result = self.cookie_collection.update_one(filter={'_id': self.name},
                                                    update={'$set': kwargs},
