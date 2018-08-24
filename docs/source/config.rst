@@ -208,7 +208,7 @@ Use ``~`` to set a value to ``None``::
 
 core4 configuration provides a special tag ``!connect`` to manage database
 connection settings. This tag parses authentication/hostname information,
-database and collection name::
+database and collection name.
 
 A fully qualified connection string to a MongoDB database ``testdb``,
 collection ``result`` at ``localhost``, port ``27017``, authenticated with

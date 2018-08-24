@@ -3,6 +3,16 @@
 """
 This module provides class :class:`.Role` featuring authorisation and access
 management to core4 API, jobs, databases and applications.
+
+Instantiate and save a new role with::
+
+    role = Role(name="test", realname="Test Role", email="test@mail.com",
+                password="secret")
+    role.save()
+
+Load an existing role with::
+
+    role = Role().load_one(name="test")
 """
 
 import pymongo
@@ -100,7 +110,10 @@ class Role(core4.base.CoreBase):
         attribute
         """
         self.config.sys.role.create_index(
-            [("name", pymongo.ASCENDING)], unique=True)
+            [("name", pymongo.ASCENDING)], unique=True, name="unique_name")
+        self.config.sys.role.create_index(
+            [("email", pymongo.ASCENDING)], unique=True, name="unique_email",
+            partialFilterExpression={"email": { "$exists": True}})
 
     def save(self):
         """
