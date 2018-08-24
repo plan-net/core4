@@ -8,6 +8,7 @@ sys:
   log: !connect mongodb://sys.log
   role: !connect mongodb://sys.role
   quota: !connect mongodb://sys.quota
+  admin: !connect mongodb://admin/dummy
 
 # system folders
 folder:
