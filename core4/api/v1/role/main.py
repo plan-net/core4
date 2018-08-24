@@ -47,6 +47,9 @@ class Role(core4.base.CoreBase):
     * ``.perm`` (list of str)
     * ``.last_login`` (:class:`.datetime`), automatically injected
     * ``.quota`` (str in format ``limit:seconds``)
+
+    Then ``name`` must be unique. The ``email`` must be unique for users (not
+    roles) if defined.
     """
 
     def __init__(self, **kwargs):
