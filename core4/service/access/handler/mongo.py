@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
-import core4.base
 import random
 import string
 
+import core4.base
 
 PASSWORD_LENGTH = 32
 
