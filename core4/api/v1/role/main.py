@@ -148,11 +148,21 @@ class Role(core4.base.CoreBase):
         :return: verify a valid role (no email and password) or a valid
                  user role (email and password)
         """
-        have_password = self.password is not None
-        have_email = self.email is not None
-        if ((not (have_password and have_email))
-                and (have_password or have_email)):
+        has_password = self.password is not None
+        has_email = self.email is not None
+        if ((not (has_password and has_email))
+                and (has_password or has_email)):
             raise AttributeError("user role requires email and password")
+
+    @property
+    def is_user(self):
+        """
+        :return: ``True`` if this role represents a valid user with password
+                 and email attribute defined
+        """
+        has_password = self.password is not None
+        has_email = self.email is not None
+        return has_password and has_email
 
     def _check_circle(self):
         """
