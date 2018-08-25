@@ -32,3 +32,10 @@ class Core4RoleNotFound(Core4Error):
     """"
     This exception is raised if a role/user does not exist.
     """
+
+
+class Core4UsageError(Core4Error):
+    """"
+    This exception is raised if the application or usage or a core4 class
+    feature is not supported.
+    """

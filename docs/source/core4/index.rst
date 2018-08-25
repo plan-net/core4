@@ -13,6 +13,7 @@ most important right here and provide links to the canonical documentation.
    base/index
    config/index
    logger/index
+   service/index
    api/v1/index
    error
    util

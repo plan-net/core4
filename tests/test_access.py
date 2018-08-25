@@ -83,6 +83,21 @@ class TestAccess(unittest.TestCase):
         self.assertEqual(len(token),
                          core4.service.access.handler.mongo.PASSWORD_LENGTH)
 
+    def test_mere_role(self):
+        test_role = core4.api.v1.role.main.Role(
+            name="regress_test", realname="test role",
+            perm=["mongodb://core4test1"])
+        test_role.save()
+        role = core4.api.v1.role.Role().load_one(name="regress_test")
+        self.assertRaises(core4.error.Core4UsageError,
+                          core4.service.access.manager.CoreAccessManager, role)
+        self.assertRaises(core4.error.Core4UsageError,
+                          core4.service.access.manager.CoreAccessManager,
+                          "regress_test")
+        self.assertRaises(StopIteration,
+                          core4.service.access.manager.CoreAccessManager,
+                          "notexist")
+
     def test_add_role(self):
         test_role = core4.api.v1.role.main.Role(
             name="regress_test", realname="test role", email="test@role.de",
