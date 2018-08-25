@@ -17,7 +17,7 @@ class MongoHandler(BaseHandler):
     in :attr:core4.service.access.manager.HANDLER` attribute.
     """
     def __init__(self, role, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(role, *args, **kwargs)
         self.token = None
         self.admin_db = self.config.sys.admin.connection[
             self.config.sys.admin.database]

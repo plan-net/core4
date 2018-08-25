@@ -27,13 +27,13 @@ class BaseHandler(core4.base.CoreBase):
 
         :return: token/password (str)
         """
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     def del_role(self):
         """
         This method deletes the role if exists.
         """
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     def add_role(self):
         """
@@ -42,7 +42,7 @@ class BaseHandler(core4.base.CoreBase):
 
         :return: token/password (str)
         """
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     def grant(self, database):
         """
@@ -50,7 +50,7 @@ class BaseHandler(core4.base.CoreBase):
 
         :param database: str
         """
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     def finish(self):
         """
