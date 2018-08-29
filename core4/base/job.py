@@ -22,6 +22,8 @@ It is only a container holding options.
 delegation of options:
 enqueue
 |
+environment-variables
+|
 config
 |
 Class-Defaults
@@ -58,7 +60,6 @@ class CoreJob(CoreBase):
 
         super().__init__()
 
-
         # defaults from the config take preceedence over class-defaults.
         self.load_config()
 
@@ -68,7 +69,6 @@ class CoreJob(CoreBase):
                 if key in self.__dict__.keys() and key is not "config":
                     setattr(self, key, value)
                 else:
-                    print(self.job_args is None, key)
                     self.job_args[key] = value
 
         # these vars are written by the queue-only.
@@ -89,22 +89,18 @@ class CoreJob(CoreBase):
 
 
     def load_config(self):
-        '''
-        look default-values in the config and overwrite current values.
-        '''
-        for i in self.__dict__.keys():
-            try:
-                n = self.config.job.get(i)
-                setattr(self, i, n)
-            except:
-                pass
-
+        """
+        Load all present values in the config and update current values.
+        """
+        for i in self.config.job:
+            n = self.config.job.get(i)
+            setattr(self, i, n)
 
     def serialize(self):
-        '''
-        Serialize the Job with all set default-params.
-        :return:  dict
-        '''
+        """
+        Serialize a job for manifestating it within the mongo or any other document-store
+        :returns dict
+        """
         serialize_args = ["job_args","nodes","priority","chain","tags","adhoc","defer_max",
                           "defer_time","error_time","dependency","max_parallel","wall_at","wall_time"]
 
@@ -117,11 +113,10 @@ class CoreJob(CoreBase):
 
 
     def deserialize(self, args={}):
-        '''
-        Deserialzie a Job from a given dict.
-        :param args: dict
-        ":raises KeyError if no dict is given.
-        '''
+        """
+        Deserialize a Job from a given dict.
+        Updates a jobs params from a given dict.
+        """
         if args:
             for key, value in args.items():
                 if key == '_id':
@@ -146,8 +141,6 @@ class CoreJob(CoreBase):
 
         return ret
 
-
-
     def execute(self, *args, **kwargs):
         """
         This is the actual task processing. The method needs to be overwritten
@@ -159,11 +152,20 @@ class CoreJob(CoreBase):
     @property
     def cookie(self):
         """
-        Is the access layer to the job's cookie. See also :class:`.Cookie`.
+        This is the access layer to the job's cookie. See also :class:`.Cookie`.
         """
         if not self._cookie:
             self._cookie = core4.base.cookie.Cookie(self.qual_name())
         return self._cookie
+
+
+    def progress(self):
+        '''
+        Trigger a progress-update from queue/worker
+        :return:
+        '''
+        # trigger update of progress from queue/worker
+        pass
 
 
 
