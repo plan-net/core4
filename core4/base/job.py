@@ -87,10 +87,11 @@ class CoreJob(CoreBase):
         self.runtime = None
         self.status = None
 
-    '''
-    look for config-values
-    '''
+
     def load_config(self):
+        '''
+        look default-values in the config and overwrite current values.
+        '''
         for i in self.__dict__.keys():
             try:
                 n = self.config.job.get(i)
@@ -100,6 +101,10 @@ class CoreJob(CoreBase):
 
 
     def serialize(self):
+        '''
+        Serialize the Job with all set default-params.
+        :return:  dict
+        '''
         serialize_args = ["job_args","nodes","priority","chain","tags","adhoc","defer_max",
                           "defer_time","error_time","dependency","max_parallel","wall_at","wall_time"]
 
@@ -108,13 +113,15 @@ class CoreJob(CoreBase):
         for i in serialize_args:
             tmp[i] = self.__getattribute__(i)
 
-
         return tmp
-        # also do this explezitly
 
-        #return tmp.pop('config')
 
     def deserialize(self, args={}):
+        '''
+        Deserialzie a Job from a given dict.
+        :param args: dict
+        ":raises KeyError if no dict is given.
+        '''
         if args:
             for key, value in args.items():
                 if key == '_id':
@@ -123,7 +130,13 @@ class CoreJob(CoreBase):
         else:
             raise KeyError
 
+
     def __eq__(self, obj):
+        '''
+        compares two Jobs by serializing them and comparing the dicts.
+        :param obj: compare Object
+        :return: True or False
+        '''
         if isinstance(obj, CoreJob):
             ret = self.serialize() == obj.serialize()
         elif isinstance(obj, dict):
