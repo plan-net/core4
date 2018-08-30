@@ -9,6 +9,7 @@ Welcome to core4's documentation!
    config
    logging
    tools
+   job
    core4/index
 
 
