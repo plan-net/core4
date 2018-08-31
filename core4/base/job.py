@@ -41,7 +41,6 @@ class CoreJob(CoreBase):
     =================== =============== ===========================================================================
     job property        handle          description
     =================== =============== ===========================================================================
-    plugin              auto-assigned   plugin the job is running under
     args                user-defined    arguments passed to the job
     attempts            user-defined    maximum number of execution attempts after job failure
     attempts_left       read-only       number of attempts left after failure
@@ -50,18 +49,42 @@ class CoreJob(CoreBase):
     defer_time          user-defined    seconds to wait before restart after exception JobDeferred
     dependency          user-defined    list of jobs which need to complete before execution starts
     chain               user-defined    list of jobs which are enqueued after a job finishes
+    enqueued            read-only       dictionary of information about the job creator
+    enqueued.at         read-only       datetime when the job has been enqueued
+    enqueued.host       read-only       name of the host from where the job has been enqueued
+    enqueued.parent     read-only       job id of the precursing job which has been journaled and restarted
+    enqueued.user       read-only       user who enqueued the job
     error_time          user-defined    seconds to wait before restart after job failure
+    finished            read-only       datetime when the job finished with success, failure, or deferral
+    inactive_at         read-only       datetime  when a deferring job turns inactive, derived from defer_max
     job_id              read-only       job id taken from mongo document _id
+    killed              read-only       datetime when the job has been killed
+    last_error          read-only       last stack trace in case of failure or error
+    locked              read-only       dictionary of information about the job consumer
+    locked.at           read-only       datetime when the job has been locked by a worker
+    locked.heartbeat    read-only       datetime of the last advertising of job progress
+    locked.host         read-only       hostname of the worker which locked the job
+    locked.pid          read-only       process id of the worker which locked the job
+    locked.progress     read-only       last progress message of the job
+    locked.worker       read-only       name of the worker which locked the job
+    locked.user         read-only       name of the user running the worker which locked the job
     max_parallel        user-defined    maximum number of this jobs to run in parallel on the same node
     memory              user-defined    mininmum memory requirements in GB
     name                read-only       fully qualified name of the job
     nodes               user-defined    nodes eligable to execute the job
     nonstop             read-only       datetime when the job turned into a non-stopping job, determined by wall_time
+    plugin              auto-assigned   plugin the job is running under
     priority            user-defined    priority to execute the job with >0 higher and <0 lower priority
+    query_at            read-only       datetime to re-execute the job, derived from error_time or defer_time
+    removed             read-only       datetime of the request to remove the job
+    runtime             read-only       job execution run-time
+    sandbox             user-defined    if the job is sandboxed, it will run in its enqueueing-users context
     schedule            user-defined    job schedule in crontab format
     section             user-defined    default config section
     sources             read-only       set of sources processed by the job
+    started             read-only       job execution start-time
     state               read-only       job state
+    tag                 user-defined    tag the job with freestyle string-argmuents
     wall_at             read-only       datetime when a running job turns into a non-stopping job
     wall_time           user-defined    number of seconds before a running job turns into a non-stopping job
     zombie              read-only       datetime when the job turned into a zombie due to lacking progress
@@ -104,8 +127,10 @@ class CoreJob(CoreBase):
     max_parallel supported            supported          supported      see core.conf, section job None
     nodes        supported            supported          supported      see core.conf, section job empty list (any)
     priority     supported            supported          supported      see core.conf, section job 0 (normal)
+    sandbox      supported            supported          supported      None                       False
     schedule     not supported        supported          supported      see core.conf, section job None
     section      not supported        not supported      supported      None                       DEFAULT
+    tag          supported            supported          supported      None                       None
     wall_time    supported            supported          supported      see core.conf, section job None
     ============ ==================== ================== ============== ========================== =====================
 
@@ -216,6 +241,7 @@ class CoreJob(CoreBase):
         self.max_parallel = None
         self.wall_at = 0
         self.wall_time = 0
+        self.sandbox = False
 
         super().__init__()
 
@@ -257,10 +283,30 @@ class CoreJob(CoreBase):
 
     def serialize(self):
         """
-        Serialize a job for manifestating it within the mongo or any other document-store
+        Serialize a job for manifestating it within the mongo or any other document-store.
+
+        The following argmuents are serialized, all other job-arguments are ignored:
+
+        ======
+        job_args"
+        "nodes"
+        "priority"
+        "chain"
+        "tags"
+        "adhoc"
+        "defer_max"
+        "sandbox"
+        "defer_time"
+        "error_time"
+        "dependency"
+        "max_parallel"
+        "wall_at"
+        "wall_time"
+        ======
+
         :returns dict
         """
-        serialize_args = ["job_args","nodes","priority","chain","tags","adhoc","defer_max",
+        serialize_args = ["job_args","nodes","priority","chain","tags","adhoc","defer_max", "sandbox",
                           "defer_time","error_time","dependency","max_parallel","wall_at","wall_time"]
 
         tmp = {}
