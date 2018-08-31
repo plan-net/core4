@@ -50,38 +50,17 @@ class CoreJob(CoreBase):
     defer_time          user-defined    seconds to wait before restart after exception JobDeferred
     dependency          user-defined    list of jobs which need to complete before execution starts
     chain               user-defined    list of jobs which are enqueued after a job finishes
-    enqueued            read-only       dictionary of information about the job creator
-    enqueued.at         read-only       datetime when the job has been enqueued
-    enqueued.host       read-only       name of the host from where the job has been enqueued
-    enqueued.parent     read-only       job id of the precursing job which has been journaled and restarted
-    enqueued.user       read-only       user who enqueued the job
     error_time          user-defined    seconds to wait before restart after job failure
-    finished            read-only       datetime when the job finished with success, failure, or deferral
-    inactive_at         read-only       datetime  when a deferring job turns inactive, derived from defer_max
     job_id              read-only       job id taken from mongo document _id
-    killed              read-only       datetime when the job has been killed
-    last_error          read-only       last stack trace in case of failure or error
-    locked              read-only       dictionary of information about the job consumer
-    locked.at           read-only       datetime when the job has been locked by a worker
-    locked.heartbeat    read-only       datetime of the last advertising of job progress
-    locked.host         read-only       hostname of the worker which locked the job
-    locked.pid          read-only       process id of the worker which locked the job
-    locked.progress     read-only       last progress message of the job
-    locked.worker       read-only       name of the worker which locked the job
-    locked.user         read-only       name of the user running the worker which locked the job
     max_parallel        user-defined    maximum number of this jobs to run in parallel on the same node
     memory              user-defined    mininmum memory requirements in GB
     name                read-only       fully qualified name of the job
     nodes               user-defined    nodes eligable to execute the job
     nonstop             read-only       datetime when the job turned into a non-stopping job, determined by wall_time
     priority            user-defined    priority to execute the job with >0 higher and <0 lower priority
-    query_at            read-only       datetime to re-execute the job, derived from error_time or defer_time
-    removed             read-only       datetime of the request to remove the job
-    runtime             read-only       job execution run-time
     schedule            user-defined    job schedule in crontab format
     section             user-defined    default config section
     sources             read-only       set of sources processed by the job
-    started             read-only       job execution start-time
     state               read-only       job state
     wall_at             read-only       datetime when a running job turns into a non-stopping job
     wall_time           user-defined    number of seconds before a running job turns into a non-stopping job
