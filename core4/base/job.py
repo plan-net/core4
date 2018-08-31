@@ -13,23 +13,6 @@ STATE_COMPLETE = 'complete'
 STATE_INACTIVE = 'inactive'
 STATE_KILLED = 'killed'
 
-
-'''
-This is the Job-Class of core4.
-Every Job has to inherit from this.
-It is only a container holding options.
-
-delegation of options:
-enqueue
-|
-environment-variables
-|
-config
-|
-Class-Defaults
-'''
-
-
 class CoreJob(CoreBase):
 
     """
