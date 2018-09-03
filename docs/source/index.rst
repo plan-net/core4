@@ -10,7 +10,9 @@ Welcome to core4's documentation!
    logging
    tools
    job
+   helpers   
    core4/index
+   
 
 
 Indices and tables

@@ -34,8 +34,8 @@ Out of experience we would recommend to adhere to the following principles also:
 #. implement continuity-checks if data is continuos.
 
 
-Example:
---------
+Example
+-------
 .. code-block:: python
 
     import requests

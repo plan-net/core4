@@ -14,6 +14,7 @@ most important right here and provide links to the canonical documentation.
    config/index
    logger/index
    api/v1/index
+   helpers/index
    error
    util
 
