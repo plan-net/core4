@@ -1,5 +1,6 @@
+######
 api.v1
-======
+######
 
 .. toctree::
    :caption: Table of Contents

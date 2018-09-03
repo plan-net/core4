@@ -1,5 +1,6 @@
+####
 base
-====
+####
 
 Package :any:`core4.base <core4.base.main>` with class
 :any:`core4.base.CoreBase <core4.base.main.CoreBase>`

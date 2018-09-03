@@ -1,5 +1,6 @@
+######
 logger
-======
+######
 
 Package ``core4.logger`` implements all components required for the core4
 logging system.

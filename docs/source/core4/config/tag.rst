@@ -1,5 +1,6 @@
+###
 tag
-===
+###
 
 .. automodule:: core4.config.tag
     :members:

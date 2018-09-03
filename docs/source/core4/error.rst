@@ -1,5 +1,6 @@
+#####
 error
-=====
+#####
 
 .. automodule:: core4.error
     :members:
