@@ -1,14 +1,25 @@
 
+#################################
 Welcome to core4's documentation!
-=================================
+#################################
 
 .. toctree::
    :caption: Contents:
    :maxdepth: 1
 
+   intro
+   plugin
+   job
+   R
+   parallel
+   api
    config
    logging
+   data
+   access
+   rollout
    tools
+   about
    core4/index
 
 

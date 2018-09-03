@@ -758,6 +758,13 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(extra_config=("test", extra), config_file=empty)
         self.assertRaises(core4.error.Core4ConfigurationError, conf._load)
 
+    def test_dev_default(self):
+        extra = tests.util.asset("config/extra1.yaml")
+        empty = tests.util.asset("config/empty.yaml")
+        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        print(conf.test.v7)
+        print(conf.test.get("v8", "abc"))
+        print(conf.test.v9)
 
 if __name__ == '__main__':
     unittest.main(exit=False)
