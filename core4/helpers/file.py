@@ -3,52 +3,71 @@ import core4.util
 import os
 import shutil
 import zipfile
+import gzip
 
 class FileMixin(CoreBase):
+
+    """
+    Return a found directory or all files found within that directory.
+    :returns directory or list of files.
+    """
+    def get_file(self, dirname, filename=None, pattern=None):
+        # this is not used
+        #if filename:
+            #return os.path.join(dirname, filename)
+        if pattern:
+            return sorted([
+                              os.path.join(dirname, f)
+                              for f in os.listdir(dirname)
+                              if pattern.match(f)])
+        else:
+            return dirname
 
 
     def move_arch(self, source, base=None, compress=True):
         """
         Moves the file to the account archive.
 
-        With default settings, the file ``/tmp/test.txt`` will be moved into
+        With folder settings, the file ``/tmp/test.txt`` will be moved into
         ``/srv/core/arch/account/YYYY/MM/DD/HH.MM.SS/test.txt``.
 
         :param source: the full pathname of the source file
         :param base: an optional relative base directory to core's proc
-                     directory, defaults to the account name
-        :param compress: compresses the source file, default to True
+                     directory, folders to the account name
+        :param compress: compresses the source file, folder to True
         """
         if not os.path.exists(source):
             raise (RuntimeError('source [%s] not found' % (source)))
         basename = os.path.basename(source)
-        # timestamp
-        timestamp = None
-        if self.started is None:
-            timestamp = core4.util.now()
-        else:
-            timestamp = self.started
-        # archive root
-        archive_dir = self.config.get('archive_directory', 'DEFAULT')
+        # todo: this is currently not used
+        # timestamp = None
+        # if self.started is None:
+        #     timestamp = core4.util.now()
+        # else:
+        #     timestamp = self.started
+        # # archive root
+        archive_dir = self.config.folder.root + "/" + self.config.folder.archive
         if not os.path.exists(archive_dir):
             raise (RuntimeError('archive root [%s] not found' % (archive_dir)))
         # archive directory
         target_dir = os.path.join(archive_dir,
-                                  base or self.account,
-                                  timestamp.strftime(
-                                      self.config.get('archive_timestamp',
-                                                      'DEFAULT')),
+                                  base or self.plugin,
+                                  # todo: where is archive_timestamp configured ?
+                                  # timestamp.strftime(
+                                  #     self.config.get('archive_timestamp',
+                                  #                     'folder')),
                                   str(self.job_id))
         if not os.path.exists(target_dir):
             self.logger.debug('creating [%s]', target_dir)
             os.makedirs(target_dir)
         # compression
         target = os.path.join(target_dir, basename)
-        for extension in self.config.get_list('archive_skip_compress',
-                                              'DEFAULT'):
-            if target.lower().endswith(extension.lower()):
-                compress = False
-                self.logger.warning('skip compressing [%s]', source)
+        # todo: currently not possible due to
+        # core4.error.Core4ConfigurationError: invalid type cast [archive_skip_compress] from [list] to [str]
+#        for extension in self.config.folder.archive_skip_compress:
+#            if target.lower().endswith(extension.lower()):
+#                compress = False
+#                self.logger.warning('skip compressing [%s]', source)
         if compress:
             target += '.gz'
         # target
@@ -57,7 +76,7 @@ class FileMixin(CoreBase):
         # compression
         if compress:
             self.logger.debug('compressing [%s]', source)
-            source = core4.util.compress(source)
+            source = self.compress(source)
         # moving
         #
         # self.logger.debug('archiving [%s] to [%s]', source, target)
@@ -69,24 +88,24 @@ class FileMixin(CoreBase):
         """
         Moves the file to the account processing folder.
 
-        With default settings, the file ``/tmp/test.txt`` will be moved into
+        With folder settings, the file ``/tmp/test.txt`` will be moved into
         ``/srv/core/proc/account/test.txt``.
 
         :param source: the full pathname of the source file
         :param base: an optional relative base directory to core's proc
-                     directory, defaults to the account name
-        :param compress: compresses the source file, default to False
+                     directory, folders to the account name
+        :param compress: compresses the source file, folder to False
         """
         if not os.path.exists(source):
             raise (RuntimeError('source [%s] not found' % (source)))
         basename = os.path.basename(source)
         # root
-        proc_dir = self.config.get('process_directory', 'DEFAULT')
+        proc_dir = self.config.folder.root + "/" + self.config.folder.process
         if not os.path.exists(proc_dir):
             raise (RuntimeError('process root [%s] not found' % (proc_dir)))
         # process directory
         target_dir = os.path.join(proc_dir,
-                                  base or self.account)
+                                  base or self.plugin)
         if not os.path.exists(target_dir):
             self.logger.debug('creating [%s]', target_dir)
             os.makedirs(target_dir)
@@ -112,59 +131,46 @@ class FileMixin(CoreBase):
         :return: the filename, directory name or list of full file names
         """
         # root
-        proc_dir = self.config.get('process_directory', 'DEFAULT')
+        proc_dir = self.config.folder.root + "/" + self.config.folder.process
         source_dir = os.path.join(proc_dir,
-                                  base or self.account)
+                                  base or self.plugin)
         if not os.path.exists(source_dir):
             raise (RuntimeError('process root [%s] not found' % (source_dir)))
         self.logger.debug('scanning [%s]', source_dir)
-        return self.config.get_file(source_dir, pattern=pattern)
+        return self.get_file(source_dir, pattern=pattern)
 
-    def transfer_file(self, filename=None, base=None):
+    def list_transfer(self, pattern=None, base=None):
         """
         Returns a filename in the account transfer directory. This method is
         useful if you just have the basename of a target file for the transfer
         directory.
 
-        :param filename: locates the filename in the transfer directory, if
-                         *None*, the directory itself is returned
+        :param pattern: uses the regular expression to filter files in the
+                        directory
         :param base: an optional relative base directory to core's transfer
-                     directory, defaults to the account name
+                     directory, folders to the account name
         :return: the filename, directory name or list of full file names
         """
-        d = self.config.get('transfer_directory', 'DEFAULT')
-        tdir = os.path.join(d, base or self.account)
-        if not os.path.exists(tdir):
-            self.logger.debug('creating [%s]', tdir)
-            os.makedirs(tdir)
-        return self.config.get_file(tdir, filename)
+        transfer_dir = self.config.folder.root + "/" + self.config.folder.transfer
+        source_dir = os.path.join(transfer_dir,
+                                  base or self.plugin)
+        if not os.path.exists(source_dir):
+            raise (RuntimeError('process root [%s] not found' % (source_dir)))
+        self.logger.debug('scanning [%s]', source_dir)
+        return self.get_file(source_dir, pattern=pattern)
 
-    def uncompress(self, filename, ignore_error=True, folder=None):
+    def compress(self, filename):
         """
-        Uncompresses the passed file. Supports ZIP at the moment.
+        Internal method to compress a file.
 
-        :param filename: compressed file name
-        :param ignore_error: fails if the temporary directory exists, already
-        :param folder: subfolder name to use for extraction
-        :return: tuple of directory and manifest of uncompressed files
+        :param filename: full filename
         """
-        if not os.path.exists(filename):
-            raise (IOError, 'file [%s] not found' % (filename))
-        if zipfile.is_zipfile(filename):
-            z = zipfile.ZipFile(filename)
-            basename = os.path.basename(filename)
-            if folder:
-                temp_dir = self.config.get_temp_file(folder)
-            else:
-                temp_dir = self.config.get_temp_file(basename)
-            if os.path.exists(temp_dir):
-                if not ignore_error:
-                    raise(RuntimeError, 'temporary unzip directory ' \
-                                        '[%s] exists' % (temp_dir))
-            else:
-                os.makedirs(temp_dir)
-            z.extractall(path=temp_dir)
-            content = [f.filename for f in z.infolist()]
-            return (temp_dir, content)
-        else:
-            raise(RuntimeError, 'unknown compression type [%s]' % (filename))
+        target = filename + '.gz'
+        fin = open(filename, 'rb')
+        fout = gzip.open(target, 'wb')
+        fout.writelines(fin)
+        fout.close()
+        fin.close()
+        os.remove(filename)
+        return target
+
