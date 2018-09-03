@@ -7,11 +7,11 @@ import gzip
 
 class FileMixin(CoreBase):
 
-    """
-    Return a found directory or all files found within that directory.
-    :returns directory or list of files.
-    """
     def get_file(self, dirname, filename=None, pattern=None):
+        """
+        Return a found directory or all files found within that directory.
+        :returns directory or list of files.
+        """
         # this is not used
         #if filename:
             #return os.path.join(dirname, filename)
