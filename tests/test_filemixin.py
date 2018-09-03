@@ -25,11 +25,6 @@ class TestBase(unittest.TestCase):
             shutil.rmtree(self.baseroot, ignore_errors=False)
 
         os.makedirs(self.baseroot)
-        os.makedirs(self.baseroot + "/temp")
-        os.makedirs(self.baseroot + "/temp/tests")
-        #os.makedirs(self.baseroot + "/proc")
-
-        os.makedirs(self.baseroot + "/transfer")
 
         # plugin will get overwriten when executing locally without calling runner.py
         self.plugin = 'tests'
@@ -112,6 +107,7 @@ class TestBase(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.tester.list_transfer()
 
+        os.makedirs(self.baseroot + "/transfer")
         os.makedirs(self.baseroot + "/transfer/tests")
 
         self.assertEqual(self.tester.list_transfer(), self.baseroot + "/transfer/tests")
