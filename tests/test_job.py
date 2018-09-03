@@ -36,6 +36,9 @@ class TestBase(unittest.TestCase):
         j = CoreJob()
         self.assertEqual("core4.base.job.CoreJob", j.qual_name())
         self.assertEqual("core4.base.job.CoreJob", j.qual_name(short=False))
+        with self.assertRaises(NotImplementedError):
+            j.execute()
+
 
     # def test_OS_environ(self):
     #     os.environ["CORE4_OPTION_job_defer_time"] = "20"
@@ -45,14 +48,20 @@ class TestBase(unittest.TestCase):
 
    # thy do options not show up in __init__ as kwargs?
     def test_enqueue_options(self):
-        f = CoreJob(defer_max=20, defer_time=10)
+        f = CoreJob(defer_max=20, defer_time=10, custom=10)
         self.assertEqual(20, f.defer_max)
+        self.assertEqual(10, f.job_args['custom'])
 
     def test_deserialize_default(self):
         j = CoreJob()
-        j.deserialize({"defer_max": 10, "defer_time": 10})
+        j.deserialize({"defer_max": 10, "defer_time": 10, "_id": 7777})
         self.assertEqual(10, j.defer_max)
         self.assertEqual(10, j.defer_time)
+        self.assertEqual(7777, j.job_id)
+        g = CoreJob()
+        with self.assertRaises(KeyError):
+            g.deserialize()
+
 
     def test_serialize(self):
         j = CoreJob(defer_time=60)
@@ -68,17 +77,17 @@ class TestBase(unittest.TestCase):
         self.assertEqual(j,f.serialize())
         self.assertNotEqual(j, g)
         self.assertNotEqual(j, g.serialize())
+        self.assertNotEqual(j, "Not a job.")
 
-    @unittest.skip
     def test_dummy(self):
-        for i in range(20):
-            dummy = DummyJob(sleep=60)
-            dummyt = DummyJob(sleep=60)
-            print(dummy == dummyt)
-            print(dummy.__dict__.values())
-            print(dummyt.__dict__.values())
+        dummy = DummyJob(sleep=60)
+        dummyt = DummyJob(sleep=60)
+        self.assertEqual(dummy,dummyt)
 
-            #self.assertEqual(dummy,dummyt)
+    def test_cookie(self):
+        dummy = DummyJob(sleep=60)
+        self.assertEqual(type(core4.base.cookie.Cookie()), type(dummy.cookie))
+        self.assertEqual("core4.base.job.DummyJob", dummy.cookie.name)
 
 
 

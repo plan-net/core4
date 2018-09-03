@@ -5,6 +5,7 @@ DEFAULT:
 # system collections
 sys:
   conf: ~
+  cookie: !connect mongodb://sys.cookie
   log: !connect mongodb://sys.log
   role: !connect mongodb://sys.role
   quota: !connect mongodb://sys.quota
