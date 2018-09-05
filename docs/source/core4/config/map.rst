@@ -1,5 +1,6 @@
+###
 map
-===
+###
 
 .. automodule:: core4.config.map
     :members:

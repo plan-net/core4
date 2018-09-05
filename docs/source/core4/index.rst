@@ -1,5 +1,6 @@
+#####################
 package documentation
-=====================
+#####################
 
 This part of the documentation covers all interfaces, classes and methods of
 core4. For parts where core4 depends on external libraries, we document the

@@ -10,3 +10,7 @@ v3: !!int 4
 v4: !!str 123
 v5: !!timestamp 2018-01-01T22:33:21
 v6: !!timestamp 2018-01-02
+v7: https://www.bild.de/rssfeeds/vw-alles/vw-alles-26970192,dzbildplus=true,sort=1,teaserbildmobil=false,view=rss2,wtmc=ob.feed.bild.xml
+v9:
+  - liebe
+  - hass

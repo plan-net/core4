@@ -1,7 +1,8 @@
 .. _config:
 
+#############
 configuration
-=============
+#############
 
 System configuration of various kind are the bridge between core4 development
 and operations activities. Key features of core4 configuration are:
@@ -19,7 +20,7 @@ and operations activities. Key features of core4 configuration are:
 
 
 sources of configuration
-------------------------
+========================
 
 There are multiple places where core4 is looking for configuration.
 
@@ -71,7 +72,7 @@ This boils down to the configuration flow outlined in the following diagram:
 
 
 configuration language and format
----------------------------------
+=================================
 
 core4 configuration uses YAML as the configuration language (see
 http://yaml.org/) and the PyYaml Python package supporting YAML version 1.1.
@@ -107,7 +108,7 @@ example an excerpt from ``core.yaml`` standard configuration file::
 
 
 plugin configuration
---------------------
+====================
 
 All plugin configuration is wrapped in a dictionary with the key equal to the
 plugin name.
@@ -124,7 +125,7 @@ To access the username and password use::
 
 
 DEFAULT values
---------------
+==============
 
 The ``DEFAULT`` dictionary defines default keys/values. These default values
 are forwarded into all configuration dictionaries::
@@ -162,7 +163,7 @@ defined, then this global default value is forwarded.
 
 
 local configuration
--------------------
+===================
 
 The local configuration is used to overwrite core4 standard and plugin
 configuration keys/values for your concrete system setup. You can only specify
@@ -173,7 +174,7 @@ plugin configuration. All other keys/values are silently ignored.
 .. _env_config:
 
 environment options and values
-------------------------------
+==============================
 
 As an administrator you can enforce configuration option values by defining
 environment variables. The structure is::
@@ -204,7 +205,7 @@ Use ``~`` to set a value to ``None``::
 .. _connect_tag:
 
 ``!connect`` tag
-----------------
+================
 
 core4 configuration provides a special tag ``!connect`` to manage database
 connection settings. This tag parses authentication/hostname information,
@@ -234,7 +235,7 @@ cascade to the same connection settings::
 
 
 MongoDB collection ``sys.conf``
--------------------------------
+===============================
 
 If you prefer to use a central MongoDB database collection to setup your
 system, then you will have to provide the connection string. The standard
@@ -256,7 +257,7 @@ Alternatively you can define the environment variable
 
 
 configuration access
---------------------
+====================
 
 All classes based on :class:`.CoreBase` have configuration access via the
 ``self.config`` attribute. To access configuration options and values you can
@@ -265,7 +266,7 @@ by dot notation as in ``self.config.mongo_database``.
 
 
 example
--------
+=======
 
 core4 configuration principles are best described by example.
 In this scenario a plugin has been created for an plugin named ``plugin1``.

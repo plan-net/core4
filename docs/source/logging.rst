@@ -1,7 +1,8 @@
 .. _logging:
 
+#######
 logging
-=======
+#######
 
 There are three main logging targets used by core4 components:
 
@@ -32,7 +33,7 @@ i.e.::
 
 
 custom logging setup
---------------------
+====================
 
 You can add additional custom logging handlers by setting the core4
 configuration setting ``logging.extra``. See for example
@@ -42,7 +43,7 @@ will be set up.
 
 
 extra logging attributes
-------------------------
+========================
 
 core4 defines the following additional logging attributes:
 
@@ -72,7 +73,7 @@ following objects:
 
 
 logging of exceptions
----------------------
+=====================
 
 core4 provides a special means to handle exceptions. In the event of a logging
 message at level ``logging.CRITICAL``, all log messages below the specified log
@@ -85,7 +86,7 @@ belated.
 
 
 logging startup
----------------
+===============
 
 All classes derived from :class:`.CoreBase` attach to the ``core4`` root logger
 with a :class:`logging.NullHandler`. Opening the logging targets described
@@ -108,7 +109,7 @@ example::
 
 
 logging guideline
------------------
+=================
 
 Best practice is to use as few log levels as possible. The rational is to
 minimise confusion and to have a simple and clear log level convention. This

@@ -1,5 +1,6 @@
+######
 config
-======
+######
 
 Package :any:`core4.config <core4.config.main>` with class
 :any:`core4.config.CoreConfig <core4.config.main.CoreConfig>`

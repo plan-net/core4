@@ -1,5 +1,6 @@
+####
 util
-====
+####
 
 .. automodule:: core4.util
     :members:
