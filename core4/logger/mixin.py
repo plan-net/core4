@@ -72,7 +72,6 @@ class CoreLoggerMixin:
 
     def _setup_extra_logging(self, logger):
         extra = self.config.logging.extra
-        print(self.config)
         if extra:
             logging.config.dictConfig(extra)
             self.logger.debug("extra logging setup complete from")

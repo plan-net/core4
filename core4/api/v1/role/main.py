@@ -3,6 +3,16 @@
 """
 This module provides class :class:`.Role` featuring authorisation and access
 management to core4 API, jobs, databases and applications.
+
+Instantiate and save a new role with::
+
+    role = Role(name="test", realname="Test Role", email="test@mail.com",
+                password="secret")
+    role.save()
+
+Load an existing role with::
+
+    role = Role().load_one(name="test")
 """
 
 import pymongo
@@ -37,6 +47,9 @@ class Role(core4.base.CoreBase):
     * ``.perm`` (list of str)
     * ``.last_login`` (:class:`.datetime`), automatically injected
     * ``.quota`` (str in format ``limit:seconds``)
+
+    Then ``name`` must be unique. The ``email`` must be unique for users (not
+    roles) if defined.
     """
 
     def __init__(self, **kwargs):
@@ -100,7 +113,10 @@ class Role(core4.base.CoreBase):
         attribute
         """
         self.config.sys.role.create_index(
-            [("name", pymongo.ASCENDING)], unique=True)
+            [("name", pymongo.ASCENDING)], unique=True, name="unique_name")
+        self.config.sys.role.create_index(
+            [("email", pymongo.ASCENDING)], unique=True, name="unique_email",
+            partialFilterExpression={"email": { "$exists": True}})
 
     def save(self):
         """
@@ -132,11 +148,21 @@ class Role(core4.base.CoreBase):
         :return: verify a valid role (no email and password) or a valid
                  user role (email and password)
         """
-        have_password = self.password is not None
-        have_email = self.email is not None
-        if ((not (have_password and have_email))
-                and (have_password or have_email)):
+        has_password = self.password is not None
+        has_email = self.email is not None
+        if ((not (has_password and has_email))
+                and (has_password or has_email)):
             raise AttributeError("user role requires email and password")
+
+    @property
+    def is_user(self):
+        """
+        :return: ``True`` if this role represents a valid user with password
+                 and email attribute defined
+        """
+        has_password = self.password is not None
+        has_email = self.email is not None
+        return has_password and has_email
 
     def _check_circle(self):
         """
