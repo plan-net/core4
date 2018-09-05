@@ -2,8 +2,8 @@
 jobs
 ####
 
-Job principles
---------------
+job principles
+==============
 
 core4 Jobs represent single or multiple Tasks that are to be executed within the Framework.
 Jobs give access to the core4 configuration, core4 queue and the database.
@@ -33,6 +33,9 @@ Out of experience we would recommend to adhere to the following principles also:
 #. create Data-Structures that are idempotent on multiple loads of the same data.
 #. implement continuity-checks if data is continuos.
 
+
+example
+=======
 
 .. code-block:: python
    :linenos:
@@ -80,7 +83,6 @@ Out of experience we would recommend to adhere to the following principles also:
 
            target = self.config.get('target', 'term.count')
            target.insert_one(result)
-
 
 
 explanation

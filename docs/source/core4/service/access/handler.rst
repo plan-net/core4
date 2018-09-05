@@ -1,8 +1,9 @@
+###################################
 database access management handlers
-===================================
+###################################
 
 Abstract database handler
--------------------------
+=========================
 
 .. automodule:: core4.service.access.handler
     :members:
@@ -10,7 +11,7 @@ Abstract database handler
 
 
 MongoDB database access management
-----------------------------------
+==================================
 
 .. automodule:: core4.service.access.handler.mongo
     :members:
