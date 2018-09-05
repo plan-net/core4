@@ -45,9 +45,9 @@ class TestAccess(unittest.TestCase):
         for role in roles["roles"]:
             if role["role"].startswith("regress_"):
                 self.mongo.admin.command('dropRole', role["role"])
-        for coll in self.mongo.user.collection_names():
-            if coll.startswith("regress_"):
-                self.mongo.user.drop_collection(coll)
+        for db in self.mongo.database_names():
+            if db.startswith("user!regress_"):
+                self.mongo.drop_database(db)
 
     @property
     def mongo(self):
@@ -205,12 +205,12 @@ class TestAccess(unittest.TestCase):
 
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test1", token))
-        self.assertEqual(0, connection.user.regress_test1.count())
-        connection.user.regress_test1.insert_one({})
-        self.assertEqual(1, connection.user.regress_test1.count())
+        self.assertEqual(0, connection["user!regress_test1"].coll.count())
+        connection["user!regress_test1"].coll.insert_one({})
+        self.assertEqual(1, connection["user!regress_test1"].coll.count())
 
         self.assertRaises(pymongo.errors.OperationFailure,
-                          connection.user.regress_test2.count)
+                          connection["user!regress_test2"].coll.count)
 
         mgr = core4.service.access.manager.CoreAccessManager("regress_test2")
         access = mgr.synchronise()
@@ -218,13 +218,29 @@ class TestAccess(unittest.TestCase):
 
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test2", token))
-        self.assertEqual(0, connection.user.regress_test2.count())
-        connection.user.regress_test2.insert_one({})
-        connection.user.regress_test2.insert_one({})
-        self.assertEqual(2, connection.user.regress_test2.count())
+        self.assertEqual(0, connection["user!regress_test2"].coll.count())
+        connection["user!regress_test2"].coll.insert_one({})
+        connection["user!regress_test2"].coll.insert_one({})
+        self.assertEqual(2, connection["user!regress_test2"].coll.count())
 
         self.assertRaises(pymongo.errors.OperationFailure,
-                          connection.user.regress_test1.count)
+                          connection["user!regress_test1"].coll.count)
+
+    def test_dependency(self):
+        test_role1 = core4.api.v1.role.main.Role(
+            name="regress_test1", realname="test role", email="test1@role.de",
+            password="123456", perm=["mongodb://core4test1",
+                                     "mongodb://core4test2"])
+        test_role1.save()
+        test_role2 = core4.api.v1.role.main.Role(
+            name="regress_test2", realname="test role", email="test2@role.de",
+            password="654321", role=[test_role1])
+        test_role2.save()
+        mgr = core4.service.access.manager.CoreAccessManager("regress_test1")
+        mgr.synchronise()
+        mgr = core4.service.access.manager.CoreAccessManager("regress_test2")
+        #print(mgr.synchronise())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -15,6 +15,14 @@ class MongoHandler(BaseHandler):
     """
     This class handles MongoDB access permissions. The handler is registered
     in :attr:core4.service.access.manager.HANDLER` attribute.
+
+    The handler provides read-only access to MongoDB databases specified by
+    the user/role permission field (``mongodb://<DBNAME>``). Additionally the
+    handler creates user user database at ``user!<USERNAME>`` with the built-in
+    ``dbOwner`` role assigned to the user.
+
+    .. note:: The prefix of the user database (``user!``) can be defined with
+              core4 configuration option ``sys.userdb``.
     """
     def __init__(self, role, *args, **kwargs):
         super().__init__(role, *args, **kwargs)
@@ -61,38 +69,29 @@ class MongoHandler(BaseHandler):
         :meth:`.create_token`.
 
         .. note:: The user is created in MongoDB admin system database,
-                  collection ``system.users``. Additionally a role is created
-                  with the same name to grant read/write access permissions
-                  to the custom user collection ``<USERNAME>`` in database
-                  ``user``.
+                  collection ``system.users``. Additionally the MongoDB
+                  built-in role *dbOwner* is granted on database
+                  ``user!<USERNAME>``. The prefix *user!* can be configured
+                  with core4 configuration option ``sys.userdb``.
 
         :return: token/password (str)
         """
         # create the role
         username = self.role.name
         password = self.create_token()
-        privileges = [
-            {
-                "resource": {
-                    "db": "user",
-                    "collection": username
-                },
-                "actions": [
-                    "find", "insert", "remove", "update"
-                ]
-            }
-        ]
-        self.admin_db.command('createRole', username, roles=[],
-                              privileges=privileges)
-        self.logger.info('created mongo role [%s]', username)
-        self.admin_db.command('createUser', username, pwd=password,
-                              roles=[username])
-        self.logger.info('created mongo user [%s]', username)
+        userdb = "".join([self.config.sys.userdb, username])
+        self.admin_db.command('createUser', username, pwd=password, roles=[])
+        self.admin_db.command(
+            'grantRolesToUser', username,
+            roles=[{'role': 'dbOwner', 'db': userdb}])
+        self.logger.info(
+            'created mongo user [%s] with private [%s]', username, userdb)
         return password
 
     def grant(self, database):
         # cascade db permission, then grant read-only access
         username = self.role.name
-        self.admin_db.command('grantRolesToUser', username,
-                              roles=[{'role': 'read', 'db': database}])
+        self.admin_db.command(
+            'grantRolesToUser', username,
+            roles=[{'role': 'read', 'db': database}])
         self.logger.info('grant role [%s] access to [%s]', username, database)
