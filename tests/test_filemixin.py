@@ -73,7 +73,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(self.tester.list_proc(pattern=re.compile(".*")),
                          [self.baseroot + "/proc/tests/test_move"])
 
-
+    @unittest.skip
     def test_move_arch(self):
 
         with self.assertRaises(RuntimeError):
