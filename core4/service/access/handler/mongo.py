@@ -56,12 +56,6 @@ class MongoHandler(BaseHandler):
             self.logger.info('removed mongo user [%s]', username)
         else:
             self.logger.debug("mongo user [%s] not found", username)
-        role_info = self.admin_db.command("rolesInfo", username)
-        if role_info["roles"]:
-            self.admin_db.command('dropRole', username)
-            self.logger.info('removed mongo role [%s]', username)
-        else:
-            self.logger.debug("mongo user [%s] not found", username)
 
     def add_role(self):
         """
