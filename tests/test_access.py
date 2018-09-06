@@ -17,40 +17,51 @@ from tests.test_logger import LogOn
 class TestAccess(unittest.TestCase):
 
     def setUp(self):
+        self.tearDown()
+        self.tearup()
+
+    def tearup(self):
+        os.environ[
+            "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@localhost:27017"
+        os.environ[
+            "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
+        mongo = self.mongo()
+        LogOn()
+        for i in range(1, 5):
+            db = "core4test" + str(i)
+            for j in range(i):
+                mongo[db].coll1.insert_one({})
+            for j in range(i*2):
+                mongo[db].coll2.insert_one({})
+
+    def tearDown(self):
+        mongo = self.mongo()
+        for db in ["core4test"] + ["core4test" + str(i) for i in range(1, 5)]:
+            mongo.drop_database(db)
+        for db in mongo.database_names():
+            if db.startswith("user!regress_"):
+                mongo.drop_database(db)
+        users = mongo.admin.command("usersInfo")
+        for user in users["users"]:
+            if user["user"].startswith("regress_"):
+                mongo.admin.command('dropUser', user["user"])
+        roles = mongo.admin.command("rolesInfo")
+        for role in roles["roles"]:
+            if role["role"].startswith("regress_"):
+                mongo.admin.command('dropRole', role["role"])
         dels = []
         for k in os.environ:
             if k.startswith('CORE4_'):
                 dels.append(k)
         for k in dels:
             del os.environ[k]
-        for db in ["core4test"] + ["core4test" + str(i) for i in range(1, 5)]:
-            self.mongo.drop_database(db)
-        os.environ[
-            "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@localhost:27017"
-        os.environ[
-            "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
-        LogOn()
-        for i in range(1, 5):
-            db = "core4test" + str(i)
-            for j in range(i):
-                self.mongo[db].coll1.insert_one({})
-            for j in range(i*2):
-                self.mongo[db].coll2.insert_one({})
 
-        users = self.mongo.admin.command("usersInfo")
-        for user in users["users"]:
-            if user["user"].startswith("regress_"):
-                self.mongo.admin.command('dropUser', user["user"])
-        roles = self.mongo.admin.command("rolesInfo")
-        for role in roles["roles"]:
-            if role["role"].startswith("regress_"):
-                self.mongo.admin.command('dropRole', role["role"])
-        for db in self.mongo.database_names():
-            if db.startswith("user!regress_"):
-                self.mongo.drop_database(db)
+    @classmethod
+    def tearDownClass(cls):
+        cls.tearDown(cls)
 
-    @property
-    def mongo(self):
+    @staticmethod
+    def mongo():
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
 
     def test_simple(self):
