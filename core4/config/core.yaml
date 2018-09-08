@@ -7,6 +7,7 @@ sys:
   conf: ~
   cookie: !connect mongodb://sys.cookie
   log: !connect mongodb://sys.log
+  userdb: user!
   role: !connect mongodb://sys.role
   quota: !connect mongodb://sys.quota
   admin: !connect mongodb://admin/dummy

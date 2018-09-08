@@ -506,8 +506,8 @@ class RoleField(Field):
                         obj.append(o)
         if error:
             raise TypeError(
-                "field [{}] requires list of existing ObjectId".format(
-                    self.key))
+                "field [{}] requires list of existing "
+                "role objects or ObjectId".format(self.key))
         self.instance_id = ids
         return obj
 
