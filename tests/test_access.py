@@ -17,10 +17,19 @@ from tests.test_logger import LogOn
 class TestAccess(unittest.TestCase):
 
     def setUp(self):
-        self.tearDown()
-        self.tearup()
+        self._teardown()
+        self._tearup()
 
-    def tearup(self):
+    def tearDown(self):
+        #return
+        self._teardown()
+
+    @classmethod
+    def tearDownClass(cls):
+        #return
+        cls._teardown(cls)
+
+    def _tearup(self):
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@localhost:27017"
         os.environ[
@@ -34,7 +43,7 @@ class TestAccess(unittest.TestCase):
             for j in range(i*2):
                 mongo[db].coll2.insert_one({})
 
-    def tearDown(self):
+    def _teardown(self):
         mongo = self.mongo()
         for db in ["core4test"] + ["core4test" + str(i) for i in range(1, 5)]:
             mongo.drop_database(db)
@@ -55,10 +64,6 @@ class TestAccess(unittest.TestCase):
                 dels.append(k)
         for k in dels:
             del os.environ[k]
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.tearDown(cls)
 
     @staticmethod
     def mongo():
@@ -250,7 +255,7 @@ class TestAccess(unittest.TestCase):
         mgr = core4.service.access.manager.CoreAccessManager("regress_test1")
         mgr.synchronise()
         mgr = core4.service.access.manager.CoreAccessManager("regress_test2")
-        #print(mgr.synchronise())
+        print(mgr.synchronise())
 
 
 if __name__ == '__main__':
