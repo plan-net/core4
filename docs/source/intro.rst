@@ -11,7 +11,7 @@ consumers.
 
 
 .. figure:: _static/overview.png
-   :scale: 100 %
+   :scale: 85 %
    :alt: core4 overview
 
 
