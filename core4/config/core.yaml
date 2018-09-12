@@ -30,6 +30,10 @@ logging:
     capacity: 1000
   extra: ~
 
+# base class defaults
+base:
+  log_level: DEBUG
+
 # job defaults
 job:
   defer_time: 60

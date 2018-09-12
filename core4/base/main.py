@@ -138,6 +138,8 @@ class CoreBase:
         # internal method to open and attach core4 logging
         self.logger_name = self.qual_name(short=False)
         logger = logging.getLogger(self.logger_name)
+        level = self.config.base.log_level
+        logger.setLevel(getattr(logging, level))
         nh = logging.NullHandler()
         logger.addHandler(nh)
         f = core4.logger.filter.CoreLoggingFilter()

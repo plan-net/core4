@@ -211,6 +211,30 @@ class TestBase(unittest.TestCase):
         data = list(b.config.sys.log.find())
         self.assertEqual("hello world", data[-1]["message"])
 
+    def test_class_level(self):
+        os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+        os.environ["CORE4_OPTION_base__log_level"] = "INFO"
+
+        class C(core4.base.CoreBase):
+            pass
+
+        class D(core4.base.CoreBase):
+            pass
+
+        b = LogOn()
+        b.logger.debug("world1")  # comes through
+        b.logger.info("world2")  # comes through
+        c = C()
+        c.logger.debug("world3")  # suppressed
+        c.logger.info("hello world4")  # comes through
+        d = D()
+        d.logger.debug("world5")  # suppressed
+        d.logger.info("hello world6")  # comes through
+        data = list(b.config.sys.log.find())
+        import pandas as pd
+        df = pd.DataFrame(list(data))
+        print(df.to_string())
+
 
 if __name__ == '__main__':
     unittest.main()
