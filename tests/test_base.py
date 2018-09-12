@@ -12,6 +12,13 @@ import core4.base.collection
 import core4.error
 
 
+class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_logging()
+
+
 class TestBase(unittest.TestCase):
 
     def setUp(self):
@@ -79,12 +86,6 @@ class TestBase(unittest.TestCase):
             password="654321"
         )
 
-        class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
-
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-                self.setup_logging()
-
         a = LogOn()
         a.logger.info("hello world")
         self.assertEqual(coll1.count(), 1)
@@ -99,6 +100,62 @@ class TestBase(unittest.TestCase):
                               password="654321"
                           ))
         # pprint(a.config)
+
+    def test_progress(self):
+        bc = LogOn()
+        bc.progress(0.01)
+        bc.progress(0.04)  # suppress
+        bc.progress(0.05)
+        bc.progress(0.05)  # suppress
+        bc.progress(0.08)
+        bc.progress(0.09)  # suppress
+        bc.progress(0.12)  # suppress
+        data = list(self.mongo.core4test.sys.log.find())
+        self.assertEqual(3, len(data))
+        for i, check in enumerate([0, 5, 10]):
+            self.assertRegex(data[i]["message"], "{}%$".format(check))
+
+    def test_progress_restart(self):
+        bc = LogOn()
+        bc.progress(0.01)
+        bc.progress(0.05)
+        bc.progress(0.10)
+        bc.progress(0.15)
+        bc.progress(0.09)
+        bc.progress(0.08)  # suppress
+        bc.progress(0.50)
+        bc.progress(0.10)  # restart
+        data = list(self.mongo.core4test.sys.log.find())
+        self.assertEqual(7, len(data))
+        for i, check in enumerate([0, 5, 10, 15, 10, 50, 10]):
+            self.assertRegex(data[i]["message"], "{}%$".format(check))
+
+    def test_custom_progress(self):
+        bc = LogOn()
+        bc.progress(0.01, inc=0.1)
+        bc.progress(0.05, inc=0.1)
+        bc.progress(0.10, inc=0.1)
+        bc.progress(0.15, inc=0.1)
+        bc.progress(0.18, inc=0.1)
+        bc.progress(0.20, inc=0.1)
+        bc.progress(0.22, inc=0.1)
+        bc.progress(0.25, inc=0.1)
+        bc.progress(0.28, inc=0.1)
+        data = list(self.mongo.core4test.sys.log.find())
+        self.assertEqual(4, len(data))
+        for i, check in enumerate([0, 10, 20, 30]):
+            self.assertRegex(data[i]["message"], "{}%$".format(check))
+
+    def test_progress_message(self):
+        bc = LogOn()
+        bc.progress(0.01, "hello %s: %1.2f", "world", 0.01, inc=0.1)
+        bc.progress(0.12, "hello %s: %1.2f", "world", 0.12, inc=0.1)
+        data = list(self.mongo.core4test.sys.log.find())
+        self.assertEqual(2, len(data))
+        self.assertEqual(data[0]["message"],
+                         "progress at 0% - hello world: 0.01")
+        self.assertEqual(data[1]["message"],
+                         "progress at 10% - hello world: 0.12")
 
 
 if __name__ == '__main__':

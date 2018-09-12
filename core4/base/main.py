@@ -63,7 +63,7 @@ class CoreBase:
                 if not isinstance(ident, property):
                     if ident is not None:
                         self.identifier = ident
-
+        self._last_progress = None
         self._set_plugin()
         self._open_config()
         self._open_logging()
@@ -78,16 +78,17 @@ class CoreBase:
                 init_file = "/".join(dirname + ['__init__.py'])
                 pathname.append(dirname.pop(-1))
                 if os.path.exists(init_file):
-                    body = open(init_file, 'r').read()
-                    if re.match(
-                            r'.*\_\_project\_\_\s*'
-                            r'\=\s*[\"\']{}[\"\'].*'.format(
-                                CORE4), body, re.DOTALL):
-                        self.__class__._qual_name = ".".join(
-                            list(reversed(pathname))
-                            + [self.__class__.__name__])
-                        self.plugin = pathname.pop(-1)
-                        break
+                    with open(init_file, 'r') as fh:
+                        body = fh.read()
+                        if re.match(
+                                r'.*\_\_project\_\_\s*'
+                                r'\=\s*[\"\']{}[\"\'].*'.format(
+                                    CORE4), body, re.DOTALL):
+                            self.__class__._qual_name = ".".join(
+                                list(reversed(pathname))
+                                + [self.__class__.__name__])
+                            self.plugin = pathname.pop(-1)
+                            break
 
     def __repr__(self):
         return "{}()".format(self.qual_name())
@@ -144,3 +145,41 @@ class CoreBase:
         # pass object reference into logging and enable lazy property access
         #   and late binding
         self.logger = core4.logger.CoreLoggingAdapter(logger, self)
+
+    def log_progress(self, p, *args):
+        """
+        Internal method used to log progress. Overwrite this method to
+        implement custom progress logging.
+
+        :param p: current progress value (0.0 - 1.0)
+        :param args: message and optional variables using Python format
+                     operator
+        """
+        if args:
+            args = list(args)
+            fmt = " - {}".format(args.pop(0))
+        else:
+            fmt = ""
+        self.logger.info('progress at %.0f%%' + fmt, p, *args)
+
+    def progress(self, p, *args, inc=0.05):
+        """
+        Progress counter calling :meth:`.log_progress` to handle progress and
+        message output. All progress outside bins defined by ``inc`` are
+        reported only once and otherwise suppressed. This method reliable
+        reports progress without creating too much noise in core4 logging
+        targets.
+
+        .. note:: Still you can reuse progress reporting. If the current
+                  progress is below the last reported progress, then reporting
+                  restarts.
+
+        :param p: current progress value (0.0 - 1.0)
+        :param args: message and optional variables using Python format
+                     operator
+        :param inc: progress bins, defaults to 0.05 (5%)
+        """
+        p_round = round(p / inc) * inc
+        if self._last_progress is None or p_round != self._last_progress:
+            self.log_progress(p_round * 100., *args)
+            self._last_progress = p_round

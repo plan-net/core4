@@ -201,8 +201,15 @@ class TestBase(unittest.TestCase):
         m.execute()
         data = list(m.config.sys.log.find())
         idented = sum([1 for i in data if i["identifier"] == "0815"])
-        # print(idented)
         self.assertEqual(700, idented)
+
+    def test_format(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+        b = LogOn()
+        b.logger.info("hello %s", "world")
+        data = list(b.config.sys.log.find())
+        self.assertEqual("hello world", data[-1]["message"])
 
 
 if __name__ == '__main__':

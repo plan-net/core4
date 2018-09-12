@@ -33,7 +33,7 @@ def make_record(record):
         "identifier": record.identifier,
         "qual_name": record.qual_name,
         "_id": record._id,
-        "msg": record.msg,
+        "message": record.getMessage(),
         "level": record.levelname
     }
     if record.exc_info or record.exc_text:
