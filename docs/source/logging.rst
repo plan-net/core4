@@ -95,16 +95,19 @@ and web applications (see `logging howto`_).
 
 Class :class:`.CoreLoggerMixin` adds a method :meth:`.setup_logging` to classes
 based on :class:`.CoreBase`. This method starts logging as in the following
-example::
+example.
 
-    from core4.base import CoreBase
-    from core4.logger import CoreLoggerMixin
+.. code-block:: python
+   :linenos:
 
-    class MyApp(CoreBase, CoreLoggerMixin):
+   from core4.base import CoreBase
+   from core4.logger import CoreLoggerMixin
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.setup_logging()
+   class MyApp(CoreBase, CoreLoggerMixin):
+
+       def __init__(self, *args, **kwargs):
+           super().__init__(*args, **kwargs)
+           self.setup_logging()
 
 
 logging guideline
