@@ -77,8 +77,7 @@ logging of exceptions
 
 core4 provides a special means to handle exceptions. In the event of a logging
 message at level ``logging.CRITICAL``, all log messages below the specified log
-level  defined for logging into MongoDB collection ``sys.log`` will be logged
-belated.
+level defined for MongoDB will be logged belated.
 
 .. note:: Later logging of log messages below the specified level only works
           for logging into MongoDB (``logging.mongodb``). Therefore this
