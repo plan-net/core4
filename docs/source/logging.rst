@@ -4,6 +4,31 @@
 logging
 #######
 
+There is a long lasting argument to use logging instead of print. Every serious
+programmer knows about the advantages of logging and we will not repeat these
+arguments here. Yet, every programmer has used straight forward ``print``
+statements here and there because the hurdle to use higher to configure and
+use a logging library instead of built-in commands.
+
+core4 ships with logging batteries included. Every core4 class including jobs
+and API resources provide logging facilities out of the box.
+
+core4 supports logging to STDOUT, STDERR and a MongoDB collection. Furthermore
+additional logging facilities can be configured following the Python standard
+logging module (see :ref:`extra_logging). Logging is configured using core4
+configuration mechanics (see :ref:`config`). Two important features of core4
+logging are that all log messages created by jobs inform the core4 system that
+the job is still alive. Finally if a job dies all log messages below the
+configured log level get bumped into collection ``sys.log`` belate. This
+special features provides extra logging messages which are suppressed in normal
+operations (see :ref:`exception_logging).
+
+.. todo:: link core4 logging with zombie jobs and the ``.progress`` method.
+
+
+logging targets
+===============
+
 There are three main logging targets used by core4 components:
 
 #. the console ``STDOUT``
@@ -42,6 +67,8 @@ configuration setting ``logging.extra``. See for example
 will be set up.
 
 
+.. _extra_logging:
+
 extra logging attributes
 ========================
 
@@ -71,6 +98,7 @@ following objects:
           This behavior ensures that a log filter captures all activities
           which occured during execution.
 
+.. _exception_logging:
 
 logging of exceptions
 =====================
@@ -140,8 +168,7 @@ To cut a long story short: *WARNING* and *ERROR* level messages should be
 reviewed on a regular bases. *ERROR* level messages require attention.
 *CRITICAL* messages require immediate attention.
 
-Since *CRITICAL* messages require immediate attention, the list of these
-exception is listed below:
+
 
 
 .. _logging howto: https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library
