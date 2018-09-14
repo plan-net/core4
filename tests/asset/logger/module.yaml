@@ -1,0 +1,36 @@
+DEFAULT:
+  mongo_database: core4test
+
+logging:
+    stderr: DEBUG
+    mongodb: ~
+    extra:
+      version: 1
+      disable_existing_loggers: False
+
+      formatters:
+        simple:
+          format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+      handlers:
+
+        info_file_handler:
+          class: logging.FileHandler
+          level: DEBUG
+          formatter: simple
+          filename: info.log
+          encoding: utf8
+
+        mongo_handler:
+          class: core4.logger.handler.MongoLoggingHandler
+          level: DEBUG
+          connection: !connect mongodb://core:654321@localhost:27017/core4test/sys.log
+
+      root:
+        level: DEBUG
+        handlers:
+          - info_file_handler
+          - mongo_handler
+
+sys:
+  log: !connect mongodb://sys.log

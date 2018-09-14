@@ -2,6 +2,7 @@ import datetime
 import logging.config
 import time
 import traceback
+from bson.objectid import ObjectId
 
 
 def make_record(record):
@@ -28,14 +29,12 @@ def make_record(record):
     doc = {
         "created": datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
                                      ts.tm_hour, ts.tm_min, ts.tm_sec),
-        "username": record.username,
-        "hostname": record.hostname,
-        "identifier": record.identifier,
-        "qual_name": record.qual_name,
-        "_id": record._id,
         "message": record.getMessage(),
         "level": record.levelname
     }
+    for k in ["username", "hostname", "identifier", "qual_name"]:
+        doc[k] = getattr(record, k, None)
+    doc["_id"] = getattr(record, "_id", ObjectId())
     if record.exc_info or record.exc_text:
         doc["exception"] = {
             "info": repr(record.exc_info[1]),
@@ -44,7 +43,15 @@ def make_record(record):
     return doc
 
 
-class MongoLoggingHandler(logging.Handler):
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class MongoLoggingHandler(logging.Handler, metaclass=Singleton):
     """
     This class implements logging into a MongoDB database/collection.
     """

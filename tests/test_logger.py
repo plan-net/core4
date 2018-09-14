@@ -159,7 +159,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(2, sum([1 for d in data if d["level"] == "DEBUG"]))
         self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
 
-    def test_exception_dsiabled(self):
+    def test_exception_disabled(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = ""
         b = LogOn()
@@ -210,6 +210,24 @@ class TestBase(unittest.TestCase):
         b.logger.info("hello %s", "world")
         data = list(b.config.sys.log.find())
         self.assertEqual("hello world", data[-1]["message"])
+
+    def test_module_logging(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/module.yaml")
+        b = LogOn()
+        b.logger.debug("this is a DEBUG message")
+        b.logger.info("this is an INFO message")
+        b.logger.warning("this is a WARNING message")
+        b.logger.error("this is an ERROR message")
+        b.logger.critical("this is a CRITICAL error message")
+        import requests
+        r = requests.get('http://localhost:27017')
+        data = list(b.config.sys.log.find())
+        import pprint
+        print("MongoDB")
+        pprint.pprint([d["message"] for d in data])
+        print("info.log")
+        with open("info.log", "r") as fh:
+            print(fh.read())
 
     def test_class_level(self):
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
