@@ -302,8 +302,8 @@ class CoreConfig(collections.MutableMapping):
         This method applies the passed standard ``default`` and plugin
         ``default``data to ``config``,
 
-        Please not special handloing of configuration key
-        ``logging.extra`` which is not processed by this method.
+        Please note special handling of configuration key ``logging.extra``
+        which is not processed by this method.
 
         :param config: dict of configuration data
         :param default: dict of standard default values
