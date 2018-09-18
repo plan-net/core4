@@ -14,7 +14,7 @@ prerequisites
 core4 depends on the following prerequisites.
 
 
-* Python 3.5
+* Python 3.5 or higher
 * MongoDB database instance version 3.6.4 or higher up-and-running, 
   download from https://www.mongodb.com/download-center#community
 * Python virtual environment. Install with ``pip install virtualenvwrapper``. 
@@ -28,7 +28,7 @@ create Python virtual environment
 
 Create a Python virtual environment with::
 
-    $ mkvirtualenv core4 --python=python3.5
+    $ mkvirtualenv core4 --python=python3
     
 
 regression tests
