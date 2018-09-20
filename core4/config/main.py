@@ -82,11 +82,11 @@ class CoreConfig(collections.MutableMapping):
     system_config = SYSTEM_CONFIG
     _cache = {}
 
-    def __init__(self, plugin_config=None, config_file=None, plugin_dict={}):
+    def __init__(self, plugin_config=None, config_file=None, extra_dict={}):
         self._config_file = config_file
         self.plugin_config = plugin_config
         self.env_config = os.getenv("CORE4_CONFIG", None)
-        self.plugin_dict = plugin_dict
+        self.extra_dict = extra_dict
 
     def __getitem__(self, key):
         """
@@ -192,6 +192,8 @@ class CoreConfig(collections.MutableMapping):
         """
         # collect standard config and standard DEFAULT
         standard_config = config.copy()
+        if extra:
+            standard_config = core4.util.dict_merge(standard_config, extra)
         self._verify_dict(standard_config, "standard config")
         standard_default = standard_config.pop(DEFAULT, {})
         self._verify_dict(standard_default, "standard DEFAULT")
@@ -207,10 +209,6 @@ class CoreConfig(collections.MutableMapping):
         # merge standard DEFAULT and local DEFAULT
         default = core4.util.dict_merge(standard_default, local_default)
         self._verify_dict(default, "DEFAULT")
-        if extra:
-            extra_config = extra.copy()
-        else:
-            extra_config = {}
         if plugin is not None:
             # collect plugin name, plugin config and plugin DEFAULT
             plugin_name = plugin[0]
@@ -225,15 +223,13 @@ class CoreConfig(collections.MutableMapping):
             # merge plugin DEFAULT and local plugin DEFAULT
             plugin_default = core4.util.dict_merge(
                 plugin_default, local_plugin_default)
-            # merge extra plugin dict into plugin config
-            plugin_config = core4.util.dict_merge(plugin_config, extra_config)
             # merge plugin config and standard config
             schema = core4.util.dict_merge(
                 standard_config, {plugin_name: plugin_config})
         else:
             plugin_name = None
             plugin_default = {}
-            schema = core4.util.dict_merge(standard_config, extra_config)
+            schema = standard_config
         # merge config with local config
         result = core4.util.dict_merge(schema, local_config)
         # recursively forward DEFAULT into all dicts and into tags
@@ -564,7 +560,7 @@ class CoreConfig(collections.MutableMapping):
 
         # merge OS environ
         data = core4.config.map.ConfigMap(
-            self._parse(standard_data, extra, local_data, self.plugin_dict)
+            self._parse(standard_data, extra, local_data, self.extra_dict)
         )
         if self.__class__._cache is not None:
             self.__class__._cache[lookup] = data

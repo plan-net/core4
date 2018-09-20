@@ -6,7 +6,7 @@ import unittest
 import datetime
 import pymongo
 import pymongo.errors
-from pprint import pprint
+
 import core4.config
 import core4.config.test
 import core4.error
@@ -218,7 +218,7 @@ class TestConfig(unittest.TestCase):
         }
         conf = MyConfig()
         ret = conf._parse(standard_config, None, local_config)
-        #pprint(ret)
+        # pprint(ret)
         self.assertNotIn("unknown", ret["sys"])
 
     def test_retype(self):
@@ -769,11 +769,11 @@ class TestConfig(unittest.TestCase):
 
     def test_test_config(self):
         config = core4.config.test.TestConfig(plugin_name="test1",
-                                              plugin_dict={"abc": 1},
+                                              extra_dict={"test1": {"abc": 1}},
                                               local_dict={"test1": {"abc": 2}})
         self.assertEqual(config.test1.abc, 2)
         config = core4.config.test.TestConfig(plugin_name="test1",
-                                              plugin_dict={"abc": 1})
+                                              extra_dict={"test1": {"abc": 1}})
         self.assertEqual(config.test1.abc, 1)
 
     def test_plugin_default(self):
@@ -810,11 +810,13 @@ class TestConfig(unittest.TestCase):
                     "not_exists": "bla"
                 }
             },
-            extra_plugin_dict={
-                "extra_value": None,
-                "deep_dict": {
+            extra_dict={
+                "test1": {
+                    "extra_value": None,
+                    "deep_dict": {}
                 }
-            })
+            }
+        )
         self.assertEqual(config.test1.extra_value, 987)
         self.assertEqual(config.test1.abc, 2)
         self.assertEqual(config.test1["def"], 99)

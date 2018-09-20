@@ -230,8 +230,8 @@ class TestBase(unittest.TestCase):
             print(fh.read())
 
     def test_class_level(self):
-        os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         os.environ["CORE4_OPTION_base__log_level"] = "INFO"
+        os.environ["CORE4_OPTION_test_logger__C__log_level"] = "DEBUG"
 
         class C(core4.base.CoreBase):
             pass
@@ -243,6 +243,7 @@ class TestBase(unittest.TestCase):
         b.logger.debug("world1")  # comes through
         b.logger.info("world2")  # comes through
         c = C()
+        print(c.config)
         c.logger.debug("world3")  # suppressed
         c.logger.info("hello world4")  # comes through
         d = D()
