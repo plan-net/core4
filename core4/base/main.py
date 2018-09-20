@@ -25,6 +25,8 @@ import core4.config.main
 import core4.logger
 import core4.logger.filter
 import core4.util
+import core4.error
+import core4.config.map
 
 CORE4 = "core4"
 PLUGIN = ["core4", "plugin"]
@@ -52,6 +54,7 @@ class CoreBase:
     _qual_name = None
     plugin = None
     identifier = None
+    unwind_keys = ["log_level"]
 
     def __init__(self):
 
@@ -132,13 +135,35 @@ class CoreBase:
         plugin_config = self.plugin_config()
         if plugin_config and os.path.exists(plugin_config):
             kwargs["plugin_config"] = (self.plugin, plugin_config)
+        kwargs["extra_dict"] = self._add_extra_config()
         self.config = core4.config.CoreConfig(**kwargs)
+        self._add_extra_config()
+        self._unwind_config()
+
+    def _add_extra_config(self):
+        extra_config = {}
+        pos = extra_config
+        for p in self.qual_name(short=True).split("."):
+            pos[p] = {}
+            pos = pos[p]
+        self.class_config = pos
+        pos["log_level"] = None
+        return extra_config
+
+    def _unwind_config(self):
+        for k in self.config.base:
+            if k in self.unwind_keys:
+                if k in self.class_config:
+                    if self.class_config[k] is not None:
+                        self.__dict__[k] = self.class_config[k]
+                        continue
+                    self.__dict__[k] = self.config.base[k]
 
     def _open_logging(self):
         # internal method to open and attach core4 logging
         self.logger_name = self.qual_name(short=False)
         logger = logging.getLogger(self.logger_name)
-        level = self.config.base.log_level
+        level = self.log_level
         logger.setLevel(getattr(logging, level))
         nh = logging.NullHandler()
         logger.addHandler(nh)

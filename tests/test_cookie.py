@@ -80,3 +80,6 @@ class TestCookie(unittest.TestCase):
         self.assertEqual(cookie.has_option("has"), True)
         self.assertEqual(cookie.has_option("not_present"), False)
 
+
+if __name__ == '__main__':
+    unittest.main(exit=False)

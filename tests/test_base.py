@@ -5,7 +5,7 @@ import sys
 import unittest
 import tests.util
 import pymongo
-
+import plugin.test
 import core4.base
 # import core4.logger
 import core4.base.collection
@@ -156,6 +156,11 @@ class TestBase(unittest.TestCase):
                          "progress at 0% - hello world: 0.01")
         self.assertEqual(data[1]["message"],
                          "progress at 10% - hello world: 0.12")
+
+    def test_unwind_config(self):
+        b = core4.base.CoreBase()
+        print(b.log_level)
+        t = plugin.test.Test()
 
 
 if __name__ == '__main__':

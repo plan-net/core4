@@ -123,8 +123,10 @@ class TestBase(unittest.TestCase):
         self.assertEqual(self.tester.list_transfer(pattern=re.compile('pattern not present*')), list())
 
 
-
-
 class TestFile(CoreJob, FileMixin):
     def test(self):
         pass
+
+
+if __name__ == '__main__':
+    unittest.main(exit=False)

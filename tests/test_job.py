@@ -90,10 +90,5 @@ class TestBase(unittest.TestCase):
         self.assertEqual("core4.base.job.DummyJob", dummy.cookie.name)
 
 
-
-
-
-
-
 if __name__ == '__main__':
     unittest.main()
