@@ -110,7 +110,7 @@ class CoreBase:
             return '.'.join(PLUGIN + [cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
 
-    def plugin_conf(self):
+    def plugin_config(self):
         """
         Returns the expected path and file name of the plugin configuration.
         Note that this method does not verify that the file actually exists.
@@ -129,9 +129,9 @@ class CoreBase:
     def _open_config(self):
         # internal method to open and attach core4 cascading configuration
         kwargs = {}
-        extra_conf = self.plugin_conf()
-        if extra_conf and os.path.exists(extra_conf):
-            kwargs["extra_config"] = (self.plugin, extra_conf)
+        plugin_config = self.plugin_config()
+        if plugin_config and os.path.exists(plugin_config):
+            kwargs["plugin_config"] = (self.plugin, plugin_config)
         self.config = core4.config.CoreConfig(**kwargs)
 
     def _open_logging(self):

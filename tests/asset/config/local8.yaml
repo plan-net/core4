@@ -1,0 +1,10 @@
+DEFAULT:
+  nf2: xyz
+
+test:
+  job:
+    test:
+      my_job:
+        nf1: a
+    value: 345
+  nf2: b

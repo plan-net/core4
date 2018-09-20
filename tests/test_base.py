@@ -55,7 +55,7 @@ class TestBase(unittest.TestCase):
     def test_plugin_conf(self):
         import plugin.test
         t = plugin.test.Test()
-        self.assertTrue(t.plugin_conf().endswith("core4/plugin/plugin.yaml"))
+        self.assertTrue(t.plugin_config().endswith("core4/plugin/plugin.yaml"))
         self.assertEqual(t.config.mongo_database, "core4test")
         self.assertEqual(repr(t), "plugin.test.Test()")
         #self.assertIn("/core4test/sys.role", t.config.sys.role.info_url)

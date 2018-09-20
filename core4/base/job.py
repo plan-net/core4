@@ -113,13 +113,12 @@ class CoreJob(CoreBase):
     ============ ==================== ================== ============== ========================== =====================
     job property :meth:`.enqueue`     core configuration class property default option             default value
     ============ ==================== ================== ============== ========================== =====================
-    account      not supported        not supported      not supported  not applicable             automatically set
+    author       not supported        not supported      supported      see core.conf, section job None
     args         supported            not supported      not supported  empty dictionary
     attempts     supported            supported          supported      see core.conf, section job 1
-    author       not supported        supported          supported      see core.conf, section job None
     defer_max    supported            supported          supported      see core.conf, section job 3600 seconds
     defer_time   supported            supported          supported      see core.conf, section job 360 seconds
-    dependency   not supported        supported          supported      see core.conf, section job empty list
+    dependency   supported            supported          supported      see core.conf, section job empty list
     chain        supported            supported          supported      see core.conf, section job empty list
     error_time   supported            supported          supported      see core.conf, section job 3600 seconds
     force        supported            supported          supported      see core.conf, section job False
@@ -129,7 +128,6 @@ class CoreJob(CoreBase):
     priority     supported            supported          supported      see core.conf, section job 0 (normal)
     sandbox      supported            supported          supported      None                       False
     schedule     not supported        supported          supported      see core.conf, section job None
-    section      not supported        not supported      supported      None                       DEFAULT
     tag          supported            supported          supported      None                       None
     wall_time    supported            supported          supported      see core.conf, section job None
     ============ ==================== ================== ============== ========================== =====================

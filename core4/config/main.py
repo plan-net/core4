@@ -11,8 +11,8 @@ import yaml
 from datetime import datetime, date
 
 import core4.base.collection
-import core4.config.tag
 import core4.config.map
+import core4.config.tag
 import core4.util
 from core4.error import Core4ConfigurationError
 
@@ -82,10 +82,11 @@ class CoreConfig(collections.MutableMapping):
     system_config = SYSTEM_CONFIG
     _cache = {}
 
-    def __init__(self, extra_config=None, config_file=None):
+    def __init__(self, plugin_config=None, config_file=None, plugin_dict={}):
         self._config_file = config_file
-        self.extra_config = extra_config
+        self.plugin_config = plugin_config
         self.env_config = os.getenv("CORE4_CONFIG", None)
+        self.plugin_dict = plugin_dict
 
     def __getitem__(self, key):
         """
@@ -179,7 +180,7 @@ class CoreConfig(collections.MutableMapping):
             raise Core4ConfigurationError(
                 "expected dict with " + message)
 
-    def _parse(self, config, plugin=None, local=None):
+    def _parse(self, config, plugin=None, local=None, extra=None):
         """
         Parses and merges the passed standard configuration, plugin
         configuration and local configuration sources.
@@ -206,27 +207,33 @@ class CoreConfig(collections.MutableMapping):
         # merge standard DEFAULT and local DEFAULT
         default = core4.util.dict_merge(standard_default, local_default)
         self._verify_dict(default, "DEFAULT")
+        if extra:
+            extra_config = extra.copy()
+        else:
+            extra_config = {}
         if plugin is not None:
             # collect plugin name, plugin config and plugin DEFAULT
             plugin_name = plugin[0]
-            plugin_config = plugin[1]
+            plugin_config = plugin[1].copy()
             self._verify_dict(plugin_config, "plugin config")
             plugin_default = plugin_config.pop(DEFAULT, {})
             self._verify_dict(plugin_default, "plugin DEFAULT")
-            # collection local plugin DEFAULT
+            # collect local plugin DEFAULT
             local_plugin_default = local_config.get(
                 plugin_name, {}).pop(DEFAULT, {})
             self._verify_dict(local_plugin_default, "local plugin DEFAULT")
             # merge plugin DEFAULT and local plugin DEFAULT
             plugin_default = core4.util.dict_merge(
                 plugin_default, local_plugin_default)
+            # merge extra plugin dict into plugin config
+            plugin_config = core4.util.dict_merge(plugin_config, extra_config)
             # merge plugin config and standard config
             schema = core4.util.dict_merge(
                 standard_config, {plugin_name: plugin_config})
         else:
             plugin_name = None
             plugin_default = {}
-            schema = standard_config
+            schema = core4.util.dict_merge(standard_config, extra_config)
         # merge config with local config
         result = core4.util.dict_merge(schema, local_config)
         # recursively forward DEFAULT into all dicts and into tags
@@ -512,8 +519,8 @@ class CoreConfig(collections.MutableMapping):
         :return: :class:`.ConfigMap`
         """
         # extra config
-        if self.extra_config and os.path.exists(self.extra_config[1]):
-            lookup = self.extra_config[0]
+        if self.plugin_config and os.path.exists(self.plugin_config[1]):
+            lookup = self.plugin_config[0]
         else:
             extra = lookup = None
 
@@ -521,7 +528,10 @@ class CoreConfig(collections.MutableMapping):
             return self.__class__._cache[lookup]
 
         if lookup is not None:
-            extra = (lookup, self._read_yaml(self.extra_config[1]))
+            extra_config = self._read_yaml(self.plugin_config[1])
+
+        if lookup is not None:
+            extra = (lookup, extra_config)
 
         # standard config
         standard_data = self._read_yaml(self.standard_config)
@@ -549,11 +559,12 @@ class CoreConfig(collections.MutableMapping):
         # merge sys.conf
         local_data = core4.util.dict_merge(
             local_data, self._read_db(standard_data, local_data))
-        # merge OS environ
+
         local_data = core4.util.dict_merge(local_data, environ)
 
+        # merge OS environ
         data = core4.config.map.ConfigMap(
-            self._parse(standard_data, extra, local_data)
+            self._parse(standard_data, extra, local_data, self.plugin_dict)
         )
         if self.__class__._cache is not None:
             self.__class__._cache[lookup] = data

@@ -162,6 +162,9 @@ defined, then this global default value is forwarded.
           :ref:`core_config` and the :ref:`connect_tag`).
 
 
+.. todo:: write about plugin DEFAULTs
+
+
 local configuration
 ===================
 
