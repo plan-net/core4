@@ -38,4 +38,4 @@ job:
 mymod:
   jobs:
     MyJob:
-      schedule: * * * * 1
+      schedule: "* * * * 1"
