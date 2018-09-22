@@ -14,6 +14,5 @@ class CoreLoggingAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         kwargs["extra"] = {
             "obj": self.extra,
-            "_id": ObjectId()
         }
         return msg, kwargs

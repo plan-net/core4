@@ -8,6 +8,7 @@ import pymongo
 
 import core4.base
 from core4.base.job import CoreJob, DummyJob
+import tests.util
 
 # import core4.logger
 os.environ["CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
@@ -27,10 +28,12 @@ class TestBase(unittest.TestCase):
             "CORE4_OPTION_mongo_url"] = "mongodb://core:654321@localhost:27017"
         os.environ["CORE4_OPTION_mongo_database"] = "core4test"
 
+    def tearDown(self):
+        tests.util.drop_env()
+
     @property
     def mongo(self):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
-
 
     def test_base(self):
         j = CoreJob()

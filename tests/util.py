@@ -19,3 +19,10 @@ def mongo_connect():
     mongo = pymongo.MongoClient(MONGO_URL)
     return mongo[MONGO_DATABASE]
 
+def drop_env():
+    dels = []
+    for k in os.environ:
+        if k.startswith('CORE4_'):
+            dels.append(k)
+    for k in dels:
+        del os.environ[k]

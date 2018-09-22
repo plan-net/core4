@@ -12,7 +12,7 @@ import core4.service.access.manager
 import core4.service.access.handler.mongo
 import core4.util
 from tests.test_logger import LogOn
-
+import tests.util
 
 class TestAccess(unittest.TestCase):
 
@@ -23,6 +23,7 @@ class TestAccess(unittest.TestCase):
     def tearDown(self):
         #return
         self._teardown()
+        tests.util.drop_env()
 
     @classmethod
     def tearDownClass(cls):
@@ -58,12 +59,7 @@ class TestAccess(unittest.TestCase):
         for role in roles["roles"]:
             if role["role"].startswith("regress_"):
                 mongo.admin.command('dropRole', role["role"])
-        dels = []
-        for k in os.environ:
-            if k.startswith('CORE4_'):
-                dels.append(k)
-        for k in dels:
-            del os.environ[k]
+        tests.util.drop_env()
 
     @staticmethod
     def mongo():

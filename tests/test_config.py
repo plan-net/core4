@@ -29,6 +29,9 @@ class TestConfig(unittest.TestCase):
         for db in ("", "1", "2"):
             self.mongo.drop_database('core4test' + db)
 
+    def tearDown(self):
+        tests.util.drop_env()
+
     @property
     def mongo(self):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')

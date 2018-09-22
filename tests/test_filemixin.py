@@ -7,7 +7,7 @@ import unittest
 from core4.base.job import CoreJob
 from core4.helpers.file import FileMixin
 import re
-
+import tests.util
 
 
 class TestBase(unittest.TestCase):
@@ -30,6 +30,9 @@ class TestBase(unittest.TestCase):
         self.plugin = 'tests'
         self.tester = TestFile()
         self.tester.plugin = 'tests'
+
+    def tearDown(self):
+        tests.util.drop_env()
 
     def test_list_proc(self):
         with self.assertRaises(RuntimeError):

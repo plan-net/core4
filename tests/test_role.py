@@ -14,6 +14,7 @@ import core4.api.v1.role.main
 import core4.error
 import core4.util
 from tests.test_logger import LogOn
+import tests.util
 
 
 class TestRole(unittest.TestCase):
@@ -31,6 +32,9 @@ class TestRole(unittest.TestCase):
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
         LogOn()
+
+    def tearDown(self):
+        tests.util.drop_env()
 
     @property
     def mongo(self):

@@ -11,9 +11,13 @@ class MyConfig(core4.config.CoreConfig):
 
 
 class TestCookie(unittest.TestCase):
+
     @property
     def mongo(self):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
+
+    def tearDown(self):
+        tests.util.drop_env()
 
     def testSet(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/local7.yaml")
@@ -26,11 +30,8 @@ class TestCookie(unittest.TestCase):
         self.assertEqual(cookie.get("first"), 1)
         self.assertEqual(cookie.get("second"), 2)
         self.assertEqual(cookie.get("third"), 3)
-
         with self.assertRaises(RuntimeError):
             cookie.set("z", 2, kwargs={"a": "No kwargs allowed."})
-
-
 
     def testInc(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/local7.yaml")

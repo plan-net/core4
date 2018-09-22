@@ -79,3 +79,12 @@ def now():
     :return: current core4 system time (in UTC)
     """
     return datetime.datetime.utcnow()
+
+
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+

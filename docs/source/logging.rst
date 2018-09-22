@@ -67,6 +67,9 @@ configuration setting ``logging.extra``. See for example
 will be set up.
 
 
+.. todo:: give example, see test_logger.test_module_logging
+
+
 .. _extra_logging:
 
 extra logging attributes

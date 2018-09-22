@@ -13,41 +13,41 @@ import core4.error
 import core4.logger
 import plugin.ident
 import tests.util
+import core4.util
 
 
 class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
+
+    _cache = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setup_logging()
 
 
-class TestBase(unittest.TestCase):
+class TestLogging(unittest.TestCase):
 
     def setUp(self):
-        dels = []
-        for k in os.environ:
-            if k.startswith('CORE4_'):
-                dels.append(k)
-        for k in dels:
-            del os.environ[k]
+        tests.util.drop_env()
         self.mongo.drop_database('core4test')
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
                                                  "localhost:27017"
         os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
-        core4.config.CoreConfig._cache = {}
+        logging.shutdown()
+        import imp
+        imp.reload(logging)
+        core4.util.Singleton._instances = {}
+        self.drop_logs()
 
-        logger = logging.getLogger(core4.logger.CORE4_PREFIX)
-        logger.handlers = []
-        core4.logger.CoreLoggerMixin.completed = False
-        self.tearDown()
+    def drop_logs(self):
+        for fn in glob.glob("*.log*"):
+            #print("removed", fn)
+            os.unlink(fn)
 
     def tearDown(self):
-        for fn in glob.glob("*.log*"):
-            pass
-            print("removed", fn)
-            os.unlink(fn)
+        self.drop_logs()
+        tests.util.drop_env()
 
     @property
     def mongo(self):
@@ -56,6 +56,7 @@ class TestBase(unittest.TestCase):
     def test_log(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         b = LogOn()
+        #print(b.config)
         b.logger.debug("this is DEBUG")
         b.logger.info("this is INFO")
         b.logger.warning("this is WARNING")
@@ -123,6 +124,8 @@ class TestBase(unittest.TestCase):
             if not k in data:
                 data[k] = []
             data[k] += body.strip().splitlines()
+        # for k in data:
+        #     print("\n".join(data[k]))
         self.assertEqual(2, len(data["errors"]))
         self.assertEqual(5, len(data["info"]))
 
@@ -145,6 +148,7 @@ class TestBase(unittest.TestCase):
     def test_exception_fifo(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"
+        os.environ["CORE4_OPTION_base__log_level"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__exception__capacity"] = "!!int 2"
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
@@ -221,17 +225,42 @@ class TestBase(unittest.TestCase):
         b.logger.critical("this is a CRITICAL error message")
         import requests
         r = requests.get('http://localhost:27017')
+        self.assertEqual(200, r.status_code)
         data = list(b.config.sys.log.find())
-        import pprint
-        print("MongoDB")
-        pprint.pprint([d["message"] for d in data])
-        print("info.log")
+        expected = ["extra logging setup",
+                    "logging setup",
+                    "DEBUG message",
+                    "INFO message",
+                    "WARNING message",
+                    "ERROR message",
+                    "CRITICAL error message",
+                    "Starting new HTTP connection",
+                    "http://localhost:27017"]
+        for i, e in enumerate(expected):
+            self.assertIn(e, data[i]["message"])
+
+        log = logging.getLogger("root")
+        x = list(log.handlers)
+        for i in x:
+            log.removeHandler(i)
+            i.flush()
+            i.close()
+        expected = ['tests.test_logger.LogOn'] * 7 + [None] * 2
+        for i, e in enumerate(expected):
+            self.assertEqual(e, data[i]["qual_name"])
         with open("info.log", "r") as fh:
-            print(fh.read())
+            content = fh.read()
+        body = content.splitlines()
+        expected = ["mixin"] * 2 + ["test_logger"] * 5 + ["connectionpool"] * 2
+        print("FILE")
+        print(content)
+        for i, e in enumerate(expected):
+            self.assertIn(e, body[i])
 
     def test_class_level(self):
         os.environ["CORE4_OPTION_base__log_level"] = "INFO"
-        os.environ["CORE4_OPTION_test_logger__C__log_level"] = "DEBUG"
+        os.environ["CORE4_OPTION_tests__test_logger__C__log_level"] = "DEBUG"
+        os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
 
         class C(core4.base.CoreBase):
             pass
@@ -240,19 +269,19 @@ class TestBase(unittest.TestCase):
             pass
 
         b = LogOn()
-        b.logger.debug("world1")  # comes through
-        b.logger.info("world2")  # comes through
+        b.logger.debug("world1")
+        b.logger.info("world2")
         c = C()
-        print(c.config)
-        c.logger.debug("world3")  # suppressed
-        c.logger.info("hello world4")  # comes through
+        self.assertEqual("DEBUG", c.config.tests.test_logger.C.log_level)
+        c.logger.debug("world3")
+        c.logger.info("hello world4")
         d = D()
-        d.logger.debug("world5")  # suppressed
-        d.logger.info("hello world6")  # comes through
+        d.logger.debug("world5")
+        d.logger.info("hello world6")
+        self.assertIsNone(d.config.tests.test_logger.D.log_level)
         data = list(b.config.sys.log.find())
-        import pandas as pd
-        df = pd.DataFrame(list(data))
-        print(df.to_string())
+        expected = ['world2', 'world3', 'hello world4', 'hello world6']
+        self.assertEqual(expected, [d["message"] for d in data])
 
 
 if __name__ == '__main__':

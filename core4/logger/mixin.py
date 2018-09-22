@@ -4,6 +4,7 @@ import logging
 import logging.config
 import time
 
+import core4.base
 import core4.error
 import core4.logger
 import core4.logger.exception
@@ -13,7 +14,7 @@ import core4.util
 logging.Formatter.converter = time.gmtime  # log in UTC
 
 
-class CoreLoggerMixin:
+class CoreLoggerMixin(metaclass=core4.util.Singleton):
 
     """
     If your application wants to enable logging, mixin
@@ -21,16 +22,12 @@ class CoreLoggerMixin:
     instantiate your logging needs as defined in core4 cascading configuration.
     """
 
-    completed = False
-
     def setup_logging(self):
         """
         setup logging as specified in configuration. See :ref:`core_config`
         ``logging`` for further details.
         """
-        if CoreLoggerMixin.completed:
-            return
-        logger = logging.getLogger(core4.logger.CORE4_PREFIX)
+        logger = logging.getLogger(core4.base.CORE4_PREFIX)
         self._shutdown_logging(logger)
         logger.setLevel(logging.DEBUG)
         self._setup_console(logger)
@@ -38,7 +35,6 @@ class CoreLoggerMixin:
         self._setup_mongodb(logger)
         self._setup_extra_logging(logger)
         self.logger.debug("logging setup complete")
-        CoreLoggerMixin.completed = True
 
     def _shutdown_logging(self, logger):
         logger.handlers = []

@@ -22,5 +22,5 @@ class CoreLoggingFilter(logging.Filter):
         record.username = core4.util.get_username()
         record.hostname = core4.util.get_hostname()
         record.identifier = record.obj.identifier
-        record.qual_name = record.obj.qual_name()
+        record.qual_name = record.obj.qual_name(short=True)
         return 1

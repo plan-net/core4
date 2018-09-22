@@ -22,11 +22,11 @@ import re
 import sys
 
 import core4.config.main
+import core4.config.map
+import core4.error
 import core4.logger
 import core4.logger.filter
 import core4.util
-import core4.error
-import core4.config.map
 
 CORE4 = "core4"
 PLUGIN = ["core4", "plugin"]
@@ -52,12 +52,13 @@ class CoreBase:
               from object _A_ to object _B_.
     """
     _qual_name = None
+    _long_qual_name = None
     plugin = None
     identifier = None
+
     unwind_keys = ["log_level"]
 
     def __init__(self):
-
         # set identifier
         frame = inspect.currentframe().f_back.f_locals
         for n, v in frame.items():
@@ -67,31 +68,42 @@ class CoreBase:
                     if ident is not None:
                         self.identifier = ident
         self._last_progress = None
-        self._set_plugin()
+        self.plugin = self._get_plugin()
         self._open_config()
         self._open_logging()
 
-    def _set_plugin(self):
-        self.plugin = self.__class__.__module__.split('.')[0]
+    def _get_plugin(self):
+        modstr = self.__class__.__module__
+        plugin = modstr.split('.')[0]
+        module = sys.modules[plugin]
         # the following is a hack
-        if self.plugin == '__main__':  # pragma: no cover
-            dirname = os.path.dirname(sys.argv[0]).split('/')
-            pathname = [os.path.splitext(sys.argv[0].split('/')[-1])[0]]
-            while dirname:
-                init_file = "/".join(dirname + ['__init__.py'])
-                pathname.append(dirname.pop(-1))
-                if os.path.exists(init_file):
-                    with open(init_file, 'r') as fh:
-                        body = fh.read()
-                        if re.match(
-                                r'.*\_\_project\_\_\s*'
-                                r'\=\s*[\"\']{}[\"\'].*'.format(
-                                    CORE4), body, re.DOTALL):
-                            self.__class__._qual_name = ".".join(
-                                list(reversed(pathname))
-                                + [self.__class__.__name__])
-                            self.plugin = pathname.pop(-1)
-                            break
+        if not hasattr(module, "__project__"):
+            source = module.__file__
+        elif plugin == '__main__':
+            source = sys.argv[0]
+        else:
+            return plugin
+        dirname = os.path.dirname(source).split(os.path.sep)
+        pathname = [os.path.splitext(source.split(os.path.sep)[-1])[0]]
+        while dirname:
+            init_file = os.path.sep.join(dirname + ['__init__.py'])
+            pathname.append(dirname.pop(-1))
+            if os.path.exists(init_file):
+                with open(init_file, 'r') as fh:
+                    body = fh.read()
+                    if re.match(
+                            r'.*\_\_project\_\_\s*'
+                            r'\=\s*[\"\']{}[\"\'].*'.format(
+                                CORE4), body, re.DOTALL):
+                        self.__class__._qual_name = ".".join(
+                            list(reversed(pathname))
+                            + [self.__class__.__name__])
+                        self.__class__._long_qual_name = ".".join(
+                            PLUGIN + [self.__class__._qual_name]
+                        )
+                        plugin = pathname.pop(-1)
+                        break
+        return plugin
 
     def __repr__(self):
         return "{}()".format(self.qual_name())
@@ -107,7 +119,9 @@ class CoreBase:
         :return: qual_name string
         """
         if cls._qual_name:  # pragma: no cover (see test_base.test_main)
-            return cls._qual_name
+            if short:
+                return cls._qual_name
+            return cls._long_qual_name
         plugin = cls.__module__.split('.')[0]
         if plugin != CORE4 and not short:
             return '.'.join(PLUGIN + [cls.__module__, cls.__name__])
@@ -121,13 +135,11 @@ class CoreBase:
         :return: str
         """
         module = sys.modules.get(self.plugin)
-        if module:
-            if hasattr(module, "__project__"):
-                if module.__project__ == CORE4:
-                    return os.path.join(
-                        os.path.dirname(module.__file__),
-                        self.plugin + core4.config.main.CONFIG_EXTENSION)
-        return None
+        if hasattr(module, "__project__"):
+            if module.__project__ == CORE4:
+                return os.path.join(
+                    os.path.dirname(module.__file__),
+                    self.plugin + core4.config.main.CONFIG_EXTENSION)
 
     def _open_config(self):
         # internal method to open and attach core4 cascading configuration
@@ -135,18 +147,23 @@ class CoreBase:
         plugin_config = self.plugin_config()
         if plugin_config and os.path.exists(plugin_config):
             kwargs["plugin_config"] = (self.plugin, plugin_config)
-        kwargs["extra_dict"] = self._add_extra_config()
-        self.config = core4.config.CoreConfig(**kwargs)
-        self._add_extra_config()
+        kwargs["extra_dict"] = self._proc_extra_config()
+        self.config = self.make_config(**kwargs)
+        pos = self.config._config
+        for p in self.qual_name(short=True).split("."):
+            pos = pos[p]
+        self.class_config = pos
         self._unwind_config()
 
-    def _add_extra_config(self):
+    def make_config(self, *args, **kwargs):
+        return core4.config.main.CoreConfig(*args, **kwargs)
+
+    def _proc_extra_config(self):
         extra_config = {}
         pos = extra_config
         for p in self.qual_name(short=True).split("."):
             pos[p] = {}
             pos = pos[p]
-        self.class_config = pos
         pos["log_level"] = None
         return extra_config
 

@@ -18,7 +18,7 @@ from core4.error import Core4ConfigurationError
 
 CONFIG_EXTENSION = ".yaml"
 STANDARD_CONFIG = pkg_resources.resource_filename(
-    "core4", "config/core" + CONFIG_EXTENSION)
+    "core4", "core4" + CONFIG_EXTENSION)
 USER_CONFIG = os.path.expanduser("core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
@@ -35,7 +35,7 @@ def parse_boolean(value):
              value no pattern matches.
     """
     if value.lower() in ("yes", "y", "on", "1", "true", "t"):
-        return True
+        return True  # todo: test coverage
     elif value.lower() in ("no", "n", "off", "0", "false", "f"):
         return False
     return value
@@ -80,7 +80,8 @@ class CoreConfig(collections.MutableMapping):
     standard_config = STANDARD_CONFIG
     user_config = USER_CONFIG
     system_config = SYSTEM_CONFIG
-    _cache = {}
+    #_cache = {}
+    _cache = None
 
     def __init__(self, plugin_config=None, config_file=None, extra_dict={}):
         self._config_file = config_file
@@ -520,8 +521,8 @@ class CoreConfig(collections.MutableMapping):
         else:
             extra = lookup = None
 
-        if self.__class__._cache and lookup in self.__class__._cache:
-            return self.__class__._cache[lookup]
+        # if self.__class__._cache and lookup in self.__class__._cache:
+        #     return self.__class__._cache[lookup]
 
         if lookup is not None:
             extra_config = self._read_yaml(self.plugin_config[1])
@@ -562,6 +563,6 @@ class CoreConfig(collections.MutableMapping):
         data = core4.config.map.ConfigMap(
             self._parse(standard_data, extra, local_data, self.extra_dict)
         )
-        if self.__class__._cache is not None:
-            self.__class__._cache[lookup] = data
+        # if self.__class__._cache is not None:
+        #     self.__class__._cache[lookup] = data
         return data
