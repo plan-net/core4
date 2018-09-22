@@ -176,8 +176,7 @@ class TestBase(unittest.TestCase):
         self.assertEqual(data[1]["message"],
                          "progress at 10% - hello world: 0.12")
 
-    # todo: make work
-    def _test_unwind_config(self):
+    def test_unwind_config(self):
 
         import core4.config.test
 
@@ -225,12 +224,10 @@ class TestBase(unittest.TestCase):
             password="654321"
         )
         data = list(coll1.find())
-        self.assertEqual(1, sum([1 for i in data if i["level"] == "DEBUG"]))
+        self.assertEqual(0, sum([1 for i in data if i["level"] == "DEBUG"]))
         self.assertEqual(1, sum([1 for i in data if i["level"] == "INFO"]))
         self.assertEqual(2, sum([1 for i in data if i["level"] == "WARNING"]))
         self.assertEqual(2, sum([1 for i in data if i["level"] == "ERROR"]))
-
-    # todo: move const
 
 
 if __name__ == '__main__':
