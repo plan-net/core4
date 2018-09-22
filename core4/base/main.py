@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This module features :class:`.CoreBase`, the base class to all core4 classes.
 All classes inheriting from :class:`.CoreBase` provide the developer with the
@@ -27,9 +25,7 @@ import core4.error
 import core4.logger
 import core4.logger.filter
 import core4.util
-
-CORE4 = "core4"
-PLUGIN = ["core4", "plugin"]
+from core4.const import CORE4, PREFIX
 
 
 class CoreBase:
@@ -98,9 +94,9 @@ class CoreBase:
                         self.__class__._qual_name = ".".join(
                             list(reversed(pathname))
                             + [self.__class__.__name__])
-                        self.__class__._long_qual_name = ".".join(
-                            PLUGIN + [self.__class__._qual_name]
-                        )
+                        self.__class__._long_qual_name = ".".join([
+                            CORE4, PREFIX, self.__class__._qual_name
+                        ])
                         plugin = pathname.pop(-1)
                         break
         return plugin
@@ -124,7 +120,9 @@ class CoreBase:
             return cls._long_qual_name
         plugin = cls.__module__.split('.')[0]
         if plugin != CORE4 and not short:
-            return '.'.join(PLUGIN + [cls.__module__, cls.__name__])
+            return '.'.join([
+                CORE4, PREFIX, cls.__module__, cls.__name__
+            ])
         return '.'.join([cls.__module__, cls.__name__])
 
     def plugin_config(self):

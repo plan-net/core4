@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-
-
 import core4.base
 
 
 class BaseHandler(core4.base.CoreBase):
-
     """
     This abstract class is the base class to all database access permission
     handlers managed by :class:`.CoreAccessManager`.

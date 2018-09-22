@@ -1,4 +1,3 @@
-
 from core4.config.main import CoreConfig, STANDARD_CONFIG
 from core4.config.map import ConfigMap
 

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 class Core4Error(Exception):
     """
     This is the base class of all core4 exceptions.

@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
-
 import logging
 import logging.config
 
 import time
 
 import core4.base
+import core4.const
 import core4.error
 import core4.logger
 import core4.logger.exception
@@ -30,7 +29,7 @@ class CoreLoggerMixin:
         ``logging`` for further details.
         """
         if not CoreLoggerMixin.completed:
-            logger = logging.getLogger(core4.base.CORE4_PREFIX)
+            logger = logging.getLogger(core4.const.CORE4)
             self._shutdown_logging(logger)
             logger.setLevel(logging.DEBUG)
             self._setup_console(logger)

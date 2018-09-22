@@ -61,7 +61,8 @@ class Cookie(core4.base.main.CoreBase):
         :param value: value to compare
         """
         result = self.cookie_collection.update_one(filter={'_id': self.name},
-                                                   update={'$max': {field: value}},
+                                                   update={
+                                                       '$max': {field: value}},
                                                    upsert=True)
         return result.raw_result['nModified'] > 0
 
@@ -74,7 +75,8 @@ class Cookie(core4.base.main.CoreBase):
         :param value: value to compare
         """
         result = self.cookie_collection.update_one(filter={'_id': self.name},
-                                                   update={'$min': {field: value}},
+                                                   update={
+                                                       '$min': {field: value}},
                                                    upsert=True)
         return result.raw_result['n'] > 0
 
@@ -85,7 +87,9 @@ class Cookie(core4.base.main.CoreBase):
         :param option: of the cookie
         :return: option value
         """
-        value = self.cookie_collection.find_one({'_id': self.name}, projection={option: 1, '_id': 0})
+        value = self.cookie_collection.find_one({'_id': self.name},
+                                                projection={option: 1,
+                                                            '_id': 0})
         if value and option in value:
             return value[option]
         return None
@@ -98,7 +102,8 @@ class Cookie(core4.base.main.CoreBase):
         """
         doc = self.cookie_collection.find_one({'_id': self.name})
         del doc[option]
-        self.cookie_collection.find_one_and_replace(filter={'_id': self.name}, replacement=doc)
+        self.cookie_collection.find_one_and_replace(filter={'_id': self.name},
+                                                    replacement=doc)
 
     def has_option(self, option):
         """

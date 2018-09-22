@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import collections.abc
 import os
@@ -363,6 +361,7 @@ class CoreConfig(collections.MutableMapping):
                     traverse(v)
                 elif isinstance(v, core4.config.tag.ConnectTag):
                     v.set_config(dct)
+
         traverse(config)
 
     def _read_yaml(self, filename):

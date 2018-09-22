@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 core4.util provides various support and helper methods used by various
 core4 packages and modules.
@@ -9,8 +7,9 @@ import collections
 import getpass
 import os
 import re
-import socket
+
 import datetime
+import socket
 from flask_login import current_user
 
 REGEX_MODIFIER = {
@@ -83,8 +82,9 @@ def now():
 
 class Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super(Singleton, cls).__call__(*args,
+                                                                 **kwargs)
         return cls._instances[cls]
-

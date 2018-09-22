@@ -1,8 +1,7 @@
-from core4.config.main import CoreConfig
-from core4.base.main import CoreBase
-import core4.base.cookie
 import time
 
+import core4.base.cookie
+from core4.base.main import CoreBase
 
 STATE_PENDING = 'pending'
 STATE_RUNNING = 'running'
@@ -13,8 +12,8 @@ STATE_COMPLETE = 'complete'
 STATE_INACTIVE = 'inactive'
 STATE_KILLED = 'killed'
 
-class CoreJob(CoreBase):
 
+class CoreJob(CoreBase):
     """
     This is the base class of all core jobs. Core jobs implement the actual task
     processing. If you say that :class:`.Worker` is the working horse of core,
@@ -207,8 +206,6 @@ class CoreJob(CoreBase):
     execution automation is to use ``sys.queue``.
     """
 
-
-
     def __init__(self, **kwargs):
 
         """
@@ -223,7 +220,6 @@ class CoreJob(CoreBase):
         self._cookie = None
         self.author = "mkr"
         self.section = "job"
-
 
         # set default vars.
         self.job_args = {}
@@ -270,7 +266,6 @@ class CoreJob(CoreBase):
         self.runtime = None
         self.status = None
 
-
     def load_config(self):
         """
         Load all present values in the config and update current values.
@@ -304,8 +299,10 @@ class CoreJob(CoreBase):
 
         :returns dict
         """
-        serialize_args = ["job_args","nodes","priority","chain","tags","adhoc","defer_max", "sandbox",
-                          "defer_time","error_time","dependency","max_parallel","wall_at","wall_time"]
+        serialize_args = ["job_args", "nodes", "priority", "chain", "tags",
+                          "adhoc", "defer_max", "sandbox",
+                          "defer_time", "error_time", "dependency",
+                          "max_parallel", "wall_at", "wall_time"]
 
         tmp = {}
 
@@ -313,7 +310,6 @@ class CoreJob(CoreBase):
             tmp[i] = self.__getattribute__(i)
 
         return tmp
-
 
     def deserialize(self, args={}):
         """
@@ -327,7 +323,6 @@ class CoreJob(CoreBase):
                 setattr(self, key, value)
         else:
             raise KeyError
-
 
     def __eq__(self, obj):
         '''
@@ -349,8 +344,8 @@ class CoreJob(CoreBase):
         This is the actual task processing. The method needs to be overwritten
         during job implementations.
         """
-        raise NotImplementedError('.execute(*args, **kwargs) needs to be implemented')
-
+        raise NotImplementedError(
+            '.execute(*args, **kwargs) needs to be implemented')
 
     @property
     def cookie(self):
@@ -361,7 +356,6 @@ class CoreJob(CoreBase):
             self._cookie = core4.base.cookie.Cookie(self.qual_name())
         return self._cookie
 
-
     def progress(self):
         '''
         Trigger a progress-update from queue/worker
@@ -371,7 +365,6 @@ class CoreJob(CoreBase):
         pass
 
 
-
 class DummyJob(CoreJob):
     """
     This is a simple example job sleeping and reporting progress for the
@@ -379,6 +372,7 @@ class DummyJob(CoreJob):
     """
 
     author = 'mra'
+
     def execute(self, sleep=10):
         time.sleep(10)
 

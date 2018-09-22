@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-
 import logging.config
-
-from bson.objectid import ObjectId
 
 
 class CoreLoggingAdapter(logging.LoggerAdapter):
