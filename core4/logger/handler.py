@@ -20,7 +20,7 @@ def make_record(record):
     * username
     * hostname
     * qual_name
-    * msg
+    * ,essage
     * level
     * exception.info (``repr`` string of :class:`Exception`)
     * exception.text (traceback)

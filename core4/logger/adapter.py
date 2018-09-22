@@ -3,8 +3,7 @@ import logging.config
 
 class CoreLoggingAdapter(logging.LoggerAdapter):
     """
-    This adapter passes the object and creates an ``_id`` of type
-    :class:`bson.object.ObjectId`.
+    This adapter passes the object to logging.
     """
 
     def process(self, msg, kwargs):

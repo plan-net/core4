@@ -70,7 +70,7 @@ class CoreCollection:
     @property
     def info_url(self):
         """
-        human-readable connection string hiding sensitive data, e.g.
+        Human-readable connection string hiding sensitive data, e.g.
         password, from inquisitive eyes.
 
         :return: connection URL information (str)

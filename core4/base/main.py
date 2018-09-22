@@ -1,15 +1,7 @@
 """
 This module features :class:`.CoreBase`, the base class to all core4 classes.
-All classes inheriting from :class:`.CoreBase` provide the developer with the
-following features:
-
-* a :meth:`.qual_name` locates the class in the core4 runtime enrivonment. The
-  :meth:`.qual_name` for example is used to address jobs, APIs, and widgets
-  among others.
-
-* a :attr:`.identifier` identifies the individual object instance of the class;
-  this is None with :class:`.CoreBase` and extends into the job ``_id`` or the
-  worker identifier for child classes.
+All classes inheriting from :class:`.CoreBase` provide the standard features of
+core4 classes.
 """
 
 import inspect
@@ -33,12 +25,12 @@ class CoreBase:
     This is the base class to all core4 classes. :class:`CoreBase` ships with
 
     * access to configuration keys/values including plugin based extra
-      configuration settings, use :attr:`.config`, here.
-    * standard logging facilities, use :attr:`.logger`, here.
-    * a distinct qual_name based on module path and class name with
-      :meth:`.qual_name`.
-    * a unique object identifier, i.e. the job id, the request id or the name
-      of the worker with :attr:`.identifier`.
+      configuration settings, use :attr:`.config`
+    * standard logging facilities, use :attr:`.logger`
+    * a distinct :meth:`.qual_name` based on module path and class name
+    * a unique object :meth:`.identifier`, i.e. the job id, the request id or
+      the name of the worker
+    * helper methods, see :meth:`.progress`
 
     .. note:: Please note that :class:`.CoreBase` replicates the identifier of
               the class in which scope the object is created. If an object _A_
@@ -47,15 +39,18 @@ class CoreBase:
               :class:`.CoreBase`, too, then the :attr:`.identifier` is passed
               from object _A_ to object _B_.
     """
-    _qual_name = None
+    # used to hack
+    _short_qual_name = None
     _long_qual_name = None
+
     plugin = None
     identifier = None
 
-    unwind_keys = ["log_level"]
+    # these config attributes are raised to object level
+    upwind = ["log_level"]
 
     def __init__(self):
-        # set identifier
+        # query identifier from instantiating object
         frame = inspect.currentframe().f_back.f_locals
         for n, v in frame.items():
             if hasattr(v, "qual_name"):
@@ -64,11 +59,11 @@ class CoreBase:
                     if ident is not None:
                         self.identifier = ident
         self._last_progress = None
-        self.plugin = self._get_plugin()
+        self.plugin = self.get_plugin()
         self._open_config()
         self._open_logging()
 
-    def _get_plugin(self):
+    def get_plugin(self):
         modstr = self.__class__.__module__
         plugin = modstr.split('.')[0]
         module = sys.modules[plugin]
@@ -91,38 +86,39 @@ class CoreBase:
                             r'.*\_\_project\_\_\s*'
                             r'\=\s*[\"\']{}[\"\'].*'.format(
                                 CORE4), body, re.DOTALL):
-                        self.__class__._qual_name = ".".join(
+                        self.__class__._short_qual_name = ".".join(
                             list(reversed(pathname))
                             + [self.__class__.__name__])
                         self.__class__._long_qual_name = ".".join([
-                            CORE4, PREFIX, self.__class__._qual_name
+                            CORE4, PREFIX, self.__class__._short_qual_name
                         ])
                         plugin = pathname.pop(-1)
                         break
         return plugin
 
     def __repr__(self):
+        """
+        :return: str representing the :meth:`.qual_name`
+        """
         return "{}()".format(self.qual_name())
 
     @classmethod
     def qual_name(cls, short=True):
         """
         Returns the distinct ``qual_name``, the fully qualified module and
-        class name. With ``short=False`` the prefix ``core4.plugin`` is
-        put in front of all plugin classes.
+        class name. With ``short=False`` the prefix ``core4.plugin`` is put in
+        front of all plugin classes.
 
         :param short: defaults to ``False``
         :return: qual_name string
         """
-        if cls._qual_name:  # pragma: no cover (see test_base.test_main)
+        if cls._short_qual_name:  # pragma: no cover (see test_base.test_main)
             if short:
-                return cls._qual_name
+                return cls._short_qual_name
             return cls._long_qual_name
         plugin = cls.__module__.split('.')[0]
         if plugin != CORE4 and not short:
-            return '.'.join([
-                CORE4, PREFIX, cls.__module__, cls.__name__
-            ])
+            return '.'.join([CORE4, PREFIX, cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
 
     def plugin_config(self):
@@ -141,35 +137,41 @@ class CoreBase:
                         self.plugin + core4.config.main.CONFIG_EXTENSION)
         return None
 
+    def make_config(self, *args, **kwargs):
+        """
+        :return: :class:`.CoreConfig` class to be attached to this class
+        """
+        return core4.config.main.CoreConfig(*args, **kwargs)
+
     def _open_config(self):
         # internal method to open and attach core4 cascading configuration
         kwargs = {}
         plugin_config = self.plugin_config()
         if plugin_config and os.path.exists(plugin_config):
             kwargs["plugin_config"] = (self.plugin, plugin_config)
-        kwargs["extra_dict"] = self._proc_extra_config()
+        kwargs["extra_dict"] = self._build_extra_config()
         self.config = self.make_config(**kwargs)
         pos = self.config._config
         for p in self.qual_name(short=True).split("."):
             pos = pos[p]
         self.class_config = pos
-        self._unwind_config()
+        self._upwind_config()
 
-    def make_config(self, *args, **kwargs):
-        return core4.config.main.CoreConfig(*args, **kwargs)
-
-    def _proc_extra_config(self):
+    def _build_extra_config(self):
+        # internal method to create the configuration option reflecting
+        # the qual_name
         extra_config = {}
         pos = extra_config
         for p in self.qual_name(short=True).split("."):
             pos[p] = {}
             pos = pos[p]
-        pos["log_level"] = None
+        for k in self.upwind:
+            pos[k] = None
         return extra_config
 
-    def _unwind_config(self):
+    def _upwind_config(self):
         for k in self.config.base:
-            if k in self.unwind_keys:
+            if k in self.upwind:
                 if k in self.class_config:
                     if self.class_config[k] is not None:
                         self.__dict__[k] = self.class_config[k]
@@ -177,7 +179,7 @@ class CoreBase:
                     self.__dict__[k] = self.config.base[k]
 
     def _open_logging(self):
-        # internal method to open and attach core4 logging
+        # internal method to open and attach logging
         self.logger_name = self.qual_name(short=False)
         logger = logging.getLogger(self.logger_name)
         level = self.log_level
@@ -191,7 +193,7 @@ class CoreBase:
         #   and late binding
         self.logger = core4.logger.CoreLoggingAdapter(logger, self)
 
-    def log_progress(self, p, *args):
+    def _log_progress(self, p, *args):
         """
         Internal method used to log progress. Overwrite this method to
         implement custom progress logging.
@@ -209,7 +211,7 @@ class CoreBase:
 
     def progress(self, p, *args, inc=0.05):
         """
-        Progress counter calling :meth:`.log_progress` to handle progress and
+        Progress counter calling :meth:`._log_progress` to handle progress and
         message output. All progress outside bins defined by ``inc`` are
         reported only once and otherwise suppressed. This method reliable
         reports progress without creating too much noise in core4 logging
@@ -226,5 +228,5 @@ class CoreBase:
         """
         p_round = round(p / inc) * inc
         if self._last_progress is None or p_round != self._last_progress:
-            self.log_progress(p_round * 100., *args)
+            self._log_progress(p_round * 100., *args)
             self._last_progress = p_round

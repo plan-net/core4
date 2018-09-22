@@ -18,7 +18,7 @@ class CoreLoggerMixin:
     """
     If your application wants to enable logging, mixin
     :class:`.CoreLoggerMixin` and call :meth:`.setup_logging`. This will
-    instantiate your logging needs as defined in core4 cascading configuration.
+    instantiate your logging needs as defined in core4 :doc:`config`.
     """
 
     completed = False  # type: bool
@@ -30,17 +30,13 @@ class CoreLoggerMixin:
         """
         if not CoreLoggerMixin.completed:
             logger = logging.getLogger(core4.const.CORE4)
-            self._shutdown_logging(logger)
+            logger.handlers = []  # logging shutdown
             logger.setLevel(logging.DEBUG)
             self._setup_console(logger)
-            # self._setup_exception_logger(logger)
             self._setup_mongodb(logger)
             self._setup_extra_logging(logger)
             self.logger.debug("logging setup complete")
             CoreLoggerMixin.completed = True
-
-    def _shutdown_logging(self, logger):
-        logger.handlers = []
 
     def _setup_console(self, logger):
         log_format = self.config.logging.format
@@ -78,6 +74,12 @@ class CoreLoggerMixin:
 
 
 class ExceptionLoggerMixin:
+    """
+    If your object wants exception logging, mixin
+    :class:`.ExceptionLoggerMixin` and call :meth:`.add_exception_logger`. This
+    bump all log messages with level below the object`s standard log level if
+    a ``CRITICAL`` log message occurs. See :ref:`exception_logging`.
+    """
 
     def add_exception_logger(self):
         if not (hasattr(self, "config") and hasattr(self, "logger")):

@@ -75,10 +75,11 @@ class CoreConfig(collections.MutableMapping):
     accessible through :meth:`._config`. This attribute implements the
     :class:`.ConfigMap`.
     """
-    cache = True  # 5x faster (1.1 vs. 6.2)
+    cache = True
     standard_config = STANDARD_CONFIG
     user_config = USER_CONFIG
     system_config = SYSTEM_CONFIG
+
     _config_cache = None
     _file_cache = {}
     _db_cache = None
@@ -167,9 +168,6 @@ class CoreConfig(collections.MutableMapping):
 
         :return: :class:`.ConfigMap`
         """
-        # w/o cache, this method has a test_config.test_cache of 170s
-        # with cache, this method has a test_config.test_cache of 4.9s
-        # all tests: 35s vs. 3':20''
         if self._config_cache is None:
             self._config_cache = self._load()
         return self._config_cache
@@ -194,6 +192,7 @@ class CoreConfig(collections.MutableMapping):
         :param config: dict with standard configuration
         :param plugin: tuple with plugin name and plugin configuration dict
         :param local: dict with local configuration
+        :param extra: dict with extra schema and default values
         :return: dict
         """
         # collect standard config and standard DEFAULT
@@ -276,7 +275,6 @@ class CoreConfig(collections.MutableMapping):
         :param schema: configuration schema
         :return: updated configuration dict
         """
-
         def traverse(data, tmpl, result):
             if tmpl is None:
                 return {}
@@ -361,7 +359,6 @@ class CoreConfig(collections.MutableMapping):
                     traverse(v)
                 elif isinstance(v, core4.config.tag.ConnectTag):
                     v.set_config(dct)
-
         traverse(config)
 
     def _read_yaml(self, filename):

@@ -81,6 +81,10 @@ def now():
 
 
 class Singleton(type):
+    """
+    Singleton metaclass, see
+    https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python.
+    """
     _instances = {}
 
     def __call__(cls, *args, **kwargs):

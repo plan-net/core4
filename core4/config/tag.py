@@ -77,6 +77,7 @@ class ConnectTag(yaml.YAMLObject):
     This method implements the delegation pattern and passes all non-owned
     methods and properties to :class:`.CoreCollection`.
     """
+
     yaml_tag = u'!connect'
 
     def __init__(self, conn_str):
