@@ -7,7 +7,7 @@ import tests.util
 
 
 class MyConfig(core4.config.CoreConfig):
-    _cache = None
+    cache = False
 
 
 class TestCookie(unittest.TestCase):

@@ -77,11 +77,13 @@ class CoreConfig(collections.MutableMapping):
     accessible through :meth:`._config`. This attribute implements the
     :class:`.ConfigMap`.
     """
+    cache = True  # 5x faster (1.1 vs. 6.2)
     standard_config = STANDARD_CONFIG
     user_config = USER_CONFIG
     system_config = SYSTEM_CONFIG
-    #_cache = {}
-    _cache = None
+    _config_cache = None
+    _file_cache = {}
+    _db_cache = None
 
     def __init__(self, plugin_config=None, config_file=None, extra_dict={}):
         self._config_file = config_file
@@ -167,7 +169,12 @@ class CoreConfig(collections.MutableMapping):
 
         :return: :class:`.ConfigMap`
         """
-        return self._load()
+        # w/o cache, this method has a test_config.test_cache of 170s
+        # with cache, this method has a test_config.test_cache of 4.9s
+        # all tests: 35s vs. 3':20''
+        if self._config_cache is None:
+            self._config_cache = self._load()
+        return self._config_cache
 
     def _verify_dict(self, variable, message):
         """
@@ -356,7 +363,6 @@ class CoreConfig(collections.MutableMapping):
                     traverse(v)
                 elif isinstance(v, core4.config.tag.ConnectTag):
                     v.set_config(dct)
-
         traverse(config)
 
     def _read_yaml(self, filename):
@@ -366,9 +372,14 @@ class CoreConfig(collections.MutableMapping):
         :param filename: to parse
         :return: YAML structure in Python dict format
         """
+        if self.cache and filename in self.__class__._file_cache:
+            body = self.__class__._file_cache[filename]
+            return yaml.safe_load(body) or {}
         if os.path.exists(filename):
             with open(filename, "r", encoding="utf-8") as f:
                 body = f.read()
+            if self.cache:
+                self.__class__._file_cache[filename] = body
             return yaml.safe_load(body) or {}
         else:
             raise FileNotFoundError(filename)
@@ -380,6 +391,8 @@ class CoreConfig(collections.MutableMapping):
         parsed in alphabetic order. The last configuration key/value overwrites
         existing values.
         """
+        if self._db_cache is not None:
+            return self._db_cache
         # build OS environ lookup
         environ = {
             "DEFAULT": {},
@@ -418,9 +431,10 @@ class CoreConfig(collections.MutableMapping):
                 conn_str, **opts)
             for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
                 conf = core4.util.dict_merge(conf, doc)
-            return self._resolve_tags(conf)
-
-        return {}
+            self._db_cache = self._resolve_tags(conf)
+        else:
+            self._db_cache = {}
+        return self._db_cache
 
     def _read_env(self):
         """
@@ -521,9 +535,6 @@ class CoreConfig(collections.MutableMapping):
         else:
             extra = lookup = None
 
-        # if self.__class__._cache and lookup in self.__class__._cache:
-        #     return self.__class__._cache[lookup]
-
         if lookup is not None:
             extra_config = self._read_yaml(self.plugin_config[1])
 
@@ -563,6 +574,4 @@ class CoreConfig(collections.MutableMapping):
         data = core4.config.map.ConfigMap(
             self._parse(standard_data, extra, local_data, self.extra_dict)
         )
-        # if self.__class__._cache is not None:
-        #     self.__class__._cache[lookup] = data
         return data

@@ -14,7 +14,7 @@ import tests.util
 
 
 class MyConfig(core4.config.CoreConfig):
-    _cache = None
+    cache = False
 
 
 class TestConfig(unittest.TestCase):
@@ -827,6 +827,16 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.test1.deep_dict.default_value, 123)
         self.assertEqual(config.test1.deep_dict.mongo_database, "test")
 
+    # def test_cache(self):
+    #     extra = tests.util.asset("config/extra1.yaml")
+    #     local = tests.util.asset("config/local1.yaml")
+    #     for i in range(100):
+    #         c = core4.config.main.CoreConfig(plugin_config=("test", extra),
+    #                                          config_file=local)
+    #         s = 0
+    #         for j in range(100):
+    #             x = c.sys.log
+    #             s += x.count()
 
 if __name__ == '__main__':
     unittest.main(exit=False)

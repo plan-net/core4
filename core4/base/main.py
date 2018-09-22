@@ -135,11 +135,13 @@ class CoreBase:
         :return: str
         """
         module = sys.modules.get(self.plugin)
-        if hasattr(module, "__project__"):
-            if module.__project__ == CORE4:
-                return os.path.join(
-                    os.path.dirname(module.__file__),
-                    self.plugin + core4.config.main.CONFIG_EXTENSION)
+        if self.plugin != CORE4:
+            if hasattr(module, "__project__"):
+                if module.__project__ == CORE4:
+                    return os.path.join(
+                        os.path.dirname(module.__file__),
+                        self.plugin + core4.config.main.CONFIG_EXTENSION)
+        return None
 
     def _open_config(self):
         # internal method to open and attach core4 cascading configuration
@@ -181,7 +183,8 @@ class CoreBase:
         self.logger_name = self.qual_name(short=False)
         logger = logging.getLogger(self.logger_name)
         level = self.log_level
-        logger.setLevel(getattr(logging, level))
+        if level:
+            logger.setLevel(getattr(logging, level))
         nh = logging.NullHandler()
         logger.addHandler(nh)
         f = core4.logger.filter.CoreLoggingFilter()
