@@ -1,0 +1,10 @@
+defer_max: 12345
+error_time: 12345
+
+test_job:
+  ConfigTest:
+    schedule: "*/5 * * * *"
+    test_ignored: 1
+    list_ignored: [1, 2, 3]
+    defer_max: 54321
+

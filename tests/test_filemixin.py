@@ -2,10 +2,9 @@
 
 import os
 import shutil
-import sys
 import unittest
-from core4.base.job import CoreJob
-from core4.helpers.file import FileMixin
+from core4.queue.job import CoreJob
+from core4.queue.file import FileMixin
 import re
 import tests.util
 
