@@ -11,6 +11,7 @@ sys:
   role: !connect mongodb://sys.role
   quota: !connect mongodb://sys.quota
   admin: !connect mongodb://admin/dummy
+  queue: !connect mongodb://sys.queue
 
 # system folders
 folder:
@@ -36,5 +37,15 @@ base:
 
 # job defaults
 job:
-  defer_time: 60
+  attempts: 1
   defer_max: 3600
+  defer_time: 300
+  error_time: 600
+  hidden: False
+  inactive_time: 1800
+  wall_time: ~
+  max_parallel: ~
+  nodes: ~
+  priority: 0
+  schedule: ~
+  tag: ~

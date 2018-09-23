@@ -4,6 +4,8 @@ from core4.config.map import ConfigMap
 
 class TestConfig(CoreConfig):
 
+    cache = False
+
     def __init__(self, plugin_name=None, plugin_dict=None, local_dict=None,
                  extra_dict=None):
         self._plugin_name = plugin_name
