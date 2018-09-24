@@ -30,24 +30,6 @@ class TestJob(unittest.TestCase):
     def mongo(self):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
 
-    #  def test_deserialize_default(self):
-    #      j = CoreJob()
-    #      j.deserialize({"defer_max": 10, "defer_time": 10, "_id": 7777})
-    #      self.assertEqual(10, j.defer_max)
-    #      self.assertEqual(10, j.defer_time)
-    #      self.assertEqual(7777, j._id)
-    #      a = j.serialize()
-    #      g = CoreJob()
-    #      g.deserialize(a)
-    #      self.assertEqual(10, g.defer_max)
-    #      self.assertEqual(10, g.defer_time)
-    #
-    #  def test_serialize(self):
-    #      j = CoreJob(defer_time=60)
-    #      tmp = j.serialize()
-    #      self.assertEqual(60, tmp['defer_time'])
-    #
-
     def test_init(self):
         job = core4.queue.job.CoreJob()
         with self.assertRaises(AssertionError):
