@@ -364,6 +364,49 @@ class TestJob(unittest.TestCase):
         child.validate()
         self.assertIsNone(child.schedule)
 
+    def test_frozen_init(self):
+        class MyJob(core4.queue.job.CoreJob):
+
+            author = 'mra'
+
+            def make_config(self, *args, **kwargs):
+                return core4.config.test.TestConfig(
+                    plugin_name="tests",
+                    plugin_dict={},
+                    local_dict={},
+                    **kwargs
+                )
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.author = "abc"
+
+        with self.assertRaises(core4.error.Core4UsageError):
+            _ = MyJob()
+
+    def test_frozen_method(self):
+        class MyJob(core4.queue.job.CoreJob):
+
+            author = 'mra'
+
+            def make_config(self, *args, **kwargs):
+                return core4.config.test.TestConfig(
+                    plugin_name="tests",
+                    plugin_dict={},
+                    local_dict={},
+                    **kwargs
+                )
+
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+            def test(self):
+                self.state = 'RUNNING'
+
+        job = MyJob()
+        with self.assertRaises(core4.error.Core4UsageError):
+            job.test()
+
     def test_serialise(self):
         job = core4.queue.job.DummyJob()
         job.save()

@@ -292,6 +292,7 @@ class CoreJob(CoreBase):
     wall_time = None
     max_parallel = None
     schedule = None
+    _frozen_ = False
 
     # these config attributes are raised to object level
 
@@ -328,6 +329,15 @@ class CoreJob(CoreBase):
         self.overload_config()
 
         self.overload_args(**kwargs)
+        self._frozen_ = True
+
+    def __setattr__(self, key, value):
+        if self._frozen_:
+            if key in JOB_ARGS:
+                raise core4.error.Core4UsageError(
+                    "not allowed to set job class/config property [{}]".format(
+                        key))
+        super().__setattr__(key, value)
 
     def validate(self):
         for prop, check in JOB_VALIDATION.items():
