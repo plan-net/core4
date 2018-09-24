@@ -137,6 +137,7 @@ class CoreBase:
                         self.plugin + core4.config.main.CONFIG_EXTENSION)
         return None
 
+    # todo: hide this method with a prefix "_"
     def make_config(self, *args, **kwargs):
         """
         :return: :class:`.CoreConfig` class to be attached to this class
