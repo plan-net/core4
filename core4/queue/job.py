@@ -83,6 +83,8 @@ JOB_VALIDATION = {
     "wall_time": is_int_gt0_null,
 }
 
+NOT_INHERITED = ("schedule", "dependency", "chain")
+
 
 class CoreJob(CoreBase):
     """
@@ -291,6 +293,9 @@ class CoreJob(CoreBase):
 
     def __init__(self, *args, **kwargs):
         self.upwind += list(CONFIG_ARGS)
+        for prop in NOT_INHERITED:
+            if prop not in self.__class__.__dict__:
+                self.schedule = None
         super().__init__()
 
         self.name = self.qual_name(short=True)
@@ -323,6 +328,9 @@ class CoreJob(CoreBase):
     def validate(self):
         for prop, check in JOB_VALIDATION.items():
             check(prop, getattr(self, prop))
+        if "author" not in self.__class__.__dict__:
+            raise AssertionError("missing author in [{}]".format(
+                self.qual_name()))
 
     def load_default(self):
         for prop in DEFAULT_ARGS:

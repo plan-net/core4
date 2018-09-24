@@ -310,9 +310,64 @@ class TestJob(unittest.TestCase):
         self.assertIsNone(job.schedule)  # DEFAULT not applied to class config
         self.assertEqual(job.attempts, 2)
 
+    def test_author_inheritance(self):
+        class MyParent(core4.queue.job.CoreJob):
+
+            author = 'mra'
+
+            def make_config(self, *args, **kwargs):
+                return core4.config.test.TestConfig(
+                    plugin_name="tests",
+                    plugin_dict={},
+                    local_dict={},
+                    **kwargs
+                )
+
+        class MyChild(MyParent): pass
+
+        parent = MyParent()
+        child = MyChild()
+
+        parent.validate()
+        with self.assertRaises(AssertionError):
+            child.validate()
+
+    def test_schedule_inheritance(self):
+        class MyParent(core4.queue.job.CoreJob):
+
+            author = 'mra'
+            schedule = '1 * * * *'
+
+            def make_config(self, *args, **kwargs):
+                return core4.config.test.TestConfig(
+                    plugin_name="tests",
+                    plugin_dict={},
+                    local_dict={
+                        "tests": {
+                            "test_job": {
+                                "MyParent": {
+                                    "schedule": "2 * * * *"
+                                },
+                            }
+                        }
+                    },
+                    **kwargs
+                )
+
+        class MyChild(MyParent):
+            author = "mra"
+
+        parent = MyParent()
+        child = MyChild()
+
+        parent.validate()
+        child.validate()
+        self.assertIsNone(child.schedule)
+
     def test_serialise(self):
         job = core4.queue.job.DummyJob()
         job.save()
+
 
 if __name__ == '__main__':
     unittest.main()
