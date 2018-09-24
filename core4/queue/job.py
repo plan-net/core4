@@ -288,13 +288,10 @@ class CoreJob(CoreBase):
     schedule = None
 
     # these config attributes are raised to object level
-    upwind = ["log_level"] + list(CONFIG_ARGS)
 
     def __init__(self, *args, **kwargs):
+        self.upwind += list(CONFIG_ARGS)
         super().__init__()
-
-        self.load_default()
-        self.overload_config()
 
         self.name = self.qual_name(short=True)
         self._id = None
@@ -317,6 +314,9 @@ class CoreJob(CoreBase):
         self.wall_at = None
         self.zombie_at = None
         self.state = None
+
+        self.load_default()
+        self.overload_config()
 
         self.overload_args(**kwargs)
 
@@ -390,6 +390,7 @@ class CoreJob(CoreBase):
         # the job sets and updates the following attributes
         # - .started_at, finished_at, runtime, last_error
         # note: runtime is the incremental sum (in case of failure and defer)
+        #       test this!
         # the method should start and finish with a .progress
         # the method catches all exceptions
         pass
