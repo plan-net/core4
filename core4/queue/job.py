@@ -57,14 +57,18 @@ JOB_ARGS = {
     "zombie_at": (SERIALISE,),
 }
 
+# property scope to load from config
 CONFIG_ARGS = tuple([k for k, v in JOB_ARGS.items() if CONFIG in v])
+# property scope to load from class
 PROPERTY_ARGS = tuple([k for k, v in JOB_ARGS.items() if PROPERTY in v])
+# property scope to set default values
 DEFAULT_ARGS = tuple(set(CONFIG_ARGS + PROPERTY_ARGS))
+# property scope to parse from enqueue
 ENQUEUE_ARGS = tuple([k for k, v in JOB_ARGS.items() if ENQUEUE in v])
+# property scope to materialise
 SERIALISE_ARGS = tuple([k for k, v in JOB_ARGS.items() if SERIALISE in v])
 
 # validation setting
-
 JOB_VALIDATION = {
     "attempts": is_int_gt0,
     "author": is_str,
@@ -83,6 +87,7 @@ JOB_VALIDATION = {
     "wall_time": is_int_gt0_null,
 }
 
+# job properties not inherited from parent class
 NOT_INHERITED = {
     "schedule": None,
     "dependency": [],
@@ -294,19 +299,20 @@ class CoreJob(CoreBase):
     schedule = None
     _frozen_ = False
 
-    # these config attributes are raised to object level
-
     def __init__(self, *args, **kwargs):
+        # attributes raised from self.class_config.* to self.*
         self.upwind += list(CONFIG_ARGS)
+        # reset properties not to be inherited
         for prop, default in NOT_INHERITED.items():
             if prop not in self.__class__.__dict__:
                 self.__dict__[prop] = default
+
         super().__init__()
 
+        # runtime properties
         self.name = self.qual_name(short=True)
         self._id = None
         self._cookie = None
-
         self.args = {}
         self.attempts_left = None
         self.enqueued = None
@@ -321,14 +327,14 @@ class CoreJob(CoreBase):
         self.runtime = None
         self.sources = None
         self.started_at = None
+        self.state = None
         self.wall_at = None
         self.zombie_at = None
-        self.state = None
 
         self.load_default()
         self.overload_config()
-
         self.overload_args(**kwargs)
+
         self._frozen_ = True
 
     def __setattr__(self, key, value):
@@ -342,6 +348,7 @@ class CoreJob(CoreBase):
     def validate(self):
         for prop, check in JOB_VALIDATION.items():
             check(prop, getattr(self, prop))
+        # special handling of author property
         if "author" not in self.__class__.__dict__:
             raise AssertionError("missing author in [{}]".format(
                 self.qual_name()))
