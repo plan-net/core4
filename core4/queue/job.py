@@ -83,7 +83,11 @@ JOB_VALIDATION = {
     "wall_time": is_int_gt0_null,
 }
 
-NOT_INHERITED = ("schedule", "dependency", "chain")
+NOT_INHERITED = {
+    "schedule": None,
+    "dependency": [],
+    "chain": []
+}
 
 
 class CoreJob(CoreBase):
@@ -293,9 +297,9 @@ class CoreJob(CoreBase):
 
     def __init__(self, *args, **kwargs):
         self.upwind += list(CONFIG_ARGS)
-        for prop in NOT_INHERITED:
+        for prop, default in NOT_INHERITED.items():
             if prop not in self.__class__.__dict__:
-                self.schedule = None
+                self.__dict__[prop] = default
         super().__init__()
 
         self.name = self.qual_name(short=True)

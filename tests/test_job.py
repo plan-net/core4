@@ -280,8 +280,8 @@ class TestJob(unittest.TestCase):
                 )
 
         job = MyJob()
-        self.assertEqual(job.schedule, "1 * * * *")
-        self.assertEqual(job.attempts, 2)
+        self.assertEqual("1 * * * *", job.schedule)
+        self.assertEqual(2, job.attempts)
 
     def test_plugin_default(self):
         class MyJob(core4.queue.job.CoreJob):
