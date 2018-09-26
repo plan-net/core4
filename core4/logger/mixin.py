@@ -18,7 +18,7 @@ class CoreLoggerMixin:
     """
     If your application wants to enable logging, mixin
     :class:`.CoreLoggerMixin` and call :meth:`.setup_logging`. This will
-    instantiate your logging needs as defined in core4 :doc:`config`.
+    instantiate extra logging needs.
     """
 
     completed = False  # type: bool
