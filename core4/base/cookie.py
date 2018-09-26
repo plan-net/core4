@@ -1,7 +1,7 @@
 import core4.base.main
 
 
-class Cookie():
+class Cookie:
     """
     Jobs and API resources have read/write access to a cookie identified by a
     name (both, jobs and resources are supposed to specify its
