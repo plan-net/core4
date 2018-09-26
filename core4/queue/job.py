@@ -59,7 +59,7 @@ JOB_ARGS = {
     "wall_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "zombie_at": (SERIALISE,),
     "_frozen_": (ENQUEUE,),
-    "_progress_intervall": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "progress_interval": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
 }
 
 # property scope to load from config
@@ -91,7 +91,7 @@ JOB_VALIDATION = {
     "schedule": is_cron,
     "tag": is_str_list_null,
     "wall_time": is_int_gt0_null,
-    "_progress_interval": is_int_gt0,
+    "progress_interval": is_int_gt0,
 }
 
 # job properties not inherited from parent class
@@ -311,7 +311,7 @@ _progress_interval    True   True  True     False       5 int > 0
     max_parallel = None
     schedule = None
     _frozen_ = False
-    _progress_interval = 5
+    progress_interval = 5
 
     def __init__(self, *args, **kwargs):
         # attributes raised from self.class_config.* to self.*
@@ -348,15 +348,10 @@ _progress_interval    True   True  True     False       5 int > 0
 
         self.load_default()
         self.overload_config()
-
         self.overload_args(**kwargs)
+        self._frozen_ = True
         self.__mongo_dict = None
 
-        # frozen has to be set before loading args or config as some attributes may be set during tests.
-        if "_frozen_" not in kwargs.keys():
-            self._frozen_ = True
-        else:
-            self._frozen_ = kwargs['_frozen_']
 
     def __setattr__(self, key, value):
         """
@@ -417,10 +412,10 @@ _progress_interval    True   True  True     False       5 int > 0
         :return: cookie-instance
         """
         if not self._cookie:
-            self._cookie = core4.base.cookie.CookieMixin(self.qual_name(short=True))
+            self._cookie = core4.base.cookie.Cookie(self.qual_name(short=True), self.config.sys.cookie)
         return self._cookie
 
-    def progress(self, p, message, *args):
+    def progress(self, p, *args):
         """
         monitor the progress of a job.
         this method is called on a set intervall.
@@ -428,18 +423,23 @@ _progress_interval    True   True  True     False       5 int > 0
         updates the jobs heartbeat and logs the progress with debug-messages.
         """
         # Check tuple to have the correct format (float, string)
+        if args:
+            args = list(args)
+            message = args.pop(0)
+        else:
+            message = ""
 
         now = core4.util.now()
         if (self._last_progress is None
             # check own document within sys.queue and check for hostname and pid
-                or (now >= self._last_progress + dt.timedelta(seconds=self._progress_interval)
-                and self._mongo_dict and self._mongo_dict['locked']['host'] == core4.util.get_hostname()
-                and self._mongo_dict['locked']['user'] == core4.util.get_username()
+                or (now >= self._last_progress + dt.timedelta(seconds=self.progress_interval)
+                and self.locked and self.locked['host'] == core4.util.get_hostname()
+                and self.locked['user'] == core4.util.get_username()
                 # pid is not currently included in sys.queue-doc
-                and self._mongo_dict['locked']['pid'] == core4.util.get_pid())):
+                and self.locked['pid'] == core4.util.get_pid())):
             if args:
-                message = message % args
-            self._last_progress = now
+                message = message % tuple(args)
+            self.__dict__['_last_progress'] = now
             self.logger.debug(message)
             return self.config.sys.queue.update_one({"_id": self._id}, update={
                 '$set': {'locked.heartbeat': core4.util.now(),
@@ -472,20 +472,21 @@ _progress_interval    True   True  True     False       5 int > 0
         # log entry
         self.progress(0.0, "starting job: {} with id: {}".format(self.qual_name(), self._id))
         try:
-            self.started_at = core4.util.now()
+            self.__dict__['started_at'] = core4.util.now()
             self.execute(*args, **kwargs)
         except:
-            self.last_error = core4.util.now()
+            self.__dict__['last_error'] = core4.util.now()
             raise
         finally:
-            self.finished_at = core4.util.now()
+            self.__dict__['finished_at'] = core4.util.now()
             runtime = (self.finished_at - self.started_at).total_seconds()
             if self.runtime is not None:
                 runtime += self.runtime
-            self.runtime = runtime
+            self.__dict__['runtime'] = runtime
             # is last runtime the finished-time or the starting-time?
             # self.cookie.set("last_runtime", self.finished_at)
             # direct insert here to ignore if last update < 5s
+            self.cookie.set("last_runtime", self.finished_at)
             self.config.sys.queue.update_one({"_id": self._id}, update={
                 '$set': {'locked.heartbeat': core4.util.now(),
                          'locked.progress': "execution end marker",

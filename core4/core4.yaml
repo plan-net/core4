@@ -50,3 +50,4 @@ job:
   priority: 0
   schedule: ~
   tag: ~
+  progress_inverval: 5

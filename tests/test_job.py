@@ -4,6 +4,7 @@ import os
 import unittest
 
 import pymongo
+import datetime as dt
 
 import core4.base
 import core4.config.test
@@ -126,6 +127,7 @@ class TestJob(unittest.TestCase):
                             "MyJob": {
                                 "defer_time": 666,
                                 "defer_max": 777,
+                                "progress_interval": 5,
                                 "my_var": 'custom value'
                             }
                         },
@@ -140,6 +142,7 @@ class TestJob(unittest.TestCase):
                                     "attempts": 2,
                                     "author": "fake",
                                     "defer_max": 999,
+                                    "progress_interval": 10,
                                     "my_var": 'local value',
                                     "unknown": 'not defined'
                                 }
@@ -152,6 +155,7 @@ class TestJob(unittest.TestCase):
         self.assertEqual(job.attempts, 2)
         self.assertEqual(job.author, "mra")
         self.assertEqual(job.defer_max, 999)
+        self.assertEqual(job.progress_interval, 10)
         self.assertEqual(job.defer_time, 666)
         self.assertEqual(job.config.tests.test_job.MyJob.my_var, "local value")
         self.assertFalse("unknown" in job.config.tests.test_job.MyJob)
@@ -407,13 +411,15 @@ class TestJob(unittest.TestCase):
                 self.defer()
 
         job = MyJob(_frozen_=False)
-        job._id = "this is just a test_id"
-        job.config.sys.queue.insert_one({"_id": job._id, "locked" : {
-        "progress_value" : 0.0,
-        "host" : core4.util.get_hostname(),
-        "pid" : core4.util.get_pid(),
-        "user" : core4.util.get_username()
-        }})
+        job.__dict__['_id'] = "this is just a test_id"
+        locked = {"_id": job._id, "locked": {
+        "progress_value": 0.0,
+        "host": core4.util.get_hostname(),
+        "pid": core4.util.get_pid(),
+        "user": core4.util.get_username()
+        }}
+        job.config.sys.queue.insert_one(locked)
+        job.__dict__['locked'] = locked['locked']
         # execute ones by calling execute directly to check job-runtime progress
         job.execute()
         expected = {
@@ -449,40 +455,46 @@ class TestJob(unittest.TestCase):
                     self.defer("defer for testing")
                 time.sleep(2)
 
-            def progress_with_format(self):
+            def progress_with_format_single(self):
                 self.progress(0.5, "Testing %s with format", "progress")
+            def progress_with_format_multiple(self):
+                # we do have to sleep here to allow this progress-message to come through with default-settings
+                import time
+                time.sleep(5)
+                self.progress(0.6, "Testing %s with %d format", "progress", 2)
 
-        defer_job = DeferJob(_frozen_=False)
-        defer_job._id = "this is test_defer"
 
-        defer_job.config.sys.queue.insert_one({"_id": defer_job._id, "locked" : {
-            "progress_value" : 0.0,
-            "host" : core4.util.get_hostname(),
-            "pid" : core4.util.get_pid(),
-            "user" : core4.util.get_username()
-        }})
+        defer_job = DeferJob()
+        defer_job.__dict__['_id'] = "this is test_defer"
 
-        defer_job.progress_with_format()
+        locked = {"_id": defer_job._id, "locked": {
+            "progress_value": 0.0,
+            "host": core4.util.get_hostname(),
+            "pid": core4.util.get_pid(),
+            "user": core4.util.get_username()
+        }}
+        defer_job.__dict__['locked'] = locked['locked']
+        defer_job.config.sys.queue.insert_one(locked)
+
+        defer_job.progress_with_format_single()
         actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
         self.assertEqual(actual['locked']['progress_value'], 0.5)
         self.assertEqual(actual['locked']['progress'], "Testing progress with format")
+        defer_job.progress_with_format_multiple()
+        actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
+        self.assertEqual(0.6, actual['locked']['progress_value'])
+        self.assertEqual(actual['locked']['progress'], "Testing progress with 2 format")
 
         with self.assertRaises(core4.error.CoreJobDeferred):
             defer_job.run()
         defer_job.run()
-        expected = {
-            "_id": "this is test_defer",
-            "locked": {
-                "progress_value": 1.0,
-                "host": core4.util.get_hostname(),
-                "pid": core4.util.get_pid(),
-                "user": core4.util.get_username(),
-            }
-        }
         actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
         self.assertEqual(actual['locked']['progress_value'], 1.0)
         self.assertEqual(actual['locked']['progress'], "execution end marker")
         self.assertGreaterEqual(actual['locked']['runtime'], 4)
+        actual = defer_job.config.sys.cookie.find_one({"_id": defer_job.qual_name()})
+        self.assertLess(actual['last_runtime'], dt.datetime.now())
+
 
     def test_execute_notImplemented(self):
         class ExecuteNotImplemented(core4.queue.job.CoreJob):
@@ -493,12 +505,13 @@ class TestJob(unittest.TestCase):
             exec_job.run()
         with self.assertRaises(NotImplementedError):
             exec_job.execute()
-    # def test_cookie(self):
-    #     class JobCookie(core4.queue.job.CoreJob, core4.base.cookie.CookieMixin):
-    #         author = "mkr"
-    #
-    #     cookie_job = JobCookie()
-    #     print(cookie_job.cookie)
+
+    def test_cookie(self):
+        class JobCookie(core4.queue.job.CoreJob):
+            author = "mkr"
+
+        cookie_job = JobCookie()
+        self.assertTrue(cookie_job.cookie.cookie_name, "tests.test_job.JobCookie")
 
 
 if __name__ == '__main__':
