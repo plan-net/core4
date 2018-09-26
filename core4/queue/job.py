@@ -33,6 +33,7 @@ JOB_ARGS = {
     "enqueued": (SERIALISE,),
     "error_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "finished_at": (SERIALISE,),
+    "force": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "hidden": (CONFIG, PROPERTY,),
     "inactive_at": (SERIALISE,),
     "inactive_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
@@ -77,6 +78,7 @@ JOB_VALIDATION = {
     "defer_time": is_int_gt0,
     "dependency": is_job,
     "error_time": is_int_gt0,
+    "force": is_bool_null,
     "hidden": is_bool_null,
     "inactive_time": is_int_gt0,
     "max_parallel": is_int_gt0_null,
@@ -126,6 +128,8 @@ class CoreJob(CoreBase):
     * ``error_time`` - seconds to wait before job restart after failure
     * ``finished_at`` - datetime when the job finished with success, failure,
       or deferral
+    * ``force`` - if ``True`` then ignore nodes' resource limits and launch the
+      job
     * ``hidden`` - if ``True`` then hide the job from job listing (defaults to
       ``False``)
     * ``inactive_at`` - datetime  when a deferring job turns inactive, derived
@@ -195,6 +199,8 @@ class CoreJob(CoreBase):
           enqueued   False  False False      True      na
         error_time    True   True  True      True     10' int > 0
        finished_at   False  False False      True      na
+             force    True   True  True      True   False is bool
+            hidden   False   True  True     False   False is bool
        inactive_at   False  False False      True      na
      inactive_time    True   True  True      True     30' int > 0
          killed_at   False  False False      True      na
@@ -292,6 +298,7 @@ class CoreJob(CoreBase):
     defer_time = None
     defer_max = None
     error_time = None
+    force = None
     hidden = None
     inactive_time = None
     wall_time = None
