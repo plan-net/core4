@@ -35,6 +35,8 @@ def connect_mongodb(conn_str, **kwargs):
     specs = specs[0]
     opts = dict()
     opts["scheme"] = protocol
+    if kwargs.get(SCHEME[opts["scheme"]]["url"]) is not None and not isinstance(kwargs.get(SCHEME[opts["scheme"]]["url"]), str):
+        raise core4.error.Core4ConfigurationError("[mongo_url] expected str")
     default_url = kwargs.get(SCHEME[opts["scheme"]]["url"])
     if default_url is not None and default_url.startswith(protocol):
         default_url = default_url[len(protocol) + 3:]
