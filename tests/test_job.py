@@ -11,7 +11,8 @@ import core4.error
 import core4.queue.job
 import tests.util
 import tests.util
-
+import core4.util
+import core4.base.cookie
 
 class TestJob(unittest.TestCase):
 
@@ -389,9 +390,115 @@ class TestJob(unittest.TestCase):
         with self.assertRaises(core4.error.Core4UsageError):
             job.test()
 
-    def test_serialise(self):
-        job = core4.queue.job.DummyJob()
-        job.save()
+
+    def test_progress(self):
+        class MyJob(core4.queue.job.CoreJob):
+            author = 'mkr'
+
+            def execute(self):
+                import time
+                for i in range(0, 10, 1):
+                    time.sleep(1.0)
+                    self.progress(i/10, "slept {} seconds".format(i))
+
+            def defer_self(self):
+                import time
+                time.sleep(10.0)
+                self.defer()
+
+        job = MyJob(_frozen_=False)
+        job._id = "this is just a test_id"
+        job.config.sys.queue.insert_one({"_id": job._id, "locked" : {
+        "progress_value" : 0.0,
+        "host" : core4.util.get_hostname(),
+        "pid" : core4.util.get_pid(),
+        "user" : core4.util.get_username()
+        }})
+        # execute ones by calling execute directly to check job-runtime progress
+        job.execute()
+        expected = {
+                    "_id": "this is just a test_id",
+                    "locked": {
+                    "progress_value": 0.5,
+                    "host": core4.util.get_hostname(),
+                    "pid": core4.util.get_pid(),
+                    "user": core4.util.get_username(),
+                    "progress": "slept 5 seconds"
+                        }
+                    }
+        actual = job.config.sys.queue.find_one({"_id": job._id})
+        self.assertEqual(expected['locked']['host'], actual['locked']['host'])
+        self.assertEqual(expected['locked']['user'], actual['locked']['user'])
+        self.assertEqual(expected['locked']['pid'], actual['locked']['pid'])
+        self.assertEqual(expected['locked']['progress_value'], actual['locked']['progress_value'])
+        self.assertEqual(expected['locked']['progress'], actual['locked']['progress'])
+        job.run()
+        actual = job.config.sys.queue.find_one({"_id": job._id})
+        self.assertEqual(actual['locked']['progress_value'], 1.0)
+        self.assertEqual(actual['locked']['progress'], "execution end marker")
+
+    def test_defer(self):
+        class DeferJob(core4.queue.job.CoreJob):
+            author = 'mkr'
+            defer_self = True
+            def execute(self):
+                import time
+                time.sleep(2)
+                if self.defer_self:
+                    self.defer_self = False
+                    self.defer("defer for testing")
+                time.sleep(2)
+
+            def progress_with_format(self):
+                self.progress(0.5, "Testing %s with format", "progress")
+
+        defer_job = DeferJob(_frozen_=False)
+        defer_job._id = "this is test_defer"
+
+        defer_job.config.sys.queue.insert_one({"_id": defer_job._id, "locked" : {
+            "progress_value" : 0.0,
+            "host" : core4.util.get_hostname(),
+            "pid" : core4.util.get_pid(),
+            "user" : core4.util.get_username()
+        }})
+
+        defer_job.progress_with_format()
+        actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
+        self.assertEqual(actual['locked']['progress_value'], 0.5)
+        self.assertEqual(actual['locked']['progress'], "Testing progress with format")
+
+        with self.assertRaises(core4.error.CoreJobDeferred):
+            defer_job.run()
+        defer_job.run()
+        expected = {
+            "_id": "this is test_defer",
+            "locked": {
+                "progress_value": 1.0,
+                "host": core4.util.get_hostname(),
+                "pid": core4.util.get_pid(),
+                "user": core4.util.get_username(),
+            }
+        }
+        actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
+        self.assertEqual(actual['locked']['progress_value'], 1.0)
+        self.assertEqual(actual['locked']['progress'], "execution end marker")
+        self.assertGreaterEqual(actual['locked']['runtime'], 4)
+
+    def test_execute_notImplemented(self):
+        class ExecuteNotImplemented(core4.queue.job.CoreJob):
+            author = "mkr"
+
+        exec_job = ExecuteNotImplemented()
+        with self.assertRaises(NotImplementedError):
+            exec_job.run()
+        with self.assertRaises(NotImplementedError):
+            exec_job.execute()
+    # def test_cookie(self):
+    #     class JobCookie(core4.queue.job.CoreJob, core4.base.cookie.CookieMixin):
+    #         author = "mkr"
+    #
+    #     cookie_job = JobCookie()
+    #     print(cookie_job.cookie)
 
 
 if __name__ == '__main__':

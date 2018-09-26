@@ -1,6 +1,8 @@
 import core4.error
 from core4.base.main import CoreBase
 from core4.queue.validate import *
+import core4.util
+import datetime as dt
 
 # Job-States
 STATE_PENDING = 'pending'
@@ -55,6 +57,8 @@ JOB_ARGS = {
     "wall_at": (SERIALISE,),
     "wall_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "zombie_at": (SERIALISE,),
+    "_frozen_": (ENQUEUE,),
+    "_progress_intervall": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
 }
 
 # property scope to load from config
@@ -85,6 +89,7 @@ JOB_VALIDATION = {
     "schedule": is_cron,
     "tag": is_str_list_null,
     "wall_time": is_int_gt0_null,
+    "_progress_interval": is_int_gt0,
 }
 
 # job properties not inherited from parent class
@@ -204,6 +209,7 @@ class CoreJob(CoreBase):
              nodes    True   True  True      True    ([]) list of str, None
         nonstop_at   False  False False      True      na
           priority    True   True  True      True       0 int
+_progress_interval    True   True  True     False       5 int > 0
               name   False  False False      True      na
           query_at   False  False False      True      na
          remove_at   False  False False      True      na
@@ -298,6 +304,7 @@ class CoreJob(CoreBase):
     max_parallel = None
     schedule = None
     _frozen_ = False
+    _progress_interval = 5
 
     def __init__(self, *args, **kwargs):
         # attributes raised from self.class_config.* to self.*
@@ -331,13 +338,23 @@ class CoreJob(CoreBase):
         self.wall_at = None
         self.zombie_at = None
 
+
         self.load_default()
         self.overload_config()
-        self.overload_args(**kwargs)
 
-        self._frozen_ = True
+        self.overload_args(**kwargs)
+        self.__mongo_dict = None
+
+        # frozen has to be set before loading args or config as some attributes may be set during tests.
+        if "_frozen_" not in kwargs.keys():
+            self._frozen_ = True
+        else:
+            self._frozen_ = kwargs['_frozen_']
 
     def __setattr__(self, key, value):
+        """
+        Setting an class-attribute is only allowed if _frozen has not been set.
+        """
         if self._frozen_:
             if key in JOB_ARGS:
                 raise core4.error.Core4UsageError(
@@ -346,6 +363,10 @@ class CoreJob(CoreBase):
         super().__setattr__(key, value)
 
     def validate(self):
+        """
+        check all standard job-attributes to be of their intended type.
+        :raises: AssertionError if no author is set or asserts if attribute is not of its intended type.
+        """
         for prop, check in JOB_VALIDATION.items():
             check(prop, getattr(self, prop))
         # special handling of author property
@@ -354,18 +375,28 @@ class CoreJob(CoreBase):
                 self.qual_name()))
 
     def load_default(self):
+        """
+        sets the default class-attributes given in the job-section of the config.
+        """
         for prop in DEFAULT_ARGS:
             val = getattr(self, prop, None)
             if val is None and prop in self.config.job:
                 setattr(self, prop, self.config.job[prop])
 
     def overload_config(self):
+        """
+        sets all job-attributes that can be found within the config.
+        """
         for prop in CONFIG_ARGS:
             if prop in self.class_config:
                 if self.class_config[prop] is not None:
                     setattr(self, prop, self.class_config[prop])
 
     def overload_args(self, **kwargs):
+        """
+        sets job-attributes depending on the enqueueing arguments.
+        :param kwargs: arguments given by the user while enqueueing.
+        """
         for prop, value in kwargs.items():
             if prop in ENQUEUE_ARGS:
                 setattr(self, prop, value)
@@ -374,47 +405,54 @@ class CoreJob(CoreBase):
 
     @property
     def cookie(self):
+        """
+        cookie of the job depending on its qual_name.
+        :return: cookie-instance
+        """
         if not self._cookie:
-            self._cookie = core4.base.cookie.Cookie(self.qual_name(short=True))
+            self._cookie = core4.base.cookie.CookieMixin(self.qual_name(short=True))
         return self._cookie
 
-    def progress(self):
+    def progress(self, p, message, *args):
+        """
+        monitor the progress of a job.
+        this method is called on a set intervall.
+        if a job does not report progress within a specified timeframe, it turns into a zombie.
+        updates the jobs heartbeat and logs the progress with debug-messages.
+        """
+        # Check tuple to have the correct format (float, string)
+
+        now = core4.util.now()
+        if (self._last_progress is None
+            # check own document within sys.queue and check for hostname and pid
+                or (now >= self._last_progress + dt.timedelta(seconds=self._progress_interval)
+                and self._mongo_dict and self._mongo_dict['locked']['host'] == core4.util.get_hostname()
+                and self._mongo_dict['locked']['user'] == core4.util.get_username()
+                # pid is not currently included in sys.queue-doc
+                and self._mongo_dict['locked']['pid'] == core4.util.get_pid())):
+            if args:
+                message = message % args
+            self._last_progress = now
+            self.logger.debug(message)
+            return self.config.sys.queue.update_one({"_id": self._id}, update={
+                '$set': {'locked.heartbeat': core4.util.now(),
+                         'locked.progress': message,
+                         'locked.progress_value': p}
+            })
+
         # todo: implement
         # this method creates a DEBUG message and updates the heartbeat
         # each progress interval.
         # ensure the hostname + pid is really the owner of the job (mongo filter)
+
+
         pass
 
-    def save(self):
-        # todo: implement
-        doc = dict((prop, getattr(self, prop)) for prop in SERIALISE_ARGS)
-        # if _id is None, then del(_id) and let mongo create one for you
-        # feed mongodb _id into self._id
-        # set enqueue fields!
-        # ensure the unique index on qual_name and job args exists
-        #  - since MongoDB supports index only up to 1024 characters
-        #  - it might be a good idea to hash the job args and create the index
-        #    on the hash value
-        # ensure self.identifier carries the job id
-        # test: all objects created inside a job inherit the identifier (if
-        #       the object is based on CoreBase, see CoreBase.__init__)
-        # check if the enqueueing user has proper job execution rights
-        #  - let's get rid of sudo coco
-        pass
-
-    @classmethod
-    def load(cls, _id):
-        # todo: implement
-        # re-instantiates the job object from mongodb (therefore the class
-        # method).
-        # ensure self.identifier carries the job id
-        # test: all objects created inside a job inherit the identifier (if
-        #       the object is based on CoreBase, see CoreBase.__init__)
-        # check if the user has proper job access rights
-        #  - let's get rid of sudo coco
-        pass
-
-    def run(self):
+    def run(self, *args, **kwargs):
+        """
+        set the nessecary cookie-information on startup and finish of the job.
+        log a first progress and call the execute-method of the job.
+        """
         # todo: implement
         # the job sets and updates the following attributes
         # - .started_at, finished_at, runtime, last_error
@@ -422,27 +460,74 @@ class CoreJob(CoreBase):
         #       test this!
         # the method should start and finish with a .progress
         # the method catches all exceptions
-        pass
+
+
+        # log entry
+        self.progress(0.0, "starting job: {} with id: {}".format(self.qual_name(), self._id))
+        try:
+            self.started_at = core4.util.now()
+            self.execute(*args, **kwargs)
+        except:
+            self.last_error = core4.util.now()
+            raise
+        finally:
+            self.finished_at = core4.util.now()
+            runtime = (self.finished_at - self.started_at).total_seconds()
+            if self.runtime is not None:
+                runtime += self.runtime
+            self.runtime = runtime
+            # is last runtime the finished-time or the starting-time?
+            # self.cookie.set("last_runtime", self.finished_at)
+            # direct insert here to ignore if last update < 5s
+            self.config.sys.queue.update_one({"_id": self._id}, update={
+                '$set': {'locked.heartbeat': core4.util.now(),
+                         'locked.progress': "execution end marker",
+                         'locked.progress_value': 1.0,
+                         'locked.runtime': self.runtime}
+                })
 
     def defer(self, message=None):
-        # todo: implement
-        # raises a core4.error.CoreJobDeferred
-        pass
+        """
+        :param message: error-message
+        :raises: CoreJobDefered
+        """
+        raise core4.error.CoreJobDeferred(message)
 
     def execute(self, *args, **kwargs):
+        """
+        this method has to be implented by the user.
+        it is the entry-point of the framework.
+        code specified in this method is executed within the core-ecosystem.
+        :param args: passed argmuents
+        :param kwargs: passed enqueueing arguments
+        """
         raise NotImplementedError
 
+    @property
+    def _mongo_dict(self):
+        """
+        find your jobs queue-entry.
+        :return: mongodb-document representating this job.
+        """
+        query = {'_id': self._id,
+                 'locked.pid': core4.util.get_pid(),
+                 'locked.host': core4.util.get_hostname()
+                 }
+
+        if not self.__mongo_dict:
+            self.__mongo_dict = self.config.sys.queue.find_one(query)
+        return self.__mongo_dict
 
 class DummyJob(CoreJob):
+    """
+    This is just a job-dummy for testing purposes.
+    """
     author = 'mra'
 
 # todo: task list
-# - test + implement .save
-# - test + implement .load
-# - test + implement .progress (mock a sys.queue record for testing)
-# - test + implement .run
+
+
 # - test + implement DummyJob.execute
-# - test + implement .defer
 # then:
 # - reach 100% test coverage
 # - write documentation

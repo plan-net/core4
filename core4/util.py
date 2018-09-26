@@ -80,6 +80,13 @@ def now():
     return datetime.datetime.utcnow()
 
 
+def get_pid():
+    """
+    :return: pid of the current process.
+    """
+    return os.getpid()
+
+
 class Singleton(type):
     """
     Singleton metaclass, see
