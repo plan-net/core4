@@ -827,16 +827,44 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(config.test1.deep_dict.default_value, 123)
         self.assertEqual(config.test1.deep_dict.mongo_database, "test")
 
-    # def test_cache(self):
-    #     extra = tests.util.asset("config/extra1.yaml")
-    #     local = tests.util.asset("config/local1.yaml")
-    #     for i in range(100):
-    #         c = core4.config.main.CoreConfig(plugin_config=("test", extra),
-    #                                          config_file=local)
-    #         s = 0
-    #         for j in range(100):
-    #             x = c.sys.log
-    #             s += x.count()
+    def test_db_default(self):
+        self.mongo.core4test.sys.conf.insert_one({
+            "folder": {
+                "root": "/tmp"
+            },
+            "DEFAULT": {
+                "mongo_url": "mongodb://core:654321@localhost:27017",
+                "mongo_database": "abc"
+            }
+        })
+        local = tests.util.asset("config/local5.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual(
+            str(conf.sys.conf),
+            "!connect 'mongodb://core:654321@localhost:27017"
+            "/core4test/sys.conf'")
+        self.assertEqual(
+            conf.sys.role.info_url, "core@localhost:27017/abc/sys.role")
 
-if __name__ == '__main__':
-    unittest.main(exit=False)
+    def test_mongo_url_no_str(self):
+        self.mongo.core4test.sys.conf.insert_one({
+            "folder": {
+                "root": "/tmp"
+            },
+            "DEFAULT": {
+                "mongo_url": "!connect mongodb://core:654321@localhost:27017",
+                "mongo_database": "abc"
+            }
+        })
+        local = tests.util.asset("config/local5.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual(
+            str(conf.sys.conf),
+            "!connect 'mongodb://core:654321@localhost:27017"
+            "/core4test/sys.conf'")
+        with self.assertRaises(core4.error.Core4ConfigurationError):
+            x = conf.sys.role.info_url()
+
+
+    if __name__ == '__main__':
+        unittest.main(exit=False)

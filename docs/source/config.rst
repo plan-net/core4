@@ -7,7 +7,7 @@ configuration
 System configuration of various kind are the bridge between core4 development
 and operations activities. Key features of core4 configuration are:
 
-#. to keep sensitive data safe and keep naive staff and smart hackers out.
+#. to keep sensitive data safe and top keep naive staff and smart hackers out.
 #. to make the life of system administrators easy. The config system supports
    various configuration sources, e.g. configuration files, a central mongodb
    ``sys.conf`` collection, user configuration files, default values, OS
@@ -154,16 +154,11 @@ then the plugin default value applies if it is defined. If the plugin
 configuration does not define a default value and a standard value is
 defined, then this global default value is forwarded.
 
-.. note:: The configuration cascade from standard values through plugin
-          default values down to sub level plugin values applies only to
-          keys/values defined in core4`s configuration file. At the moment
-          only the configuration keys ``mongo_database`` and ``mongo_url``
-          exist to facilitate MongoDB collection access (see
-          :ref:`core_config` and the :ref:`connect_tag`).
+.. note:: The plugin configuration as well as :ref:`local_config` can provide a
+          ``DEFAULT`` dictionary, too.
 
 
-.. todo:: write about plugin DEFAULTs
-
+.. _local_config:
 
 local configuration
 ===================
