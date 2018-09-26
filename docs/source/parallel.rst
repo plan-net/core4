@@ -1,3 +1,5 @@
+.. _parallel:
+
 ########################################
 distributed and concurrent job execution
 ########################################
