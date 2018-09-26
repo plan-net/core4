@@ -230,6 +230,7 @@ _progress_interval    True   True  True     False       5 int > 0
          zombie_at   False  False False      True      na
     ============== ======= ====== ===== ========= ======= ====================
 
+    # todo: the table will not format properly
 
     Best practice is to put the section definitions as class variables. Define
     all other property settings into the configuration section of the job. The
@@ -268,8 +269,6 @@ _progress_interval    True   True  True     False       5 int > 0
         |            |                                   |       |
         `-----------´                                    `-------'
 
-    .. todo:: please use draw.io and create a proper chart
-
     Additionally to the job state property there are four flags indicating
     special job management:
 
@@ -281,9 +280,11 @@ _progress_interval    True   True  True     False       5 int > 0
       ``sys.queue``
     * **killed** - if not *None* indicates that the job has been killed
 
+    # todo: this is hidden, not __hidden__
+
     .. note:: There might be even cases, where you might want to hide a job from
-              any job listing. Set the ``__hidden__`` class variable to *True*
               for these jobs.
+              any job listing. Set the ``__hidden__`` class variable to *True*
 
     **job schedules**
 
@@ -311,7 +312,7 @@ _progress_interval    True   True  True     False       5 int > 0
     max_parallel = None
     schedule = None
     _frozen_ = False
-    progress_interval = 5
+    progress_interval = 5 # todo: update docs
 
     def __init__(self, *args, **kwargs):
         # attributes raised from self.class_config.* to self.*
@@ -348,8 +349,9 @@ _progress_interval    True   True  True     False       5 int > 0
         self.load_default()
         self.overload_config()
         self.overload_args(**kwargs)
+
         self._frozen_ = True
-        self.__mongo_dict = None
+        self.__mongo_dict = None  # todo: obsolete
 
     def __setattr__(self, key, value):
         """
@@ -468,10 +470,10 @@ _progress_interval    True   True  True     False       5 int > 0
         # log entry
         self.progress(0.0, "starting job: {} with id: {}".format(self.qual_name(), self._id))
         try:
-            self.__dict__['started_at'] = core4.util.now()
+            self.__dict__['started_at'] = core4.util.now() # todo: why is this in try?
             self.execute(*args, **kwargs)
         except:
-            self.__dict__['last_error'] = core4.util.now()
+            self.__dict__['last_error'] = core4.util.now() # todo: please check docs above, this carries something else, check core3
             raise
         finally:
             self.__dict__['finished_at'] = core4.util.now()
@@ -479,7 +481,7 @@ _progress_interval    True   True  True     False       5 int > 0
             if self.runtime is not None:
                 runtime += self.runtime
             self.__dict__['runtime'] = runtime
-            # is last runtime the finished-time or the starting-time?
+            # is last runtime the finished-time or the starting-time? # todo: finish time
             # self.cookie.set("last_runtime", self.finished_at)
             # direct insert here to ignore if last update < 5s
             self.cookie.set("last_runtime", self.finished_at)
@@ -495,7 +497,7 @@ _progress_interval    True   True  True     False       5 int > 0
         :param message: error-message
         :raises: CoreJobDefered
         """
-        raise core4.error.CoreJobDeferred(message)
+        raise core4.error.CoreJobDeferred(message) # todo: same *args mechanic as .progress, please
 
     def execute(self, *args, **kwargs):
         """
