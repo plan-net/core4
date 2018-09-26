@@ -68,7 +68,8 @@ setup(
         "Flask>=1.0, <2.0",
         "Flask-Login>=0.4, <1.0",
         "PyYaml>=3.12, <4",
-        "PyJWT>=1.6.4, <2"
+        "PyJWT>=1.6.4, <2",
+        "psutil>=5.4.7"
     ],
     zip_safe=False,
     cmdclass={
