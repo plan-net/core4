@@ -345,13 +345,11 @@ _progress_interval    True   True  True     False       5 int > 0
         self.wall_at = None
         self.zombie_at = None
 
-
         self.load_default()
         self.overload_config()
         self.overload_args(**kwargs)
         self._frozen_ = True
         self.__mongo_dict = None
-
 
     def __setattr__(self, key, value):
         """
@@ -431,12 +429,12 @@ _progress_interval    True   True  True     False       5 int > 0
 
         now = core4.util.now()
         if (self._last_progress is None
-            # check own document within sys.queue and check for hostname and pid
+                # check own document within sys.queue and check for hostname and pid
                 or (now >= self._last_progress + dt.timedelta(seconds=self.progress_interval)
-                and self.locked and self.locked['host'] == core4.util.get_hostname()
-                and self.locked['user'] == core4.util.get_username()
-                # pid is not currently included in sys.queue-doc
-                and self.locked['pid'] == core4.util.get_pid())):
+                    and self.locked and self.locked['host'] == core4.util.get_hostname()
+                    and self.locked['user'] == core4.util.get_username()
+                    # pid is not currently included in sys.queue-doc
+                    and self.locked['pid'] == core4.util.get_pid())):
             if args:
                 message = message % tuple(args)
             self.__dict__['_last_progress'] = now
@@ -452,7 +450,6 @@ _progress_interval    True   True  True     False       5 int > 0
         # each progress interval.
         # ensure the hostname + pid is really the owner of the job (mongo filter)
 
-
         pass
 
     def run(self, *args, **kwargs):
@@ -467,7 +464,6 @@ _progress_interval    True   True  True     False       5 int > 0
         #       test this!
         # the method should start and finish with a .progress
         # the method catches all exceptions
-
 
         # log entry
         self.progress(0.0, "starting job: {} with id: {}".format(self.qual_name(), self._id))
@@ -492,7 +488,7 @@ _progress_interval    True   True  True     False       5 int > 0
                          'locked.progress': "execution end marker",
                          'locked.progress_value': 1.0,
                          'locked.runtime': self.runtime}
-                })
+            })
 
     def defer(self, message=None):
         """
@@ -511,20 +507,6 @@ _progress_interval    True   True  True     False       5 int > 0
         """
         raise NotImplementedError
 
-    @property
-    def _mongo_dict(self):
-        """
-        find your jobs queue-entry.
-        :return: mongodb-document representating this job.
-        """
-        query = {'_id': self._id,
-                 'locked.pid': core4.util.get_pid(),
-                 'locked.host': core4.util.get_hostname()
-                 }
-
-        if not self.__mongo_dict:
-            self.__mongo_dict = self.config.sys.queue.find_one(query)
-        return self.__mongo_dict
 
 class DummyJob(CoreJob):
     """
@@ -533,11 +515,8 @@ class DummyJob(CoreJob):
     author = 'mra'
 
 # todo: task list
-
-
 # - test + implement DummyJob.execute
 # then:
-# - reach 100% test coverage
 # - write documentation
 # - write job.rst (decide what goes into API docs, and what goes in job.rst)
 # - verify sphinx docs format is right and looking good

@@ -440,28 +440,36 @@ class TestJob(unittest.TestCase):
         self.assertEqual(expected['locked']['progress'], actual['locked']['progress'])
         job.run()
         actual = job.config.sys.queue.find_one({"_id": job._id})
-        self.assertEqual(actual['locked']['progress_value'], 1.0)
-        self.assertEqual(actual['locked']['progress'], "execution end marker")
+        self.assertEqual(1.0, actual['locked']['progress_value'])
+        self.assertEqual("execution end marker", actual['locked']['progress'])
 
     def test_defer(self):
         class DeferJob(core4.queue.job.CoreJob):
             author = 'mkr'
             defer_self = True
+            progress_interval = 1
+
             def execute(self):
                 import time
-                time.sleep(2)
+                time.sleep(1)
                 if self.defer_self:
                     self.defer_self = False
                     self.defer("defer for testing")
-                time.sleep(2)
+                time.sleep(1)
 
             def progress_with_format_single(self):
-                self.progress(0.5, "Testing %s with format", "progress")
+                self.progress(0.2, "Testing %s with format", "progress")
+
             def progress_with_format_multiple(self):
                 # we do have to sleep here to allow this progress-message to come through with default-settings
                 import time
-                time.sleep(5)
-                self.progress(0.6, "Testing %s with %d format", "progress", 2)
+                time.sleep(1)
+                self.progress(0.5, "Testing %s with %d format", "progress", 2)
+
+            def progress_without_comment(self):
+                import time
+                time.sleep(1)
+                self.progress(0.7)
 
 
         defer_job = DeferJob()
@@ -478,12 +486,16 @@ class TestJob(unittest.TestCase):
 
         defer_job.progress_with_format_single()
         actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
-        self.assertEqual(actual['locked']['progress_value'], 0.5)
-        self.assertEqual(actual['locked']['progress'], "Testing progress with format")
+        self.assertEqual(0.2, actual['locked']['progress_value'])
+        self.assertEqual("Testing progress with format", actual['locked']['progress'])
         defer_job.progress_with_format_multiple()
         actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
-        self.assertEqual(0.6, actual['locked']['progress_value'])
-        self.assertEqual(actual['locked']['progress'], "Testing progress with 2 format")
+        self.assertEqual(0.5, actual['locked']['progress_value'])
+        self.assertEqual("Testing progress with 2 format", actual['locked']['progress'])
+        defer_job.progress_without_comment()
+        actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
+        self.assertEqual(0.7, actual['locked']['progress_value'])
+        self.assertEqual("", actual['locked']['progress'])
 
         with self.assertRaises(core4.error.CoreJobDeferred):
             defer_job.run()
@@ -491,7 +503,7 @@ class TestJob(unittest.TestCase):
         actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
         self.assertEqual(actual['locked']['progress_value'], 1.0)
         self.assertEqual(actual['locked']['progress'], "execution end marker")
-        self.assertGreaterEqual(actual['locked']['runtime'], 4)
+        self.assertGreaterEqual(actual['locked']['runtime'], 2)
         actual = defer_job.config.sys.cookie.find_one({"_id": defer_job.qual_name()})
         self.assertLess(actual['last_runtime'], dt.datetime.now())
 
