@@ -16,7 +16,7 @@ most important right here and provide links to the canonical documentation.
    logger/index
    service/index
    api/v1/index
-   helpers/index
+   queue/index
    error
    util
 

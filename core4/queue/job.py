@@ -115,6 +115,8 @@ class CoreJob(CoreBase):
     The following table describes all job properties in alphabetical order.
 
     * ``_id`` - job identifier in ``sys.queue``
+    * ``_frozen_`` freeze job so none of the Job-Aruments described here can be set by the user
+    * ``_next_progress`` when to next update the Jobs progress
     * ``args`` - arguments passed to the job
     * ``attempts`` - maximum number of execution attempts after job failure
       before the job enters the final ``error`` state
@@ -189,12 +191,12 @@ class CoreJob(CoreBase):
               :meth:`.enqueue()`, 2) key/values in the job configuration,
               3) values specified as class properties.
 
-    ============== ======= ====== ===== ========= ======= ====================
+ ================= ======= ====== ===== ========= ======= ====================
           property enqueue config class serialise default validation
-    ============== ======= ====== ===== ========= ======= ====================
+ ================= ======= ====== ===== ========= ======= ====================
                _id   False  False False      True      na
-          _frozen_   False  False False      False   True
-    _next_progress   False  False False      False     na
+          _frozen_   False  False False     False    True
+    _next_progress   False  False False     False      na
               args    True  False False      True      na
           attempts    True   True  True      True       1 int > 0
      attempts_left   False  False False      True      na
@@ -230,9 +232,8 @@ class CoreJob(CoreBase):
            wall_at   False  False False      True      na
          wall_time    True   True  True      True    None int > 0, None
          zombie_at   False  False False      True      na
-    ============== ======= ====== ===== ========= ======= ====================
+ ================= ======= ====== ===== ========= ======= ====================
 
-    # todo: the table will not format properly
 
     Best practice is to put the section definitions as class variables. Define
     all other property settings into the configuration section of the job. The
@@ -281,8 +282,6 @@ class CoreJob(CoreBase):
     * **removed** - if not *None* indicates a request to remove the job from
       ``sys.queue``
     * **killed** - if not *None* indicates that the job has been killed
-
-    # todo: this is hidden, not __hidden__
 
     .. note:: There might be even cases, where you might want to hide a job from
               for these jobs.

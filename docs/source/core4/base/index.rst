@@ -16,6 +16,5 @@ also :doc:`logging mechanics<../logger/index>`).
    main
    collection
    connector
-   job
 
 
