@@ -24,7 +24,7 @@ folder:
 logging:
   stderr: DEBUG
   stdout: ~
-  mongodb: INFO
+  mongodb: ~
   format: "%(asctime)s - %(levelname)-8s [%(qual_name)s/%(identifier)s] %(message)s"
   exception:
     capacity: 1000
@@ -34,3 +34,8 @@ logging:
 job:
   defer_time: 60
   defer_max: 3600
+
+mymod:
+  jobs:
+    MyJob:
+      schedule: "* * * * 1"
