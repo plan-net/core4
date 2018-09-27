@@ -37,13 +37,10 @@ Continue reading with
 
 
 Further information on python in data and analytics:
- * `The Incredible Growth of Python`_
- * `Why Python is Growing So Quickly`_).
+ * `The Incredible Growth of Python <https://stackoverflow.blog/2017/09/06/incredible-growth-python/>`_
+ * `Why Python is Growing So Quickly <https://stackoverflow.blog/2017/09/14/python-growing-quickly/>`_
 
 .. _Python: https://www.python.org/
 .. _NumPy: http://www.numpy.org/
 .. _Pandas: https://pandas.pydata.org/
 .. _Scikit-Learn: http://scikit-learn.org/
-
-.. _The Incredible Growth of Python: https://stackoverflow.blog/2017/09/06/incredible-growth-python/
-.. _Why Python is Growing So Quickly: https://stackoverflow.blog/2017/09/14/python-growing-quickly/
