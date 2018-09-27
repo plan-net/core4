@@ -7,7 +7,7 @@ configuration
 System configuration of various kind are the bridge between core4 development
 and operations activities. Key features of core4 configuration are:
 
-#. to keep sensitive data safe and top keep naive staff and smart hackers out.
+#. to keep sensitive data safe and keep naive staff and smart hackers out.
 #. to make the life of system administrators easy. The config system supports
    various configuration sources, e.g. configuration files, a central mongodb
    ``sys.conf`` collection, user configuration files, default values, OS
