@@ -193,6 +193,8 @@ class CoreJob(CoreBase):
           property enqueue config class serialise default validation
     ============== ======= ====== ===== ========= ======= ====================
                _id   False  False False      True      na
+          _frozen_   False  False False      False   True
+    _next_progress   False  False False      False     na
               args    True  False False      True      na
           attempts    True   True  True      True       1 int > 0
      attempts_left   False  False False      True      na
@@ -312,7 +314,8 @@ class CoreJob(CoreBase):
     max_parallel = None
     schedule = None
     _frozen_ = False
-    progress_interval = 5 # todo: update docs
+    progress_interval = 5
+    _next_progress = None
 
     def __init__(self, *args, **kwargs):
         # attributes raised from self.class_config.* to self.*
@@ -421,47 +424,18 @@ class CoreJob(CoreBase):
         if a job does not report progress within a specified timeframe, it turns into a zombie.
         updates the jobs heartbeat and logs the progress with debug-messages.
         """
-        # Check tuple to have the correct format (float, string) -- this will be done by string manim
-        if args:
-            args = list(args)
-            message = args.pop(0)
-        else:
-            message = ""
-
         now = core4.util.now()
-        if (force or self._last_progress is None
-                #       and include this only in the sys.queue update below
-                # todo: please check the docs, this is hostname, not host
-                #       and username, not user
-                # check own document within sys.queue and check for hostname and pid
-                or (now >= self._last_progress + dt.timedelta(seconds=self.progress_interval))):
-#                    and self.locked and self.locked['hostname'] == core4.util.get_hostname()
-#                    and self.locked['username'] == core4.util.get_username()
-                    # pid is not currently included in sys.queue-doc
- #                   and self.locked['pid'] == core4.util.get_pid())):
-            if args:
-                message = message % tuple(args)
-            self.__dict__['_last_progress'] = now
-            self.logger.debug(message + " progress: " + str(p))
-            if self.finished_at:
-                runtime = (self.finished_at - self.started_at).total_seconds()
-            else:
-                runtime = (core4.util.now() - self.started_at).total_seconds()
-            if self.runtime is not None:
-                runtime += self.runtime
-            self.__dict__['runtime'] = runtime
-                # is last runtime the finished-time or the starting-time? # todo: finish time
+
+        if (force or self._next_progress is None or now >= self._next_progress):
+            message = self._format_args(*args)
+            self.__dict__['_next_progress'] = now + dt.timedelta(seconds=self.progress_interval)
+            self.logger.debug(message + "|  Progress at: " + str(p * 100) + "%")
             return self.config.sys.queue.update_one({"_id": self._id}, update={
                 '$set': {'locked.heartbeat': core4.util.now(),
                          'locked.progress': message,
-                         'locked.progress_value': p,
-                         'locked.runtime': self.runtime}
+                         'locked.progress_value': p
+                         }
             })
-
-        # todo: implement
-        # this method creates a DEBUG message and updates the heartbeat
-        # each progress interval.
-        # ensure the hostname + pid is really the owner of the job (mongo filter)
 
         pass
 
@@ -470,57 +444,33 @@ class CoreJob(CoreBase):
         set the nessecary cookie-information on startup and finish of the job.
         log a first progress and call the execute-method of the job.
         """
-        # todo: implement
-        # the job sets and updates the following attributes
-        # - .started_at, finished_at, runtime, last_error
-        # note: runtime is the incremental sum (in case of failure and defer)
-        #       test this!
-        # the method should start and finish with a .progress
-        # the method catches all exceptions
-
-        # log entry
-
         self.__dict__['started_at'] = core4.util.now()
         self.progress(0.0, "starting job: {} with id: {}".format(self.qual_name(), self._id))
         self.logger.debug("starting job: {} with id: {}".format(self.qual_name(), self._id))
         try:
             self.execute(*args, **kwargs)
         except:
-            self.__dict__['last_error'] = core4.util.now() # todo: please check docs above, this carries something else, check core3
+            self.__dict__[
+                'last_error'] = core4.util.now()  # todo: please check docs above, this carries something else, check core3
             raise
         finally:
             self.__dict__['finished_at'] = core4.util.now()
-            # This is now done within progress()
-            # runtime = (self.finished_at - self.started_at).total_seconds()
-            # if self.runtime is not None:
-            #     runtime += self.runtime
-            # self.__dict__['runtime'] = runtime
-            # is last runtime the finished-time or the starting-time? # todo: finish time
-            # self.cookie.set("last_runtime", self.finished_at)
-            # direct insert here to ignore if last update < 5s
+            runtime = (self.finished_at - self.started_at).total_seconds()
+            if self.runtime is not None:
+                runtime += self.runtime
+            self.__dict__['runtime'] = runtime
+            self.config.sys.queue.update_one({"_id": self._id}, update={'$set': {'locked.runtime': self.runtime}})
             self.cookie.set("last_runtime", self.finished_at)
             self.logger.debug("finished execution of job after {}".format(self.runtime))
             self.progress(1.0, "execution end marker", force=True)
-            # self.config.sys.queue.update_one({"_id": self._id}, update={
-            #     '$set': {'locked.heartbeat': core4.util.now(),
-            #              'locked.progress': "execution end marker",
-            #              'locked.progress_value': 1.0,
-            #              'locked.runtime': self.runtime}
-            # })
 
     def defer(self, *args):
         """
         :param message: error-message
         :raises: CoreJobDefered
         """
-        if args:
-            args = list(args)
-            m = args.pop(0)
-            message = m % tuple(args)
-        else:
-            message = ""
-
-        raise core4.error.CoreJobDeferred(message) # todo: same *args mechanic as .progress, please
+        message = self._format_args(*args)
+        raise core4.error.CoreJobDeferred(message)
 
     def execute(self, *args, **kwargs):
         """

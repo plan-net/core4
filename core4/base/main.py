@@ -231,3 +231,19 @@ class CoreBase:
         if self._last_progress is None or p_round != self._last_progress:
             self._log_progress(p_round * 100., *args)
             self._last_progress = p_round
+
+    @staticmethod
+    def _format_args(*args):
+        """
+        format a message given only by args.
+        message hast to be the first parameter, formatting second.
+        :param args: args
+        :return: formatted message.
+        """
+        if args:
+            args = list(args)
+            m = args.pop(0)
+            message = m % tuple(args)
+        else:
+            message = ""
+        return message
