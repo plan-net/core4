@@ -378,6 +378,3 @@ developer has for example read-only access to production data.
 All configuration files - ``plugin1.yaml``, ``~/core4/local.yaml`` and
 ``/etc/core4/local.yaml`` in this example - can be created and maintained
 independent of each other.
-
-
-.. _ISO format: https://en.wikipedia.org/wiki/ISO_8601
