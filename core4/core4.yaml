@@ -51,3 +51,13 @@ job:
   schedule: ~
   tag: ~
   progress_inverval: 5
+
+# master settings
+master:
+  execution_plan:
+    work_jobs: 0.25
+    inactive_jobs: 5.00
+    kill_jobs: 10.00
+    nopid_jobs: 15.00
+    nonstop_jobs: 20.00
+    collect_stats: 25.00

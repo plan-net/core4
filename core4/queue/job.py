@@ -431,6 +431,10 @@ _progress_interval    True   True  True     False       5 int > 0
 
         now = core4.util.now()
         if (self._last_progress is None
+                # todo: I suggest to leave the filter on host etc. out
+                #       and include this only in the sys.queue update below
+                # todo: please check the docs, this is hostname, not host
+                #       and username, not user
                 # check own document within sys.queue and check for hostname and pid
                 or (now >= self._last_progress + dt.timedelta(seconds=self.progress_interval)
                     and self.locked and self.locked['host'] == core4.util.get_hostname()
@@ -485,6 +489,9 @@ _progress_interval    True   True  True     False       5 int > 0
             # self.cookie.set("last_runtime", self.finished_at)
             # direct insert here to ignore if last update < 5s
             self.cookie.set("last_runtime", self.finished_at)
+            # todo: I suggest to use .progress here with a force=True
+            # parameter. This is approach is better if we decide to enhance logging in
+            # the future!
             self.config.sys.queue.update_one({"_id": self._id}, update={
                 '$set': {'locked.heartbeat': core4.util.now(),
                          'locked.progress': "execution end marker",
