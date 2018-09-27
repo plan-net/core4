@@ -10,4 +10,9 @@ tbd.
 prerequisites
 =============
 
-tbd.
+* MongoDB
+* git
+* uwsgi?
+* nginx?
+
+all other comes with core4 installation.
