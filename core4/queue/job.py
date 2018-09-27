@@ -176,20 +176,19 @@ class CoreJob(CoreBase):
 
     **job property definition schemes**
 
-    Job properties can be specified in three ways:
+    Job properties can be specified in the following three ways,
+    if a property is defined within more then one definition scheme hinted order is applied:
 
     #. job properties can be defined by parameters passed to :meth:`.enqueue()`
     #. job properties can be defined in configuration settings
     #. job properties can be defined as a class property
 
+    After all properties have been applied according to their priority, the _frozen_ Attribute will be set,
+    which results in an error if the users tries to set any core4-related job-parameters.
+
     Note that not all properties support all three definition schemes. The
     following table provides information about which user-defined job properties
     support one or more definition scheme.
-
-    .. note:: if a job property is defined with more than one definition scheme,
-              the following order/priority is applied: 1) parameters to
-              :meth:`.enqueue()`, 2) key/values in the job configuration,
-              3) values specified as class properties.
 
  ================= ======= ====== ===== ========= ======= ====================
           property enqueue config class serialise default validation
@@ -251,8 +250,7 @@ class CoreJob(CoreBase):
     * **complete** - the job successfully finished execution
     * **failed** - job execution failed with attempts left
     * **error** - job execution failed with no attempts left
-    * **inactive** - the job continuously deferred execution and is considered
-                     inactive
+    * **inactive** - the job continuously deferred execution and is considered inactive
     * **killed** - the job has been killed by a user
 
     The states *complete*, *error*, *inactive* and *killed* are final states.
@@ -410,7 +408,7 @@ class CoreJob(CoreBase):
     def cookie(self):
         """
         cookie of the job depending on its qual_name.
-        :return: cookie-instance
+        :return: ``Cookie``
         """
         if not self._cookie:
             self._cookie = core4.base.cookie.Cookie(self.qual_name(short=True), self.config.sys.cookie)
@@ -422,6 +420,10 @@ class CoreJob(CoreBase):
         this method is called on a set intervall.
         if a job does not report progress within a specified timeframe, it turns into a zombie.
         updates the jobs heartbeat and logs the progress with debug-messages.
+
+        :param p: percentage in decimal.
+        :param args: message and or format, will be passed to ``_format_args`` of ``CoreBase``
+        :param force: force progress update, ignore ``_next_progress``
         """
         now = core4.util.now()
 
@@ -442,6 +444,9 @@ class CoreJob(CoreBase):
         """
         set the nessecary cookie-information on startup and finish of the job.
         log a first progress and call the execute-method of the job.
+
+        :param args: will be passed to ``execute()``
+        :param kwargs: will be passed to ``execute()``
         """
         self.__dict__['started_at'] = core4.util.now()
         self.progress(0.0, "starting job: {} with id: {}".format(self.qual_name(), self._id))
@@ -465,8 +470,10 @@ class CoreJob(CoreBase):
 
     def defer(self, *args):
         """
+        defer the job, this will result in the job being returned to the queue and be queried again after ``defer_time``
+
         :param message: error-message
-        :raises: CoreJobDefered
+        :raises: ``CoreJobDefered``
         """
         message = self._format_args(*args)
         raise core4.error.CoreJobDeferred(message)
@@ -476,6 +483,7 @@ class CoreJob(CoreBase):
         this method has to be implented by the user.
         it is the entry-point of the framework.
         code specified in this method is executed within the core-ecosystem.
+
         :param args: passed argmuents
         :param kwargs: passed enqueueing arguments
         """
