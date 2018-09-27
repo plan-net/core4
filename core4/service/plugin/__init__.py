@@ -15,6 +15,14 @@ def input_loop(message, identifier=False):
 
 
 def make_plugin(package_name=None):
+    """
+    Interactive method used by :mod:`.coco` to create a new plugin.
+    The plugin templates are located in directory ``/template``. A combination
+    of :mod:`Jinja2` and file-/folder name substitution is used to create a
+    new plugin from this blueprint.
+
+    :param package_name: str
+    """
     kwargs = {
         "package_name": package_name,
         "package_description": "",
