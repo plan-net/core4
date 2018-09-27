@@ -1,0 +1,2 @@
+DEFAULT:
+  mongo_database: {{ package_name }}
