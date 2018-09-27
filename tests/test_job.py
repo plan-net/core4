@@ -24,6 +24,10 @@ class TestJob(unittest.TestCase):
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321" \
                                                  "@localhost:27017"
         os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
+        class LogOn(core4.base.main.CoreBase,
+                    core4.logger.mixin.CoreLoggerMixin): pass
+        logon = LogOn()
+        logon.setup_logging()
 
     def tearDown(self):
         tests.util.drop_env()
@@ -127,7 +131,7 @@ class TestJob(unittest.TestCase):
                             "MyJob": {
                                 "defer_time": 666,
                                 "defer_max": 777,
-                                "progress_interval": 5,
+                                "progress_interval": 5, # todo: obsolete?
                                 "my_var": 'custom value'
                             }
                         },
@@ -142,7 +146,7 @@ class TestJob(unittest.TestCase):
                                     "attempts": 2,
                                     "author": "fake",
                                     "defer_max": 999,
-                                    "progress_interval": 10,
+                                    "progress_interval": 10, # todo: dito?
                                     "my_var": 'local value',
                                     "unknown": 'not defined'
                                 }
@@ -394,8 +398,21 @@ class TestJob(unittest.TestCase):
         with self.assertRaises(core4.error.Core4UsageError):
             job.test()
 
-
     def test_progress(self):
+        # todo: this test produces the following output if DEBUG is on (see .setup, above). Please explain
+        """
+        Testing started at 09:00 ...
+        /home/mra/.virtualenvs/core4dev/bin/python /snap/pycharm-community/85/helpers/pycharm/_jb_unittest_runner.py --target test_job.TestJob.test_progress
+        Launching unittests with arguments python -m unittest test_job.TestJob.test_progress in /home/mra/PycharmProjects/core4/tests
+        2018-09-27 07:00:36,629 - DEBUG    [tests.test_job.LogOn/None] stderr logging setup complete, level DEBUG
+        2018-09-27 07:00:36,629 - DEBUG    [tests.test_job.LogOn/None] logging setup complete
+        2018-09-27 07:00:37,662 - DEBUG    [tests.test_job.MyJob/None] slept 0 seconds
+        2018-09-27 07:00:42,672 - DEBUG    [tests.test_job.MyJob/None] slept 5 seconds
+        2018-09-27 07:00:47,680 - DEBUG    [tests.test_job.MyJob/None] slept 0 seconds
+        2018-09-27 07:00:52,691 - DEBUG    [tests.test_job.MyJob/None] slept 5 seconds
+
+        Ran 1 test in 20.145s
+        """
         class MyJob(core4.queue.job.CoreJob):
             author = 'mkr'
 
@@ -475,7 +492,8 @@ class TestJob(unittest.TestCase):
         defer_job = DeferJob()
         defer_job.__dict__['_id'] = "this is test_defer"
 
-        locked = {"_id": defer_job._id, "locked": {
+        locked = {"_id": defer_job._id,
+                  "locked": {
             "progress_value": 0.0,
             "host": core4.util.get_hostname(),
             "pid": core4.util.get_pid(),
