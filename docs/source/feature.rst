@@ -34,4 +34,4 @@ or months:
 * :ref:`widgets <widget>` as mini applications - extension to the ReST API to
   deliver simple single-page applications
 * :ref:`plugin architecture <plugin>` a unified scheme to package and manage
-  multiple business domains, accounts and even tenants
+  multiple projects, accounts, business domains, or tenants

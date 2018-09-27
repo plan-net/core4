@@ -1,4 +1,3 @@
-
 .. raw:: html
 
    <div style="text-align: center">
@@ -15,15 +14,16 @@
    </p>
    </div>
 
+
 .. toctree::
    :caption: Contents:
    :maxdepth: 1
 
    intro
    feature
-   why
-   example
    install
+   example
+   why
    plugin
    job
    helpers
@@ -39,6 +39,7 @@
    tools
    about
    core4/index
+
 
 Indices and tables
 ==================
