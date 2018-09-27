@@ -411,6 +411,9 @@ class TestJob(unittest.TestCase):
         2018-09-27 07:00:47,680 - DEBUG    [tests.test_job.MyJob/None] slept 0 seconds
         2018-09-27 07:00:52,691 - DEBUG    [tests.test_job.MyJob/None] slept 5 seconds
 
+        todo: once called via execute() and once via run()
+        todo: run() start and end-message missing
+
         Ran 1 test in 20.145s
         """
         class MyJob(core4.queue.job.CoreJob):
@@ -422,36 +425,33 @@ class TestJob(unittest.TestCase):
                     time.sleep(1.0)
                     self.progress(i/10, "slept {} seconds".format(i))
 
-            def defer_self(self):
-                import time
-                time.sleep(10.0)
-                self.defer()
 
         job = MyJob(_frozen_=False)
         job.__dict__['_id'] = "this is just a test_id"
         locked = {"_id": job._id, "locked": {
         "progress_value": 0.0,
-        "host": core4.util.get_hostname(),
+        "hostname": core4.util.get_hostname(),
         "pid": core4.util.get_pid(),
-        "user": core4.util.get_username()
+        "username": core4.util.get_username()
         }}
         job.config.sys.queue.insert_one(locked)
         job.__dict__['locked'] = locked['locked']
         # execute ones by calling execute directly to check job-runtime progress
+        job.__dict__['started_at'] = core4.util.now()
         job.execute()
         expected = {
                     "_id": "this is just a test_id",
                     "locked": {
                     "progress_value": 0.5,
-                    "host": core4.util.get_hostname(),
+                    "hostname": core4.util.get_hostname(),
                     "pid": core4.util.get_pid(),
-                    "user": core4.util.get_username(),
+                    "username": core4.util.get_username(),
                     "progress": "slept 5 seconds"
                         }
                     }
         actual = job.config.sys.queue.find_one({"_id": job._id})
-        self.assertEqual(expected['locked']['host'], actual['locked']['host'])
-        self.assertEqual(expected['locked']['user'], actual['locked']['user'])
+        self.assertEqual(expected['locked']['hostname'], actual['locked']['hostname'])
+        self.assertEqual(expected['locked']['username'], actual['locked']['username'])
         self.assertEqual(expected['locked']['pid'], actual['locked']['pid'])
         self.assertEqual(expected['locked']['progress_value'], actual['locked']['progress_value'])
         self.assertEqual(expected['locked']['progress'], actual['locked']['progress'])
@@ -488,20 +488,26 @@ class TestJob(unittest.TestCase):
                 time.sleep(1)
                 self.progress(0.7)
 
+            def defer_self(self):
+                self.defer()
+
 
         defer_job = DeferJob()
         defer_job.__dict__['_id'] = "this is test_defer"
 
+        with self.assertRaises(core4.error.CoreJobDeferred):
+            defer_job.defer_self()
+
         locked = {"_id": defer_job._id,
                   "locked": {
             "progress_value": 0.0,
-            "host": core4.util.get_hostname(),
+            "hostname": core4.util.get_hostname(),
             "pid": core4.util.get_pid(),
-            "user": core4.util.get_username()
+            "username": core4.util.get_username()
         }}
         defer_job.__dict__['locked'] = locked['locked']
         defer_job.config.sys.queue.insert_one(locked)
-
+        defer_job.__dict__['started_at'] = core4.util.now()
         defer_job.progress_with_format_single()
         actual = defer_job.config.sys.queue.find_one({"_id": defer_job._id})
         self.assertEqual(0.2, actual['locked']['progress_value'])
