@@ -37,7 +37,7 @@ There are three main logging targets used by core4 components:
 
 The core4 logger name is ``core4`` and replicates the :meth:`.qual_name()` of
 the class, e.g. ``core4.base.main.CoreBase`` for :class:`.CoreBase`. All
-plugin based classes have a special logger name starting with ``core4.plugin``.
+project based classes have a special logger name starting with ``core4.project``.
 
 To turn on logging to ``STDOUT``, ``STDERR`` or MongoDB set the requested
 logging level, for example::

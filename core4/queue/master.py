@@ -18,7 +18,7 @@ class CoreMaster(core4.base.CoreBase):
         self.enter_phase("startup")
         self.create_master_env()
         self.register_master()
-        self.register_plugins()
+        self.register_projects()
         self.cleanup()
         self.plan = self.create_plan()
         self.loop()
@@ -41,7 +41,7 @@ class CoreMaster(core4.base.CoreBase):
     def register_master(self):
         pass
 
-    def register_plugins(self):
+    def register_projects(self):
         pass
 
     def cleanup(self):

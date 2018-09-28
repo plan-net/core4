@@ -4,6 +4,6 @@ __version__ = '{{ package_version }}'
 __project__ = 'core4'
 __built__ = None
 
-title = '{{ package_name }} (core4 plugin)'
+title = '{{ package_name }} (core4 project)'
 description = """{{ package_description }}
 """

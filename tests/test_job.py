@@ -125,8 +125,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={
+                    project_name="tests",
+                    project_dict={
                         "test_job": {
                             "MyJob": {
                                 "defer_time": 666,
@@ -173,8 +173,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={
+                    project_name="tests",
+                    project_dict={
                         "test_job": {
                             "MyJob": {
                                 "defer_time": "abc"
@@ -188,15 +188,15 @@ class TestJob(unittest.TestCase):
         with self.assertRaises(AssertionError):
             job.validate()
 
-    def test_plugin_overwrite(self):
+    def test_project_overwrite(self):
         class MyJob(core4.queue.job.CoreJob):
             author = "mra"
             schedule = "1 * * * *"
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={
+                    project_name="tests",
+                    project_dict={
                         "test_job": {
                             "MyJob": {
                                 "schedule": "2 * * * *"
@@ -220,8 +220,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={
+                    project_name="tests",
+                    project_dict={
                         "test_job": {
                             "MyJob": {
                                 "schedule": "2 * * * *"
@@ -250,8 +250,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={
+                    project_name="tests",
+                    project_dict={
                         "test_job": {
                             "MyJob": {
                                 "attempts": 1
@@ -274,13 +274,13 @@ class TestJob(unittest.TestCase):
         self.assertEqual("1 * * * *", job.schedule)
         self.assertEqual(2, job.attempts)
 
-    def test_plugin_default(self):
+    def test_project_default(self):
         class MyJob(core4.queue.job.CoreJob):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={
+                    project_name="tests",
+                    project_dict={
                         "DEFAULT": {
                             "schedule": "1 * * * *"
                         },
@@ -308,8 +308,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={},
+                    project_name="tests",
+                    project_dict={},
                     local_dict={},
                     **kwargs
                 )
@@ -331,8 +331,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={},
+                    project_name="tests",
+                    project_dict={},
                     local_dict={
                         "tests": {
                             "test_job": {
@@ -362,8 +362,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={},
+                    project_name="tests",
+                    project_dict={},
                     local_dict={},
                     **kwargs
                 )
@@ -382,8 +382,8 @@ class TestJob(unittest.TestCase):
 
             def make_config(self, *args, **kwargs):
                 return core4.config.test.TestConfig(
-                    plugin_name="tests",
-                    plugin_dict={},
+                    project_name="tests",
+                    project_dict={},
                     local_dict={},
                     **kwargs
                 )

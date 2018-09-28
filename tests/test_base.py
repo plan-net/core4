@@ -53,26 +53,26 @@ class TestBase(unittest.TestCase):
         self.assertEqual("core4.base.main.CoreBase", b.qual_name())
         self.assertEqual("core4.base.main.CoreBase", b.qual_name(short=False))
 
-    def test_plugin(self):
-        import plugin.test
-        t = plugin.test.Test()
-        self.assertEqual("plugin", t.plugin)
-        self.assertEqual("plugin.test.Test", t.qual_name())
-        self.assertEqual("core4.plugin.plugin.test.Test", t.qual_name(
+    def test_project(self):
+        import project.test
+        t = project.test.Test()
+        self.assertEqual("project", t.project)
+        self.assertEqual("project.test.Test", t.qual_name())
+        self.assertEqual("core4.project.project.test.Test", t.qual_name(
             short=False))
-        self.assertEqual("plugin.test.Test()", repr(t))
+        self.assertEqual("project.test.Test()", repr(t))
 
-    def test_plugin_conf(self):
-        import plugin.test
-        t = plugin.test.Test()
-        self.assertTrue(t.plugin_config().endswith("core4/plugin/plugin.yaml"))
+    def test_project_conf(self):
+        import project.test
+        t = project.test.Test()
+        self.assertTrue(t.project_config().endswith("core4/project/project.yaml"))
         self.assertEqual(t.config.mongo_database, "core4test")
-        self.assertEqual(repr(t), "plugin.test.Test()")
+        self.assertEqual(repr(t), "project.test.Test()")
         # self.assertIn("/core4test/sys.role", t.config.sys.role.info_url)
         # self.assertEqual(test, t.config)
 
     def test_main(self):
-        import plugin.test
+        import project.test
         from subprocess import check_output
         environ = os.environ
         if "PYTHONPATH" in os.environ:
@@ -81,9 +81,9 @@ class TestBase(unittest.TestCase):
             pp = []
         pp.append(os.path.dirname(core4.__file__) + "/..")
         os.environ["PYTHONPATH"] = ":".join(pp)
-        out = check_output([sys.executable, plugin.test.__file__], env=environ)
+        out = check_output([sys.executable, project.test.__file__], env=environ)
         self.assertEqual(out.decode("utf-8").strip(),
-                         'core4.base.main.CoreBase plugin.test.Test')
+                         'core4.base.main.CoreBase project.test.Test')
 
     def test_collection_scheme(self):
         os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"

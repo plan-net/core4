@@ -48,11 +48,11 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/m-rau/core4",
-    packages=find_packages(exclude=['docs', 'tests*', 'plugin']),
+    packages=find_packages(exclude=['docs', 'tests*', 'project']),
     package_data={
         '':
             ["core4.yaml"]
-            + package_files("core4/service/plugin/template/", "^.+$")
+            + package_files("core4/service/project/template/", "^.+$")
     },
     tests_require=[
         "coverage>=4.0, <5.0",

@@ -14,12 +14,12 @@ def input_loop(message, identifier=False):
                 print("this is not a valid package name\n")
 
 
-def make_plugin(package_name=None):
+def make_project(package_name=None):
     """
-    Interactive method used by :mod:`.coco` to create a new plugin.
-    The plugin templates are located in directory ``/template``. A combination
+    Interactive method used by :mod:`.coco` to create a new project.
+    The project templates are located in directory ``/template``. A combination
     of :mod:`Jinja2` and file-/folder name substitution is used to create a
-    new plugin from this blueprint.
+    new project from this blueprint.
 
     :param package_name: str
     """
@@ -32,7 +32,7 @@ def make_plugin(package_name=None):
         print("this is not a valid package name")
         sys.exit(1)
     print()
-    print("core4 plugin creation")
+    print("core4 project creation")
     print("=====================")
     if kwargs["package_name"] is None:
         kwargs["package_name"] = input_loop("Name: ", identifier=True)
@@ -46,7 +46,7 @@ def make_plugin(package_name=None):
             break
 
     if os.path.exists(kwargs["package_name"]):
-        print("\nplugin exists")
+        print("\nproject exists")
         sys.exit(1)
     print()
     template = os.path.join(os.path.dirname(__file__), "template")

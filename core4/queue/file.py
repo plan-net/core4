@@ -51,7 +51,7 @@ class FileMixin(CoreBase):
             raise (RuntimeError('archive root [%s] not found' % (archive_dir)))
         # archive directory
         target_dir = os.path.join(archive_dir,
-                                  base or self.plugin,
+                                  base or self.project,
                                   # todo: where is archive_timestamp configured ?
                                   # timestamp.strftime(
                                   #     self.config.get('archive_timestamp',
@@ -105,7 +105,7 @@ class FileMixin(CoreBase):
             raise (RuntimeError('process root [%s] not found' % (proc_dir)))
         # process directory
         target_dir = os.path.join(proc_dir,
-                                  base or self.plugin)
+                                  base or self.project)
         if not os.path.exists(target_dir):
             self.logger.debug('creating [%s]', target_dir)
             os.makedirs(target_dir)
@@ -133,7 +133,7 @@ class FileMixin(CoreBase):
         # root
         proc_dir = self.config.folder.root + "/" + self.config.folder.process
         source_dir = os.path.join(proc_dir,
-                                  base or self.plugin)
+                                  base or self.project)
         if not os.path.exists(source_dir):
             raise (RuntimeError('process root [%s] not found' % (source_dir)))
         self.logger.debug('scanning [%s]', source_dir)
@@ -153,7 +153,7 @@ class FileMixin(CoreBase):
         """
         transfer_dir = self.config.folder.root + "/" + self.config.folder.transfer
         source_dir = os.path.join(transfer_dir,
-                                  base or self.plugin)
+                                  base or self.project)
         if not os.path.exists(source_dir):
             raise (RuntimeError('process root [%s] not found' % (source_dir)))
         self.logger.debug('scanning [%s]', source_dir)

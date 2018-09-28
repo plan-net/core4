@@ -11,7 +11,7 @@ and operations activities. Key features of core4 configuration are:
 #. to make the life of system administrators easy. The config system supports
    various configuration sources, e.g. configuration files, a central mongodb
    ``sys.conf`` collection, user configuration files, default values, OS
-   environment variables as well as plugin specific config files.
+   environment variables as well as project specific config files.
    Administrators choose their weapons.
 #. to make the life of data scientists and developers easy. The config system
    supports cross-database application development, local and remote sources,
@@ -26,9 +26,9 @@ There are multiple places where core4 is looking for configuration.
 
 #. The **core4 configuration** file ``config/core.yaml``, see
    :ref:`core_config`. This file provides standard values.
-#. The **plugin configuration** file for plugin specific settings in
-   ``[PLUGIN]/[PLUGIN].yaml``. This file is part of the plugin repository and
-   is considered to provide plugin specific default values.
+#. The **project configuration** file for project specific settings in
+   ``[project]/[project].yaml``. This file is part of the project repository and
+   is considered to provide project specific default values.
 #. The optional **local configuration file**. If the special environment
    variable ``CORE4_CONFIG`` locates an existing file, then this file is
    processed. If the variable is not defined, then the user file
@@ -44,7 +44,7 @@ There are multiple places where core4 is looking for configuration.
    configuration values (see :ref:`env_config`).
 
 If more than one source specifies a configuration key, then the last value
-wins. Local configuration takes precedence over standard core4 and plugin
+wins. Local configuration takes precedence over standard core4 and project
 values. Collection ``sys.conf`` takes precedence over local configruation.
 Finally environment variables have the top most priority to set configuration
 values.
@@ -66,7 +66,7 @@ This boils down to the configuration flow outlined in the following diagram:
              mechanic of core4 configuration**. The configuration sources
              described above represent a cascade. Specify only those
              configuration settings for your local setup which are different
-             to the standard configuration as defined in core4 and plugin
+             to the standard configuration as defined in core4 and project
              configuration. Use local configuration files or the MongoDB
              collection ``sys.conf`` for your specific settings.
 
@@ -107,13 +107,13 @@ example an excerpt from ``core.yaml`` standard configuration file::
           values. Still the :ref:`connect_tag` is processed.
 
 
-plugin configuration
-====================
+project configuration
+=====================
 
-All plugin configuration is wrapped in a dictionary with the key equal to the
-plugin name.
+All project configuration is wrapped in a dictionary with the key equal to the
+project name.
 
-Example plugin configuration file ``test.yaml`` for plugin ``test``::
+Example project configuration file ``test.yaml`` for project ``test``::
 
     username: peter
     password: ~
@@ -147,14 +147,14 @@ This YAML example implements the following configuration values::
     config.sys.mongo_url == "mongodb://localhost:27017"  # True
 
 
-Plugin configuration features a ``DEFAULT`` dictionary, too. The default keys
-and values defined in the plugin configuration apply to the plugin
-configuration only. Consequently, if a plugin key in a section is not defined,
-then the plugin default value applies if it is defined. If the plugin
+project configuration features a ``DEFAULT`` dictionary, too. The default keys
+and values defined in the project configuration apply to the project
+configuration only. Consequently, if a project key in a section is not defined,
+then the project default value applies if it is defined. If the project
 configuration does not define a default value and a standard value is
 defined, then this global default value is forwarded.
 
-.. note:: The plugin configuration as well as :ref:`local_config` can provide a
+.. note:: The project configuration as well as :ref:`local_config` can provide a
           ``DEFAULT`` dictionary, too.
 
 
@@ -163,10 +163,10 @@ defined, then this global default value is forwarded.
 local configuration
 ===================
 
-The local configuration is used to overwrite core4 standard and plugin
+The local configuration is used to overwrite core4 standard and project
 configuration keys/values for your concrete system setup. You can only specify
 keys which are either present in core4 standard  (``config/core.yaml``) or
-plugin configuration. All other keys/values are silently ignored.
+project configuration. All other keys/values are silently ignored.
 
 
 .. _env_config:
@@ -267,18 +267,18 @@ example
 =======
 
 core4 configuration principles are best described by example.
-In this scenario a plugin has been created for an plugin named ``plugin1``.
-As part of the automation workflow for this plugin some 3rd party web API is
-used to download data on a regular basis. The plugin configuration is supposed
+In this scenario a project has been created for an project named ``project1``.
+As part of the automation workflow for this project some 3rd party web API is
+used to download data on a regular basis. The project configuration is supposed
 to provide API authorisation data, the URL for the web service as well as the
 target database and collection to store the downloaded data.
 
-Therefore the plugin developer has created a dictionary ``api`` in the plugin
-configuration file ``plugin1.yaml`` located in the package directory.
+Therefore the project developer has created a dictionary ``api`` in the project
+configuration file ``project1.yaml`` located in the package directory.
 Furthermore the developer directs all database access to the default database
-for this plugin ``db1``::
+for this project ``db1``::
 
-    # file: plugin1/plugin1.yaml
+    # file: project1/project1.yaml
 
     DEFAULT:
       mongo_database: db1
@@ -289,11 +289,11 @@ for this plugin ``db1``::
       download_collection: !connect mongodb://download
 
 
-Since the plugin configuration is version controlled and part of the code
+Since the project configuration is version controlled and part of the code
 repository, the developer provides the (default) API user, but no sensitive
 data, e.g. the API password.
 
-During development of the plugin, the developer works with the following user
+During development of the project, the developer works with the following user
 configuration file located at ``~/core4/local.yaml``::
 
     # file: ~/core4/local.yaml
@@ -301,7 +301,7 @@ configuration file located at ``~/core4/local.yaml``::
     DEFAULT:
       mongo_url: mongodb://localhost:27017
 
-    plugin1:
+    project1:
       api:
         username: test-user
         password: 123456
@@ -311,7 +311,7 @@ This setup allows the developer to use his or her ``test-user`` with valid
 credentials during implementation and to address the local MongoDB instance at
 ``mongodb://localhost:27017/db1/download``. Please note that the hostname/port
 comes from ``~/core4/local.yaml` while the database ``db1`` and the collection
-``download`` comes from the plugin configuration in ``plugin1.yaml``.
+``download`` comes from the project configuration in ``project1.yaml``.
 
 After implementation is complete and during deployment the operator extends
 core4 system configuration in production located at ``/etc/core4/local.yaml``
@@ -322,7 +322,7 @@ with::
     DEFAULT:
       mongo_url = mongodb://core:mongosecret@mongodb.prod:27017
 
-    plugin1:
+    project1:
       api:
         password: secret
 
@@ -335,10 +335,10 @@ The fully qualified download collection now points to
 
 After several weeks with downloaded data the need arises to aggregate the data
 into a reporting collection. The developer, who has read-only access grants at
-``mongodb.prod`` (username ``pete``, password ``mysecret``) extends the plugin
-configuration ``plugin1.py`` with::
+``mongodb.prod`` (username ``pete``, password ``mysecret``) extends the project
+configuration ``project1.py`` with::
 
-    # file: plugin1/plugin1.yaml
+    # file: project1/project1.yaml
 
     DEFAULT:
       mongo_database: db1
@@ -358,7 +358,7 @@ data from production with::
     DEFAULT:
       mongo_url: mongodb://localhost:27017
 
-    plugin1:
+    project1:
       api:
         username: test-user
         password: 123456
@@ -366,15 +366,15 @@ data from production with::
 
 Now the report collection addresses ``mongodb://localhost:27017/db1/report``
 with hostname/port coming from ``local.yaml`` and database and collection
-coming from ``plugin.yaml``. The developer can read-only access production
+coming from ``project.yaml``. The developer can read-only access production
 data by overwriting ``download_collection`` in his ``local.yaml``.
 
-This example show, how to create valid plugin configuration settings which can
+This example show, how to create valid project configuration settings which can
 be overwritten easily for development as well as production needs. With the
 ``!connect`` tag the developer furthermore can easily create cross
 database connections which simplifies implementation activities if the
 developer has for example read-only access to production data.
 
-All configuration files - ``plugin1.yaml``, ``~/core4/local.yaml`` and
+All configuration files - ``project1.yaml``, ``~/core4/local.yaml`` and
 ``/etc/core4/local.yaml`` in this example - can be created and maintained
 independent of each other.

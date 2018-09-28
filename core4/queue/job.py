@@ -238,7 +238,7 @@ class CoreJob(CoreBase):
     Best practice is to put the section definitions as class variables. Define
     all other property settings into the configuration section of the job. The
     job configuration must be located in the extra configuration file of the
-    plugin package.
+    project package.
 
 
     **job life-cycle**

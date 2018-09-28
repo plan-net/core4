@@ -25,10 +25,10 @@ class TestBase(unittest.TestCase):
 
         os.makedirs(self.baseroot)
 
-        # plugin will get overwriten when executing locally without calling runner.py
-        self.plugin = 'tests'
+        # project will get overwriten when executing locally without calling runner.py
+        self.project = 'tests'
         self.tester = TestFile()
-        self.tester.plugin = 'tests'
+        self.tester.project = 'tests'
 
     def tearDown(self):
         tests.util.drop_env()

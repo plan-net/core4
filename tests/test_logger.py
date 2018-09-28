@@ -12,7 +12,7 @@ import core4.config
 import core4.error
 import core4.logger
 import core4.config.test
-import plugin.ident
+import project.ident
 import tests.util
 import core4.util
 
@@ -153,7 +153,7 @@ class TestLogging(unittest.TestCase):
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         b = LogOn()
         b.logger.debug("*** START ***")
-        ident = plugin.ident.Controller()
+        ident = project.ident.Controller()
         ident.execute()
         b.logger.debug("*** END ***")
 
@@ -163,7 +163,7 @@ class TestLogging(unittest.TestCase):
         os.environ["CORE4_OPTION_logging__stderr"] = ""
         os.environ["CORE4_OPTION_logging__stdout"] = ""
         LogOn()
-        m = plugin.ident.Massive()
+        m = project.ident.Massive()
         m.execute()
         data = list(m.config.sys.log.find())
         idented = sum([1 for i in data if i["identifier"] == "0815"])

@@ -24,7 +24,7 @@
    install
    example
    why
-   plugin
+   project
    job
    helpers
    R

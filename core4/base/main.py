@@ -24,7 +24,7 @@ class CoreBase:
     """
     This is the base class to all core4 classes. :class:`CoreBase` ships with
 
-    * access to configuration keys/values including plugin based extra
+    * access to configuration keys/values including project based extra
       configuration settings, use :attr:`.config`
     * standard logging facilities, use :attr:`.logger`
     * a distinct :meth:`.qual_name` based on module path and class name
@@ -43,7 +43,7 @@ class CoreBase:
     _short_qual_name = None
     _long_qual_name = None
 
-    plugin = None
+    project = None
     identifier = None
 
     # these config attributes are raised to object level
@@ -59,21 +59,21 @@ class CoreBase:
                     if ident is not None:
                         self.identifier = ident
         self._progress = None
-        self.plugin = self.get_plugin()
+        self.project = self.get_project()
         self._open_config()
         self._open_logging()
 
-    def get_plugin(self):
+    def get_project(self):
         modstr = self.__class__.__module__
-        plugin = modstr.split('.')[0]
-        module = sys.modules[plugin]
+        project = modstr.split('.')[0]
+        module = sys.modules[project]
         # the following is a hack
         if not hasattr(module, "__project__"):
             source = module.__file__
-        elif plugin == '__main__':
+        elif project == '__main__':
             source = sys.argv[0]
         else:
-            return plugin
+            return project
         dirname = os.path.dirname(source).split(os.path.sep)
         pathname = [os.path.splitext(source.split(os.path.sep)[-1])[0]]
         while dirname:
@@ -92,9 +92,9 @@ class CoreBase:
                         self.__class__._long_qual_name = ".".join([
                             CORE4, PREFIX, self.__class__._short_qual_name
                         ])
-                        plugin = pathname.pop(-1)
+                        project = pathname.pop(-1)
                         break
-        return plugin
+        return project
 
     def __repr__(self):
         """
@@ -106,8 +106,8 @@ class CoreBase:
     def qual_name(cls, short=True):
         """
         Returns the distinct ``qual_name``, the fully qualified module and
-        class name. With ``short=False`` the prefix ``core4.plugin`` is put in
-        front of all plugin classes.
+        class name. With ``short=False`` the prefix ``core4.project`` is put in
+        front of all project classes.
 
         :param short: defaults to ``False``
         :return: qual_name string
@@ -116,25 +116,25 @@ class CoreBase:
             if short:
                 return cls._short_qual_name
             return cls._long_qual_name
-        plugin = cls.__module__.split('.')[0]
-        if plugin != CORE4 and not short:
+        project = cls.__module__.split('.')[0]
+        if project != CORE4 and not short:
             return '.'.join([CORE4, PREFIX, cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
 
-    def plugin_config(self):
+    def project_config(self):
         """
-        Returns the expected path and file name of the plugin configuration.
+        Returns the expected path and file name of the project configuration.
         Note that this method does not verify that the file actually exists.
 
         :return: str
         """
-        module = sys.modules.get(self.plugin)
-        if self.plugin != CORE4:
+        module = sys.modules.get(self.project)
+        if self.project != CORE4:
             if hasattr(module, "__project__"):
                 if module.__project__ == CORE4:
                     return os.path.join(
                         os.path.dirname(module.__file__),
-                        self.plugin + core4.config.main.CONFIG_EXTENSION)
+                        self.project + core4.config.main.CONFIG_EXTENSION)
         return None
 
     # todo: hide this method with a prefix "_"
@@ -147,9 +147,9 @@ class CoreBase:
     def _open_config(self):
         # internal method to open and attach core4 cascading configuration
         kwargs = {}
-        plugin_config = self.plugin_config()
-        if plugin_config and os.path.exists(plugin_config):
-            kwargs["plugin_config"] = (self.plugin, plugin_config)
+        project_config = self.project_config()
+        if project_config and os.path.exists(project_config):
+            kwargs["project_config"] = (self.project, project_config)
         kwargs["extra_dict"] = self._build_extra_config()
         self.config = self.make_config(**kwargs)
         pos = self.config._config

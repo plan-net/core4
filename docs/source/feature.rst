@@ -33,5 +33,5 @@ or months:
   web application frameworks
 * :ref:`widgets <widget>` as mini applications - extension to the ReST API to
   deliver simple single-page applications
-* :ref:`plugin architecture <plugin>` a unified scheme to package and manage
+* :ref:`project architecture <project>` a unified scheme to package and manage
   multiple projects, accounts, business domains, or tenants
