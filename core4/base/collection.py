@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """
 This module implements CoreCollection, featuring database access.
 """
 
-from core4.base.connector.mongo import make_connection as make_mongo_connection
 import core4.error
-
+from core4.base.connector.mongo import make_connection as make_mongo_connection
 
 DEFAULT_SCHEME = 'mongodb'
 SCHEME = {
@@ -73,7 +70,7 @@ class CoreCollection:
     @property
     def info_url(self):
         """
-        human-readable connection string hiding sensitive data, e.g.
+        Human-readable connection string hiding sensitive data, e.g.
         password, from inquisitive eyes.
 
         :return: connection URL information (str)

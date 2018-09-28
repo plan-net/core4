@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 import core4.api.v1.role
 import core4.base
 import core4.error

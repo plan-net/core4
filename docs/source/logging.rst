@@ -15,13 +15,13 @@ and API resources provide logging facilities out of the box.
 
 core4 supports logging to STDOUT, STDERR and a MongoDB collection. Furthermore
 additional logging facilities can be configured following the Python standard
-logging module (see :ref:`extra_logging). Logging is configured using core4
+logging module (see :ref:`extra_logging`). Logging is configured using core4
 configuration mechanics (see :ref:`config`). Two important features of core4
 logging are that all log messages created by jobs inform the core4 system that
 the job is still alive. Finally if a job dies all log messages below the
 configured log level get bumped into collection ``sys.log`` belate. This
 special features provides extra logging messages which are suppressed in normal
-operations (see :ref:`exception_logging).
+operations (see :ref:`exception_logging`).
 
 .. todo:: link core4 logging with zombie jobs and the ``.progress`` method.
 
@@ -65,6 +65,9 @@ configuration setting ``logging.extra``. See for example
 `dict based logging setup`_ and Fang's coding notes on
 `good logging practices`_. If ``logging.extra is None`` then no custom logging
 will be set up.
+
+
+.. todo:: give example, see test_logger.test_module_logging
 
 
 .. _extra_logging:

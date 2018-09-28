@@ -5,6 +5,8 @@ import datetime
 import time
 from bson.objectid import ObjectId
 
+from core4.util import Singleton
+
 
 def make_record(record):
     """
@@ -18,7 +20,7 @@ def make_record(record):
     * username
     * hostname
     * qual_name
-    * msg
+    * ,message
     * level
     * exception.info (``repr`` string of :class:`Exception`)
     * exception.text (traceback)
@@ -42,16 +44,6 @@ def make_record(record):
             "text": traceback.format_exception(*record.exc_info)
         }
     return doc
-
-
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args,
-                                                                 **kwargs)
-        return cls._instances[cls]
 
 
 class MongoLoggingHandler(logging.Handler, metaclass=Singleton):

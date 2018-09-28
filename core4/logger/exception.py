@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import logging
 
@@ -9,7 +7,6 @@ FLUSH_LEVEL = logging.CRITICAL
 
 
 class ExceptionHandler(logging.Handler):
-
     """
     This handler stacks all :attr:`logging.DEBUG` log records. If a log record
     with log level :attr:`logging.CRITICAL` appears, then all memorised log

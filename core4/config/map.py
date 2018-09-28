@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 
 import core4.error
@@ -23,10 +21,10 @@ class ConfigMap(dict):
 
     def __setitem__(self, key, value):
         if self.__dict__["__ro__"]:
-            raise core4.error.Core4ConfigurationError("core4.config.map.Map "
-                                                      "is readonly")
+            raise core4.error.Core4ConfigurationError(
+                "core4.config.map.Map is readonly")
         super().__setitem__(key, value)
 
     def __setattr__(self, key, value):
-        raise core4.error.Core4ConfigurationError("core4.config.map.Map "
-                                                  "is readonly")
+        raise core4.error.Core4ConfigurationError(
+            "core4.config.map.Map is readonly")

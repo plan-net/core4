@@ -2,12 +2,11 @@
 
 import os
 import shutil
-import sys
 import unittest
-from core4.base.job import CoreJob
-from core4.helpers.file import FileMixin
+from core4.queue.job import CoreJob
+from core4.queue.file import FileMixin
 import re
-
+import tests.util
 
 
 class TestBase(unittest.TestCase):
@@ -30,6 +29,9 @@ class TestBase(unittest.TestCase):
         self.plugin = 'tests'
         self.tester = TestFile()
         self.tester.plugin = 'tests'
+
+    def tearDown(self):
+        tests.util.drop_env()
 
     def test_list_proc(self):
         with self.assertRaises(RuntimeError):
@@ -123,8 +125,10 @@ class TestBase(unittest.TestCase):
         self.assertEqual(self.tester.list_transfer(pattern=re.compile('pattern not present*')), list())
 
 
-
-
 class TestFile(CoreJob, FileMixin):
     def test(self):
         pass
+
+
+if __name__ == '__main__':
+    unittest.main(exit=False)
