@@ -58,7 +58,7 @@ class CoreBase:
                 if not isinstance(ident, property):
                     if ident is not None:
                         self.identifier = ident
-        self._last_progress = None
+        self._progress = None
         self.plugin = self.get_plugin()
         self._open_config()
         self._open_logging()
@@ -228,9 +228,9 @@ class CoreBase:
         :param inc: progress bins, defaults to 0.05 (5%)
         """
         p_round = round(p / inc) * inc
-        if self._last_progress is None or p_round != self._last_progress:
+        if self._progress is None or p_round != self._progress:
             self._log_progress(p_round * 100., *args)
-            self._last_progress = p_round
+            self._progress = p_round
 
     @staticmethod
     def _format_args(*args):

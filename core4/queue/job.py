@@ -104,19 +104,17 @@ NOT_INHERITED = {
 
 class CoreJob(CoreBase):
     """
-    This is the base class of all core jobs. Core jobs implement the actual task
-    processing. If you say that :class:`.Worker` is the working horse of core,
-    then jobs tell these workers *what* to do.
+    This is the base class of all core jobss. Core jobs implement the actual
+    task processing. If you say that :class:`.Worker` is the working horse of
+    core, then jobs tell these workers *what* to do.
 
-    To control these activities in a distributed job execution environment, jobs
-    have several properties. Some are read only attributes. Other can be
+    To control these activities in a distributed job execution environment,
+    jobs have several properties. Some are read only attributes. Other can be
     specified by the developer and core operator in multiple ways (see below).
 
     The following table describes all job properties in alphabetical order.
 
     * ``_id`` - job identifier in ``sys.queue``
-    * ``_frozen_`` freeze job so none of the Job-Aruments described here can be set by the user
-    * ``_next_progress`` when to next update the Jobs progress
     * ``args`` - arguments passed to the job
     * ``attempts`` - maximum number of execution attempts after job failure
       before the job enters the final ``error`` state
@@ -174,28 +172,31 @@ class CoreJob(CoreBase):
     * ``zombie_at`` - datetime when the job turned into a zombie due to
       lacking progress
 
-    **job property definition schemes**
+    **job property definition scheme**
 
     Job properties can be specified in the following three ways,
-    if a property is defined within more then one definition scheme hinted order is applied:
+    if a property is defined within more then one definition scheme hinted
+    order is applied:
 
     #. job properties can be defined by parameters passed to :meth:`.enqueue()`
     #. job properties can be defined in configuration settings
     #. job properties can be defined as a class property
 
-    After all properties have been applied according to their priority, the _frozen_ Attribute will be set,
-    which results in an error if the users tries to set any core4-related job-parameters.
+    .. warning: these properties cannot be implemented directed with
+                ``self.query_at = datetime.datetime.now()`. This throws an
+                :class:`.CoreUsageError` exception.
 
     Note that not all properties support all three definition schemes. The
-    following table provides information about which user-defined job properties
-    support one or more definition scheme.
+    following table provides information about which user-defined job
+    properties support one or more definition scheme. Furthermore the table
+    informs about the default value, applied validation rules and if the
+    property is saved into ``sys.queue``.
 
  ================= ======= ====== ===== ========= ======= ====================
           property enqueue config class serialise default validation
  ================= ======= ====== ===== ========= ======= ====================
                _id   False  False False      True      na
           _frozen_   False  False False     False    True
-    _next_progress   False  False False     False      na
               args    True  False False      True      na
           attempts    True   True  True      True       1 int > 0
      attempts_left   False  False False      True      na
@@ -236,7 +237,7 @@ class CoreJob(CoreBase):
 
     Best practice is to put the section definitions as class variables. Define
     all other property settings into the configuration section of the job. The
-    job configuration should be located in the extra configuration file of the
+    job configuration must be located in the extra configuration file of the
     plugin package.
 
 
@@ -310,9 +311,8 @@ class CoreJob(CoreBase):
     wall_time = None
     max_parallel = None
     schedule = None
-    _frozen_ = False
     progress_interval = 5
-    _next_progress = None
+    _frozen_ = False
 
     def __init__(self, *args, **kwargs):
         # attributes raised from self.class_config.* to self.*
@@ -354,7 +354,9 @@ class CoreJob(CoreBase):
 
     def __setattr__(self, key, value):
         """
-        Setting an class-attribute is only allowed if _frozen has not been set.
+        Setting an class-attribute is only allowed if ``_frozen`` is ``False``.
+        The ``_frozen`` attribute is automatically set to ``True`` after object
+        instantiation.
         """
         if self._frozen_:
             if key in JOB_ARGS:
@@ -366,7 +368,9 @@ class CoreJob(CoreBase):
     def validate(self):
         """
         check all standard job-attributes to be of their intended type.
-        :raises: AssertionError if no author is set or asserts if attribute is not of its intended type.
+
+        :raises: ``AssertionError`` if no author is set or asserts if attribute
+                 is not of its intended type.
         """
         for prop, check in JOB_VALIDATION.items():
             check(prop, getattr(self, prop))
@@ -377,7 +381,8 @@ class CoreJob(CoreBase):
 
     def load_default(self):
         """
-        sets the default class-attributes given in the job-section of the config.
+        sets the default class-attributes given in the job-section of the
+        config.
         """
         for prop in DEFAULT_ARGS:
             val = getattr(self, prop, None)
@@ -396,6 +401,7 @@ class CoreJob(CoreBase):
     def overload_args(self, **kwargs):
         """
         sets job-attributes depending on the enqueueing arguments.
+
         :param kwargs: arguments given by the user while enqueueing.
         """
         for prop, value in kwargs.items():
@@ -408,54 +414,66 @@ class CoreJob(CoreBase):
     def cookie(self):
         """
         cookie of the job depending on its qual_name.
-        :return: ``Cookie``
+
+        :return: :class:`.Cookie`
         """
         if not self._cookie:
-            self._cookie = core4.base.cookie.Cookie(self.qual_name(short=True), self.config.sys.cookie)
+            self._cookie = core4.base.cookie.Cookie(
+                self.qual_name(short=True), self.config.sys.cookie)
         return self._cookie
 
     def progress(self, p, *args, force=False):
         """
-        monitor the progress of a job.
-        this method is called on a set intervall.
-        if a job does not report progress within a specified timeframe, it turns into a zombie.
-        updates the jobs heartbeat and logs the progress with debug-messages.
+        monitors the progress of a job. This method is called on the set
+        intervall.
+
+        This method pdates the job's heartbeat and logs the progress with
+        a debug messages. If a job does not report progress within a specified
+        timeframe, it turns into a zombie.
 
         :param p: percentage in decimal.
-        :param args: message and or format, will be passed to ``_format_args`` of ``CoreBase``
-        :param force: force progress update, ignore ``_next_progress``
+        :param args: message and or format, will be passed to
+               :meth:`core4.base.main.CoreBase._format_args`.
+        :param force: force progress update, ignoring ``._progress``
         """
         now = core4.util.now()
 
-        if (force or self._next_progress is None or now >= self._next_progress):
+        if (force or self._progress is None or now >= self._progress):
             message = self._format_args(*args)
-            self.__dict__['_next_progress'] = now + dt.timedelta(seconds=self.progress_interval)
+            self.__dict__['_progress'] = now + dt.timedelta(
+                seconds=self.progress_interval)
             self.logger.debug(message + "|  Progress at: " + str(p * 100) + "%")
-            return self.config.sys.queue.update_one({"_id": self._id}, update={
-                '$set': {'locked.heartbeat': core4.util.now(),
-                         'locked.progress': message,
-                         'locked.progress_value': p
-                         }
-            })
-
-        pass
+            return self.config.sys.queue.update_one(
+                {
+                    "_id": self._id
+                },
+                update={
+                    '$set': {
+                        'locked.heartbeat': core4.util.now(),
+                        'locked.progress': message,
+                        'locked.progress_value': p
+                    }
+                }
+            )
 
     def run(self, *args, **kwargs):
         """
         set the nessecary cookie-information on startup and finish of the job.
         log a first progress and call the execute-method of the job.
 
-        :param args: will be passed to ``execute()``
-        :param kwargs: will be passed to ``execute()``
+        :param args: will be passed to :meth:`execute()`
+        :param kwargs: will be passed to :meth:`execute()`
         """
         self.__dict__['started_at'] = core4.util.now()
-        self.progress(0.0, "starting job: {} with id: {}".format(self.qual_name(), self._id))
-        self.logger.debug("starting job: {} with id: {}".format(self.qual_name(), self._id))
+        self.progress(0.0, "starting job: {} with id: {}".format(
+            self.qual_name(), self._id))
+        self.logger.debug("starting job: {} with id: {}".format(
+            self.qual_name(), self._id))
         try:
             self.execute(*args, **kwargs)
         except:
-            self.__dict__[
-                'last_error'] = core4.util.now()  # todo: please check docs above, this carries something else, check core3
+            # todo: please check docs above, this carries something else, check core3
+            self.__dict__['last_error'] = core4.util.now()
             raise
         finally:
             self.__dict__['finished_at'] = core4.util.now()
@@ -463,29 +481,35 @@ class CoreJob(CoreBase):
             if self.runtime is not None:
                 runtime += self.runtime
             self.__dict__['runtime'] = runtime
-            self.config.sys.queue.update_one({"_id": self._id}, update={'$set': {'locked.runtime': self.runtime}})
+            self.config.sys.queue.update_one(
+                {"_id": self._id},
+                update={'$set': {'locked.runtime': self.runtime}})
             self.cookie.set("last_runtime", self.finished_at)
-            self.logger.debug("finished execution of job after {}".format(self.runtime))
+            self.logger.debug("finished execution of job after {}".format(
+                self.runtime))
             self.progress(1.0, "execution end marker", force=True)
 
     def defer(self, *args):
         """
-        defer the job, this will result in the job being returned to the queue and be queried again after ``defer_time``
+        defer the job, this will result in the job being returned to the queue
+        and be queried again after ``defer_time``
 
-        :param message: error-message
-        :raises: ``CoreJobDefered``
+        :param message: defer message
+        :raises: :class:`.CoreJobDefered`
         """
         message = self._format_args(*args)
         raise core4.error.CoreJobDeferred(message)
 
     def execute(self, *args, **kwargs):
         """
-        this method has to be implented by the user.
-        it is the entry-point of the framework.
-        code specified in this method is executed within the core-ecosystem.
+        This method has to be implented by the job developer.
+        It is the entry-point of the framework. Code specified in this method
+        is executed within the core-ecosystem.
 
-        :param args: passed argmuents
+        :param args: passed job argmuents
         :param kwargs: passed enqueueing arguments
+
+        # todo: euqneueing arguments? not really!
         """
         raise NotImplementedError
 
