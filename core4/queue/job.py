@@ -454,8 +454,9 @@ class CoreJob(CoreBase):
         try:
             self.execute(*args, **kwargs)
         except:
-            self.__dict__[
-                'last_error'] = core4.util.now()  # todo: please check docs above, this carries something else, check core3
+            #self.__dict__['last_error'] = core4.util.now()
+            # todo: please check docs above, this carries something else, check core3
+            # todo: show sets the stack-trace? the job itself or the worker, as the job may not know about submodules failing.
             raise
         finally:
             self.__dict__['finished_at'] = core4.util.now()
