@@ -54,6 +54,7 @@ of nine guidelines:
 
 -   Choose portability over efficiency.
 
+
 Out of experience we would recommend to adhere to the following
 principles also:
 
@@ -63,3 +64,11 @@ principles also:
     same data.
 
 -   implement continuity-checks if data is continuos.
+
+-   robustness before neatness.
+
+-   work silently, fail noisily.
+
+-   build modular and reusable classes and functions.
+
+-   choose meaningful function-/class-/variable-names
