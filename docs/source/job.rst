@@ -70,3 +70,5 @@ principles also:
 -   work silently, fail noisily.
 
 -   build modular and reusable classes and functions.
+
+-   choose meaningful function-/class-/variable-names

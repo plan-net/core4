@@ -354,7 +354,9 @@ class CoreJob(CoreBase):
 
     def __setattr__(self, key, value):
         """
-        Setting an class-attribute is only allowed if _frozen has not been set.
+        Setting an class-attribute is only allowed if _frozen has not been set,
+        this is to prevent the developer from accidentaly overwriting a critical core-setting by e.g. a Mixin
+        or a Method.
         """
         if self._frozen_:
             if key in JOB_ARGS:
@@ -408,6 +410,8 @@ class CoreJob(CoreBase):
     def cookie(self):
         """
         cookie of the job depending on its qual_name.
+        The cookie can be used to make the job stateful.
+        e.g. within a job that loads data from files to the databse, one can save the last processed file.
         :return: ``Cookie``
         """
         if not self._cookie:
@@ -417,7 +421,7 @@ class CoreJob(CoreBase):
     def progress(self, p, *args, force=False):
         """
         monitor the progress of a job.
-        this method is called on a set intervall.
+        this method has to be called from the developer.
         if a job does not report progress within a specified timeframe, it turns into a zombie.
         updates the jobs heartbeat and logs the progress with debug-messages.
 
@@ -444,6 +448,9 @@ class CoreJob(CoreBase):
         """
         set the nessecary cookie-information on startup and finish of the job.
         log a first progress and call the execute-method of the job.
+
+        this method encapsulates the execute()-Method that is to be implemented by the developer.
+        the run() method itself is of no interest to the developer.
 
         :param args: will be passed to ``execute()``
         :param kwargs: will be passed to ``execute()``
