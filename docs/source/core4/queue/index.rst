@@ -2,11 +2,10 @@
 queue
 #####
 
-Package :any:`core4.queue <core4.queue>` with class
-:any:`core4.queue.job.CoreJob <core4.queue.job.CoreJob>`
+Package :mod:`core4.queue` with class :class:`core4.queue.job.CoreJob`
 represent the basis to all core4 Jobs. All classes dervied from
 :class:`.CoreJob` ship with access to configuration, data (see also
-:doc:`data access protocols <connector>`), and logging (see
+:mod:`data access protocols <.connector>`), and logging (see
 also :doc:`logging mechanics<../logger/index>`).
 
 
@@ -14,5 +13,3 @@ also :doc:`logging mechanics<../logger/index>`).
    :caption: Table of Contents
 
    job
-
-
