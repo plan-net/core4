@@ -3,9 +3,10 @@ import core4.base
 import core4.util
 import datetime
 import time
+import core4.service.setup
 
 
-class CoreMaster(core4.base.CoreBase):
+class CoreWorker(core4.base.CoreBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -16,18 +17,19 @@ class CoreMaster(core4.base.CoreBase):
 
     def start(self):
         self.enter_phase("startup")
-        self.create_master_env()
-        self.register_master()
+        self.create_worker_env()
+        self.register_worker()
         self.register_projects()
         self.cleanup()
         self.plan = self.create_plan()
         self.loop()
         self.shutdown()
 
-    def create_master_env(self):
-        self.create_dirs()
+    def create_worker_env(self):
+        setup = core4.service.setup.CoreSetup()
+        setup.make_folder()
+        setup.make_role()
         self.create_stats()
-        self.create_roles()
 
     def create_dirs(self):
         pass
@@ -38,7 +40,7 @@ class CoreMaster(core4.base.CoreBase):
     def create_roles(self):
         pass
 
-    def register_master(self):
+    def register_worker(self):
         pass
 
     def register_projects(self):
@@ -59,7 +61,7 @@ class CoreMaster(core4.base.CoreBase):
         now = core4.util.now()
         self.wait_time = None
         for s in steps:
-            interval = self.config.master.execution_plan[s]
+            interval = self.config.worker.execution_plan[s]
             if self.wait_time is None:
                 self.wait_time = interval
             else:
@@ -76,9 +78,6 @@ class CoreMaster(core4.base.CoreBase):
 
     def enter_phase(self, phase):
         self.logger.info("enter phase [%s]", phase)
-
-    def exit(self):
-        return False
 
     def loop(self):
         self.enter_phase("loop")

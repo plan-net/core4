@@ -42,3 +42,17 @@ class CoreJobDeferred(Core4Error):
     """"
     This exception is raised if a job defers execution.
     """
+
+
+class CoreJobNotFound(Core4Error):
+    """
+    This exception is raised if the job is not found.
+    """
+
+
+class CoreJobExists(Core4Error):
+    """
+    This exception is raised if the job already exists as defined by the
+    name/qual_name and job arguments.
+    """
+

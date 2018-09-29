@@ -50,10 +50,10 @@ job:
   priority: 0
   schedule: ~
   tag: ~
-  progress_inverval: 5
+  progress_interval: 5
 
-# master settings
-master:
+# worker settings
+worker:
   execution_plan:
     work_jobs: 0.25
     inactive_jobs: 5.00

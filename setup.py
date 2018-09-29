@@ -55,7 +55,11 @@ setup(
             + package_files("core4/service/project/template/", "^.+$")
     },
     tests_require=[
+        "pytest",
         "coverage>=4.0, <5.0",
+    ],
+    setup_requires=[
+        "pytest-runner"
     ],
     entry_points={
         'console_scripts': [
@@ -78,7 +82,6 @@ setup(
     ],
     zip_safe=False,
     cmdclass={
-        'test': MyTestCommand,
         'sphinx': MySphinxCommand
     },
     classifiers=(

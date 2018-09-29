@@ -34,6 +34,7 @@
    config
    logging
    data
+   file
    access
    deploy
    tools

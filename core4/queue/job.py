@@ -3,6 +3,8 @@ from core4.base.main import CoreBase
 from core4.queue.validate import *
 import core4.util
 import datetime as dt
+import json
+import hashlib
 
 # Job-States
 STATE_PENDING = 'pending'
@@ -24,6 +26,7 @@ SERIALISE = 3  # property is to be materialised in sys.queue
 # job property definition scope
 JOB_ARGS = {
     "_id": (SERIALISE,),
+    "_hash": (SERIALISE,),
     "args": (ENQUEUE, SERIALISE,),
     "attempts": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "attempts_left": (SERIALISE,),
@@ -58,7 +61,6 @@ JOB_ARGS = {
     "wall_at": (SERIALISE,),
     "wall_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "zombie_at": (SERIALISE,),
-    "_frozen_": (ENQUEUE,),
     "progress_interval": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
 }
 
@@ -196,7 +198,6 @@ class CoreJob(CoreBase):
           property enqueue config class serialise default validation
  ================= ======= ====== ===== ========= ======= ====================
                _id   False  False False      True      na
-          _frozen_   False  False False     False    True
               args    True  False False      True      na
           attempts    True   True  True      True       1 int > 0
      attempts_left   False  False False      True      na
@@ -219,7 +220,7 @@ class CoreJob(CoreBase):
              nodes    True   True  True      True    ([]) list of str, None
         nonstop_at   False  False False      True      na
           priority    True   True  True      True       0 int
- progress_interval    True   True  True     False       5 int > 0
+ progress_interval    True   True  True      True       5 int > 0
               name   False  False False      True      na
           query_at   False  False False      True      na
          remove_at   False  False False      True      na
@@ -297,10 +298,10 @@ class CoreJob(CoreBase):
     """
     author = None
     attempts = None
-    chain = []
-    dependency = []
+    chain = None
+    dependency = None
     priority = None
-    tag = []
+    tag = None
     nodes = None
     defer_time = None
     defer_max = None
@@ -311,7 +312,8 @@ class CoreJob(CoreBase):
     wall_time = None
     max_parallel = None
     schedule = None
-    progress_interval = 5
+    progress_interval = None
+
     _frozen_ = False
 
     def __init__(self, *args, **kwargs):
@@ -327,6 +329,7 @@ class CoreJob(CoreBase):
         # runtime properties
         self.name = self.qual_name(short=True)
         self._id = None
+        self._hash = None
         self._cookie = None
         self.args = {}
         self.attempts_left = None
@@ -349,6 +352,10 @@ class CoreJob(CoreBase):
         self.load_default()
         self.overload_config()
         self.overload_args(**kwargs)
+
+        if self.args:
+            js = json.dumps(self.args, sort_keys=True)
+            self._hash = hashlib.md5(js.encode("utf-8")).hexdigest()
 
         self._frozen_ = True
 
@@ -433,13 +440,13 @@ class CoreJob(CoreBase):
 
         :param p: percentage in decimal.
         :param args: message and or format, will be passed to
-               :meth:`core4.base.main.CoreBase._format_args`.
+               :meth:`core4.base.main.CoreBase.format_args`.
         :param force: force progress update, ignoring ``._progress``
         """
         now = core4.util.now()
 
         if (force or self._progress is None or now >= self._progress):
-            message = self._format_args(*args)
+            message = self.format_args(*args)
             self.__dict__['_progress'] = now + dt.timedelta(
                 seconds=self.progress_interval)
             self.logger.debug(message + "|  Progress at: " + str(p * 100) + "%")
@@ -497,8 +504,14 @@ class CoreJob(CoreBase):
         :param message: defer message
         :raises: :class:`.CoreJobDefered`
         """
-        message = self._format_args(*args)
+        message = self.format_args(*args)
         raise core4.error.CoreJobDeferred(message)
+
+    def serialise(self):
+        doc = dict([(k, self.__dict__[k]) for k in SERIALISE_ARGS])
+        if self._id is None:
+            del doc["_id"]
+        return doc
 
     def execute(self, *args, **kwargs):
         """
@@ -526,3 +539,4 @@ class DummyJob(CoreJob):
 # - write documentation
 # - write job.rst (decide what goes into API docs, and what goes in job.rst)
 # - verify sphinx docs format is right and looking good
+

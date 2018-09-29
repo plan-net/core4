@@ -53,8 +53,8 @@ class CoreBase:
         # query identifier from instantiating object
         frame = inspect.currentframe().f_back.f_locals
         for n, v in frame.items():
-            if hasattr(v, "qual_name"):
-                ident = getattr(v, "identifier", None)
+            if isinstance(v, CoreBase):
+                ident = v.identifier
                 if not isinstance(ident, property):
                     if ident is not None:
                         self.identifier = ident
@@ -233,7 +233,7 @@ class CoreBase:
             self._progress = p_round
 
     @staticmethod
-    def _format_args(*args):
+    def format_args(*args, **kwargs):
         """
         format a message given only by args.
         message hast to be the first parameter, formatting second.
@@ -243,7 +243,12 @@ class CoreBase:
         if args:
             args = list(args)
             m = args.pop(0)
-            message = m % tuple(args)
+            if kwargs:
+                message = m % kwargs
+            elif args:
+                message = m % tuple(args)
+            else:
+                return m
         else:
             message = ""
         return message
