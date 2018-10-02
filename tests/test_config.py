@@ -445,7 +445,8 @@ class TestConfig(unittest.TestCase):
         local = tests.util.asset("config/empty.yaml")
         conf = MyConfig(project_config=("test", extra), config_file=local)
         conf._load()
-        self.assertIsNone(conf.sys.log.connect())
+        with self.assertRaises(core4.error.Core4ConfigurationError):
+            conf.sys.log.connect()
 
     def test_readonly(self):
         extra = tests.util.asset("config/empty.yaml")

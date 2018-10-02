@@ -15,10 +15,6 @@ def once(f):
 
 class CoreSetup(CoreBase, metaclass=Singleton):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        print("INIT")
-
     @once
     def make_folder(self):
         """
