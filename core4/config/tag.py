@@ -68,6 +68,7 @@ def connect_mongodb(conn_str, **kwargs):
     opts["collection"] = "/".join(collection)
     if hostname:
         return core4.base.collection.CoreCollection(**opts)
+    raise core4.error.Core4ConfigurationError("no mongo connected")
     return None
 
 
