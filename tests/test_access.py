@@ -31,6 +31,7 @@ class TestAccess(unittest.TestCase):
         cls._teardown(cls)
 
     def _tearup(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@localhost:27017"
         os.environ[

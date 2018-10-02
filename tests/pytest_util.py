@@ -16,6 +16,7 @@ MONGO_DATABASE = 'core4test'
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
     # setup
+    os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE

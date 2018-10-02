@@ -1,12 +1,14 @@
 import unittest
 
 import core4.service.discover
+import tests.util
+import os
 
 
 class TestDiscovery(unittest.TestCase):
 
     def setUp(self):
-        pass
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
 
     def test_discovery(self):
         discover = core4.service.discover.CoreDiscovery()

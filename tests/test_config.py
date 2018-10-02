@@ -513,6 +513,7 @@ class TestConfig(unittest.TestCase):
 
     def test_extra_no_project(self):
         extra = tests.util.asset("config/extra1.yaml")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
         conf = MyConfig(project_config=("test", extra))
         self.assertEqual(conf.folder.archive, "arch")
 
@@ -590,6 +591,7 @@ class TestConfig(unittest.TestCase):
 
     def test_repr(self):
         extra = tests.util.asset("config/extra1.yaml")
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
         conf = MyConfig(project_config=("test", extra))
         _ = str(conf)
 

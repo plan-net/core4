@@ -35,6 +35,7 @@ class TestLogging(unittest.TestCase):
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
                                                  "localhost:27017"
         os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
         logging.shutdown()
         import importlib
         importlib.reload(logging)

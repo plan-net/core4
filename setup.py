@@ -57,6 +57,7 @@ setup(
     tests_require=[
         "pytest",
         "coverage>=4.0, <5.0",
+        "pytest-timeout==1.3.2"
     ],
     setup_requires=[
         "pytest-runner"
