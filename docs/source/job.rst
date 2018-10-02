@@ -10,8 +10,9 @@ Introduction
 As of today, modern Data-Scientists use a variety of python- and R-modules both Open- and Closed-Source to create
 relevant insights based on multiple sets of data from many different sources.
 
-Core4-Jobs are for those Data-Scientists and -Engieneers to achive fault-tolerant automatization of all
-needed steps of creating those insights without having the user think about the underlying software or hardware.
+Core4-Jobs are for those Data-Scientists and -Engineers to achieve fault-tolerant automation of all needed steps of
+creating those insights without having the user think about the underlying software or hardware.
+
 
 core4 takes care of everything that is essential to using and operating such a distributed system,
 from central logging and configuration to deployment, all this while scaling to the 100ths of servers.
@@ -20,7 +21,7 @@ todo: first small example....
 
 
 
-A job can have multiple states, depending on its configured runtime-behaviour:
+A job can have multiple states, depending on its configured runtime-behavior:
 
 .. figure:: _static/job_states.png
    :scale: 100 %
