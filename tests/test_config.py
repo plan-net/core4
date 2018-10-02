@@ -868,6 +868,12 @@ class TestConfig(unittest.TestCase):
         with self.assertRaises(core4.error.Core4ConfigurationError):
             x = conf.sys.role.info_url()
 
+    def test_error_config(self):
+        local = tests.util.asset("config/error.yaml")
+        conf = MyConfig(config_file=local)
+        with self.assertRaises(core4.error.Core4ConfigurationError):
+            _ = conf.config
+
 
     if __name__ == '__main__':
         unittest.main(exit=False)

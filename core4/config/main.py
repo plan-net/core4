@@ -199,13 +199,13 @@ class CoreConfig(collections.MutableMapping):
         standard_config = config.copy()
         if extra:
             standard_config = core4.util.dict_merge(standard_config, extra)
-        self._verify_dict(standard_config, "standard config")
+        #self._verify_dict(standard_config, "standard config")
         standard_default = standard_config.pop(DEFAULT, {})
         self._verify_dict(standard_default, "standard DEFAULT")
         if local is not None:
             # collect local config and local DEFAULT
             local_config = local.copy()
-            self._verify_dict(local_config, "local config")
+            #self._verify_dict(local_config, "local config")
             local_default = local_config.pop(DEFAULT, {})
             self._verify_dict(local_default, "local DEFAULT")
         else:
@@ -213,12 +213,12 @@ class CoreConfig(collections.MutableMapping):
             local_default = {}
         # merge standard DEFAULT and local DEFAULT
         default = core4.util.dict_merge(standard_default, local_default)
-        self._verify_dict(default, "DEFAULT")
+        #self._verify_dict(default, "DEFAULT")
         if project is not None:
             # collect project name, project config and project DEFAULT
             project_name = project[0]
             project_config = project[1].copy()
-            self._verify_dict(project_config, "project config")
+            #self._verify_dict(project_config, "project config")
             project_default = project_config.pop(DEFAULT, {})
             self._verify_dict(project_default, "project DEFAULT")
             # collect local project DEFAULT
@@ -376,7 +376,9 @@ class CoreConfig(collections.MutableMapping):
                 body = f.read()
             if self.cache:
                 self.__class__._file_cache[filename] = body
-            return yaml.safe_load(body) or {}
+            data = yaml.safe_load(body) or {}
+            self._verify_dict(data, filename)
+            return data
         else:
             raise FileNotFoundError(filename)
 
@@ -533,8 +535,6 @@ class CoreConfig(collections.MutableMapping):
 
         if lookup is not None:
             extra_config = self._read_yaml(self.project_config[1])
-
-        if lookup is not None:
             extra = (lookup, extra_config)
 
         # standard config
