@@ -1,9 +1,94 @@
+# import core4.logger.mixin
+# import pymongo
+# import pytest
+# import logging
+# import os
+# import core4.base.main
+# import importlib
+#
+#
+# ASSET_FOLDER = 'asset'
+# MONGO_URL = 'mongodb://core:654321@localhost:27017'
+# MONGO_DATABASE = 'core4test'
+#
+# @pytest.fixture(autouse=True)
+# def reset(tmpdir):
+#     logging.shutdown()
+#     # setup
+#     conn = pymongo.MongoClient(MONGO_URL)
+#     conn.drop_database(MONGO_DATABASE)
+#
+#     # singletons
+#     core4.util.Singleton._instances = {}
+#     # os environment
+#     dels = []
+#     for k in os.environ:
+#         if k.startswith('CORE4_'):
+#             dels.append(k)
+#     for k in dels:
+#         del os.environ[k]
+#     # logging mixin (setup complete)
+#     core4.logger.mixin.CoreLoggerMixin.completed = False
+#
+#     os.environ[
+#         "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
+#                                              "localhost:27017"
+#     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
+#     os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
+#     yield conn
+#     # teardown database
+#     conn.drop_database(MONGO_DATABASE)
+#     # singletons
+#     core4.util.Singleton._instances = {}
+#     # os environment
+#     dels = []
+#     for k in os.environ:
+#         if k.startswith('CORE4_'):
+#             dels.append(k)
+#     for k in dels:
+#         del os.environ[k]
+#     # logging mixin (setup complete)
+#     core4.logger.mixin.CoreLoggerMixin.completed = False
+#
+# @pytest.fixture
+# def mongodb():
+#     return pymongo.MongoClient(MONGO_URL)
+#
+#
+# def asset(*filename, exists=True):
+#     dirname = os.path.dirname(__file__)
+#     filename = os.path.join(dirname, ASSET_FOLDER, *filename)
+#     if not exists or os.path.exists(filename):
+#         return filename
+#     raise FileNotFoundError(filename)
+#
+#
+# def test_log(mongodb):
+#     os.environ["CORE4_CONFIG"] = asset("logger/simple.yaml")
+#     core4.logger.mixin.logon()
+#     b = core4.base.main.CoreBase()
+#     b.logger.debug("this is DEBUG")
+#     b.logger.info("this is INFO")
+#     b.logger.warning("this is WARNING")
+#     b.logger.error("this is ERROR")
+#     b.logger.critical("this is CRITICAL")
+#     data = list(mongodb.core4test.sys.log.find())
+#     print(data)
+#     assert 1 == sum([1 for i in data if i["level"] == "INFO"])
+#     assert 3 == sum([1 for i in data if i["level"] == "DEBUG"])
+#     assert 1 == sum([1 for i in data if i["level"] == "WARNING"])
+#     assert 1 == sum([1 for i in data if i["level"] == "ERROR"])
+#     assert 1 == sum([1 for i in data if i["level"] == "CRITICAL"])
+
+
+
 # -*- coding: utf-8 -*-
 
 import glob
 import logging
 import os
 import unittest
+import importlib
 
 import pymongo
 
@@ -30,18 +115,18 @@ class TestLogging(unittest.TestCase):
 
     def setUp(self):
         tests.util.drop_env()
+
+        logging.shutdown()
+        importlib.reload(logging)
+        core4.util.Singleton._instances = {}
+        core4.logger.mixin.CoreLoggerMixin.completed = False
+
         self.mongo.drop_database('core4test')
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
                                                  "localhost:27017"
         os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
-        logging.shutdown()
-        import importlib
-        importlib.reload(logging)
-        core4.util.Singleton._instances = {}
-        self.drop_logs()
-        core4.logger.mixin.CoreLoggerMixin.completed = False
 
     def drop_logs(self):
         for fn in glob.glob("*.log*"):
@@ -51,6 +136,11 @@ class TestLogging(unittest.TestCase):
     def tearDown(self):
         self.drop_logs()
         tests.util.drop_env()
+        logging.shutdown()
+        importlib.reload(logging)
+        core4.util.Singleton._instances = {}
+        self.drop_logs()
+        core4.logger.mixin.CoreLoggerMixin.completed = False
 
     @property
     def mongo(self):

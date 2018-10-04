@@ -1,6 +1,7 @@
 DEFAULT:
   mongo_url: ~
   mongo_database: test
+  python: ~
 
 # system collections
 sys:
@@ -12,6 +13,9 @@ sys:
   quota: !connect mongodb://sys.quota
   admin: !connect mongodb://admin/dummy
   queue: !connect mongodb://sys.queue
+  journal: !connect mongodb://sys.journal
+  worker: !connect mongodb://sys.worker
+  lock: !connect mongodb://sys.lock
 
 # system folders
 folder:
@@ -46,7 +50,7 @@ job:
   inactive_time: 1800
   wall_time: ~
   max_parallel: ~
-  nodes: ~
+  worker: ~
   priority: 0
   schedule: ~
   tag: ~
@@ -56,7 +60,7 @@ job:
 worker:
   execution_plan:
     work_jobs: 0.25
-    inactive_jobs: 5.00
+    remove_jobs: 3.0
     kill_jobs: 10.00
     nopid_jobs: 15.00
     nonstop_jobs: 20.00

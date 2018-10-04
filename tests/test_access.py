@@ -11,8 +11,16 @@ import core4.error
 import core4.service.access.manager
 import core4.service.access.handler.mongo
 import core4.util
-from tests.test_logger import LogOn
+#from tests.test_logger import LogOn
 import tests.util
+
+class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
+
+    cache = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_logging()
 
 class TestAccess(unittest.TestCase):
 

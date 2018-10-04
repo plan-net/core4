@@ -2,6 +2,7 @@ import os
 
 import pymongo
 import pytest
+import logging
 
 import core4.base
 import core4.logger.mixin
@@ -12,9 +13,11 @@ ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
 
-
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
+    logging.shutdown()
+    # logging mixin (setup complete)
+    core4.logger.mixin.CoreLoggerMixin.completed = False
     # setup
     os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
@@ -47,8 +50,6 @@ def reset(tmpdir):
             dels.append(k)
     for k in dels:
         del os.environ[k]
-    # logging mixin (setup complete)
-    core4.logger.mixin.CoreLoggerMixin.completed = False
 
 
 @pytest.fixture

@@ -80,6 +80,10 @@ def now():
     return datetime.datetime.utcnow()
 
 
+def mongo_now():
+    # note: https://stackoverflow.com/questions/17476176/nanoseconds-lost-coming-from-mongodb-isodate-object
+    return now().replace(microsecond=0)
+
 def get_pid():
     """
     :return: pid of the current process.

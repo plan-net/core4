@@ -26,17 +26,16 @@ def test_init():
     assert job.error_time == 10 * 60
     assert job.finished_at is None
     assert job.inactive_at is None
-    assert job.inactive_time == 30 * 60
+    #assert job.inactive_time == 30 * 60
     assert job.killed_at is None
     assert job.last_error is None
     assert job.locked is None
     assert job.max_parallel is None
-    assert job.nodes is None
-    assert job.nonstop_at is None
+    assert job.worker is None
     assert job.priority == 0
     assert job.name == 'core4.queue.job.DummyJob'
     assert job.query_at is None
-    assert job.remove_at is None
+    assert job.removed_at is None
     assert job.runtime is None
     assert job.schedule is None
     assert job.sources is None
@@ -45,7 +44,6 @@ def test_init():
     assert job.tag is None
     assert job.wall_at is None
     assert job.wall_time is None
-    assert job.zombie_at is None
 
 
 def test_custom_init():
@@ -64,7 +62,7 @@ def test_custom_init():
 def test_validation():
     class MyJob(core4.queue.job.CoreJob):
         author = 'mra'
-        defer_time = None
+        #defer_time = None
         hidden = True
 
     job = MyJob()
@@ -73,22 +71,32 @@ def test_validation():
     assert job.hidden is True
 
 
+def test_validation2():
+    class MyJob(core4.queue.job.CoreJob):
+        author = 'mra'
+        defer_time = None
+
+    job = MyJob()
+    with pytest.raises(AssertionError):
+        job.validate()
+
+
 def test_enqueue():
     job = core4.queue.job.DummyJob(attempts=10)
     assert job.attempts == 10
     assert job.chain == []
 
     job = core4.queue.job.DummyJob(
-        defer_max=1, defer_time=2, inactive_time=4,
-        max_parallel=5, nodes=['A'], priority=6, arg1=100, arg2=200)
+        defer_max=1, defer_time=2, # inactive_time=4,
+        max_parallel=5, worker=['A'], priority=6, arg1=100, arg2=200)
     assert job.attempts == 1
     assert job.chain == []
     assert job.defer_max == 1
     assert job.defer_time == 2
     assert job.error_time == 10 * 60
-    assert job.inactive_time == 4
+    #assert job.inactive_time == 4
     assert job.max_parallel == 5
-    assert job.nodes == ['A']
+    assert job.worker == ['A']
     assert job.priority == 6
     assert job.wall_time is None
     assert job.args == {'arg1': 100, 'arg2': 200}
@@ -389,3 +397,4 @@ def test_job_not_found():
     q = core4.queue.main.CoreQueue()
     with pytest.raises(core4.error.CoreJobNotFound):
         q.enqueue("DummyJob")
+
