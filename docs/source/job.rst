@@ -28,7 +28,7 @@ A job can have multiple states, depending on its configured runtime-behavior:
    :alt: job_states
 
 Jobs are guided via config- or class-variables,
-A most basic subset of these settings are descriped in the table below:
+A most basic subset of these settings are described in the table below:
 
  ================= ====================================================================
           property description
@@ -37,10 +37,10 @@ A most basic subset of these settings are descriped in the table below:
             author author of the job
              chain jobs that are to launch after the current job finishes
          defer_max overall Sum of seconds a job can be deferred
-        defer_time time inbetween defers
+        defer_time time between defers
         dependency dependencies that have to be finished before the job can be launched
         error_time seconds to wait before a job is restarted after a failure
-             force ignore available ressources, force start a job
+             force ignore available resources, force start a job
       max_parallel max. number of parallel running jobs of current type
              nodes nodes the job can run on
           priority priority with 0 being the lowest
@@ -93,9 +93,9 @@ to adhere to the following design paradigms:
 
 -   **do one thing and do it well**
 
-        Do not try to: "I'll fix everything in one method". Seperate logical building-blocks from your code, every
+        Do not try to: "I'll fix everything in one method". Separate logical building-blocks from your code, every
         block should only do one single task. This makes it easier to implement changes in the future and helps your
-        code to be more readble.
+        code to be more readable.
 
 -   **KISS - keep it simple and stupid**
         Robustness and maintainability are more precious than saving a few seconds of time. This however is not valid
@@ -111,11 +111,11 @@ of nine guidelines:
 
 -   **Make each program do one thing well**
         do not mix several steps of a processing chain into one document.
-        Seperate in e.g. load-Job, transform-Job and report-Job.
+        Separate in e.g. load-Job, transform-Job and report-Job.
 
 -   **Build a prototype as soon as possible**
         if you do start programming, try reaching the state of a working prototype as soon as possible. This way,
-        you'll notice errors in your concept wail earlier, stumble open flaws in your design and you will speed up your
+        you'll notice errors in your concept way earlier, stumble open flaws in your design and you will speed up your
         overall developing speed.
 
 -   **Choose portability over efficiency**
@@ -128,23 +128,23 @@ principles also:
 
 -   **design your applications with restartability in mind**
         There are multiple reasons why a job might fail, including only temporary failures (imagine a website you crawl
-        being in maintenance). You can safe yourself a lot of hastle if the job itself knows about its state and can
+        being in maintenance). You can safe yourself a lot of hassle if the job itself knows about its state and can
         simply be restarted without being worried about data-loss or crashing dependencies.
 
 -   **create Data-Structures that are idempotent on multiple loads of the same data**
         you may find yourself in the position where you do not know whether a certain job has processed a particular set
         of data or not. It is elegant to just be able to enqueue that particular job that either only updates the data
-        if changes are detected or simply updates allready present documents. That way you do not have to worry about
+        if changes are detected or simply updates already present documents. That way you do not have to worry about
         overwriting critical output.
 
 -   **implement continuity-checks if data is continuous**
         even if your jobs always run to perfection, some of your clients may not. If you have a continuous data stream
-        (e.g. a daily reporting via excel) always check that data for completness. It is easier to let a job fail if
+        (e.g. a daily reporting via excel) always check that data for completeness. It is easier to let a job fail if
         expected data is not present than to try to retrospectively fix a processing-chain.
 
 -   **robustness before neatness**
         python offers some really nice features for writing clean and easy-to-understand code. An experienced programmer
-        might feel tempted to implement the fastest, most effecient way for doing some kind of task. However, speed
+        might feel tempted to implement the fastest, most efficient way for doing some kind of task. However, speed
         alone should not always be the sole goal of software-design. Keep in mind that many more people might be reliant
         on working on and understanding your code, this even includes your future self.
 
@@ -154,7 +154,7 @@ principles also:
         error, but still, you are the one that has to implement these messages.
 
 -   **build modular and reusable classes and functions**
-        there always will be multiple parts of a programm that can be reused somewhere else. Rather than duplicating
+        there always will be multiple parts of a program that can be reused somewhere else. Rather than duplicating
         that code on every place it is needed, simply uncouple the part that is often reused. Not only will your code
         look more clean, you also do save yourself a lot of time if you need to enhance or fix that particular part of
         code.
