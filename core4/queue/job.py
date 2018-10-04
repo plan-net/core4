@@ -49,6 +49,7 @@ JOB_ARGS = {
     "max_parallel": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "name": (SERIALISE,),
     "priority": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "progress_interval": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "python": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "query_at": (SERIALISE,),
     "removed_at": (SERIALISE,),
@@ -62,7 +63,7 @@ JOB_ARGS = {
     "wall_at": (SERIALISE,),
     "wall_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "worker": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
-    "progress_interval": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "zombie_at": (SERIALISE,),
 }
 
 # property scope to load from config
@@ -143,8 +144,6 @@ class CoreJob(CoreBase):
       ``False``)
     * ``inactive_at`` - datetime  when a deferring job turns inactive, derived
       from ``defer_max``
-    * ``zombie_at`` - datetime when the job not advertising any progress is
-      flagged a zombie
     * ``killed_at`` - datetime when the job has been requested to kill
     * ``last_error`` - last stack trace in case of failure or error
     * ``locked`` - dict with information about the worker
@@ -174,6 +173,8 @@ class CoreJob(CoreBase):
     * ``wall_time`` - number of seconds before a running job turns into a
       non-stopping job
     * ``worker`` - eligable to execute the job
+    * ``zombie_at`` - datetime when the job not advertising any progress is
+      flagged a zombie
 
     **job property definition scheme**
 
@@ -231,7 +232,8 @@ class CoreJob(CoreBase):
                tag   False   True  True     False    ([]) list of str, None
            wall_at   False  False False      True      na
          wall_time    True   True  True      True    None int > 0, None
-             worker   True   True  True      True    ([]) list of str, None
+            worker    True   True  True      True    ([]) list of str, None
+         zombie_at   False  False False      True      na
  ================= ======= ====== ===== ========= ======= ====================
 
 
@@ -346,6 +348,7 @@ class CoreJob(CoreBase):
         self.state = None
         self.trial = 0
         self.wall_at = None
+        self.zombie_at = None
 
         self.load_default()
         self.overload_property()
@@ -453,56 +456,23 @@ class CoreJob(CoreBase):
         """
         now = core4.util.now()
 
-        if (force or self._progress is None or now >= self._progress):
+        if (force or self._progress is None or now > self._progress):
             message = self.format_args(*args)
             self.__dict__['_progress'] = now + dt.timedelta(
                 seconds=self.progress_interval)
-            self.logger.debug(message + "|  Progress at: " + str(p * 100) + "%")
-            return self.config.sys.queue.update_one(
+            self.logger.debug("progress [%1.0f%%] - " + message, p*100.)
+            self.config.sys.queue.update_one(
                 {
                     "_id": self._id
                 },
                 update={
                     '$set': {
-                        'locked.heartbeat': core4.util.now(),
+                        'locked.heartbeat': now,
                         'locked.progress': message,
                         'locked.progress_value': p
                     }
                 }
             )
-
-    def run(self, *args, **kwargs):
-        """
-        set the nessecary cookie-information on startup and finish of the job.
-        log a first progress and call the execute-method of the job.
-
-        :param args: will be passed to :meth:`execute()`
-        :param kwargs: will be passed to :meth:`execute()`
-        """
-        #self.__dict__['started_at'] = core4.util.now()
-        self.progress(0.0, "starting job: {} with id: {}".format(
-            self.qual_name(), self._id))
-        # self.logger.debug("starting job: {} with id: {}".format(
-        #     self.qual_name(), self._id))
-        try:
-            self.execute(*args, **kwargs)
-        except:
-            # todo: please check docs above, this carries something else, check core3
-            self.__dict__['last_error'] = core4.util.now()
-            raise
-        finally:
-            # self.__dict__['finished_at'] = core4.util.now()
-            # runtime = (self.finished_at - self.started_at).total_seconds()
-            # if self.runtime is not None:
-            #     runtime += self.runtime
-            # self.__dict__['runtime'] = runtime
-            # self.config.sys.queue.update_one(
-            #     {"_id": self._id},
-            #     update={'$set': {'locked.runtime': self.runtime}})
-            self.cookie.set("last_runtime", self.finished_at)
-            # self.logger.debug("finished execution of job after {}".format(
-            #     self.runtime))
-            self.progress(1.0, "execution end marker", force=True)
 
     def defer(self, *args):
         """

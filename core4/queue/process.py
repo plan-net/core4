@@ -23,9 +23,11 @@ class CoreWorkerProcess(core4.base.CoreBase,
         job = self.queue.load_job(_id)
         self.drop_privilege()
         try:
-            job.run(**job.args)
+            job.execute(**job.args)
             job.__dict__["attempts_left"] -= 1
             self.queue.set_complete(job)
+            job.cookie.set("last_runtime", job.finished_at)
+            job.progress(1.0, "execution end marker", force=True)
         except core4.error.CoreJobDeferred:
             self.queue.set_defer(job)
         except:

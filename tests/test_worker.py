@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import datetime
 import pandas as pd
 import time
 from threading import Thread
@@ -10,6 +11,7 @@ import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
 import tests.pytest_util
+
 tests.pytest_util.MONGO_LEVEL = "DEBUG"
 from tests.pytest_util import *
 
@@ -296,7 +298,7 @@ def test_error(queue, worker):
     assert df[df.message.str.find("start execution") >= 0].shape[0] == 3
     x = pd.to_timedelta(
         df[((df.message.str.find("execution") >= 0) & (df.level == "INFO"))
-           ].created.diff()).apply(lambda r: r.total_seconds()).tolist()
+        ].created.diff()).apply(lambda r: r.total_seconds()).tolist()
     assert [x[i] >= 5 for i in [1, 2]] == [True, True]
 
 
@@ -331,6 +333,7 @@ def test_defer(queue, worker):
     assert df[df.message.str.find(
         "done execution with [inactive]") >= 0].shape[0] == 1
 
+
 @pytest.mark.timeout(90)
 def test_mass_defer(queue, worker, mongodb):
     import project.work
@@ -343,6 +346,7 @@ def test_mass_defer(queue, worker, mongodb):
             break
     worker.stop()
 
+
 @pytest.mark.timeout(30)
 def test_fail2inactive(queue, worker, mongodb):
     import project.work
@@ -353,6 +357,7 @@ def test_fail2inactive(queue, worker, mongodb):
         if queue.config.sys.queue.count({"state": "inactive"}) == 1:
             break
     worker.stop()
+
 
 @pytest.mark.timeout(30)
 def test_remove_failed(queue, worker, mongodb):
@@ -368,6 +373,7 @@ def test_remove_failed(queue, worker, mongodb):
     assert queue.config.sys.journal.count() == 1
     assert queue.config.sys.queue.count() == 0
 
+
 @pytest.mark.timeout(30)
 def test_remove_deferred(queue, worker, mongodb):
     import project.work
@@ -381,6 +387,7 @@ def test_remove_deferred(queue, worker, mongodb):
     worker.stop()
     assert queue.config.sys.journal.count() == 1
     assert queue.config.sys.queue.count() == 0
+
 
 @pytest.mark.timeout(30)
 def test_remove_complete(queue, worker, mongodb):
@@ -396,6 +403,7 @@ def test_remove_complete(queue, worker, mongodb):
     assert queue.config.sys.queue.count() == 0
     job = queue.find_job(job._id)
     assert job.state == "complete"
+
 
 @pytest.mark.timeout(90)
 def test_remove_inactive(queue, worker):
@@ -414,6 +422,7 @@ def test_remove_inactive(queue, worker):
     assert queue.config.sys.queue.count() == 0
     job = queue.find_job(job._id)
     assert job.state == "inactive"
+
 
 @pytest.mark.timeout(30)
 def test_remove_error(queue, worker):
@@ -434,6 +443,7 @@ def test_remove_error(queue, worker):
     assert job.state == "error"
 
 
+@pytest.mark.timeout(30)
 def test_nonstop(queue, worker):
     job = queue.enqueue(core4.queue.job.DummyJob, sleep=10, wall_time=5)
     worker.start(1)
@@ -450,26 +460,43 @@ def test_nonstop(queue, worker):
     assert job.wall_at is not None
 
 
+class ProgressJob(core4.queue.job.CoreJob):
+    author = "mra"
+    progress_interval = 10
+
+    def execute(self, *args, **kwargs):
+        runtime = 5.
+        tx = core4.util.now() + datetime.timedelta(seconds=runtime)
+        n = 0
+        while True:
+            n += 1
+            t0 = core4.util.now()
+            if t0 >= tx:
+                break
+            p = 1. - (tx - t0).total_seconds() / runtime
+            self.progress(p, "at %d", n)
+            time.sleep(0.25)
 
 
-"""
-                              _hash                       _id                       args  attempts  attempts_left chain  defer_time dependency                                           enqueued  error_time         finished_at  force         inactive_at killed_at                                         last_error locked max_parallel                   name  priority  progress_interval python query_at removed_at  runtime sources          started_at     state  trial wall_at wall_time worker
-0  9d80399e2f6ec2cf1703098702590845  5bb52a8e34ed0902e2f1409d  {'i': 0, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:25  False 2018-10-03 20:46:37      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      3.0    None 2018-10-03 20:46:22  complete      4    None      None   None
-1  92eb6bb86e256744b6dbf48c425e66b2  5bb52a8e34ed0902e2f140a0  {'i': 1, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:26  False 2018-10-03 20:46:37      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      4.0    None 2018-10-03 20:46:23  complete      4    None      None   None
-2  a5de59ec05828ce409f40c345709658b  5bb52a8e34ed0902e2f140a2  {'i': 2, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:26  False 2018-10-03 20:46:37      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      4.0    None 2018-10-03 20:46:23  complete      4    None      None   None
-3  8dc1f7e2c0ac682d3ddb690364b87fc6  5bb52a8e34ed0902e2f140a4  {'i': 3, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:26  False 2018-10-03 20:46:38      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      3.0    None 2018-10-03 20:46:23  complete      4    None      None   None
-4  449227654901f1d5dca0b0ad23650525  5bb52a8e34ed0902e2f140a6  {'i': 4, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:27  False 2018-10-03 20:46:38      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      4.0    None 2018-10-03 20:46:24  complete      4    None      None   None
-5  4956177ca15c045e729583b5ac689bf0  5bb52a8e34ed0902e2f140a8  {'i': 5, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:27  False 2018-10-03 20:46:38      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      4.0    None 2018-10-03 20:46:24  complete      4    None      None   None
-6  75357743c83f2124d8229142d5b5092b  5bb52a8e34ed0902e2f140aa  {'i': 6, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:28  False 2018-10-03 20:46:38      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      5.0    None 2018-10-03 20:46:25  complete      4    None      None   None
-7  1c785ed5c10452fc4b2b3afb2a5e6863  5bb52a8e34ed0902e2f140ac  {'i': 7, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:28  False 2018-10-03 20:46:39      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      4.0    None 2018-10-03 20:46:25  complete      4    None      None   None
-8  32419a751c28d777f58612a1cb9e2d6b  5bb52a8e34ed0902e2f140ae  {'i': 8, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:28  False 2018-10-03 20:46:39      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      4.0    None 2018-10-03 20:46:25  complete      4    None      None   None
-9  e4a5f6e799716e82682fba8b9fd37524  5bb52a8e34ed0902e2f140b0  {'i': 9, 'success': True}         1              0    []           5         []  {'parent': None, 'hostname': 'mra.devops', 'us...         600 2018-10-03 20:46:29  False 2018-10-03 20:46:39      None  {'traceback': ['Traceback (most recent call la...   None         None  project.work.DeferJob         0                  5   None     None       None      5.0    None 2018-10-03 20:46:25  complete      4    None      None   None
+def test_progress1(queue, worker):
+    queue.enqueue(ProgressJob)
+    worker.start(1)
+    worker.wait_queue()
+    worker.stop()
+    df = pd.DataFrame(list(queue.config.sys.log.find()))
+    assert df[
+               ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
+           ].shape[0] == 2
 
-In [19]: 
-[0]
-"""
-
-
+def test_progress2(queue, worker):
+    queue.enqueue(ProgressJob, progress_interval=1)
+    worker.start(1)
+    worker.wait_queue()
+    worker.stop()
+    df = pd.DataFrame(list(queue.config.sys.log.find()))
+    assert df[
+               ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
+           ].shape[0] >= 5
 
 # #@pytest.mark.timeout(30)
 # def test_locking():
