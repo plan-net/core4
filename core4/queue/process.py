@@ -1,16 +1,14 @@
 import sys
-import time
-import os
-import traceback
-import core4.util
+
+from bson.objectid import ObjectId
+
+import core4.base
+import core4.error
+import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
-import core4.base
-from bson.objectid import ObjectId
-import importlib
-import core4.error
-from datetime import timedelta
-import core4.logger.mixin
+import core4.util
+
 
 class CoreWorkerProcess(core4.base.CoreBase,
                         core4.logger.mixin.CoreLoggerMixin):
@@ -34,15 +32,15 @@ class CoreWorkerProcess(core4.base.CoreBase,
             job.__dict__["attempts_left"] -= 1
             self.queue.set_failed(job)
         finally:
-            self.queue.unlock_job(job._id)
             self.raise_privilege()
-
+            self.queue.unlock_job(job._id)
 
     def drop_privilege(self):
         pass
 
     def raise_privilege(self):
         pass
+
 
 def start():
     proc = CoreWorkerProcess()

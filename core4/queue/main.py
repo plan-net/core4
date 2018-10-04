@@ -122,7 +122,8 @@ class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
         for _id in args:
             ret = self.config.sys.queue.update_one(
                 {
-                    "_id": _id
+                    "_id": _id,
+                    "removed_at": None
                 },
                 update={
                     "$set": {
@@ -135,6 +136,29 @@ class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
                     "flagged job [%s] to be remove at [%s]", _id, at)
             else:
                 self.logger.error("failed to flag job [%s] to be remove", _id)
+                failed = True
+        return not failed
+
+    def kill_job(self, *args):
+        at = core4.util.now()
+        failed = False
+        for _id in args:
+            ret = self.config.sys.queue.update_one(
+                {
+                    "_id": _id,
+                    "killed_at": None
+                },
+                update={
+                    "$set": {
+                        "killed_at": at
+                    }
+                }
+            )
+            if ret.raw_result["n"] == 1:
+                self.logger.warning(
+                    "flagged job [%s] to be killed at [%s]", _id, at)
+            else:
+                self.logger.error("failed to flag job [%s] to be killed", _id)
                 failed = True
         return not failed
 
@@ -199,6 +223,21 @@ class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
                 "failed to remove job [{}] from queue".format(job._id))
         job.logger.info("done execution with [complete] "
                         "after [%d] sec.", runtime)
+
+    def set_killed(self, job):
+        self.logger.debug(
+            "updating job [%s] to [%s]", job._id,
+            core4.queue.job.STATE_KILLED)
+        runtime = self.finish(job, core4.queue.job.STATE_KILLED)
+        job.__dict__["last_error"] = {
+            "exception": "JobKilledByWorker",
+            "timestamp": core4.util.mongo_now(),
+            "traceback": None
+        }
+        self.update_job(job, "state", "runtime", "locked",
+                        "trial", "last_error")
+        job.logger.critical("done execution with [%s] after [%d] sec.",
+                            job.state, runtime)
 
     def finish(self, job, state):
         job.__dict__["state"] = state

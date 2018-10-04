@@ -1,11 +1,13 @@
-import core4.error
-from core4.base.main import CoreBase
-import core4.base.cookie
-from core4.queue.validate import *
-import core4.util
-import datetime as dt
-import json
 import hashlib
+import json
+
+import datetime as dt
+
+import core4.base.cookie
+import core4.error
+import core4.util
+from core4.base.main import CoreBase
+from core4.queue.validate import *
 
 # Job-States
 STATE_PENDING = 'pending'
@@ -64,6 +66,7 @@ JOB_ARGS = {
     "wall_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "worker": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "zombie_at": (SERIALISE,),
+    "zombie_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
 }
 
 # property scope to load from config
@@ -90,13 +93,14 @@ JOB_VALIDATION = {
     "force": is_bool_null,
     "hidden": is_bool_null,
     "max_parallel": is_int_gt0_null,
-    "worker": is_str_null,
     "priority": is_int,
+    "progress_interval": is_int_gt0,
     "python": exists,
     "schedule": is_cron,
     "tag": is_str_list_null,
     "wall_time": is_int_gt0_null,
-    "progress_interval": is_int_gt0,
+    "worker": is_str_null,
+    "zombie_time": is_int_gt0,
 }
 
 # job properties not inherited from parent class
@@ -175,6 +179,8 @@ class CoreJob(CoreBase):
     * ``worker`` - eligable to execute the job
     * ``zombie_at`` - datetime when the job not advertising any progress is
       flagged a zombie
+    * ``zombie_time`` - number of seconds before a job turns into a zombie
+      non-stopping job
 
     **job property definition scheme**
 
@@ -234,6 +240,7 @@ class CoreJob(CoreBase):
          wall_time    True   True  True      True    None int > 0, None
             worker    True   True  True      True    ([]) list of str, None
          zombie_at   False  False False      True      na
+       zombie_time    True   True  True      True    1800 int > 0
  ================= ======= ====== ===== ========= ======= ====================
 
 
@@ -314,6 +321,7 @@ class CoreJob(CoreBase):
     max_parallel = None
     schedule = None
     progress_interval = None
+    zombie_time = None
 
     _frozen_ = False
 
@@ -460,7 +468,7 @@ class CoreJob(CoreBase):
             message = self.format_args(*args)
             self.__dict__['_progress'] = now + dt.timedelta(
                 seconds=self.progress_interval)
-            self.logger.debug("progress [%1.0f%%] - " + message, p*100.)
+            self.logger.debug("progress [%1.0f%%] - " + message, p * 100.)
             self.config.sys.queue.update_one(
                 {
                     "_id": self._id

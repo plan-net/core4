@@ -2,6 +2,7 @@
 
 import datetime
 import pandas as pd
+import psutil
 import time
 from threading import Thread
 
@@ -10,10 +11,8 @@ import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
-import tests.pytest_util
-
-tests.pytest_util.MONGO_LEVEL = "DEBUG"
 from tests.pytest_util import *
+
 
 LOOP_INTERVAL = 0.25
 
@@ -24,12 +23,12 @@ def worker_timing():
                "worker__execution_plan__work_jobs"] = "!!float {}".format(
         LOOP_INTERVAL)
     os.environ["CORE4_OPTION_" \
-               "worker__execution_plan__nonstop_jobs"] = "!!float 3"
+               "worker__execution_plan__flag_jobs"] = "!!float 3"
 
 
 def test_plan():
     worker = core4.queue.worker.CoreWorker()
-    assert len(worker.create_plan()) == 6
+    assert len(worker.create_plan()) == 4
 
 
 @pytest.mark.timeout(30)
@@ -88,9 +87,8 @@ def test_maintenance():
     assert worker.at is None
     t.join()
     assert worker.cycle == {
-        'collect_stats': 0, 'kill_jobs': 0, 'total': 3, 'work_jobs': 0,
-        'nonstop_jobs': 0, 'nopid_jobs': 0,
-        'remove_jobs': 0}
+        'collect_stats': 0, 'total': 3, 'work_jobs': 0,
+        'flag_jobs': 0, 'remove_jobs': 0}
 
 
 @pytest.mark.timeout(30)
@@ -458,6 +456,10 @@ def test_nonstop(queue, worker):
     assert queue.config.sys.queue.count() == 0
     job = queue.find_job(job._id)
     assert job.wall_at is not None
+    df = pd.DataFrame(list(queue.config.sys.log.find()))
+    assert df[df.message.str.find(
+        "successfully set non-stop job [{}]".format(
+            job._id)) >= 0].shape[0] == 1
 
 
 class ProgressJob(core4.queue.job.CoreJob):
@@ -478,6 +480,7 @@ class ProgressJob(core4.queue.job.CoreJob):
             time.sleep(0.25)
 
 
+@pytest.mark.timeout(30)
 def test_progress1(queue, worker):
     queue.enqueue(ProgressJob)
     worker.start(1)
@@ -488,6 +491,8 @@ def test_progress1(queue, worker):
                ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
            ].shape[0] == 2
 
+
+@pytest.mark.timeout(30)
 def test_progress2(queue, worker):
     queue.enqueue(ProgressJob, progress_interval=1)
     worker.start(1)
@@ -497,6 +502,77 @@ def test_progress2(queue, worker):
     assert df[
                ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
            ].shape[0] >= 5
+
+
+class NoProgressJob(core4.queue.job.CoreJob):
+    author = "mra"
+
+    def execute(self, *args, **kwargs):
+        time.sleep(5)
+
+
+@pytest.mark.timeout(30)
+def test_zombie(queue, worker):
+    job = queue.enqueue(NoProgressJob, zombie_time=2)
+    worker.start(1)
+    worker.wait_queue()
+    worker.stop()
+    assert queue.config.sys.journal.count() == 1
+    assert queue.config.sys.queue.count() == 0
+    job = queue.find_job(job._id)
+    assert job.zombie_at is not None
+    df = pd.DataFrame(list(queue.config.sys.log.find()))
+    assert df[df.message.str.find(
+        "successfully set zombie job [{}]".format(
+            job._id)) >= 0].shape[0] == 1
+
+
+class ForeverJob(core4.queue.job.CoreJob):
+    author = "mra"
+
+    def execute(self, *args, **kwargs):
+        time.sleep(60 * 60 * 24)
+
+
+@pytest.mark.timeout(30)
+def test_no_pid(queue, worker):
+    job = queue.enqueue(ForeverJob)
+    worker.start(1)
+    while True:
+        job = queue.find_job(job._id)
+        if job.locked and job.locked["pid"]:
+            job = queue.find_job(job._id)
+            proc = psutil.Process(job.locked["pid"])
+            time.sleep(5)
+            proc.kill()
+            break
+    while True:
+        job = queue.find_job(job._id)
+        if job.state == "killed":
+            break
+    worker.stop()
+
+@pytest.mark.timeout(30)
+def test_kill(queue, worker):
+    job = queue.enqueue(ForeverJob, zombie_time=2)
+    worker.start(1)
+    while True:
+        job = queue.find_job(job._id)
+        if job.locked and job.locked["pid"]:
+            break
+    queue.kill_job(job._id)
+    while True:
+        job = queue.find_job(job._id)
+        if job.state == "killed":
+            break
+    queue.remove_job(job._id)
+    worker.wait_queue()
+    assert queue.config.sys.journal.count() == 1
+    assert queue.config.sys.queue.count() == 0
+    job = queue.find_job(job._id)
+    assert job.state == "killed"
+    assert job.killed_at is not None
+    worker.stop()
 
 # #@pytest.mark.timeout(30)
 # def test_locking():
@@ -525,19 +601,17 @@ def test_progress2(queue, worker):
 # remove jobs
 # remove inactive
 # job turns nonstop (wall_time)
-
-# todo: job turns into zombie
-
-# todo: auto kill if PID was gone
+# job turns into zombie
+# custom progress_interval, by DEFAULT, by job
+# auto kill if PID was gone
+# killed
+# remove killed
+# todo: restarting
 
 # todo: last_runtime in cookie
 # todo: dependency and chain
-# todo: custom progress_interval, by DEFAULT, by job
-# todo: restarting
 # todo: job collection, access management
 # todo: max_parallel
-# todo: killed
 # todo: check all exceptions have logging and log exceptions
 # todo: memory logger
 # todo: plugin maintenance
-# todo: remove killed

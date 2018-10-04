@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import traceback
+import psutil
 
 from datetime import timedelta
 import pymongo
@@ -18,9 +19,7 @@ import core4.util
 STEPS = (
     "work_jobs",
     "remove_jobs",
-    "nonstop_jobs",
-    "kill_jobs",
-    "nopid_jobs",
+    "flag_jobs",
     "collect_stats")
 
 
@@ -335,34 +334,77 @@ class CoreWorker(core4.base.CoreBase):
                 self.logger.error(
                     "failed to journal and remove job [%s]", doc["_id"])
 
-    def nonstop_jobs(self):
+    def flag_jobs(self):
         cur = self.config.sys.queue.find(
             {
                 "state": core4.queue.job.STATE_RUNNING,
-                "wall_time": {
-                    "$ne": None
-                },
-                "wall_at": None
-            }
+                "locked.worker": self.identifier
+            },
+            projection=[
+                "_id", "wall_time", "wall_at", "zombie_time",  "zombie_at",
+                "started_at", "locked.heartbeat", "locked.pid", "killed_at"
+            ]
         )
         for doc in cur:
-            ret = self.config.sys.queue.update_one(
-                filter={
-                    "_id": doc["_id"],
-                    "started_at": {
-                        "$lt": self.at - timedelta(seconds=doc["wall_time"])
-                    }
-                },
-                update={"$set": {"wall_at": core4.util.mongo_now()}})
-            if ret.raw_result["n"] == 1:
-                self.logger.warning(
-                    "successfully set non-stop job [%s]", doc["_id"])
+            self.flag_nonstop(doc)
+            self.flag_zombie(doc)
+            self.check_pid(doc)
+            self.kill_pid(doc)
 
-    def kill_jobs(self):
-        pass
+    def flag_nonstop(self, doc):
+        if doc["wall_time"] and not doc["wall_at"]:
+            if doc["started_at"] < (self.at
+                                    - timedelta(seconds=doc["wall_time"])):
+                ret = self.config.sys.queue.update_one(
+                    filter={
+                        "_id": doc["_id"]
+                    },
+                    update={"$set": {"wall_at": core4.util.mongo_now()}})
+                if ret.raw_result["n"] == 1:
+                    self.logger.warning(
+                        "successfully set non-stop job [%s]", doc["_id"])
 
-    def nopid_jobs(self):
-        pass
+    def flag_zombie(self, doc):
+        if not doc["zombie_at"]:
+            if doc["locked"]["heartbeat"] < (self.at
+                                    - timedelta(seconds=doc["zombie_time"])):
+                ret = self.config.sys.queue.update_one(
+                    filter={
+                        "_id": doc["_id"]
+                    },
+                    update={"$set": {"zombie_at": core4.util.mongo_now()}})
+                if ret.raw_result["n"] == 1:
+                    self.logger.warning(
+                        "successfully set zombie job [%s]", doc["_id"])
+
+    def pid_exists(self, doc):
+        proc = None
+        if doc["locked"] and doc["locked"]["pid"]:
+            if psutil.pid_exists(doc["locked"]["pid"]):
+                proc = psutil.Process(doc["locked"]["pid"])
+                if proc.status() not in (psutil.STATUS_DEAD,
+                                         psutil.STATUS_ZOMBIE):
+                    return (True, proc)
+        return (False, proc)
+
+    def check_pid(self, doc):
+        (found, proc) = self.pid_exists(doc)
+        if not found and proc:
+            self.logger.critical("pid [%s] not exists, killing",
+                                 doc["locked"]["pid"])
+            job = self.queue.load_job(doc["_id"])
+            self.queue.set_killed(job)
+            self.queue.unlock_job(job._id)
+
+
+    def kill_pid(self, doc):
+        if doc["killed_at"]:
+            (found, proc) = self.pid_exists(doc)
+            if found and proc:
+                proc.kill()
+                job = self.queue.load_job(doc["_id"])
+                self.queue.set_killed(job)
+                self.queue.unlock_job(job._id)
 
     def collect_stats(self):
         pass

@@ -45,9 +45,9 @@ job:
   defer_max: 3600
   defer_time: 300
   error_time: 600
+  zombie_time: 1800
   force: False
   hidden: False
-  inactive_time: 1800
   wall_time: ~
   max_parallel: ~
   worker: ~
@@ -61,7 +61,5 @@ worker:
   execution_plan:
     work_jobs: 0.25
     remove_jobs: 3.0
-    kill_jobs: 10.00
-    nopid_jobs: 15.00
-    nonstop_jobs: 20.00
-    collect_stats: 25.00
+    flag_jobs: 10.0
+    collect_stats: 25.0
