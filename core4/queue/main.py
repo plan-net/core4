@@ -9,6 +9,11 @@ from core4.base import CoreBase
 from core4.queue.job import STATE_PENDING
 import traceback
 
+STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
+                 core4.queue.job.STATE_FAILED)
+STATE_STOPPED = (core4.queue.job.STATE_KILLED,
+                 core4.queue.job.STATE_INACTIVE,
+                 core4.queue.job.STATE_ERROR)
 
 class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
 
@@ -28,13 +33,13 @@ class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
         enqueued_from = {
             "at": lambda: core4.util.mongo_now(),
             "hostname": lambda: core4.util.get_hostname(),
-            "parent": lambda: None,
+            "parent_id": lambda: None,
             "username": lambda: core4.util.get_username()
         }
         if by is None:
             by = {}
         job.__dict__["enqueued"] = {}
-        for k in ("at", "hostname", "parent", "username"):
+        for k in ("at", "hostname", "parent_id", "username"):
             job.__dict__["enqueued"][k] = by.get(k, enqueued_from[k]())
         # save
         doc = job.serialise()
@@ -116,51 +121,92 @@ class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
         else:
             raise core4.error.Core4UsageError(".halt requires now or past")
 
-    def remove_job(self, *args):
+    def remove_job(self, _id):
         at = core4.util.now()
-        failed = False
-        for _id in args:
-            ret = self.config.sys.queue.update_one(
-                {
-                    "_id": _id,
-                    "removed_at": None
-                },
-                update={
-                    "$set": {
-                        "removed_at": at
-                    }
+        ret = self.config.sys.queue.update_one(
+            {
+                "_id": _id,
+                "removed_at": None
+            },
+            update={
+                "$set": {
+                    "removed_at": at
                 }
-            )
-            if ret.raw_result["n"] == 1:
-                self.logger.warning(
-                    "flagged job [%s] to be remove at [%s]", _id, at)
-            else:
-                self.logger.error("failed to flag job [%s] to be remove", _id)
-                failed = True
-        return not failed
+            }
+        )
+        if ret.raw_result["n"] == 1:
+            self.logger.warning(
+                "flagged job [%s] to be remove at [%s]", _id, at)
+            return True
+        self.logger.error("failed to flag job [%s] to be remove", _id)
+        return False
 
-    def kill_job(self, *args):
-        at = core4.util.now()
-        failed = False
-        for _id in args:
-            ret = self.config.sys.queue.update_one(
-                {
-                    "_id": _id,
-                    "killed_at": None
-                },
-                update={
-                    "$set": {
-                        "killed_at": at
-                    }
-                }
-            )
-            if ret.raw_result["n"] == 1:
-                self.logger.warning(
-                    "flagged job [%s] to be killed at [%s]", _id, at)
+    def restart_job(self, _id):
+        if self._restart_waiting(_id):
+            self.logger.warning('successfully restarted [%s]', _id)
+            return _id
+        else:
+            new_id = self._restart_stopped(_id)
+            if new_id:
+                self.logger.warning('successfully restarted [%s] '
+                                    'with [%s]', _id, new_id)
+                return new_id
             else:
-                self.logger.error("failed to flag job [%s] to be killed", _id)
-                failed = True
-        return not failed
+                self.logger.error("failed to restart [%s]", _id)
+                return _id
+
+    def _restart_waiting(self, _id):
+        ret = self.config.sys.queue.update_one(
+            {
+                "_id": _id,
+                "state": {
+                    "$in": STATE_WAITING
+                }
+            },
+            update={
+                "$set": {
+                    "query_at": None
+                }
+            }
+        )
+        return ret.raw_result["n"] == 1
+
+    def _restart_stopped(self, _id):
+        job = self.find_job(_id)
+        if job.state in STATE_STOPPED:
+            if self.lock_job('__user__', _id):
+                ret = self.config.sys.queue.delete_one({"_id": _id})
+                if ret.raw_result["n"] == 1:
+                    enqueue = job.enqueued
+                    enqueue["parent_id"] = job._id
+                    enqueue["at"] = core4.util.mongo_now()
+                    doc = dict([(k, v) for k, v in job.serialise().items() if k in core4.queue.job.ENQUEUE_ARGS])
+                    new_job = self.enqueue(name=job.qual_name(), by=enqueue, **doc)
+                    job.enqueued["child_id"] = new_job._id
+                    self.journal(job.serialise())
+                    return new_job._id
+        return None
+
+    def kill_job(self, _id):
+        at = core4.util.now()
+        ret = self.config.sys.queue.update_one(
+            {
+                "_id": _id,
+                "killed_at": None,
+                "state": core4.queue.job.STATE_RUNNING
+            },
+            update={
+                "$set": {
+                    "killed_at": at
+                }
+            }
+        )
+        if ret.raw_result["n"] == 1:
+            self.logger.warning(
+                "flagged job [%s] to be killed at [%s]", _id, at)
+            return True
+        self.logger.error("failed to flag job [%s] to be killed", _id)
+        return False
 
     def lock_job(self, identifier, _id):
         try:
@@ -245,7 +291,6 @@ class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
         runtime = (job.finished_at - job.started_at).total_seconds()
         job.__dict__["runtime"] = (job.runtime or 0.) + runtime
         job.__dict__["locked"] = None
-        job.__dict__["trial"] += 1
         return runtime
 
     def add_exception(self, job):
@@ -278,8 +323,10 @@ class CoreQueue(CoreBase): #, metaclass=core4.util.Singleton):
         self.update_job(job, "state", "finished_at", "runtime", "locked",
                         "last_error", "attempts_left", "query_at", "trial")
         job.logger.error("done execution with [%s] "
-                         "after [%d] sec. and [%d] attempts to go", state,
-                         runtime, job.attempts_left)
+                         "after [%d] sec. and [%d] attempts to go: %s\n%s",
+                         state, runtime, job.attempts_left,
+                         job.last_error["exception"],
+                         "\n".join(job.last_error["traceback"]))
 
     def update_job(self, job, *args):
         ret = self.config.sys.queue.update_one(

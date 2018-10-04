@@ -13,7 +13,6 @@ import core4.queue.main
 import core4.queue.worker
 from tests.pytest_util import *
 
-
 LOOP_INTERVAL = 0.25
 
 
@@ -552,6 +551,7 @@ def test_no_pid(queue, worker):
             break
     worker.stop()
 
+
 @pytest.mark.timeout(30)
 def test_kill(queue, worker):
     job = queue.enqueue(ForeverJob, zombie_time=2)
@@ -574,25 +574,169 @@ def test_kill(queue, worker):
     assert job.killed_at is not None
     worker.stop()
 
-# #@pytest.mark.timeout(30)
-# def test_locking():
-#     queue = core4.queue.main.CoreQueue()
-#     pool = []
-#     workers = []
-#     for i in range(0, 50):
-#         queue.enqueue(core4.queue.job.DummyJob, i=i)
-#     for i in range(1, 4):
-#         worker = core4.queue.worker.CoreWorker(name="worker-{}".format(i))
-#         workers.append(worker)
-#         t = Thread(target=worker.start, args=())
-#         t.start()
-#         pool.append(t)
-#     wait = 10.
-#     time.sleep(wait)
-#     for w in workers:
-#         w.exit = True
-#     for t in pool:
-#         t.join()
+
+class RestartDeferredTest(core4.queue.job.CoreJob):
+    author = 'mra'
+    defer_time = 120
+
+    def execute(self, *args, **kwargs):
+        if self.trial == 2:
+            return
+        self.defer("expected deferred")
+
+
+@pytest.mark.timeout(30)
+def test_restart_deferred(queue, worker):
+    job = queue.enqueue(RestartDeferredTest)
+    worker.start(1)
+    while True:
+        j = queue.find_job(job._id)
+        if j.state == "deferred":
+            break
+    queue.restart_job(job._id)
+    worker.wait_queue()
+    worker.stop()
+    assert queue.config.sys.journal.count() == 1
+    assert queue.config.sys.queue.count() == 0
+    job = queue.find_job(job._id)
+    assert job.trial == 2
+    assert job.state == core4.queue.job.STATE_COMPLETE
+
+
+class RestartFailedTest(core4.queue.job.CoreJob):
+    author = 'mra'
+    error_time = 120
+    attempts = 2
+
+    def execute(self, *args, **kwargs):
+        if self.trial == 2:
+            return
+        raise RuntimeError("expected failure")
+
+
+@pytest.mark.timeout(30)
+def test_failed_deferred(queue, worker):
+    job = queue.enqueue(RestartFailedTest)
+    worker.start(1)
+    while True:
+        j = queue.find_job(job._id)
+        if j.state == "failed":
+            break
+    queue.restart_job(job._id)
+    worker.wait_queue()
+    worker.stop()
+    assert queue.config.sys.journal.count() == 1
+    assert queue.config.sys.queue.count() == 0
+    job = queue.find_job(job._id)
+    assert job.trial == 2
+    assert job.state == core4.queue.job.STATE_COMPLETE
+
+
+class RestartErrorTest(core4.queue.job.CoreJob):
+    author = 'mra'
+    error_time = 120
+    attempts = 1
+
+    def execute(self, *args, **kwargs):
+        if self.enqueued["parent_id"] is not None:
+            return
+        raise RuntimeError("expected failure")
+
+
+@pytest.mark.timeout(30)
+def test_restart_error(queue, worker):
+    job = queue.enqueue(RestartErrorTest)
+    worker.start(1)
+    while True:
+        j = queue.find_job(job._id)
+        if j.state == "error":
+            break
+    new_id = queue.restart_job(job._id)
+    worker.wait_queue()
+    worker.stop()
+    assert queue.config.sys.journal.count() == 2
+    assert queue.config.sys.queue.count() == 0
+    parent = queue.find_job(job._id)
+    assert parent.state == core4.queue.job.STATE_ERROR
+    child = queue.find_job(new_id)
+    assert child.state == core4.queue.job.STATE_COMPLETE
+
+
+def test_kill_running_only(queue):
+    job = queue.enqueue(core4.queue.job.DummyJob)
+    assert not queue.kill_job(job._id)
+
+
+class RequiresArgTest(core4.queue.job.CoreJob):
+    author = 'mra'
+
+    def execute(self, test, *args, **kwargs):
+        pass
+
+
+def test_requires_arg(queue, worker):
+    job = queue.enqueue(RequiresArgTest)
+    worker.start(1)
+    while True:
+        j = queue.find_job(job._id)
+        if j.state == "error":
+            break
+    worker.stop()
+
+
+class RestartKilledTest(core4.queue.job.CoreJob):
+    author = 'mra'
+    defer_time = 1
+
+    def execute(self, *args, **kwargs):
+        if self.enqueued["parent_id"]:
+            return
+        time.sleep(120)
+
+
+@pytest.mark.timeout(30)
+def test_restart_killed(queue, worker):
+    job = queue.enqueue(RestartKilledTest)
+    worker.start(1)
+    while True:
+        j = queue.find_job(job._id)
+        if j.state == "running":
+            break
+    queue.kill_job(job._id)
+    while True:
+        j = queue.find_job(job._id)
+        if j.state == "killed":
+            break
+    new_id = queue.restart_job(job._id)
+    queue.restart_job(new_id)
+    #queue.remove_job(job._id)
+    worker.wait_queue()
+    worker.stop()
+
+
+class RestartInactiveTest(core4.queue.job.CoreJob):
+    author = 'mra'
+    defer_max = 5
+    defer_time = 1
+
+    def execute(self, *args, **kwargs):
+        if self.enqueued["parent_id"]:
+            return
+        self.defer("expected defer")
+
+
+@pytest.mark.timeout(30)
+def test_restart_inactive(queue, worker):
+    job = queue.enqueue(RestartInactiveTest)
+    worker.start(1)
+    while True:
+        j = queue.find_job(job._id)
+        if j.state == "inactive":
+            break
+    queue.restart_job(job._id)
+    worker.wait_queue()
+    worker.stop()
+
 
 
 # last_error
@@ -606,7 +750,7 @@ def test_kill(queue, worker):
 # auto kill if PID was gone
 # killed
 # remove killed
-# todo: restarting
+# restarting
 
 # todo: last_runtime in cookie
 # todo: dependency and chain

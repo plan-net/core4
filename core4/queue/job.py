@@ -11,7 +11,7 @@ from core4.queue.validate import *
 
 # Job-States
 STATE_PENDING = 'pending'
-STATE_STARTING = 'starting'
+STATE_STARTING = 'starting'  # todo: we need this?
 STATE_RUNNING = 'running'
 STATE_COMPLETE = 'complete'
 STATE_DEFERRED = 'deferred'
@@ -136,8 +136,10 @@ class CoreJob(CoreBase):
     * ``enqueued`` - dict with information about job enqueuing
     * ``enqueued.at`` - datetime when the job has been enqueued
     * ``enqueued.hostname`` - from where the job has been enqueued
-    * ``enqueued.parent`` - job id of the precursing job which has been
+    * ``enqueued.parent_id`` - job id of the precursing job which has been
       journaled and restarted
+    * ``enqueued.child_id`` - job id of the follow-up job which has been
+      launched
     * ``enqueued.username`` - user who enqueued the job
     * ``error_time`` - seconds to wait before job restart after failure
     * ``finished_at`` - datetime when the job finished with success, failure,

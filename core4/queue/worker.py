@@ -193,10 +193,12 @@ class CoreWorker(core4.base.CoreBase):
     def start_job(self, job):
         job.logger.info("start execution")
         at = core4.util.mongo_now()
+        job.__dict__["trial"] += 1
         update = {
             "state": core4.queue.job.STATE_RUNNING,
             "started_at": at,
             "query_at": None,
+            "trial": job.trial,
             "locked": {
                 "at": self.at,
                 "heartbeat": self.at,
