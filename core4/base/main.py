@@ -193,6 +193,7 @@ class CoreBase:
         # pass object reference into logging and enable lazy property access
         #   and late binding
         self.logger = core4.logger.CoreLoggingAdapter(logger, self)
+        sys.excepthook = self.excepthook
 
     def _log_progress(self, p, *args):
         """
@@ -252,3 +253,12 @@ class CoreBase:
         else:
             message = ""
         return message
+
+    def excepthook(self, *args):
+        """
+        Internal exception hook to forward unhandled exceptions to core4
+        logger with logging level ``CRITICAL``.
+        """
+        self.logger.critical("unhandled exception encountered", exc_info=args)
+        self.sys_except_hook(*args)
+
