@@ -42,6 +42,7 @@ class CoreBase:
     # used to hack
     _short_qual_name = None
     _long_qual_name = None
+    sys_excepthook = None
 
     project = None
     identifier = None
@@ -193,7 +194,9 @@ class CoreBase:
         # pass object reference into logging and enable lazy property access
         #   and late binding
         self.logger = core4.logger.CoreLoggingAdapter(logger, self)
-        sys.excepthook = self.excepthook
+        if CoreBase.sys_excepthook is None:
+            CoreBase.sys_excepthook = sys.excepthook
+            sys.excepthook = self.excepthook
 
     def _log_progress(self, p, *args):
         """
@@ -259,6 +262,5 @@ class CoreBase:
         Internal exception hook to forward unhandled exceptions to core4
         logger with logging level ``CRITICAL``.
         """
-        self.logger.critical("unhandled exception encountered", exc_info=args)
-        self.sys_except_hook(*args)
-
+        self.logger.critical("unhandled exception", exc_info=args)
+        self.sys_excepthook(*args)
