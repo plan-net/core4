@@ -39,13 +39,13 @@ class CoreWorker(core4.base.CoreBase):
     Each worker operates in three distinct phases. Each phase features one or
     more processing steps.
 
-    # **startup** - registers the worker abd available projects, do some
-      housekeeping/ cleanup, and several prerequisites, e.g. required
-      folders and MongoDB collections are verified
-    # **loop** - work and manage jobs, collect server statistics
-    # **shutdown** - again some housekeeping and unregistering the worker
-      and projects
-    # **exit** - quit worker
+    #. **startup** - registers the worker abd available projects, do some
+       housekeeping/ cleanup, and several prerequisites, e.g. required
+       folders and MongoDB collections are verified
+    #. **loop** - work and manage jobs, collect server statistics
+    #. **shutdown** - again some housekeeping and unregistering the worker
+       and projects
+    #. **exit** - quit worker
 
     .. warning:: The worker ``.identifier`` must be unique.
     """
@@ -533,9 +533,9 @@ class CoreWorker(core4.base.CoreBase):
         ``.locked`` attribute) for date/time range specified in the
         ``.zombie_time`` attribute.
 
-        The jobs' :meth:`.progress` method updates the ``heartbeat``. Therefore
-        job developers are expected to call this method for long-running
-        algorithms regularly.
+        The jobs' :meth:`.progress <core4.queue.job.CoreJob.progress>` method
+        updates the ``heartbeat``. Therefore job developers are expected to
+        call this method for long-running algorithms regularly.
 
         .. note:: The ``zombie_at`` attribute represents the timestamp when
                   the job was flagged. Job execution continues without further

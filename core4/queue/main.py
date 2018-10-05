@@ -30,7 +30,7 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
         Enqueues the passed job identified by it's :meth:`.qual_name`. The job
         is represented by a document in MongoDB collection ``sys.queue``.
 
-        :param **kwargs: dict
+        :param kwargs: dict
         :return: enqueued job object
         """
         core4.service.setup.CoreSetup().make_queue()

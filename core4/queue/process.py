@@ -18,8 +18,9 @@ class CoreWorkerProcess(core4.base.CoreBase,
                         core4.logger.mixin.CoreLoggerMixin):
     """
     This class controls jobs execution. It loads the requested job from
-    ``sys.queue``, drops user privileges, :meth:`.execute` the job, manages
-    the final job state (``complete`` or ``failed``) and set the jobs' cookie
+    ``sys.queue``, drops user privileges,
+    :meth:`.execute <core4.queue.job.CoreJob.execute>` the job, manages the
+    final job state (``complete`` or ``failed``) and set the jobs' cookie
     ``last_runtime``.
     """
 
