@@ -4,8 +4,8 @@ import datetime
 import pandas as pd
 import psutil
 import time
-from threading import Thread
-
+import sys
+import threading
 import core4.base.main
 import core4.logger.mixin
 import core4.queue.job
@@ -16,6 +16,33 @@ from tests.pytest_util import *
 LOOP_INTERVAL = 0.25
 
 
+def setup_thread_excepthook():
+    """
+    Workaround for `sys.excepthook` thread bug from:
+    http://bugs.python.org/issue1230540
+
+    Call once from the main thread before creating any threads.
+    """
+
+    init_original = threading.Thread.__init__
+
+    def init(self, *args, **kwargs):
+
+        init_original(self, *args, **kwargs)
+        run_original = self.run
+
+        def run_with_except_hook(*args2, **kwargs2):
+            try:
+                run_original(*args2, **kwargs2)
+            except Exception:
+                sys.excepthook(*sys.exc_info())
+
+        self.run = run_with_except_hook
+
+    threading.Thread.__init__ = init
+
+setup_thread_excepthook()
+
 @pytest.fixture(autouse=True)
 def worker_timing():
     os.environ["CORE4_OPTION_" \
@@ -24,30 +51,6 @@ def worker_timing():
     os.environ["CORE4_OPTION_" \
                "worker__execution_plan__flag_jobs"] = "!!float 3"
 
-
-def test_plan():
-    worker = core4.queue.worker.CoreWorker()
-    assert len(worker.create_plan()) == 4
-
-
-@pytest.mark.timeout(30)
-def test_5loops():
-    worker = core4.queue.worker.CoreWorker()
-    t = Thread(target=worker.start, args=())
-    t.start()
-    while worker.cycle["total"] < 5:
-        time.sleep(0.1)
-    worker.exit = True
-    t.join()
-
-
-@pytest.mark.timeout(30)
-def test_setup():
-    worker = core4.queue.worker.CoreWorker()
-    worker.exit = True
-    worker.start()
-
-
 @pytest.mark.timeout(30)
 def test_register(caplog):
     pool = []
@@ -55,7 +58,7 @@ def test_register(caplog):
     for i in range(1, 4):
         worker = core4.queue.worker.CoreWorker(name="worker-{}".format(i))
         workers.append(worker)
-        t = Thread(target=worker.start, args=())
+        t = threading.Thread(target=worker.start, args=())
         t.start()
         pool.append(t)
     wait = 3.
@@ -72,13 +75,41 @@ def test_register(caplog):
                 for i in worker.plan
                 if i["name"] == "work_jobs"][0] >= worker.cycle["total"]
 
+def test_register_duplicate():
+    w1 = core4.queue.worker.CoreWorker(name="worker")
+    w1.register_worker()
+    w2 = core4.queue.worker.CoreWorker(name="worker")
+    w1.register_worker()
+
+def test_plan():
+    worker = core4.queue.worker.CoreWorker()
+    assert len(worker.create_plan()) == 4
+
+
+@pytest.mark.timeout(30)
+def test_5loops():
+    worker = core4.queue.worker.CoreWorker()
+    t = threading.Thread(target=worker.start, args=())
+    t.start()
+    while worker.cycle["total"] < 5:
+        time.sleep(0.1)
+    worker.exit = True
+    t.join()
+
+
+@pytest.mark.timeout(30)
+def test_setup():
+    worker = core4.queue.worker.CoreWorker()
+    worker.exit = True
+    worker.start()
+
 
 @pytest.mark.timeout(30)
 def test_maintenance():
     queue = core4.queue.main.CoreQueue()
     queue.enter_maintenance()
     worker = core4.queue.worker.CoreWorker()
-    t = Thread(target=worker.start, args=())
+    t = threading.Thread(target=worker.start, args=())
     t.start()
     while worker.cycle["total"] < 3:
         time.sleep(0.5)
@@ -94,8 +125,9 @@ def test_maintenance():
 def test_halt():
     queue = core4.queue.main.CoreQueue()
     queue.halt(now=True)
+    time.sleep(2)
     worker = core4.queue.worker.CoreWorker()
-    t = Thread(target=worker.start, args=())
+    t = threading.Thread(target=worker.start, args=())
     t.start()
     while worker.cycle["total"] < 3:
         time.sleep(0.5)
@@ -167,7 +199,7 @@ def test_removing():
     for i in range(1, 4):
         worker = core4.queue.worker.CoreWorker(name="worker-{}".format(i))
         workers.append(worker)
-        t = Thread(target=worker.start, args=())
+        t = threading.Thread(target=worker.start, args=())
         t.start()
         pool.append(t)
     while queue.config.sys.queue.count() > 0:
@@ -217,7 +249,7 @@ def test_start_job2(queue):
     for i in range(0, threads):
         worker = core4.queue.worker.CoreWorker(name="worker-{}".format(i + 1))
         workers.append(worker)
-        t = Thread(target=worker.start, args=())
+        t = threading.Thread(target=worker.start, args=())
         t.start()
         pool.append(t)
     while queue.config.sys.queue.count() > 0:
@@ -250,7 +282,7 @@ class WorkerHelper:
             worker = core4.queue.worker.CoreWorker(
                 name="worker-{}".format(i + 1))
             self.worker.append(worker)
-            t = Thread(target=worker.start, args=())
+            t = threading.Thread(target=worker.start, args=())
             self.pool.append(t)
         for t in self.pool:
             t.start()
@@ -751,11 +783,13 @@ def test_restart_inactive(queue, worker):
 # killed
 # remove killed
 # restarting
+# last_runtime in cookie
 
-# todo: last_runtime in cookie
-# todo: dependency and chain
-# todo: job collection, access management
-# todo: max_parallel
 # todo: check all exceptions have logging and log exceptions
+
+# todo: job collection, access management
+# todo: dependency and chain
+# todo: max_parallel
 # todo: memory logger
-# todo: plugin maintenance
+# todo: project maintenance
+# todo: stats

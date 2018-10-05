@@ -81,8 +81,11 @@ def now():
 
 
 def mongo_now():
-    # note: https://stackoverflow.com/questions/17476176/nanoseconds-lost-coming-from-mongodb-isodate-object
+    """
+    :return: current core4 system time in MongoDB resolution (in UTC)
+    """
     return now().replace(microsecond=0)
+
 
 def get_pid():
     """
