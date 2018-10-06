@@ -20,6 +20,11 @@ import core4.util
 from core4.const import CORE4, PREFIX
 
 
+def is_core4_project(body):
+    return re.match(r'.*\_\_project\_\_\s*\=\s*[\"\']{}[\"\'].*'.format(
+        CORE4), body, re.DOTALL)
+
+
 class CoreBase:
     """
     This is the base class to all core4 classes. :class:`CoreBase` ships with
@@ -83,10 +88,7 @@ class CoreBase:
             if os.path.exists(init_file):
                 with open(init_file, 'r') as fh:
                     body = fh.read()
-                    if re.match(
-                            r'.*\_\_project\_\_\s*'
-                            r'\=\s*[\"\']{}[\"\'].*'.format(
-                                CORE4), body, re.DOTALL):
+                    if is_core4_project(body):
                         self.__class__._short_qual_name = ".".join(
                             list(reversed(pathname))
                             + [self.__class__.__name__])

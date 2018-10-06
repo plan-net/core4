@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 __project__ = 'core4'
-__version__ = None
+__version__ = "0.1.1"
 __built__ = None
 
 title = 'project example (core4 regression tests)'

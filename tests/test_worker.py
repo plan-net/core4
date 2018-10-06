@@ -793,3 +793,4 @@ def test_restart_inactive(queue, worker):
 # todo: memory logger
 # todo: project maintenance
 # todo: stats
+# todo: capture stdout and stderr
