@@ -248,8 +248,6 @@ class CoreWorker(core4.base.CoreBase):
         doc = self.get_next_job()
         if doc is None:
             return
-        if not self.queue.lock_job(self.identifier, doc["_id"]):
-            return
         try:
             job = self.queue.job_factory(doc["name"]).deserialise(**doc)
         except:
@@ -339,31 +337,45 @@ class CoreWorker(core4.base.CoreBase):
             cur2 = None
         cur1 = self.config.sys.queue.find(
             filter={'$and': query}, sort=order)
-        try:
-            data = cur1.next()
-        except StopIteration:
-            data = None
-        if cur2 is not None:
+        while True:
             try:
-                data2 = cur2.next()
+                data = cur1.next()
             except StopIteration:
+                data = None
+            if cur2 is not None:
+                try:
+                    data2 = cur2.next()
+                except StopIteration:
+                    data2 = None
+            else:
                 data2 = None
-        else:
-            data2 = None
-        if data is None:
-            if data2 is None:
-                self.offset = None
-                return None
-            self.logger.debug("next job from top chunk [%s]", data2["_id"])
-            data = data2
-        else:
-            self.logger.debug("next job from bottom chunk [%s]", data["_id"])
-            if data2 is not None and data2["priority"] > data["priority"]:
-                data = data2
+            if data is None:
+                if data2 is None:
+                    self.offset = None
+                    return None
                 self.logger.debug(
-                    "next job from prioritised top chunk [%s]", data["_id"])
-        self.offset = data["_id"]
-        return data
+                    "next job from top chunk [%s]", data2["_id"])
+                data = data2
+            else:
+                self.logger.debug(
+                    "next job from bottom chunk [%s]", data["_id"])
+                if data2 is not None and data2["priority"] > data["priority"]:
+                    data = data2
+                    self.logger.debug(
+                        "next job from prioritised top chunk [%s]",
+                        data["_id"])
+            project = data["name"].split(".")[0]
+            if self.queue.maintenance(project):
+                self.logger.info(
+                    "skipped job [%s] in maintenance", data["_id"])
+                continue
+            if not self.queue.lock_job(self.identifier, data["_id"]):
+                self.logger.debug('skipped job [%s] due to lock failure',
+                                  data["_id"])
+                continue
+            self.offset = data["_id"]
+            self.logger.debug('successfully reserved [%s]', data["_id"])
+            return data
 
     def start_job(self, job):
         """
