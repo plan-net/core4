@@ -54,6 +54,26 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
         return iter(self._project)
 
     def iter_job(self):
+        """
+        Iterator through all core4 jobs across projects. The following
+        meta information is retrieved:
+
+        * name (see :meth:`.qual_name`)
+        * author
+        * schedule
+        * hidden
+        * doc (the ``__doc__`` string of the job class)
+        * tag
+        * valid (``True`` if job properties and configuration is valid, else
+          ``False``)
+        * exception with type and traceback in case of errors
+
+        .. note:: Jobs with a ``.hidden`` attribute of ``None`` are not
+                  retrieved. All other jobs irrespective of their hidden value
+                  (``True`` or ``False``) are enumerated.
+
+        :return: dict generator
+        """
         self._load()
         for qual_name, cls in self._job.items():
             try:
