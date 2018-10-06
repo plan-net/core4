@@ -70,13 +70,10 @@ class CoreSetup(CoreBase, metaclass=Singleton):
             expireAfterSeconds=ttl)
 
     @once
-    def register_jobs(self):
+    def collect_jobs(self):
         intro = CoreIntrospector()
         lookup = dict([(p["name"], p) for p in intro.iter_project()])
-        coll = self.config.sys.project
         for info in intro.iter_job():
-            yield info
-            # parts = info["name"].split(".")
-            # project = parts[0]
-            # module = ".".join(parts[0:-1])
-            # #print(info["name"], project, module, lookup[project])
+            project = info["name"].split(".")[0]
+            lookup[project].setdefault("job", {})[info["name"]] = info
+        return lookup

@@ -24,4 +24,4 @@ def test_make_queue2():
 def test_register_jobs():
     setup = core4.service.setup.CoreSetup()
     from pprint import pprint
-    pprint(list(setup.register_jobs()))
+    pprint(setup.collect_jobs())
