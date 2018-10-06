@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import sys
+import ctypes
+
 import datetime
 import pandas as pd
 import psutil
-import time
-import sys
 import threading
+import time
+
 import core4.base.main
 import core4.logger.mixin
 import core4.queue.job
@@ -14,6 +17,7 @@ import core4.queue.worker
 from tests.pytest_util import *
 
 LOOP_INTERVAL = 0.25
+libc = ctypes.CDLL(None)
 
 
 def setup_thread_excepthook():
@@ -41,7 +45,9 @@ def setup_thread_excepthook():
 
     threading.Thread.__init__ = init
 
+
 setup_thread_excepthook()
+
 
 @pytest.fixture(autouse=True)
 def worker_timing():
@@ -50,6 +56,7 @@ def worker_timing():
         LOOP_INTERVAL)
     os.environ["CORE4_OPTION_" \
                "worker__execution_plan__flag_jobs"] = "!!float 3"
+
 
 @pytest.mark.timeout(30)
 def test_register(caplog):
@@ -75,11 +82,13 @@ def test_register(caplog):
                 for i in worker.plan
                 if i["name"] == "work_jobs"][0] >= worker.cycle["total"]
 
+
 def test_register_duplicate():
     w1 = core4.queue.worker.CoreWorker(name="worker")
     w1.register_worker()
     w2 = core4.queue.worker.CoreWorker(name="worker")
     w1.register_worker()
+
 
 def test_plan():
     worker = core4.queue.worker.CoreWorker()
@@ -741,7 +750,7 @@ def test_restart_killed(queue, worker):
             break
     new_id = queue.restart_job(job._id)
     queue.restart_job(new_id)
-    #queue.remove_job(job._id)
+    # queue.remove_job(job._id)
     worker.wait_queue()
     worker.stop()
 
@@ -775,15 +784,14 @@ class OutputTestJob(core4.queue.job.CoreJob):
 
     def execute(self, *args, **kwargs):
         print("this output comes from %s" % self.qual_name())
+        os.system("echo this comes from echo")
+        libc.puts(b"this comes from C")
 
 def test_stdout(queue, worker):
     job = queue.enqueue(OutputTestJob)
     worker.start(1)
     worker.wait_queue()
     worker.stop()
-
-
-
 
 # last_error
 # job turns inactive

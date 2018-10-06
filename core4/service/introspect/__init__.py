@@ -83,6 +83,7 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
                 obj.validate()
                 validate = True
                 exception = None
+                executable = obj.find_executable()
             except Exception as esc:
                 validate = False
                 exc_info = sys.exc_info()
@@ -90,6 +91,7 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
                     "exception": repr(exc_info[1]),
                     "traceback": traceback.format_exception(*exc_info)
                 }
+                executable = None
                 self.logger.error("cannot instantiate job [%s]",
                                   qual_name, exc_info=exc_info)
             yield {
@@ -100,7 +102,8 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
                 "doc": obj.__doc__,
                 "tag": obj.tag,
                 "valid": validate,
-                "exception": exception
+                "exception": exception,
+                "python": executable
             }
 
     def _load(self):

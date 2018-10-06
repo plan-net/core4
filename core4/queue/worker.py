@@ -413,15 +413,12 @@ class CoreWorker(core4.base.CoreBase):
                 "failed to update job [{}] state [starting]".format(job._id))
         for k, v in update.items():
             job.__dict__[k] = v
-        executable = self.find_executable(job)
-        if not os.path.exists(executable):
-            self.logger.error("cannot find Python executable [%s]", executable)
+        try:
+            executable = job.find_executable()
+        except:
+            self.logger.error("cannot instantiate job", exc_info=True)
             job.__dict__["attempts_left"] = 0
-            self.queue.set_failed(job, exception={
-                "exception": "FileNotFoundError({})".format(executable),
-                "timestamp": core4.util.mongo_now(),
-                "traceback": []
-            })
+            self.queue.set_failed(job)
         else:
             proc = subprocess.Popen(
                 [
@@ -451,33 +448,6 @@ class CoreWorker(core4.base.CoreBase):
             proc.stdin.close()
             self.logger.debug("successfully launched job [%s] with [%s]",
                               job._id, executable)
-
-    def find_executable(self, job):
-        """
-        This method is used to find the Python executable/virtual environment
-        for the passed job.
-
-        The Python executable is defined by a configuration key named
-        ``python`` . If the value is ``None``, then the executable running the
-        :class:`.CoreWorker` is used. If configuration variable
-        ``worker.virtual_environment_home`` is defined, then the actual
-        Python interpreter path is built from this path and the value of the
-        ``python`` key. If key ``worker.virtual_environment_home`` is ``None``,
-        then the ``python`` key must address the full path to the Python
-        interpreter.
-
-        :param job: :class:`.CoreJob` object
-        :return: full path (str) to Python executable
-        """
-        if job.python:
-            if self.config.worker.virtual_environment_home:
-                return os.path.join(
-                    self.config.worker.virtual_environment_home,
-                    job.python)
-            else:
-                return job.python
-        else:
-            return sys.executable
 
     def remove_jobs(self):
         """

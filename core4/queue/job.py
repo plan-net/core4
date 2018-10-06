@@ -1,6 +1,8 @@
-import datetime as dt
 import hashlib
 import json
+import sys
+
+import datetime as dt
 
 import core4.base.cookie
 import core4.error
@@ -520,6 +522,38 @@ class CoreJob(CoreBase):
         # todo: euqneueing arguments? not really!
         """
         raise NotImplementedError
+
+    def find_executable(self):
+        """
+        This method is used to find the Python executable/virtual environment
+        for the passed job.
+
+        The Python executable is defined by a configuration key named
+        ``python`` . If the value is ``None``, then the executable running the
+        :class:`.CoreWorker` is used. If configuration variable
+        ``worker.virtual_environment_home`` is defined, then the actual
+        Python interpreter path is built from this path and the value of the
+        ``python`` key. If key ``worker.virtual_environment_home`` is ``None``,
+        then the ``python`` key must address the full path to the Python
+        interpreter.
+
+        :param job: :class:`.CoreJob` object
+        :return: full path (str) to Python executable
+        """
+        if self.python:
+            if self.config.worker.virtual_environment_home:
+                executable = os.path.join(
+                    self.config.worker.virtual_environment_home, self.python)
+            else:
+                executable = self.python
+        else:
+            executable = sys.executable
+        if not os.path.exists(executable):
+            raise FileNotFoundError(
+                "Python executable [{}] not found for [{}]".format(
+                    executable, self.qual_name()
+                ))
+        return executable
 
 
 class DummyJob(CoreJob):

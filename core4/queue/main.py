@@ -371,17 +371,14 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
                 "failed to update job [{}] state [%s]".format(
                     job._id, job.state))
 
-    def _add_exception(self, job, exception=None):
+    def _add_exception(self, job):
         # internal method used to add exception information to .last_error
-        if exception:
-            job.__dict__["last_error"] = exception
-        else:
-            exc_info = sys.exc_info()
-            job.__dict__["last_error"] = {
-                "exception": repr(exc_info[1]),
-                "timestamp": core4.util.mongo_now(),
-                "traceback": traceback.format_exception(*exc_info)
-            }
+        exc_info = sys.exc_info()
+        job.__dict__["last_error"] = {
+            "exception": repr(exc_info[1]),
+            "timestamp": core4.util.mongo_now(),
+            "traceback": traceback.format_exception(*exc_info)
+        }
 
     def set_complete(self, job):
         """
@@ -467,7 +464,7 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
                          "after [%d] sec. and [%d] trials in [%s]", runtime,
                          job.trial, job.inactive_at - job.enqueued["at"])
 
-    def set_failed(self, job, exception=None):
+    def set_failed(self, job):
         """
         If the passed job has ``.attempts_left``, then set the job state to
         ``failed`` and update the next ``query_at`` timestamp using the job
@@ -490,7 +487,7 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
             state = core4.queue.job.STATE_ERROR
         self.logger.debug("updating job [%s] to [%s]", job._id, state)
         runtime = self._finish(job, state)
-        self._add_exception(job, exception)
+        self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "attempts_left", "query_at", "trial")
         self.unlock_job(job._id)
