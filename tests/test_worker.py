@@ -346,7 +346,6 @@ def test_success_after_failure(queue, worker):
     queue.enqueue(project.work.ErrorJob, success=True)
     worker.start(1)
     worker.wait_queue()
-    worker.stop()
     df = pd.DataFrame(list(queue.config.sys.log.find()))
     assert df[df.message.str.find("start execution") >= 0].shape[0] == 3
     assert df[df.message.str.find(
@@ -525,7 +524,6 @@ def test_progress1(queue, worker):
     queue.enqueue(ProgressJob)
     worker.start(1)
     worker.wait_queue()
-    worker.stop()
     df = pd.DataFrame(list(queue.config.sys.log.find()))
     assert df[
                ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
@@ -537,7 +535,6 @@ def test_progress2(queue, worker):
     queue.enqueue(ProgressJob, progress_interval=1)
     worker.start(1)
     worker.wait_queue()
-    worker.stop()
     df = pd.DataFrame(list(queue.config.sys.log.find()))
     assert df[
                ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
@@ -556,7 +553,6 @@ def test_zombie(queue, worker):
     job = queue.enqueue(NoProgressJob, zombie_time=2)
     worker.start(1)
     worker.wait_queue()
-    worker.stop()
     assert queue.config.sys.journal.count() == 1
     assert queue.config.sys.queue.count() == 0
     job = queue.find_job(job._id)
@@ -613,7 +609,6 @@ def test_kill(queue, worker):
     job = queue.find_job(job._id)
     assert job.state == "killed"
     assert job.killed_at is not None
-    worker.stop()
 
 
 class RestartDeferredTest(core4.queue.job.CoreJob):
@@ -636,7 +631,6 @@ def test_restart_deferred(queue, worker):
             break
     queue.restart_job(job._id)
     worker.wait_queue()
-    worker.stop()
     assert queue.config.sys.journal.count() == 1
     assert queue.config.sys.queue.count() == 0
     job = queue.find_job(job._id)
@@ -665,7 +659,6 @@ def test_failed_deferred(queue, worker):
             break
     queue.restart_job(job._id)
     worker.wait_queue()
-    worker.stop()
     assert queue.config.sys.journal.count() == 1
     assert queue.config.sys.queue.count() == 0
     job = queue.find_job(job._id)
@@ -694,7 +687,6 @@ def test_restart_error(queue, worker):
             break
     new_id = queue.restart_job(job._id)
     worker.wait_queue()
-    worker.stop()
     assert queue.config.sys.journal.count() == 2
     assert queue.config.sys.queue.count() == 0
     parent = queue.find_job(job._id)
@@ -752,7 +744,6 @@ def test_restart_killed(queue, worker):
     queue.restart_job(new_id)
     # queue.remove_job(job._id)
     worker.wait_queue()
-    worker.stop()
 
 
 class RestartInactiveTest(core4.queue.job.CoreJob):
@@ -776,7 +767,6 @@ def test_restart_inactive(queue, worker):
             break
     queue.restart_job(job._id)
     worker.wait_queue()
-    worker.stop()
 
 
 class OutputTestJob(core4.queue.job.CoreJob):
@@ -788,7 +778,7 @@ class OutputTestJob(core4.queue.job.CoreJob):
         os.system("echo this comes from stderr > /dev/stderr")
         libc.puts(b"this comes from C")
 
-
+@pytest.mark.timeout(30)
 def test_stdout(queue, worker, mongodb):
     job = queue.enqueue(OutputTestJob)
     worker.start(3)
@@ -800,7 +790,6 @@ def test_stdout(queue, worker, mongodb):
             in doc["stdout"])
     assert ("this comes from echo" in doc["stdout"])
     assert ("this comes from C" in doc["stdout"])
-    worker.stop()
 
 
 class BinaryOutputTestJob(core4.queue.job.CoreJob):
@@ -810,6 +799,7 @@ class BinaryOutputTestJob(core4.queue.job.CoreJob):
         sys.stdout.buffer.write(b"evil payload \xDE\xAD\xBE\xEF.")
 
 
+@pytest.mark.timeout(30)
 def test_binary_out(queue, worker, mongodb):
     job = queue.enqueue(BinaryOutputTestJob)
     worker.start(3)
@@ -818,7 +808,26 @@ def test_binary_out(queue, worker, mongodb):
     doc = mongodb.core4test.sys.stdout.find_one()
     assert doc["_id"] == job._id
     assert doc["stdout"] == b"evil payload \xDE\xAD\xBE\xEF."
-    worker.stop()
+
+
+@pytest.mark.timeout(30)
+def test_project_maintenance(queue, worker):
+    job = queue.enqueue(core4.queue.job.DummyJob)
+    worker.start(1)
+    while queue.config.sys.queue.count() > 0:
+        time.sleep(1)
+    curr = worker.worker[0].cycle["total"]
+    queue.enter_maintenance("core4")
+    assert queue.config.sys.queue.count() == 0
+    job = queue.enqueue(core4.queue.job.DummyJob)
+    assert queue.config.sys.queue.count() == 1
+    while worker.worker[0].cycle["total"] < curr + 10:
+        time.sleep(1)
+    assert queue.config.sys.queue.count() == 1
+    queue.leave_maintenance("core4")
+    worker.wait_queue()
+    assert queue.config.sys.queue.count() == 0
+
 
 # last_error
 # job turns inactive
