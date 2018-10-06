@@ -92,39 +92,83 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
         obj.validate()
         return obj
 
-    def enter_maintenance(self):
+    def enter_maintenance(self, project=None):
         """
-        Enters global maintenance mode. This mode is indicated with a document
-        ``_id == "__maintenance__"`` in collection ``sys.worker``.
+        Enters global or project maintenance mode. Global maintenance mode is
+        indicated with a document ``_id == "__maintenance__"`` in collection
+        ``sys.worker``. Project maintenance is indicated with an element in
+        a document ``_id == "__project__"`` in collection ``sys.worker``.
 
-        :return: ``True`` if maintenance mode is set, else ``False``
+        :param project: ``None`` for global maintenance, else the name of the
+                        project
+        :return: ``True`` if maintenance mode has been set, else ``False``
         """
+        if project is None:
+            ret = self.config.sys.worker.update_one(
+                {"_id": "__maintenance__"},
+                update={
+                    "$set": {
+                        "timestamp": core4.util.now()
+                    }
+                },
+                upsert=True
+            )
+            return ret.raw_result["n"] == 1
+        # project specific maintenance
         ret = self.config.sys.worker.update_one(
-            {"_id": "__maintenance__"},
+            {"_id": "__project__"},
             update={
-                "$set": {
-                    "timestamp": core4.util.now()
+                "$push": {
+                    "maintenance": project
                 }
             },
             upsert=True
         )
         return ret.raw_result["n"] == 1
 
-    def leave_maintenance(self):
+    def leave_maintenance(self, project=None):
         """
-        Leaves global maintenance mode. See :meth:`.enter_maintenance`.
+        Leaves global or project maintenance mode. See
+        :meth:`.enter_maintenance`.
 
+        :param project: ``None`` for global maintenance, else the name of the
+                        project
         :return: ``True`` if maintenance mode has been left
         """
-        ret = self.config.sys.worker.delete_one({"_id": "__maintenance__"})
+        if project is None:
+            ret = self.config.sys.worker.delete_one({"_id": "__maintenance__"})
+            return ret.raw_result["n"] == 1
+        # project specific maintenance
+        ret = self.config.sys.worker.update_one(
+            {"_id": "__project__"},
+            update={
+                "$pull": {
+                    "maintenance": project
+                }
+            },
+            upsert=True
+        )
         return ret.raw_result["n"] == 1
 
-    def maintenance(self):
+    def maintenance(self, project=None):
         """
+        Returns global or project maintenance mode indicator. Global
+        maintenance ``True`` or ``False`` is retrieved if the passed
+        ``project`` is ``None``. Use the ``project`` name to query project
+        maintenance mode.
+
+        :param project: ``None`` for global maintenance, else the name of the
+                        project
         :return: ``True`` if core4 is in global maintenance mode, else
                  ``False``
         """
-        return self.config.sys.worker.count({"_id": "__maintenance__"}) > 0
+        if project is None:
+            return self.config.sys.worker.count({"_id": "__maintenance__"}) > 0
+        return self.config.sys.worker.count({
+            "_id": "__project__",
+            "maintenance": project
+        }) > 0
+
 
     def halt(self, at=None, now=None):
         """
@@ -282,13 +326,11 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
         """
         try:
             self.config.sys.lock.insert_one({"_id": _id, "worker": identifier})
-            self.logger.debug('successfully reserved [%s]', _id)
             return True
         except pymongo.errors.DuplicateKeyError:
-            self.logger.debug('failed to reserve [%s]', _id)
+            return False
         except:
             raise
-        return False
 
     def unlock_job(self, _id):
         """

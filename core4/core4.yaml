@@ -15,7 +15,6 @@ sys:
   journal: !connect mongodb://sys.journal
   worker: !connect mongodb://sys.worker
   lock: !connect mongodb://sys.lock
-  project: !connect mongodb://sys.project
   stdout: !connect mongodb://sys.stdout
   userdb: user!
 

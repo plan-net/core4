@@ -94,3 +94,17 @@ def test_invalid():
         author = 'mra'
 
     q.enqueue(T2)
+
+def test_project_maintenance():
+    q = core4.queue.main.CoreQueue()
+    assert not q.maintenance('project')
+    q.enter_maintenance('project')
+    q.enter_maintenance('project1')
+    q.leave_maintenance('XXX')
+    assert q.maintenance('project')
+    assert q.maintenance('project1')
+    q.leave_maintenance('project')
+    assert q.maintenance('project1')
+    assert not q.maintenance('project')
+    q.leave_maintenance('project1')
+    assert not q.maintenance('project1')

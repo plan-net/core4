@@ -62,6 +62,7 @@ class CoreWorkerProcess(core4.base.CoreBase,
             job.cookie.set("last_runtime", job.finished_at)
             job.progress(1.0, "execution end marker", force=True)
         finally:
+            # todo: this one is a race condition in testing
             self._redirect_stdout(saved_stdout_fd)
             tfile.flush()
             tfile.seek(0, io.SEEK_SET)
