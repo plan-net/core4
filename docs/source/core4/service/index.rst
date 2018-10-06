@@ -11,5 +11,8 @@ to core4 roles and users. Module :mod:`core4.service.access.handler` delivers
 
    access/manager
    access/handler
+   discover
+   introspect
+   setup
 
 

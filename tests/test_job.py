@@ -26,7 +26,7 @@ def test_init():
     assert job.error_time == 10 * 60
     assert job.finished_at is None
     assert job.inactive_at is None
-    #assert job.inactive_time == 30 * 60
+    # assert job.inactive_time == 30 * 60
     assert job.killed_at is None
     assert job.last_error is None
     assert job.locked is None
@@ -62,7 +62,7 @@ def test_custom_init():
 def test_validation():
     class MyJob(core4.queue.job.CoreJob):
         author = 'mra'
-        #defer_time = None
+        # defer_time = None
         hidden = True
 
     job = MyJob()
@@ -87,14 +87,14 @@ def test_enqueue():
     assert job.chain == []
 
     job = core4.queue.job.DummyJob(
-        defer_max=1, defer_time=2, # inactive_time=4,
+        defer_max=1, defer_time=2,  # inactive_time=4,
         max_parallel=5, worker=['A'], priority=6, arg1=100, arg2=200)
     assert job.attempts == 1
     assert job.chain == []
     assert job.defer_max == 1
     assert job.defer_time == 2
     assert job.error_time == 10 * 60
-    #assert job.inactive_time == 4
+    # assert job.inactive_time == 4
     assert job.max_parallel == 5
     assert job.worker == ['A']
     assert job.priority == 6
@@ -292,7 +292,6 @@ def test_project_default():
 
 def test_author_inheritance():
     class MyParent(core4.queue.job.CoreJob):
-
         author = 'mra'
 
         def make_config(self, *args, **kwargs):
@@ -312,9 +311,9 @@ def test_author_inheritance():
     with pytest.raises(AssertionError):
         child.validate()
 
+
 def test_schedule_inheritance():
     class MyParent(core4.queue.job.CoreJob):
-
         author = 'mra'
         schedule = '1 * * * *'
 
@@ -344,9 +343,9 @@ def test_schedule_inheritance():
     child.validate()
     assert child.schedule is None
 
+
 def test_frozen_init():
     class MyJob(core4.queue.job.CoreJob):
-
         author = 'mra'
 
         def make_config(self, *args, **kwargs):
@@ -364,9 +363,9 @@ def test_frozen_init():
     with pytest.raises(core4.error.Core4UsageError):
         _ = MyJob()
 
+
 def test_frozen_method():
     class MyJob(core4.queue.job.CoreJob):
-
         author = 'mra'
 
         def make_config(self, *args, **kwargs):
@@ -398,3 +397,40 @@ def test_job_not_found():
     with pytest.raises(core4.error.CoreJobNotFound):
         q.enqueue("DummyJob")
 
+
+class EnvJob(core4.queue.job.CoreJob):
+    author = "mra"
+    defer_time = 1
+    defer_max = 60*60*24
+
+    def execute(self, *args, **kwargs):
+        self.defer("still waiting")
+
+    def make_config(self, *args, **kwargs):
+        return core4.config.test.TestConfig(
+            project_name="tests",
+            project_dict={
+            },
+            local_dict={
+                "tests": {
+                    "DEFAULT": {
+                        "python": "test1"
+                    },
+                    "test_job": {
+                        "EnvJob": {
+                            "python": "test2"
+                        }
+                    }
+                }
+            }, **kwargs
+        )
+
+
+def test_python():
+    job1 = EnvJob()
+    import core4.queue.main
+    q = core4.queue.main.CoreQueue()
+    job2 = q.enqueue(EnvJob, i=1)
+    job3 = q.enqueue(EnvJob, python="test99env")
+    assert job1.python == job2.python == "test2"
+    assert job3.python == "test99env"

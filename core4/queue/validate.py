@@ -70,10 +70,3 @@ def is_objectid(key, val):
         return
     msg = "[{}] expected bson.objectid.ObjectId or None".format(key)
     assert isinstance(val, bson.objectid.ObjectId), msg
-
-
-def exists(key, val):
-    if val is None:
-        return
-    msg = "[{}] expected Python executable or None".format(key)
-    assert os.path.exists(val), msg

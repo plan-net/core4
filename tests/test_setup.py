@@ -19,3 +19,8 @@ def test_make_queue2():
     setup.make_folder()
     for f in ["transfer", "proc", "arch", "temp"]:
         assert os.path.exists(os.path.join(setup.config.folder.root, f))
+
+
+def test_register_jobs():
+    setup = core4.service.setup.CoreSetup()
+    setup.register_jobs()

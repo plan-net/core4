@@ -94,7 +94,6 @@ JOB_VALIDATION = {
     "max_parallel": is_int_gt0_null,
     "priority": is_int,
     "progress_interval": is_int_gt0,
-    "python": exists,
     "schedule": is_cron,
     "tag": is_str_list_null,
     "wall_time": is_int_gt0_null,
@@ -310,7 +309,6 @@ class CoreJob(CoreBase):
     chain = None
     dependency = None
     priority = None
-    python = None
     tag = None
     worker = None
     defer_time = None

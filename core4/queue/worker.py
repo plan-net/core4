@@ -386,12 +386,11 @@ class CoreWorker(core4.base.CoreBase):
         """
         job.logger.info("start execution")
         at = core4.util.mongo_now()
-        job.__dict__["trial"] += 1
         update = {
             "state": core4.queue.job.STATE_RUNNING,
             "started_at": at,
             "query_at": None,
-            "trial": job.trial,
+            "trial": job.trial + 1,
             "locked": {
                 "at": self.at,
                 "heartbeat": self.at,
@@ -412,35 +411,73 @@ class CoreWorker(core4.base.CoreBase):
         if ret.raw_result["n"] != 1:
             raise RuntimeError(
                 "failed to update job [{}] state [starting]".format(job._id))
-        executable = job.python or sys.executable
-        proc = subprocess.Popen(
-            [
-                executable,
-                "-c", "from core4.queue.process import _start; _start()"
-            ],
-            env=os.environ,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE
-        )
-        ret = self.config.sys.queue.update_one(
-            filter={
-                "_id": job._id
-            },
-            update={
-                "$set": {
-                    "locked.pid": proc.pid
+        for k, v in update.items():
+            job.__dict__[k] = v
+        executable = self.find_executable(job)
+        if not os.path.exists(executable):
+            self.logger.error("cannot find Python executable [%s]", executable)
+            job.__dict__["attempts_left"] = 0
+            self.queue.set_failed(job, exception={
+                "exception": "FileNotFoundError({})".format(executable),
+                "timestamp": core4.util.mongo_now(),
+                "traceback": []
+            })
+        else:
+            proc = subprocess.Popen(
+                [
+                    executable,
+                    "-c", "from core4.queue.process import _start; _start()"
+                ],
+                env=os.environ,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE
+            )
+            ret = self.config.sys.queue.update_one(
+                filter={
+                    "_id": job._id
+                },
+                update={
+                    "$set": {
+                        "locked.pid": proc.pid
+                    }
                 }
-            }
-        )
-        if ret.raw_result["n"] != 1:
-            raise RuntimeError(
-                "failed to update job [{}] pid [{}]".format(
-                    job._id, proc.pid))
-        job_id = str(job._id).encode("utf-8")
-        proc.stdin.write(bytes(job_id))
-        proc.stdin.close()
-        self.logger.debug("successfully launched job [%s] at [%s]",
-                          job._id, at)
+            )
+            if ret.raw_result["n"] != 1:
+                raise RuntimeError(
+                    "failed to update job [{}] pid [{}]".format(
+                        job._id, proc.pid))
+            job_id = str(job._id).encode("utf-8")
+            proc.stdin.write(bytes(job_id))
+            proc.stdin.close()
+            self.logger.debug("successfully launched job [%s] with [%s]",
+                              job._id, executable)
+
+    def find_executable(self, job):
+        """
+        This method is used to find the Python executable/virtual environment
+        for the passed job.
+
+        The Python executable is defined by a configuration key named
+        ``python`` . If the value is ``None``, then the executable running the
+        :class:`.CoreWorker` is used. If configuration variable
+        ``worker.virtual_environment_home`` is defined, then the actual
+        Python interpreter path is built from this path and the value of the
+        ``python`` key. If key ``worker.virtual_environment_home`` is ``None``,
+        then the ``python`` key must address the full path to the Python
+        interpreter.
+
+        :param job: :class:`.CoreJob` object
+        :return: full path (str) to Python executable
+        """
+        if job.python:
+            if self.config.worker.virtual_environment_home:
+                return os.path.join(
+                    self.config.worker.virtual_environment_home,
+                    job.python)
+            else:
+                return job.python
+        else:
+            return sys.executable
 
     def remove_jobs(self):
         """
@@ -599,3 +636,10 @@ class CoreWorker(core4.base.CoreBase):
     def collect_stats(self):
         # todo: should update worker's heartbeat, too
         pass
+
+
+if __name__ == '__main__':
+    from core4.logger.mixin import logon
+
+    logon()
+    CoreWorker().start()

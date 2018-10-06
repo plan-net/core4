@@ -770,6 +770,20 @@ def test_restart_inactive(queue, worker):
     worker.stop()
 
 
+class OutputTestJob(core4.queue.job.CoreJob):
+    author = 'mra'
+
+    def execute(self, *args, **kwargs):
+        print("this output comes from %s" % self.qual_name())
+
+def test_stdout(queue, worker):
+    job = queue.enqueue(OutputTestJob)
+    worker.start(1)
+    worker.wait_queue()
+    worker.stop()
+
+
+
 
 # last_error
 # job turns inactive
@@ -784,8 +798,7 @@ def test_restart_inactive(queue, worker):
 # remove killed
 # restarting
 # last_runtime in cookie
-
-# todo: check all exceptions have logging and log exceptions
+# check all exceptions have logging and log exceptions
 
 # todo: job collection, access management
 # todo: dependency and chain

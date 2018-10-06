@@ -16,6 +16,7 @@ sys:
   journal: !connect mongodb://sys.journal
   worker: !connect mongodb://sys.worker
   lock: !connect mongodb://sys.lock
+  project: !connect mongodb://sys.project
 
 # system folders
 folder:
@@ -58,6 +59,7 @@ job:
 
 # worker settings
 worker:
+  virtual_environment_home: ~
   execution_plan:
     work_jobs: 0.25
     remove_jobs: 3.0
