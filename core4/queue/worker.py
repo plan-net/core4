@@ -569,7 +569,7 @@ class CoreWorker(core4.base.CoreBase):
             self.logger.error("pid [%s] not exists, killing",
                               doc["locked"]["pid"])
             job = self.queue.load_job(doc["_id"])
-            self.queue.set_killed(job)
+            self.queue.set_killed(job, "JobKilled")
 
     def kill_pid(self, doc):
         """

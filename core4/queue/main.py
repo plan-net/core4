@@ -497,7 +497,7 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
                          job.last_error["exception"],
                          "\n".join(job.last_error["traceback"]))
 
-    def set_killed(self, job):
+    def set_killed(self, job, exception="JobKilledByWorker"):
         """
         Set the passed ``job`` to state ``killed``.
 
@@ -515,7 +515,7 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
             core4.queue.job.STATE_KILLED)
         runtime = self._finish(job, core4.queue.job.STATE_KILLED)
         job.__dict__["last_error"] = {
-            "exception": "JobKilledByWorker",
+            "exception": exception,
             "timestamp": core4.util.mongo_now(),
             "traceback": None
         }
