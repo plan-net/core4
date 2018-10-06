@@ -785,11 +785,12 @@ class OutputTestJob(core4.queue.job.CoreJob):
     def execute(self, *args, **kwargs):
         print("this output comes from %s" % self.qual_name())
         os.system("echo this comes from echo")
+        os.system("echo this comes from stderr > /dev/stderr")
         libc.puts(b"this comes from C")
 
 def test_stdout(queue, worker):
     job = queue.enqueue(OutputTestJob)
-    worker.start(1)
+    worker.start(3)
     worker.wait_queue()
     worker.stop()
 
@@ -807,11 +808,11 @@ def test_stdout(queue, worker):
 # restarting
 # last_runtime in cookie
 # check all exceptions have logging and log exceptions
+# capture stdout and stderr
 
+# todo: project maintenance
 # todo: job collection, access management
 # todo: dependency and chain
 # todo: max_parallel
 # todo: memory logger
-# todo: project maintenance
 # todo: stats
-# todo: capture stdout and stderr

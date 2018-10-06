@@ -131,6 +131,7 @@ class CoreWorker(core4.base.CoreBase):
         setup = core4.service.setup.CoreSetup()
         setup.make_folder()
         setup.make_role()  # todo: implement!
+        setup.make_stdout()
         self.create_stats()
 
     def create_stats(self):

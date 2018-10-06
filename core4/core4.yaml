@@ -17,6 +17,7 @@ sys:
   worker: !connect mongodb://sys.worker
   lock: !connect mongodb://sys.lock
   project: !connect mongodb://sys.project
+  stdout: !connect mongodb://sys.stdout
 
 # system folders
 folder:
@@ -65,3 +66,4 @@ worker:
     remove_jobs: 3.0
     flag_jobs: 10.0
     collect_stats: 25.0
+  stdout_ttl: 604800
