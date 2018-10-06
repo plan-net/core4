@@ -8,7 +8,6 @@ sys:
   conf: ~
   cookie: !connect mongodb://sys.cookie
   log: !connect mongodb://sys.log
-  userdb: user!
   role: !connect mongodb://sys.role
   quota: !connect mongodb://sys.quota
   admin: !connect mongodb://admin/dummy
@@ -18,6 +17,7 @@ sys:
   lock: !connect mongodb://sys.lock
   project: !connect mongodb://sys.project
   stdout: !connect mongodb://sys.stdout
+  userdb: user!
 
 # system folders
 folder:
