@@ -21,8 +21,8 @@ from core4.const import CORE4, PREFIX
 
 
 def is_core4_project(body):
-    return re.match(r'.*\_\_project\_\_\s*\=\s*[\"\']{}[\"\'].*'.format(
-        CORE4), body, re.DOTALL)
+    return re.match(r'.*\_\_project\_\_\s*\=\s*[\"\']{1,3}'
+                    + CORE4 + r'[\"\']{1,3}.*', body, re.DOTALL)
 
 
 class CoreBase:
