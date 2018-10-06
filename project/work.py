@@ -1,11 +1,14 @@
-
-import core4.queue.job
-import core4.logger
-import core4.queue.main
 import time
+
+import core4.logger
+import core4.queue.job
+import core4.queue.main
 
 
 class ErrorJob(core4.queue.job.CoreJob):
+    """
+    This is a simple example job
+    """
 
     author = 'mra'
     error_time = 5
@@ -20,7 +23,6 @@ class ErrorJob(core4.queue.job.CoreJob):
 
 
 class DeferJob(core4.queue.job.CoreJob):
-
     author = 'mra'
     defer_time = 5
     defer_max = 30
@@ -31,11 +33,8 @@ class DeferJob(core4.queue.job.CoreJob):
         time.sleep(10)
 
 
-
 if __name__ == '__main__':
     core4.logger.logon()
     q = core4.queue.main.CoreQueue()
-    #q.enqueue(ErrorJob)
+    # q.enqueue(ErrorJob)
     q.enqueue(core4.queue.job.DummyJob)
-
-

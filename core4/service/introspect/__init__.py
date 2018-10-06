@@ -56,29 +56,32 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
     def iter_job(self):
         self._load()
         for qual_name, cls in self._job.items():
-            obj = cls()
-            if obj.hidden is not None and not obj.hidden:
-                try:
-                    obj.validate()
-                    validate = True
-                    exception = None
-                except Exception as esc:
-                    validate = False
-                    exc_info = sys.exc_info()
-                    exception = {
-                        "exception": repr(exc_info[1]),
-                        "traceback": traceback.format_exception(*exc_info)
-                    }
-                yield {
-                    "name": qual_name,
-                    "author": obj.author,
-                    "schedule": obj.schedule,
-                    "hidden": obj.hidden,
-                    "doc": obj.__doc__,
-                    "tag": obj.tag,
-                    "validate": validate,
-                    "exception": exception
+            try:
+                obj = cls()
+                if obj.hidden is None:
+                    continue  # applies to core4.queue.job.CoreJob
+                obj.validate()
+                validate = True
+                exception = None
+            except Exception as esc:
+                validate = False
+                exc_info = sys.exc_info()
+                exception = {
+                    "exception": repr(exc_info[1]),
+                    "traceback": traceback.format_exception(*exc_info)
                 }
+                self.logger.error("cannot instantiate job [%s]",
+                                  qual_name, exc_info=exc_info)
+            yield {
+                "name": qual_name,
+                "author": obj.author,
+                "schedule": obj.schedule,
+                "hidden": obj.hidden,
+                "doc": obj.__doc__,
+                "tag": obj.tag,
+                "valid": validate,
+                "exception": exception
+            }
 
     def _load(self):
         # internal method to collect core4 project packages and iterate

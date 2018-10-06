@@ -4,6 +4,7 @@ import core4.logger.mixin
 from tests.util import asset
 import os
 from core4.service.introspect import CoreIntrospector
+from core4.queue.job import CoreJob
 
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
@@ -24,6 +25,29 @@ def reset(tmpdir):
     for k in dels:
         del os.environ[k]
 
+class HiddenJob(CoreJob):
+    hidden = True
+    author = "mra"
+    schedule = "1 2 3 4 5"
+class NoAuthorJob(HiddenJob):
+    pass
+
+class OkJob(HiddenJob):
+    """
+    this job is ok
+    """
+    author = 'mra'
+
 def test_load():
     intro = CoreIntrospector()
-    intro._load()
+    jobs = list(intro.iter_job())
+    assert [j for j in jobs if j["name"] == "core4.queue.job.DummyJob"]
+    assert not [j for j in jobs if j["name"] == "core4.queue.job.CoreJob"]
+    hidden_job = [j for j in jobs if "HiddenJob" in j["name"]][0]
+    assert hidden_job["hidden"]
+    no_author_job = [j for j in jobs if "NoAuthorJob" in j["name"]][0]
+    assert not no_author_job["valid"]
+    assert "missing author" in no_author_job["exception"]["exception"]
+    ok_job = [j for j in jobs if "OkJob" in j["name"]][0]
+    assert ok_job["schedule"] is None
+    assert "this job is ok" in ok_job["doc"]

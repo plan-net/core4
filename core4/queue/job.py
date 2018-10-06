@@ -1,7 +1,6 @@
+import datetime as dt
 import hashlib
 import json
-
-import datetime as dt
 
 import core4.base.cookie
 import core4.error
