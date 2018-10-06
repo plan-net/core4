@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import ctypes
+import sys
 
 import datetime
 import pandas as pd
@@ -788,6 +788,7 @@ class OutputTestJob(core4.queue.job.CoreJob):
         os.system("echo this comes from stderr > /dev/stderr")
         libc.puts(b"this comes from C")
 
+
 def test_stdout(queue, worker, mongodb):
     job = queue.enqueue(OutputTestJob)
     worker.start(3)
@@ -801,11 +802,13 @@ def test_stdout(queue, worker, mongodb):
     assert ("this comes from C" in doc["stdout"])
     worker.stop()
 
+
 class BinaryOutputTestJob(core4.queue.job.CoreJob):
     author = 'mra'
 
     def execute(self, *args, **kwargs):
         sys.stdout.buffer.write(b"evil payload \xDE\xAD\xBE\xEF.")
+
 
 def test_binary_out(queue, worker, mongodb):
     job = queue.enqueue(BinaryOutputTestJob)
@@ -834,6 +837,7 @@ def test_binary_out(queue, worker, mongodb):
 # capture stdout and stderr
 
 # todo: project maintenance
+
 # todo: job collection, access management
 # todo: dependency and chain
 # todo: max_parallel
