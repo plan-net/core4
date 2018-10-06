@@ -844,8 +844,7 @@ def test_project_maintenance(queue, worker):
 # last_runtime in cookie
 # check all exceptions have logging and log exceptions
 # capture stdout and stderr
-
-# todo: project maintenance
+# project maintenance
 
 # todo: job collection, access management
 # todo: dependency and chain
