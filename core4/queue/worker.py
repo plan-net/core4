@@ -466,6 +466,14 @@ class CoreWorker(core4.base.CoreBase):
                                   job._id, executable)
 
     def fail_hard(self, job):
+        """
+        This method puts the job into ``error`` state due to early exceptions
+        before the job has even been launched. These issues arise either at
+        job class instantiation or subprocessing with
+        :mod:`core4.queue.process`.
+
+        :param job: :class:`core4.queue.job.CoreJob` object
+        """
         self.logger.error("failed to instantiate job", exc_info=True)
         job.__dict__["attempts_left"] = 0
         self.queue.set_failed(job)
