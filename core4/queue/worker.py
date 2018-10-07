@@ -52,7 +52,7 @@ class CoreWorker(core4.base.CoreBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__()
-        self.identifier = kwargs.get("name", core4.util.get_hostname())
+        self.identifier = kwargs.get("name", None) or core4.util.get_hostname()
         self.hostname = core4.util.get_hostname()
         self.phase = {
             "startup": core4.util.now(),
@@ -366,7 +366,7 @@ class CoreWorker(core4.base.CoreBase):
                         data["_id"])
             project = data["name"].split(".")[0]
             if self.queue.maintenance(project):
-                self.logger.info(
+                self.logger.debug(
                     "skipped job [%s] in maintenance", data["_id"])
                 continue
             if not self.queue.lock_job(self.identifier, data["_id"]):
@@ -397,7 +397,6 @@ class CoreWorker(core4.base.CoreBase):
 
         :param job: :class:`.CoreJob` object
         """
-        job.logger.info("start execution")
         at = core4.util.mongo_now()
         update = {
             "state": core4.queue.job.STATE_RUNNING,
@@ -429,38 +428,46 @@ class CoreWorker(core4.base.CoreBase):
         try:
             executable = job.find_executable()
         except:
-            self.logger.error("cannot instantiate job", exc_info=True)
-            job.__dict__["attempts_left"] = 0
-            self.queue.set_failed(job)
+            self.fail_hard(job)
         else:
-            proc = subprocess.Popen(
-                [
-                    executable,
-                    "-c", "from core4.queue.process import _start; _start()"
-                ],
-                env=os.environ,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE
-            )
-            ret = self.config.sys.queue.update_one(
-                filter={
-                    "_id": job._id
-                },
-                update={
-                    "$set": {
-                        "locked.pid": proc.pid
+            job.logger.info("start execution with [%s]", executable)
+            try:
+                proc = subprocess.Popen(
+                    [
+                        executable,
+                        "-c", "from core4.queue.process import _start; _start()"
+                    ],
+                    env=os.environ,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE
+                )
+            except:
+                self.fail_hard(job)
+            else:
+                ret = self.config.sys.queue.update_one(
+                    filter={
+                        "_id": job._id
+                    },
+                    update={
+                        "$set": {
+                            "locked.pid": proc.pid
+                        }
                     }
-                }
-            )
-            if ret.raw_result["n"] != 1:
-                raise RuntimeError(
-                    "failed to update job [{}] pid [{}]".format(
-                        job._id, proc.pid))
-            job_id = str(job._id).encode("utf-8")
-            proc.stdin.write(bytes(job_id))
-            proc.stdin.close()
-            self.logger.debug("successfully launched job [%s] with [%s]",
-                              job._id, executable)
+                )
+                if ret.raw_result["n"] != 1:
+                    raise RuntimeError(
+                        "failed to update job [{}] pid [{}]".format(
+                            job._id, proc.pid))
+                job_id = str(job._id).encode("utf-8")
+                proc.stdin.write(bytes(job_id))
+                proc.stdin.close()
+                self.logger.debug("successfully launched job [%s] with [%s]",
+                                  job._id, executable)
+
+    def fail_hard(self, job):
+        self.logger.error("failed to instantiate job", exc_info=True)
+        job.__dict__["attempts_left"] = 0
+        self.queue.set_failed(job)
 
     def remove_jobs(self):
         """
