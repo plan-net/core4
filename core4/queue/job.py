@@ -563,10 +563,10 @@ class DummyJob(CoreJob):
     author = 'mra'
 
     def execute(self, *args, **kwargs):
-        self.logger.info("this is the execute method")
-        self.logger.info("user: %s", core4.util.get_username())
         import time
-        time.sleep(kwargs.get("sleep", 0.5))
+        sleep = kwargs.get("sleep", None) or 3
+        self.logger.info("just sleeping [%s] seconds", sleep)
+        time.sleep(sleep)
 
 # todo: task list
 # - test + implement DummyJob.execute
