@@ -435,7 +435,8 @@ class CoreWorker(core4.base.CoreBase):
                 proc = subprocess.Popen(
                     [
                         executable,
-                        "-c", "from core4.queue.process import _start; _start()"
+                        "-c", "from core4.queue.process import _start; "
+                              "_start()"
                     ],
                     env=os.environ,
                     stdin=subprocess.PIPE,
