@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 import random
 import string
 
@@ -11,7 +8,6 @@ PASSWORD_LENGTH = 32
 
 
 class MongoHandler(BaseHandler):
-
     """
     This class handles MongoDB access permissions. The handler is registered
     in :attr:core4.service.access.manager.HANDLER` attribute.
@@ -24,6 +20,7 @@ class MongoHandler(BaseHandler):
     .. note:: The prefix of the user database (``user!``) can be defined with
               core4 configuration option ``sys.userdb``.
     """
+
     def __init__(self, role, *args, **kwargs):
         super().__init__(role, *args, **kwargs)
         self.token = None

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 core4.util provides various support and helper methods used by various
 core4 packages and modules.
@@ -9,8 +7,9 @@ import collections
 import getpass
 import os
 import re
-import socket
+
 import datetime
+import socket
 from flask_login import current_user
 
 REGEX_MODIFIER = {
@@ -79,3 +78,37 @@ def now():
     :return: current core4 system time (in UTC)
     """
     return datetime.datetime.utcnow()
+
+
+def get_pid():
+    """
+    :return: pid of the current process.
+    """
+    return os.getpid()
+
+
+class Singleton(type):
+    """
+    Singleton metaclass, see
+    https://stackoverflow.com/questions/6760685/creating-a-singleton-in-python.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(
+                *args, **kwargs)
+        return cls._instances[cls]
+
+
+class lazyproperty:
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, instance, cls):
+        if instance is None:
+            return self
+        else:
+            value = self.func(instance)
+            setattr(instance, self.func.__name__, value)
+            return value

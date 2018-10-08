@@ -32,8 +32,7 @@ def package_files(directory, pattern):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            if sum([1 for p in pattern
-                    if re.match(p, filename) is not None]) > 0:
+            if re.search(pattern, filename):
                 paths.append(os.path.join('..', path, filename))
     return paths
 
@@ -50,14 +49,19 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/m-rau/core4",
     packages=find_packages(exclude=['docs', 'tests*', 'plugin']),
-    scripts=[],
-    console_scripts=[],
     package_data={
-        '': package_files('core4/api', ['.+\.(html|js|css|tmpl)$'])
+        '':
+            ["core4.yaml"]
+            + package_files("core4/service/plugin/template/", "^.+$")
     },
     tests_require=[
         "coverage>=4.0, <5.0",
     ],
+    entry_points={
+        'console_scripts': [
+            'coco=core4.script.coco:main'
+        ],
+    },
     install_requires=[
         "numpy>=1.14, <1.15",
         "pandas>=0.22, <0.23",
@@ -68,7 +72,9 @@ setup(
         "Flask>=1.0, <2.0",
         "Flask-Login>=0.4, <1.0",
         "PyYaml>=3.12, <4",
-        "PyJWT>=1.6.4, <2"
+        "PyJWT>=1.6.4, <2",
+        "psutil>=5.4.7",
+        "docopt>=0.6.1"
     ],
     zip_safe=False,
     cmdclass={

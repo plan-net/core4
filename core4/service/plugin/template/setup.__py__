@@ -1,0 +1,23 @@
+# -*- coding: utf-8 -*-
+
+import setuptools
+from setuptools import find_packages
+
+import {{ package_name }}
+
+setuptools.setup(
+    name="{{ package_name }}",
+    version={{ package_name }}.__version__,
+    description="{{ package_description }}",
+    packages = find_packages(exclude=['docs', 'tests*']),
+    install_requires=[],
+    classifiers=[
+        'Development Status :: 2 - Pre-Alpha',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        "Operating System :: POSIX :: Linux"
+    ],
+    zip_safe = False
+)

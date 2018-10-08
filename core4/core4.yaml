@@ -11,6 +11,7 @@ sys:
   role: !connect mongodb://sys.role
   quota: !connect mongodb://sys.quota
   admin: !connect mongodb://admin/dummy
+  queue: !connect mongodb://sys.queue
 
 # system folders
 folder:
@@ -30,12 +31,33 @@ logging:
     capacity: 1000
   extra: ~
 
+# base class defaults
+base:
+  log_level: DEBUG
+
 # job defaults
 job:
-  defer_time: 60
+  attempts: 1
   defer_max: 3600
+  defer_time: 300
+  error_time: 600
+  force: False
+  hidden: False
+  inactive_time: 1800
+  wall_time: ~
+  max_parallel: ~
+  nodes: ~
+  priority: 0
+  schedule: ~
+  tag: ~
+  progress_inverval: 5
 
-mymod:
-  jobs:
-    MyJob:
-      schedule: "* * * * 1"
+# master settings
+master:
+  execution_plan:
+    work_jobs: 0.25
+    inactive_jobs: 5.00
+    kill_jobs: 10.00
+    nopid_jobs: 15.00
+    nonstop_jobs: 20.00
+    collect_stats: 25.00

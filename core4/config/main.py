@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import collections
 import collections.abc
 import os
@@ -11,14 +9,14 @@ import yaml
 from datetime import datetime, date
 
 import core4.base.collection
-import core4.config.tag
 import core4.config.map
+import core4.config.tag
 import core4.util
 from core4.error import Core4ConfigurationError
 
 CONFIG_EXTENSION = ".yaml"
 STANDARD_CONFIG = pkg_resources.resource_filename(
-    "core4", "config/core" + CONFIG_EXTENSION)
+    "core4", "core4" + CONFIG_EXTENSION)
 USER_CONFIG = os.path.expanduser("core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
@@ -35,7 +33,7 @@ def parse_boolean(value):
              value no pattern matches.
     """
     if value.lower() in ("yes", "y", "on", "1", "true", "t"):
-        return True
+        return True  # todo: test coverage
     elif value.lower() in ("no", "n", "off", "0", "false", "f"):
         return False
     return value
@@ -77,15 +75,20 @@ class CoreConfig(collections.MutableMapping):
     accessible through :meth:`._config`. This attribute implements the
     :class:`.ConfigMap`.
     """
+    cache = True
     standard_config = STANDARD_CONFIG
     user_config = USER_CONFIG
     system_config = SYSTEM_CONFIG
-    _cache = {}
 
-    def __init__(self, extra_config=None, config_file=None):
+    _config_cache = None
+    _file_cache = {}
+    _db_cache = None
+
+    def __init__(self, plugin_config=None, config_file=None, extra_dict={}):
         self._config_file = config_file
-        self.extra_config = extra_config
+        self.plugin_config = plugin_config
         self.env_config = os.getenv("CORE4_CONFIG", None)
+        self.extra_dict = extra_dict
 
     def __getitem__(self, key):
         """
@@ -165,7 +168,9 @@ class CoreConfig(collections.MutableMapping):
 
         :return: :class:`.ConfigMap`
         """
-        return self._load()
+        if self._config_cache is None:
+            self._config_cache = self._load()
+        return self._config_cache
 
     def _verify_dict(self, variable, message):
         """
@@ -179,7 +184,7 @@ class CoreConfig(collections.MutableMapping):
             raise Core4ConfigurationError(
                 "expected dict with " + message)
 
-    def _parse(self, config, plugin=None, local=None):
+    def _parse(self, config, plugin=None, local=None, extra=None):
         """
         Parses and merges the passed standard configuration, plugin
         configuration and local configuration sources.
@@ -187,10 +192,13 @@ class CoreConfig(collections.MutableMapping):
         :param config: dict with standard configuration
         :param plugin: tuple with plugin name and plugin configuration dict
         :param local: dict with local configuration
+        :param extra: dict with extra schema and default values
         :return: dict
         """
         # collect standard config and standard DEFAULT
         standard_config = config.copy()
+        if extra:
+            standard_config = core4.util.dict_merge(standard_config, extra)
         self._verify_dict(standard_config, "standard config")
         standard_default = standard_config.pop(DEFAULT, {})
         self._verify_dict(standard_default, "standard DEFAULT")
@@ -209,11 +217,11 @@ class CoreConfig(collections.MutableMapping):
         if plugin is not None:
             # collect plugin name, plugin config and plugin DEFAULT
             plugin_name = plugin[0]
-            plugin_config = plugin[1]
+            plugin_config = plugin[1].copy()
             self._verify_dict(plugin_config, "plugin config")
             plugin_default = plugin_config.pop(DEFAULT, {})
             self._verify_dict(plugin_default, "plugin DEFAULT")
-            # collection local plugin DEFAULT
+            # collect local plugin DEFAULT
             local_plugin_default = local_config.get(
                 plugin_name, {}).pop(DEFAULT, {})
             self._verify_dict(local_plugin_default, "local plugin DEFAULT")
@@ -267,7 +275,6 @@ class CoreConfig(collections.MutableMapping):
         :param schema: configuration schema
         :return: updated configuration dict
         """
-
         def traverse(data, tmpl, result):
             if tmpl is None:
                 return {}
@@ -302,8 +309,8 @@ class CoreConfig(collections.MutableMapping):
         This method applies the passed standard ``default`` and plugin
         ``default``data to ``config``,
 
-        Please not special handloing of configuration key
-        ``logging.extra`` which is not processed by this method.
+        Please note special handling of configuration key ``logging.extra``
+        which is not processed by this method.
 
         :param config: dict of configuration data
         :param default: dict of standard default values
@@ -352,7 +359,6 @@ class CoreConfig(collections.MutableMapping):
                     traverse(v)
                 elif isinstance(v, core4.config.tag.ConnectTag):
                     v.set_config(dct)
-
         traverse(config)
 
     def _read_yaml(self, filename):
@@ -362,9 +368,14 @@ class CoreConfig(collections.MutableMapping):
         :param filename: to parse
         :return: YAML structure in Python dict format
         """
+        if self.cache and filename in self.__class__._file_cache:
+            body = self.__class__._file_cache[filename]
+            return yaml.safe_load(body) or {}
         if os.path.exists(filename):
             with open(filename, "r", encoding="utf-8") as f:
                 body = f.read()
+            if self.cache:
+                self.__class__._file_cache[filename] = body
             return yaml.safe_load(body) or {}
         else:
             raise FileNotFoundError(filename)
@@ -376,6 +387,8 @@ class CoreConfig(collections.MutableMapping):
         parsed in alphabetic order. The last configuration key/value overwrites
         existing values.
         """
+        if self._db_cache is not None:
+            return self._db_cache
         # build OS environ lookup
         environ = {
             "DEFAULT": {},
@@ -414,9 +427,10 @@ class CoreConfig(collections.MutableMapping):
                 conn_str, **opts)
             for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
                 conf = core4.util.dict_merge(conf, doc)
-            return self._resolve_tags(conf)
-
-        return {}
+            self._db_cache = self._resolve_tags(conf)
+        else:
+            self._db_cache = {}
+        return self._db_cache
 
     def _read_env(self):
         """
@@ -512,16 +526,16 @@ class CoreConfig(collections.MutableMapping):
         :return: :class:`.ConfigMap`
         """
         # extra config
-        if self.extra_config and os.path.exists(self.extra_config[1]):
-            lookup = self.extra_config[0]
+        if self.plugin_config and os.path.exists(self.plugin_config[1]):
+            lookup = self.plugin_config[0]
         else:
             extra = lookup = None
 
-        if self.__class__._cache and lookup in self.__class__._cache:
-            return self.__class__._cache[lookup]
+        if lookup is not None:
+            extra_config = self._read_yaml(self.plugin_config[1])
 
         if lookup is not None:
-            extra = (lookup, self._read_yaml(self.extra_config[1]))
+            extra = (lookup, extra_config)
 
         # standard config
         standard_data = self._read_yaml(self.standard_config)
@@ -549,12 +563,11 @@ class CoreConfig(collections.MutableMapping):
         # merge sys.conf
         local_data = core4.util.dict_merge(
             local_data, self._read_db(standard_data, local_data))
-        # merge OS environ
+
         local_data = core4.util.dict_merge(local_data, environ)
 
+        # merge OS environ
         data = core4.config.map.ConfigMap(
-            self._parse(standard_data, extra, local_data)
+            self._parse(standard_data, extra, local_data, self.extra_dict)
         )
-        if self.__class__._cache is not None:
-            self.__class__._cache[lookup] = data
         return data

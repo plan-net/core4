@@ -1,2 +1,2 @@
-
-mongo_database: core4test
+DEFAULT:
+  mongo_database: core4test

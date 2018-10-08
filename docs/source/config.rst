@@ -154,13 +154,11 @@ then the plugin default value applies if it is defined. If the plugin
 configuration does not define a default value and a standard value is
 defined, then this global default value is forwarded.
 
-.. note:: The configuration cascade from standard values through plugin
-          default values down to sub level plugin values applies only to
-          keys/values defined in core4`s configuration file. At the moment
-          only the configuration keys ``mongo_database`` and ``mongo_url``
-          exist to facilitate MongoDB collection access (see
-          :ref:`core_config` and the :ref:`connect_tag`).
+.. note:: The plugin configuration as well as :ref:`local_config` can provide a
+          ``DEFAULT`` dictionary, too.
 
+
+.. _local_config:
 
 local configuration
 ===================
@@ -380,6 +378,3 @@ developer has for example read-only access to production data.
 All configuration files - ``plugin1.yaml``, ``~/core4/local.yaml`` and
 ``/etc/core4/local.yaml`` in this example - can be created and maintained
 independent of each other.
-
-
-.. _ISO format: https://en.wikipedia.org/wiki/ISO_8601

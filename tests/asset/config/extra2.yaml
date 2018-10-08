@@ -1,0 +1,11 @@
+DEFAULT:
+  schedule: 30 * * * *
+  mongo_url: mongodb://testhost
+
+job:
+  test:
+    my_job:
+      schedule: 10 * * * *
+      value: 999
+  value: 123
+

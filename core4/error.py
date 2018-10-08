@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-
-
 class Core4Error(Exception):
     """
     This is the base class of all core4 exceptions.
@@ -38,4 +35,10 @@ class Core4UsageError(Core4Error):
     """"
     This exception is raised if the application or usage or a core4 class
     feature is not supported.
+    """
+
+
+class CoreJobDeferred(Core4Error):
+    """"
+    This exception is raised if a job defers execution.
     """

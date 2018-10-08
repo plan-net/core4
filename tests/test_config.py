@@ -6,14 +6,15 @@ import unittest
 import datetime
 import pymongo
 import pymongo.errors
-from pprint import pprint
+
 import core4.config
+import core4.config.test
 import core4.error
 import tests.util
 
 
 class MyConfig(core4.config.CoreConfig):
-    _cache = None
+    cache = False
 
 
 class TestConfig(unittest.TestCase):
@@ -27,6 +28,9 @@ class TestConfig(unittest.TestCase):
             del os.environ[k]
         for db in ("", "1", "2"):
             self.mongo.drop_database('core4test' + db)
+
+    def tearDown(self):
+        tests.util.drop_env()
 
     @property
     def mongo(self):
@@ -217,7 +221,7 @@ class TestConfig(unittest.TestCase):
         }
         conf = MyConfig()
         ret = conf._parse(standard_config, None, local_config)
-        #pprint(ret)
+        # pprint(ret)
         self.assertNotIn("unknown", ret["sys"])
 
     def test_retype(self):
@@ -282,7 +286,7 @@ class TestConfig(unittest.TestCase):
     def test_syntax(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/local4.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         self.assertRaises(core4.error.Core4ConfigurationError,
                           conf._load)
 
@@ -322,7 +326,7 @@ class TestConfig(unittest.TestCase):
     def test_connect(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/local1.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test1/sys.log")
@@ -335,7 +339,7 @@ class TestConfig(unittest.TestCase):
     def test_connect2(self):
         extra = tests.util.asset("config/extra1.yaml")
         local = tests.util.asset("config/local6.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test/sys.log")
@@ -365,7 +369,7 @@ class TestConfig(unittest.TestCase):
     def test_env_file(self):
         extra = tests.util.asset("config/empty.yaml")
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/local1.yaml")
-        conf = MyConfig(extra_config=("test", extra))
+        conf = MyConfig(plugin_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test1/sys.log")
         self.assertEqual(conf["sys"]["log"].count(), 0)
@@ -377,13 +381,13 @@ class TestConfig(unittest.TestCase):
     def test_not_found(self):
         extra = tests.util.asset("config/nf", exists=False)
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/local1.yaml")
-        conf = MyConfig(extra_config=("test", extra))
+        conf = MyConfig(plugin_config=("test", extra))
         self.assertEqual(str(conf.sys.log), "!connect 'mongodb://sys.log'")
 
         extra = tests.util.asset("config/empty.yaml")
         os.environ["CORE4_CONFIG"] = tests.util.asset("config/nf",
                                                       exists=False)
-        conf = MyConfig(extra_config=("test", extra))
+        conf = MyConfig(plugin_config=("test", extra))
         self.assertRaises(FileNotFoundError, conf._load)
 
     def test_user_file(self):
@@ -395,7 +399,7 @@ class TestConfig(unittest.TestCase):
             user_config = user_file
             system_config = system_file
 
-        conf = Config(extra_config=("test", extra))
+        conf = Config(plugin_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test1/sys.log")
         self.assertEqual(conf["sys"]["log"].count(), 0)
@@ -414,7 +418,7 @@ class TestConfig(unittest.TestCase):
             user_config = user_file
             system_config = system_file
 
-        conf = Config(extra_config=("test", extra))
+        conf = Config(plugin_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test2/sys.log")
         self.assertEqual(conf["sys"]["log"].count(), 0)
@@ -427,7 +431,7 @@ class TestConfig(unittest.TestCase):
     def test_no_default_connect(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/local2.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test/sys.log")
@@ -439,14 +443,14 @@ class TestConfig(unittest.TestCase):
     def test_empty_connect(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/empty.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         conf._load()
         self.assertIsNone(conf.sys.log.connect())
 
     def test_readonly(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/empty.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         self.assertEqual(conf.mongo_database, "test")
 
         def set1():
@@ -480,7 +484,7 @@ class TestConfig(unittest.TestCase):
     def test_iter(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/empty.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         self.assertIn("mongo_database", conf.keys())
         self.assertIn("sys", conf.keys())
         self.assertIn("logging", conf.keys())
@@ -494,7 +498,7 @@ class TestConfig(unittest.TestCase):
     def test_values(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/empty.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         v = conf.values()
         self.assertEqual(v._mapping.mongo_database, "test")
         self.assertEqual(len(v), len(conf))
@@ -502,14 +506,14 @@ class TestConfig(unittest.TestCase):
     def test_dot(self):
         extra = tests.util.asset("config/empty.yaml")
         local = tests.util.asset("config/local1.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         conf._load()
         conf.sys.log.insert_one({})
         self.assertEqual(1, conf.sys.log.count())
 
     def test_extra_no_plugin(self):
         extra = tests.util.asset("config/extra1.yaml")
-        conf = MyConfig(extra_config=("test", extra))
+        conf = MyConfig(plugin_config=("test", extra))
         self.assertEqual(conf.folder.archive, "arch")
 
     def test_reserved_word(self):
@@ -536,7 +540,7 @@ class TestConfig(unittest.TestCase):
             }
         })
         local = tests.util.asset("config/local3.yaml")
-        conf = MyConfig(extra_config=None, config_file=local)
+        conf = MyConfig(plugin_config=None, config_file=local)
         conf._load()
         self.assertEqual(conf.folder.transfer, "/tmp")
         self.assertEqual(conf.logging.exception.capacity, 1)
@@ -551,7 +555,7 @@ class TestConfig(unittest.TestCase):
                 "stderr": "INFO"
             }
         })
-        conf = MyConfig(extra_config=None, config_file=local)
+        conf = MyConfig(plugin_config=None, config_file=local)
         conf._load()
         self.assertEqual(conf.folder.transfer, "/tmp")
         self.assertEqual(conf.logging.exception.capacity, 42)
@@ -576,7 +580,7 @@ class TestConfig(unittest.TestCase):
         })
         local = tests.util.asset("config/local3.yaml")
         extra = tests.util.asset("config/extra1.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=local)
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf.folder.transfer, "/tmp")
         self.assertEqual(conf.logging.exception.capacity, 1)
@@ -586,7 +590,7 @@ class TestConfig(unittest.TestCase):
 
     def test_repr(self):
         extra = tests.util.asset("config/extra1.yaml")
-        conf = MyConfig(extra_config=("test", extra))
+        conf = MyConfig(plugin_config=("test", extra))
         _ = str(conf)
 
     def test_env(self):
@@ -718,7 +722,7 @@ class TestConfig(unittest.TestCase):
     def test_tag(self):
         extra = tests.util.asset("config/extra1.yaml")
         empty = tests.util.asset("config/empty.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        conf = MyConfig(plugin_config=("test", extra), config_file=empty)
         self.assertEqual(conf.test.v1, 3)
         self.assertIsInstance(conf.test.v1, float)
         self.assertTrue(conf.test.v2)
@@ -734,7 +738,7 @@ class TestConfig(unittest.TestCase):
         os.environ["CORE4_OPTION_test__v4"] = "!!str 456"
         os.environ["CORE4_OPTION_test__v5"] = "!!timestamp 2014-04-14"
         os.environ["CORE4_OPTION_test__v6"] = "!!timestamp 2014-04-14 12:23"
-        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        conf = MyConfig(plugin_config=("test", extra), config_file=empty)
         conf._load()
         self.assertIsInstance(conf.test.v5, datetime.datetime)
         self.assertIsInstance(conf.test.v6, datetime.date)
@@ -746,7 +750,7 @@ class TestConfig(unittest.TestCase):
     def test_tag_timestamp(self):
         extra = tests.util.asset("config/extra1.yaml")
         empty = tests.util.asset("config/empty.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        conf = MyConfig(plugin_config=("test", extra), config_file=empty)
         conf._load()
         self.assertIsInstance(conf.test.v5, datetime.datetime)
         self.assertIsInstance(conf.test.v6, datetime.date)
@@ -755,16 +759,112 @@ class TestConfig(unittest.TestCase):
         extra = tests.util.asset("config/extra1.yaml")
         empty = tests.util.asset("config/empty.yaml")
         os.environ["CORE4_OPTION_test__v2"] = "!!bool 123"
-        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        conf = MyConfig(plugin_config=("test", extra), config_file=empty)
         self.assertRaises(core4.error.Core4ConfigurationError, conf._load)
 
     def test_dev_default(self):
         extra = tests.util.asset("config/extra1.yaml")
         empty = tests.util.asset("config/empty.yaml")
-        conf = MyConfig(extra_config=("test", extra), config_file=empty)
+        conf = MyConfig(plugin_config=("test", extra), config_file=empty)
         print(conf.test.v7)
         print(conf.test.get("v8", "abc"))
         print(conf.test.v9)
 
-if __name__ == '__main__':
-    unittest.main(exit=False)
+    def test_test_config(self):
+        config = core4.config.test.TestConfig(plugin_name="test1",
+                                              extra_dict={"test1": {"abc": 1}},
+                                              local_dict={"test1": {"abc": 2}})
+        self.assertEqual(config.test1.abc, 2)
+        config = core4.config.test.TestConfig(plugin_name="test1",
+                                              extra_dict={"test1": {"abc": 1}})
+        self.assertEqual(config.test1.abc, 1)
+
+    def test_plugin_default(self):
+        extra = tests.util.asset("config/extra2.yaml")
+        local = tests.util.asset("config/local8.yaml")
+        conf = MyConfig(plugin_config=("test", extra), config_file=local)
+        self.assertIsNone(conf.sys.mongo_url)
+        self.assertEqual(conf.test.job.mongo_url, "mongodb://testhost")
+        self.assertEqual(conf.test.job.schedule, "30 * * * *")
+        self.assertEqual(conf.test.job.test.my_job.schedule, "10 * * * *")
+        self.assertFalse("nf1" in conf.test.job.test.my_job)
+        self.assertTrue("nf2" in conf.test.job)
+        self.assertEqual("xyz", conf.test.job.nf2)
+        self.assertEqual("b", conf.test.nf2)
+        self.assertTrue("value" in conf.test.job)
+        self.assertTrue("value" in conf.test.job.test.my_job)
+        self.assertEqual(345, conf.test.job.value)
+        self.assertEqual(999, conf.test.job.test.my_job.value)
+
+    def test_extra_config(self):
+        config = core4.config.test.TestConfig(
+            plugin_name="test1",
+            plugin_dict={
+                "abc": 1,
+                "def": 99,
+                "DEFAULT": {
+                    "default_value": 123
+                }
+            },
+            local_dict={
+                "test1": {
+                    "abc": 2,
+                    "extra_value": 987,
+                    "not_exists": "bla"
+                }
+            },
+            extra_dict={
+                "test1": {
+                    "extra_value": None,
+                    "deep_dict": {}
+                }
+            }
+        )
+        self.assertEqual(config.test1.extra_value, 987)
+        self.assertEqual(config.test1.abc, 2)
+        self.assertEqual(config.test1["def"], 99)
+        self.assertEqual(config.test1.default_value, 123)
+        self.assertEqual(config.test1.deep_dict.default_value, 123)
+        self.assertEqual(config.test1.deep_dict.mongo_database, "test")
+
+    def test_db_default(self):
+        self.mongo.core4test.sys.conf.insert_one({
+            "folder": {
+                "root": "/tmp"
+            },
+            "DEFAULT": {
+                "mongo_url": "mongodb://core:654321@localhost:27017",
+                "mongo_database": "abc"
+            }
+        })
+        local = tests.util.asset("config/local5.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual(
+            str(conf.sys.conf),
+            "!connect 'mongodb://core:654321@localhost:27017"
+            "/core4test/sys.conf'")
+        self.assertEqual(
+            conf.sys.role.info_url, "core@localhost:27017/abc/sys.role")
+
+    def test_mongo_url_no_str(self):
+        self.mongo.core4test.sys.conf.insert_one({
+            "folder": {
+                "root": "/tmp"
+            },
+            "DEFAULT": {
+                "mongo_url": "!connect mongodb://core:654321@localhost:27017",
+                "mongo_database": "abc"
+            }
+        })
+        local = tests.util.asset("config/local5.yaml")
+        conf = MyConfig(config_file=local)
+        self.assertEqual(
+            str(conf.sys.conf),
+            "!connect 'mongodb://core:654321@localhost:27017"
+            "/core4test/sys.conf'")
+        with self.assertRaises(core4.error.Core4ConfigurationError):
+            x = conf.sys.role.info_url()
+
+
+    if __name__ == '__main__':
+        unittest.main(exit=False)
