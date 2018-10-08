@@ -25,6 +25,36 @@ STATE_STOPPED = (core4.queue.job.STATE_KILLED,
 
 class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
 
+    """
+    Use this class for general queue management, for example::
+
+        from core4.queue.main import CoreQueue
+        from core4.queue.job import DummyJob
+
+        queue = CoreQueue()
+
+        queue.enqueue(DummyJob)
+        job = queue.enqueue("core4.queue.job.DummyJob", sleep=10)
+
+        queue.restart_job(job._id)
+        queue.remove_job(job._id)
+        queue.kill_job(job._id)
+
+        queue.maintenance()
+        queue.maintenance("example_project")
+
+        queue.enter_maintenance()
+        queue.leave_maintenance()
+
+        queue.enter_maintenance("example_project")
+        queue.leave_maintenance("example_project")
+
+    .. note:: With :ref:`coco` exists a terminal application to manage the
+              queue.
+
+    .. todo:: link to queue API once it is there
+    """
+
     def enqueue(self, cls=None, name=None, by=None, **kwargs):
         """
         Enqueues the passed job identified by it's :meth:`.qual_name`. The job
