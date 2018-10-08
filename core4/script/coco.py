@@ -17,8 +17,9 @@ Options:
   -v --version  Show version.
 """
 
-import re
 import json
+import re
+
 from docopt import docopt
 
 import core4
@@ -81,7 +82,7 @@ def enqueue(qual_name, *args):
                 data = json.loads(args[0])
             else:
                 s = str(args)
-                raise json.JSONDecodeError("failed to parse %s" %(s), s, 0)
+                raise json.JSONDecodeError("failed to parse %s" % (s), s, 0)
     else:
         data = {}
     q = core4.queue.main.CoreQueue()
