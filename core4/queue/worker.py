@@ -633,8 +633,16 @@ class CoreWorker(core4.base.CoreBase):
         return (False, proc)
 
     def collect_stats(self):
-        # todo: should update worker's heartbeat, too
-        pass
+        ret = self.config.sys.worker.update_one(
+            {"_id": self.identifier},
+            update={
+                "$set": {
+                    "heartbeat": self.at
+                }
+            }
+        )
+        if ret.raw_result["n"] != 1:
+            raise RuntimeError("failed to update heartbeat")
 
 
 if __name__ == '__main__':
