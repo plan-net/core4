@@ -47,13 +47,9 @@ Change into core4 directory and execute regression tests with::
 If all core4 Python dependencies are installed you can execute regression tests
 also with::
 
-    $ python tests/runner.py
+    $ pytest
     
-Test coverage is reported with
 
-    $ python tests/runner.py -c
-    
-    
 installation
 ------------
 

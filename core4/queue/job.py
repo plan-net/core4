@@ -227,7 +227,7 @@ class CoreJob(CoreBase):
             locked   False  False False      True      na
       max_parallel    True   True  True      True    None int > 0, None
           priority    True   True  True      True       0 int
-           python     True   True  True      True    None os.path.exist
+           python     True   True  True      True  note-1 os.path.exist
  progress_interval    True   True  True      True       5 int > 0
               name   False  False False      True      na
           query_at   False  False False      True      na
@@ -244,6 +244,9 @@ class CoreJob(CoreBase):
          zombie_at   False  False False      True      na
        zombie_time    True   True  True      True    1800 int > 0
  ================= ======= ====== ===== ========= ======= ====================
+
+    .. note:: **note-1**: The default value for ``python`` is defined by the
+              {{DEFAULT.python}} variable.
 
 
     Best practice is to put the section definitions as class variables. Define
@@ -495,6 +498,11 @@ class CoreJob(CoreBase):
         raise core4.error.CoreJobDeferred(message)
 
     def serialise(self):
+        """
+        Convert the job properties into a dict.
+
+        :return: dict
+        """
         doc = dict([(k, self.__dict__[k]) for k in SERIALISE_ARGS])
         if self._id is None:
             del doc["_id"]
@@ -502,6 +510,13 @@ class CoreJob(CoreBase):
 
     @classmethod
     def deserialise(cls, **kwargs):
+        """
+        This class method converts the passed {{**kwargs**}} keys-/values into
+        a job object and :meth:`.validate` and return the object.
+
+        :param kwargs: keys-/values
+        :return: :class:`.CoreJob`
+        """
         obj = cls()
         for k in kwargs:
             if k in obj.__dict__:
@@ -510,16 +525,13 @@ class CoreJob(CoreBase):
         obj.validate()
         return obj
 
-    def execute(self, *args, **kwargs):
+    def execute(self, **kwargs):
         """
         This method has to be implented by the job developer.
         It is the entry-point of the framework. Code specified in this method
         is executed within the core-ecosystem.
 
-        :param args: passed job argmuents
-        :param kwargs: passed enqueueing arguments
-
-        # todo: euqneueing arguments? not really!
+        :param kwargs: passed enqueueing job arguments
         """
         raise NotImplementedError
 
@@ -565,12 +577,9 @@ class DummyJob(CoreJob):
     def execute(self, *args, **kwargs):
         import time
         sleep = kwargs.get("sleep", None) or 3
+        until = core4.util.now() + dt.timedelta(seconds=sleep)
         self.logger.info("just sleeping [%s] seconds", sleep)
-        time.sleep(sleep)
-
-# todo: task list
-# - test + implement DummyJob.execute
-# then:
-# - write documentation
-# - write job.rst (decide what goes into API docs, and what goes in job.rst)
-# - verify sphinx docs format is right and looking good
+        while core4.util.now() <= until:
+            p = float(sleep - (until - core4.util.now()).total_seconds()) / sleep
+            self.progress(p, "running")
+            time.sleep(0.5)

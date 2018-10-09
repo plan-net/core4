@@ -14,12 +14,6 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-class MyTestCommand(TestCommand):
-
-    def run_tests(self):
-        check_call([sys.executable, "tests/runner.py"])
-
-
 class MySphinxCommand(TestCommand):
 
     def run_tests(self):

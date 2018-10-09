@@ -29,12 +29,12 @@ class CoreWorkerProcess(core4.base.CoreBase,
     ``sys.queue``, drops user privileges,
     :meth:`.execute <core4.queue.job.CoreJob.execute>` the job, manages the
     final job state (``complete`` or ``failed``) and set the jobs' cookie
-    ``last_runtime``.
+    ``last_runtime``. Finally job output to ``STDOUT`` is saved into
+    ``sys.stdout ``.
     """
 
     def start(self, job_id):
         """
-
         :param job_id: str representing a :class:`bson.objectid.ObjectId`
         """
         _id = ObjectId(job_id)

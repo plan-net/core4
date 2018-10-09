@@ -2,6 +2,25 @@
 This module implements the core4 worker. Together with :mod:`core4.queue.main`
 and :mod:`core4.queue.process` it delivers a simple producer/consumer pattern
 for job execution.
+
+To start a worker from Python goes like this::
+
+    from core4.queue.worker import CoreWorker
+
+    worker = CoreWorker()
+    worker.start
+
+To stop the worker start a new Python interpreter and go with::
+
+    from core4.queue.main import CoreQueue
+
+    queue = CoreQueue()
+    queue.halt(now=True)
+
+.. note:: use :ref:`coco` to achieve the same with::
+
+    $ coco --worker
+    $ coco --halt
 """
 
 import os
@@ -580,9 +599,8 @@ class CoreWorker(core4.base.CoreBase):
         :param doc: job MongoDB document
         """
         if not doc["zombie_at"]:
-            if doc["locked"]["heartbeat"] < (self.at
-                                             - timedelta(
-                        seconds=doc["zombie_time"])):
+            if doc["locked"]["heartbeat"] < (self.at - timedelta(
+                    seconds=doc["zombie_time"])):
                 ret = self.config.sys.queue.update_one(
                     filter={
                         "_id": doc["_id"]
@@ -633,6 +651,7 @@ class CoreWorker(core4.base.CoreBase):
         return (False, proc)
 
     def collect_stats(self):
+        # todo: requires implementation
         ret = self.config.sys.worker.update_one(
             {"_id": self.identifier},
             update={
