@@ -192,7 +192,7 @@ def resume(project):
 
 
 def enqueue(qual_name, *args):
-    print("enqueueing [%s]" % (qual_name))
+    print("enqueueing [%s]" % (qual_name[0]))
     if args:
         cmdline = []
         for a in args:
@@ -209,7 +209,7 @@ def enqueue(qual_name, *args):
                 raise json.JSONDecodeError("failed to parse %s" % (s), s, 0)
     else:
         data = {}
-    QUEUE.enqueue(name=qual_name, **data)
+    QUEUE.enqueue(name=qual_name[0], **data)
 
 
 def project(name):
@@ -247,5 +247,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    alive()
+    main()
