@@ -16,3 +16,4 @@ logging (see also :doc:`logging mechanics<../logger/index>`).
    worker
    process
    main
+   query

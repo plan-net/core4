@@ -278,7 +278,7 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
                 return new_id
             else:
                 self.logger.error("failed to restart [%s]", _id)
-                return _id
+                return None
 
     def _restart_waiting(self, _id):
         # internal method used by .restart_job
@@ -295,7 +295,7 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
                 }
             }
         )
-        return ret.raw_result["n"] == 1
+        return ret.modified_count == 1
 
     def _restart_stopped(self, _id):
         # internal method used by .restart_job
@@ -591,8 +591,9 @@ class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
             "timestamp": core4.util.mongo_now(),
             "traceback": None
         }
+        job.__dict__["removed_at"] = None
         self._update_job(job, "state", "runtime", "locked",
-                         "trial", "last_error")
+                         "trial", "last_error", "removed_at")
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
