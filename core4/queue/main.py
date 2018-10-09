@@ -195,6 +195,17 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         """
         if project is None:
             return self.config.sys.worker.count({"_id": "__maintenance__"}) > 0
+        if isinstance(project, bool):
+            if project:
+                doc = self.config.sys.worker.find_one(
+                    {"_id": "__project__"},
+                    projection={"_id": 0, "maintenance": 1}
+                )
+                if doc:
+                    return doc.get("maintenance", [])
+                return []
+            else:
+                raise RuntimeError("project must be True or str")
         return self.config.sys.worker.count({
             "_id": "__project__",
             "maintenance": project

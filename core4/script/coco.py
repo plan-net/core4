@@ -9,10 +9,12 @@ Usage:
   coco --enqueue QUAL_NAME [ARGS]...
   coco --info
   coco --list [STATE]...
+  coco --detail (ID | QUAL_NAME)...
   coco --remove (ID | QUAL_NAME)...
   coco --restart [ID | QUAL_NAME]...
   coco --kill [ID | QUAL_NAME]...
   coco (--pause | --resume) [PROJECT]
+  coco --mode
   coco --version
 
 Options:
@@ -29,6 +31,7 @@ Options:
 
 import json
 import re
+from pprint import pprint
 
 from bson.objectid import ObjectId
 from docopt import docopt
@@ -54,18 +57,6 @@ def worker(name):
     w = core4.queue.worker.CoreWorker(name=name)
     print("start worker [%s]" % (w.identifier))
     w.start()
-
-
-def pause(project):
-    if not QUEUE.maintenance(project):
-        print("entering maintenance", end="")
-        QUEUE.enter_maintenance(project)
-    else:
-        print("in maintenance already,\nnothing to do", end="")
-    if project:
-        print(" on [%s]" % (project))
-    else:
-        print()
 
 
 def alive():
@@ -135,9 +126,9 @@ def listing(*state):
             "{:<6.6s}".format(job.get("enqueued", {}).get("username", None)),
             "{:19s}".format(str(core4.util.utc2local(job["enqueued"]["at"]))),
             "{:11s}".format(str(core4.util.mongo_now() - (
-                    job["enqueued"]["at"]or core4.util.mongo_now()))),
+                    job["enqueued"]["at"] or core4.util.mongo_now()))),
             "{:11s}".format(str(core4.util.mongo_now() - (
-                    job["started_at"]or core4.util.mongo_now()))),
+                    job["started_at"] or core4.util.mongo_now()))),
             job["name"]
         )
 
@@ -179,6 +170,34 @@ def kill(*_id):
             print("failed to kill [{}]".format(oid))
 
 
+def detail(*_id):
+    _id = list(_id)
+    while _id:
+        i = _id.pop(0)
+        try:
+            oid = ObjectId(i)
+        except:
+            for job in QUEUE.get_job_listing(name=i):
+                _id.append(job["_id"])
+                break
+        else:
+            job = QUEUE.find_job(oid)
+            pprint(job.serialise())
+            break
+
+
+def pause(project):
+    if not QUEUE.maintenance(project):
+        print("entering maintenance", end="")
+        QUEUE.enter_maintenance(project)
+    else:
+        print("in maintenance already,\nnothing to do", end="")
+    if project:
+        print(" on [%s]" % (project))
+    else:
+        print()
+
+
 def resume(project):
     if QUEUE.maintenance(project):
         print("leaving maintenance", end="")
@@ -189,6 +208,16 @@ def resume(project):
         print(" on [%s]" % (project))
     else:
         print()
+
+
+def mode():
+    print("global maintenance:")
+    print(" ", QUEUE.maintenance())
+    project = QUEUE.maintenance(project=True)
+    if project:
+        print("project maintenance:")
+        for p in project:
+            print(" ", p)
 
 
 def enqueue(qual_name, *args):
@@ -242,6 +271,10 @@ def main():
         restart(*args["ID"])
     elif args["--kill"]:
         kill(*args["ID"])
+    elif args["--detail"]:
+        detail(*args["ID"])
+    elif args["--mode"]:
+        mode()
     else:
         raise SystemExit("nothing to do.")
 
