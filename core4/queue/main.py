@@ -14,6 +14,7 @@ import core4.error
 import core4.service.setup
 import core4.util
 from core4.base import CoreBase
+from core4.queue.query import QueryMixin
 from core4.queue.job import STATE_PENDING
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
@@ -23,7 +24,7 @@ STATE_STOPPED = (core4.queue.job.STATE_KILLED,
                  core4.queue.job.STATE_ERROR)
 
 
-class CoreQueue(CoreBase, metaclass=core4.util.Singleton):
+class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
 
     """
     Use this class for general queue management, for example::
