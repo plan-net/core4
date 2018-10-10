@@ -13,6 +13,7 @@ from datetime import timedelta
 import core4.error
 import core4.service.setup
 import core4.util
+from core4.queue.query import QueryMixin
 from core4.base import CoreBase
 from core4.queue.query import QueryMixin
 from core4.queue.job import STATE_PENDING

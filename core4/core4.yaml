@@ -66,3 +66,5 @@ worker:
     flag_jobs: 10.0
     collect_stats: 25.0
   stdout_ttl: 604800
+  alive_timeout: 60
+
