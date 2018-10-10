@@ -49,25 +49,36 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         ``_hash``. The ``_hash`` attribute ensures that jobs are unique with
         regard to their :meth:`.qual_name` and job arguments.
         """
-        self.config.sys.queue.create_index(
-            [
-                ("name", pymongo.ASCENDING),
-                ("_hash", pymongo.ASCENDING)
-            ],
-            unique=True,
-            name="job_args"
-        )
+        if "job_args" not in self.config.sys.queue.index_information():
+            self.config.sys.queue.create_index(
+                [
+                    ("name", pymongo.ASCENDING),
+                    ("_hash", pymongo.ASCENDING)
+                ],
+                unique=True,
+                name="job_args"
+            )
+            self.logger.info("created index [job_args] on [sys.queue]")
 
     @once
     def make_stdout(self):
         """
         Creates collection ``sys.stdout`` and its TTL index on ``timestamp``.
+        If config ``worker.stdout_ttl`` is ``None``, then any existing index
+        is removed.
         """
         ttl = self.config.worker.stdout_ttl
-        self.config.sys.stdout.create_index(
-            [("timestamp", pymongo.ASCENDING)],
-            name="timestamp_ttl",
-            expireAfterSeconds=ttl)
+        if ttl:
+            if "ttl" not in self.config.sys.stdout.index_information():
+                self.config.sys.stdout.create_index(
+                    [("timestamp", pymongo.ASCENDING)],
+                    name="ttl",
+                    expireAfterSeconds=ttl)
+                self.logger.info("created index [ttl] on [sys.stdout]")
+        else:
+            if "ttl" in self.config.sys.stdout.index_information():
+                self.config.sys.stdout.drop_index(index_or_name="ttl")
+                self.logger.warning("removed index [ttl] from [sys.stdout]")
 
     @once
     def collect_jobs(self):

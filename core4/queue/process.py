@@ -30,7 +30,7 @@ class CoreWorkerProcess(core4.base.CoreBase,
     :meth:`.execute <core4.queue.job.CoreJob.execute>` the job, manages the
     final job state (``complete`` or ``failed``) and set the jobs' cookie
     ``last_runtime``. Finally job output to ``STDOUT`` is saved into
-    ``sys.stdout ``.
+    ``sys.stdout``.
     """
 
     def start(self, job_id):
