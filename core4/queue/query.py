@@ -33,6 +33,7 @@ class QueryMixin:
             {
                 "$match": {
                     "heartbeat": {"$exists": True},
+                    "phase.shutdown": None,
                     "$or": [
                         {"heartbeat": None},
                         {
@@ -52,15 +53,21 @@ class QueryMixin:
             },
             {"$sort": {"_id": 1}}
         ])
-        data = list(cur)
+        data = []
+        for doc in cur:
+            if doc["heartbeat"]:
+                doc["heartbeat"] = (core4.util.mongo_now() -
+                                    doc["heartbeat"].replace(microsecond=0))
+            if doc["loop"]:
+                doc["loop_time"] = (core4.util.mongo_now() -
+                                    doc["loop"].replace(microsecond=0))
+            else:
+                doc["Loop_time"] = None
+            data.append(doc)
         df = pd.DataFrame(data)
         if df.empty:
             return df
-        df["heartbeat"] = (core4.util.now() - df.heartbeat).dt.round(freq="S")
-        df["loop_time"] = core4.util.mongo_now() - df.loop
-        df["loop"] = core4.util.dfutc2local(df.loop)
         return df[["_id", "loop", "loop_time", "heartbeat"]]
-        return df
 
     def get_queue_state(self):
         """
@@ -172,3 +179,19 @@ class QueryMixin:
                 'state': 1,
                 'locked': 1},
             sort=[('_id', 1)])
+
+    def get_job_stdout(self, _id):
+        """
+        Returns the job STDOUT filtered.
+
+        .. note:: The STDOUT of jobs have a time-to-live and is purged after
+                  7 days. You can configure this TTL with config setting
+                  {{worker.stdout.ttl}.
+
+        :param _id: :class:`bson.object.ObjectId`
+        :return: str
+        """
+        doc = self.config.sys.stdout.find_one({"_id": _id})
+        if doc:
+            return doc["stdout"]
+        return None

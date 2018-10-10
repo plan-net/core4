@@ -183,6 +183,9 @@ def detail(*_id):
         else:
             job = QUEUE.find_job(oid)
             pprint(job.serialise())
+            stdout = QUEUE.get_job_stdout(job._id)
+            print("-"*80)
+            print("STDOUT:\n" + stdout)
             break
 
 
@@ -238,7 +241,8 @@ def enqueue(qual_name, *args):
                 raise json.JSONDecodeError("failed to parse %s" % (s), s, 0)
     else:
         data = {}
-    QUEUE.enqueue(name=qual_name[0], **data)
+    job = QUEUE.enqueue(name=qual_name[0], **data)
+    print(job._id)
 
 
 def project(name):

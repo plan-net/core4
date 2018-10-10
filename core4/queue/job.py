@@ -579,7 +579,10 @@ class DummyJob(CoreJob):
         sleep = kwargs.get("sleep", None) or 3
         until = core4.util.now() + dt.timedelta(seconds=sleep)
         self.logger.info("just sleeping [%s] seconds", sleep)
+        n = 0
         while core4.util.now() <= until:
+            n += 1
+            print("line %d at %s" %(n, core4.util.now()))
             p = float(sleep - (until - core4.util.now()).total_seconds()) / sleep
             self.progress(p, "running")
             time.sleep(0.5)

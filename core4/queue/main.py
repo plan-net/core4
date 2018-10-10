@@ -610,3 +610,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
+
+
+if __name__ == '__main__':
+    q = CoreQueue()
+    q.get_worker()
