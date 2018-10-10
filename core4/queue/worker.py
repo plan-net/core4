@@ -93,10 +93,16 @@ class CoreWorker(core4.base.CoreBase):
         processing :meth:`.loop` to :meth:`.shutdown`.
         :return:
         """
-        self.startup()
-        self.loop()
-        self.shutdown()
-        self.enter_phase("exit")
+        try:
+            self.startup()
+            self.loop()
+        except KeyboardInterrupt:
+            raise SystemExit()
+        except:
+            raise
+        finally:
+            self.shutdown()
+            self.enter_phase("exit")
 
     def startup(self):
         """
@@ -105,7 +111,6 @@ class CoreWorker(core4.base.CoreBase):
         self.register_worker()
         self.enter_phase("startup")
         self.create_worker_env()
-        self.register_projects()
         self.cleanup()
         self.plan = self.create_plan()
 
@@ -123,16 +128,12 @@ class CoreWorker(core4.base.CoreBase):
                 "$set": {
                     "phase": {},
                     "heartbeat": None,
-                    "plugins": None
+                    "project": None
                 }
             },
             upsert=True
         )
         self.logger.info("registered worker")
-
-    def register_projects(self):
-        # todo: implement
-        pass
 
     def shutdown(self):
         """
@@ -145,12 +146,23 @@ class CoreWorker(core4.base.CoreBase):
     def create_worker_env(self):
         """
         Ensures proper environment setup with required folders and roles.
-        This method utilises :class:`core4.service.setup.CoreSetup`.
+        This method utilises :class:`core4.service.setup.CoreSetup`. Finally
+        this method collects core4 meta information on jobs and pushes the data
+        into ``sys.worker``.
         """
         setup = core4.service.setup.CoreSetup()
         setup.make_folder()
         setup.make_role()  # todo: implement!
         setup.make_stdout()
+        self.config.sys.worker.update_one(
+            {"_id": self.identifier},
+            update={
+                "$set": {
+                    "project": setup.collect_jobs()
+                }
+            }
+        )
+        self.logger.info("registered worker")
         self.create_stats()
 
     def create_stats(self):
