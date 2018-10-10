@@ -1,12 +1,13 @@
 """
-This module delivers various MongoDB support methods retrieving important
-information about collection ``sys.queue``. The main class :class:`QueryMixin`
-is to be mixed into a class based on :class:`core4.base.main.CoreBase`.
+This module delivers various MongoDB support methods retrieving information
+about collection ``sys.queue``. The main class :class:`QueryMixin` is to be
+mixed into a class based on :class:`core4.base.main.CoreBase`.
 """
+
+from collections import OrderedDict
 
 import datetime
 import pandas as pd
-from collections import OrderedDict
 
 import core4.util
 
@@ -16,6 +17,7 @@ class QueryMixin:
     def get_worker(self):
         """
         Retrieves information about all workers alive. This includes
+
         * ``_id`` - the identifier of the worker
         * ``loop`` - the date/time when the working entered looping in UTC
         * ``loop_time`` - the timedelta of the worker looping
@@ -141,7 +143,7 @@ class QueryMixin:
 
     def get_job_listing(self, **kwargs):
         """
-        Returns the job listing filtered by {{**kwargs}}. This is
+        Returns the job listing filtered by {{kwargs}}. This is
 
         * ``_id`` (ObjectId)
         * ``attempts_left`` (int)
@@ -186,7 +188,7 @@ class QueryMixin:
 
         .. note:: The STDOUT of jobs have a time-to-live and is purged after
                   7 days. You can configure this TTL with config setting
-                  {{worker.stdout.ttl}.
+                  ``worker.stdout.ttl``.
 
         :param _id: :class:`bson.object.ObjectId`
         :return: str
