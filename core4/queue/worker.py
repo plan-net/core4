@@ -246,6 +246,7 @@ class CoreWorker(core4.base.CoreBase):
         in_maintenance = False
         while not self.exit:
             self.cycle["total"] += 1
+            #self.logger.debug("cycle [%d]", self.cycle["total"])
             if self.queue.halt(at=self.phase["startup"]):
                 return
             if self.queue.maintenance():
