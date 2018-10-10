@@ -120,14 +120,14 @@ def test_maintenance():
     worker = core4.queue.worker.CoreWorker()
     t = threading.Thread(target=worker.start, args=())
     t.start()
-    while worker.cycle["total"] < 3:
-        time.sleep(0.5)
+    while worker.cycle["total"] <= 3:
+        time.sleep(0.05)
     worker.exit = True
     assert worker.at is None
     t.join()
+    del worker.cycle["total"]
     assert worker.cycle == {
-        'collect_stats': 0, 'total': 3, 'work_jobs': 0,
-        'flag_jobs': 0, 'remove_jobs': 0}
+        'collect_stats': 0, 'work_jobs': 0, 'flag_jobs': 0, 'remove_jobs': 0}
 
 
 @pytest.mark.timeout(30)
