@@ -2,7 +2,7 @@
 coco - core control utililty.
 
 Usage:
-  coco --project [PROJECT]
+  coco --init [PROJECT]
   coco --halt
   coco --worker [IDENTIFIER]
   coco --alive
@@ -245,7 +245,7 @@ def enqueue(qual_name, *args):
     print(job._id)
 
 
-def project(name):
+def init(name):
     core4.service.project.make_project(name)
 
 
@@ -261,8 +261,8 @@ def main():
         resume(args["PROJECT"])
     elif args["--enqueue"]:
         enqueue(args["QUAL_NAME"], *args["ARGS"])
-    elif args["--project"]:
-        project(args["PROJECT"])
+    elif args["--init"]:
+        init(args["PROJECT"])
     elif args["--alive"]:
         alive()
     elif args["--info"]:
