@@ -30,12 +30,12 @@ import traceback
 
 import psutil
 import pymongo
-import pymongo.errors
 import time
 from datetime import timedelta
 
 import core4.base
 import core4.error
+import core4.queue.daemon
 import core4.queue.job
 import core4.queue.main
 import core4.service.setup
@@ -49,11 +49,13 @@ STEPS = (
     "collect_stats")
 
 
-class CoreWorker(core4.base.CoreBase):
+class CoreWorker(core4.queue.daemon.CoreDaemon):
     """
     This class is the working horse to carry and execute jobs. Workers have an
     identifier. This identifier defaults to the hostname of the worker and must
     be unique across the cluster.
+
+    The :class:`.CoreWorker` is based on :class:`.CoreDaemon`.
 
     Each worker operates in three distinct phases. Each phase features one or
     more processing steps.
@@ -70,103 +72,8 @@ class CoreWorker(core4.base.CoreBase):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__()
-        self.identifier = kwargs.get("name", None) or core4.util.get_hostname()
-        self.hostname = core4.util.get_hostname()
-        self.phase = {
-            "startup": core4.util.now(),
-            "loop": None,
-            "shutdown": None,
-            "exit": None
-        }
-        self.plan = None
-        self.exit = False
-        self.at = None
-        self.cycle = dict([(s, 0) for s in STEPS])
-        self.cycle["total"] = 0
+        super().__init__(STEPS, *args, **kwargs)
         self.offset = None
-        self.queue = core4.queue.main.CoreQueue()
-
-    def start(self):
-        """
-        executes the worker's workflow from :meth:`.startup` to the main
-        processing :meth:`.loop` to :meth:`.shutdown`.
-        :return:
-        """
-        try:
-            self.startup()
-            self.loop()
-        except KeyboardInterrupt:
-            raise SystemExit()
-        except:
-            raise
-        finally:
-            self.shutdown()
-            self.enter_phase("exit")
-
-    def startup(self):
-        """
-        Implements the **startup** phase of the worker.
-        """
-        self.register_worker()
-        self.enter_phase("startup")
-        self.create_worker_env()
-        self.cleanup()
-        self.plan = self.create_plan()
-
-    def register_worker(self):
-        """
-        Registers the worker identified by it's ``.identifier`` in collection
-        ``sys.worker``.
-
-        .. warning:: please note that the ``.identifier`` of the worker must
-                     not exist.
-        """
-        self.config.sys.worker.update_one(
-            {"_id": self.identifier},
-            update={
-                "$set": {
-                    "phase": {},
-                    "heartbeat": None,
-                    "project": None
-                }
-            },
-            upsert=True
-        )
-        self.logger.info("registered worker")
-
-    def shutdown(self):
-        """
-        Shutdown the worker by spawning the final housekeeping
-        method :meth:`cleanup`.
-        """
-        self.enter_phase("shutdown")
-        self.cleanup()
-
-    def create_worker_env(self):
-        """
-        Ensures proper environment setup with required folders and roles.
-        This method utilises :class:`core4.service.setup.CoreSetup`. Finally
-        this method collects core4 meta information on jobs and pushes the data
-        into ``sys.worker``.
-        """
-        setup = core4.service.setup.CoreSetup()
-        setup.make_folder()
-        setup.make_role()  # todo: implement!
-        setup.make_stdout()
-        self.config.sys.worker.update_one(
-            {"_id": self.identifier},
-            update={
-                "$set": {
-                    "project": setup.collect_jobs()
-                }
-            }
-        )
-        self.logger.info("registered worker")
-        self.create_stats()
-
-    def create_stats(self):
-        pass
 
     def cleanup(self):
         """
@@ -176,61 +83,6 @@ class CoreWorker(core4.base.CoreBase):
         ret = self.config.sys.lock.delete_many({"worker": self.identifier})
         self.logger.info(
             "cleanup removed [%d] sys.lock records", ret.raw_result["n"])
-
-    def create_plan(self):
-        """
-        Creates the worker's execution plan in the main processing loop:
-
-        # :meth:`.work_jobs` - get next job, inactivate or execute
-        # :meth:`.remove_jobs` - remove jobs
-        # :meth:`.flag_jobs` - flag jobs as non-stoppers, zombies, killed
-        # :meth:`.collect_stats` - collect and save general sever metrics
-
-        :return: dict with step ``name``, ``interval``, ``next`` timestamp
-                 to execute and method reference ``call``
-        """
-        plan = []
-        now = core4.util.now()
-        self.wait_time = None
-        for s in STEPS:
-            interval = self.config.worker.execution_plan[s]
-            if self.wait_time is None:
-                self.wait_time = interval
-            else:
-                self.wait_time = min(interval, self.wait_time)
-            self.logger.debug("set [%s] interval [%1.2f] sec.", s, interval)
-            plan.append({
-                "name": s,
-                "interval": interval,
-                "next": now + timedelta(seconds=interval),
-                "call": getattr(self, s)
-            })
-        self.logger.debug(
-            "create execution plan with cycle time [%1.2f] sec.",
-            self.wait_time)
-        return plan
-
-    def enter_phase(self, phase):
-        """
-        This method advertises current execution phase in collection
-        ``sys.worker``.
-
-        :param phase: current phase
-        """
-        self.phase[phase] = core4.util.mongo_now()
-        ret = self.config.sys.worker.update_one(
-            {"_id": self.identifier},
-            update={
-                "$set": {
-                    "phase.{}".format(phase): self.phase[phase]
-                }
-            }
-        )
-        if ret.raw_result["n"] == 1:
-            self.logger.info("enter phase [%s]", phase)
-        else:
-            raise core4.error.Core4SetupError(
-                "failed to enter phase [{}]".format(phase))
 
     def loop(self):
         """
@@ -246,7 +98,7 @@ class CoreWorker(core4.base.CoreBase):
         in_maintenance = False
         while not self.exit:
             self.cycle["total"] += 1
-            #self.logger.debug("cycle [%d]", self.cycle["total"])
+            # self.logger.debug("cycle [%d]", self.cycle["total"])
             if self.queue.halt(at=self.phase["startup"]):
                 return
             if self.queue.maintenance():
@@ -474,7 +326,7 @@ class CoreWorker(core4.base.CoreBase):
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE
                 )
-            except:
+            except Exception:
                 self.fail_hard(job)
             else:
                 ret = self.config.sys.queue.update_one(
