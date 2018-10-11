@@ -330,11 +330,11 @@ class TestConfig(unittest.TestCase):
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test1/sys.log")
-        self.assertEqual(conf["sys"]["log"].count(), 0)
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
-        self.assertEqual(conf["sys"]["log"].count(), 1)
-        self.assertEqual(1, self.mongo.core4test1.sys.log.count())
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 1)
+        self.assertEqual(1, self.mongo.core4test1.sys.log.count_documents({}))
 
     def test_connect2(self):
         extra = tests.util.asset("config/extra1.yaml")
@@ -344,21 +344,21 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test/sys.log")
         self.assertRaises(pymongo.errors.OperationFailure,
-                          conf["sys"]["log"].count)
+                          conf["sys"]["log"].count_documents, {})
 
         self.assertEqual(conf.test.coll1.info_url,
                          "core@localhost:27017/core4test2/coll1")
-        self.assertEqual(0, conf.test.coll1.count())
+        self.assertEqual(0, conf.test.coll1.count_documents({}))
         conf.test.coll1.insert_one({})
-        self.assertEqual(1, conf.test.coll1.count())
-        self.assertEqual(1, self.mongo.core4test2.coll1.count())
+        self.assertEqual(1, conf.test.coll1.count_documents({}))
+        self.assertEqual(1, self.mongo.core4test2.coll1.count_documents({}))
         self.assertEqual(conf.test.coll2.info_url,
                          "core@localhost:27017/core4test/coll2")
         conf.test.coll2.insert_one({})
-        self.assertEqual(1, conf.test.coll2.count())
-        self.assertEqual(1, self.mongo.core4test.coll2.count())
-        self.assertEqual(0, self.mongo.core4test1.coll2.count())
-        self.assertEqual(0, self.mongo.core4test2.coll2.count())
+        self.assertEqual(1, conf.test.coll2.count_documents({}))
+        self.assertEqual(1, self.mongo.core4test.coll2.count_documents({}))
+        self.assertEqual(0, self.mongo.core4test1.coll2.count_documents({}))
+        self.assertEqual(0, self.mongo.core4test2.coll2.count_documents({}))
         self.assertEqual(
             "!connect "
             "'mongodb://core:654321@localhost:27017/core4test/coll2/collx'",
@@ -372,11 +372,11 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(project_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test1/sys.log")
-        self.assertEqual(conf["sys"]["log"].count(), 0)
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
-        self.assertEqual(conf["sys"]["log"].count(), 1)
-        self.assertEqual(1, self.mongo.core4test1.sys.log.count())
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 1)
+        self.assertEqual(1, self.mongo.core4test1.sys.log.count_documents({}))
 
     def test_not_found(self):
         extra = tests.util.asset("config/nf", exists=False)
@@ -402,11 +402,11 @@ class TestConfig(unittest.TestCase):
         conf = Config(project_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test1/sys.log")
-        self.assertEqual(conf["sys"]["log"].count(), 0)
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
-        self.assertEqual(conf["sys"]["log"].count(), 1)
-        self.assertEqual(1, self.mongo.core4test1.sys.log.count())
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 1)
+        self.assertEqual(1, self.mongo.core4test1.sys.log.count_documents({}))
         self.assertEqual(conf.test.value, 2)
 
     def test_system_file(self):
@@ -421,11 +421,11 @@ class TestConfig(unittest.TestCase):
         conf = Config(project_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test2/sys.log")
-        self.assertEqual(conf["sys"]["log"].count(), 0)
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
-        self.assertEqual(conf["sys"]["log"].count(), 1)
-        self.assertEqual(1, self.mongo.core4test2.sys.log.count())
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 1)
+        self.assertEqual(1, self.mongo.core4test2.sys.log.count_documents({}))
         self.assertEqual(conf.test.value, 4)
 
     def test_no_default_connect(self):
@@ -435,10 +435,10 @@ class TestConfig(unittest.TestCase):
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test/sys.log")
-        self.assertEqual(conf["sys"]["log"].count(), 0)
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
-        self.assertEqual(conf["sys"]["log"].count(), 1)
+        self.assertEqual(conf["sys"]["log"].count_documents({}), 1)
 
     def test_empty_connect(self):
         extra = tests.util.asset("config/empty.yaml")
@@ -510,7 +510,7 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(project_config=("test", extra), config_file=local)
         conf._load()
         conf.sys.log.insert_one({})
-        self.assertEqual(1, conf.sys.log.count())
+        self.assertEqual(1, conf.sys.log.count_documents({}))
 
     def test_extra_no_project(self):
         extra = tests.util.asset("config/extra1.yaml")
@@ -624,10 +624,10 @@ class TestConfig(unittest.TestCase):
             "CORE4_OPTION_sys__log"] = "!connect mongodb://coll1"
         empty = tests.util.asset("config/empty.yaml")
         conf = MyConfig(config_file=empty)
-        self.assertEqual(0, conf.sys.log.count())
+        self.assertEqual(0, conf.sys.log.count_documents({}))
         for i in range(10):
             conf.sys.log.insert_one({})
-        self.assertEqual(10, self.mongo.core4test.coll1.count())
+        self.assertEqual(10, self.mongo.core4test.coll1.count_documents({}))
 
     def test_env_db(self):
         os.environ[
@@ -641,10 +641,10 @@ class TestConfig(unittest.TestCase):
         empty = tests.util.asset("config/empty.yaml")
         conf = MyConfig(config_file=empty)
         conf._load()
-        self.assertEqual(0, conf.sys.log.count())
+        self.assertEqual(0, conf.sys.log.count_documents({}))
         for i in range(5):
             self.mongo.core4test1.coll1.insert_one({})
-        self.assertEqual(5, conf.sys.log.count())
+        self.assertEqual(5, conf.sys.log.count_documents({}))
 
     def test_env_db2(self):
         os.environ[
@@ -667,10 +667,10 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf["sys"]["log"].info_url,
                          "core@localhost:27017/core4test1/coll1")
 
-        # self.assertEqual(0, conf.sys.log.count())
+        # self.assertEqual(0, conf.sys.log.count_documents({}))
         # for i in range(5):
         #     self.mongo.core4test1.coll1.insert_one({})
-        # self.assertEqual(5, conf.sys.log.count())
+        # self.assertEqual(5, conf.sys.log.count_documents({}))
 
     def test_db_connect(self):
         os.environ[
@@ -685,10 +685,10 @@ class TestConfig(unittest.TestCase):
         })
         local = tests.util.asset("config/local3.yaml")
         conf = MyConfig(config_file=local)
-        self.assertEqual(0, conf.sys.log.count())
+        self.assertEqual(0, conf.sys.log.count_documents({}))
         for i in range(5):
             self.mongo.core4test1.coll1.insert_one({})
-        self.assertEqual(5, conf.sys.log.count())
+        self.assertEqual(5, conf.sys.log.count_documents({}))
 
     def test_db_connect1(self):
         os.environ[
@@ -703,10 +703,10 @@ class TestConfig(unittest.TestCase):
         })
         local = tests.util.asset("config/local3.yaml")
         conf = MyConfig(config_file=local)
-        self.assertEqual(0, conf.sys.log.count())
+        self.assertEqual(0, conf.sys.log.count_documents({}))
         for i in range(5):
             self.mongo.core4test1.coll1.insert_one({})
-        self.assertEqual(5, conf.sys.log.count())
+        self.assertEqual(5, conf.sys.log.count_documents({}))
 
     def test_db_connect2(self):
         self.mongo.core4test.sys.conf.insert_one({
@@ -717,10 +717,10 @@ class TestConfig(unittest.TestCase):
         })
         local = tests.util.asset("config/local5.yaml")
         conf = MyConfig(config_file=local)
-        self.assertEqual(0, conf.sys.log.count())
+        self.assertEqual(0, conf.sys.log.count_documents({}))
         for i in range(5):
             self.mongo.core4test1.coll1.insert_one({})
-        self.assertEqual(5, conf.sys.log.count())
+        self.assertEqual(5, conf.sys.log.count_documents({}))
 
     def test_tag(self):
         extra = tests.util.asset("config/extra1.yaml")
@@ -875,5 +875,5 @@ class TestConfig(unittest.TestCase):
             _ = conf.config
 
 
-    if __name__ == '__main__':
-        unittest.main(exit=False)
+if __name__ == '__main__':
+    unittest.main(exit=False)

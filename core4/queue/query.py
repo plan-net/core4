@@ -7,7 +7,6 @@ mixed into a class based on :class:`core4.base.main.CoreBase`.
 from collections import OrderedDict
 
 import datetime
-import pandas as pd
 
 import core4.util
 
@@ -28,7 +27,7 @@ class QueryMixin:
                   The alive timeout can be configured by config section
                   ``alive.timeout``.
 
-        :return: :class:`pandas.DataFrame``
+        :return: dict
         """
         timeout = self.config.worker.alive_timeout
         cur = self.config.sys.worker.aggregate([
@@ -66,10 +65,7 @@ class QueryMixin:
             else:
                 doc["Loop_time"] = None
             data.append(doc)
-        df = pd.DataFrame(data)
-        if df.empty:
-            return df
-        return df[["_id", "loop", "loop_time", "heartbeat"]]
+        return data
 
     def get_queue_state(self):
         """
@@ -81,7 +77,7 @@ class QueryMixin:
           ``killed``
         * ``name`` - job :meth:`.qual_name``
 
-        :return: :class:`pandas.DataFrame``
+        :return: dict
         """
         sort_dict = OrderedDict()
         sort_dict['state'] = 1
@@ -132,14 +128,13 @@ class QueryMixin:
                 "$sort": sort_dict
             }
         ])
-        data = list(cur)
-        df = pd.DataFrame(data)
-        if df.empty:
-            return df
-        df["flags"] = df.apply(lambda r: "".join(
-            [k[0].upper() if r[k] else "." for k in
-             ["zombie", "wall", "removed", "killed"]]), axis=1)
-        return df[["n", "state", "flags", "name"]]
+        data = []
+        for doc in cur:
+            doc["flags"] = "".join(
+                [doc[k].upper()
+                 for k in ["zombie", "wall", "removed", "killed"]])
+            data.append(doc)
+        return data
 
     def get_job_listing(self, **kwargs):
         """

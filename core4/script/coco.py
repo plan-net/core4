@@ -60,14 +60,15 @@ def worker(name):
 
 
 def alive():
-    df = QUEUE.get_worker()
-    if df.empty:
-        print("no worker alive")
-    else:
-        print(df.to_string())
-
+    for doc in QUEUE.get_worker():
+        print("{loop_time:19s} {hearbeat:19s} {loop:19s} {_id:s}".format(
+            loop_time=str(doc["loop_time"]),
+            loop=str(doc["loop"]),
+            heartbeat=str(doc["heartbeat"])
+        ))
 
 def info():
+    # todo: requires fixing
     df = QUEUE.get_queue_state()
     if df.empty:
         print("no jobs")

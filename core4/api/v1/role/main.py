@@ -16,6 +16,7 @@ Load an existing role with::
 """
 
 import pymongo
+# todo: we do not want this dependency
 from flask_login import login_user
 
 import core4.base
@@ -522,4 +523,4 @@ class RoleField(Field):
         """
         Internal method used to check if the role ``_id`` exists.
         """
-        return self.collection.count({"_id": _id}) == 1
+        return self.collection.count_documents({"_id": _id}) == 1

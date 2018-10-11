@@ -1,5 +1,3 @@
-import time
-
 import core4.logger
 import core4.queue.job
 import core4.queue.main
@@ -11,7 +9,7 @@ class ErrorJob(core4.queue.job.CoreJob):
     """
 
     author = 'mra'
-    error_time = 5
+    error_time = 3
     attempts = 3
 
     def execute(self, *args, **kwargs):
@@ -24,8 +22,8 @@ class ErrorJob(core4.queue.job.CoreJob):
 
 class DeferJob(core4.queue.job.CoreJob):
     author = 'mra'
-    defer_time = 5
-    defer_max = 30
+    defer_time = 2
+    defer_max = 10
 
     def execute(self, *args, **kwargs):
         if not kwargs.get("success", False) or self.trial < 3:

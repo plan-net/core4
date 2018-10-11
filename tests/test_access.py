@@ -57,7 +57,7 @@ class TestAccess(unittest.TestCase):
         mongo = self.mongo()
         for db in ["core4test"] + ["core4test" + str(i) for i in range(1, 5)]:
             mongo.drop_database(db)
-        for db in mongo.database_names():
+        for db in mongo.list_database_names():
             if db.startswith("user!regress_"):
                 mongo.drop_database(db)
         users = mongo.admin.command("usersInfo")
@@ -129,14 +129,14 @@ class TestAccess(unittest.TestCase):
         token = access["mongodb"]
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test", token))
-        self.assertEqual(1, connection.core4test1.coll1.count())
-        self.assertEqual(2, connection.core4test1.coll2.count())
+        self.assertEqual(1, connection.core4test1.coll1.count_documents({}))
+        self.assertEqual(2, connection.core4test1.coll2.count_documents({}))
         for i in range(2, 5):
             db = "core4test" + str(i)
             self.assertRaises(pymongo.errors.OperationFailure,
-                              connection[db].coll1.count)
+                              connection[db].coll1.count_documents, {})
             self.assertRaises(pymongo.errors.OperationFailure,
-                              connection[db].coll2.count)
+                              connection[db].coll2.count_documents, {})
 
     def test_update_role(self):
         test_role = core4.api.v1.role.main.Role(
@@ -148,12 +148,12 @@ class TestAccess(unittest.TestCase):
         token = access["mongodb"]
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test", token))
-        self.assertEqual(1, connection.core4test1.coll1.count())
-        self.assertEqual(2, connection.core4test1.coll2.count())
+        self.assertEqual(1, connection.core4test1.coll1.count_documents({}))
+        self.assertEqual(2, connection.core4test1.coll2.count_documents({}))
         self.assertRaises(pymongo.errors.OperationFailure,
-                          connection.core4test2.coll1.count)
+                          connection.core4test2.coll1.count_documents, {})
         self.assertRaises(pymongo.errors.OperationFailure,
-                          connection.core4test2.coll2.count)
+                          connection.core4test2.coll2.count_documents, {})
         test_role.perm = ["mongodb://core4test1", "mongodb://core4test2"]
         test_role.save()
         mgr = core4.service.access.manager.CoreAccessManager("regress_test")
@@ -161,10 +161,10 @@ class TestAccess(unittest.TestCase):
         token = access["mongodb"]
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test", token))
-        self.assertEqual(1, connection.core4test1.coll1.count())
-        self.assertEqual(2, connection.core4test1.coll2.count())
-        self.assertEqual(2, connection.core4test2.coll1.count())
-        self.assertEqual(4, connection.core4test2.coll2.count())
+        self.assertEqual(1, connection.core4test1.coll1.count_documents({}))
+        self.assertEqual(2, connection.core4test1.coll2.count_documents({}))
+        self.assertEqual(2, connection.core4test2.coll1.count_documents({}))
+        self.assertEqual(4, connection.core4test2.coll2.count_documents({}))
 
     def test_multi_db(self):
         test_role = core4.api.v1.role.main.Role(
@@ -177,16 +177,16 @@ class TestAccess(unittest.TestCase):
         token = access["mongodb"]
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test", token))
-        self.assertEqual(1, connection.core4test1.coll1.count())
-        self.assertEqual(2, connection.core4test1.coll2.count())
-        self.assertEqual(2, connection.core4test2.coll1.count())
-        self.assertEqual(4, connection.core4test2.coll2.count())
+        self.assertEqual(1, connection.core4test1.coll1.count_documents({}))
+        self.assertEqual(2, connection.core4test1.coll2.count_documents({}))
+        self.assertEqual(2, connection.core4test2.coll1.count_documents({}))
+        self.assertEqual(4, connection.core4test2.coll2.count_documents({}))
         for i in range(3, 5):
             db = "core4test" + str(i)
             self.assertRaises(pymongo.errors.OperationFailure,
-                              connection[db].coll1.count)
+                              connection[db].coll1.count_documents, {})
             self.assertRaises(pymongo.errors.OperationFailure,
-                              connection[db].coll2.count)
+                              connection[db].coll2.count_documents, {})
 
     def test_duplicate(self):
         test_role1 = core4.api.v1.role.main.Role(
@@ -226,12 +226,12 @@ class TestAccess(unittest.TestCase):
 
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test1", token))
-        self.assertEqual(0, connection["user!regress_test1"].coll.count())
+        self.assertEqual(0, connection["user!regress_test1"].coll.count_documents({}))
         connection["user!regress_test1"].coll.insert_one({})
-        self.assertEqual(1, connection["user!regress_test1"].coll.count())
+        self.assertEqual(1, connection["user!regress_test1"].coll.count_documents({}))
 
         self.assertRaises(pymongo.errors.OperationFailure,
-                          connection["user!regress_test2"].coll.count)
+                          connection["user!regress_test2"].coll.count_documents, {})
 
         mgr = core4.service.access.manager.CoreAccessManager("regress_test2")
         access = mgr.synchronise()
@@ -239,13 +239,13 @@ class TestAccess(unittest.TestCase):
 
         connection = pymongo.MongoClient(
             'mongodb://{}:{}@localhost:27017'.format("regress_test2", token))
-        self.assertEqual(0, connection["user!regress_test2"].coll.count())
+        self.assertEqual(0, connection["user!regress_test2"].coll.count_documents({}))
         connection["user!regress_test2"].coll.insert_one({})
         connection["user!regress_test2"].coll.insert_one({})
-        self.assertEqual(2, connection["user!regress_test2"].coll.count())
+        self.assertEqual(2, connection["user!regress_test2"].coll.count_documents({}))
 
         self.assertRaises(pymongo.errors.OperationFailure,
-                          connection["user!regress_test1"].coll.count)
+                          connection["user!regress_test1"].coll.count_documents, {})
 
     def test_dependency(self):
         test_role1 = core4.api.v1.role.main.Role(

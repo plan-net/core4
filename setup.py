@@ -2,7 +2,6 @@
 
 import os
 import re
-import sys
 from subprocess import check_call
 
 from setuptools import setup, find_packages
@@ -31,6 +30,8 @@ def package_files(directory, pattern):
     return paths
 
 
+
+
 setup(
     name='core4',
     version=core4.__version__,
@@ -48,13 +49,7 @@ setup(
             ["core4.yaml"]
             + package_files("core4/service/project/template/", "^.+$")
     },
-    tests_require=[
-        "pytest",
-        "coverage>=4.0, <5.0",
-        "pytest-timeout==1.3.2"
-    ],
     setup_requires=[
-        "pytest-runner"
     ],
     entry_points={
         'console_scripts': [
@@ -62,19 +57,25 @@ setup(
         ],
     },
     install_requires=[
-        "numpy>=1.14, <1.15",
-        "pandas>=0.22, <0.23",
-        "pymongo>=3.6, <3.7",
-        "python-dateutil>=2.7, <2.8",
-        "Sphinx>=1.7, <1.8",
-        "sphinx-rtd-theme==0.3, <0.4",
-        "Flask>=1.0, <2.0",
-        "Flask-Login>=0.4, <1.0",
-        "PyYaml>=3.12, <4",
-        "PyJWT>=1.6.4, <2",
-        "psutil>=5.4.7",
-        "docopt>=0.6.1"
+        "pymongo>=3.7",
+        "python-dateutil>=2.7",
+        "Flask>=1.0",
+        "Flask-Login>=0.4",
+        "PyYaml>=3.12",
+        "psutil>=5.4",
+        "docopt>=0.6"
     ],
+    extras_require={
+        "tests": [
+            "pytest",
+            "pytest-timeout",
+            "pytest-runner",
+            "requests",
+            "coverage",
+            "Sphinx",
+            "sphinx-rtd-theme"
+        ]
+    },
     zip_safe=False,
     cmdclass={
         'sphinx': MySphinxCommand

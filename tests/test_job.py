@@ -401,7 +401,7 @@ def test_job_not_found():
 class EnvJob(core4.queue.job.CoreJob):
     author = "mra"
     defer_time = 1
-    defer_max = 60*60*24
+    defer_max = 60 * 60 * 24
 
     def execute(self, *args, **kwargs):
         self.defer("still waiting")

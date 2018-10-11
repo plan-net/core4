@@ -4,7 +4,6 @@ import ctypes
 import sys
 
 import datetime
-import pandas as pd
 import psutil
 import threading
 import time
@@ -85,9 +84,9 @@ def test_register(caplog):
 
 def test_register_duplicate():
     w1 = core4.queue.worker.CoreWorker(name="worker")
-    w1.register_worker()
+    w1.register()
     w2 = core4.queue.worker.CoreWorker(name="worker")
-    w1.register_worker()
+    w2.register()
 
 
 def test_plan():
@@ -134,7 +133,7 @@ def test_maintenance():
 def test_halt():
     queue = core4.queue.main.CoreQueue()
     queue.halt(now=True)
-    time.sleep(2)
+    time.sleep(1)  # need to wait one second to respect mongo resolution
     worker = core4.queue.worker.CoreWorker()
     t = threading.Thread(target=worker.start, args=())
     t.start()
@@ -190,10 +189,10 @@ def test_remove(mongodb):
     job = worker.get_next_job()
     assert job is None
     worker.remove_jobs()
-    assert 0 == mongodb.core4test.sys.queue.count()
-    assert 1 == mongodb.core4test.sys.journal.count()
+    assert 0 == mongodb.core4test.sys.queue.count_documents({})
+    assert 1 == mongodb.core4test.sys.journal.count_documents({})
     worker.cleanup()
-    assert 0 == mongodb.core4test.sys.lock.count()
+    assert 0 == mongodb.core4test.sys.lock.count_documents({})
 
 
 @pytest.mark.timeout(30)
@@ -201,24 +200,24 @@ def test_removing():
     queue = core4.queue.main.CoreQueue()
     pool = []
     workers = []
-    count = 50
+    count = 10
     for i in range(0, count):
         job = queue.enqueue(core4.queue.job.DummyJob, i=i)
         queue.remove_job(job._id)
-    for i in range(1, 4):
+    for i in range(1, 2):
         worker = core4.queue.worker.CoreWorker(name="worker-{}".format(i))
         workers.append(worker)
         t = threading.Thread(target=worker.start, args=())
         t.start()
         pool.append(t)
-    while queue.config.sys.queue.count() > 0:
-        time.sleep(1)
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(0.25)
     for w in workers:
         w.exit = True
     for t in pool:
         t.join()
-    assert queue.config.sys.queue.count() == 0
-    assert queue.config.sys.journal.count() == count
+    assert queue.config.sys.queue.count_documents({}) == 0
+    assert queue.config.sys.journal.count_documents({}) == count
 
 
 @pytest.mark.timeout(30)
@@ -231,20 +230,16 @@ def test_start_job():
     assert job._id is not None
     assert job.wall_time is None
     worker.start_job(job)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.5)
-    assert queue.config.sys.queue.count() == 0
-    assert queue.config.sys.journal.count() == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
     job = queue.find_job(job._id)
     assert job.state == "complete"
     print(job.started_at)
     print(job.finished_at)
     print(job.finished_at - job.started_at)
     print(job.runtime)
-    import pandas as pd
-    data = list(queue.config.sys.log.find())
-    df = pd.DataFrame(data)
-    print(df.to_string())
 
 
 @pytest.mark.timeout(30)
@@ -261,18 +256,12 @@ def test_start_job2(queue):
         t = threading.Thread(target=worker.start, args=())
         t.start()
         pool.append(t)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     for w in workers:
         w.exit = True
     for t in pool:
         t.join()
-
-    import pandas as pd
-    data = list(queue.config.sys.log.find())
-    df = pd.DataFrame(data)
-    df.to_pickle('/tmp/df.pickle')
-    print(df[df.level.isin(["WARNING", "ERROR", "CRITICAL"])].to_string())
 
 
 @pytest.fixture
@@ -303,7 +292,7 @@ class WorkerHelper:
             t.join()
 
     def wait_queue(self):
-        while self.queue.config.sys.queue.count() > 0:
+        while self.queue.config.sys.queue.count_documents({}) > 0:
             time.sleep(1)
         self.stop()
 
@@ -315,7 +304,7 @@ def worker():
 
 @pytest.mark.timeout(30)
 def test_ok(queue, worker):
-    queue.enqueue(core4.queue.job.DummyJob)
+    queue.enqueue(core4.queue.job.DummyJob, sleep=0)
     worker.start(1)
     worker.wait_queue()
 
@@ -325,20 +314,17 @@ def test_error(queue, worker):
     import project.work
     queue.enqueue(project.work.ErrorJob)
     worker.start(1)
-    while queue.config.sys.queue.count() > 0:
-        time.sleep(1)
-        if queue.config.sys.queue.count({"state": "error"}) > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(0.25)
+        if queue.config.sys.queue.count_documents({"state": "error"}) > 0:
             break
     worker.stop()
-    df = pd.DataFrame(list(queue.config.sys.log.find()))
-    df.to_pickle('/tmp/df.pickle')
-    assert df[df.message.str.find("done execution") >= 0].shape[0] == 3
-    assert df[df.message.str.find("start execution") >= 0].shape[0] == 3
-    x = pd.to_timedelta(
-        df[((df.message.str.find("execution") >= 0) & (df.level == "INFO"))
-        ].created.diff()).apply(lambda r: r.total_seconds()).tolist()
-    assert [x[i] >= 5 for i in [1, 2]] == [True, True]
-
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "done execution" in d["message"]]) == 3
+    assert sum([1 for d in data if "start execution" in d["message"]]) == 3
+    delta = [d["created"] for d in data if "execution" in d["message"] and d["level"] == "INFO"]
+    assert (delta[1] - delta[0]).total_seconds() >= 3
+    assert (delta[2] - delta[1]).total_seconds() >= 3
 
 @pytest.mark.timeout(30)
 def test_success_after_failure(queue, worker):
@@ -346,12 +332,10 @@ def test_success_after_failure(queue, worker):
     queue.enqueue(project.work.ErrorJob, success=True)
     worker.start(1)
     worker.wait_queue()
-    df = pd.DataFrame(list(queue.config.sys.log.find()))
-    assert df[df.message.str.find("start execution") >= 0].shape[0] == 3
-    assert df[df.message.str.find(
-        "done execution with [failed]") >= 0].shape[0] == 2
-    assert df[df.message.str.find(
-        "done execution with [complete]") >= 0].shape[0] == 1
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "done execution" in d["message"]]) == 3
+    assert sum([1 for d in data if "done execution with [failed]" in d["message"]]) == 2
+    assert sum([1 for d in data if "done execution with [complete]" in d["message"]]) == 1
 
 
 @pytest.mark.timeout(90)
@@ -359,27 +343,26 @@ def test_defer(queue, worker):
     import project.work
     queue.enqueue(project.work.DeferJob)
     worker.start(1)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-        if queue.config.sys.queue.count({"state": "inactive"}) > 0:
+        if queue.config.sys.queue.count_documents({"state": "inactive"}) > 0:
             break
     worker.stop()
-    df = pd.DataFrame(list(queue.config.sys.log.find()))
-    assert df[df.message.str.find(
-        "done execution with [deferred]") >= 0].shape[0] > 2
-    assert df[df.message.str.find(
-        "done execution with [inactive]") >= 0].shape[0] == 1
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "done execution with [deferred]" in d["message"]]) > 2
+    assert sum([1 for d in data if "done execution with [inactive]" in d["message"]]) == 1
 
 
 @pytest.mark.timeout(90)
 def test_mass_defer(queue, worker, mongodb):
     import project.work
     for i in range(0, 10):
-        queue.enqueue(project.work.DeferJob, i=i, success=True, defer_max=5)
+        queue.enqueue(project.work.DeferJob, i=i, success=True, defer_time=1,
+                      defer_max=2)
     worker.start(4)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-        if queue.config.sys.queue.count({"state": "inactive"}) == 10:
+        if queue.config.sys.queue.count_documents({"state": "inactive"}) == 10:
             break
     worker.stop()
 
@@ -387,11 +370,11 @@ def test_mass_defer(queue, worker, mongodb):
 @pytest.mark.timeout(30)
 def test_fail2inactive(queue, worker, mongodb):
     import project.work
-    queue.enqueue(project.work.ErrorJob, defer_max=15, attempts=5)
+    queue.enqueue(project.work.ErrorJob, defer_max=5, attempts=10)
     worker.start(1)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-        if queue.config.sys.queue.count({"state": "inactive"}) == 1:
+        if queue.config.sys.queue.count_documents({"state": "inactive"}) == 1:
             break
     worker.stop()
 
@@ -399,16 +382,16 @@ def test_fail2inactive(queue, worker, mongodb):
 @pytest.mark.timeout(30)
 def test_remove_failed(queue, worker, mongodb):
     import project.work
-    job = queue.enqueue(project.work.ErrorJob, attempts=5, sleep=10)
+    job = queue.enqueue(project.work.ErrorJob, attempts=5, sleep=1)
     worker.start(1)
-    while queue.config.sys.queue.count({"state": "running"}) == 0:
+    while queue.config.sys.queue.count_documents({"state": "running"}) == 0:
         time.sleep(0.25)
     assert queue.remove_job(job._id)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.25)
     worker.stop()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
 
 
 @pytest.mark.timeout(30)
@@ -416,28 +399,28 @@ def test_remove_deferred(queue, worker, mongodb):
     import project.work
     job = queue.enqueue(project.work.DeferJob, defer_time=10)
     worker.start(1)
-    while queue.config.sys.queue.count({"state": "deferred"}) == 0:
+    while queue.config.sys.queue.count_documents({"state": "deferred"}) == 0:
         time.sleep(0.25)
     assert queue.remove_job(job._id)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.25)
     worker.stop()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
 
 
 @pytest.mark.timeout(30)
 def test_remove_complete(queue, worker, mongodb):
-    job = queue.enqueue(core4.queue.job.DummyJob, sleep=10)
+    job = queue.enqueue(core4.queue.job.DummyJob, sleep=3)
     worker.start(1)
-    while queue.config.sys.queue.count({"state": "running"}) == 0:
+    while queue.config.sys.queue.count_documents({"state": "running"}) == 0:
         time.sleep(0.25)
     assert queue.remove_job(job._id)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.25)
     worker.stop()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.state == "complete"
 
@@ -445,18 +428,18 @@ def test_remove_complete(queue, worker, mongodb):
 @pytest.mark.timeout(90)
 def test_remove_inactive(queue, worker):
     import project.work
-    job = queue.enqueue(project.work.DeferJob)
+    job = queue.enqueue(project.work.DeferJob, defer_max=1)
     worker.start(1)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-        if queue.config.sys.queue.count({"state": "inactive"}) > 0:
+        if queue.config.sys.queue.count_documents({"state": "inactive"}) > 0:
             break
     assert queue.remove_job(job._id)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     worker.stop()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.state == "inactive"
 
@@ -464,41 +447,40 @@ def test_remove_inactive(queue, worker):
 @pytest.mark.timeout(30)
 def test_remove_error(queue, worker):
     import project.work
-    job = queue.enqueue(project.work.ErrorJob)
+    job = queue.enqueue(project.work.ErrorJob, attempts=1)
     worker.start(1)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-        if queue.config.sys.queue.count({"state": "error"}) > 0:
+        if queue.config.sys.queue.count_documents({"state": "error"}) > 0:
             break
     assert queue.remove_job(job._id)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     worker.stop()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.state == "error"
 
 
 @pytest.mark.timeout(30)
 def test_nonstop(queue, worker):
-    job = queue.enqueue(core4.queue.job.DummyJob, sleep=10, wall_time=5)
+    job = queue.enqueue(core4.queue.job.DummyJob, sleep=3, wall_time=1)
     worker.start(1)
-    while queue.config.sys.queue.count() > 0:
-        time.sleep(1)
-        if queue.config.sys.queue.count({"wall_at": {"$ne": None}}) > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(0.1)
+        if queue.config.sys.queue.count_documents({"wall_at": {"$ne": None}}) > 0:
             break
-    while queue.config.sys.queue.count() > 0:
-        time.sleep(1)
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(0.1)
     worker.stop()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.wall_at is not None
-    df = pd.DataFrame(list(queue.config.sys.log.find()))
-    assert df[df.message.str.find(
-        "successfully set non-stop job [{}]".format(
-            job._id)) >= 0].shape[0] == 1
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data
+                if "successfully set non-stop job" in d["message"]]) == 1
 
 
 class ProgressJob(core4.queue.job.CoreJob):
@@ -524,10 +506,9 @@ def test_progress1(queue, worker):
     queue.enqueue(ProgressJob)
     worker.start(1)
     worker.wait_queue()
-    df = pd.DataFrame(list(queue.config.sys.log.find()))
-    assert df[
-               ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
-           ].shape[0] == 2
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
 
 
 @pytest.mark.timeout(30)
@@ -535,32 +516,30 @@ def test_progress2(queue, worker):
     queue.enqueue(ProgressJob, progress_interval=1)
     worker.start(1)
     worker.wait_queue()
-    df = pd.DataFrame(list(queue.config.sys.log.find()))
-    assert df[
-               ((df.message.str.find("progress") >= 0) & (df.level == "DEBUG"))
-           ].shape[0] >= 5
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) >= 5
 
 
 class NoProgressJob(core4.queue.job.CoreJob):
     author = "mra"
 
     def execute(self, *args, **kwargs):
-        time.sleep(5)
+        time.sleep(3)
 
 
 @pytest.mark.timeout(30)
 def test_zombie(queue, worker):
-    job = queue.enqueue(NoProgressJob, zombie_time=2)
+    job = queue.enqueue(NoProgressJob, zombie_time=1)
     worker.start(1)
     worker.wait_queue()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.zombie_at is not None
-    df = pd.DataFrame(list(queue.config.sys.log.find()))
-    assert df[df.message.str.find(
-        "successfully set zombie job [{}]".format(
-            job._id)) >= 0].shape[0] == 1
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data
+                if "successfully set zombie job" in d["message"]]) == 1
 
 
 class ForeverJob(core4.queue.job.CoreJob):
@@ -604,8 +583,8 @@ def test_kill(queue, worker):
             break
     queue.remove_job(job._id)
     worker.wait_queue()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.state == "killed"
     assert job.killed_at is not None
@@ -631,8 +610,8 @@ def test_restart_deferred(queue, worker):
             break
     queue.restart_job(job._id)
     worker.wait_queue()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.trial == 2
     assert job.state == core4.queue.job.STATE_COMPLETE
@@ -659,8 +638,8 @@ def test_failed_deferred(queue, worker):
             break
     queue.restart_job(job._id)
     worker.wait_queue()
-    assert queue.config.sys.journal.count() == 1
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.find_job(job._id)
     assert job.trial == 2
     assert job.state == core4.queue.job.STATE_COMPLETE
@@ -687,8 +666,8 @@ def test_restart_error(queue, worker):
             break
     new_id = queue.restart_job(job._id)
     worker.wait_queue()
-    assert queue.config.sys.journal.count() == 2
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.journal.count_documents({}) == 2
+    assert queue.config.sys.queue.count_documents({}) == 0
     parent = queue.find_job(job._id)
     assert parent.state == core4.queue.job.STATE_ERROR
     child = queue.find_job(new_id)
@@ -707,6 +686,7 @@ class RequiresArgTest(core4.queue.job.CoreJob):
         pass
 
 
+@pytest.mark.timeout(30)
 def test_requires_arg(queue, worker):
     job = queue.enqueue(RequiresArgTest)
     worker.start(1)
@@ -778,12 +758,13 @@ class OutputTestJob(core4.queue.job.CoreJob):
         os.system("echo this comes from stderr > /dev/stderr")
         libc.puts(b"this comes from C")
 
+
 @pytest.mark.timeout(30)
 def test_stdout(queue, worker, mongodb):
     job = queue.enqueue(OutputTestJob)
     worker.start(3)
     worker.wait_queue()
-    assert mongodb.core4test.sys.stdout.count() == 1
+    assert mongodb.core4test.sys.stdout.count_documents({}) == 1
     doc = mongodb.core4test.sys.stdout.find_one()
     assert doc["_id"] == job._id
     assert ("this output comes from tests.test_worker.OutputTestJob"
@@ -804,7 +785,7 @@ def test_binary_out(queue, worker, mongodb):
     job = queue.enqueue(BinaryOutputTestJob)
     worker.start(3)
     worker.wait_queue()
-    assert mongodb.core4test.sys.stdout.count() == 1
+    assert mongodb.core4test.sys.stdout.count_documents({}) == 1
     doc = mongodb.core4test.sys.stdout.find_one()
     assert doc["_id"] == job._id
     assert doc["stdout"] == b"evil payload \xDE\xAD\xBE\xEF."
@@ -814,40 +795,16 @@ def test_binary_out(queue, worker, mongodb):
 def test_project_maintenance(queue, worker):
     job = queue.enqueue(core4.queue.job.DummyJob)
     worker.start(1)
-    while queue.config.sys.queue.count() > 0:
+    while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     curr = worker.worker[0].cycle["total"]
     queue.enter_maintenance("core4")
-    assert queue.config.sys.queue.count() == 0
+    assert queue.config.sys.queue.count_documents({}) == 0
     job = queue.enqueue(core4.queue.job.DummyJob)
-    assert queue.config.sys.queue.count() == 1
+    assert queue.config.sys.queue.count_documents({}) == 1
     while worker.worker[0].cycle["total"] < curr + 10:
         time.sleep(1)
-    assert queue.config.sys.queue.count() == 1
+    assert queue.config.sys.queue.count_documents({}) == 1
     queue.leave_maintenance("core4")
     worker.wait_queue()
-    assert queue.config.sys.queue.count() == 0
-
-
-# last_error
-# job turns inactive
-# query_at mit defer
-# remove jobs
-# remove inactive
-# job turns nonstop (wall_time)
-# job turns into zombie
-# custom progress_interval, by DEFAULT, by job
-# auto kill if PID was gone
-# killed
-# remove killed
-# restarting
-# last_runtime in cookie
-# check all exceptions have logging and log exceptions
-# capture stdout and stderr
-# project maintenance
-
-# todo: job collection, access management
-# todo: dependency and chain
-# todo: max_parallel
-# todo: memory logger
-# todo: stats
+    assert queue.config.sys.queue.count_documents({}) == 0

@@ -80,8 +80,7 @@ def test_collection_scheme():
 
     a = LogOn()
     a.logger.info("hello world")
-
-    assert coll1.count() == 1
+    assert coll1.count_documents({}) == 1
     with pytest.raises(core4.error.Core4ConfigurationError):
         core4.base.collection.CoreCollection(
             scheme="mongoxxx",
