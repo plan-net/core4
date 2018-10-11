@@ -527,10 +527,3 @@ class CoreWorker(core4.queue.daemon.CoreDaemon):
         )
         if ret.raw_result["n"] != 1:
             raise RuntimeError("failed to update heartbeat")
-
-
-if __name__ == '__main__':
-    from core4.logger.mixin import logon
-
-    logon()
-    CoreWorker().start()
