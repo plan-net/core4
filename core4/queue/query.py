@@ -131,7 +131,7 @@ class QueryMixin:
         data = []
         for doc in cur:
             doc["flags"] = "".join(
-                [doc[k].upper()
+                [k[0].upper() if doc[k] else "."
                  for k in ["zombie", "wall", "removed", "killed"]])
             data.append(doc)
         return data

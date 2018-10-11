@@ -68,13 +68,26 @@ def alive():
         ))
 
 def info():
-    # todo: requires fixing
-    df = QUEUE.get_queue_state()
-    if df.empty:
-        print("no jobs")
+    header = False
+    rec = []
+    mx = 0
+    for doc in QUEUE.get_queue_state():
+        rec.append(doc)
+        mx = max(mx, len(doc["name"]))
+    if rec:
+        print("{:>6s} {:8s} {:4s} {:s}".format(
+            "n", "state", "flag", "name"
+        ))
+        print(" ".join(["-" * i for i in [6, 8, 4, mx]]))
     else:
-        print(df.to_string())
-
+        print("no jobs.")
+    for doc in rec:
+        print(
+            "{:6d}".format(doc["n"]),
+            "{:8.8s}".format(doc["state"]),
+            "{:4.4s}".format(doc["flags"]),
+            "{:s}".format(doc["name"])
+        )
 
 def listing(*state):
     filter = []
@@ -99,13 +112,23 @@ def listing(*state):
         kwargs["state"] = {
             "$in": filter
         }
-    print(
-        "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} "
-        "{:19s} {:11s} {:11s}".format(
-            "_id", "state", "flag", "pro", "prio", "attempt", "user",
-            "enqueued", "age", "runtime"))
-    print(" ".join(["-" * i for i in [24, 8, 4, 4, 4, 7, 6, 19, 11, 11]]))
+    header = False
+    rec = []
+    mx = 0
     for job in QUEUE.get_job_listing(**kwargs):
+        mx = max(mx, len(job["name"]))
+        rec.append(job)
+    if rec:
+        print(
+            "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} "
+            "{:19s} {:11s} {:11s} {:s}".format(
+                "_id", "state", "flag", "pro", "prio", "attempt", "user",
+                "enqueued", "age", "runtime", "name"))
+        print(" ".join(["-" * i
+                        for i in [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mx]]))
+    else:
+        print("no jobs.")
+    for job in rec:
         locked = job["locked"]
         if locked:
             progress = job["locked"]["progress_value"] or 0
@@ -132,7 +155,6 @@ def listing(*state):
                     job["started_at"] or core4.util.mongo_now()))),
             job["name"]
         )
-
 
 def _handle(_id, call):
     _id = list(_id)
@@ -186,7 +208,7 @@ def detail(*_id):
             pprint(job.serialise())
             stdout = QUEUE.get_job_stdout(job._id)
             print("-"*80)
-            print("STDOUT:\n" + stdout)
+            print("STDOUT:\n" + str(stdout))
             break
 
 
