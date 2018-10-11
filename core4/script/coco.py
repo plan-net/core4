@@ -60,15 +60,22 @@ def worker(name):
 
 
 def alive():
+    rec = []
+    mx = 0
+    cols = ["loop", "loop_time", "heartbeat", "_id"]
     for doc in QUEUE.get_worker():
-        print("{loop_time:19s} {hearbeat:19s} {loop:19s} {_id:s}".format(
-            loop_time=str(doc["loop_time"]),
-            loop=str(doc["loop"]),
-            heartbeat=str(doc["heartbeat"])
-        ))
+        mx = max(0, len(doc["_id"]))
+        rec.append([str(doc[k]) for k in cols])
+    if rec:
+        print("{:19s} {:19s} {:19s} {:s}".format(*cols))
+        print(" ".join(["-" * i for i in [19, 19, 19, mx]]))
+    else:
+        print("no worker.")
+    for doc in rec:
+        print("{:19s} {:19s} {:19s} {:s}".format(*doc))
+
 
 def info():
-    header = False
     rec = []
     mx = 0
     for doc in QUEUE.get_queue_state():
@@ -88,6 +95,7 @@ def info():
             "{:4.4s}".format(doc["flags"]),
             "{:s}".format(doc["name"])
         )
+
 
 def listing(*state):
     filter = []
@@ -156,6 +164,7 @@ def listing(*state):
             job["name"]
         )
 
+
 def _handle(_id, call):
     _id = list(_id)
     while _id:
@@ -207,7 +216,7 @@ def detail(*_id):
             job = QUEUE.find_job(oid)
             pprint(job.serialise())
             stdout = QUEUE.get_job_stdout(job._id)
-            print("-"*80)
+            print("-" * 80)
             print("STDOUT:\n" + str(stdout))
             break
 
