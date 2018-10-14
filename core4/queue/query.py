@@ -59,11 +59,12 @@ class QueryMixin:
             if doc["heartbeat"]:
                 doc["heartbeat"] = (core4.util.mongo_now() -
                                     doc["heartbeat"].replace(microsecond=0))
-            if doc["loop"]:
+            if doc.get("loop", None):
                 doc["loop_time"] = (core4.util.mongo_now() -
                                     doc["loop"].replace(microsecond=0))
             else:
-                doc["Loop_time"] = None
+                doc["loop_time"] = None
+                doc["loop"] = None
             data.append(doc)
         return data
 
@@ -192,3 +193,4 @@ class QueryMixin:
         if doc:
             return doc["stdout"]
         return None
+
