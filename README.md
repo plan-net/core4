@@ -14,7 +14,13 @@ core4 depends on the following prerequisites.
   https://github.com/pypa/pipenv
 
 
-Setup development environment
+installation
+------------
+
+.. todo:: document how to install and how to create core4 projects    
+
+
+setup development environment
 -----------------------------
 
 Install Pipenv following https://pipenv.readthedocs.io/en/latest/install/::
@@ -33,8 +39,9 @@ Setup your Python virtual environment with::
 
     $ cd core4
     $ pipenv install --python=3.5 -v -e .[tests]
+    $ pipenv shell
 
-Your're good to go now and extned core4 apackage.
+Your're good to go now and extned core4 package.
 
 
 regression tests
@@ -48,25 +55,7 @@ The execution of regression tests require a MongoDB user ``core`` with password
 Change into core4 directory and execute regression tests with::
 
     $ cd core4
-    $ python setup.py test
-
-If all core4 Python dependencies are installed you can execute regression tests
-also with::
-
-    $ pytest
-    
-
-installation
-------------
-
-Install core4 and Python dependencies using pip::
-
-    $ pip install .
-    
-
-or directly execute  ``setup.py`` with::
-
-    $ python setup.py install
+    $ pipenv shell
 
 
 documentation
