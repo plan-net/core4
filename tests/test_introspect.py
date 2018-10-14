@@ -64,12 +64,11 @@ def test_load():
     #pprint(jobs)
 
 def test_discover():
-    setup = CoreSetup()
-    jobs = setup.collect_jobs()
-    for pro in ("tests", "project", "core4"):
-        assert pro in jobs.keys()
-        assert "version" in jobs[pro].keys()
-        assert "name" in jobs[pro].keys()
-        assert "title" in jobs[pro].keys()
-        assert "built" in jobs[pro].keys()
-    assert "core4.queue.job.DummyJob" in jobs["core4"]["job"]
+    intro = CoreIntrospector()
+    project = dict([(p["name"], p) for p in intro.iter_project()])
+    for name in ("tests", "project", "core4"):
+        assert name in project.keys()
+        assert "version" in project[name].keys()
+        assert "name" in project[name].keys()
+        assert "title" in project[name].keys()
+        assert "built" in project[name].keys()

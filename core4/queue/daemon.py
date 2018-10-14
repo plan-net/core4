@@ -1,19 +1,33 @@
-"""
-"""
+import datetime
+from croniter import croniter
 
+import core4.queue.main
+import core4.util
+from core4.base.main import CoreBase
+import time
 from datetime import timedelta
 
-import core4.base
-import core4.error
-import core4.queue.job
-import core4.queue.main
-import core4.service.setup
-import core4.util
 
+class CoreDaemon(CoreBase):
+    """
+    The daemon class is the base class for :class:`.CoreWorker` and
+    :class:`.CoreScheduler`. It delivers the main methods around starting,
+    looping and stopping a daemon.
 
-class CoreDaemon(core4.base.CoreBase):
+    Each daemon operates in three distinct phases. Each phase features one or
+    more processing steps.
 
-    def __init__(self, steps, name=None):
+    #. **startup** - registers the daemon and available projects, do some
+       housekeeping/ cleanup, and several prerequisites, e.g. required
+       folders and MongoDB collections are verified
+    #. **loop** - the main loop
+    #. **shutdown** - again some housekeeping and unregistering the daemon
+    #. **exit** - quit daemon
+
+    .. warning:: The daemon ``.identifier`` must be unique.
+    """
+
+    def __init__(self, name=None):
         super().__init__()
         self.identifier = name or core4.util.get_hostname()
         self.hostname = core4.util.get_hostname()
@@ -23,13 +37,12 @@ class CoreDaemon(core4.base.CoreBase):
             "shutdown": None,
             "exit": None
         }
-        self.plan = None
         self.exit = False
         self.at = None
-        self.steps = steps
-        self.cycle = dict([(s, 0) for s in steps])
-        self.cycle["total"] = 0
+        self.cycle = {"total": 0}
         self.queue = core4.queue.main.CoreQueue()
+        self.jobs = {}
+        self.wait_time = None
 
     def start(self):
         """
@@ -56,14 +69,20 @@ class CoreDaemon(core4.base.CoreBase):
         self.enter_phase("startup")
         self.create_env()
         self.cleanup()
-        self.plan = self.create_plan()
+        self.collect_project()
+
+    def cleanup(self):
+        """
+        General housekeeping method.
+        """
+        pass
 
     def register(self):
         """
         Registers the daemon identified by it's ``.identifier`` in collection
         ``sys.worker``.
 
-        .. warning:: please note that the ``.identifier`` of the worker must
+        .. warning:: please note that the ``.identifier`` of the daemon must
                      not exist.
         """
         self.config.sys.worker.update_one(
@@ -77,11 +96,11 @@ class CoreDaemon(core4.base.CoreBase):
             },
             upsert=True
         )
-        self.logger.info("registered worker")
+        self.logger.info("registered daemon")
 
     def shutdown(self):
         """
-        Shutdown the worker by spawning the final housekeeping
+        Shutdown the daemon by spawning the final housekeeping
         method :meth:`cleanup`.
         """
         self.enter_phase("shutdown")
@@ -98,55 +117,27 @@ class CoreDaemon(core4.base.CoreBase):
         setup.make_folder()
         setup.make_role()  # todo: implement!
         setup.make_stdout()
+
+    def collect_project(self):
+        """
+        Inquires existing core4 projects on the node using
+        :class:`.CoreIntrospector`. This method stores the identified projects
+        alongside some meta information in ``sys.worker``.
+
+        :return:
+        """
+        intro = core4.service.setup.CoreIntrospector()
+        project = dict([(p["name"], p) for p in intro.iter_project()])
         self.config.sys.worker.update_one(
             {"_id": self.identifier},
             update={
                 "$set": {
-                    "project": setup.collect_jobs()
+                    "project": project
                 }
             }
         )
-        self.logger.info("registered worker")
+        self.logger.info("registered projects")
 
-    def cleanup(self):
-        """
-        General housekeeping method of the worker.
-        :return:
-        """
-        pass
-
-    def create_plan(self):
-        """
-        Creates the worker's execution plan in the main processing loop:
-
-        # :meth:`.work_jobs` - get next job, inactivate or execute
-        # :meth:`.remove_jobs` - remove jobs
-        # :meth:`.flag_jobs` - flag jobs as non-stoppers, zombies, killed
-        # :meth:`.collect_stats` - collect and save general sever metrics
-
-        :return: dict with step ``name``, ``interval``, ``next`` timestamp
-                 to execute and method reference ``call``
-        """
-        plan = []
-        now = core4.util.now()
-        self.wait_time = None
-        for s in self.steps:
-            interval = self.config.worker.execution_plan[s]
-            if self.wait_time is None:
-                self.wait_time = interval
-            else:
-                self.wait_time = min(interval, self.wait_time)
-            self.logger.debug("set [%s] interval [%1.2f] sec.", s, interval)
-            plan.append({
-                "name": s,
-                "interval": interval,
-                "next": now + timedelta(seconds=interval),
-                "call": getattr(self, s)
-            })
-        self.logger.debug(
-            "create execution plan with cycle time [%1.2f] sec.",
-            self.wait_time)
-        return plan
 
     def enter_phase(self, phase):
         """
@@ -170,13 +161,40 @@ class CoreDaemon(core4.base.CoreBase):
             raise core4.error.Core4SetupError(
                 "failed to enter phase [{}]".format(phase))
 
+
     def loop(self):
         """
-        This is the main processing phase of the worker entered by
+        This is the main processing phase of the daemon entered by
         :meth:`.start`. This method skips processing if core4 system is in the
         general *maintenance* state indicated in collection ``sys.worker``.
 
         The loop is left if core4 system is in the general *__halt__* state as
         indicated in collection ``sys.worker``, too.
+        """
+        self.offset = None
+        time.sleep(self.wait_time)  # start with cycle 1
+        self.enter_phase("loop")
+        in_maintenance = False
+        while not self.exit:
+            self.cycle["total"] += 1
+            self.logger.debug("cycle [%d]", self.cycle["total"])
+            if self.queue.halt(at=self.phase["startup"]):
+                return
+            if self.queue.maintenance():
+                if not in_maintenance:
+                    in_maintenance = True
+                    self.logger.info("entering maintenance")
+            else:
+                if in_maintenance:
+                    in_maintenance = False
+                    self.logger.info("leaving maintenance")
+                self.at = core4.util.now()
+                self.run_step()
+            time.sleep(self.wait_time)
+
+    def run_step(self):
+        """
+        This method implements the steps of the daemon. It has to be
+        implemented in the class derived from :class:`.CoreDaemon`.
         """
         raise NotImplementedError

@@ -33,9 +33,10 @@ import pymongo
 import time
 from datetime import timedelta
 
-import core4.base
+from core4.queue.daemon import CoreDaemon
+import core4.queue.query
 import core4.error
-import core4.queue.daemon
+import core4.base
 import core4.queue.job
 import core4.queue.main
 import core4.service.setup
@@ -49,77 +50,74 @@ STEPS = (
     "collect_stats")
 
 
-class CoreWorker(core4.queue.daemon.CoreDaemon):
+class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
     """
     This class is the working horse to carry and execute jobs. Workers have an
     identifier. This identifier defaults to the hostname of the worker and must
     be unique across the cluster.
-
-    The :class:`.CoreWorker` is based on :class:`.CoreDaemon`.
-
-    Each worker operates in three distinct phases. Each phase features one or
-    more processing steps.
-
-    #. **startup** - registers the worker abd available projects, do some
-       housekeeping/ cleanup, and several prerequisites, e.g. required
-       folders and MongoDB collections are verified
-    #. **loop** - work and manage jobs, collect server statistics
-    #. **shutdown** - again some housekeeping and unregistering the worker
-       and projects
-    #. **exit** - quit worker
-
-    .. warning:: The worker ``.identifier`` must be unique.
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(STEPS, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.offset = None
+        self.steps = STEPS
+        self.plan = self.create_plan()
+        self.cycle.update(dict([(s, 0) for s in self.steps]))
 
     def cleanup(self):
         """
         General housekeeping method of the worker.
-        :return:
         """
         ret = self.config.sys.lock.delete_many({"worker": self.identifier})
         self.logger.info(
             "cleanup removed [%d] sys.lock records", ret.raw_result["n"])
 
-    def loop(self):
+    def create_plan(self):
         """
-        This is the main processing phase of the worker entered by
-        :meth:`.start`. This method skips processing if core4 system is in the
-        general *maintenance* state indicated in collection ``sys.worker``.
+        Creates the worker's execution plan in the main processing loop:
 
-        The loop is left if core4 system is in the general *__halt__* state as
-        indicated in collection ``sys.worker``, too.
+        # :meth:`.work_jobs` - get next job, inactivate or execute
+        # :meth:`.remove_jobs` - remove jobs
+        # :meth:`.flag_jobs` - flag jobs as non-stoppers, zombies, killed
+        # :meth:`.collect_stats` - collect and save general sever metrics
+
+        :return: dict with step ``name``, ``interval``, ``next`` timestamp
+                 to execute and method reference ``call``
         """
-        time.sleep(self.wait_time)  # start with cycle 1
-        self.enter_phase("loop")
-        in_maintenance = False
-        while not self.exit:
-            self.cycle["total"] += 1
-            # self.logger.debug("cycle [%d]", self.cycle["total"])
-            if self.queue.halt(at=self.phase["startup"]):
-                return
-            if self.queue.maintenance():
-                if not in_maintenance:
-                    in_maintenance = True
-                    self.logger.info("entering maintenance")
+        plan = []
+        now = core4.util.now()
+        for s in self.steps:
+            interval = self.config.worker.execution_plan[s]
+            if self.wait_time is None:
+                self.wait_time = interval
             else:
-                if in_maintenance:
-                    in_maintenance = False
-                    self.logger.info("leaving maintenance")
-                self.at = core4.util.now()
-                for step in self.plan:
-                    interval = timedelta(seconds=step["interval"])
-                    if step["next"] <= self.at:
-                        self.logger.debug("enter [%s] at cycle [%s]",
-                                          step["name"], self.cycle["total"])
-                        step["call"]()
-                        self.logger.debug("exit [%s] at cycle [%s]",
-                                          step["name"], self.cycle["total"])
-                        step["next"] = self.at + interval
-            time.sleep(self.wait_time)
+                self.wait_time = min(interval, self.wait_time)
+            self.logger.debug("set [%s] interval [%1.2f] sec.", s, interval)
+            plan.append({
+                "name": s,
+                "interval": interval,
+                "next": now + timedelta(seconds=interval),
+                "call": getattr(self, s)
+            })
+        self.logger.debug(
+            "create execution plan with cycle time [%1.2f] sec.",
+            self.wait_time)
+        return plan
+
+    def run_step(self):
+        """
+        This method implements the steps of the worker.
+        See :meth:`.create_plan` for further details.
+        """
+        for step in self.plan:
+            interval = timedelta(seconds=step["interval"])
+            if step["next"] <= self.at:
+                self.logger.debug("enter [%s] at cycle [%s]",
+                                  step["name"], self.cycle["total"])
+                step["call"]()
+                self.logger.debug("exit [%s] at cycle [%s]",
+                                  step["name"], self.cycle["total"])
+                step["next"] = self.at + interval
 
     def work_jobs(self):
         """

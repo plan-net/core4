@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-
+import time
 import core4.error
 import core4.queue.job
 import core4.queue.main
 from tests.pytest_util import *
+from tests.test_worker import worker
 
 
 def test_job_found():
@@ -108,3 +109,17 @@ def test_project_maintenance():
     assert not q.maintenance('project')
     q.leave_maintenance('project1')
     assert not q.maintenance('project1')
+
+
+class ScheduleJob(core4.queue.job.CoreJob):
+    author = "mra"
+    schedule = "1 2 3 4 5"
+
+
+def test_job_listing(worker):
+    q = core4.queue.main.CoreQueue()
+    worker.start(3)
+    while sum([1 for w in q.get_worker() if w["loop_time"] is not None]) < 3:
+        time.sleep(0.5)
+    assert ('tests.test_queue.ScheduleJob', '1 2 3 4 5') in q.list_schedule()
+    worker.stop()

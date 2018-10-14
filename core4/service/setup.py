@@ -6,7 +6,6 @@ from core4.base import CoreBase
 from core4.service.introspect import CoreIntrospector
 from core4.util import Singleton
 
-
 def once(f):
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
@@ -80,11 +79,4 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 self.config.sys.stdout.drop_index(index_or_name="ttl")
                 self.logger.warning("removed index [ttl] from [sys.stdout]")
 
-    @once
-    def collect_jobs(self):
-        intro = CoreIntrospector()
-        lookup = dict([(p["name"], p) for p in intro.iter_project()])
-        for info in intro.iter_job():
-            project = info["name"].split(".")[0]
-            lookup[project].setdefault("job", {})[info["name"]] = info
-        return lookup
+

@@ -14,6 +14,7 @@ sys:
   queue: !connect mongodb://sys.queue
   journal: !connect mongodb://sys.journal
   worker: !connect mongodb://sys.worker
+  job: !connect mongodb://sys.job
   lock: !connect mongodb://sys.lock
   stdout: !connect mongodb://sys.stdout
   userdb: user!
@@ -68,3 +69,5 @@ worker:
   stdout_ttl: 604800
   alive_timeout: 60
 
+scheduler:
+  interval: 1

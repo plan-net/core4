@@ -63,7 +63,8 @@ setup(
         "Flask-Login>=0.4",
         "PyYaml>=3.12",
         "psutil>=5.4",
-        "docopt>=0.6"
+        "docopt>=0.6",
+        "croniter"
     ],
     extras_require={
         "tests": [

@@ -1,5 +1,5 @@
 import os
-
+from croniter import croniter
 import bson.objectid
 
 
@@ -51,8 +51,8 @@ def is_int(key, val, msg=None):
 def is_cron(key, val):
     if val is None:
         return
-    is_str(key, val, "[{}] expected cron syntax or None".format(key))
-    # todo: check crontab format (later)
+    assert croniter.is_valid(val), "[{}] expected cron syntax or None".format(
+        key)
 
 
 def is_str_list_null(key, val):

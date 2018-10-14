@@ -1,8 +1,8 @@
+import logging
 import os
 
 import pymongo
 import pytest
-import logging
 
 import core4.base
 import core4.logger.mixin

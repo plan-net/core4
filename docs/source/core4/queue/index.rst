@@ -17,4 +17,3 @@ logging (see also :doc:`logging mechanics<../logger/index>`).
    process
    main
    query
-   daemon
