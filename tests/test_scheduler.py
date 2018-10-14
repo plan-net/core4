@@ -155,12 +155,12 @@ def test_min_timer(queue, mongodb):
     assert len(enqueued['tests.test_scheduler.ValidSchedule4']) == 359
 
 
-class TestGapJob1(core4.queue.job.CoreJob):
+class GapJob1(core4.queue.job.CoreJob):
     author = "mra"
     schedule = "20,30,40 * * * *"
 
 
-class TestGapJob2(core4.queue.job.CoreJob):
+class GapJob2(core4.queue.job.CoreJob):
     author = "mra"
     schedule = "20 23 * * *"
 
@@ -175,8 +175,8 @@ def test_gap(mongodb):
         "ValidSchedule2": 0,
         "ValidSchedule3": 0,
         "ValidSchedule4": 0,
-        "TestGapJob1": 0,
-        "TestGapJob2": 0
+        "GapJob1": 0,
+        "GapJob2": 0
     }
     for e, c in expected.items():
         assert mongodb.core4test.sys.queue.count_documents(
@@ -188,8 +188,8 @@ def test_gap(mongodb):
         "ValidSchedule2": 1,
         "ValidSchedule3": 0,
         "ValidSchedule4": 1,
-        "TestGapJob1": 0,
-        "TestGapJob2": 0
+        "GapJob1": 0,
+        "GapJob2": 0
     }
     for e, c in expected.items():
         assert mongodb.core4test.sys.queue.count_documents(
@@ -201,8 +201,8 @@ def test_gap(mongodb):
         "ValidSchedule2": 1,
         "ValidSchedule3": 1,
         "ValidSchedule4": 1,
-        "TestGapJob1": 1,
-        "TestGapJob2": 0
+        "GapJob1": 1,
+        "GapJob2": 0
     }
     for e, c in expected.items():
         assert mongodb.core4test.sys.queue.count_documents(
@@ -214,8 +214,8 @@ def test_gap(mongodb):
         "ValidSchedule2": 1,
         "ValidSchedule3": 1,
         "ValidSchedule4": 1,
-        "TestGapJob1": 1,
-        "TestGapJob2": 1
+        "GapJob1": 1,
+        "GapJob2": 1
     }
     for e, c in expected.items():
         assert mongodb.core4test.sys.queue.count_documents(
