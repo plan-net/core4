@@ -1,13 +1,6 @@
 core4
 ===== 
 
-download
---------
-
-Download core4 by cloning the Git repository from its current location, i.e.::
-
-    $ git clone ssh://git.bi.plan-net.com/srv/git/core4.git
-
 
 prerequisites 
 -------------
@@ -17,19 +10,32 @@ core4 depends on the following prerequisites.
 * Python 3.5
 * MongoDB database instance version 3.6.4 or higher up-and-running, 
   download from https://www.mongodb.com/download-center#community
-* Python virtual environment. Install with ``pip install virtualenvwrapper``. 
-  You need to update your shell environment, see for example
-  http://virtualenvwrapper.readthedocs.io/en/latest/install.html on how to
-  setup virtualenvwrapper.
+* Pipenv - Python development workflows for humans. See 
+  https://github.com/pypa/pipenv
 
 
-create Python virtual environment
----------------------------------
+Setup development environment
+-----------------------------
 
-Create a Python virtual environment with::
+Install Pipenv following https://pipenv.readthedocs.io/en/latest/install/::
 
-    $ mkvirtualenv core4 --python=python3.5
+    $ pip install --user pipenv
     
+Pipenv is still under heavy development. Upgrade the package often with::
+
+    $ pip install --user --upgrade pipenv
+    
+Download core4 by cloning the Git repository from its current location, i.e.::
+
+    $ git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+
+Setup your Python virtual environment with::
+
+    $ cd core4
+    $ pipenv install --python=3.5 -v -e .[tests]
+
+Your're good to go now and extned core4 apackage.
+
 
 regression tests
 ----------------
