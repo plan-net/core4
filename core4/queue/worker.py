@@ -319,7 +319,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         except:
             self.fail_hard(job)
         else:
-            if self.avg_stats()[0] < self.config.worker.max_cpu and self.avg_stats()[1] < self.config.worker.max_mem:
+            cur_stats = self.avg_stats()
+            if cur_stats[0] < self.config.worker.max_cpu and cur_stats[1] < self.config.worker.max_mem:
                 job.logger.info("start execution with [%s]", executable)
                 try:
                     proc = subprocess.Popen(
