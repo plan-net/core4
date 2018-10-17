@@ -268,7 +268,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
     def start_job(self, job):
         """
-        Spawns the passed job by launching a seperate Python interpreter and
+        Spawns the passed job if there are enough free resources by launching a seperate Python interpreter and
         communicating the job ``_id``.
 
         This method updates the job ``state``, ``started_at`` timestamp,
