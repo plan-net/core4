@@ -195,7 +195,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                  ``False``
         """
         if project is None:
-            return self.config.sys.worker.find({"_id": "__maintenance__"}).count() > 0
+            return self.config.sys.worker.count_documents({"_id": "__maintenance__"}) > 0
         if isinstance(project, bool):
             if project:
                 doc = self.config.sys.worker.find_one(
@@ -207,10 +207,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 return []
             else:
                 raise RuntimeError("project must be True or str")
-        return self.config.sys.worker.find({
+        return self.config.sys.worker.count_documents({
             "_id": "__project__",
             "maintenance": project
-        }).count() > 0
+        }) > 0
 
 
     def halt(self, at=None, now=None):
@@ -232,8 +232,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 upsert=True)
             return ret.raw_result["n"] == 1
         elif at is not None:
-            return self.config.sys.worker.find(
-                {"_id": "__halt__", "timestamp": {"$gte": at}}).count() > 0
+            return self.config.sys.worker.count_documents(
+                {"_id": "__halt__", "timestamp": {"$gte": at}}) > 0
         else:
             raise core4.error.Core4UsageError(".halt requires now or past")
 
