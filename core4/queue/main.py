@@ -207,10 +207,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 return []
             else:
                 raise RuntimeError("project must be True or str")
-        return self.config.sys.worker.count_documents({
+        return self.config.sys.worker.find({
             "_id": "__project__",
             "maintenance": project
-        }) > 0
+        }).count() > 0
 
 
     def halt(self, at=None, now=None):
