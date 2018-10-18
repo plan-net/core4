@@ -9,7 +9,7 @@
    </p>
    <p style="font-size: 1.5em;">
      Develop, Operate and Collaborate on Data and Analytics<br/>
-     *<br/>
+     <br/>
      Automated - Flexible - Secure - Scalable
    </p>
    </div>

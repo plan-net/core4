@@ -2,11 +2,13 @@
 Introduction
 ############
 
-core4 is a data automation, insight extraction and knowledge distribution
-platform. It is built in `Python` and positions itself in the analytics,
-data science and artificial intelligence ecosystem. This Python ecosystem
-is fueled by computational libraries like `Numpy`_, `Pandas`_, `Scikit-Learn`_
-and a wealth of libraries for visualization, and interactive notebooks.
+As of today, data scientists and modern data engineers use a variety of
+`Python`_- and `R-Project`_-modules both open- and closed-source to create
+relevant insights based on data from many different sources. This ecosystem is
+fueled by computational libraries like `Numpy`_, `Pandas`_, `Scikit-Learn`_ and
+a wealth of libraries for visualization, and interactive notebooks like
+`Bokeh`_ and `Jupyter`_ (make a side step on `The Incredible Growth of Python`_
+and `Why Python is Growing So Quickly`_ if you like).
 
 However these packages do *not* support the data engineer or data scientist in
 workflow automation, insight distribution, collaboration, and packaging.
@@ -15,11 +17,15 @@ analysis aspect to answer single, specific business questions. If there is a
 need for broader business applications, it is usually left to other teams like
 backend developers, frontend developers and system administrators.
 
-core4 fills this gap as a development and operations framework. It supports
-and enables data engineers and data scientists to automate and deploy their
-data integration, analysis and insights. This allows for rapid progress from
-development to production. Because of that it will arrive at the end user more
-quickly, in turn making more room of supporting needs.
+core4 fills this gap and enables the community to easily integrate their
+processing chain of creating such insights into a fault-tolerant distributed
+system and thereby automating the whole process without having to think about
+underlying software or hardware.
+
+The core4 framework takes care of everything that is essential to using and operating
+such a distributed system, from central logging and configuration to
+deployment, all this while scaling to the 100ths of servers.
+
 
 Continue reading with
 
@@ -44,3 +50,6 @@ Further information on python in data and analytics:
 .. _NumPy: http://www.numpy.org/
 .. _Pandas: https://pandas.pydata.org/
 .. _Scikit-Learn: http://scikit-learn.org/
+.. _R-Project: https://www.r-project.org/
+.. _Bokeh: https://bokeh.pydata.org/en/latest/
+.. _Jupyter: https://jupyter.org/
