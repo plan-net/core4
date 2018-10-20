@@ -4,6 +4,7 @@ import traceback
 import datetime
 import time
 from bson.objectid import ObjectId
+import pymongo
 
 from core4.util import Singleton
 
@@ -58,7 +59,8 @@ class MongoLoggingHandler(logging.Handler, metaclass=Singleton):
         :param connection: :class:`pymongo.collection.Collection` object
         """
         super(MongoLoggingHandler, self).__init__()
-        self._collection = connection
+        self._collection = connection.with_options(
+            write_concern=pymongo.WriteConcern(w=0))
 
     def handle(self, record):
         """
