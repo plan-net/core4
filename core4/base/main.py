@@ -214,7 +214,7 @@ class CoreBase:
             fmt = " - {}".format(args.pop(0))
         else:
             fmt = ""
-        self.logger.info('progress at %.0f%%' + fmt, p, *args)
+        self.logger.debug('progress at %.0f%%' + fmt, p, *args)
 
     def progress(self, p, *args, inc=0.05):
         """
