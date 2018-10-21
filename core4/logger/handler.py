@@ -36,8 +36,9 @@ def make_record(record):
         "message": record.getMessage(),
         "level": record.levelname
     }
-    for k in ["username", "hostname", "identifier", "qual_name"]:
+    for k in ["username", "hostname", "identifier"]:
         doc[k] = getattr(record, k, None)
+    doc["qual_name"] = getattr(record, "qual_name", "path:" + record.pathname)
     doc["_id"] = getattr(record, "_id", ObjectId())
     if record.exc_info or record.exc_text:
         doc["exception"] = {
@@ -59,8 +60,7 @@ class MongoLoggingHandler(logging.Handler, metaclass=Singleton):
         :param connection: :class:`pymongo.collection.Collection` object
         """
         super(MongoLoggingHandler, self).__init__()
-        self._collection = connection.with_options(
-            write_concern=pymongo.WriteConcern(w=0))
+        self._collection = connection
 
     def handle(self, record):
         """
