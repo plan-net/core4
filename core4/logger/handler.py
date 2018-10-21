@@ -1,6 +1,6 @@
 import logging.config
 import traceback
-
+import os
 import datetime
 import time
 from bson.objectid import ObjectId
@@ -36,9 +36,10 @@ def make_record(record):
         "message": record.getMessage(),
         "level": record.levelname
     }
-    for k in ["username", "hostname", "identifier"]:
+    for k in ["username", "hostname", "identifier", "qual_name"]:
         doc[k] = getattr(record, k, None)
-    doc["qual_name"] = getattr(record, "qual_name", "path:" + record.pathname)
+    if doc["qual_name"] is None:
+        doc["qual_name"] = "basename:" + os.path.basename(record.pathname)
     doc["_id"] = getattr(record, "_id", ObjectId())
     if record.exc_info or record.exc_text:
         doc["exception"] = {

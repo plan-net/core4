@@ -1,4 +1,5 @@
 import logging
+import os
 
 import core4.util
 
@@ -17,7 +18,13 @@ class CoreLoggingFilter(logging.Filter):
     def filter(self, record):
         record.username = core4.util.get_username()
         record.hostname = core4.util.get_hostname()
-        record.identifier = getattr(
-            record, "identifier", record.obj.identifier)
-        record.qual_name = record.obj.qual_name(short=True)
+        try:
+            if not hasattr(record, "identifier"):
+                record.identifier = record.obj.identifier
+        except:
+            record.identifier = None
+        try:
+            record.qual_name = record.obj.qual_name(short=True)
+        except:
+            record.qual_name = "basename:" + os.path.basename(record.pathname)
         return 1
