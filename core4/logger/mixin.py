@@ -49,9 +49,20 @@ class CoreLoggerMixin:
                 formatter = logging.Formatter(log_format)
                 handler.setFormatter(formatter)
                 logger.addHandler(handler)
+                self._setup_tornado(handler, level)
                 self.logger.debug(
                     "{} logging setup complete, level {}".format(
                         name, level))
+
+    def _setup_tornado(self, handler, level):
+        for name in ("access", "application", "general"):
+            logger = logging.getLogger("tornado." + name)
+            logger.addHandler(handler)
+            logger.setLevel(level)
+            f = core4.logger.filter.CoreLoggingFilter()
+            logger.addFilter(f)
+            # logging.getLogger("tornado." + hdlr).disable = True
+            # logging.getLogger("tornado." + hdlr).setLevel(logging.DEBUG)
 
     def _setup_mongodb(self, logger):
         mongodb = self.config.logging.mongodb
@@ -66,10 +77,10 @@ class CoreLoggerMixin:
                     )))
                 handler.setLevel(level)
                 logger.addHandler(handler)
+                self._setup_tornado(handler, level)
                 self.logger.debug(
                     "mongodb logging setup complete, "
-                    "level {}, write conxern [{}]".format(
-                        mongodb, write_concern))
+                    "level [%s], write concern [%d]", mongodb, write_concern)
             else:
                 raise core4.error.Core4SetupError(
                     "config.logging.mongodb set, but config.sys.log is None")
