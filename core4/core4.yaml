@@ -75,3 +75,14 @@ worker:
 
 scheduler:
   interval: 1
+
+api:
+  setting:
+    debug: True
+    compress_response: False
+    websocket_ping_interval: ~
+    websocket_ping_timeout: ~
+    cookie_secret: ~
+  crt_file: ~
+  key_file: ~
+  port: 5001
