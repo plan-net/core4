@@ -809,28 +809,28 @@ def test_project_maintenance(queue, worker):
     worker.wait_queue()
     assert queue.config.sys.queue.count_documents({}) == 0
 
-@pytest.mark.timeout(30)
-def test_no_resources(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob)
-    worker = WorkerNoRes(name="testRes")
-    worker.start_job(job)
-    data = list(queue.config.sys.log.find())
-    assert sum([1 for d in data if "not enough system-resources" in d["message"]]) == 1
-
-
-class WorkerNoRes(core4.queue.worker.CoreWorker):
-    def __init__(self, name):
-        super().__init__(name)
-    def avg_stats(self):
-        return (95,95)
-
-@pytest.mark.timeout(30)
-def test_worker_has_resources(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob)
-    worker = WorkerHasRes(name="testRes")
-    worker.start_job(job)
-    data = list(queue.config.sys.log.find())
-    assert sum([1 for d in data if "start execution" in d["message"]]) == 1
+# @pytest.mark.timeout(30)
+# def test_no_resources(queue):
+#     job = queue.enqueue(core4.queue.job.DummyJob)
+#     worker = WorkerNoRes(name="testRes")
+#     worker.start_job(job)
+#     data = list(queue.config.sys.log.find())
+#     assert sum([1 for d in data if "not enough system-resources" in d["message"]]) == 1
+#
+#
+# class WorkerNoRes(core4.queue.worker.CoreWorker):
+#     def __init__(self, name):
+#         super().__init__(name)
+#     def avg_stats(self):
+#         return (95,95)
+#
+# @pytest.mark.timeout(30)
+# def test_worker_has_resources(queue):
+#     job = queue.enqueue(core4.queue.job.DummyJob)
+#     worker = WorkerHasRes(name="testRes")
+#     worker.start_job(job)
+#     data = list(queue.config.sys.log.find())
+#     assert sum([1 for d in data if "start execution" in d["message"]]) == 1
 
 
 class WorkerHasRes(core4.queue.worker.CoreWorker):

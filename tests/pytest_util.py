@@ -24,13 +24,14 @@ def reset(tmpdir):
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+    os.environ["CORE4_OPTION_logging__write_concern"] = "!!int 1"
 
     class LogOn(core4.base.CoreBase,
                 core4.logger.mixin.CoreLoggerMixin):
         pass
 
-    logon = LogOn()
-    logon.setup_logging()
+    #logon = LogOn()
+    #logon.setup_logging()
     conn = pymongo.MongoClient(MONGO_URL)
     conn.drop_database(MONGO_DATABASE)
     yield conn

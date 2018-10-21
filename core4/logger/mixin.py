@@ -1,6 +1,7 @@
 import logging
 import logging.config
 
+import pymongo
 import time
 
 import core4.base
@@ -57,11 +58,18 @@ class CoreLoggerMixin:
         if mongodb:
             conn = self.config.sys.log
             if conn:
-                handler = core4.logger.handler.MongoLoggingHandler(conn)
-                handler.setLevel(getattr(logging, mongodb))
+                level = getattr(logging, mongodb)
+                write_concern = self.config.logging.write_concern
+                handler = core4.logger.handler.MongoLoggingHandler(
+                    conn.with_options(write_concern=pymongo.WriteConcern(
+                        w=write_concern
+                    )))
+                handler.setLevel(level)
                 logger.addHandler(handler)
                 self.logger.debug(
-                    "mongodb logging setup complete, level {}".format(mongodb))
+                    "mongodb logging setup complete, "
+                    "level {}, write conxern [{}]".format(
+                        mongodb, write_concern))
             else:
                 raise core4.error.Core4SetupError(
                     "config.logging.mongodb set, but config.sys.log is None")
@@ -109,5 +117,5 @@ def logon():
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.setup_logging()
-    Logger()
 
+    Logger()

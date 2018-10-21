@@ -36,6 +36,7 @@ logging:
   exception:
     capacity: 1000
   extra: ~
+  write_concern: 0
 
 # base class defaults
 base:

@@ -212,9 +212,11 @@ class TestLogging(unittest.TestCase):
             log.removeHandler(i)
             i.flush()
             i.close()
-        expected = ['tests.test_logger.LogOn'] * 7 + [None] * 2
+        expected = ['tests.test_logger.LogOn'] * 7
         for i, e in enumerate(expected):
             self.assertEqual(e, data[i]["qual_name"])
+        self.assertIn("connectionpool.py", data[-1]["qual_name"])
+        self.assertIn("connectionpool.py", data[-2]["qual_name"])
         with open("info.log", "r") as fh:
             content = fh.read()
         body = content.splitlines()
@@ -270,7 +272,8 @@ class TestLogging(unittest.TestCase):
                         "mongo_database": "core4test"
                     },
                     "logging": {
-                        "mongodb": "DEBUG"
+                        "mongodb": "DEBUG",
+                        "write_concern": 1
                     }
 
                 }
