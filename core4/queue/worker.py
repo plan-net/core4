@@ -66,6 +66,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.steps = STEPS
         self.plan = self.create_plan()
         self.cycle.update(dict([(s, 0) for s in self.steps]))
+        MOVING_AVG_SECONDS = self.config.worker.moving_avg_seconds
         self.stats_collector = collections.deque(maxlen=
                                                  round(self.config.worker.avg_stats_secs
                                                        / self.config.worker.execution_plan.collect_stats))
