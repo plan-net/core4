@@ -1,10 +1,11 @@
 import os
 
 import pymongo
-
+import pymongo.errors
 from core4.base import CoreBase
-from core4.service.introspect import CoreIntrospector
 from core4.util import Singleton
+from core4.api.v1.role import Role
+
 
 def once(f):
     def wrapper(*args, **kwargs):
@@ -38,8 +39,16 @@ class CoreSetup(CoreBase, metaclass=Singleton):
 
     @once
     def make_role(self):
-        # todo: requires implementation
-        pass
+        try:
+            Role(
+                name="admin",
+                realname="default admin user",
+                password="hans",
+                email="mail@mailer.com",
+                perm=["cop"]
+            ).save()
+        except pymongo.errors.DuplicateKeyError:
+            pass
 
     @once
     def make_queue(self):

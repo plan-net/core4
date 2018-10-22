@@ -1,11 +1,9 @@
-import datetime
-from croniter import croniter
+import time
 
 import core4.queue.main
+import core4.service.introspect
 import core4.util
 from core4.base.main import CoreBase
-import time
-from datetime import timedelta
 
 
 class CoreDaemon(CoreBase):
@@ -115,7 +113,7 @@ class CoreDaemon(CoreBase):
         """
         setup = core4.service.setup.CoreSetup()
         setup.make_folder()
-        setup.make_role()  # todo: implement!
+        setup.make_role()
         setup.make_stdout()
 
     def collect_project(self):
@@ -126,7 +124,7 @@ class CoreDaemon(CoreBase):
 
         :return:
         """
-        intro = core4.service.setup.CoreIntrospector()
+        intro = core4.service.introspect.CoreIntrospector()
         project = dict([(p["name"], p) for p in intro.iter_project()])
         self.config.sys.worker.update_one(
             {"_id": self.identifier},
@@ -137,7 +135,6 @@ class CoreDaemon(CoreBase):
             }
         )
         self.logger.info("registered projects")
-
 
     def enter_phase(self, phase):
         """
@@ -160,7 +157,6 @@ class CoreDaemon(CoreBase):
         else:
             raise core4.error.Core4SetupError(
                 "failed to enter phase [{}]".format(phase))
-
 
     def loop(self):
         """
