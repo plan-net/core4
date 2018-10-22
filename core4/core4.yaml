@@ -86,3 +86,10 @@ api:
   crt_file: ~
   key_file: ~
   port: 5001
+  contact: mail@mailer.com
+  error_html_page: ./_static/error.html
+  error_text_page: ./_static/error.txt
+  token:
+    expiration: 60
+    algorithm: HS512
+    secret: secret

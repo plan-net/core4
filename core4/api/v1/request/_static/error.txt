@@ -1,0 +1,6 @@
+{{ code }}: {{ message }}
+-------------------------------------------------------------------------------
+
+We're sorry about this inconvinience.
+
+Please contact {{ contact }} if you further observe this behavior.

@@ -64,7 +64,9 @@ setup(
         "PyYaml>=3.12",
         "psutil>=5.4",
         "docopt>=0.6",
-        "croniter"
+        "croniter>=0.3",
+        "python-mimeparse>=1.6",
+        "PyJWT>=1.6"
     ],
     extras_require={
         "tests": [

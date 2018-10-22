@@ -5,10 +5,11 @@ import tornado.web
 
 import core4.error
 import core4.logger.mixin
+import core4.service.setup
 from core4.api.v1.request.default import DefaultHandler
 from core4.base.main import CoreBase
 
-LOGIN_URL = "/login"
+LOGIN_URL = "/core4/login"
 
 
 class CoreApplication(tornado.web.Application):
@@ -50,9 +51,10 @@ class CoreApiContainer(CoreBase):
         else:
             meth = self.logger.error
         request_time = 1000.0 * handler.request.request_time()
-        meth("[%d] %s in [%.2fms] by ",
-             handler.get_status(), handler._request_summary(), request_time,
-             handler.current_user, extra={"identifier": handler.identifier})
+        meth("[%d] [%s %s] in [%.2fms] by [%s]",
+             handler.get_status(), handler.request.method,
+             handler.request.path, request_time, handler.current_user,
+             extra={"identifier": handler.identifier})
 
     @property
     def executor(self):
@@ -126,4 +128,6 @@ class CoreApiServerTool(core4.base.main.CoreBase,
 
 
 def serve(*args, **kwargs):
+    setup = core4.service.setup.CoreSetup()
+    setup.make_role()
     CoreApiServerTool().serve(*args, **kwargs)
