@@ -264,7 +264,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             if ((cur_stats[0] > self.config.worker.max_cpu)
                     or (cur_stats[1] < self.config.worker.min_free_ram)):
                 if not data["force"]:
-                    self.logger.debug(
+                    self.logger.info(
                         'skipped job [%s] with _id [%s]: '
                         'not enough resources available',
                         data["name"], data["_id"])
