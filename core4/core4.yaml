@@ -93,3 +93,6 @@ api:
     expiration: 60
     algorithm: HS512
     secret: secret
+  admin_username: admin
+  admin_password: ~
+

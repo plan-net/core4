@@ -5,7 +5,7 @@ import pymongo.errors
 from core4.base import CoreBase
 from core4.util import Singleton
 from core4.api.v1.role import Role
-
+import core4.const
 
 def once(f):
     def wrapper(*args, **kwargs):
@@ -41,11 +41,11 @@ class CoreSetup(CoreBase, metaclass=Singleton):
     def make_role(self):
         try:
             Role(
-                name="admin",
-                realname="default admin user",
-                password="hans",
-                email="mail@mailer.com",
-                perm=["cop"]
+                name=self.config.api.admin_username,
+                realname=self.config.api.admin_realname,
+                password=self.config.api.admin_password,
+                email=self.config.api.contact,
+                perm=[core4.const.COP]
             ).save()
         except pymongo.errors.DuplicateKeyError:
             pass

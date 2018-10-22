@@ -5,3 +5,4 @@ modules.
 
 CORE4 = "core4"
 PREFIX = "project"  # project logger beneath "core4.project"
+COP = "cop"
