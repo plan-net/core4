@@ -820,7 +820,7 @@ def test_no_resources(queue):
     worker2.work_jobs()
     worker3.work_jobs()
     worker4.work_jobs()
-    assert queue.config.sys.queue.count_documents({}) == 1
+    assert queue.config.sys.queue.count_documents({"state": "pending"}) == 1
     worker5 = WorkerHasRes(name="testRes")
     worker5.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
