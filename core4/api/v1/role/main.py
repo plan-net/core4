@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This module provides class :class:`.Role` featuring authorisation and access
 management to core4 API, jobs, databases and applications.
@@ -16,8 +14,6 @@ Load an existing role with::
 """
 
 import pymongo
-# todo: we do not want this dependency
-from flask_login import login_user
 
 import core4.base
 import core4.error
@@ -117,7 +113,7 @@ class Role(core4.base.CoreBase):
             [("name", pymongo.ASCENDING)], unique=True, name="unique_name")
         self.config.sys.role.create_index(
             [("email", pymongo.ASCENDING)], unique=True, name="unique_email",
-            partialFilterExpression={"email": { "$exists": True}})
+            partialFilterExpression={"email": {"$exists": True}})
 
     def save(self):
         """
@@ -384,8 +380,7 @@ class Role(core4.base.CoreBase):
         self.last_login = core4.util.now()
         self.config.sys.role.update_one(
             {"_id": self._id}, {"$set": {"last_login": self.last_login}})
-        self.logger.info("login user [%s] with _id [%s]", self.name, self._id)
-        return login_user(self, remember=False)
+        self.logger.debug("login user [%s] with _id [%s]", self.name, self._id)
 
     def verify_password(self, password):
         """
