@@ -39,6 +39,8 @@ class CoreSetup(CoreBase, metaclass=Singleton):
 
     @once
     def make_role(self):
+        # todo: we might want to add a standard user role with the minimum
+        # set of perms required, like /profile
         try:
             Role(
                 name=self.config.api.admin_username,
