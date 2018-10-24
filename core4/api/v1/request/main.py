@@ -49,7 +49,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             self.current_user = self.verify_token()
             if self.current_user is None or not self.verify_access():
                 self.write_error(401)
-                self.finish()
+                #self.finish()
 
     def verify_token(self):
         auth_header = self.request.headers.get('Authorization')
