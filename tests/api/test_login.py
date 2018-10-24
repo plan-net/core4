@@ -253,7 +253,7 @@ async def test_restricted_user(http_server_client):
     assert resp.code == 200
     data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
     token = data["data"]["token"]
-    await http_server_client.fetch(
+    resp = await http_server_client.fetch(
         '/app1/login', headers={"Authorization": "Bearer " + token})
     assert resp.code == 200
     with pytest.raises(tornado.httpclient.HTTPClientError):
@@ -273,10 +273,10 @@ async def test_granted_user(http_server_client):
     assert resp.code == 200
     data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
     token = data["data"]["token"]
-    await http_server_client.fetch(
+    resp = await http_server_client.fetch(
         '/app1/login', headers={"Authorization": "Bearer " + token})
     assert resp.code == 200
-    await http_server_client.fetch(
+    resp = await http_server_client.fetch(
         '/app1/profile', headers={"Authorization": "Bearer " + token})
     assert resp.code == 200
 
@@ -293,12 +293,79 @@ async def test_unmatched_permission(http_server_client):
     assert resp.code == 200
     data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
     token = data["data"]["token"]
-    await http_server_client.fetch(
+    resp = await http_server_client.fetch(
         '/app1/login', headers={"Authorization": "Bearer " + token})
     assert resp.code == 200
     with pytest.raises(tornado.httpclient.HTTPClientError):
         await http_server_client.fetch(
             '/app1/profile', headers={"Authorization": "Bearer " + token})
+
+async def test_profile(http_server_client):
+    Role(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=["api://core4.api.v1.request"]
+    ).save()
+    resp = await http_server_client.fetch('/app1/login'
+                                          '?username=user&password=password')
+    assert resp.code == 200
+    data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
+    token = data["data"]["token"]
+    resp = await http_server_client.fetch(
+        '/app1/login', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+    resp = await http_server_client.fetch(
+        '/app1/profile', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+    from pprint import pprint
+    pprint(core4.api.v1.util.json_decode(resp.body.decode("utf-8")))
+
+async def test_profile_cascade(http_server_client):
+    role1 = Role(
+        name="role",
+        realname="test role",
+        perm=["api://core4.api.v1.abc"]
+    )
+    role2 = Role(
+        name="role2",
+        realname="test role",
+        perm=["api://core4.api.v1.aaa"]
+    )
+    role2.save()
+    role1.save()
+    user = Role(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=["api://core4.api.v1.request"],
+        role=[role1, role2]
+    )
+    user.save()
+    resp = await http_server_client.fetch('/app1/login'
+                                          '?username=user&password=password')
+    assert resp.code == 200
+    data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
+    token = data["data"]["token"]
+    resp = await http_server_client.fetch(
+        '/app1/login', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+    resp = await http_server_client.fetch(
+        '/app1/profile', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+    data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))["data"]
+    assert data["_id"] == str(user._id)
+    assert data["email"] == str(user.email)
+    assert data["name"] == user.name
+    assert data["realname"] == user.realname
+    assert data["perm"] == ['api://core4.api.v1.aaa',
+                            'api://core4.api.v1.abc',
+                            'api://core4.api.v1.request']
+    assert data["last_login"] is not None
+    assert data["is_active"]
+    assert data["role"] == ['role', 'role2', 'user']
 
 
 

@@ -330,6 +330,22 @@ class Role(core4.base.CoreBase):
         return self._perm
 
     @property
+    def _casc_role(self):
+        """
+        Internal method to recurively collect all role names.
+        """
+        def traverse(role):
+            p = [role.name]
+            for i in role.role:
+                p += traverse(i)
+            return p
+
+        role = traverse(self)
+        role = list(set(role))
+        role.sort()
+        return role
+
+    @property
     def is_admin(self):
         """
         :return: ``True`` if the role as a ``perm`` record of ``cop``.
@@ -447,6 +463,13 @@ class Role(core4.base.CoreBase):
             if upd.modified_count == 0:
                 return False
         return True
+
+    def detail(self):
+        doc = self._doc()
+        del doc["password"]
+        doc["perm"] = self._casc_perm
+        doc["role"] = self._casc_role
+        return doc
 
 
 class RoleField(Field):
