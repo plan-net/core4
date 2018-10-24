@@ -366,7 +366,7 @@ async def test_profile_cascade(http_server_client):
     assert data["last_login"] is not None
     assert data["is_active"]
     assert data["role"] == ['role', 'role2', 'user']
-
+    assert data["token_expires"] is not None
 
 
 

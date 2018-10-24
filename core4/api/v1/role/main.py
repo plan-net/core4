@@ -334,6 +334,7 @@ class Role(core4.base.CoreBase):
         """
         Internal method to recurively collect all role names.
         """
+
         def traverse(role):
             p = [role.name]
             for i in role.role:
@@ -465,6 +466,12 @@ class Role(core4.base.CoreBase):
         return True
 
     def detail(self):
+        """
+        This method converts the role data into a dict, removes the password
+        attribute, cascades role permissions, and role names.
+
+        :return: dict
+        """
         doc = self._doc()
         del doc["password"]
         doc["perm"] = self._casc_perm

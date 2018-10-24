@@ -6,11 +6,12 @@ class ProfileHandler(CoreRequestHandler):
 
     def get(self):
         try:
-            # user = await self.load_user(username)
             user = Role().load_one(name=self.current_user)
         except:
             raise Core4RoleNotFound("unknown user [{}]".format(
                 self.current_user
             ))
         else:
-            self.reply(user.detail())
+            doc = user.detail()
+            doc["token_expires"] = self.token_exp
+            self.reply(doc)

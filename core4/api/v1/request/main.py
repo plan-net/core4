@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-
+import time
 import jwt
 import mimeparse
 import pandas as pd
@@ -62,6 +62,9 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             token = self.get_argument("token", default=None)
         if token:
             payload = self._parse_token(token)
+            self.token_exp = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(
+                payload["exp"]
+            ))
             return payload.get("name")
         return None
 
@@ -184,7 +187,5 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
 
-# todo: how to handle expired signitures
 # todo: how to handle warnings, e.g. the signature has expired as an additional warning to 401 with error "Unauthorized"
-# todo: how to handle logout, suggested solution: remove token on client side
 # todo: request handler default properties management by configuration
