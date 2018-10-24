@@ -94,5 +94,5 @@ api:
     algorithm: HS512
     secret: secret
   admin_username: admin
-  admin_password: ~
-
+  admin_realname: admin user
+  admin_password: hans
