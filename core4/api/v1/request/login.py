@@ -32,8 +32,10 @@ class LoginHandler(CoreRequestHandler):
             self.write_error(401)
 
     def _create_token(self, username):
+        secs = self.config.api.token.expiration
+        self.logger.debug("set token lifetime to [%d]", secs)
         expires = datetime.timedelta(
-            seconds=self.config.api.token.expiration)
+            seconds=secs)
         secret = self.config.api.token.secret
         algorithm = self.config.api.token.algorithm
         payload = {
@@ -65,18 +67,18 @@ class LoginHandler(CoreRequestHandler):
             return payload.get("name")
         if username and password:
             try:
-                user = await self.load_user(username)
-                #user = Role().load_one(name=username)
+                #user = await self.load_user(username)
+                user = Role().load_one(name=username)
             except:
                 self.logger.warning("username [%s] not found", username)
             else:
                 if user.verify_password(password):
-                    #user.login()
+                    user.login()
                     return username
         return None
 
-    async def load_user(self, username):
-        doc = await self.motor.core4test.sys.role.find_one({'name': username})
-        doc["password_hash"] = doc["password"]
-        del doc["password"]
-        return Role(**doc)
+    # async def load_user(self, username):
+    #     doc = await self.motor.core4test.sys.role.find_one({'name': username})
+    #     doc["password_hash"] = doc["password"]
+    #     del doc["password"]
+    #     return Role(**doc)
