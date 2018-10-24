@@ -12,7 +12,7 @@ from tornado.web import RequestHandler
 import core4.util
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
-
+from core4.api.v1.role.main import Role
 tornado.escape.json_encode = json_encode
 
 
@@ -75,8 +75,14 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             return {}
 
     def verify_access(self):
-        # todo: requires implementation
-        return True
+        try:
+            user = Role().load_one(name=self.current_user)
+        except:
+            self.logger.warning("username [%s] not found", self.current_user)
+        else:
+            if user.has_api_access(self.qual_name()):
+                return True
+        return False
 
     async def run_in_executor(self, meth, *args):
         loop = asyncio.get_event_loop()

@@ -7,6 +7,7 @@ import core4.logger
 import core4.util
 from core4.api.v1.application import CoreApiContainer, CoreApiServerTool
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.role.main import Role
 import core4.service.setup
 import core4.api.v1.util
 import tornado.web
@@ -237,6 +238,68 @@ async def test_token_extended(http_server_client):
         await http_server_client.fetch('/app1/profile?token=' + token)
     with pytest.raises(tornado.httpclient.HTTPClientError):
         await http_server_client.fetch('/app1/profile?token=' + token2)
+
+
+async def test_restricted_user(http_server_client):
+    Role(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=[]
+    ).save()
+    resp = await http_server_client.fetch('/app1/login'
+                                          '?username=user&password=password')
+    assert resp.code == 200
+    data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
+    token = data["data"]["token"]
+    await http_server_client.fetch(
+        '/app1/login', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+    with pytest.raises(tornado.httpclient.HTTPClientError):
+        await http_server_client.fetch(
+            '/app1/profile', headers={"Authorization": "Bearer " + token})
+
+async def test_granted_user(http_server_client):
+    Role(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=["api://core4.api.v1.request.profile"]
+    ).save()
+    resp = await http_server_client.fetch('/app1/login'
+                                          '?username=user&password=password')
+    assert resp.code == 200
+    data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
+    token = data["data"]["token"]
+    await http_server_client.fetch(
+        '/app1/login', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+    await http_server_client.fetch(
+        '/app1/profile', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+
+async def test_unmatched_permission(http_server_client):
+    Role(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=["api://core4.api.v1.request.xxx"]
+    ).save()
+    resp = await http_server_client.fetch('/app1/login'
+                                          '?username=user&password=password')
+    assert resp.code == 200
+    data = core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
+    token = data["data"]["token"]
+    await http_server_client.fetch(
+        '/app1/login', headers={"Authorization": "Bearer " + token})
+    assert resp.code == 200
+    with pytest.raises(tornado.httpclient.HTTPClientError):
+        await http_server_client.fetch(
+            '/app1/profile', headers={"Authorization": "Bearer " + token})
+
 
 
 
