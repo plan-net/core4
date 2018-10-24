@@ -8,11 +8,12 @@ import re
 
 import datetime
 from bson.objectid import ObjectId
+# todo: must not be werkzeug
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import core4.util
+from core4.const import COP
 
-COP = "cop"
 PROTO = [
     re.compile(r"^" + COP + "$"),
     re.compile(r"^job://[^\s\/]+/[xr]$"),
