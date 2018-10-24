@@ -1,11 +1,10 @@
 from contextlib import closing
 import inspect
 from inspect import iscoroutinefunction
-
 import tornado.ioloop
 import tornado.testing
 import tornado.simple_httpclient
-
+import json
 import pytest
 
 
@@ -106,12 +105,23 @@ class AsyncHTTPServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):
         super().initialize()
         self._http_server = http_server
 
-    def fetch(self, path, **kwargs):
+    def fetch(self, path, headers=None, **kwargs):
         """
         Fetch `path` from test server, passing `kwargs` to the `fetch`
         of the underlying `tornado.simple_httpclient.SimpleAsyncHTTPClient`.
         """
-        return super().fetch(self.get_url(path), **kwargs)
+        if headers is None:
+            headers = {}
+        headers["Content-Type"] = "application/json"
+        return super().fetch(self.get_url(path), headers=headers, **kwargs)
+
+    def post(self, path, body="", headers=None, **kwargs):
+        if isinstance(body, dict):
+            data = json.dumps(body)
+        else:
+            data = body
+        kwargs["method"] = "POST"
+        return self.fetch(path, body=data, headers=headers, **kwargs)
 
     def get_protocol(self):
         return 'http'
