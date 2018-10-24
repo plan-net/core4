@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-import base64
+
 import jwt
 import mimeparse
 import pandas as pd
@@ -10,9 +10,8 @@ from bson.objectid import ObjectId
 from tornado.web import RequestHandler
 
 import core4.util
-from core4.api.v1.util import json_encode
+from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
-from core4.api.v1.role.main import Role
 
 tornado.escape.json_encode = json_encode
 
@@ -31,59 +30,53 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         RequestHandler.__init__(self, *args, **kwargs)
         self.error_html_page = self.config.api.error_html_page
         self.error_text_page = self.config.api.error_text_page
-        self._current_user = None
 
     def prepare(self):
+        """
+        This method prepares the handler with
+        * setting the ``request_id``
+        * preparing the combined parsing of query and body arguments
+        * verify access permissions
+        """
         self.identifier = ObjectId()
+        if not (self.request.query_arguments or self.request.body_arguments):
+            if self.request.body:
+                body_arguments = json_decode(
+                    self.request.body.decode("UTF-8"))
+                for k, v in body_arguments.items():
+                    self.request.arguments.setdefault(k, []).append(v)
         if self.protected:
-            self.set_current_user(self.verify_user())
-            if self.current_user is None:
+            self.current_user = self.verify_token()
+            if self.current_user is None or not self.verify_access():
                 self.write_error(401)
+                self.finish()
 
-    def verify_user(self):
+    def verify_token(self):
         auth_header = self.request.headers.get('Authorization')
-        username = password = None
         token = None
         if auth_header is not None:
             auth_type = auth_header.split()[0].lower()
-            if auth_type == "basic":
-                auth_decoded = base64.decodebytes(
-                    auth_header[6:].encode("utf-8"))
-                username, password = auth_decoded.decode(
-                    "utf-8").split(':', 2)
-            elif auth_type == "bearer":
+            if auth_type == "bearer":
                 token = auth_header[7:]
         else:
             token = self.get_argument("token", default=None)
-            username = self.get_argument("username", None)
-            password = self.get_argument("password", None)
         if token:
             payload = self._parse_token(token)
             return payload.get("name")
-        if username and password:
-            try:
-                user = Role().load_one(name=username)
-            except StopIteration:
-                self.logger.warning("username [%s] not found", username)
-            else:
-                if user.verify_password(password):
-                    return username
         return None
 
     def _parse_token(self, token):
         secret = self.config.api.token.secret
         algorithm = self.config.api.token.algorithm
         try:
-            return jwt.decode(token, key=secret, algorithm=algorithm,
+            return jwt.decode(token, key=secret, algorithms=[algorithm],
                               verify=True)
         except jwt.ExpiredSignatureError:
             return {}
 
-    def get_current_user(self):
-        return self._current_user
-
-    def set_current_user(self, username):
-        self._current_user = username
+    def verify_access(self):
+        # todo: requires implementation
+        return True
 
     async def run_in_executor(self, meth, *args):
         loop = asyncio.get_event_loop()
@@ -114,7 +107,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
 
     def guess_content_type(self):
         return mimeparse.best_match(
-            self.supported_types, self.request.headers.get("accept"))
+            self.supported_types, self.request.headers.get("accept", ""))
 
     def reply(self, chunk):
         """
