@@ -7,6 +7,8 @@ import core4.error
 import core4.logger.mixin
 import core4.service.setup
 from core4.api.v1.request.default import DefaultHandler
+from core4.api.v1.request.login import LoginHandler
+from core4.api.v1.request.profile import ProfileHandler
 from core4.base.main import CoreBase
 
 LOGIN_URL = "/core4/login"
@@ -42,6 +44,10 @@ class CoreApiContainer(CoreBase):
         self._settings = kwargs
         self._rules = handlers or kwargs.get("handlers", [])
         self._pool = None
+        self.default_routes = [
+            ("/login", LoginHandler),
+            ("/profile", ProfileHandler),
+        ]
 
     def _log(self, handler):
         if handler.get_status() < 400:
@@ -76,7 +82,7 @@ class CoreApiContainer(CoreBase):
 
     def make_application(self):
         rules = []
-        for rule in self._rules + self.rules:
+        for rule in self.default_routes + self._rules + self.rules:
             if isinstance(rule, (tuple, list)):
                 if len(rule) >= 2:
                     if isinstance(rule[0], str):
