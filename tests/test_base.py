@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 import sys
 
@@ -9,9 +7,6 @@ import core4.config
 import core4.config.tag
 import core4.error
 from tests.pytest_util import *
-
-
-# import unittest
 
 
 class MyConfig(core4.config.main.CoreConfig):
