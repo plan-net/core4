@@ -33,3 +33,8 @@ class JsonEncoder(json.JSONEncoder):
 def json_encode(value):
     """JSON-encodes the given Python object."""
     return json.dumps(value, cls=JsonEncoder, indent=2)
+
+def json_decode(value):
+    if value:
+        return json.loads(value)
+    return None
