@@ -82,17 +82,23 @@ class CoreApiContainer(CoreBase):
 
     def make_application(self):
         rules = []
+        roots = set()
         for rule in self.default_routes + self._rules + self.rules:
             if isinstance(rule, (tuple, list)):
                 if len(rule) >= 2:
                     if isinstance(rule[0], str):
                         match = self.get_root() + rule[0]
-                        self.logger.info("starting [%s] at [%s]",
-                                         rule[1].__name__, match)
-                        rules.append(
-                            tornado.routing.Rule(
-                                tornado.routing.PathMatches(match),
-                                *rule[1:]))
+                        if not match in roots:
+                            self.logger.info("starting [%s] at [%s]",
+                                             rule[1].__name__, match)
+                            roots.add(match)
+                            rules.append(
+                                tornado.routing.Rule(
+                                    tornado.routing.PathMatches(match),
+                                    *rule[1:]))
+                        else:
+                            self.logger.warning("route [%s] already exists",
+                                                match)
                         continue
             raise core4.error.Core4SetupError(
                 "routing requires list of tuples "
