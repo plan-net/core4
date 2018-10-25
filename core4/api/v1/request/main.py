@@ -1,22 +1,26 @@
 import asyncio
 import traceback
-import time
+
 import jwt
 import mimeparse
 import pandas as pd
+import time
 import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler
 
 import core4.util
+from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
-from core4.api.v1.role.main import Role
+
 tornado.escape.json_encode = json_encode
 
 
 class CoreRequestHandler(CoreBase, RequestHandler):
+    title = None
+    author = None
     protected = True
     supported_types = [
         "text/html",
@@ -26,7 +30,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
     ]
 
     def __init__(self, *args, **kwargs):
-        CoreBase.__init__(self)
+        HandlerBase.__init__(self)
         RequestHandler.__init__(self, *args, **kwargs)
         self.error_html_page = self.config.api.error_html_page
         self.error_text_page = self.config.api.error_text_page
@@ -49,7 +53,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             self.current_user = self.verify_token()
             if self.current_user is None or not self.verify_access():
                 self.write_error(401)
-                #self.finish()
+                # self.finish()
 
     def verify_token(self):
         auth_header = self.request.headers.get('Authorization')
