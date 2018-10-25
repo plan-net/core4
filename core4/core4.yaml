@@ -45,9 +45,9 @@ base:
 # job defaults
 job:
   attempts: 1
-  defer_max: 3600
-  defer_time: 300
-  error_time: 600
+  defer_max: 3600 # 1h
+  defer_time: 300 # 5'
+  error_time: 600 # 10'
   zombie_time: 1800
   force: False
   hidden: False
@@ -70,7 +70,7 @@ worker:
     remove_jobs: 3.0
     flag_jobs: 10.0
     collect_stats: 20.0
-  stdout_ttl: 604800
+  stdout_ttl: 604800  # 7d
   alive_timeout: 60
 
 scheduler:
@@ -80,8 +80,6 @@ api:
   setting:
     debug: True
     compress_response: False
-    websocket_ping_interval: ~
-    websocket_ping_timeout: ~
     cookie_secret: ~
   crt_file: ~
   key_file: ~
@@ -89,8 +87,10 @@ api:
   contact: mail@mailer.com
   error_html_page: ./_static/error.html
   error_text_page: ./_static/error.txt
+  reset_password:
+    expiration: 28800  # 8h
   token:
-    expiration: 60
+    expiration: 28800  # 8h
     algorithm: HS512
     secret: secret
   admin_username: admin

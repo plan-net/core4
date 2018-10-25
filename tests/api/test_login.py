@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import time
+import re
 import pytest
 import datetime
 import core4.logger
@@ -368,27 +369,37 @@ async def test_profile_cascade(http_server_client):
     assert data["role"] == ['role', 'role2', 'user']
     assert data["token_expires"] is not None
 
-
-
-# async def test_apps(http_server_client):
-#     resp = await http_server_client.fetch('/app1/test1')
-#     assert b'Hello, world: 123' == resp.body
-#     assert resp.code == 200
-#     resp = await http_server_client.fetch('/app2/test1')
-#     assert b'Hello, universe: 123' == resp.body
-#     assert resp.code == 200
-#
-#
-# async def test_json(http_server_client):
-#     resp = await http_server_client.fetch('/app2/data')
-#     assert resp.code == 200
-#     print(str(resp.body.decode("utf-8")))
-#     resp = await http_server_client.fetch('/app2/data/html')
-#     assert resp.code == 200
-#     print(str(resp.body.decode("utf-8")))
-#     resp = await http_server_client.fetch('/app2/data/df')
-#     assert resp.code == 200
-#     print(str(resp.body.decode("utf-8")))
+async def test_password_reset(http_server_client):
+    resp = await http_server_client.fetch('/app1/login'
+                                          '?username=admin&password=hans')
+    assert resp.code == 200
+    resp = await http_server_client.put('/app1/login?email=mail@mailer.com')
+    assert resp.code == 200
+    from core4.queue.worker import CoreWorker
+    from core4.queue.main import CoreQueue
+    q = core4.queue.main.CoreQueue()
+    w = CoreWorker()
+    w.startup()
+    w.work_jobs()
+    import time
+    while True:
+        waiting = sum([1 for job in q.get_queue_state() if job["state"] in ("running", "pending")])
+        if waiting == 0:
+            break
+        time.sleep(0.25)
+    data = list(q.config.sys.log.find())
+    msg = [d for d in data if "send mail" in d["message"]][0]
+    token = re.search(r"token = ([^\s+]+)", msg["message"]).groups()[0]
+    w.shutdown()
+    resp = await http_server_client.put('/app1/login?password=123456&token='
+                                        + token)
+    assert resp.code == 200
+    resp = await http_server_client.fetch('/app1/login'
+                                          '?username=admin&password=123456')
+    assert resp.code == 200
+    with pytest.raises(tornado.httpclient.HTTPClientError):
+        await http_server_client.fetch('/app1/login'
+                                       '?username=admin&password=hans')
 
 # async def test_data_request(http_server_client):
 #     resp = await http_server_client.fetch('/app1/data/request')

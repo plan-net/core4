@@ -113,6 +113,7 @@ class AsyncHTTPServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):
         if headers is None:
             headers = {}
         headers["Content-Type"] = "application/json"
+        headers["Accept"] = "application/json"
         return super().fetch(self.get_url(path), headers=headers, **kwargs)
 
     def post(self, path, body="", headers=None, **kwargs):
@@ -121,6 +122,14 @@ class AsyncHTTPServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):
         else:
             data = body
         kwargs["method"] = "POST"
+        return self.fetch(path, body=data, headers=headers, **kwargs)
+
+    def put(self, path, body="", headers=None, **kwargs):
+        if isinstance(body, dict):
+            data = json.dumps(body)
+        else:
+            data = body
+        kwargs["method"] = "PUT"
         return self.fetch(path, body=data, headers=headers, **kwargs)
 
     def get_protocol(self):

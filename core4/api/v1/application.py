@@ -34,8 +34,7 @@ class CoreApiContainer(CoreBase):
 
     def __init__(self, handlers=None, **kwargs):
         CoreBase.__init__(self)
-        for attr in ("debug", "compress_response", "websocket_ping_interval",
-                     "websocket_ping_timeout", "cookie_secret"):
+        for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
         kwargs["default_handler_class"] = DefaultHandler
         kwargs["default_handler_args"] = ()
