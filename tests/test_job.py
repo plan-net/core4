@@ -3,6 +3,7 @@
 
 import core4.config.test
 import core4.error
+import core4.queue.helper
 import core4.queue.job
 import core4.queue.main
 from tests.pytest_util import *
@@ -12,7 +13,7 @@ def test_init():
     job = core4.queue.job.CoreJob()
     with pytest.raises(AssertionError):
         job.validate()
-    job = core4.queue.job.DummyJob()
+    job = core4.queue.helper.DummyJob()
     assert job._id is None
     assert job.args == {}
     assert job.attempts == 1
@@ -82,11 +83,11 @@ def test_validation2():
 
 
 def test_enqueue():
-    job = core4.queue.job.DummyJob(attempts=10)
+    job = core4.queue.helper.DummyJob(attempts=10)
     assert job.attempts == 10
     assert job.chain == []
 
-    job = core4.queue.job.DummyJob(
+    job = core4.queue.helper.DummyJob(
         defer_max=1, defer_time=2,  # inactive_time=4,
         max_parallel=5, worker=['A'], priority=6, arg1=100, arg2=200)
     assert job.attempts == 1
@@ -389,7 +390,7 @@ def test_frozen_method():
 
 def test_job_found():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.job.DummyJob)
+    q.enqueue(core4.queue.helper.DummyJob)
 
 
 def test_job_not_found():
