@@ -2,7 +2,6 @@ import base64
 
 import datetime
 import jwt
-import motor
 import core4.util
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.role.main import Role
@@ -10,10 +9,6 @@ from core4.api.v1.role.main import Role
 
 class LoginHandler(CoreRequestHandler):
     protected = False
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.motor = motor.MotorClient("mongodb://core:654321@localhost:27017")
 
     async def get(self):
         await self.post()
