@@ -6,11 +6,23 @@ from core4.error import Core4RoleNotFound
 class ProfileHandler(CoreRequestHandler):
 
     """
+    Provides user details for the current user.
+
+    url
+    ===
+
+    * GET /core4/api/v1/profile
+
     parameters
     ==========
 
+    * None
+
     response
     ========
+
+    * 200 OK
+    * 500 Core4RoleNotFound
 
     example
     =======
