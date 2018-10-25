@@ -8,7 +8,14 @@
 
 <h1>{{ code }}: {{ message }}</h1>
 
-<pre>{{ error }}</pre>
+{% try %}
+{% if error %}
+<pre>
+{{ error }}
+</pre>
+{% end %}
+{% except %}
+{% end %}
 
 We're sorry about this inconvinience.
 
