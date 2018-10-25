@@ -66,7 +66,9 @@ setup(
         "docopt>=0.6",
         "croniter>=0.3",
         "python-mimeparse>=1.6",
-        "PyJWT>=1.6"
+        "PyJWT>=1.6",
+        "tornado>=5.1",
+        "pandas>=0.23"
     ],
     extras_require={
         "tests": [
