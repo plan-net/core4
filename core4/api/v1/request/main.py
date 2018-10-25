@@ -8,7 +8,7 @@ import time
 import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
-from tornado.web import RequestHandler
+from tornado.web import RequestHandler, HTTPError
 
 import core4.util
 from core4.api.v1.role.main import Role
@@ -30,7 +30,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
     ]
 
     def __init__(self, *args, **kwargs):
-        HandlerBase.__init__(self)
+        CoreBase.__init__(self)
         RequestHandler.__init__(self, *args, **kwargs)
         self.error_html_page = self.config.api.error_html_page
         self.error_text_page = self.config.api.error_text_page
@@ -190,6 +190,9 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             self.render(self.error_html_page, **var)
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
+
+    def abort(self, status_code, message=None):
+        raise HTTPError(status_code, message or "unknown")
 
 # todo: how to handle warnings, e.g. the signature has expired as an additional warning to 401 with error "Unauthorized"
 # todo: request handler default properties management by configuration
