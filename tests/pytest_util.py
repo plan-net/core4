@@ -25,6 +25,7 @@ def reset(tmpdir):
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
     os.environ["CORE4_OPTION_logging__write_concern"] = "!!int 1"
+    os.environ["CORE4_OPTION_worker__min_free_ram"] = "!!int 32"
 
     class LogOn(core4.base.CoreBase,
                 core4.logger.mixin.CoreLoggerMixin):
