@@ -18,6 +18,16 @@ core4 takes care of everything that is essential to using and operating such a d
 from central logging and configuration to deployment, all this while scaling to the 100ths of servers.
 
 
+
+
+UNTERTREILEN IN:
+
+* runtime behavior
+* collection handling
+* cookie handling
+* logging
+* file handling
+
 Example
 --------
 
