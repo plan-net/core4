@@ -1,5 +1,4 @@
 from contextlib import closing
-import inspect
 from inspect import iscoroutinefunction
 import tornado.ioloop
 import tornado.testing
@@ -8,12 +7,12 @@ import json
 import pytest
 
 
-def get_test_timeout(pyfuncitem):
-    timeout = pyfuncitem.config.option.async_test_timeout
-    marker = pyfuncitem.get_marker('timeout')
-    if marker:
-        timeout = marker.kwargs.get('seconds', timeout)
-    return timeout
+# def get_test_timeout(pyfuncitem):
+#     timeout = pyfuncitem.config.option.async_test_timeout
+#     marker = pyfuncitem.get_marker('timeout')
+#     if marker:
+#         timeout = marker.kwargs.get('seconds', timeout)
+#     return timeout
 
 
 def pytest_addoption(parser):
@@ -50,7 +49,7 @@ def pytest_pyfunc_call(pyfuncitem):
 
     event_loop.run_sync(
         lambda: pyfuncitem.obj(**testargs),
-        timeout=get_test_timeout(pyfuncitem),
+        #timeout=get_test_timeout(pyfuncitem),
     )
     return True
 
@@ -96,7 +95,8 @@ def http_server(request, io_loop, http_server_port):
 
     if hasattr(server, 'close_all_connections'):
         io_loop.run_sync(server.close_all_connections,
-                         timeout=request.config.option.async_test_timeout)
+                         #timeout=request.config.option.async_test_timeout
+        )
 
 
 class AsyncHTTPServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):

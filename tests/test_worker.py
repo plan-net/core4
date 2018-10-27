@@ -812,7 +812,7 @@ def test_project_maintenance(queue, worker):
 
 # @pytest.mark.timeout(30)
 # def test_no_resources(queue):
-#     job = queue.enqueue(core4.queue.job.DummyJob)
+#     job = queue.enqueue(core4.queue.helper.DummyJob)
 #     worker = WorkerNoRes(name="testRes")
 #     worker.start_job(job)
 #     data = list(queue.config.sys.log.find())
@@ -827,7 +827,7 @@ def test_project_maintenance(queue, worker):
 #
 # @pytest.mark.timeout(30)
 # def test_worker_has_resources(queue):
-#     job = queue.enqueue(core4.queue.job.DummyJob)
+#     job = queue.enqueue(core4.queue.helper.DummyJob)
 #     worker = WorkerHasRes(name="testRes")
 #     worker.start_job(job)
 #     data = list(queue.config.sys.log.find())

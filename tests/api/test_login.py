@@ -35,6 +35,7 @@ def setup(tmpdir):
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
     os.environ["CORE4_OPTION_api__token__expiration"] = "!!int 1"
+    os.environ["CORE4_OPTION_api__setting__debug"] = "!!bool False"
     conn = pymongo.MongoClient(MONGO_URL)
     conn.drop_database(MONGO_DATABASE)
     core4.logger.mixin.logon()
@@ -213,7 +214,7 @@ async def test_token_extended(http_server_client):
                 '/app1/profile', method="GET",
                 headers={"Authorization": "Bearer " + t})
             assert resp.code == 200
-            time.sleep(0.1)
+            time.sleep(0.05)
 
     await run5(token)
     # refresh token
