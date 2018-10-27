@@ -4,7 +4,6 @@ from core4.error import Core4RoleNotFound
 
 
 class ProfileHandler(CoreRequestHandler):
-
     """
     Provides user details for the current user.
 

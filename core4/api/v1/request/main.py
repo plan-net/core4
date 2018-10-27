@@ -1,15 +1,16 @@
 import asyncio
+import base64
 import traceback
+
 import datetime
 import jwt
 import mimeparse
 import pandas as pd
-import time
 import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
-import base64
+
 import core4.util
 from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
@@ -97,7 +98,7 @@ class BaseHandler(CoreBase):
                     payload["exp"])
                 renew = self.config.api.token.refresh
                 if (core4.util.now()
-                        - datetime.datetime.fromtimestamp(
+                    - datetime.datetime.fromtimestamp(
                             payload["timestamp"])).total_seconds() > renew:
                     self._create_token(username)
                     self.logger.debug("refresh token [%s] to [%s]", username,
@@ -116,6 +117,9 @@ class BaseHandler(CoreBase):
             else:
                 if user.verify_password(password):
                     self.token_exp = None
+                    self.logger.debug(
+                        "successfully loaded [%s] by [%s] from [%s]",
+                        username, *source)
                     return user
         return None
 
@@ -195,7 +199,6 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         RequestHandler.__init__(self, *args, **kwargs)
         self.error_html_page = self.config.api.error_html_page
         self.error_text_page = self.config.api.error_text_page
-
 
     def verify_access(self):
         try:
