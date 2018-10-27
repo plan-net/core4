@@ -145,6 +145,7 @@ def test_halt():
 
 
 def test_enqueue_dequeue(queue):
+
     enqueued_job = queue.enqueue(core4.queue.helper.DummyJob)
     worker = core4.queue.worker.CoreWorker()
     doc = worker.get_next_job()
@@ -812,7 +813,7 @@ def test_project_maintenance(queue, worker):
 
 @pytest.mark.timeout(30)
 def test_no_resources(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     worker1 = WorkerNoCPU(name="testRes_1")
     worker2 = WorkerNoCPU(name="testRes_2")
     worker3 = WorkerNoRAM(name="testRes_3")
@@ -841,18 +842,18 @@ class WorkerNoRAM(core4.queue.worker.CoreWorker):
         super().__init__(name)
 
     def avg_stats(self):
-        return (0, 240)
+        return (0, 30)
 
 @pytest.mark.timeout(30)
 def test_no_resources_force(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob, force=True)
+    job = queue.enqueue(core4.queue.helper.DummyJob, force=True)
     worker = WorkerNoCPU(name="testRes_1")
     worker.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "start execution" in d["message"]]) == 1
-    job2 = queue.enqueue(core4.queue.job.DummyJob, force=True, node="testRes2")
+    job2 = queue.enqueue(core4.queue.helper.DummyJob, force=True, node="testRes2")
     worker2 = WorkerNoRAM(name="testRes2")
     worker2.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
@@ -862,7 +863,7 @@ def test_no_resources_force(queue):
 
 @pytest.mark.timeout(30)
 def test_worker_has_resources(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     worker = WorkerNoCPU(name="testRes")
     worker.start_job(job)
     while queue.config.sys.queue.count_documents({}) > 0:
