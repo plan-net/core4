@@ -162,9 +162,9 @@ async def test_no_args(http_server_client):
         await http_server_client.fetch('/app1/login?username=admin&password=1')
 
 async def test_pass_auth(http_server_client):
-    with pytest.raises(tornado.httpclient.HTTPClientError):
-        await http_server_client.fetch('/app1/profile'
-                                       '?username=admin&password=hans')
+    resp = await http_server_client.fetch('/app1/profile'
+                                          '?username=admin&password=hans')
+    assert resp.code == 200
 
 async def test_login_success(http_server_client):
     resp = await http_server_client.fetch('/app1/login'
@@ -185,11 +185,6 @@ async def test_token_header(http_server_client):
     resp = await http_server_client.fetch('/app1/login?token=' + token)
     assert resp.code == 200
 
-    #assert b'Hello, world: 456' == resp.body
-    #assert resp.code == 401
-    # resp = await http_server_client.fetch('/app1/test1')
-    # assert b'Hello, world: 123' == resp.body
-    # assert resp.code == 200
 
 async def test_token_expired(http_server_client):
     resp = await http_server_client.fetch('/app1/login'
