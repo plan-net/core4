@@ -133,6 +133,7 @@ class BaseHandler(CoreBase):
         token = self._create_jwt(secs, payload)
         self.set_secure_cookie("token", token)
         self.set_header("token", token)
+        self.logger.debug("updated token [%s]", self.current_user)
         return token
 
     def _create_jwt(self, secs, payload):
