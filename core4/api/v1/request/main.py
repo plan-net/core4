@@ -44,8 +44,9 @@ class BaseHandler(CoreBase):
                 self.current_user = user.name
                 if self.verify_access():
                     return
-            self.redirect(self.get_login_url())
-            # self.write_error(401)
+            # login_url = self.get_login_url()
+            # self.redirect(login_url)
+            self.write_error(401)
 
     async def verify_user(self):
         """
