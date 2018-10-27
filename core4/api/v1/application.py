@@ -8,10 +8,9 @@ import core4.logger.mixin
 import core4.service.setup
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.login import LoginHandler
+from core4.api.v1.request.logout import LogoutHandler
 from core4.api.v1.request.profile import ProfileHandler
 from core4.base.main import CoreBase
-
-LOGIN_URL = "/core4/login"
 
 
 class CoreApplication(tornado.web.Application):
@@ -36,17 +35,19 @@ class CoreApiContainer(CoreBase):
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
-        kwargs["default_handler_class"] = DefaultHandler
-        kwargs["default_handler_args"] = ()
-        kwargs["login_url"] = LOGIN_URL
-        kwargs["log_function"] = self._log
         self._settings = kwargs
         self._rules = handlers or kwargs.get("handlers", [])
         self._pool = None
         self.default_routes = [
             ("/login", LoginHandler),
+            ("/logout", LogoutHandler),
             ("/profile", ProfileHandler),
         ]
+        kwargs["login_url"] = self.get_root() + "/login"
+        kwargs["default_handler_class"] = DefaultHandler
+        kwargs["default_handler_args"] = ()
+        kwargs["cookie_secret"] = "123456"
+        kwargs["log_function"] = self._log
 
     def _log(self, handler):
         if handler.get_status() < 400:

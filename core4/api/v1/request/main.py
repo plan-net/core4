@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-
+import datetime
 import jwt
 import mimeparse
 import pandas as pd
@@ -9,7 +9,7 @@ import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
-
+import base64
 import core4.util
 from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
@@ -18,59 +18,156 @@ from core4.base.main import CoreBase
 tornado.escape.json_encode = json_encode
 
 
-class CoreRequestHandler(CoreBase, RequestHandler):
+class BaseHandler(CoreBase):
+    protected = True
     title = None
     author = None
-    protected = True
-    supported_types = [
-        "text/html",
-        "text/plain",
-        "text/csv",
-        "application/json"
-    ]
 
-    def __init__(self, *args, **kwargs):
-        CoreBase.__init__(self)
-        RequestHandler.__init__(self, *args, **kwargs)
-        self.error_html_page = self.config.api.error_html_page
-        self.error_text_page = self.config.api.error_text_page
-
-    def prepare(self):
+    async def prepare(self):
         """
-        This method prepares the handler with
+        Prepares the handler with
+
         * setting the ``request_id``
         * preparing the combined parsing of query and body arguments
-        * verify access permissions
+        * authenticate and authorize the user
         """
         self.identifier = ObjectId()
         if not (self.request.query_arguments or self.request.body_arguments):
             if self.request.body:
-                body_arguments = json_decode(
-                    self.request.body.decode("UTF-8"))
+                body_arguments = json_decode(self.request.body.decode("UTF-8"))
                 for k, v in body_arguments.items():
                     self.request.arguments.setdefault(k, []).append(v)
         if self.protected:
-            self.current_user = self.verify_token()
-            if self.current_user is None or not self.verify_access():
-                self.write_error(401)
-                # self.finish()
+            user = await self.verify_user()
+            if user:
+                self.current_user = user.name
+                if self.verify_access():
+                    return
+            self.redirect(self.get_login_url())
+            # self.write_error(401)
 
-    def verify_token(self):
+    async def verify_user(self):
+        """
+        Extracts client's authorization from
+
+        # Basic Authorization header, or from
+        # Bearer Authorization header, or from
+        # token parameter (query string or json body), or from
+        # passed username and password parameters (query string or json body)
+
+        :return:  verified username
+        """
         auth_header = self.request.headers.get('Authorization')
+        username = password = None
         token = None
+        source = None
         if auth_header is not None:
             auth_type = auth_header.split()[0].lower()
-            if auth_type == "bearer":
+            if auth_type == "basic":
+                auth_decoded = base64.decodebytes(
+                    auth_header[6:].encode("utf-8"))
+                username, password = auth_decoded.decode(
+                    "utf-8").split(':', 2)
+                source = ("username", "Auth Basic")
+            elif auth_type == "bearer":
                 token = auth_header[7:]
+                source = ("token", "Auth Bearer")
         else:
             token = self.get_argument("token", default=None)
+            username = self.get_argument("username", None)
+            password = self.get_argument("password", None)
+            if token is not None:
+                source = ("token", "args")
+            elif username and password:
+                source = ("username", "args")
+            else:
+                source = ("token", "cookie")
+                token = self.get_secure_cookie("token")
         if token:
             payload = self._parse_token(token)
-            self.token_exp = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(
-                payload["exp"]
-            ))
-            return payload.get("name")
+            username = payload.get("name")
+            try:
+                # user = await self.load_user(username)
+                user = Role().load_one(name=username)
+            except:
+                self.logger.warning(
+                    "failed to load [%s] by [%s] from [%s]", username, *source)
+            else:
+                self.token_exp = datetime.datetime.fromtimestamp(
+                    payload["exp"])
+                renew = self.config.api.token.refresh
+                if (core4.util.now()
+                        - datetime.datetime.fromtimestamp(
+                            payload["timestamp"])).total_seconds() > renew:
+                    self._create_token(username)
+                    self.logger.debug("refresh token [%s] to [%s]", username,
+                                      self.token_exp)
+                self.logger.debug(
+                    "successfully loaded [%s] by [%s] from [%s] expiring [%s]",
+                    username, *source, self.token_exp)
+                return user
+        elif username and password:
+            try:
+                # user = await self.load_user(username)
+                user = Role().load_one(name=username)
+            except:
+                self.logger.warning(
+                    "failed to load [%s] by [%s] from [%s]", username, *source)
+            else:
+                if user.verify_password(password):
+                    self.token_exp = None
+                    return user
         return None
+
+    def _create_token(self, username):
+        secs = self.config.api.token.expiration
+        payload = {
+            'name': username,
+            'timestamp': core4.util.now().timestamp()
+        }
+        token = self._create_jwt(secs, payload)
+        self.set_secure_cookie("token", token)
+        self.set_header("token", token)
+        return token
+
+    def _create_jwt(self, secs, payload):
+        self.logger.debug("set token lifetime to [%d]", secs)
+        expires = datetime.timedelta(
+            seconds=secs)
+        secret = self.config.api.token.secret
+        algorithm = self.config.api.token.algorithm
+        self.token_exp = (core4.util.now() + expires).replace(microsecond=0)
+        payload["exp"] = self.token_exp
+        token = jwt.encode(payload, secret, algorithm)
+        return token.decode("utf-8")
+
+    # def verify_token(self):
+    #     """
+    #     Authenticates the user with
+    #
+    #     # Basic Authorization header, or from
+    #     # Bearer Authorization header, or from
+    #     # token parameter (query string or json body), or from
+    #     # passed username and password parameters (query string or json body)
+    #
+    #     :return:  verified username
+    #     """
+    #     auth_header = self.request.headers.get('Authorization')
+    #     token = self.get_argument("token", default=None)
+    #     if auth_header is not None:
+    #         auth_type = auth_header.split()[0].lower()
+    #         if auth_type == "bearer":
+    #             token = auth_header[7:]
+    #     elif token is None:
+    #         token = self.get_secure_cookie("token")
+    #         self.logger.info("encountered cookie [%s]", token)
+    #     if token:
+    #         payload = self._parse_token(token)
+    #         self.token_exp = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(
+    #             payload["exp"]
+    #         ))
+    #         return payload.get("name")
+    #     return None
 
     def _parse_token(self, token):
         secret = self.config.api.token.secret
@@ -80,6 +177,25 @@ class CoreRequestHandler(CoreBase, RequestHandler):
                               verify=True)
         except jwt.ExpiredSignatureError:
             return {}
+
+    def verify_access(self):
+        raise NotImplementedError
+
+
+class CoreRequestHandler(BaseHandler, RequestHandler):
+    supported_types = [
+        "text/html",
+        "text/plain",
+        "text/csv",
+        "application/json"
+    ]
+
+    def __init__(self, *args, **kwargs):
+        BaseHandler.__init__(self)
+        RequestHandler.__init__(self, *args, **kwargs)
+        self.error_html_page = self.config.api.error_html_page
+        self.error_text_page = self.config.api.error_text_page
+
 
     def verify_access(self):
         try:

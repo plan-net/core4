@@ -91,6 +91,7 @@ api:
     expiration: 28800  # 8h
   token:
     expiration: 28800  # 8h
+    refresh: 3600  # 1h
     algorithm: HS512
     secret: secret
   admin_username: admin

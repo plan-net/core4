@@ -46,10 +46,11 @@ class LoginHandler(CoreRequestHandler):
         await self.post()
 
     async def post(self):
-        username = await self.verify_user()
-        if username:
-            token = self._create_token(username)
-            self.current_user = username
+        user = await self.verify_user()
+        if user:
+            token = self._create_token(user.name)
+            self.current_user = user.name
+            user.login()
             return self.reply({
                 "token": token
             })
@@ -57,55 +58,6 @@ class LoginHandler(CoreRequestHandler):
         self.set_status(401)
         if self.wants_json():
             self.write_error(401)
-
-    def _create_token(self, username):
-        secs = self.config.api.token.expiration
-        payload = {
-            'name': username,
-        }
-        return self._create_jwt(secs, payload)
-
-    def _create_jwt(self, secs, payload):
-        self.logger.debug("set token lifetime to [%d]", secs)
-        expires = datetime.timedelta(
-            seconds=secs)
-        secret = self.config.api.token.secret
-        algorithm = self.config.api.token.algorithm
-        payload["exp"] = core4.util.now() + expires
-        token = jwt.encode(payload, secret, algorithm)
-        return token.decode("utf-8")
-
-    async def verify_user(self):
-        auth_header = self.request.headers.get('Authorization')
-        username = password = None
-        token = None
-        if auth_header is not None:
-            auth_type = auth_header.split()[0].lower()
-            if auth_type == "basic":
-                auth_decoded = base64.decodebytes(
-                    auth_header[6:].encode("utf-8"))
-                username, password = auth_decoded.decode(
-                    "utf-8").split(':', 2)
-            elif auth_type == "bearer":
-                token = auth_header[7:]
-        else:
-            token = self.get_argument("token", default=None)
-            username = self.get_argument("username", None)
-            password = self.get_argument("password", None)
-        if token:
-            payload = self._parse_token(token)
-            return payload.get("name")
-        if username and password:
-            try:
-                #user = await self.load_user(username)
-                user = Role().load_one(name=username)
-            except:
-                self.logger.warning("username [%s] not found", username)
-            else:
-                if user.verify_password(password):
-                    user.login()
-                    return username
-        return None
 
     def put(self):
         email = self.get_argument("email", None)

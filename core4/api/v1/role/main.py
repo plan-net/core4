@@ -392,12 +392,12 @@ class Role(core4.base.CoreBase):
 
     def login(self):
         """
-        :return: ``True`` for success, else ``False``
+        Updates the ``last_login`` attribute in ``sys.role``.
         """
         self.last_login = core4.util.now()
         self.config.sys.role.update_one(
             {"_id": self._id}, {"$set": {"last_login": self.last_login}})
-        self.logger.info("login user [%s] with _id [%s]", self.name, self._id)
+        self.logger.debug("login user [%s] with _id [%s]", self.name, self._id)
 
     def verify_password(self, password):
         """
