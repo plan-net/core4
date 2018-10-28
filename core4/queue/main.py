@@ -256,7 +256,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 }
             }
         )
-        self.make_stat()
+        #self.make_stat()
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be remove at [%s]", _id, at)
@@ -309,7 +309,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 }
             }
         )
-        self.make_stat()
+        #self.make_stat()
         return ret.modified_count == 1
 
     def _restart_stopped(self, _id):
@@ -354,7 +354,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 }
             }
         )
-        self.make_stat()
+        #self.make_stat()
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be killed at [%s]", _id, at)
@@ -459,7 +459,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
             raise RuntimeError(
                 "failed to update job [{}] state [%s]".format(
                     job._id, job.state))
-        self.make_stat()
 
     def _add_exception(self, job):
         # internal method used to add exception information to .last_error
@@ -529,6 +528,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "query_at", "trial")
+        self.make_stat()
         self.unlock_job(job._id)
         job.logger.info("done execution with [deferred] "
                         "after [%d] sec. and [%s] to go: %s", runtime,
@@ -550,6 +550,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         runtime = self._finish(job, core4.queue.job.STATE_INACTIVE)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "trial")
+        self.make_stat()
         self.unlock_job(job._id)
         job.logger.error("done execution with [inactive] "
                          "after [%d] sec. and [%d] trials in [%s]", runtime,
@@ -581,6 +582,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "attempts_left", "query_at", "trial")
+        self.make_stat()
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] "
                          "after [%d] sec. and [%d] attempts to go: %s\n%s",
@@ -613,6 +615,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         job.__dict__["removed_at"] = None
         self._update_job(job, "state", "runtime", "locked",
                          "trial", "last_error", "removed_at")
+        self.make_stat()
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
