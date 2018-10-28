@@ -22,7 +22,7 @@ class CoreCollection:
 
     def __init__(
             self, scheme, hostname, database, collection, username=None,
-            password=None):
+            password=None, async=False):
         """
         Instantiates a CoreCollection object with
 
@@ -40,6 +40,7 @@ class CoreCollection:
         self.username = username
         self.password = password
         self._connection = None
+        self.async = async
         if self.scheme not in SCHEME:
             raise core4.error.Core4ConfigurationError(
                 "unknown scheme [{}]".format(self.scheme))

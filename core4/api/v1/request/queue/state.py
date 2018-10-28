@@ -1,10 +1,12 @@
 from tornado import gen
-from tornado.ioloop import PeriodicCallback
 from tornado.iostream import StreamClosedError
 
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.util import json_encode
 from core4.base import CoreBase
+
+QUERY_SLEEP = 1.
+PUBLISH_SLEEP = 0.5
 
 
 class QueueStatus(CoreBase):
@@ -12,25 +14,26 @@ class QueueStatus(CoreBase):
 
     def __init__(self):
         super().__init__()
-        self._gen = self.get_stat()
         self.data = None
+        self.sys_stat = self.config.sys.stat.connect_async()
 
-    def get_stat(self):
-        doc = self.config.sys.stat.find_one(
+    async def update(self):
+        doc = await self.sys_stat.find_one(
             sort=[("_id", -1)], projection=["_id"])
-        if doc is None:
-            last = None
-        else:
+        if doc:
             last = doc["_id"]
+        else:
+            last = None
         while True:
-            update = list(self.config.sys.stat.find(
-                {"_id": {"$gt": last}}, sort=[("_id", 1)]))
+            update = []
+            cursor = self.sys_stat.find(
+                {"_id": {"$gt": last}}, sort=[("_id", 1)])
+            async for doc in cursor:
+                update.append(doc)
             if update:
                 last = update[-1]["_id"]
-            yield update
-
-    def update(self):
-        self.data = next(self._gen)
+            self.data = update
+            await gen.sleep(QUERY_SLEEP)
 
 
 class QueueHandler(CoreRequestHandler):
@@ -42,7 +45,6 @@ class QueueHandler(CoreRequestHandler):
         self.exit = False
 
     async def publish(self, data):
-        """Pushes data to a listener."""
         try:
             js = json_encode(data, indent=None, separators=(',', ':')) + "\n"
             self.write(js)
@@ -58,15 +60,11 @@ class QueueHandler(CoreRequestHandler):
             self.exit = True
 
     async def get(self):
-        step = self.publish(self.source.data)
-        await step
+        await self.publish(self.source.data)
+        last = self.source.data
         while not self.exit:
-            if self.source.data:
-                step = self.publish(self.source.data)
-                await step
-            await gen.sleep(1)
+            if self.source.data != last:
+                await self.publish(self.source.data)
+                last = self.source.data
+            await gen.sleep(PUBLISH_SLEEP)
         self.finish()
-
-
-publisher = QueueStatus()
-queue_state = PeriodicCallback(lambda: publisher.update(), 1000.)
