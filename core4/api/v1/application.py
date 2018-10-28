@@ -46,7 +46,7 @@ class CoreApiContainer(CoreBase):
             ("/logout", LogoutHandler),
             ("/profile", ProfileHandler),
         ]
-        #kwargs["login_url"] = self.get_root() + "/login"
+        # kwargs["login_url"] = self.get_root() + "/login"
         kwargs["default_handler_class"] = DefaultHandler
         kwargs["default_handler_args"] = ()
         kwargs["cookie_secret"] = "123456"
@@ -60,7 +60,8 @@ class CoreApiContainer(CoreBase):
                 if not kwargs["static_url_prefix"].endswith("/"):
                     kwargs["static_url_prefix"] += "/"
                 if not kwargs["static_url_prefix"].startswith("/"):
-                    kwargs["static_url_prefix"] = kwargs["static_url_prefix"][1:]
+                    kwargs["static_url_prefix"] = kwargs[
+                                                      "static_url_prefix"][1:]
             kwargs["static_handler_class"] = CoreStaticFileHandler
         self._settings = kwargs
 
