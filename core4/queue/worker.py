@@ -259,6 +259,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             if self.queue.maintenance(project):
                 self.logger.debug(
                     "skipped job [%s] in maintenance", data["_id"])
+                continue
 
             # check system resources
             cur_stats = self.avg_stats()
