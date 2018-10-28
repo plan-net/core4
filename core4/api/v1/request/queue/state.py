@@ -18,23 +18,26 @@ class QueueStatus(CoreBase):
         self.sys_stat = self.config.sys.stat.connect_async()
 
     async def update(self):
-        doc = await self.sys_stat.find_one(
-            sort=[("_id", -1)], projection=["_id"])
+        cur = self.sys_stat.find().sort("_id", -1).limit(1)
+        doc = await cur.to_list(length=1)
         if doc:
-            last = doc["_id"]
+            last = doc[-1]["_id"]
+            self.data = doc
+            self.logger.debug("got initial %s", self.data)
         else:
             last = None
         while True:
+            nxt = gen.sleep(QUERY_SLEEP)
             update = []
             cursor = self.sys_stat.find(
-                {"_id": {"$gt": last}}, sort=[("_id", 1)])
+                {"_id": {"$gt": last}}).sort("_id", 1)
             async for doc in cursor:
                 update.append(doc)
             if update:
+                self.logger.debug("%s got %s", last, update)
                 last = update[-1]["_id"]
-            self.data = update
-            await gen.sleep(QUERY_SLEEP)
-
+                self.data = update
+            await nxt
 
 class QueueHandler(CoreRequestHandler):
 
@@ -46,8 +49,9 @@ class QueueHandler(CoreRequestHandler):
 
     async def publish(self, data):
         try:
-            js = json_encode(data, indent=None, separators=(',', ':')) + "\n"
-            self.write(js)
+            for doc in data:
+                js = json_encode(doc, indent=None, separators=(',', ':'))
+                self.write(js + "\n\n")
             self.logger.info("serving [%s] with [%d] records, [%d] byte",
                              self.current_user, len(data), len(js))
             f = self.flush()
