@@ -160,6 +160,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 raise RuntimeError(
                     "failed to update job [{}] state [{}]".format(
                         doc["_id"], core4.queue.job.STATE_FAILED))
+            self.queue.make_stat()
         else:
             if job.inactive_at and job.inactive_at <= self.at:
                 self.queue.set_inactivate(job)
@@ -326,6 +327,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         if ret.raw_result["n"] != 1:
             raise RuntimeError(
                 "failed to update job [{}] state [starting]".format(job._id))
+        self.queue.make_stat()
         for k, v in update.items():
             job.__dict__[k] = v
         try:
@@ -362,6 +364,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     raise RuntimeError(
                         "failed to update job [{}] pid [{}]".format(
                             job._id, proc.pid))
+                self.queue.make_stat()
                 job_id = str(job._id).encode("utf-8")
                 proc.stdin.write(bytes(job_id))
                 proc.stdin.close()
@@ -407,6 +410,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     if ret.raw_result["n"] != 1:
                         raise RuntimeError(
                             "failed to remove job [{}]".format(doc["_id"]))
+                    self.queue.make_stat()
                     self.logger.info(
                         "successfully journaled and removed job [%s]",
                         doc["_id"])
@@ -467,6 +471,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set non-stop job [%s]", doc["_id"])
+                self.queue.make_stat()
 
     def flag_zombie(self, doc):
         """
@@ -495,6 +500,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set zombie job [%s]", doc["_id"])
+                self.queue.make_stat()
 
     def check_pid(self, doc):
         (found, proc) = self.pid_exists(doc)

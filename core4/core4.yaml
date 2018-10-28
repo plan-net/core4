@@ -17,6 +17,7 @@ sys:
   job: !connect mongodb://sys.job
   lock: !connect mongodb://sys.lock
   stdout: !connect mongodb://sys.stdout
+  stat: !connect mongodb://sys.stat
   userdb: user!
 
 # system folders

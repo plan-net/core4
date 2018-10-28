@@ -9,14 +9,14 @@ import traceback
 
 import pymongo.errors
 from datetime import timedelta
-
+import pymongo.collection
+import pymongo.write_concern
 import core4.error
 import core4.service.setup
 import core4.util
-from core4.queue.query import QueryMixin
 from core4.base import CoreBase
-from core4.queue.query import QueryMixin
 from core4.queue.job import STATE_PENDING
+from core4.queue.query import QueryMixin
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
                  core4.queue.job.STATE_FAILED)
@@ -26,7 +26,6 @@ STATE_STOPPED = (core4.queue.job.STATE_KILLED,
 
 
 class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
-
     """
     Use this class for general queue management, for example::
 
@@ -89,6 +88,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
             raise core4.error.CoreJobExists(
                 "job [{}] exists with args {}".format(
                     job.qual_name(), job.args))
+        self.make_stat()
         job.__dict__["_id"] = ret.inserted_id
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
@@ -195,7 +195,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                  ``False``
         """
         if project is None:
-            return self.config.sys.worker.count_documents({"_id": "__maintenance__"}) > 0
+            return self.config.sys.worker.count_documents(
+                {"_id": "__maintenance__"}) > 0
         if isinstance(project, bool):
             if project:
                 doc = self.config.sys.worker.find_one(
@@ -211,7 +212,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
             "_id": "__project__",
             "maintenance": project
         }) > 0
-
 
     def halt(self, at=None, now=None):
         """
@@ -256,6 +256,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 }
             }
         )
+        self.make_stat()
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be remove at [%s]", _id, at)
@@ -308,6 +309,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 }
             }
         )
+        self.make_stat()
         return ret.modified_count == 1
 
     def _restart_stopped(self, _id):
@@ -326,6 +328,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                                            **doc)
                     job.enqueued["child_id"] = new_job._id
                     self.journal(job.serialise())
+                    self.make_stat()
                     return new_job._id
         return None
 
@@ -351,6 +354,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 }
             }
         )
+        self.make_stat()
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be killed at [%s]", _id, at)
@@ -455,6 +459,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
             raise RuntimeError(
                 "failed to update job [{}] state [%s]".format(
                     job._id, job.state))
+        self.make_stat()
 
     def _add_exception(self, job):
         # internal method used to add exception information to .last_error
@@ -495,6 +500,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         if ret.deleted_count != 1:
             raise RuntimeError(
                 "failed to remove job [{}] from queue".format(job._id))
+        self.make_stat()
         self.unlock_job(job._id)
         job.logger.info("done execution with [complete] "
                         "after [%d] sec.", runtime)
@@ -611,7 +617,17 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
 
+    def make_stat(self):
+        if not "sys_stat" in self.__dict__:
+            coll = self.config.sys.stat
+            self.sys_stat = pymongo.collection.Collection(
+                coll.connection[coll.database], coll.collection,
+                write_concern=pymongo.write_concern.WriteConcern(w=0))
+        state = self.get_queue_count()
+        state["timestamp"] = core4.util.now()
+        self.sys_stat.insert_one(state)
+
 
 if __name__ == '__main__':
     q = CoreQueue()
-    q.get_worker()
+    q.make_stat()

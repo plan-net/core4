@@ -194,3 +194,45 @@ class QueryMixin:
             return doc["stdout"]
         return None
 
+    def get_queue_count(self):
+        """
+        Retrieves aggregated information about ``sys.queue`` state. This is
+
+        * ``n`` - the number of jobs in the given state
+        * ``state`` - job state
+        * ``flags`` - job flags ``zombie``, ``wall``, ``removed`` and
+          ``killed``
+
+        :return: dict
+        """
+        cur = self.config.sys.queue.aggregate([
+            {
+                '$match': {
+                    'state': {'$ne': 'complete'}
+                },
+            },
+            {
+                '$project': {
+                    "state": 1
+                },
+            },
+            {
+                '$group': {
+                    '_id': {
+                        'state': '$state'
+                    },
+                    'n': {'$sum': 1}
+                }
+            },
+            {
+                '$project': {
+                    "state": "$_id.state",
+                    "n": "$n",
+                    "_id": 0,
+                },
+            }
+        ])
+        data = list(cur)
+        return dict([(s["state"], s["n"]) for s in data])
+
+
