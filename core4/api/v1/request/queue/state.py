@@ -18,24 +18,26 @@ class QueueStatus(CoreBase):
         self.sys_stat = self.config.sys.stat.connect_async()
 
     async def update(self):
-        cur = self.sys_stat.find().sort("_id", -1).limit(1)
+        cur = self.sys_stat.find(projection={"_id": 0}).sort(
+            "timestamp", -1).limit(1)
         doc = await cur.to_list(length=1)
         if doc:
-            last = doc[-1]["_id"]
+            last = doc[-1]["timestamp"]
             self.data = doc
-            self.logger.debug("got initial %s", self.data)
+            #self.logger.debug("got initial %s", self.data)
         else:
             last = None
         while True:
             nxt = gen.sleep(QUERY_SLEEP)
             update = []
             cursor = self.sys_stat.find(
-                {"_id": {"$gt": last}}).sort("_id", 1)
+                {"timestamp": {"$gt": last}}, projection={"_id": 0}).sort(
+                "timestamp", 1)
             async for doc in cursor:
                 update.append(doc)
+                last = doc["timestamp"]
             if update:
-                self.logger.debug("%s got %s", last, update)
-                last = update[-1]["_id"]
+                #self.logger.debug("%s got %s", last, update)
                 self.data = update
             await nxt
 
@@ -49,18 +51,21 @@ class QueueHandler(CoreRequestHandler):
 
     async def publish(self, data):
         try:
-            for doc in data:
-                js = json_encode(doc, indent=None, separators=(',', ':'))
-                self.write(js + "\n\n")
-            self.logger.info("serving [%s] with [%d] records, [%d] byte",
-                             self.current_user, len(data), len(js))
-            f = self.flush()
-            await f
+            bytes = 0
+            if data:
+                for doc in data:
+                    js = json_encode(doc, indent=None, separators=(',', ':'))
+                    self.write(js + "\n\n")
+                    bytes += len(js)
+                self.logger.info("serving [%s] with [%d] records, [%d] byte",
+                                 self.current_user, len(data), bytes)
+                f = self.flush()
+                await f
         except StreamClosedError:
             self.logger.info("stream closed")
             self.exit = True
-        except:
-            self.logger.error("stream error")
+        except Exception as exc:
+            self.logger.error("stream error", exc_info=True)
             self.exit = True
 
     async def get(self):

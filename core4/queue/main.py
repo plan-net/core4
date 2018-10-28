@@ -627,7 +627,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 coll.connection[coll.database], coll.collection,
                 write_concern=pymongo.write_concern.WriteConcern(w=0))
         state = self.get_queue_count()
-        state["timestamp"] = core4.util.now()
+        state["timestamp"] = core4.util.now().timestamp()
         self.sys_stat.insert_one(state)
 
 
