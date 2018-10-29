@@ -30,8 +30,12 @@ class QueueStatus(CoreBase):
         while True:
             nxt = gen.sleep(QUERY_SLEEP)
             update = []
+            if last:
+                f = {"timestamp": {"$gt": last}}
+            else:
+                f = {}
             cursor = self.sys_stat.find(
-                {"timestamp": {"$gt": last}}, projection={"_id": 0}).sort(
+                filter=f, projection={"_id": 0}).sort(
                 "timestamp", 1)
             async for doc in cursor:
                 update.append(doc)
@@ -64,7 +68,7 @@ class QueueHandler(CoreRequestHandler):
         except StreamClosedError:
             self.logger.info("stream closed")
             self.exit = True
-        except Exception as exc:
+        except Exception:
             self.logger.error("stream error", exc_info=True)
             self.exit = True
 
