@@ -174,5 +174,5 @@ class CoreApiServerTool(core4.base.main.CoreBase,
 
 def serve(*args, **kwargs):
     setup = core4.service.setup.CoreSetup()
-    setup.make_role()
+    setup.make_all()
     CoreApiServerTool().serve(*args, **kwargs)
