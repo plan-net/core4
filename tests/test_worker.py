@@ -808,3 +808,71 @@ def test_project_maintenance(queue, worker):
     queue.leave_maintenance("core4")
     worker.wait_queue()
     assert queue.config.sys.queue.count_documents({}) == 0
+
+@pytest.mark.timeout(30)
+def test_no_resources(queue):
+    job = queue.enqueue(core4.queue.job.DummyJob)
+    worker1 = WorkerNoCPU(name="testRes_1")
+    worker2 = WorkerNoCPU(name="testRes_2")
+    worker3 = WorkerNoRAM(name="testRes_3")
+    worker4 = WorkerNoRAM(name="testRes_4")
+    worker1.work_jobs()
+    worker2.work_jobs()
+    worker3.work_jobs()
+    worker4.work_jobs()
+    assert queue.config.sys.queue.count_documents({"state": "pending"}) == 1
+    worker5 = WorkerHasRes(name="testRes")
+    worker5.work_jobs()
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(1)
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "skipped job" in d["message"]]) == 4
+    assert sum([1 for d in data if "start execution" in d["message"]]) == 1
+
+class WorkerNoCPU(core4.queue.worker.CoreWorker):
+    def __init__(self, name):
+        super().__init__(name)
+    def avg_stats(self):
+        return (100,1024)
+
+class WorkerNoRAM(core4.queue.worker.CoreWorker):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def avg_stats(self):
+        return (0, 240)
+
+@pytest.mark.timeout(30)
+def test_no_resources_force(queue):
+    job = queue.enqueue(core4.queue.job.DummyJob, force=True)
+    worker = WorkerNoCPU(name="testRes_1")
+    worker.work_jobs()
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(1)
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "start execution" in d["message"]]) == 1
+    job2 = queue.enqueue(core4.queue.job.DummyJob, force=True, node="testRes2")
+    worker2 = WorkerNoRAM(name="testRes2")
+    worker2.work_jobs()
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(1)
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "start execution" in d["message"]]) == 2
+
+@pytest.mark.timeout(30)
+def test_worker_has_resources(queue):
+    job = queue.enqueue(core4.queue.job.DummyJob)
+    worker = WorkerNoCPU(name="testRes")
+    worker.start_job(job)
+    while queue.config.sys.queue.count_documents({}) > 0:
+        time.sleep(1)
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "start execution" in d["message"]]) == 1
+
+
+class WorkerHasRes(core4.queue.worker.CoreWorker):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def avg_stats(self):
+        return (70, 1024)

@@ -32,6 +32,7 @@ import psutil
 import pymongo
 import time
 from datetime import timedelta
+import collections
 
 from core4.queue.daemon import CoreDaemon
 import core4.queue.query
@@ -63,6 +64,13 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.steps = STEPS
         self.plan = self.create_plan()
         self.cycle.update(dict([(s, 0) for s in self.steps]))
+        self.stats_collector = collections.deque(maxlen=
+                                                 round(self.config.worker.avg_stats_secs
+                                                       / self.config.worker.execution_plan.collect_stats))
+        # populate with first resource-tuple.
+        self.stats_collector.append(
+            (min(psutil.cpu_percent(percpu=True)),
+             psutil.virtual_memory()[4]/2.**20))
 
     def cleanup(self):
         """
@@ -250,19 +258,32 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             if self.queue.maintenance(project):
                 self.logger.debug(
                     "skipped job [%s] in maintenance", data["_id"])
-                continue
+
+            # check system resources
+            cur_stats = self.avg_stats()
+            if ((cur_stats[0] > self.config.worker.max_cpu)
+                    or (cur_stats[1] < self.config.worker.min_free_ram)):
+                if not data["force"]:
+                    self.logger.info(
+                        'skipped job [%s] with _id [%s]: '
+                        'not enough resources available',
+                        data["name"], data["_id"])
+                    return None
+
+            # acquire lock
             if not self.queue.lock_job(self.identifier, data["_id"]):
                 self.logger.debug('skipped job [%s] due to lock failure',
                                   data["_id"])
                 continue
+
             self.offset = data["_id"]
             self.logger.debug('successfully reserved [%s]', data["_id"])
             return data
 
     def start_job(self, job):
         """
-        Spawns the passed job by launching a seperate Python interpreter and
-        communicating the job ``_id``.
+        Spawns the passed job if there are enough free resources by launching
+        a seperate Python interpreter and communicating the job ``_id``.
 
         This method updates the job ``state``, ``started_at`` timestamp,
         increases the ``trial``, sets the ``locked`` property, calculates the
@@ -346,6 +367,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 proc.stdin.close()
                 self.logger.debug("successfully launched job [%s] with [%s]",
                                   job._id, executable)
+
+
 
     def fail_hard(self, job):
         """
@@ -514,7 +537,11 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         return (False, proc)
 
     def collect_stats(self):
-        # todo: requires implementation
+        """
+        Collects cpu and memory, inserts it as tuple into self.stats_collector
+        cpu is computed via CPU-Utilization/(idle-time+io-wait)
+        free RAM is in MB.
+        """
         ret = self.config.sys.worker.update_one(
             {"_id": self.identifier},
             update={
@@ -525,3 +552,18 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         )
         if ret.raw_result["n"] != 1:
             raise RuntimeError("failed to update heartbeat")
+        # psutil already accounts for idle and io-wait (idle and waiting for IO), we are not interested in both.
+        self.stats_collector.append(
+            (min(psutil.cpu_percent(percpu=True)),
+             psutil.virtual_memory()[4]/2.**20))
+
+    def avg_stats(self):
+        """
+        :return: tuple of average cpu and memory over the time configured in
+                 config.worker.avg_stats_secs.
+        """
+        cpu = sum(c for c, m in self.stats_collector)
+        mem = sum(m for c, m in self.stats_collector)
+        div = len(self.stats_collector)
+        return cpu / div, mem / div
+
