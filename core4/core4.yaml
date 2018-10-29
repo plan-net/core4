@@ -85,6 +85,7 @@ api:
     cookie_secret: ~  # must be set
   crt_file: ~
   key_file: ~
+  allow_origin: "*"
   port: 5001
   contact: mail@mailer.com
   error_html_page: ./_static/error.html

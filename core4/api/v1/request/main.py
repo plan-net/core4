@@ -1,7 +1,7 @@
 import asyncio
 import base64
 import traceback
-
+import sys
 import datetime
 import jwt
 import mimeparse
@@ -23,6 +23,17 @@ class BaseHandler(CoreBase):
     protected = True
     title = None
     author = None
+
+    def set_default_headers(self):
+        self.set_header("access-control-allow-origin",
+                        self.config.api.allow_origin)
+        self.set_header("Access-Control-Allow-Headers",
+                        "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods',
+                        'GET, POST, PUT, DELETE, OPTIONS')
+        self.set_header(
+            "Access-Control-Allow-Headers",
+            "access-control-allow-origin,authorization,content-type")
 
     async def prepare(self):
         """
@@ -270,7 +281,7 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
                 chunk = chunk.to_string()
             else:
                 chunk = chunk.to_dict('rec')
-        if isinstance(chunk, dict) or self.wants_json():
+        if isinstance(chunk, (dict, list)) or self.wants_json():
             chunk = self._build_json(
                 message=self._reason,
                 code=self.get_status(),
@@ -305,6 +316,8 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
             var["error"] = "\n".join(error)
         elif "exc_info" in kwargs:
             var["error"] = str(kwargs["exc_info"][1])
+        elif "error" in kwargs:
+            var["error"] = kwargs["error"]
         if self.wants_json():
             self.finish(self._build_json(**var))
         elif self.wants_html():
@@ -313,7 +326,10 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
             self.render(self.error_text_page, **var)
 
     def abort(self, status_code, message=None):
-        raise HTTPError(status_code, message or "unknown")
+        log_message = "%d %s - %s" %(status_code, self.request.method,
+                                     message or "unknown")
+        self.write_error(status_code, error=log_message, exc_info=sys.exc_info())
+        raise HTTPError(status_code, log_message)
 
 # todo: how to handle warnings, e.g. the signature has expired as an additional warning to 401 with error "Unauthorized"
 # todo: request handler default properties management by configuration
