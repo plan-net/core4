@@ -161,22 +161,26 @@ class QueryMixin:
         """
         return self.config.sys.queue.find(
             filter=kwargs,
-            projection={
-                '_id': 1,
-                'attempts_left': 1,
-                'attempts': 1,
-                'started_at': 1,
-                'enqueued': 1,
-                'priority': 1,
-                'args': 1,
-                'killed_at': 1,
-                'removed_at': 1,
-                'zombie_at': 1,
-                'wall_at': 1,
-                'name': 1,
-                'state': 1,
-                'locked': 1},
+            projection=self.project_job_listing(),
             sort=[('_id', 1)])
+
+    def project_job_listing(self):
+        return {
+            '_id': 1,
+            'attempts_left': 1,
+            'attempts': 1,
+            'started_at': 1,
+            'enqueued': 1,
+            'priority': 1,
+            'args': 1,
+            'killed_at': 1,
+            'removed_at': 1,
+            'zombie_at': 1,
+            'wall_at': 1,
+            'name': 1,
+            'state': 1,
+            'locked': 1
+        }
 
     def get_job_stdout(self, _id):
         """
@@ -194,18 +198,8 @@ class QueryMixin:
             return doc["stdout"]
         return None
 
-    def get_queue_count(self):
-        """
-        Retrieves aggregated information about ``sys.queue`` state. This is
-
-        * ``n`` - the number of jobs in the given state
-        * ``state`` - job state
-        * ``flags`` - job flags ``zombie``, ``wall``, ``removed`` and
-          ``killed``
-
-        :return: dict
-        """
-        cur = self.config.sys.queue.aggregate([
+    def pipeline_queue_count(self):
+        return [
             {
                 '$match': {
                     'state': {'$ne': 'complete'}
@@ -231,8 +225,19 @@ class QueryMixin:
                     "_id": 0,
                 },
             }
-        ])
+        ]
+
+    def get_queue_count(self):
+        """
+        Retrieves aggregated information about ``sys.queue`` state. This is
+
+        * ``n`` - the number of jobs in the given state
+        * ``state`` - job state
+        * ``flags`` - job flags ``zombie``, ``wall``, ``removed`` and
+          ``killed``
+
+        :return: dict
+        """
+        cur = self.config.sys.queue.aggregate(self.pipeline_queue_count())
         data = list(cur)
         return dict([(s["state"], s["n"]) for s in data])
-
-
