@@ -44,11 +44,10 @@ class BaseHandler(CoreBase):
         * authenticate and authorize the user
         """
         self.identifier = ObjectId()
-        if not (self.request.query_arguments or self.request.body_arguments):
-            if self.request.body:
-                body_arguments = json_decode(self.request.body.decode("UTF-8"))
-                for k, v in body_arguments.items():
-                    self.request.arguments.setdefault(k, []).append(v)
+        if self.request.body:
+            body_arguments = json_decode(self.request.body.decode("UTF-8"))
+            for k, v in body_arguments.items():
+                self.request.arguments.setdefault(k, []).append(v)
         if self.protected:
             user = await self.verify_user()
             if user:
