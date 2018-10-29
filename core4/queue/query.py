@@ -176,6 +176,8 @@ class QueryMixin:
             'killed_at': 1,
             'removed_at': 1,
             'zombie_at': 1,
+            'finished_at': 1,
+            'runtime': 1,
             'wall_at': 1,
             'name': 1,
             'state': 1,
