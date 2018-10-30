@@ -372,7 +372,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         :return: ``True`` if reservation succeeded, else ``False``
         """
         try:
-            self.config.sys.lock.insert_one({"_id": _id, "worker": identifier})
+            self.config.sys.lock.insert_one({"_id": _id, "owner": identifier})
             return True
         except pymongo.errors.DuplicateKeyError:
             return False

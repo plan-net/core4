@@ -76,7 +76,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         """
         General housekeeping method of the worker.
         """
-        ret = self.config.sys.lock.delete_many({"worker": self.identifier})
+        ret = self.config.sys.lock.delete_many({"owner": self.identifier})
         self.logger.info(
             "cleanup removed [%d] sys.lock records", ret.raw_result["n"])
 
