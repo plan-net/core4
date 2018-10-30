@@ -17,7 +17,7 @@ from core4.error import Core4ConfigurationError
 CONFIG_EXTENSION = ".yaml"
 STANDARD_CONFIG = pkg_resources.resource_filename(
     "core4", "core4" + CONFIG_EXTENSION)
-USER_CONFIG = os.path.expanduser("core4/local" + CONFIG_EXTENSION)
+USER_CONFIG = os.path.expanduser("~/core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
 DEFAULT = "DEFAULT"
@@ -84,9 +84,9 @@ class CoreConfig(collections.MutableMapping):
     _file_cache = {}
     _db_cache = None
 
-    def __init__(self, plugin_config=None, config_file=None, extra_dict={}):
+    def __init__(self, project_config=None, config_file=None, extra_dict={}):
         self._config_file = config_file
-        self.plugin_config = plugin_config
+        self.project_config = project_config
         self.env_config = os.getenv("CORE4_CONFIG", None)
         self.extra_dict = extra_dict
 
@@ -184,13 +184,13 @@ class CoreConfig(collections.MutableMapping):
             raise Core4ConfigurationError(
                 "expected dict with " + message)
 
-    def _parse(self, config, plugin=None, local=None, extra=None):
+    def _parse(self, config, project=None, local=None, extra=None):
         """
-        Parses and merges the passed standard configuration, plugin
+        Parses and merges the passed standard configuration, project
         configuration and local configuration sources.
 
         :param config: dict with standard configuration
-        :param plugin: tuple with plugin name and plugin configuration dict
+        :param project: tuple with project name and project configuration dict
         :param local: dict with local configuration
         :param extra: dict with extra schema and default values
         :return: dict
@@ -199,13 +199,13 @@ class CoreConfig(collections.MutableMapping):
         standard_config = config.copy()
         if extra:
             standard_config = core4.util.dict_merge(standard_config, extra)
-        self._verify_dict(standard_config, "standard config")
+        #self._verify_dict(standard_config, "standard config")
         standard_default = standard_config.pop(DEFAULT, {})
         self._verify_dict(standard_default, "standard DEFAULT")
         if local is not None:
             # collect local config and local DEFAULT
             local_config = local.copy()
-            self._verify_dict(local_config, "local config")
+            #self._verify_dict(local_config, "local config")
             local_default = local_config.pop(DEFAULT, {})
             self._verify_dict(local_default, "local DEFAULT")
         else:
@@ -213,40 +213,40 @@ class CoreConfig(collections.MutableMapping):
             local_default = {}
         # merge standard DEFAULT and local DEFAULT
         default = core4.util.dict_merge(standard_default, local_default)
-        self._verify_dict(default, "DEFAULT")
-        if plugin is not None:
-            # collect plugin name, plugin config and plugin DEFAULT
-            plugin_name = plugin[0]
-            plugin_config = plugin[1].copy()
-            self._verify_dict(plugin_config, "plugin config")
-            plugin_default = plugin_config.pop(DEFAULT, {})
-            self._verify_dict(plugin_default, "plugin DEFAULT")
-            # collect local plugin DEFAULT
-            local_plugin_default = local_config.get(
-                plugin_name, {}).pop(DEFAULT, {})
-            self._verify_dict(local_plugin_default, "local plugin DEFAULT")
-            # merge plugin DEFAULT and local plugin DEFAULT
-            plugin_default = core4.util.dict_merge(
-                plugin_default, local_plugin_default)
-            # merge plugin config and standard config
+        #self._verify_dict(default, "DEFAULT")
+        if project is not None:
+            # collect project name, project config and project DEFAULT
+            project_name = project[0]
+            project_config = project[1].copy()
+            #self._verify_dict(project_config, "project config")
+            project_default = project_config.pop(DEFAULT, {})
+            self._verify_dict(project_default, "project DEFAULT")
+            # collect local project DEFAULT
+            local_project_default = local_config.get(
+                project_name, {}).pop(DEFAULT, {})
+            self._verify_dict(local_project_default, "local project DEFAULT")
+            # merge project DEFAULT and local project DEFAULT
+            project_default = core4.util.dict_merge(
+                project_default, local_project_default)
+            # merge project config and standard config
             schema = core4.util.dict_merge(
-                standard_config, {plugin_name: plugin_config})
+                standard_config, {project_name: project_config})
         else:
-            plugin_name = None
-            plugin_default = {}
+            project_name = None
+            project_default = {}
             schema = standard_config
         # merge config with local config
         result = core4.util.dict_merge(schema, local_config)
         # recursively forward DEFAULT into all dicts and into tags
-        result = self._apply_default(result, default, plugin_name,
-                                     plugin_default)
+        result = self._apply_default(result, default, project_name,
+                                     project_default)
         # apply yaml tags
         self._apply_tags(result)
         # verify top level keys
         self._verify(result)
         # finalise the schema to cleanup local config with non existing keys
-        schema = self._apply_default(schema, default, plugin_name,
-                                     plugin_default)
+        schema = self._apply_default(schema, default, project_name,
+                                     project_default)
         return self._apply_schema(result, schema)
 
     def _verify(self, dct):
@@ -303,10 +303,10 @@ class CoreConfig(collections.MutableMapping):
             ret["logging"]["extra"] = config["logging"]["extra"]
         return ret
 
-    def _apply_default(self, config, default, plugin_name=None,
-                       plugin_default=None):
+    def _apply_default(self, config, default, project_name=None,
+                       project_default=None):
         """
-        This method applies the passed standard ``default`` and plugin
+        This method applies the passed standard ``default`` and project
         ``default``data to ``config``,
 
         Please note special handling of configuration key ``logging.extra``
@@ -314,9 +314,9 @@ class CoreConfig(collections.MutableMapping):
 
         :param config: dict of configuration data
         :param default: dict of standard default values
-        :param plugin_name: string representing the plugin name and top-level
+        :param project_name: string representing the project name and top-level
                             dictionary
-        :param plugin_default: dict of plugin default values
+        :param project_default: dict of project default values
         :return: updated dict of configuration data
         """
 
@@ -330,11 +330,11 @@ class CoreConfig(collections.MutableMapping):
                 else:
                     rslt[k] = v
 
-        # project plugin defaults
-        if plugin_name is not None:
+        # project project defaults
+        if project_name is not None:
             temp = {}
-            traverse(config[plugin_name], plugin_default, temp)
-            config[plugin_name] = temp
+            traverse(config[project_name], project_default, temp)
+            config[project_name] = temp
         # project standard defaults
         temp = {}
         traverse(config, default, temp)
@@ -376,7 +376,9 @@ class CoreConfig(collections.MutableMapping):
                 body = f.read()
             if self.cache:
                 self.__class__._file_cache[filename] = body
-            return yaml.safe_load(body) or {}
+            data = yaml.safe_load(body) or {}
+            self._verify_dict(data, filename)
+            return data
         else:
             raise FileNotFoundError(filename)
 
@@ -516,7 +518,7 @@ class CoreConfig(collections.MutableMapping):
         Loads the configuration from
 
         #. core4 standard configuration file
-        #. plugin configuration file
+        #. project configuration file
         #. local configuration defined in environment variable
            ``CORE4_CONFIG``, in user's home, or the system folder
            ``/etc/core``
@@ -526,15 +528,13 @@ class CoreConfig(collections.MutableMapping):
         :return: :class:`.ConfigMap`
         """
         # extra config
-        if self.plugin_config and os.path.exists(self.plugin_config[1]):
-            lookup = self.plugin_config[0]
+        if self.project_config and os.path.exists(self.project_config[1]):
+            lookup = self.project_config[0]
         else:
             extra = lookup = None
 
         if lookup is not None:
-            extra_config = self._read_yaml(self.plugin_config[1])
-
-        if lookup is not None:
+            extra_config = self._read_yaml(self.project_config[1])
             extra = (lookup, extra_config)
 
         # standard config

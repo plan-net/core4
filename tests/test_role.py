@@ -13,8 +13,15 @@ from flask_login import LoginManager
 import core4.api.v1.role.main
 import core4.error
 import core4.util
-from tests.test_logger import LogOn
 import tests.util
+
+class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
+
+    cache = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_logging()
 
 
 class TestRole(unittest.TestCase):
@@ -31,6 +38,7 @@ class TestRole(unittest.TestCase):
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@localhost:27017"
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
         LogOn()
 
     def tearDown(self):

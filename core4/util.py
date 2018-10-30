@@ -17,6 +17,7 @@ REGEX_MODIFIER = {
     u'm': re.M,
     u's': re.S
 }
+LOCAL_TZ = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
 
 
 def get_hostname():
@@ -80,6 +81,13 @@ def now():
     return datetime.datetime.utcnow()
 
 
+def mongo_now():
+    """
+    :return: current core4 system time in MongoDB resolution (in UTC)
+    """
+    return now().replace(microsecond=0)
+
+
 def get_pid():
     """
     :return: pid of the current process.
@@ -112,3 +120,30 @@ class lazyproperty:
             value = self.func(instance)
             setattr(instance, self.func.__name__, value)
             return value
+
+
+def dfutc2local(col):
+    """
+    Convert :mod:`pandas` timeseries in UTC into local date/time.
+
+
+    :param col: class:`pandas.core.series.Series` without timezone information
+    :return: local class:`pandas.core.series.Series` without timezone
+    """
+    # todo: is this really really really necessary:
+    #       add UTC info, convert to local timezone, and remove tz info?
+    return col.dt.tz_localize("UTC").dt.tz_convert(
+        LOCAL_TZ).dt.tz_localize(None)
+
+
+def utc2local(dt):
+    """
+    Convert :class:`datetime.datetime` in UTC into local date/time.
+
+    :param col: class:`datetime.datetime` without timezone information
+    :return: local class:`datetime.datetime` without timezone
+    """
+    # todo: is this really really really necessary:
+    #       add UTC info, convert to local timezone, and remove tz info?
+    return dt.replace(tzinfo=datetime.timezone.utc).astimezone(
+        LOCAL_TZ).replace(tzinfo=None)

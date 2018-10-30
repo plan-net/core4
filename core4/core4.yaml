@@ -1,17 +1,23 @@
 DEFAULT:
   mongo_url: ~
   mongo_database: test
+  python: ~
 
 # system collections
 sys:
   conf: ~
   cookie: !connect mongodb://sys.cookie
   log: !connect mongodb://sys.log
-  userdb: user!
   role: !connect mongodb://sys.role
   quota: !connect mongodb://sys.quota
   admin: !connect mongodb://admin/dummy
   queue: !connect mongodb://sys.queue
+  journal: !connect mongodb://sys.journal
+  worker: !connect mongodb://sys.worker
+  job: !connect mongodb://sys.job
+  lock: !connect mongodb://sys.lock
+  stdout: !connect mongodb://sys.stdout
+  userdb: user!
 
 # system folders
 folder:
@@ -41,23 +47,31 @@ job:
   defer_max: 3600
   defer_time: 300
   error_time: 600
+  zombie_time: 1800
   force: False
   hidden: False
-  inactive_time: 1800
   wall_time: ~
   max_parallel: ~
-  nodes: ~
+  worker: ~
   priority: 0
   schedule: ~
   tag: ~
-  progress_inverval: 5
+  progress_interval: 5
 
-# master settings
-master:
+# worker settings
+worker:
+  virtual_environment_home: ~
+  avg_stats_secs: 60.0
+  min_free_ram: 256
+  max_cpu: 99
+  moving_avg_seconds: 30
   execution_plan:
     work_jobs: 0.25
-    inactive_jobs: 5.00
-    kill_jobs: 10.00
-    nopid_jobs: 15.00
-    nonstop_jobs: 20.00
-    collect_stats: 25.00
+    remove_jobs: 3.0
+    flag_jobs: 10.0
+    collect_stats: 20.0
+  stdout_ttl: 604800
+  alive_timeout: 60
+
+scheduler:
+  interval: 1

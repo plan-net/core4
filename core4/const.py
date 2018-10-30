@@ -4,4 +4,4 @@ modules.
 """
 
 CORE4 = "core4"
-PREFIX = "plugin"  # plugin logger beneath "core4.plugin"
+PREFIX = "project"  # project logger beneath "core4.project"

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+
 import pymongo
 
 ASSET_FOLDER = 'asset'
@@ -15,9 +16,11 @@ def asset(*filename, exists=True):
         return filename
     raise FileNotFoundError(filename)
 
+
 def mongo_connect():
     mongo = pymongo.MongoClient(MONGO_URL)
     return mongo[MONGO_DATABASE]
+
 
 def drop_env():
     dels = []
@@ -26,3 +29,9 @@ def drop_env():
             dels.append(k)
     for k in dels:
         del os.environ[k]
+
+
+if __name__ == '__main__':
+    import pytest
+
+    pytest.main(['-x', '-k', 'test_s'])

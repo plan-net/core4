@@ -20,11 +20,16 @@ import core4.util
 from core4.const import CORE4, PREFIX
 
 
+def is_core4_project(body):
+    return re.match(r'.*\_\_project\_\_\s*\=\s*[\"\']{1,3}'
+                    + CORE4 + r'[\"\']{1,3}.*', body, re.DOTALL)
+
+
 class CoreBase:
     """
     This is the base class to all core4 classes. :class:`CoreBase` ships with
 
-    * access to configuration keys/values including plugin based extra
+    * access to configuration keys/values including project based extra
       configuration settings, use :attr:`.config`
     * standard logging facilities, use :attr:`.logger`
     * a distinct :meth:`.qual_name` based on module path and class name
@@ -42,8 +47,9 @@ class CoreBase:
     # used to hack
     _short_qual_name = None
     _long_qual_name = None
+    sys_excepthook = None
 
-    plugin = None
+    project = None
     identifier = None
 
     # these config attributes are raised to object level
@@ -53,27 +59,27 @@ class CoreBase:
         # query identifier from instantiating object
         frame = inspect.currentframe().f_back.f_locals
         for n, v in frame.items():
-            if hasattr(v, "qual_name"):
-                ident = getattr(v, "identifier", None)
+            if isinstance(v, CoreBase):
+                ident = v.identifier
                 if not isinstance(ident, property):
                     if ident is not None:
                         self.identifier = ident
         self._progress = None
-        self.plugin = self.get_plugin()
+        self.project = self.get_project()
         self._open_config()
         self._open_logging()
 
-    def get_plugin(self):
+    def get_project(self):
         modstr = self.__class__.__module__
-        plugin = modstr.split('.')[0]
-        module = sys.modules[plugin]
+        project = modstr.split('.')[0]
+        module = sys.modules[project]
         # the following is a hack
         if not hasattr(module, "__project__"):
             source = module.__file__
-        elif plugin == '__main__':
+        elif project == '__main__':
             source = sys.argv[0]
         else:
-            return plugin
+            return project
         dirname = os.path.dirname(source).split(os.path.sep)
         pathname = [os.path.splitext(source.split(os.path.sep)[-1])[0]]
         while dirname:
@@ -82,19 +88,16 @@ class CoreBase:
             if os.path.exists(init_file):
                 with open(init_file, 'r') as fh:
                     body = fh.read()
-                    if re.match(
-                            r'.*\_\_project\_\_\s*'
-                            r'\=\s*[\"\']{}[\"\'].*'.format(
-                                CORE4), body, re.DOTALL):
+                    if is_core4_project(body):
                         self.__class__._short_qual_name = ".".join(
                             list(reversed(pathname))
                             + [self.__class__.__name__])
                         self.__class__._long_qual_name = ".".join([
                             CORE4, PREFIX, self.__class__._short_qual_name
                         ])
-                        plugin = pathname.pop(-1)
+                        project = pathname.pop(-1)
                         break
-        return plugin
+        return project
 
     def __repr__(self):
         """
@@ -106,8 +109,8 @@ class CoreBase:
     def qual_name(cls, short=True):
         """
         Returns the distinct ``qual_name``, the fully qualified module and
-        class name. With ``short=False`` the prefix ``core4.plugin`` is put in
-        front of all plugin classes.
+        class name. With ``short=False`` the prefix ``core4.project`` is put in
+        front of all project classes.
 
         :param short: defaults to ``False``
         :return: qual_name string
@@ -116,25 +119,25 @@ class CoreBase:
             if short:
                 return cls._short_qual_name
             return cls._long_qual_name
-        plugin = cls.__module__.split('.')[0]
-        if plugin != CORE4 and not short:
+        project = cls.__module__.split('.')[0]
+        if project != CORE4 and not short:
             return '.'.join([CORE4, PREFIX, cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
 
-    def plugin_config(self):
+    def project_config(self):
         """
-        Returns the expected path and file name of the plugin configuration.
+        Returns the expected path and file name of the project configuration.
         Note that this method does not verify that the file actually exists.
 
         :return: str
         """
-        module = sys.modules.get(self.plugin)
-        if self.plugin != CORE4:
+        module = sys.modules.get(self.project)
+        if self.project != CORE4:
             if hasattr(module, "__project__"):
                 if module.__project__ == CORE4:
                     return os.path.join(
                         os.path.dirname(module.__file__),
-                        self.plugin + core4.config.main.CONFIG_EXTENSION)
+                        self.project + core4.config.main.CONFIG_EXTENSION)
         return None
 
     # todo: hide this method with a prefix "_"
@@ -147,9 +150,9 @@ class CoreBase:
     def _open_config(self):
         # internal method to open and attach core4 cascading configuration
         kwargs = {}
-        plugin_config = self.plugin_config()
-        if plugin_config and os.path.exists(plugin_config):
-            kwargs["plugin_config"] = (self.plugin, plugin_config)
+        project_config = self.project_config()
+        if project_config and os.path.exists(project_config):
+            kwargs["project_config"] = (self.project, project_config)
         kwargs["extra_dict"] = self._build_extra_config()
         self.config = self.make_config(**kwargs)
         pos = self.config._config
@@ -193,6 +196,9 @@ class CoreBase:
         # pass object reference into logging and enable lazy property access
         #   and late binding
         self.logger = core4.logger.CoreLoggingAdapter(logger, self)
+        if CoreBase.sys_excepthook is None:
+            CoreBase.sys_excepthook = sys.excepthook
+            sys.excepthook = self.excepthook
 
     def _log_progress(self, p, *args):
         """
@@ -233,7 +239,7 @@ class CoreBase:
             self._progress = p_round
 
     @staticmethod
-    def _format_args(*args):
+    def format_args(*args, **kwargs):
         """
         format a message given only by args.
         message hast to be the first parameter, formatting second.
@@ -243,7 +249,20 @@ class CoreBase:
         if args:
             args = list(args)
             m = args.pop(0)
-            message = m % tuple(args)
+            if kwargs:
+                message = m % kwargs
+            elif args:
+                message = m % tuple(args)
+            else:
+                return m
         else:
             message = ""
         return message
+
+    def excepthook(self, *args):
+        """
+        Internal exception hook to forward unhandled exceptions to core4
+        logger with logging level ``CRITICAL``.
+        """
+        self.logger.critical("unhandled exception", exc_info=args)
+        self.sys_excepthook(*args)

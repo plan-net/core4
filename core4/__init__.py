@@ -1,4 +1,4 @@
 __project__ = 'core4'
-__title__ = 'core4 framework'
-__version__ = None
+__version__ = "0.0.1"
 __built__ = None
+title = 'core4 framework'

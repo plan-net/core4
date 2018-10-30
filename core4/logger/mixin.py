@@ -101,3 +101,13 @@ class ExceptionLoggerMixin:
                     "exception logging skipped "
                     "with mongodb log_level [{}]".format(
                         self.config.logging.mongodb))
+
+
+def logon():
+    class Logger(core4.base.CoreBase, CoreLoggerMixin):
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.setup_logging()
+    Logger()
+

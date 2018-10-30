@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import glob
 import logging
 import os
 import unittest
+import importlib
 
 import pymongo
 
@@ -12,7 +11,7 @@ import core4.config
 import core4.error
 import core4.logger
 import core4.config.test
-import plugin.ident
+import project.ident
 import tests.util
 import core4.util
 
@@ -30,17 +29,18 @@ class TestLogging(unittest.TestCase):
 
     def setUp(self):
         tests.util.drop_env()
+
+        logging.shutdown()
+        importlib.reload(logging)
+        core4.util.Singleton._instances = {}
+        core4.logger.mixin.CoreLoggerMixin.completed = False
+
         self.mongo.drop_database('core4test')
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
                                                  "localhost:27017"
         os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
-        logging.shutdown()
-        import importlib
-        importlib.reload(logging)
-        core4.util.Singleton._instances = {}
-        self.drop_logs()
-        core4.logger.mixin.CoreLoggerMixin.completed = False
+        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
 
     def drop_logs(self):
         for fn in glob.glob("*.log*"):
@@ -50,6 +50,11 @@ class TestLogging(unittest.TestCase):
     def tearDown(self):
         self.drop_logs()
         tests.util.drop_env()
+        logging.shutdown()
+        importlib.reload(logging)
+        core4.util.Singleton._instances = {}
+        self.drop_logs()
+        core4.logger.mixin.CoreLoggerMixin.completed = False
 
     @property
     def mongo(self):
@@ -153,7 +158,7 @@ class TestLogging(unittest.TestCase):
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         b = LogOn()
         b.logger.debug("*** START ***")
-        ident = plugin.ident.Controller()
+        ident = project.ident.Controller()
         ident.execute()
         b.logger.debug("*** END ***")
 
@@ -163,11 +168,11 @@ class TestLogging(unittest.TestCase):
         os.environ["CORE4_OPTION_logging__stderr"] = ""
         os.environ["CORE4_OPTION_logging__stdout"] = ""
         LogOn()
-        m = plugin.ident.Massive()
+        m = project.ident.Massive()
         m.execute()
         data = list(m.config.sys.log.find())
         idented = sum([1 for i in data if i["identifier"] == "0815"])
-        self.assertEqual(700, idented)
+        self.assertEqual(70, idented)
 
     def test_format(self):
         os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import core4.base
 
 
@@ -36,7 +34,7 @@ class Massive(core4.base.CoreBase):
     def execute(self):
         self.logger.warning("start preps")
         data = []
-        for i in range(100):
+        for i in range(10):
             data.append(Controller())
         self.logger.warning("done preps, start execution")
         for d in data:

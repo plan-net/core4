@@ -1,15 +1,22 @@
+import hashlib
+import json
+import sys
+
+import datetime as dt
+
+import core4.base.cookie
 import core4.error
+import core4.util
 from core4.base.main import CoreBase
 from core4.queue.validate import *
-import core4.util
-import datetime as dt
 
 # Job-States
 STATE_PENDING = 'pending'
+STATE_STARTING = 'starting'  # todo: we need this?
 STATE_RUNNING = 'running'
 STATE_COMPLETE = 'complete'
 STATE_DEFERRED = 'deferred'
-STATE_SKIPPED = 'skipped'
+STATE_SKIPPED = 'skipped'  # todo: we need this?
 STATE_FAILED = 'failed'
 STATE_INACTIVE = 'inactive'
 STATE_ERROR = 'error'
@@ -24,12 +31,13 @@ SERIALISE = 3  # property is to be materialised in sys.queue
 # job property definition scope
 JOB_ARGS = {
     "_id": (SERIALISE,),
+    "_hash": (SERIALISE,),
     "args": (ENQUEUE, SERIALISE,),
     "attempts": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "attempts_left": (SERIALISE,),
     "author": (PROPERTY,),
     "chain": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
-    "defer_max": (ENQUEUE, CONFIG, PROPERTY,),
+    "defer_max": (ENQUEUE, CONFIG, PROPERTY, SERIALISE),
     "defer_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "dependency": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "enqueued": (SERIALISE,),
@@ -38,28 +46,28 @@ JOB_ARGS = {
     "force": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "hidden": (CONFIG, PROPERTY,),
     "inactive_at": (SERIALISE,),
-    "inactive_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "killed_at": (SERIALISE,),
     "last_error": (SERIALISE,),
     "locked": (SERIALISE,),
     "max_parallel": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "name": (SERIALISE,),
-    "nodes": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
-    "nonstop_at": (SERIALISE, 9),
     "priority": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "progress_interval": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "python": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "query_at": (SERIALISE,),
-    "remove_at": (SERIALISE,),
+    "removed_at": (SERIALISE,),
     "runtime": (SERIALISE,),
     "schedule": (CONFIG, PROPERTY,),
     "sources": (SERIALISE,),
     "started_at": (SERIALISE,),
     "state": (SERIALISE,),
     "tag": (CONFIG, PROPERTY,),
+    "trial": (SERIALISE,),
     "wall_at": (SERIALISE,),
     "wall_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "worker": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "zombie_at": (SERIALISE,),
-    "_frozen_": (ENQUEUE,),
-    "progress_interval": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "zombie_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
 }
 
 # property scope to load from config
@@ -75,6 +83,7 @@ SERIALISE_ARGS = tuple([k for k, v in JOB_ARGS.items() if SERIALISE in v])
 
 # validation setting
 JOB_VALIDATION = {
+    "_id": is_objectid,
     "attempts": is_int_gt0,
     "author": is_str,
     "chain": is_job,
@@ -84,14 +93,14 @@ JOB_VALIDATION = {
     "error_time": is_int_gt0,
     "force": is_bool_null,
     "hidden": is_bool_null,
-    "inactive_time": is_int_gt0,
     "max_parallel": is_int_gt0_null,
-    "nodes": is_str_null,
     "priority": is_int,
+    "progress_interval": is_int_gt0,
     "schedule": is_cron,
     "tag": is_str_list_null,
     "wall_time": is_int_gt0_null,
-    "progress_interval": is_int_gt0,
+    "worker": is_str_null,
+    "zombie_time": is_int_gt0,
 }
 
 # job properties not inherited from parent class
@@ -127,20 +136,20 @@ class CoreJob(CoreBase):
     * ``enqueued`` - dict with information about job enqueuing
     * ``enqueued.at`` - datetime when the job has been enqueued
     * ``enqueued.hostname`` - from where the job has been enqueued
-    * ``enqueued.parent`` - job id of the precursing job which has been
+    * ``enqueued.parent_id`` - job id of the precursing job which has been
       journaled and restarted
+    * ``enqueued.child_id`` - job id of the follow-up job which has been
+      launched
     * ``enqueued.username`` - user who enqueued the job
     * ``error_time`` - seconds to wait before job restart after failure
     * ``finished_at`` - datetime when the job finished with success, failure,
       or deferral
-    * ``force`` - if ``True`` then ignore nodes' resource limits and launch the
-      job
+    * ``force`` - if ``True`` then ignore worker resource limits and launch
+      the job
     * ``hidden`` - if ``True`` then hide the job from job listing (defaults to
       ``False``)
     * ``inactive_at`` - datetime  when a deferring job turns inactive, derived
       from ``defer_max``
-    * ``inactive_time`` - seconds before a job which is not advertising the
-      progress turns into a zombie
     * ``killed_at`` - datetime when the job has been requested to kill
     * ``last_error`` - last stack trace in case of failure or error
     * ``locked`` - dict with information about the worker
@@ -152,11 +161,10 @@ class CoreJob(CoreBase):
     * ``locked.worker`` - which locked the job
     * ``locked.username`` - running the worker which locked the job
     * ``max_parallel`` - max. number jobs to run in parallel on the same node
-    * ``nodes`` - nodes eligable to execute the job
-    * ``nonstop_at`` - datetime when the job turned into a non-stopping job,
-      determined by ``wall_time``
-    * ``priority`` - to execute the job with >0 higher and <0 lower priority
     * ``name`` - short fully qualified name of the job
+    * ``priority`` - to execute the job with >0 higher and <0 lower priority
+    * ``python`` - Python executable to be used for dedicated Python virtual
+      environment
     * ``query_at`` - datetime to query the job, derived from ``error_time`` or
       ``defer_time``
     * ``removed_at`` - datetime when the job has been requested to remove
@@ -166,11 +174,15 @@ class CoreJob(CoreBase):
     * ``started_at`` - last job execution start-time
     * ``state`` - job state
     * ``tag`` - tag the job with freestyle string-argmuents
-    * ``wall_at`` - datetime when a running job turns into a non-stopping job
+    * ``wall_at`` - datetime when a running job turns into a non-stopping job,
+      determined by ``wall_time``
     * ``wall_time`` - number of seconds before a running job turns into a
       non-stopping job
-    * ``zombie_at`` - datetime when the job turned into a zombie due to
-      lacking progress
+    * ``worker`` - eligable to execute the job
+    * ``zombie_at`` - datetime when the job not advertising any progress is
+      flagged a zombie
+    * ``zombie_time`` - number of seconds before a job turns into a zombie
+      non-stopping job
 
     **job property definition scheme**
 
@@ -196,13 +208,12 @@ class CoreJob(CoreBase):
           property enqueue config class serialise default validation
  ================= ======= ====== ===== ========= ======= ====================
                _id   False  False False      True      na
-          _frozen_   False  False False     False    True
               args    True  False False      True      na
           attempts    True   True  True      True       1 int > 0
      attempts_left   False  False False      True      na
             author   False  False  True     False      na str
              chain    True   True  True      True    ([]) list of jobs, None
-         defer_max    True   True  True     False     60' int > 0
+         defer_max    True   True  True      True     60' int > 0
         defer_time    True   True  True      True      5' int > 0
         dependency    True   True  True      True    ([]) list of jobs, None
           enqueued   False  False False      True      na
@@ -211,18 +222,16 @@ class CoreJob(CoreBase):
              force    True   True  True      True   False is bool
             hidden   False   True  True     False   False is bool
        inactive_at   False  False False      True      na
-     inactive_time    True   True  True      True     30' int > 0
          killed_at   False  False False      True      na
         last_error   False  False False      True      na
             locked   False  False False      True      na
       max_parallel    True   True  True      True    None int > 0, None
-             nodes    True   True  True      True    ([]) list of str, None
-        nonstop_at   False  False False      True      na
           priority    True   True  True      True       0 int
- progress_interval    True   True  True     False       5 int > 0
+           python     True   True  True      True  note-1 os.path.exist
+ progress_interval    True   True  True      True       5 int > 0
               name   False  False False      True      na
           query_at   False  False False      True      na
-         remove_at   False  False False      True      na
+        removed_at   False  False False      True      na
            runtime   False  False False      True      na
           schedule   False   True  True     False    None crontab format, None
            sources   False  False False      True      na
@@ -231,14 +240,19 @@ class CoreJob(CoreBase):
                tag   False   True  True     False    ([]) list of str, None
            wall_at   False  False False      True      na
          wall_time    True   True  True      True    None int > 0, None
+            worker    True   True  True      True    ([]) list of str, None
          zombie_at   False  False False      True      na
+       zombie_time    True   True  True      True    1800 int > 0
  ================= ======= ====== ===== ========= ======= ====================
+
+    .. note:: **note-1**: The default value for ``python`` is defined by the
+              {{DEFAULT.python}} variable.
 
 
     Best practice is to put the section definitions as class variables. Define
     all other property settings into the configuration section of the job. The
     job configuration must be located in the extra configuration file of the
-    plugin package.
+    project package.
 
 
     **job life-cycle**
@@ -297,21 +311,22 @@ class CoreJob(CoreBase):
     """
     author = None
     attempts = None
-    chain = []
-    dependency = []
+    chain = None
+    dependency = None
     priority = None
-    tag = []
-    nodes = None
+    tag = None
+    worker = None
     defer_time = None
     defer_max = None
     error_time = None
     force = None
     hidden = None
-    inactive_time = None
     wall_time = None
     max_parallel = None
     schedule = None
-    progress_interval = 5
+    progress_interval = None
+    zombie_time = None
+
     _frozen_ = False
 
     def __init__(self, *args, **kwargs):
@@ -327,6 +342,7 @@ class CoreJob(CoreBase):
         # runtime properties
         self.name = self.qual_name(short=True)
         self._id = None
+        self._hash = None
         self._cookie = None
         self.args = {}
         self.attempts_left = None
@@ -336,20 +352,26 @@ class CoreJob(CoreBase):
         self.killed_at = None
         self.last_error = None
         self.locked = None
-        self.nonstop_at = None
         self.query_at = None
-        self.remove_at = None
+        self.removed_at = None
         self.runtime = None
         self.sources = None
         self.started_at = None
         self.state = None
+        self.trial = 0
         self.wall_at = None
         self.zombie_at = None
 
         self.load_default()
+        self.overload_property()
         self.overload_config()
         self.overload_args(**kwargs)
 
+        if self.args:
+            js = json.dumps(self.args, sort_keys=True)
+            self._hash = hashlib.md5(js.encode("utf-8")).hexdigest()
+
+        self.identifier = self._id
         self._frozen_ = True
 
     def __setattr__(self, key, value):
@@ -398,6 +420,14 @@ class CoreJob(CoreBase):
                 if self.class_config[prop] is not None:
                     setattr(self, prop, self.class_config[prop])
 
+    def overload_property(self):
+        """
+        sets all job-attributes that can be found within the config.
+        """
+        for prop in PROPERTY_ARGS:
+            if prop in self.__class__.__dict__:
+                setattr(self, prop, self.__class__.__dict__[prop])
+
     def overload_args(self, **kwargs):
         """
         sets job-attributes depending on the enqueueing arguments.
@@ -433,61 +463,28 @@ class CoreJob(CoreBase):
 
         :param p: percentage in decimal.
         :param args: message and or format, will be passed to
-               :meth:`core4.base.main.CoreBase._format_args`.
+               :meth:`core4.base.main.CoreBase.format_args`.
         :param force: force progress update, ignoring ``._progress``
         """
         now = core4.util.now()
 
-        if (force or self._progress is None or now >= self._progress):
-            message = self._format_args(*args)
+        if (force or self._progress is None or now > self._progress):
+            message = self.format_args(*args)
             self.__dict__['_progress'] = now + dt.timedelta(
                 seconds=self.progress_interval)
-            self.logger.debug(message + "|  Progress at: " + str(p * 100) + "%")
-            return self.config.sys.queue.update_one(
+            self.logger.debug("progress [%1.0f%%] - " + message, p * 100.)
+            self.config.sys.queue.update_one(
                 {
                     "_id": self._id
                 },
                 update={
                     '$set': {
-                        'locked.heartbeat': core4.util.now(),
+                        'locked.heartbeat': now,
                         'locked.progress': message,
                         'locked.progress_value': p
                     }
                 }
             )
-
-    def run(self, *args, **kwargs):
-        """
-        set the nessecary cookie-information on startup and finish of the job.
-        log a first progress and call the execute-method of the job.
-
-        :param args: will be passed to :meth:`execute()`
-        :param kwargs: will be passed to :meth:`execute()`
-        """
-        self.__dict__['started_at'] = core4.util.now()
-        self.progress(0.0, "starting job: {} with id: {}".format(
-            self.qual_name(), self._id))
-        self.logger.debug("starting job: {} with id: {}".format(
-            self.qual_name(), self._id))
-        try:
-            self.execute(*args, **kwargs)
-        except:
-            # todo: please check docs above, this carries something else, check core3
-            self.__dict__['last_error'] = core4.util.now()
-            raise
-        finally:
-            self.__dict__['finished_at'] = core4.util.now()
-            runtime = (self.finished_at - self.started_at).total_seconds()
-            if self.runtime is not None:
-                runtime += self.runtime
-            self.__dict__['runtime'] = runtime
-            self.config.sys.queue.update_one(
-                {"_id": self._id},
-                update={'$set': {'locked.runtime': self.runtime}})
-            self.cookie.set("last_runtime", self.finished_at)
-            self.logger.debug("finished execution of job after {}".format(
-                self.runtime))
-            self.progress(1.0, "execution end marker", force=True)
 
     def defer(self, *args):
         """
@@ -497,21 +494,78 @@ class CoreJob(CoreBase):
         :param message: defer message
         :raises: :class:`.CoreJobDefered`
         """
-        message = self._format_args(*args)
+        message = self.format_args(*args)
         raise core4.error.CoreJobDeferred(message)
 
-    def execute(self, *args, **kwargs):
+    def serialise(self):
+        """
+        Convert the job properties into a dict.
+
+        :return: dict
+        """
+        doc = dict([(k, self.__dict__[k]) for k in SERIALISE_ARGS])
+        if self._id is None:
+            del doc["_id"]
+        return doc
+
+    @classmethod
+    def deserialise(cls, **kwargs):
+        """
+        This class method converts the passed {{**kwargs**}} keys-/values into
+        a job object and :meth:`.validate` and return the object.
+
+        :param kwargs: keys-/values
+        :return: :class:`.CoreJob`
+        """
+        obj = cls()
+        for k in kwargs:
+            if k in obj.__dict__:
+                obj.__dict__[k] = kwargs[k]
+        obj.identifier = obj._id
+        obj.validate()
+        return obj
+
+    def execute(self, **kwargs):
         """
         This method has to be implented by the job developer.
         It is the entry-point of the framework. Code specified in this method
         is executed within the core-ecosystem.
 
-        :param args: passed job argmuents
-        :param kwargs: passed enqueueing arguments
-
-        # todo: euqneueing arguments? not really!
+        :param kwargs: passed enqueueing job arguments
         """
         raise NotImplementedError
+
+    def find_executable(self):
+        """
+        This method is used to find the Python executable/virtual environment
+        for the passed job.
+
+        The Python executable is defined by a configuration key named
+        ``python`` . If the value is ``None``, then the executable running the
+        :class:`.CoreWorker` is used. If configuration variable
+        ``worker.virtual_environment_home`` is defined, then the actual
+        Python interpreter path is built from this path and the value of the
+        ``python`` key. If key ``worker.virtual_environment_home`` is ``None``,
+        then the ``python`` key must address the full path to the Python
+        interpreter.
+
+        :param job: :class:`.CoreJob` object
+        :return: full path (str) to Python executable
+        """
+        if self.python:
+            if self.config.worker.virtual_environment_home:
+                executable = os.path.join(
+                    self.config.worker.virtual_environment_home, self.python)
+            else:
+                executable = self.python
+        else:
+            executable = sys.executable
+        if not os.path.exists(executable):
+            raise FileNotFoundError(
+                "Python executable [{}] not found for [{}]".format(
+                    executable, self.qual_name()
+                ))
+        return executable
 
 
 class DummyJob(CoreJob):
@@ -520,9 +574,15 @@ class DummyJob(CoreJob):
     """
     author = 'mra'
 
-# todo: task list
-# - test + implement DummyJob.execute
-# then:
-# - write documentation
-# - write job.rst (decide what goes into API docs, and what goes in job.rst)
-# - verify sphinx docs format is right and looking good
+    def execute(self, *args, **kwargs):
+        import time
+        sleep = kwargs.get("sleep", None) or 3
+        until = core4.util.now() + dt.timedelta(seconds=sleep)
+        self.logger.info("just sleeping [%s] seconds", sleep)
+        n = 0
+        while core4.util.now() <= until:
+            n += 1
+            print("line %d at %s" %(n, core4.util.now()))
+            p = float(sleep - (until - core4.util.now()).total_seconds()) / sleep
+            self.progress(p, "running")
+            time.sleep(0.5)

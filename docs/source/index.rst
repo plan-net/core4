@@ -9,7 +9,7 @@
    </p>
    <p style="font-size: 1.5em;">
      Develop, Operate and Collaborate on Data and Analytics<br/>
-     *<br/>
+     <br/>
      Automated - Flexible - Secure - Scalable
    </p>
    </div>
@@ -24,7 +24,7 @@
    install
    example
    why
-   plugin
+   project
    job
    helpers
    R
@@ -34,6 +34,7 @@
    config
    logging
    data
+   file
    access
    deploy
    tools
