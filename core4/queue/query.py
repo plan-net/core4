@@ -169,6 +169,7 @@ class QueryMixin:
             '_id': 1,
             'attempts_left': 1,
             'attempts': 1,
+            'trial': 1,
             'started_at': 1,
             'enqueued': 1,
             'priority': 1,
