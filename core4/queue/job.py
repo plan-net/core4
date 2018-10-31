@@ -12,11 +12,9 @@ from core4.queue.validate import *
 
 # Job-States
 STATE_PENDING = 'pending'
-STATE_STARTING = 'starting'  # todo: we need this?
 STATE_RUNNING = 'running'
 STATE_COMPLETE = 'complete'
 STATE_DEFERRED = 'deferred'
-STATE_SKIPPED = 'skipped'  # todo: we need this?
 STATE_FAILED = 'failed'
 STATE_INACTIVE = 'inactive'
 STATE_ERROR = 'error'
