@@ -24,6 +24,13 @@ class BaseHandler(CoreBase):
     title = None
     author = None
 
+    async def options(self):
+        """
+        Answer preflight / OPTIONS request with 200
+        """
+        #self.set_status(200)
+        self.finish()
+
     async def prepare(self):
         """
         Prepares the handler with
@@ -33,6 +40,9 @@ class BaseHandler(CoreBase):
         * authenticate and authorize the user
         """
         self.identifier = ObjectId()
+        if(self.request.method == 'OPTIONS'):
+            # preflight / OPTIONS should always pass
+            return
         if not (self.request.query_arguments or self.request.body_arguments):
             if self.request.body:
                 body_arguments = json_decode(self.request.body.decode("UTF-8"))
@@ -194,6 +204,14 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         "text/csv",
         "application/json"
     ]
+    def set_default_headers(self):
+        """
+        custom headers, allows essential http methods
+        TODO: For testing purposes wildcard setting is used for access-control-allow-origin, switch to a more accurate setting (localhost:XXXX is needed)
+        """
+        self.set_header("access-control-allow-origin", "*")
+        self.set_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        self.set_header("Access-Control-Allow-Headers", "access-control-allow-origin,authorization,content-type")
 
     def __init__(self, *args, **kwargs):
         BaseHandler.__init__(self)
