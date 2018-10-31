@@ -1,3 +1,7 @@
+"""
+Utility methods in the context of core4 API.
+"""
+
 import json
 
 import bson.objectid
@@ -7,6 +11,14 @@ import pandas as pd
 
 
 class JsonEncoder(json.JSONEncoder):
+    """
+    Encodes Python dictionaries into JSON. Beyond the :mod:`json` encoder this
+    class supports the following additional types:
+
+    * :class:`datetime.datetime` and :class:`numpy.datetime64` into ISO format
+    * :class:`bson.objectid.ObjectId` into str
+    * :mod:`numpy` conversion of bool, integer, floating and ndarray
+    """
     def default(self, obj):
         if isinstance(obj, np.datetime64):
             # this is a hack around pandas bug, see
@@ -31,11 +43,27 @@ class JsonEncoder(json.JSONEncoder):
 
 
 def json_encode(value, **kwargs):
-    """JSON-encodes the given Python object."""
+    """
+    JSON-encodes the given Python object using :class:`.JsonEncoder`.
+
+    :param value: dict to convert
+    :param kwargs: additional keyword arguments to be passed to
+                   :class:`.JsonEncoder`
+    :return: str representing JSON
+    """
     return json.dumps(value, cls=JsonEncoder, **kwargs)
 
 
 def json_decode(value, **kwargs):
+    """
+    JSON-decods the given str into a Python dictionary using
+    :mod:`.json`.
+
+    :param value: str representing valid JSON
+    :param kwargs: additional keyword arguments to be passed to
+                   :mod:`json`
+    :return: dict or ``None`` if ``value`` is empty or ``None``
+    """
     if value:
         return json.loads(value, **kwargs)
     return None
