@@ -58,14 +58,14 @@ def halt():
 def worker(name):
     core4.logger.mixin.logon()
     w = core4.queue.worker.CoreWorker(name=name)
-    print("start scheduler [%s]" % (w.identifier))
+    print("start worker [%s]" % (w.identifier))
     w.start()
 
 
 def scheduler(name):
     core4.logger.mixin.logon()
     w = core4.queue.scheduler.CoreScheduler(name=name)
-    print("start worker [%s]" % (w.identifier))
+    print("start scheduler [%s]" % (w.identifier))
     w.start()
 
 

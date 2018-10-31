@@ -1,4 +1,5 @@
 import pymongo
+import motor
 
 
 def make_connection(connection):
@@ -16,4 +17,6 @@ def make_connection(connection):
             url += ":" + connection.password
         url += "@"
     url += str(connection.hostname)
+    if connection.async:
+        return motor.MotorClient(url, tz_aware=False, connect=False)
     return pymongo.MongoClient(url, tz_aware=False, connect=False)

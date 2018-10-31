@@ -19,6 +19,13 @@ def once(f):
 
 class CoreSetup(CoreBase, metaclass=Singleton):
 
+    def make_all(self):
+        self.make_folder()
+        self.make_role()
+        self.make_queue()
+        self.make_stdout()
+        self.make_stat()
+
     @once
     def make_folder(self):
         """
@@ -69,6 +76,20 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 name="job_args"
             )
             self.logger.info("created index [job_args] on [sys.queue]")
+
+    @once
+    def make_stat(self):
+        """
+        Creates collection ``sys.stat`` and its index on ``timestamp``.
+        """
+        if "timestamp" not in self.config.sys.stat.index_information():
+            self.config.sys.stat.create_index(
+                [
+                    ("timestamp", pymongo.ASCENDING)
+                ],
+                name="timestamp"
+            )
+            self.logger.info("created index [timestamp] on [sys.stat]")
 
     @once
     def make_stdout(self):

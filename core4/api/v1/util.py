@@ -30,11 +30,12 @@ class JsonEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def json_encode(value):
+def json_encode(value, **kwargs):
     """JSON-encodes the given Python object."""
-    return json.dumps(value, cls=JsonEncoder, indent=2)
+    return json.dumps(value, cls=JsonEncoder, **kwargs)
 
-def json_decode(value):
+
+def json_decode(value, **kwargs):
     if value:
-        return json.loads(value)
+        return json.loads(value, **kwargs)
     return None

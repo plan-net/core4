@@ -50,8 +50,6 @@ STEPS = (
     "flag_jobs",
     "collect_stats")
 
-MOVING_AVG_SECONDS = 30
-
 
 class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
     """
@@ -66,15 +64,19 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.steps = STEPS
         self.plan = self.create_plan()
         self.cycle.update(dict([(s, 0) for s in self.steps]))
-        self.stats_collector = collections.deque(
-            maxlen=(round(self.config.worker.avg_stats_secs
-                          / self.config.worker.execution_plan.collect_stats)))
+        self.stats_collector = collections.deque(maxlen=
+                                                 round(self.config.worker.avg_stats_secs
+                                                       / self.config.worker.execution_plan.collect_stats))
+        # populate with first resource-tuple.
+        self.stats_collector.append(
+            (min(psutil.cpu_percent(percpu=True)),
+             psutil.virtual_memory()[4]/2.**20))
 
     def cleanup(self):
         """
         General housekeeping method of the worker.
         """
-        ret = self.config.sys.lock.delete_many({"worker": self.identifier})
+        ret = self.config.sys.lock.delete_many({"owner": self.identifier})
         self.logger.info(
             "cleanup removed [%d] sys.lock records", ret.raw_result["n"])
 
@@ -158,6 +160,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 raise RuntimeError(
                     "failed to update job [{}] state [{}]".format(
                         doc["_id"], core4.queue.job.STATE_FAILED))
+            self.queue.make_stat()
         else:
             if job.inactive_at and job.inactive_at <= self.at:
                 self.queue.set_inactivate(job)
@@ -257,18 +260,32 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 self.logger.debug(
                     "skipped job [%s] in maintenance", data["_id"])
                 continue
+
+            # check system resources
+            cur_stats = self.avg_stats()
+            if ((cur_stats[0] > self.config.worker.max_cpu)
+                    or (cur_stats[1] < self.config.worker.min_free_ram)):
+                if not data["force"]:
+                    self.logger.info(
+                        'skipped job [%s] with _id [%s]: '
+                        'not enough resources available',
+                        data["name"], data["_id"])
+                    return None
+
+            # acquire lock
             if not self.queue.lock_job(self.identifier, data["_id"]):
                 self.logger.debug('skipped job [%s] due to lock failure',
                                   data["_id"])
                 continue
+
             self.offset = data["_id"]
             self.logger.debug('successfully reserved [%s]', data["_id"])
             return data
 
     def start_job(self, job):
         """
-        Spawns the passed job if there are enough free resources by launching a
-        seperate Python interpreter and communicating the job ``_id``.
+        Spawns the passed job if there are enough free resources by launching
+        a seperate Python interpreter and communicating the job ``_id``.
 
         This method updates the job ``state``, ``started_at`` timestamp,
         increases the ``trial``, sets the ``locked`` property, calculates the
@@ -311,6 +328,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         if ret.raw_result["n"] != 1:
             raise RuntimeError(
                 "failed to update job [{}] state [starting]".format(job._id))
+        self.queue.make_stat()
         for k, v in update.items():
             job.__dict__[k] = v
         try:
@@ -318,9 +336,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         except:
             self.fail_hard(job)
         else:
-            # cur_stats = self.avg_stats()
-            # if ((cur_stats[0] < self.config.worker.max_cpu)
-            #         and (cur_stats[1] < self.config.worker.max_mem)):
             job.logger.info("start execution with [%s]", executable)
             try:
                 proc = subprocess.Popen(
@@ -350,14 +365,13 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     raise RuntimeError(
                         "failed to update job [{}] pid [{}]".format(
                             job._id, proc.pid))
+                #self.queue.make_stat()
                 job_id = str(job._id).encode("utf-8")
                 proc.stdin.write(bytes(job_id))
                 proc.stdin.close()
                 self.logger.debug("successfully launched job [%s] with [%s]",
                                   job._id, executable)
-            # else:
-            #     job.logger.info("cancelled execution with [%s], "
-            #                     "not enough system-resources", executable)
+
 
 
     def fail_hard(self, job):
@@ -397,6 +411,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     if ret.raw_result["n"] != 1:
                         raise RuntimeError(
                             "failed to remove job [{}]".format(doc["_id"]))
+                    self.queue.make_stat()
                     self.logger.info(
                         "successfully journaled and removed job [%s]",
                         doc["_id"])
@@ -457,6 +472,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set non-stop job [%s]", doc["_id"])
+                #self.queue.make_stat()
 
     def flag_zombie(self, doc):
         """
@@ -485,6 +501,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set zombie job [%s]", doc["_id"])
+                #self.queue.make_stat()
 
     def check_pid(self, doc):
         (found, proc) = self.pid_exists(doc)
@@ -530,6 +547,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         """
         Collects cpu and memory, inserts it as tuple into self.stats_collector
         cpu is computed via CPU-Utilization/(idle-time+io-wait)
+        free RAM is in MB.
         """
         ret = self.config.sys.worker.update_one(
             {"_id": self.identifier},
@@ -542,14 +560,17 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         if ret.raw_result["n"] != 1:
             raise RuntimeError("failed to update heartbeat")
         # psutil already accounts for idle and io-wait (idle and waiting for IO), we are not interested in both.
-        self.stats_collector.append((min(psutil.cpu_percent(percpu=True)), psutil.virtual_memory()[2]))
-
+        self.stats_collector.append(
+            (min(psutil.cpu_percent(percpu=True)),
+             psutil.virtual_memory()[4]/2.**20))
 
     def avg_stats(self):
         """
-        :return: tuple of average cpu and memory over the time configured in config.worker.avg_stats_secs.
+        :return: tuple of average cpu and memory over the time configured in
+                 config.worker.avg_stats_secs.
         """
         cpu = sum(c for c, m in self.stats_collector)
         mem = sum(m for c, m in self.stats_collector)
-        return cpu / self.stats_collector.maxlen, mem / self.stats_collector.maxlen
+        div = len(self.stats_collector)
+        return cpu / div, mem / div
 

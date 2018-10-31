@@ -190,10 +190,12 @@ class TestLogging(unittest.TestCase):
         b.logger.warning("this is a WARNING message")
         b.logger.error("this is an ERROR message")
         b.logger.critical("this is a CRITICAL error message")
-        import requests
-        r = requests.get('http://localhost:27017')
-        self.assertEqual(200, r.status_code)
+        import other.test
+        # r = requests.get('http://localhost:27017')
+        # self.assertEqual(200, r.status_code)
         data = list(b.config.sys.log.find())
+        # for doc in data:
+        #     print(doc)
         expected = ["extra logging setup",
                     "logging setup",
                     "DEBUG message",
@@ -201,8 +203,8 @@ class TestLogging(unittest.TestCase):
                     "WARNING message",
                     "ERROR message",
                     "CRITICAL error message",
-                    "Starting new HTTP connection",
-                    "http://localhost:27017"]
+                    "Watch out!",
+                    "I told you so"]
         for i, e in enumerate(expected):
             self.assertIn(e, data[i]["message"])
 
@@ -215,12 +217,12 @@ class TestLogging(unittest.TestCase):
         expected = ['tests.test_logger.LogOn'] * 7
         for i, e in enumerate(expected):
             self.assertEqual(e, data[i]["qual_name"])
-        self.assertIn("connectionpool.py", data[-1]["qual_name"])
-        self.assertIn("connectionpool.py", data[-2]["qual_name"])
+        self.assertIn("test.py", data[-1]["qual_name"])
+        self.assertIn("test.py", data[-2]["qual_name"])
         with open("info.log", "r") as fh:
             content = fh.read()
         body = content.splitlines()
-        expected = ["mixin"] * 2 + ["test_logger"] * 5 + ["connectionpool"] * 2
+        expected = ["mixin"] * 2 + ["test_logger"] * 5 + ["test"] * 2
         # print("FILE")
         # print(content)
         for i, e in enumerate(expected):

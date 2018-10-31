@@ -112,9 +112,7 @@ class CoreDaemon(CoreBase):
         into ``sys.worker``.
         """
         setup = core4.service.setup.CoreSetup()
-        setup.make_folder()
-        setup.make_role()
-        setup.make_stdout()
+        setup.make_all()
 
     def collect_project(self):
         """
