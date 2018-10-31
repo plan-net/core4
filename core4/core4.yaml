@@ -87,9 +87,9 @@ api:
   key_file: ~
   allow_origin: "*"
   port: 5001
-  contact: mail@mailer.com
   error_html_page: ./_static/error.html
   error_text_page: ./_static/error.txt
+  contact: mail@mailer.com
   reset_password:
     expiration: 28800  # 8h
   token:
