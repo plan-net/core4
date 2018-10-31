@@ -57,13 +57,20 @@ class CoreBase:
 
     def __init__(self):
         # query identifier from instantiating object
-        frame = inspect.currentframe().f_back.f_locals
-        for n, v in frame.items():
-            if isinstance(v, CoreBase):
-                ident = v.identifier
-                if not isinstance(ident, property):
-                    if ident is not None:
-                        self.identifier = ident
+        if self.identifier is None:
+            identifier = None
+            current_frames = inspect.getouterframes(inspect.currentframe())
+            for frame_info in current_frames:
+                locals = list(frame_info.frame.f_locals.values())
+                for v in locals:
+                    if issubclass(v.__class__, CoreBase):
+                        ident = v.identifier
+                        if ident is not None:
+                            identifier = ident
+                            break
+                if identifier is not None:
+                    break
+            self.identifier = identifier
         self._progress = None
         self.project = self.get_project()
         self._open_config()
