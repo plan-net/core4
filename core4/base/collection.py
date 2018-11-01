@@ -60,7 +60,7 @@ class CoreCollection:
         """
         Database connection factory, featuring the following protocols:
 
-        * ``mongodb://`` with MongoDB
+        * mongodb:// with MongoDB
 
         :return: database connection
         """

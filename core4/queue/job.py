@@ -191,7 +191,8 @@ class CoreJob(CoreBase):
     if a property is defined within more then one definition scheme hinted
     order is applied:
 
-    #. job properties can be defined by parameters passed to :meth:`.enqueue()`
+    #. job properties can be defined by parameters passed to
+       :meth:`.enqueue <core4.queue.job.CoreJob.enqueue>`
     #. job properties can be defined in configuration settings
     #. job properties can be defined as a class property
 

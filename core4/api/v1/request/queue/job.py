@@ -54,7 +54,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             None
 
         Returns:
-            data element wirh job attributes, see :ref:`job_attributes`
+            data element wirh job attributes, see
+            :class:`core4.queue.job.CoreJob`.
 
         Errors:
             401: Unauthorized
@@ -130,13 +131,14 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             }
 
         Methods:
-            ``/jobs/<_id>`` - jobs details
+            /jobs/<_id> - jobs details
 
         Parameters:
             _id (str): job _id to get details
 
         Returns:
-            data element with job attributes, see :ref:`job_attributes`
+            data element with job attributes, see
+            :class:`core4.queue.job.CoreJob`.
 
         Errors:
             400: failed to parse job _id
@@ -245,7 +247,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def delete(self, _id=None):
         """
         Methods:
-            ``/jobs/<_id>`` - delete job from ``sys.queue``
+            /jobs/<_id> - delete job from ``sys.queue``
 
         Parameters:
             _id (str): job _id to delete
@@ -283,7 +285,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def put(self, request=None):
         """
         Methods:
-            ``/jobs/<action>/<_id>`` - manage job in ``sys.queue``, this is
+            /jobs/<action>/<_id> - manage job in ``sys.queue``, this is
             delete, kill and restart.
 
         Parameters:
@@ -508,7 +510,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def post(self, _id=None):
         """
         Methods:
-            ``/jobs/<_id>`` - enqueue job
+            /jobs/<_id> - enqueue job
 
         Parameters:
             args (dict): arguments to be passed to the job
@@ -634,7 +636,7 @@ class JobStream(JobHandler):
     async def get(self, _id=None):
         """
         Methods:
-            ``/jobs/poll`` - stream job attributes
+            /jobs/poll - stream job attributes
 
         Parameters:
             None
@@ -692,7 +694,7 @@ class JobStream(JobHandler):
     async def post(self, _id=None):
         """
         Methods:
-            ``/jobs/poll`` - enqueue job and stream job progress
+            /jobs/poll - enqueue job and stream job progress
 
         Parameters:
             see ``POST`` of :class:`core4.api.v1.request.queue.job.JobHandler`

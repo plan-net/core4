@@ -10,7 +10,7 @@ def make_connection(connection):
     :param connection: :class:`.CoreCollection` object
     :return: MongoClient, see :class:`pymongo.mongo_client.MongoClient`
              or MotorClient, see :class:`motor.MotorClient` if the connection
-             object has ``connection.async == True`.
+             object has ``connection.async == True``.
     """
     url = 'mongodb://'
     if connection.username:
