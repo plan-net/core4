@@ -7,6 +7,11 @@ import tornado.template
 
 
 def enqueue(job, **kwargs):
+    """
+    Helper method to enqueue a job.
+
+    :param job: qual_name or job class
+    """
     if isinstance(job, str):
         kwargs["name"] = job
     else:

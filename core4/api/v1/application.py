@@ -33,7 +33,7 @@ import tornado.routing
 import tornado.web
 
 import core4.error
-import core4.logger.mixin
+from core4.logger.mixin import CoreLoggerMixin
 import core4.service.setup
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.standard.login import LoginHandler
@@ -187,8 +187,7 @@ class CoreApplication(tornado.web.Application):
         self.identifier = container.identifier
 
 
-class CoreApiServerTool(
-    core4.base.main.CoreBase, core4.logger.mixin.CoreLoggerMixin):
+class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     """
     Helper class to :meth:`serve` :class:`CoreApiContainer` classes.
     """
@@ -223,6 +222,16 @@ class CoreApiServerTool(
         return tornado.routing.RuleRouter(routes)
 
     def serve(self, *args, port=None, name=None, **kwargs):
+        """
+        Starts the tornado HTTP server listening on the specified port and
+        enters tornado's IOLoop.
+
+        :param args: one or more :class:`CoreApiContainer` classes
+        :param port: to listen, defaults to ``5001``, see core4 configuration
+                     setting ``api.port``
+        :param name: to identify the server
+        :param kwargs: to be passed to all :class:`CoreApiApplication`
+        """
         self.identifier = name or core4.util.get_hostname()
         self.setup_logging()
         router = self.make_routes(*args, **kwargs)

@@ -165,6 +165,11 @@ class QueryMixin:
             sort=[('_id', 1)])
 
     def project_job_listing(self):
+        """
+        Returns the ``sys.queue`` attributes to be projected in a job listing.
+
+        :return: dict of attributes
+        """
         return {
             '_id': 1,
             'attempts_left': 1,
@@ -202,6 +207,11 @@ class QueryMixin:
         return None
 
     def pipeline_queue_count(self):
+        """
+        Returns the pipeline commands to count jobs in different states.
+
+        :return: list of MongoDB pipeline commands
+        """
         return [
             {
                 '$match': {

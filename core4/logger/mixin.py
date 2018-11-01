@@ -123,6 +123,9 @@ class ExceptionLoggerMixin:
 
 
 def logon():
+    """
+    Helper method to turn on logging as defined in core4 configuration.
+    """
     class Logger(core4.base.CoreBase, CoreLoggerMixin):
 
         def __init__(self, *args, **kwargs):

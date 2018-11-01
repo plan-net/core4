@@ -368,21 +368,50 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
             ret["flash"] = self._flash
         return ret
 
-    def flash(self, level, message):
+    def flash(self, level, message, *vars):
+        """
+        Add a flash message with
+        :param level: DEBUG, INFO, WARNING or ERROR
+        :param message: str to flash
+        """
         level = level.upper().strip()
         assert level in FLASH_LEVEL
-        self._flash.append({"level": level, "message": message})
+        self._flash.append({"level": level, "message": message % vars})
 
     def flash_debug(self, message, *vars):
+        """
+        Add a DEBUG flash message.
+
+        :param message: str.
+        :param vars: optional str template variables
+        """
         self.flash("DEBUG", message % vars)
 
     def flash_info(self, message, *vars):
+        """
+        Add a INFO flash message.
+
+        :param message: str.
+        :param vars: optional str template variables
+        """
         self.flash("INFO", message % vars)
 
     def flash_warning(self, message, *vars):
+        """
+        Add a WARNING flash message.
+
+        :param message: str.
+        :param vars: optional str template variables
+        """
         self.flash("WARNING", message % vars)
 
     def flash_error(self, message, *vars):
+        """
+        Add a ERROR flash message.
+
+        :param message: str.
+        :param vars: optional str template variables
+        """
         self.flash("ERROR", message % vars)
 
     def write_error(self, status_code, **kwargs):

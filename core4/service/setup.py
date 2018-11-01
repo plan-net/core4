@@ -2,12 +2,18 @@ import os
 
 import pymongo
 import pymongo.errors
+
+import core4.const
+from core4.api.v1.role import Role
 from core4.base import CoreBase
 from core4.util import Singleton
-from core4.api.v1.role import Role
-import core4.const
+
 
 def once(f):
+    """
+    Execute decorated methods only once.
+    """
+
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
             wrapper.has_run = True
@@ -18,8 +24,20 @@ def once(f):
 
 
 class CoreSetup(CoreBase, metaclass=Singleton):
+    """
+    Setup core4 environment including
+
+    * folders
+    * users and roles
+    * collection index of ``sys.queue``
+    * collection TTL of ``sys.stdout``
+    * collection index of ``sys.stat``
+    """
 
     def make_all(self):
+        """
+        setup *all* core4 environment prerequisites
+        """
         self.make_folder()
         self.make_role()
         self.make_queue()
@@ -46,6 +64,15 @@ class CoreSetup(CoreBase, metaclass=Singleton):
 
     @once
     def make_role(self):
+        """
+        Creates API administration user as defined in core4 configuration
+        settings
+
+        * ``api.admin_username``
+        * ``api.admin_realname``
+        * ``api.admin_password``
+        * ``api.contact``
+        """
         # todo: we might want to add a standard user role with the minimum
         # set of perms required, like /profile
         try:
@@ -110,5 +137,3 @@ class CoreSetup(CoreBase, metaclass=Singleton):
             if "ttl" in self.config.sys.stdout.index_information():
                 self.config.sys.stdout.drop_index(index_or_name="ttl")
                 self.logger.warning("removed index [ttl] from [sys.stdout]")
-
-

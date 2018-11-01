@@ -14,7 +14,7 @@ class MongoHandler(BaseHandler):
 
     The handler provides read-only access to MongoDB databases specified by
     the user/role permission field (``mongodb://<DBNAME>``). Additionally the
-    handler creates user user database at ``user!<USERNAME>`` with the built-in
+    handler creates user database at ``user!<USERNAME>`` with the built-in
     ``dbOwner`` role assigned to the user.
 
     .. note:: The prefix of the user database (``user!``) can be defined with
@@ -80,7 +80,11 @@ class MongoHandler(BaseHandler):
         return password
 
     def grant(self, database):
-        # cascade db permission, then grant read-only access
+        """
+        cascade database permissions and read-only access.
+
+        :param database: to grant
+        """
         username = self.role.name
         self.admin_db.command(
             'grantRolesToUser', username,
