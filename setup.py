@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-class MySphinxCommand(TestCommand):
+class SphinxCommand(TestCommand):
 
     def run_tests(self):
         check_call(
@@ -84,7 +84,7 @@ setup(
     },
     zip_safe=False,
     cmdclass={
-        'sphinx': MySphinxCommand
+        'sphinx': SphinxCommand
     },
     classifiers=(
         'Development Status :: 3 - Alpha',
