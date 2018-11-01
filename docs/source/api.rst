@@ -10,6 +10,7 @@ ReST API and widgets
 * serving with serve, serving the default server
 * standard response types including
 * json response format
+* documentation standards
 
 .. todo:: write about core4 ReST API
 
