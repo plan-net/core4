@@ -265,7 +265,7 @@ async def test_granted_user(http_server_client):
         realname="test user",
         password="password",
         email="test@user.com",
-        perm=["api://core4.api.v1.request.profile"]
+        perm=["api://core4.api.v1.request.standard"]
     ).save()
     resp = await http_server_client.fetch('/app1/login'
                                           '?username=user&password=password')

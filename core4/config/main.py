@@ -33,7 +33,7 @@ def parse_boolean(value):
              value no pattern matches.
     """
     if value.lower() in ("yes", "y", "on", "1", "true", "t"):
-        return True  # todo: test coverage
+        return True
     elif value.lower() in ("no", "n", "off", "0", "false", "f"):
         return False
     return value
