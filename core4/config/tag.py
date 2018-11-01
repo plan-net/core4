@@ -117,9 +117,11 @@ class ConnectTag(yaml.YAMLObject):
 
     def connect(self, async=False):
         """
-        Internal methods used to lazily establish the MongoDB connection when
-        requsted. Uses :func:`connect_database` to connect.
+        Used to lazily establish the MongoDB connection when requested. Uses
+        :func:`connect_database` to connect.
 
+        :param async: if ``True`` connects with :mod:`motor`, else with
+                      :mod:`pymongo` (default).
         :return: :class:`.CoreCollection`
         """
 
@@ -131,6 +133,11 @@ class ConnectTag(yaml.YAMLObject):
         return self._mongo
 
     def connect_async(self):
+        """
+        Same as :meth:`.connect` with ``async=True``.
+
+        :return: :class:`.CoreCollection`
+        """
         return self.connect(async=True)
 
     def __getattr__(self, item):
