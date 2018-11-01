@@ -15,7 +15,7 @@ class ProfileHandler(CoreRequestHandler):
             None
 
         Returns:
-            dict with data element
+            data element with
 
             - **_id** (*str*): user _id
             - **_etag** (*str*): specifies the current version of the user

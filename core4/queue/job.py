@@ -121,13 +121,16 @@ class CoreJob(CoreBase):
 
     The following table describes all job properties in alphabetical order.
 
+    .. _job_attributes:
+
     * ``_id`` - job identifier in ``sys.queue``
     * ``args`` - arguments passed to the job
     * ``attempts`` - maximum number of execution attempts after job failure
       before the job enters the final ``error`` state
     * ``attempts_left`` -  number of attempts left after failure
     * ``author`` - the author(s) of the job
-    * ``defer_max`` - maximum number of seconds to defer the job before restart
+    * ``defer_max`` - maximum number of seconds to defer the job before the job
+      turns inactive
     * ``defer_time`` - seconds to wait before restart after defer
     * ``dependency`` - list of jobs which need complete before execution
     * ``chain`` - list of jobs to be enqueued after successful job completion

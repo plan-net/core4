@@ -25,7 +25,7 @@ class LoginHandler(CoreRequestHandler):
             password (str): requesting login
 
         Returns:
-            dict with data element
+            data element with
 
             - **token** (*str*): the created authorization token
 
@@ -87,7 +87,7 @@ class LoginHandler(CoreRequestHandler):
         User password reset.
 
         Parameters:
-            email (str): of the user _who requests to reset his password
+            email (str): of the user who requests to reset his password
             token (str): of the authenticated user
             password (str): the new password to set
 

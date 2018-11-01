@@ -19,7 +19,7 @@ class LogoutHandler(CoreRequestHandler):
             None
 
         Returns:
-            dict with data element as str ``OK``
+            data element with ``OK``
 
         Errors:
             401: Unauthorized

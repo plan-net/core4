@@ -100,7 +100,7 @@ class QueueHandler(CoreRequestHandler):
             None
 
         Returns:
-            stream of dict
+            stream of dict with
 
             - **timestamp** (*float*): epoch seconds since 1970 (unix date)
             - **pending** (*int*): number of jobs in state *pending*
