@@ -2,6 +2,7 @@
 
 import time
 import core4.error
+import core4.queue.helper
 import core4.queue.job
 import core4.queue.main
 from tests.pytest_util import *
@@ -10,7 +11,7 @@ from tests.test_worker import worker
 
 def test_job_found():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.job.DummyJob)
+    q.enqueue(core4.queue.helper.DummyJob)
 
 
 def test_job_not_found():
@@ -70,17 +71,17 @@ def test_no_mro3():
 
 def test_enqueue():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.job.DummyJob)
+    q.enqueue(core4.queue.helper.DummyJob)
 
 
 def test_enqueue_args():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.job.DummyJob, a1=1, a2=2, a3=3)
+    q.enqueue(core4.queue.helper.DummyJob, a1=1, a2=2, a3=3)
     with pytest.raises(core4.error.CoreJobExists):
-        q.enqueue(core4.queue.job.DummyJob, args={"a1": 1, "a2": 2, "a3": 3})
-    q.enqueue(core4.queue.job.DummyJob)
+        q.enqueue(core4.queue.helper.DummyJob, args={"a1": 1, "a2": 2, "a3": 3})
+    q.enqueue(core4.queue.helper.DummyJob)
     with pytest.raises(core4.error.CoreJobExists):
-        q.enqueue(core4.queue.job.DummyJob)
+        q.enqueue(core4.queue.helper.DummyJob)
 
 
 def test_invalid():

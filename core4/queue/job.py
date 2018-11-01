@@ -12,11 +12,9 @@ from core4.queue.validate import *
 
 # Job-States
 STATE_PENDING = 'pending'
-STATE_STARTING = 'starting'  # todo: we need this?
 STATE_RUNNING = 'running'
 STATE_COMPLETE = 'complete'
 STATE_DEFERRED = 'deferred'
-STATE_SKIPPED = 'skipped'  # todo: we need this?
 STATE_FAILED = 'failed'
 STATE_INACTIVE = 'inactive'
 STATE_ERROR = 'error'
@@ -568,21 +566,3 @@ class CoreJob(CoreBase):
         return executable
 
 
-class DummyJob(CoreJob):
-    """
-    This is just a job-dummy for testing purposes.
-    """
-    author = 'mra'
-
-    def execute(self, *args, **kwargs):
-        import time
-        sleep = kwargs.get("sleep", None) or 3
-        until = core4.util.now() + dt.timedelta(seconds=sleep)
-        self.logger.info("just sleeping [%s] seconds", sleep)
-        n = 0
-        while core4.util.now() <= until:
-            n += 1
-            print("line %d at %s" %(n, core4.util.now()))
-            p = float(sleep - (until - core4.util.now()).total_seconds()) / sleep
-            self.progress(p, "running")
-            time.sleep(0.5)

@@ -1,9 +1,10 @@
 import logging.config
 import traceback
-
+import os
 import datetime
 import time
 from bson.objectid import ObjectId
+import pymongo
 
 from core4.util import Singleton
 
@@ -37,6 +38,8 @@ def make_record(record):
     }
     for k in ["username", "hostname", "identifier", "qual_name"]:
         doc[k] = getattr(record, k, None)
+    if doc["qual_name"] is None:
+        doc["qual_name"] = "basename:" + os.path.basename(record.pathname)
     doc["_id"] = getattr(record, "_id", ObjectId())
     if record.exc_info or record.exc_text:
         doc["exception"] = {

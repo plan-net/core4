@@ -5,6 +5,7 @@ Usage:
   coco --init [PROJECT]
   coco --halt
   coco --worker [IDENTIFIER]
+  coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
   coco --info
@@ -18,15 +19,16 @@ Usage:
   coco --version
 
 Options:
-  -e --enqueue  enqueue job
-  -w --worker   launch worker
-  -a --alive    worker alive/dead state
-  -i --info     job state summary
-  -l --list     job listing
-  -d --detail   job details
-  -x --halt     immediate system halt
-  -h --help     Show this screen.
-  -v --version  Show version.
+  -e --enqueue    enqueue job
+  -w --worker     launch worker
+  -s --scheduler  launch scheduler
+  -a --alive      worker alive/dead state
+  -i --info       job state summary
+  -l --list       job listing
+  -d --detail     job details
+  -x --halt       immediate system halt
+  -h --help       Show this screen.
+  -v --version    Show version.
 """
 
 import json
@@ -41,6 +43,7 @@ import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
+import core4.queue.scheduler
 import core4.service.project
 import core4.util
 
@@ -56,6 +59,13 @@ def worker(name):
     core4.logger.mixin.logon()
     w = core4.queue.worker.CoreWorker(name=name)
     print("start worker [%s]" % (w.identifier))
+    w.start()
+
+
+def scheduler(name):
+    core4.logger.mixin.logon()
+    w = core4.queue.scheduler.CoreScheduler(name=name)
+    print("start scheduler [%s]" % (w.identifier))
     w.start()
 
 
@@ -287,6 +297,8 @@ def main():
         halt()
     elif args["--worker"]:
         worker(args["IDENTIFIER"])
+    elif args["--scheduler"]:
+        scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
         pause(args["PROJECT"])
     elif args["--resume"]:

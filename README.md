@@ -20,8 +20,8 @@ installation
 .. todo:: document how to install and how to create core4 projects    
 
 
-setup development environment
------------------------------
+setup development environment on ubuntu
+---------------------------------------
 
 Install Pipenv following https://pipenv.readthedocs.io/en/latest/install/::
 
@@ -41,7 +41,11 @@ Setup your Python virtual environment with::
     $ pipenv install --python=3.5 -v -e .[tests]
     $ pipenv shell
 
-Your're good to go now and extned core4 package.
+Your're good to go now and extend core4 package.
+
+
+setup development environment on debian
+---------------------------------------
 
 
 regression tests

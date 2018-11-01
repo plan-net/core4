@@ -29,9 +29,3 @@ def drop_env():
             dels.append(k)
     for k in dels:
         del os.environ[k]
-
-
-if __name__ == '__main__':
-    import pytest
-
-    pytest.main(['-x', '-k', 'test_s'])

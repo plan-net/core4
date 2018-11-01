@@ -1,5 +1,5 @@
 DEFAULT:
-  mongo_url: ~
+  mongo_url: ~  # must be set
   mongo_database: test
   python: ~
 
@@ -17,11 +17,12 @@ sys:
   job: !connect mongodb://sys.job
   lock: !connect mongodb://sys.lock
   stdout: !connect mongodb://sys.stdout
+  stat: !connect mongodb://sys.stat
   userdb: user!
 
 # system folders
 folder:
-  root: /srv/core4
+  root: /tmp/core4
   transfer: transfer
   process: proc
   archive: arch
@@ -36,6 +37,7 @@ logging:
   exception:
     capacity: 1000
   extra: ~
+  write_concern: 0
 
 # base class defaults
 base:
@@ -44,9 +46,9 @@ base:
 # job defaults
 job:
   attempts: 1
-  defer_max: 3600
-  defer_time: 300
-  error_time: 600
+  defer_max: 3600 # 1h
+  defer_time: 300 # 5'
+  error_time: 600 # 10'
   zombie_time: 1800
   force: False
   hidden: False
@@ -70,8 +72,31 @@ worker:
     remove_jobs: 3.0
     flag_jobs: 10.0
     collect_stats: 20.0
-  stdout_ttl: 604800
+  stdout_ttl: 604800  # 7d
   alive_timeout: 60
 
 scheduler:
   interval: 1
+
+api:
+  setting:
+    debug: True
+    compress_response: False
+    cookie_secret: ~  # must be set
+  crt_file: ~
+  key_file: ~
+  allow_origin: "*"
+  port: 5001
+  error_html_page: ./_static/error.html
+  error_text_page: ./_static/error.txt
+  contact: mail@mailer.com
+  reset_password:
+    expiration: 28800  # 8h
+  token:
+    expiration: 28800  # 8h
+    refresh: 3600  # 1h
+    algorithm: HS512
+    secret: secret
+  admin_username: admin
+  admin_realname: admin user
+  admin_password: hans  # must be set

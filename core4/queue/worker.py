@@ -23,6 +23,7 @@ To stop the worker start a new Python interpreter and go with::
     $ coco --halt
 """
 
+import collections
 import os
 import subprocess
 import sys
@@ -30,18 +31,16 @@ import traceback
 
 import psutil
 import pymongo
-import time
 from datetime import timedelta
-import collections
 
-from core4.queue.daemon import CoreDaemon
-import core4.queue.query
-import core4.error
 import core4.base
+import core4.error
 import core4.queue.job
 import core4.queue.main
+import core4.queue.query
 import core4.service.setup
 import core4.util
+from core4.queue.daemon import CoreDaemon
 
 #: processing steps in the main loop of :class:`.CoreWorker`
 STEPS = (
@@ -65,18 +64,19 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.plan = self.create_plan()
         self.cycle.update(dict([(s, 0) for s in self.steps]))
         self.stats_collector = collections.deque(maxlen=
-                                                 round(self.config.worker.avg_stats_secs
-                                                       / self.config.worker.execution_plan.collect_stats))
+        round(
+            self.config.worker.avg_stats_secs
+            / self.config.worker.execution_plan.collect_stats))
         # populate with first resource-tuple.
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
-             psutil.virtual_memory()[4]/2.**20))
+             psutil.virtual_memory()[4] / 2. ** 20))
 
     def cleanup(self):
         """
         General housekeeping method of the worker.
         """
-        ret = self.config.sys.lock.delete_many({"worker": self.identifier})
+        ret = self.config.sys.lock.delete_many({"owner": self.identifier})
         self.logger.info(
             "cleanup removed [%d] sys.lock records", ret.raw_result["n"])
 
@@ -160,6 +160,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 raise RuntimeError(
                     "failed to update job [{}] state [{}]".format(
                         doc["_id"], core4.queue.job.STATE_FAILED))
+            self.queue.make_stat()
         else:
             if job.inactive_at and job.inactive_at <= self.at:
                 self.queue.set_inactivate(job)
@@ -258,6 +259,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             if self.queue.maintenance(project):
                 self.logger.debug(
                     "skipped job [%s] in maintenance", data["_id"])
+                continue
 
             # check system resources
             cur_stats = self.avg_stats()
@@ -326,6 +328,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         if ret.raw_result["n"] != 1:
             raise RuntimeError(
                 "failed to update job [{}] state [starting]".format(job._id))
+        self.queue.make_stat()
         for k, v in update.items():
             job.__dict__[k] = v
         try:
@@ -362,13 +365,12 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     raise RuntimeError(
                         "failed to update job [{}] pid [{}]".format(
                             job._id, proc.pid))
+                # self.queue.make_stat()
                 job_id = str(job._id).encode("utf-8")
                 proc.stdin.write(bytes(job_id))
                 proc.stdin.close()
                 self.logger.debug("successfully launched job [%s] with [%s]",
                                   job._id, executable)
-
-
 
     def fail_hard(self, job):
         """
@@ -407,6 +409,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     if ret.raw_result["n"] != 1:
                         raise RuntimeError(
                             "failed to remove job [{}]".format(doc["_id"]))
+                    self.queue.make_stat()
                     self.logger.info(
                         "successfully journaled and removed job [%s]",
                         doc["_id"])
@@ -467,6 +470,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set non-stop job [%s]", doc["_id"])
+                # self.queue.make_stat()
 
     def flag_zombie(self, doc):
         """
@@ -495,8 +499,15 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set zombie job [%s]", doc["_id"])
+                # self.queue.make_stat()
 
     def check_pid(self, doc):
+        """
+        Identifies and handles died jobs. If the job PID does not exists, the
+        job is flagged ``killed_at`` in ``sys.queue``.
+
+        :param doc: job MongoDB document
+        """
         (found, proc) = self.pid_exists(doc)
         if not found and proc:
             self.logger.error("pid [%s] not exists, killing",
@@ -555,7 +566,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         # psutil already accounts for idle and io-wait (idle and waiting for IO), we are not interested in both.
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
-             psutil.virtual_memory()[4]/2.**20))
+             psutil.virtual_memory()[4] / 2. ** 20))
 
     def avg_stats(self):
         """
@@ -566,4 +577,3 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         mem = sum(m for c, m in self.stats_collector)
         div = len(self.stats_collector)
         return cpu / div, mem / div
-

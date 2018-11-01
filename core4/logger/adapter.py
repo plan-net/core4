@@ -7,7 +7,5 @@ class CoreLoggingAdapter(logging.LoggerAdapter):
     """
 
     def process(self, msg, kwargs):
-        kwargs["extra"] = {
-            "obj": self.extra,
-        }
+        kwargs.setdefault("extra", {}).update({"obj": self.extra})
         return msg, kwargs

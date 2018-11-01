@@ -10,6 +10,7 @@ import time
 
 import core4.base.main
 import core4.logger.mixin
+import core4.queue.helper
 import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
@@ -144,7 +145,7 @@ def test_halt():
 
 
 def test_enqueue_dequeue(queue):
-    enqueued_job = queue.enqueue(core4.queue.job.DummyJob)
+    enqueued_job = queue.enqueue(core4.queue.helper.DummyJob)
     worker = core4.queue.worker.CoreWorker()
     doc = worker.get_next_job()
     dequeued_job = queue.job_factory(doc["name"]).deserialise(**doc)
@@ -159,13 +160,13 @@ def test_offset():
     queue = core4.queue.main.CoreQueue()
     enqueued_id = []
     for i in range(0, 5):
-        enqueued_id.append(queue.enqueue(core4.queue.job.DummyJob, i=i)._id)
+        enqueued_id.append(queue.enqueue(core4.queue.helper.DummyJob, i=i)._id)
     worker = core4.queue.worker.CoreWorker()
     dequeued_id = []
     dequeued_id.append(worker.get_next_job()["_id"])
     dequeued_id.append(worker.get_next_job()["_id"])
     dequeued_id.append(worker.get_next_job()["_id"])
-    enqueued_job = queue.enqueue(core4.queue.job.DummyJob, i=5, priority=10)
+    enqueued_job = queue.enqueue(core4.queue.helper.DummyJob, i=5, priority=10)
     dequeued_job = worker.get_next_job()
     assert enqueued_job._id == dequeued_job["_id"]
     assert enqueued_id[0:len(dequeued_id)] == dequeued_id
@@ -174,7 +175,7 @@ def test_offset():
 def test_lock():
     queue = core4.queue.main.CoreQueue()
     worker = core4.queue.worker.CoreWorker()
-    queue.enqueue(core4.queue.job.DummyJob)
+    queue.enqueue(core4.queue.helper.DummyJob)
     job = worker.get_next_job()
     assert queue.lock_job(job["_id"], worker.identifier)
     assert queue.lock_job(job["_id"], worker.identifier) is False
@@ -183,7 +184,7 @@ def test_lock():
 def test_remove(mongodb):
     queue = core4.queue.main.CoreQueue()
     worker = core4.queue.worker.CoreWorker()
-    _id = queue.enqueue(core4.queue.job.DummyJob)._id
+    _id = queue.enqueue(core4.queue.helper.DummyJob)._id
     assert _id is not None
     assert queue.remove_job(_id)
     job = worker.get_next_job()
@@ -202,7 +203,7 @@ def test_removing():
     workers = []
     count = 10
     for i in range(0, count):
-        job = queue.enqueue(core4.queue.job.DummyJob, i=i)
+        job = queue.enqueue(core4.queue.helper.DummyJob, i=i)
         queue.remove_job(job._id)
     for i in range(1, 2):
         worker = core4.queue.worker.CoreWorker(name="worker-{}".format(i))
@@ -225,7 +226,7 @@ def test_start_job():
     queue = core4.queue.main.CoreQueue()
     worker = core4.queue.worker.CoreWorker()
     worker.cleanup()
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     assert job.identifier == job._id
     assert job._id is not None
     assert job.wall_time is None
@@ -249,7 +250,7 @@ def test_start_job2(queue):
     workers = []
     count = 5
     for i in range(0, count):
-        queue.enqueue(core4.queue.job.DummyJob, i=i)
+        queue.enqueue(core4.queue.helper.DummyJob, i=i)
     for i in range(0, threads):
         worker = core4.queue.worker.CoreWorker(name="worker-{}".format(i + 1))
         workers.append(worker)
@@ -304,7 +305,7 @@ def worker():
 
 @pytest.mark.timeout(30)
 def test_ok(queue, worker):
-    queue.enqueue(core4.queue.job.DummyJob, sleep=0)
+    queue.enqueue(core4.queue.helper.DummyJob, sleep=0)
     worker.start(1)
     worker.wait_queue()
 
@@ -322,9 +323,11 @@ def test_error(queue, worker):
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "done execution" in d["message"]]) == 3
     assert sum([1 for d in data if "start execution" in d["message"]]) == 3
-    delta = [d["created"] for d in data if "execution" in d["message"] and d["level"] == "INFO"]
+    delta = [d["created"] for d in data if
+             "execution" in d["message"] and d["level"] == "INFO"]
     assert (delta[1] - delta[0]).total_seconds() >= 3
     assert (delta[2] - delta[1]).total_seconds() >= 3
+
 
 @pytest.mark.timeout(30)
 def test_success_after_failure(queue, worker):
@@ -334,8 +337,10 @@ def test_success_after_failure(queue, worker):
     worker.wait_queue()
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "done execution" in d["message"]]) == 3
-    assert sum([1 for d in data if "done execution with [failed]" in d["message"]]) == 2
-    assert sum([1 for d in data if "done execution with [complete]" in d["message"]]) == 1
+    assert sum([1 for d in data if
+                "done execution with [failed]" in d["message"]]) == 2
+    assert sum([1 for d in data if
+                "done execution with [complete]" in d["message"]]) == 1
 
 
 @pytest.mark.timeout(90)
@@ -349,8 +354,10 @@ def test_defer(queue, worker):
             break
     worker.stop()
     data = list(queue.config.sys.log.find())
-    assert sum([1 for d in data if "done execution with [deferred]" in d["message"]]) > 2
-    assert sum([1 for d in data if "done execution with [inactive]" in d["message"]]) == 1
+    assert sum([1 for d in data if
+                "done execution with [deferred]" in d["message"]]) > 2
+    assert sum([1 for d in data if
+                "done execution with [inactive]" in d["message"]]) == 1
 
 
 @pytest.mark.timeout(90)
@@ -411,7 +418,7 @@ def test_remove_deferred(queue, worker, mongodb):
 
 @pytest.mark.timeout(30)
 def test_remove_complete(queue, worker, mongodb):
-    job = queue.enqueue(core4.queue.job.DummyJob, sleep=3)
+    job = queue.enqueue(core4.queue.helper.DummyJob, sleep=3)
     worker.start(1)
     while queue.config.sys.queue.count_documents({"state": "running"}) == 0:
         time.sleep(0.25)
@@ -465,11 +472,12 @@ def test_remove_error(queue, worker):
 
 @pytest.mark.timeout(30)
 def test_nonstop(queue, worker):
-    job = queue.enqueue(core4.queue.job.DummyJob, sleep=3, wall_time=1)
+    job = queue.enqueue(core4.queue.helper.DummyJob, sleep=3, wall_time=1)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.1)
-        if queue.config.sys.queue.count_documents({"wall_at": {"$ne": None}}) > 0:
+        if queue.config.sys.queue.count_documents(
+                {"wall_at": {"$ne": None}}) > 0:
             break
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.1)
@@ -656,7 +664,7 @@ class RestartErrorTest(core4.queue.job.CoreJob):
         raise RuntimeError("expected failure")
 
 
-@pytest.mark.timeout(30)
+# @pytest.mark.timeout(30)
 def test_restart_error(queue, worker):
     job = queue.enqueue(RestartErrorTest)
     worker.start(1)
@@ -672,10 +680,15 @@ def test_restart_error(queue, worker):
     assert parent.state == core4.queue.job.STATE_ERROR
     child = queue.find_job(new_id)
     assert child.state == core4.queue.job.STATE_COMPLETE
+    assert parent.enqueued["child_id"] == child._id
+    assert child.enqueued["parent_id"] == parent._id
+    assert parent.enqueued["parent_id"] is None
+    assert "child_id" not in child.enqueued
+    assert queue.config.sys.lock.count_documents({}) == 0
 
 
 def test_kill_running_only(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     assert not queue.kill_job(job._id)
 
 
@@ -793,14 +806,14 @@ def test_binary_out(queue, worker, mongodb):
 
 @pytest.mark.timeout(30)
 def test_project_maintenance(queue, worker):
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     curr = worker.worker[0].cycle["total"]
     queue.enter_maintenance("core4")
     assert queue.config.sys.queue.count_documents({}) == 0
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     assert queue.config.sys.queue.count_documents({}) == 1
     while worker.worker[0].cycle["total"] < curr + 10:
         time.sleep(1)
@@ -809,9 +822,10 @@ def test_project_maintenance(queue, worker):
     worker.wait_queue()
     assert queue.config.sys.queue.count_documents({}) == 0
 
+
 @pytest.mark.timeout(30)
 def test_no_resources(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     worker1 = WorkerNoCPU(name="testRes_1")
     worker2 = WorkerNoCPU(name="testRes_2")
     worker3 = WorkerNoRAM(name="testRes_3")
@@ -829,29 +843,34 @@ def test_no_resources(queue):
     assert sum([1 for d in data if "skipped job" in d["message"]]) == 4
     assert sum([1 for d in data if "start execution" in d["message"]]) == 1
 
+
 class WorkerNoCPU(core4.queue.worker.CoreWorker):
     def __init__(self, name):
         super().__init__(name)
+
     def avg_stats(self):
-        return (100,1024)
+        return (100, 1024)
+
 
 class WorkerNoRAM(core4.queue.worker.CoreWorker):
     def __init__(self, name):
         super().__init__(name)
 
     def avg_stats(self):
-        return (0, 240)
+        return (0, 30)
+
 
 @pytest.mark.timeout(30)
 def test_no_resources_force(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob, force=True)
+    job = queue.enqueue(core4.queue.helper.DummyJob, force=True)
     worker = WorkerNoCPU(name="testRes_1")
     worker.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "start execution" in d["message"]]) == 1
-    job2 = queue.enqueue(core4.queue.job.DummyJob, force=True, node="testRes2")
+    job2 = queue.enqueue(core4.queue.helper.DummyJob, force=True,
+                         node="testRes2")
     worker2 = WorkerNoRAM(name="testRes2")
     worker2.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
@@ -859,9 +878,10 @@ def test_no_resources_force(queue):
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "start execution" in d["message"]]) == 2
 
+
 @pytest.mark.timeout(30)
 def test_worker_has_resources(queue):
-    job = queue.enqueue(core4.queue.job.DummyJob)
+    job = queue.enqueue(core4.queue.helper.DummyJob)
     worker = WorkerNoCPU(name="testRes")
     worker.start_job(job)
     while queue.config.sys.queue.count_documents({}) > 0:

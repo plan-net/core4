@@ -57,19 +57,31 @@ class CoreBase:
 
     def __init__(self):
         # query identifier from instantiating object
-        frame = inspect.currentframe().f_back.f_locals
-        for n, v in frame.items():
-            if isinstance(v, CoreBase):
-                ident = v.identifier
-                if not isinstance(ident, property):
-                    if ident is not None:
-                        self.identifier = ident
+        if self.identifier is None:
+            identifier = None
+            current_frames = inspect.getouterframes(inspect.currentframe())
+            for frame_info in current_frames:
+                locals = list(frame_info.frame.f_locals.values())
+                for v in locals:
+                    if issubclass(v.__class__, CoreBase):
+                        ident = v.identifier
+                        if ident is not None:
+                            identifier = ident
+                            break
+                if identifier is not None:
+                    break
+            self.identifier = identifier
         self._progress = None
         self.project = self.get_project()
         self._open_config()
         self._open_logging()
 
     def get_project(self):
+        """
+        Identifies the class project.
+
+        :return: project (str)
+        """
         modstr = self.__class__.__module__
         project = modstr.split('.')[0]
         module = sys.modules[project]
@@ -140,8 +152,7 @@ class CoreBase:
                         self.project + core4.config.main.CONFIG_EXTENSION)
         return None
 
-    # todo: hide this method with a prefix "_"
-    def make_config(self, *args, **kwargs):
+    def _make_config(self, *args, **kwargs):
         """
         :return: :class:`.CoreConfig` class to be attached to this class
         """
@@ -154,7 +165,7 @@ class CoreBase:
         if project_config and os.path.exists(project_config):
             kwargs["project_config"] = (self.project, project_config)
         kwargs["extra_dict"] = self._build_extra_config()
-        self.config = self.make_config(**kwargs)
+        self.config = self._make_config(**kwargs)
         pos = self.config._config
         for p in self.qual_name(short=True).split("."):
             pos = pos[p]
@@ -214,7 +225,7 @@ class CoreBase:
             fmt = " - {}".format(args.pop(0))
         else:
             fmt = ""
-        self.logger.info('progress at %.0f%%' + fmt, p, *args)
+        self.logger.debug('progress at %.0f%%' + fmt, p, *args)
 
     def progress(self, p, *args, inc=0.05):
         """

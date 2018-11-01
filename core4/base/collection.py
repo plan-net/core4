@@ -22,7 +22,7 @@ class CoreCollection:
 
     def __init__(
             self, scheme, hostname, database, collection, username=None,
-            password=None):
+            password=None, async=False):
         """
         Instantiates a CoreCollection object with
 
@@ -32,6 +32,7 @@ class CoreCollection:
         :param collection: name (str)
         :param username: (str)
         :param password: (str)
+        :param async: (bool)
         """
         self.scheme = scheme
         self.hostname = hostname
@@ -40,6 +41,7 @@ class CoreCollection:
         self.username = username
         self.password = password
         self._connection = None
+        self.async = async
         if self.scheme not in SCHEME:
             raise core4.error.Core4ConfigurationError(
                 "unknown scheme [{}]".format(self.scheme))
@@ -58,7 +60,7 @@ class CoreCollection:
         """
         Database connection factory, featuring the following protocols:
 
-        #. ``mongodb://`` with MongoDB
+        * ``mongodb://`` with MongoDB
 
         :return: database connection
         """
