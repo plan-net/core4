@@ -36,6 +36,13 @@ class BaseHandler(CoreBase):
     #: handler description
     description = None
 
+    async def options(self):
+        """
+        Answer preflight / OPTIONS request with 200
+        """
+        #self.set_status(200)
+        self.finish()
+
     def set_default_headers(self):
         """
         Set the default HTTP headers to allow CORS, see core4 config setting
@@ -63,6 +70,14 @@ class BaseHandler(CoreBase):
         Raises 401 error if authentication and authorization fails.
         """
         self.identifier = ObjectId()
+        if(self.request.method == 'OPTIONS'):
+            # preflight / OPTIONS should always pass
+            return
+        if not (self.request.query_arguments or self.request.body_arguments):
+            if self.request.body:
+                body_arguments = json_decode(self.request.body.decode("UTF-8"))
+                for k, v in body_arguments.items():
+                    self.request.arguments.setdefault(k, []).append(v)
         if self.request.body:
             body_arguments = json_decode(self.request.body.decode("UTF-8"))
             for k, v in body_arguments.items():
