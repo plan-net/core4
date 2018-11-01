@@ -209,9 +209,9 @@ def test_async_enqueue(test_server, queue):
                 state = data.get("state")
                 states.append(state)
     assert states[0] == "pending"
-    assert set(states[1:-2]) == {"running"}
-    assert states[-2] == "complete"
-    assert states[-1] is None
+    assert set(states[1:-1]) == {"running"}
+    assert states[-1] == "complete"
+    #assert states[-1] is None
     queue.halt(now=True)
     t.join()
     test_server.stop()
@@ -341,7 +341,7 @@ def test_restart_error(test_server, queue):
 
     rv = test_server.put("/jobs/" + j1 + "?action=restart")
     assert rv.status_code == 200
-    j2 = rv.json()["data"]
+    j2 = rv.json()["data"]["new_id"]
 
     rv2 = test_server.get("/jobs/" + j2)
     assert rv2.status_code == 200
@@ -452,4 +452,3 @@ def test_restart_deferred(test_server, queue):
     queue.halt(now=True)
     t.join()
     test_server.stop()
-
