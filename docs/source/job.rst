@@ -207,7 +207,7 @@ principles also:
 
 -   **create Data-Structures that are idempotent on multiple loads of the same data**
         you may find yourself in the position where you do not know whether a certain job has processed a particular set
-        of data or not. It is elegant to just be able to enqueue that particular job that either only updates the data
+        of data or not. It is elegant to just be able to _enqueue that particular job that either only updates the data
         if changes are detected or simply updates already present documents. That way you do not have to worry about
         overwriting critical output.
 

@@ -20,7 +20,7 @@ class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
         super().__init__(*args, **kwargs)
         self.setup_logging()
 
-    def make_config(self, *args, **kwargs):
+    def _make_config(self, *args, **kwargs):
         return MyConfig(*args, **kwargs)
 
 
@@ -161,7 +161,7 @@ def test_unwind_config(mongodb):
         cache = False
 
     class A(LogOn):
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             kwargs["local_dict"] = {
                 "tests": {
                     "test_base": {

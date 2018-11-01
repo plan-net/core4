@@ -145,7 +145,6 @@ def test_halt():
 
 
 def test_enqueue_dequeue(queue):
-
     enqueued_job = queue.enqueue(core4.queue.helper.DummyJob)
     worker = core4.queue.worker.CoreWorker()
     doc = worker.get_next_job()
@@ -324,9 +323,11 @@ def test_error(queue, worker):
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "done execution" in d["message"]]) == 3
     assert sum([1 for d in data if "start execution" in d["message"]]) == 3
-    delta = [d["created"] for d in data if "execution" in d["message"] and d["level"] == "INFO"]
+    delta = [d["created"] for d in data if
+             "execution" in d["message"] and d["level"] == "INFO"]
     assert (delta[1] - delta[0]).total_seconds() >= 3
     assert (delta[2] - delta[1]).total_seconds() >= 3
+
 
 @pytest.mark.timeout(30)
 def test_success_after_failure(queue, worker):
@@ -336,8 +337,10 @@ def test_success_after_failure(queue, worker):
     worker.wait_queue()
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "done execution" in d["message"]]) == 3
-    assert sum([1 for d in data if "done execution with [failed]" in d["message"]]) == 2
-    assert sum([1 for d in data if "done execution with [complete]" in d["message"]]) == 1
+    assert sum([1 for d in data if
+                "done execution with [failed]" in d["message"]]) == 2
+    assert sum([1 for d in data if
+                "done execution with [complete]" in d["message"]]) == 1
 
 
 @pytest.mark.timeout(90)
@@ -351,8 +354,10 @@ def test_defer(queue, worker):
             break
     worker.stop()
     data = list(queue.config.sys.log.find())
-    assert sum([1 for d in data if "done execution with [deferred]" in d["message"]]) > 2
-    assert sum([1 for d in data if "done execution with [inactive]" in d["message"]]) == 1
+    assert sum([1 for d in data if
+                "done execution with [deferred]" in d["message"]]) > 2
+    assert sum([1 for d in data if
+                "done execution with [inactive]" in d["message"]]) == 1
 
 
 @pytest.mark.timeout(90)
@@ -471,7 +476,8 @@ def test_nonstop(queue, worker):
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.1)
-        if queue.config.sys.queue.count_documents({"wall_at": {"$ne": None}}) > 0:
+        if queue.config.sys.queue.count_documents(
+                {"wall_at": {"$ne": None}}) > 0:
             break
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.1)
@@ -658,7 +664,7 @@ class RestartErrorTest(core4.queue.job.CoreJob):
         raise RuntimeError("expected failure")
 
 
-@pytest.mark.timeout(30)
+# @pytest.mark.timeout(30)
 def test_restart_error(queue, worker):
     job = queue.enqueue(RestartErrorTest)
     worker.start(1)
@@ -674,6 +680,11 @@ def test_restart_error(queue, worker):
     assert parent.state == core4.queue.job.STATE_ERROR
     child = queue.find_job(new_id)
     assert child.state == core4.queue.job.STATE_COMPLETE
+    assert parent.enqueued["child_id"] == child._id
+    assert child.enqueued["parent_id"] == parent._id
+    assert parent.enqueued["parent_id"] is None
+    assert "child_id" not in child.enqueued
+    assert queue.config.sys.lock.count_documents({}) == 0
 
 
 def test_kill_running_only(queue):
@@ -811,6 +822,7 @@ def test_project_maintenance(queue, worker):
     worker.wait_queue()
     assert queue.config.sys.queue.count_documents({}) == 0
 
+
 @pytest.mark.timeout(30)
 def test_no_resources(queue):
     job = queue.enqueue(core4.queue.helper.DummyJob)
@@ -831,11 +843,14 @@ def test_no_resources(queue):
     assert sum([1 for d in data if "skipped job" in d["message"]]) == 4
     assert sum([1 for d in data if "start execution" in d["message"]]) == 1
 
+
 class WorkerNoCPU(core4.queue.worker.CoreWorker):
     def __init__(self, name):
         super().__init__(name)
+
     def avg_stats(self):
-        return (100,1024)
+        return (100, 1024)
+
 
 class WorkerNoRAM(core4.queue.worker.CoreWorker):
     def __init__(self, name):
@@ -843,6 +858,7 @@ class WorkerNoRAM(core4.queue.worker.CoreWorker):
 
     def avg_stats(self):
         return (0, 30)
+
 
 @pytest.mark.timeout(30)
 def test_no_resources_force(queue):
@@ -853,13 +869,15 @@ def test_no_resources_force(queue):
         time.sleep(1)
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "start execution" in d["message"]]) == 1
-    job2 = queue.enqueue(core4.queue.helper.DummyJob, force=True, node="testRes2")
+    job2 = queue.enqueue(core4.queue.helper.DummyJob, force=True,
+                         node="testRes2")
     worker2 = WorkerNoRAM(name="testRes2")
     worker2.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data if "start execution" in d["message"]]) == 2
+
 
 @pytest.mark.timeout(30)
 def test_worker_has_resources(queue):

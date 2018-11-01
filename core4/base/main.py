@@ -77,6 +77,11 @@ class CoreBase:
         self._open_logging()
 
     def get_project(self):
+        """
+        Identifies the class project.
+
+        :return: project (str)
+        """
         modstr = self.__class__.__module__
         project = modstr.split('.')[0]
         module = sys.modules[project]
@@ -147,8 +152,7 @@ class CoreBase:
                         self.project + core4.config.main.CONFIG_EXTENSION)
         return None
 
-    # todo: hide this method with a prefix "_"
-    def make_config(self, *args, **kwargs):
+    def _make_config(self, *args, **kwargs):
         """
         :return: :class:`.CoreConfig` class to be attached to this class
         """
@@ -161,7 +165,7 @@ class CoreBase:
         if project_config and os.path.exists(project_config):
             kwargs["project_config"] = (self.project, project_config)
         kwargs["extra_dict"] = self._build_extra_config()
-        self.config = self.make_config(**kwargs)
+        self.config = self._make_config(**kwargs)
         pos = self.config._config
         for p in self.qual_name(short=True).split("."):
             pos = pos[p]

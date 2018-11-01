@@ -35,5 +35,5 @@ class DeferJob(core4.queue.job.CoreJob):
 if __name__ == '__main__':
     core4.logger.logon()
     q = core4.queue.main.CoreQueue()
-    # q.enqueue(ErrorJob)
+    # q._enqueue(ErrorJob)
     q.enqueue(core4.queue.helper.DummyJob)

@@ -334,7 +334,7 @@ The fully qualified download collection now points to
 ``mongodb://core:mongosecret@mongodb.prod:27017/db1/download``
 
 After several weeks with downloaded data the need arises to aggregate the data
-into a reporting collection. The developer, who has read-only access grants at
+into a reporting collection. The developer, _who has read-only access grants at
 ``mongodb.prod`` (username ``pete``, password ``mysecret``) extends the project
 configuration ``project1.py`` with::
 

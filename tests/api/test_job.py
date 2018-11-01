@@ -18,7 +18,7 @@ from core4.api.v1.application import CoreApiServerTool, CoreApiContainer, serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobStream
-from core4.api.v1.request.queue.job import JobSummary
+#from core4.api.v1.request.queue.job import JobSummary
 from core4.api.v1.request.queue.state import QueueHandler
 from core4.api.v1.request.queue.state import QueueStatus
 from tests.util import asset
@@ -94,6 +94,8 @@ class StopHandler(CoreRequestHandler):
 
 class LocalTestServer:
 
+    base_url = "/core4/api/v1"
+
     def __init__(self):
         self.port = 5555
         self.process = None
@@ -112,7 +114,7 @@ class LocalTestServer:
         assert self.signin.status_code == 200
 
     def url(self, url):
-        return "http://localhost:{}/core4/api/v1".format(self.port) + url
+        return "http://localhost:{}{}".format(self.port, self.base_url) + url
 
     def request(self, method, url, **kwargs):
         kwargs.setdefault("headers", {})[
@@ -135,18 +137,25 @@ class LocalTestServer:
 
         pubs = QueueStatus()
         IOLoop.current().spawn_callback(pubs.update)
+        cls = self.start(publisher=pubs)
+        cls.root = self.base_url
+        self.serve(cls)
+
+    def serve(self, cls, **kwargs):
+        serve(cls, port=self.port, **kwargs)
+
+    def start(self, *args, **kwargs):
 
         class CoreApiTestServer(CoreApiContainer):
-            root = "core4/api/v1"
             rules = [
-                (r'/queue', QueueHandler, dict(source=pubs)),
-                (r'/job/summary', JobSummary),
-                (r'/job/poll/?(.*)', JobStream),
-                (r'/job/?(.*)', JobHandler),
+                (r'/queue', QueueHandler, dict(
+                    source=kwargs.get("publisher"))),
+                #(r'/jobs/summary', JobSummary),
+                (r'/jobs/poll/?(.*)', JobStream),
+                (r'/jobs/?(.*)', JobHandler),
                 (r'/kill', StopHandler)
             ]
-
-        serve(CoreApiTestServer, port=self.port)
+        return CoreApiTestServer
 
     def stop(self):
         rv = self.get("/kill")
@@ -167,14 +176,14 @@ def test_server_test(test_server):
 
 def test_enqueue(test_server, queue):
     rv = test_server.post(
-        "/job", json=dict(name="core4.queue.helper.DummyJob", sleep=1))
+        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=1))
     assert rv.status_code == 200
     job_id = rv.json()["data"]["_id"]
     worker = core4.queue.worker.CoreWorker()
     worker.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-    rv = test_server.get("/job/" + job_id)
+    rv = test_server.get("/jobs/" + job_id)
     assert rv.status_code == 200
     assert rv.json()["data"]["runtime"] >= 1.0
     assert rv.json()["data"]["state"] == "complete"
@@ -189,7 +198,7 @@ def test_async_enqueue(test_server, queue):
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     rv = test_server.post(
-        "/job/poll", json=dict(name="core4.queue.helper.DummyJob", sleep=3),
+        "/jobs/poll", json=dict(name="core4.queue.helper.DummyJob", sleep=3),
         stream=True)
     assert rv.status_code == 200
     states = []
@@ -215,7 +224,7 @@ def test_queue(test_server, queue):
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     rv = test_server.post(
-        "/job", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
+        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     rv = test_server.get("/queue", stream=True)
     assert rv.status_code == 200
@@ -236,36 +245,36 @@ def test_queue(test_server, queue):
 
 def test_getter(test_server, queue):
     rv = test_server.post(
-        "/job", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
+        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
-    rv = test_server.get("/job")
+    rv = test_server.get("/jobs")
     assert rv.status_code == 200
     assert len(rv.json()["data"]) == 1
     assert rv.json()["data"][0]["state"] == "pending"
 
     rv = test_server.post(
-        "/job", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
+        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
     assert rv.status_code == 200
     j2 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/job")
+    rv = test_server.get("/jobs")
     assert rv.status_code == 200
     assert len(rv.json()["data"]) == 2
     assert rv.json()["data"][0]["state"] == "pending"
     assert rv.json()["data"][1]["state"] == "pending"
 
     rv = test_server.post(
-        "/job", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
+        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
     assert rv.status_code == 400
 
-    rv = test_server.get("/job")
+    rv = test_server.get("/jobs")
     assert rv.status_code == 200
     assert len(rv.json()["data"]) == 2
     act = [i["_id"] for i in rv.json()["data"]]
     assert sorted(act) == sorted([j1, j2])
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
 
@@ -273,29 +282,29 @@ def test_getter(test_server, queue):
 
 def test_flag(test_server, queue):
     rv = test_server.post(
-        "/job", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
+        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
-    rv = test_server.delete("/job")
+    rv = test_server.delete("/jobs")
     assert rv.status_code == 400
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
 
-    rv = test_server.delete("/job/" + j1)
+    rv = test_server.delete("/jobs/" + j1)
     assert rv.status_code == 200
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is not None
 
-    rv = test_server.put("/job/kill/" + j1)
+    rv = test_server.put("/jobs/kill/" + j1)
     assert rv.status_code == 200
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["killed_at"] is not None
@@ -312,11 +321,11 @@ class ErrorJob(core4.queue.job.CoreJob):
 
 def test_restart_error(test_server, queue):
     rv = test_server.post(
-        "/job", json=dict(name="tests.api.test_job.ErrorJob", sleep=5))
+        "/jobs", json=dict(name="tests.api.test_job.ErrorJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
@@ -325,22 +334,22 @@ def test_restart_error(test_server, queue):
     worker.work_jobs()
 
     while True:
-        rv = test_server.get("/job/" + j1)
+        rv = test_server.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "error":
             break
 
-    rv = test_server.put("/job/" + j1 + "?action=restart")
+    rv = test_server.put("/jobs/" + j1 + "?action=restart")
     assert rv.status_code == 200
     j2 = rv.json()["data"]
 
-    rv2 = test_server.get("/job/" + j2)
+    rv2 = test_server.get("/jobs/" + j2)
     assert rv2.status_code == 200
     assert rv2.json()["data"]["state"] == "pending"
     assert rv2.json()["data"]["_id"] == j2
     assert rv2.json()["data"]["enqueued"]["parent_id"] == j1
 
-    rv3 = test_server.get("/job/" + j1)
+    rv3 = test_server.get("/jobs/" + j1)
     assert rv3.status_code == 200
     assert rv3.json()["data"]["state"] == "error"
     assert rv3.json()["data"]["_id"] == j1
@@ -356,38 +365,38 @@ def test_kill(test_server, queue):
     t.start()
 
     rv = test_server.post(
-        "/job", json=dict(name="core4.queue.helper.DummyJob", sleep=600))
+        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=600))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
 
-    rv = test_server.put("/job/" + j1 + "?action=xxx")
+    rv = test_server.put("/jobs/" + j1 + "?action=xxx")
     assert rv.status_code == 400
 
     while True:
-        rv = test_server.get("/job/" + j1)
+        rv = test_server.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "running":
             break
 
-    rv = test_server.put("/job/" + j1 + "?action=kill")
+    rv = test_server.put("/jobs/" + j1 + "?action=kill")
     assert rv.status_code == 200
 
     while True:
-        rv = test_server.get("/job/" + j1)
+        rv = test_server.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "killed":
             break
 
-    rv = test_server.put("/job/" + j1 + "?action=delete")
+    rv = test_server.put("/jobs/" + j1 + "?action=delete")
     assert rv.status_code == 200
 
     while True:
-        rv = test_server.get("/job/" + j1)
+        rv = test_server.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["journal"]:
             break
@@ -411,30 +420,30 @@ def test_restart_deferred(test_server, queue):
     t.start()
 
     rv = test_server.post(
-        "/job", json=dict(name="tests.api.test_job.DeferJob"))
+        "/jobs", json=dict(name="tests.api.test_job.DeferJob"))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
 
     while True:
-        rv = test_server.get("/job/" + j1)
+        rv = test_server.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "deferred":
             break
 
-    rv = test_server.get("/job/" + j1)
+    rv = test_server.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["trial"] == 1
 
-    rv = test_server.put("/job/" + j1 + "?action=restart")
+    rv = test_server.put("/jobs/" + j1 + "?action=restart")
     assert rv.status_code == 200
 
     while True:
-        rv = test_server.get("/job/" + j1)
+        rv = test_server.get("/jobs/" + j1)
         assert rv.status_code == 200
         data = rv.json()["data"]
         if data["trial"] == 2 and data["state"] == "deferred":

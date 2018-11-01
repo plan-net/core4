@@ -260,7 +260,7 @@ class TestLogging(unittest.TestCase):
 
             log_level = "INFO"
             identifier = "A"
-            def make_config(self, *args, **kwargs):
+            def _make_config(self, *args, **kwargs):
                 kwargs["local_dict"] = {
                     "tests": {
                         "test_logger": {
@@ -354,7 +354,7 @@ class TestLogging(unittest.TestCase):
 
             log_level = None
 
-            def make_config(self, *args, **kwargs):
+            def _make_config(self, *args, **kwargs):
                 kwargs["local_dict"] = {
                     "tests": {
                         "test_logger": {
