@@ -319,7 +319,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
             if self.lock_job('__user__', _id):
                 ret = self.config.sys.queue.delete_one({"_id": _id})
                 if ret.raw_result["n"] == 1:
-                    enqueue = job.enqueued
+                    enqueue = job.enqueued.copy()
                     enqueue["parent_id"] = job._id
                     enqueue["at"] = core4.util.mongo_now()
                     doc = dict([(k, v) for k, v in job.serialise().items() if
@@ -329,6 +329,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                     job.enqueued["child_id"] = new_job._id
                     self.journal(job.serialise())
                     self.make_stat()
+                    self.unlock_job(_id)
                     return new_job._id
         return None
 
