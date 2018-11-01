@@ -1,9 +1,10 @@
 import pymongo
+import pymongo.errors
 from bson.objectid import ObjectId
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
-import pymongo.errors
+
 import core4.queue.job
 import core4.queue.query
 import core4.util
@@ -15,9 +16,7 @@ STATE_FINAL = (
     core4.queue.job.STATE_COMPLETE,
     core4.queue.job.STATE_KILLED,
     core4.queue.job.STATE_INACTIVE,
-    core4.queue.job.STATE_ERROR
-)
-
+    core4.queue.job.STATE_ERROR)
 STATE_WAITING = (
     core4.queue.job.STATE_DEFERRED,
     core4.queue.job.STATE_FAILED)
@@ -53,7 +52,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                 oid = ObjectId(_id)
             except:
                 self.abort(400, "bad job_id [{}]".format(_id))
-            ret = await self.remove_job(oid)
+            ret = await self._remove_job(oid)
             if not ret:
                 raise HTTPError(404, "job_id [{}] not found".format(oid))
         else:
@@ -72,9 +71,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             else:
                 action = self.get_argument("action")
             action_method = {
-                "delete": self.remove_job,
-                "restart": self.restart_job,
-                "kill": self.kill_job
+                "delete": self._remove_job,
+                "restart": self._restart_job,
+                "kill": self._kill_job
             }
             if action not in action_method:
                 self.abort(400, "requires action in (delete, restart, kill)")
@@ -105,13 +104,13 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         self.logger.error("failed to flag job [%s] to %s", oid, message)
         return None
 
-    async def remove_job(self, oid):
+    async def _remove_job(self, oid):
         return await self._update(oid, "removed_at", "remove")
 
-    async def kill_job(self, oid):
+    async def _kill_job(self, oid):
         return await self._update(oid, "killed_at", "kill")
 
-    async def restart_job(self, oid):
+    async def _restart_job(self, oid):
         if await self._restart_waiting(oid):
             self.logger.warning('successfully restarted [%s]', oid)
             return oid
@@ -125,7 +124,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         return None
 
     async def _restart_waiting(self, _id):
-        # internal method used by .restart_job
+        # internal method used by ._restart_job
         ret = await self.sys_queue.update_one(
             {
                 "_id": _id,
@@ -141,7 +140,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         )
         return ret.modified_count == 1
 
-    async def lock_job(self, identifier, _id):
+    async def _lock_job(self, identifier, _id):
         try:
             await self.config.sys.lock.connect_async().insert_one({
                 "_id": _id, "owner": identifier})
@@ -151,7 +150,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         except:
             raise
 
-    async def make_stat(self):
+    async def _make_stat(self):
         state = await self.get_queue_count()
         state["timestamp"] = core4.util.now().timestamp()
         await self.config.sys.stat.connect_async().insert_one(state)
@@ -159,7 +158,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def _restart_stopped(self, _id):
         job = await self.sys_queue.find_one(filter={"_id": _id})
         if job["state"] in STATE_STOPPED:
-            if await self.lock_job(self.application.container.identifier, _id):
+            if await self._lock_job(
+                    self.application.container.identifier, _id):
                 ret = await self.sys_queue.delete_one({"_id": _id})
                 if ret.raw_result["n"] == 1:
                     doc = dict([(k, v) for k, v in job.items() if
@@ -168,7 +168,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                     new_job.__dict__["attempts_left"] = new_job.__dict__[
                         "attempts"]
                     new_job.__dict__["state"] = core4.queue.main.STATE_PENDING
-                    new_job.__dict__["enqueued"] = self.who()
+                    new_job.__dict__["enqueued"] = self._who()
                     new_job.__dict__["enqueued"]["parent_id"] = job["_id"]
                     new_doc = new_job.serialise()
                     try:
@@ -184,7 +184,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                     job["enqueued"]["child_id"] = new_doc["_id"]
                     await self.config.sys.journal.connect_async().insert_one(
                         job)
-                    await self.make_stat()
+                    await self._make_stat()
                     return new_doc["_id"]
         return None
 
@@ -218,22 +218,22 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         return doc
 
     async def post(self, _id=None):
-        job = await self.enqueue()
+        job = await self._enqueue()
         self.reply({
             "name": job.qual_name(),
             "_id": job._id
         })
 
-    def who(self):
-        # todo: extract remote ip
+    def _who(self):
+        x_real_ip = self.request.headers.get("X-Real-IP")
         return {
             "at": core4.util.mongo_now(),
-            "hostname": None,
+            "hostname": x_real_ip or self.request.remote_ip,
             "parent_id": None,
             "username": self.current_user
         }
 
-    async def enqueue(self):
+    async def _enqueue(self):
         name = self.get_argument("name")
         args = dict([
             (k, v[0]) for k, v
@@ -245,7 +245,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             self.abort(400, "cannot instantiate job [{}]".format(name))
         job.__dict__["attempts_left"] = job.__dict__["attempts"]
         job.__dict__["state"] = core4.queue.job.STATE_PENDING
-        job.__dict__["enqueued"] = self.who()
+        job.__dict__["enqueued"] = self._who()
         doc = job.serialise()
         try:
             ret = await self.sys_queue.insert_one(doc)
@@ -289,7 +289,7 @@ class JobStream(JobHandler):
         self.set_header('cache-control', 'no-cache')
         self.exit = False
 
-    async def poll(self, meth, *args):
+    async def _poll(self, meth, *args):
         last = None
         while not self.exit:
             doc = await meth(*args)
@@ -316,16 +316,11 @@ class JobStream(JobHandler):
                 oid = ObjectId(_id)
             except:
                 self.abort(400, "bad job_id [{}]".format(_id))
-            await self.poll(self.get_detail, oid)
+            await self._poll(self.get_detail, oid)
         else:
-            await self.poll(self.get_listing)
+            await self._poll(self.get_listing)
         self.reply(None)
 
     async def post(self, _id=None):
-        job = await self.enqueue()
+        job = await self._enqueue()
         await self.get(job._id)
-
-
-class JobSummary(JobHandler):
-    # todo: requires implementation
-    pass
