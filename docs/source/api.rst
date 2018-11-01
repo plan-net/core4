@@ -11,6 +11,7 @@ ReST API and widgets
 * standard response types including
 * json response format
 * documentation standards
+* flashing
 
 .. todo:: write about core4 ReST API
 
