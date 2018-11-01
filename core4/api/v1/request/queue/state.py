@@ -128,9 +128,9 @@ class QueueHandler(CoreRequestHandler):
             <Response [200]>
             >>>
             >>> for line in rv.iter_lines():
-            >>> if line:
-            >>>     ret = json.loads(line.decode("utf-8"))
-            >>>     print(ret)
+            >>>     if line:
+            >>>         ret = json.loads(line.decode("utf-8"))
+            >>>         print(ret)
             {'timestamp': 1541017444.365525, 'killed': 1}
             {'pending': 1, 'timestamp': 1541017550.765429, 'killed': 1}
             {'running': 1, 'timestamp': 1541017556.893435, 'killed': 1}
