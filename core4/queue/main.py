@@ -622,6 +622,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                          job.state, runtime)
 
     def make_stat(self):
+        """
+        Collects current job state counts from ``sys.queue`` and inserts a
+        record into ``sys.stat``.
+        """
         if not "sys_stat" in self.__dict__:
             coll = self.config.sys.stat
             self.sys_stat = pymongo.collection.Collection(
@@ -630,8 +634,3 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         state = self.get_queue_count()
         state["timestamp"] = core4.util.now().timestamp()
         self.sys_stat.insert_one(state)
-
-
-if __name__ == '__main__':
-    q = CoreQueue()
-    q.make_stat()
