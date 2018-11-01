@@ -19,10 +19,10 @@ todos:
 * support API special argumnt parsing (objectId, datetime)
 * check required request handler properties (author, title, description)
 * async support to authorize (load role)
-* todo: how to handle warnings, e.g. the signature has expired as an additional warning to 401 with error "Unauthorized"
-* todo: request handler default properties management by configuration
+* how to handle warnings, e.g. the signature has expired as an additional warning to 401 with error "Unauthorized"
+* request handler default properties management by configuration
 * verify well-structured documentation
 * how to handle i18n in backend, i.e. wrt to emails
 * password strength in FE
-* user/role management
+* user/role management api
 * add collected serve application to coco
