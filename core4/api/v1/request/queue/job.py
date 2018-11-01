@@ -140,10 +140,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         )
         return ret.modified_count == 1
 
-    async def _lock_job(self, identifier, _id):
+    async def _lock_job(self, collection, identifier, _id):
         try:
-            await self.config.sys.lock.connect_async().insert_one({
-                "_id": _id, "owner": identifier})
+            await collection.insert_one({"_id": _id, "owner": identifier})
             return True
         except pymongo.errors.DuplicateKeyError:
             return False
@@ -158,7 +157,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def _restart_stopped(self, _id):
         job = await self.sys_queue.find_one(filter={"_id": _id})
         if job["state"] in STATE_STOPPED:
-            if await self._lock_job(
+            lock_collection = self.config.sys.stat.connect_async()
+            if await self._lock_job(lock_collection,
                     self.application.container.identifier, _id):
                 ret = await self.sys_queue.delete_one({"_id": _id})
                 if ret.raw_result["n"] == 1:
@@ -184,6 +184,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                     job["enqueued"]["child_id"] = new_doc["_id"]
                     await self.config.sys.journal.connect_async().insert_one(
                         job)
+                    await lock_collection.delete_one({"_id": _id})
                     await self._make_stat()
                     return new_doc["_id"]
         return None
