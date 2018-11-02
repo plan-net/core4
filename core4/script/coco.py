@@ -46,6 +46,8 @@ import core4.queue.worker
 import core4.queue.scheduler
 import core4.service.project
 import core4.util
+import core4.util.date
+import core4.util.node
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -166,11 +168,12 @@ def listing(*state):
             "{:3d}/{:3d}".format(
                 job["attempts"] - job["attempts_left"], job["attempts"]),
             "{:<6.6s}".format(job.get("enqueued", {}).get("username", None)),
-            "{:19s}".format(str(core4.util.utc2local(job["enqueued"]["at"]))),
-            "{:11s}".format(str(core4.util.mongo_now() - (
-                    job["enqueued"]["at"] or core4.util.mongo_now()))),
-            "{:11s}".format(str(core4.util.mongo_now() - (
-                    job["started_at"] or core4.util.mongo_now()))),
+            "{:19s}".format(str(
+                core4.util.date.utc2local(job["enqueued"]["at"]))),
+            "{:11s}".format(str(core4.util.node.mongo_now() - (
+                    job["enqueued"]["at"] or core4.util.node.mongo_now()))),
+            "{:11s}".format(str(core4.util.node.mongo_now() - (
+                    job["started_at"] or core4.util.node.mongo_now()))),
             job["name"]
         )
 

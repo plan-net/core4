@@ -6,7 +6,7 @@ import time
 from bson.objectid import ObjectId
 import pymongo
 
-from core4.util import Singleton
+from core4.util.tool import Singleton
 
 
 def make_record(record):

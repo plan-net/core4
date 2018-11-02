@@ -33,6 +33,7 @@ import tornado.routing
 import tornado.web
 
 import core4.error
+import core4.util.node
 from core4.logger.mixin import CoreLoggerMixin
 import core4.service.setup
 from core4.api.v1.request.default import DefaultHandler
@@ -232,7 +233,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param name: to identify the server
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
-        self.identifier = name or core4.util.get_hostname()
+        self.identifier = name or core4.util.node.get_hostname()
         self.setup_logging()
         router = self.make_routes(*args, **kwargs)
         http_args = {}

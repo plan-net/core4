@@ -14,6 +14,7 @@ import core4.queue.main
 import core4.queue.worker
 import core4.service.setup
 import core4.util
+import core4.util.tool
 from core4.api.v1.application import CoreApiServerTool, CoreApiContainer, serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.queue.job import JobHandler
@@ -57,7 +58,7 @@ def setup(tmpdir):
             if "has_run" in j.__dict__:
                 j.has_run = False
     # singletons
-    core4.util.Singleton._instances = {}
+    core4.util.tool.Singleton._instances = {}
     # os environment
     dels = []
     for k in os.environ:

@@ -2,6 +2,7 @@ import logging
 import os
 
 import core4.util
+import core4.util.node
 
 
 class CoreLoggingFilter(logging.Filter):
@@ -16,8 +17,8 @@ class CoreLoggingFilter(logging.Filter):
     """
 
     def filter(self, record):
-        record.username = core4.util.get_username()
-        record.hostname = core4.util.get_hostname()
+        record.username = core4.util.node.get_username()
+        record.hostname = core4.util.node.get_hostname()
         try:
             if not hasattr(record, "identifier"):
                 record.identifier = record.obj.identifier

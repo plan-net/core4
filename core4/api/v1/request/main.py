@@ -12,6 +12,7 @@ from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
 
 import core4.util
+import core4.util.node
 from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
@@ -148,7 +149,7 @@ class BaseHandler(CoreBase):
                 self.token_exp = datetime.datetime.fromtimestamp(
                     payload["exp"])
                 renew = self.config.api.token.refresh
-                if (core4.util.now()
+                if (core4.util.node.now()
                     - datetime.datetime.fromtimestamp(
                             payload["timestamp"])).total_seconds() > renew:
                     self.create_token(username)
@@ -186,7 +187,7 @@ class BaseHandler(CoreBase):
         secs = self.config.api.token.expiration
         payload = {
             'name': username,
-            'timestamp': core4.util.now().timestamp()
+            'timestamp': core4.util.node.now().timestamp()
         }
         token = self.create_jwt(secs, payload)
         self.set_secure_cookie("token", token)
@@ -208,7 +209,8 @@ class BaseHandler(CoreBase):
             seconds=secs)
         secret = self.config.api.token.secret
         algorithm = self.config.api.token.algorithm
-        self.token_exp = (core4.util.now() + expires).replace(microsecond=0)
+        self.token_exp = (core4.util.node.now()
+                          + expires).replace(microsecond=0)
         payload["exp"] = self.token_exp
         token = jwt.encode(payload, secret, algorithm)
         return token.decode("utf-8")
@@ -372,7 +374,7 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         # internal method to wrap the response
         ret = {
             "_id": self.identifier,
-            "timestamp": core4.util.now(),
+            "timestamp": core4.util.node.now(),
             "message": message,
             "code": code
         }

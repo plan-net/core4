@@ -14,6 +14,7 @@ import core4.queue.helper
 import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
+import core4.util.node
 from tests.pytest_util import *
 
 LOOP_INTERVAL = 0.25
@@ -497,11 +498,11 @@ class ProgressJob(core4.queue.job.CoreJob):
 
     def execute(self, *args, **kwargs):
         runtime = 5.
-        tx = core4.util.now() + datetime.timedelta(seconds=runtime)
+        tx = core4.util.node.now() + datetime.timedelta(seconds=runtime)
         n = 0
         while True:
             n += 1
-            t0 = core4.util.now()
+            t0 = core4.util.node.now()
             if t0 >= tx:
                 break
             p = 1. - (tx - t0).total_seconds() / runtime

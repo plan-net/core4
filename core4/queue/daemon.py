@@ -3,6 +3,7 @@ import time
 import core4.queue.main
 import core4.service.introspect
 import core4.util
+import core4.util.node
 from core4.base.main import CoreBase
 
 
@@ -27,10 +28,10 @@ class CoreDaemon(CoreBase):
 
     def __init__(self, name=None):
         super().__init__()
-        self.identifier = name or core4.util.get_hostname()
-        self.hostname = core4.util.get_hostname()
+        self.identifier = name or core4.util.node.get_hostname()
+        self.hostname = core4.util.node.get_hostname()
         self.phase = {
-            "startup": core4.util.now(),
+            "startup": core4.util.node.now(),
             "loop": None,
             "shutdown": None,
             "exit": None
@@ -141,7 +142,7 @@ class CoreDaemon(CoreBase):
 
         :param phase: current phase
         """
-        self.phase[phase] = core4.util.mongo_now()
+        self.phase[phase] = core4.util.node.mongo_now()
         ret = self.config.sys.worker.update_one(
             {"_id": self.identifier},
             update={
@@ -182,7 +183,7 @@ class CoreDaemon(CoreBase):
                 if in_maintenance:
                     in_maintenance = False
                     self.logger.info("leaving maintenance")
-                self.at = core4.util.now()
+                self.at = core4.util.node.now()
                 self.run_step()
             time.sleep(self.wait_time)
 

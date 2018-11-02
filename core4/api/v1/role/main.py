@@ -17,6 +17,7 @@ import pymongo
 
 import core4.base
 import core4.error
+import core4.util.node
 from core4.api.v1.role.field import *
 
 ALPHANUM = re.compile(r'^[a-zA-Z0-9_.-]+$')
@@ -394,7 +395,7 @@ class Role(core4.base.CoreBase):
         """
         Updates the ``last_login`` attribute in ``sys.role``.
         """
-        self.last_login = core4.util.now()
+        self.last_login = core4.util.node.now()
         self.config.sys.role.update_one(
             {"_id": self._id}, {"$set": {"last_login": self.last_login}})
         self.logger.debug("login user [%s] with _id [%s]", self.name, self._id)
@@ -420,7 +421,7 @@ class Role(core4.base.CoreBase):
                  ``False``
         """
         # regular quota update
-        now = core4.util.now()
+        now = core4.util.node.now()
         upd = self.config.sys.quota.update_one(
             filter={
                 "_id": self._id,

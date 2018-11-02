@@ -14,6 +14,8 @@ import pymongo.write_concern
 import core4.error
 import core4.service.setup
 import core4.util
+import core4.util.node
+import core4.util.tool
 from core4.base import CoreBase
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
@@ -25,7 +27,7 @@ STATE_STOPPED = (core4.queue.job.STATE_KILLED,
                  core4.queue.job.STATE_ERROR)
 
 
-class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
+class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
     """
     Use this class for general queue management, for example::
 
@@ -70,10 +72,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         job.__dict__["attempts_left"] = job.__dict__["attempts"]
         job.__dict__["state"] = STATE_PENDING
         enqueued_from = {
-            "at": lambda: core4.util.mongo_now(),
-            "hostname": lambda: core4.util.get_hostname(),
+            "at": lambda: core4.util.node.mongo_now(),
+            "hostname": lambda: core4.util.node.get_hostname(),
             "parent_id": lambda: None,
-            "username": lambda: core4.util.get_username()
+            "username": lambda: core4.util.node.get_username()
         }
         if by is None:
             by = {}
@@ -97,8 +99,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
 
     def job_factory(self, job, **kwargs):
         """
-        Takes the fully qualified job name, identifies and imports the job class
-        and returns the job class.
+        Takes the fully qualified job name, identifies and imports the job
+        class and returns the job class.
 
         :param job_name: fully qualified name of the job
         :return: job class
@@ -140,7 +142,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 {"_id": "__maintenance__"},
                 update={
                     "$set": {
-                        "timestamp": core4.util.now()
+                        "timestamp": core4.util.node.now()
                     }
                 },
                 upsert=True
@@ -228,7 +230,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         if now is not None:
             ret = self.config.sys.worker.update_one(
                 {"_id": "__halt__"},
-                update={"$set": {"timestamp": core4.util.now()}},
+                update={"$set": {"timestamp": core4.util.node.now()}},
                 upsert=True)
             return ret.raw_result["n"] == 1
         elif at is not None:
@@ -244,7 +246,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         :param _id: :class:`bson.object.ObjectId`
         :return: ``True`` if the request succeeded, else ``False``
         """
-        at = core4.util.now()
+        at = core4.util.node.now()
         ret = self.config.sys.queue.update_one(
             {
                 "_id": _id,
@@ -321,7 +323,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 if ret.raw_result["n"] == 1:
                     enqueue = job.enqueued.copy()
                     enqueue["parent_id"] = job._id
-                    enqueue["at"] = core4.util.mongo_now()
+                    enqueue["at"] = core4.util.node.mongo_now()
                     doc = dict([(k, v) for k, v in job.serialise().items() if
                                 k in core4.queue.job.ENQUEUE_ARGS])
                     new_job = self.enqueue(name=job.qual_name(), by=enqueue,
@@ -342,7 +344,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         :param _id: :class:`bson.object.ObjectId`
         :return: ``True`` if the request succeeded, else ``False``
         """
-        at = core4.util.now()
+        at = core4.util.node.now()
         ret = self.config.sys.queue.update_one(
             {
                 "_id": _id,
@@ -444,7 +446,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
     def _finish(self, job, state):
         # internal method used to set the most relevant job attributes
         job.__dict__["state"] = state
-        job.__dict__["finished_at"] = core4.util.mongo_now()
+        job.__dict__["finished_at"] = core4.util.node.mongo_now()
         runtime = (job.finished_at - job.started_at).total_seconds()
         job.__dict__["runtime"] = (job.runtime or 0.) + runtime
         job.__dict__["locked"] = None
@@ -466,7 +468,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         exc_info = sys.exc_info()
         job.__dict__["last_error"] = {
             "exception": repr(exc_info[1]),
-            "timestamp": core4.util.mongo_now(),
+            "timestamp": core4.util.node.mongo_now(),
             "traceback": traceback.format_exception(*exc_info)
         }
 
@@ -522,7 +524,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         :param job: :class:`.CoreJob` object
         """
         state = core4.queue.job.STATE_DEFERRED
-        now = core4.util.mongo_now()
+        now = core4.util.node.mongo_now()
         job.__dict__["query_at"] = now + timedelta(seconds=job.defer_time)
         self.logger.debug("updating job [%s] to [%s]", job._id, state)
         runtime = self._finish(job, state)
@@ -574,7 +576,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         """
         if job.attempts_left > 0:
             state = core4.queue.job.STATE_FAILED
-            job.__dict__["query_at"] = (core4.util.mongo_now()
+            job.__dict__["query_at"] = (core4.util.node.mongo_now()
                                         + timedelta(seconds=job.error_time))
         else:
             state = core4.queue.job.STATE_ERROR
@@ -610,7 +612,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
         runtime = self._finish(job, core4.queue.job.STATE_KILLED)
         job.__dict__["last_error"] = {
             "exception": exception,
-            "timestamp": core4.util.mongo_now(),
+            "timestamp": core4.util.node.mongo_now(),
             "traceback": None
         }
         job.__dict__["removed_at"] = None
@@ -632,5 +634,5 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.Singleton):
                 coll.connection[coll.database], coll.collection,
                 write_concern=pymongo.write_concern.WriteConcern(w=0))
         state = self.get_queue_count()
-        state["timestamp"] = core4.util.now().timestamp()
+        state["timestamp"] = core4.util.node.now().timestamp()
         self.sys_stat.insert_one(state)

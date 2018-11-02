@@ -13,6 +13,7 @@ from flask_login import LoginManager
 import core4.api.v1.role.main
 import core4.error
 import core4.util
+import core4.util.node
 import tests.util
 
 class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
@@ -633,24 +634,24 @@ class TestRole(unittest.TestCase):
             name="test", realname="test_role", quota="10:1")
         role.save()
         for i in range(0, 5):
-            t0 = core4.util.now()
+            t0 = core4.util.node.now()
             for i in range(10):
                 role.dec_quota()
             self.assertFalse(role.dec_quota())
             while not role.dec_quota():
-                t1 = core4.util.now()
+                t1 = core4.util.node.now()
             self.assertAlmostEqual((t1 - t0).total_seconds(), 1, 0)
 
     def test_limit_time(self):
         role = core4.api.v1.role.main.Role(
             name="test", realname="test_role", quota="1:1")
         role.save()
-        t0 = core4.util.now()
+        t0 = core4.util.node.now()
         success = 5
         while success > 0:
             if role.dec_quota():
                 success -= 1
-        self.assertAlmostEqual((core4.util.now() - t0).total_seconds(), 4, 0)
+        self.assertAlmostEqual((core4.util.node.now() - t0).total_seconds(), 4, 0)
 
     def test_perm_cascade(self):
         role1 = core4.api.v1.role.main.Role(

@@ -12,6 +12,7 @@ import core4.base.collection
 import core4.config.map
 import core4.config.tag
 import core4.util
+import core4.util.tool
 from core4.error import Core4ConfigurationError
 
 CONFIG_EXTENSION = ".yaml"
@@ -198,7 +199,8 @@ class CoreConfig(collections.MutableMapping):
         # collect standard config and standard DEFAULT
         standard_config = config.copy()
         if extra:
-            standard_config = core4.util.dict_merge(standard_config, extra)
+            standard_config = core4.util.tool.dict_merge(
+                standard_config, extra)
         #self._verify_dict(standard_config, "standard config")
         standard_default = standard_config.pop(DEFAULT, {})
         self._verify_dict(standard_default, "standard DEFAULT")
@@ -212,7 +214,7 @@ class CoreConfig(collections.MutableMapping):
             local_config = {}
             local_default = {}
         # merge standard DEFAULT and local DEFAULT
-        default = core4.util.dict_merge(standard_default, local_default)
+        default = core4.util.tool.dict_merge(standard_default, local_default)
         #self._verify_dict(default, "DEFAULT")
         if project is not None:
             # collect project name, project config and project DEFAULT
@@ -226,17 +228,17 @@ class CoreConfig(collections.MutableMapping):
                 project_name, {}).pop(DEFAULT, {})
             self._verify_dict(local_project_default, "local project DEFAULT")
             # merge project DEFAULT and local project DEFAULT
-            project_default = core4.util.dict_merge(
+            project_default = core4.util.tool.dict_merge(
                 project_default, local_project_default)
             # merge project config and standard config
-            schema = core4.util.dict_merge(
+            schema = core4.util.tool.dict_merge(
                 standard_config, {project_name: project_config})
         else:
             project_name = None
             project_default = {}
             schema = standard_config
         # merge config with local config
-        result = core4.util.dict_merge(schema, local_config)
+        result = core4.util.tool.dict_merge(schema, local_config)
         # recursively forward DEFAULT into all dicts and into tags
         result = self._apply_default(result, default, project_name,
                                      project_default)
@@ -428,7 +430,7 @@ class CoreConfig(collections.MutableMapping):
             coll = core4.config.tag.connect_database(
                 conn_str, **opts)
             for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
-                conf = core4.util.dict_merge(conf, doc)
+                conf = core4.util.tool.dict_merge(conf, doc)
             self._db_cache = self._resolve_tags(conf)
         else:
             self._db_cache = {}
@@ -561,10 +563,10 @@ class CoreConfig(collections.MutableMapping):
         environ = self._read_env()
 
         # merge sys.conf
-        local_data = core4.util.dict_merge(
+        local_data = core4.util.tool.dict_merge(
             local_data, self._read_db(standard_data, local_data))
 
-        local_data = core4.util.dict_merge(local_data, environ)
+        local_data = core4.util.tool.dict_merge(local_data, environ)
 
         # merge OS environ
         data = core4.config.map.ConfigMap(

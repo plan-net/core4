@@ -5,6 +5,7 @@ import core4.queue.main
 import core4.queue.query
 import core4.service.introspect
 import core4.util
+import core4.util.node
 from core4.queue.daemon import CoreDaemon
 
 
@@ -70,7 +71,7 @@ class CoreScheduler(CoreDaemon):
                 },
             }
         )
-        now = core4.util.mongo_now()
+        now = core4.util.node.mongo_now()
         self.job = {}
         for job in intro.iter_job():
             self.logger.debug("registering job [%s]", job["name"])

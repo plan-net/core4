@@ -8,6 +8,7 @@ from tornado.web import HTTPError
 import core4.queue.job
 import core4.queue.query
 import core4.util
+import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.util import json_encode
 from core4.queue.main import CoreQueue
@@ -345,7 +346,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :param message: logging helper string
         :return: ``True`` for success, else ``False``
         """
-        at = core4.util.now()
+        at = core4.util.node.now()
         ret = await self.collection("queue").update_one(
             {
                 "_id": oid,
@@ -490,7 +491,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         record into ``sys.stat``.
         """
         state = await self.get_queue_count()
-        state["timestamp"] = core4.util.now().timestamp()
+        state["timestamp"] = core4.util.node.now().timestamp()
         await self.collection("stat").insert_one(state)
 
     def who(self):
@@ -502,7 +503,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         """
         x_real_ip = self.request.headers.get("X-Real-IP")
         return {
-            "at": core4.util.mongo_now(),
+            "at": core4.util.node.mongo_now(),
             "hostname": x_real_ip or self.request.remote_ip,
             "username": self.current_user
         }
@@ -604,7 +605,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
         state = await self.get_queue_count()
-        state["timestamp"] = core4.util.now().timestamp()
+        state["timestamp"] = core4.util.node.now().timestamp()
         await self.collection("stat").insert_one(state)
         return job
 

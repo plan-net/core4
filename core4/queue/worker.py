@@ -40,6 +40,7 @@ import core4.queue.main
 import core4.queue.query
 import core4.service.setup
 import core4.util
+import core4.util.node
 from core4.queue.daemon import CoreDaemon
 
 #: processing steps in the main loop of :class:`.CoreWorker`
@@ -93,7 +94,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                  to execute and method reference ``call``
         """
         plan = []
-        now = core4.util.now()
+        now = core4.util.node.now()
         for s in self.steps:
             interval = self.config.worker.execution_plan[s]
             if self.wait_time is None:
@@ -302,7 +303,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
         :param job: :class:`.CoreJob` object
         """
-        at = core4.util.mongo_now()
+        at = core4.util.node.mongo_now()
         update = {
             "state": core4.queue.job.STATE_RUNNING,
             "started_at": at,
@@ -466,7 +467,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     filter={
                         "_id": doc["_id"]
                     },
-                    update={"$set": {"wall_at": core4.util.mongo_now()}})
+                    update={"$set": {"wall_at": core4.util.node.mongo_now()}})
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set non-stop job [%s]", doc["_id"])
@@ -495,7 +496,10 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     filter={
                         "_id": doc["_id"]
                     },
-                    update={"$set": {"zombie_at": core4.util.mongo_now()}})
+                    update={
+                        "$set": {"zombie_at": core4.util.node.mongo_now()}
+                    }
+                )
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set zombie job [%s]", doc["_id"])

@@ -11,6 +11,7 @@ import time
 import core4.logger.mixin
 import core4.queue.job
 import core4.util
+import core4.util.tool
 from core4.queue.main import CoreQueue
 from core4.queue.scheduler import CoreScheduler
 from tests.test_worker import worker, mongodb, queue
@@ -48,7 +49,7 @@ def reset(tmpdir):
             if "has_run" in j.__dict__:
                 j.has_run = False
     # singletons
-    core4.util.Singleton._instances = {}
+    core4.util.tool.Singleton._instances = {}
     # os environment
     dels = []
     for k in os.environ:

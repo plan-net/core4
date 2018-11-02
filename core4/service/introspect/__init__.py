@@ -8,7 +8,7 @@ import traceback
 
 import core4.base
 import core4.queue.job
-from core4.util import Singleton
+from core4.util.tool import Singleton
 
 JOB_CLASS = core4.queue.job.CoreJob
 

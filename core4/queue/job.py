@@ -7,6 +7,7 @@ import datetime as dt
 import core4.base.cookie
 import core4.error
 import core4.util
+import core4.util.node
 from core4.base.main import CoreBase
 from core4.queue.validate import *
 
@@ -267,7 +268,8 @@ class CoreJob(CoreBase):
     * **complete** - the job successfully finished execution
     * **failed** - job execution failed with attempts left
     * **error** - job execution failed with no attempts left
-    * **inactive** - the job continuously deferred execution and is considered inactive
+    * **inactive** - the job continuously deferred execution and is considered
+      inactive
     * **killed** - the job has been killed by a user
 
     The states *complete*, *error*, *inactive* and *killed* are final states.
@@ -298,9 +300,9 @@ class CoreJob(CoreBase):
       ``sys.queue``
     * **killed** - if not *None* indicates that the job has been killed
 
-    .. note:: There might be even cases, where you might want to hide a job from
-              for these jobs.
-              any job listing. Set the ``hidden`` class variable to *True*
+    .. note:: There might be even cases, where you might want to hide a job
+              from for these jobs. any job listing. Set the ``hidden`` class
+              variable to *True*
 
     **job schedules**
 
@@ -468,7 +470,7 @@ class CoreJob(CoreBase):
                :meth:`core4.base.main.CoreBase.format_args`.
         :param force: force progress update, ignoring ``._progress``
         """
-        now = core4.util.now()
+        now = core4.util.node.now()
 
         if (force or self._progress is None or now > self._progress):
             message = self.format_args(*args)

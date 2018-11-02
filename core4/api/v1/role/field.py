@@ -12,6 +12,7 @@ from bson.objectid import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import core4.util
+import core4.util.node
 from core4.const import COP
 
 PROTO = [
@@ -152,7 +153,7 @@ class TimestampField(Field):
         """
         Set the value to current date/time in UTC.
         """
-        self.value = core4.util.now()
+        self.value = core4.util.node.now()
 
 
 class PermField(Field):

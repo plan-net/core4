@@ -6,7 +6,7 @@ import pymongo.errors
 import core4.const
 from core4.api.v1.role import Role
 from core4.base import CoreBase
-from core4.util import Singleton
+from core4.util.tool import Singleton
 
 
 def once(f):

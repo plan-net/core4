@@ -6,6 +6,8 @@ import pytest
 import datetime
 import core4.logger
 import core4.util
+import core4.util.node
+import core4.util.tool
 from core4.api.v1.application import CoreApiContainer, CoreApiServerTool
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.role.main import Role
@@ -52,7 +54,7 @@ def setup(tmpdir):
             if "has_run" in j.__dict__:
                 j.has_run = False
     # singletons
-    core4.util.Singleton._instances = {}
+    core4.util.tool.Singleton._instances = {}
     # os environment
     dels = []
     for k in os.environ:
@@ -85,7 +87,7 @@ class DataRequest(CoreRequestHandler):
             self.write({
                 "value": 123,
                 "string": "abc",
-                "datetime": core4.util.now(),
+                "datetime": core4.util.node.now(),
                 "pathname": path
             })
 

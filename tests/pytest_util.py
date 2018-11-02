@@ -8,6 +8,7 @@ import core4.base
 import core4.logger.mixin
 import core4.service.setup
 import core4.util
+import core4.util.tool
 
 ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
@@ -44,7 +45,7 @@ def reset(tmpdir):
             if "has_run" in j.__dict__:
                 j.has_run = False
     # singletons
-    core4.util.Singleton._instances = {}
+    core4.util.tool.Singleton._instances = {}
     # os environment
     dels = []
     for k in os.environ:
