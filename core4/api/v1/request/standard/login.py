@@ -144,6 +144,8 @@ class LoginHandler(CoreRequestHandler):
             user = Role().load_one(email=email)
         except:
             self.logger.warning("email [%s] not found", email)
+            #fix mmr, previously was answered with 200
+            self.abort(400, "Email not found")
         else:
             username = user.name
             self.current_user = username
