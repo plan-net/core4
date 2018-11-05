@@ -131,15 +131,16 @@ core4 ships a great configuration management that should be used to handle multi
 
 
 The plugin-configuration is located within the project itself and is the most obvious place to put collections used
-within that plugin::
+within that plugin. The following configuration will seperate the collections so that the datbase that is read from
+(registers/cash_register)  branches to the production database while all writing collections (high/low/mid) branch to
+localhost so that no production-data is affected::
 
-    mongo_url: mongodb://usr:pwd@production_database:27017
+    mongo_url: mongodb://usr:pwd@localhost:27017
     mongo_database: bakery
-    cash_register: mongodb://registers
+    cash_register: mongodb://usr:pwd@production_database:27017/registers/cash_register
     low_values: mongodb://low
     mid_values: mongodb://mid
     high: mongodb://high
-    cash_register: mongodb://registers
 
 
 
