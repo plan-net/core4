@@ -33,7 +33,7 @@ def parse_boolean(value):
              value no pattern matches.
     """
     if value.lower() in ("yes", "y", "on", "1", "true", "t"):
-        return True  # todo: test coverage
+        return True
     elif value.lower() in ("no", "n", "off", "0", "false", "f"):
         return False
     return value
@@ -425,7 +425,7 @@ class CoreConfig(collections.MutableMapping):
             else:
                 conn_str = connect.conn_str
             conf = {}
-            coll = core4.config.tag.connect_mongodb(
+            coll = core4.config.tag.connect_database(
                 conn_str, **opts)
             for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
                 conf = core4.util.dict_merge(conf, doc)

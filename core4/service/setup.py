@@ -1,12 +1,19 @@
 import os
 
 import pymongo
+import pymongo.errors
 
+import core4.const
+from core4.api.v1.role import Role
 from core4.base import CoreBase
-from core4.service.introspect import CoreIntrospector
 from core4.util import Singleton
 
+
 def once(f):
+    """
+    Execute decorated methods only once.
+    """
+
     def wrapper(*args, **kwargs):
         if not wrapper.has_run:
             wrapper.has_run = True
@@ -17,6 +24,25 @@ def once(f):
 
 
 class CoreSetup(CoreBase, metaclass=Singleton):
+    """
+    Setup core4 environment including
+
+    * folders
+    * users and roles
+    * collection index of ``sys.queue``
+    * collection TTL of ``sys.stdout``
+    * collection index of ``sys.stat``
+    """
+
+    def make_all(self):
+        """
+        setup *all* core4 environment prerequisites
+        """
+        self.make_folder()
+        self.make_role()
+        self.make_queue()
+        self.make_stdout()
+        self.make_stat()
 
     @once
     def make_folder(self):
@@ -38,8 +64,27 @@ class CoreSetup(CoreBase, metaclass=Singleton):
 
     @once
     def make_role(self):
-        # todo: requires implementation
-        pass
+        """
+        Creates API administration user as defined in core4 configuration
+        settings
+
+        * ``api.admin_username``
+        * ``api.admin_realname``
+        * ``api.admin_password``
+        * ``api.contact``
+        """
+        # todo: we might want to add a standard user role with the minimum
+        # set of perms required, like /profile
+        try:
+            Role(
+                name=self.config.api.admin_username,
+                realname=self.config.api.admin_realname,
+                password=self.config.api.admin_password,
+                email=self.config.api.contact,
+                perm=[core4.const.COP]
+            ).save()
+        except pymongo.errors.DuplicateKeyError:
+            pass
 
     @once
     def make_queue(self):
@@ -60,6 +105,20 @@ class CoreSetup(CoreBase, metaclass=Singleton):
             self.logger.info("created index [job_args] on [sys.queue]")
 
     @once
+    def make_stat(self):
+        """
+        Creates collection ``sys.stat`` and its index on ``timestamp``.
+        """
+        if "timestamp" not in self.config.sys.stat.index_information():
+            self.config.sys.stat.create_index(
+                [
+                    ("timestamp", pymongo.ASCENDING)
+                ],
+                name="timestamp"
+            )
+            self.logger.info("created index [timestamp] on [sys.stat]")
+
+    @once
     def make_stdout(self):
         """
         Creates collection ``sys.stdout`` and its TTL index on ``timestamp``.
@@ -78,5 +137,3 @@ class CoreSetup(CoreBase, metaclass=Singleton):
             if "ttl" in self.config.sys.stdout.index_information():
                 self.config.sys.stdout.drop_index(index_or_name="ttl")
                 self.logger.warning("removed index [ttl] from [sys.stdout]")
-
-

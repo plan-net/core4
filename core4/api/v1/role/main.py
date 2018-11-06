@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 This module provides class :class:`.Role` featuring authorisation and access
 management to core4 API, jobs, databases and applications.
@@ -16,8 +14,6 @@ Load an existing role with::
 """
 
 import pymongo
-# todo: we do not want this dependency
-from flask_login import login_user
 
 import core4.base
 import core4.error
@@ -117,7 +113,7 @@ class Role(core4.base.CoreBase):
             [("name", pymongo.ASCENDING)], unique=True, name="unique_name")
         self.config.sys.role.create_index(
             [("email", pymongo.ASCENDING)], unique=True, name="unique_email",
-            partialFilterExpression={"email": { "$exists": True}})
+            partialFilterExpression={"email": {"$exists": True}})
 
     def save(self):
         """
@@ -334,6 +330,23 @@ class Role(core4.base.CoreBase):
         return self._perm
 
     @property
+    def _casc_role(self):
+        """
+        Internal method to recurively collect all role names.
+        """
+
+        def traverse(role):
+            p = [role.name]
+            for i in role.role:
+                p += traverse(i)
+            return p
+
+        role = traverse(self)
+        role = list(set(role))
+        role.sort()
+        return role
+
+    @property
     def is_admin(self):
         """
         :return: ``True`` if the role as a ``perm`` record of ``cop``.
@@ -379,13 +392,12 @@ class Role(core4.base.CoreBase):
 
     def login(self):
         """
-        :return: ``True`` for success, else ``False``
+        Updates the ``last_login`` attribute in ``sys.role``.
         """
         self.last_login = core4.util.now()
         self.config.sys.role.update_one(
             {"_id": self._id}, {"$set": {"last_login": self.last_login}})
-        self.logger.info("login user [%s] with _id [%s]", self.name, self._id)
-        return login_user(self, remember=False)
+        self.logger.debug("login user [%s] with _id [%s]", self.name, self._id)
 
     def verify_password(self, password):
         """
@@ -452,6 +464,19 @@ class Role(core4.base.CoreBase):
             if upd.modified_count == 0:
                 return False
         return True
+
+    def detail(self):
+        """
+        This method converts the role data into a dict, removes the password
+        attribute, cascades role permissions, and role names.
+
+        :return: dict
+        """
+        doc = self._doc()
+        del doc["password"]
+        doc["perm"] = self._casc_perm
+        doc["role"] = self._casc_role
+        return doc
 
 
 class RoleField(Field):

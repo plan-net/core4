@@ -3,10 +3,10 @@ from croniter import croniter
 
 import core4.queue.main
 import core4.queue.query
-import core4.util
 import core4.service.introspect
+import core4.util
 from core4.queue.daemon import CoreDaemon
-from core4.base.cookie import Cookie
+
 
 class CoreScheduler(CoreDaemon):
     """

@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-class MySphinxCommand(TestCommand):
+class SphinxCommand(TestCommand):
 
     def run_tests(self):
         check_call(
@@ -64,7 +64,12 @@ setup(
         "PyYaml>=3.12",
         "psutil>=5.4",
         "docopt>=0.6",
-        "croniter"
+        "croniter>=0.3",
+        "python-mimeparse>=1.6",
+        "PyJWT>=1.6",
+        "tornado>=5.1",
+        "pandas>=0.23",
+        "motor>=2.0.0",
     ],
     extras_require={
         "tests": [
@@ -79,7 +84,7 @@ setup(
     },
     zip_safe=False,
     cmdclass={
-        'sphinx': MySphinxCommand
+        'sphinx': SphinxCommand
     },
     classifiers=(
         'Development Status :: 3 - Alpha',

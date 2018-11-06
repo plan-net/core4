@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import re
 import sys
 
@@ -9,9 +7,6 @@ import core4.config
 import core4.config.tag
 import core4.error
 from tests.pytest_util import *
-
-
-# import unittest
 
 
 class MyConfig(core4.config.main.CoreConfig):
@@ -25,7 +20,7 @@ class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
         super().__init__(*args, **kwargs)
         self.setup_logging()
 
-    def make_config(self, *args, **kwargs):
+    def _make_config(self, *args, **kwargs):
         return MyConfig(*args, **kwargs)
 
 
@@ -77,9 +72,11 @@ def test_collection_scheme():
         username="core",
         password="654321"
     )
-
+    os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"
     a = LogOn()
     a.logger.info("hello world")
+    import pprint
+    pprint.pprint(list(coll1.find()))
     assert coll1.count_documents({}) == 1
     with pytest.raises(core4.error.Core4ConfigurationError):
         core4.base.collection.CoreCollection(
@@ -93,7 +90,7 @@ def test_collection_scheme():
 
 
 def test_progress(mongodb):
-    os.environ["CORE4_OPTION_logging__mongodb"] = "INFO"
+    os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
     bc = LogOn()
     bc.progress(0.01)
     bc.progress(0.04)  # suppress
@@ -102,13 +99,15 @@ def test_progress(mongodb):
     bc.progress(0.08)
     bc.progress(0.09)  # suppress
     bc.progress(0.12)  # suppress
-    data = list(mongodb.core4test.sys.log.find())
+    data = list(mongodb.core4test.sys.log.find({"message":
+                                                    {"$regex": "progress"}}))
     assert 3 == len(data)
     for i, check in enumerate([0, 5, 10]):
         assert re.search("{}%$".format(check), data[i]["message"])
 
 
 def test_progress_restart(mongodb):
+    os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
     bc = LogOn()
     bc.progress(0.01)
     bc.progress(0.05)
@@ -118,7 +117,8 @@ def test_progress_restart(mongodb):
     bc.progress(0.08)  # suppress
     bc.progress(0.50)
     bc.progress(0.10)  # restart
-    data = list(mongodb.core4test.sys.log.find())
+    data = list(mongodb.core4test.sys.log.find({"message":
+                                                    {"$regex": "progress"}}))
     assert 7 == len(data)
     for i, check in enumerate([0, 5, 10, 15, 10, 50, 10]):
         assert re.search("{}%$".format(check), data[i]["message"])
@@ -135,7 +135,8 @@ def test_custom_progress(mongodb):
     bc.progress(0.22, inc=0.1)
     bc.progress(0.25, inc=0.1)
     bc.progress(0.28, inc=0.1)
-    data = list(mongodb.core4test.sys.log.find())
+    data = list(mongodb.core4test.sys.log.find({"message":
+                                                    {"$regex": "progress"}}))
     assert 4 == len(data)
     for i, check in enumerate([0, 10, 20, 30]):
         assert re.search("{}%$".format(check), data[i]["message"])
@@ -145,7 +146,8 @@ def test_progress_message(mongodb):
     bc = LogOn()
     bc.progress(0.01, "hello %s: %1.2f", "world", 0.01, inc=0.1)
     bc.progress(0.12, "hello %s: %1.2f", "world", 0.12, inc=0.1)
-    data = list(mongodb.core4test.sys.log.find())
+    data = list(mongodb.core4test.sys.log.find({"message":
+                                                    {"$regex": "progress"}}))
     assert 2 == len(data)
     assert data[0]["message"] == "progress at 0% - hello world: 0.01"
     assert data[1]["message"] == "progress at 10% - hello world: 0.12"
@@ -159,7 +161,7 @@ def test_unwind_config(mongodb):
         cache = False
 
     class A(LogOn):
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             kwargs["local_dict"] = {
                 "tests": {
                     "test_base": {

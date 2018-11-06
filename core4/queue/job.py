@@ -12,11 +12,9 @@ from core4.queue.validate import *
 
 # Job-States
 STATE_PENDING = 'pending'
-STATE_STARTING = 'starting'  # todo: we need this?
 STATE_RUNNING = 'running'
 STATE_COMPLETE = 'complete'
 STATE_DEFERRED = 'deferred'
-STATE_SKIPPED = 'skipped'  # todo: we need this?
 STATE_FAILED = 'failed'
 STATE_INACTIVE = 'inactive'
 STATE_ERROR = 'error'
@@ -123,13 +121,16 @@ class CoreJob(CoreBase):
 
     The following table describes all job properties in alphabetical order.
 
+    .. _job_attributes:
+
     * ``_id`` - job identifier in ``sys.queue``
     * ``args`` - arguments passed to the job
     * ``attempts`` - maximum number of execution attempts after job failure
       before the job enters the final ``error`` state
     * ``attempts_left`` -  number of attempts left after failure
     * ``author`` - the author(s) of the job
-    * ``defer_max`` - maximum number of seconds to defer the job before restart
+    * ``defer_max`` - maximum number of seconds to defer the job before the job
+      turns inactive
     * ``defer_time`` - seconds to wait before restart after defer
     * ``dependency`` - list of jobs which need complete before execution
     * ``chain`` - list of jobs to be enqueued after successful job completion
@@ -190,7 +191,8 @@ class CoreJob(CoreBase):
     if a property is defined within more then one definition scheme hinted
     order is applied:
 
-    #. job properties can be defined by parameters passed to :meth:`.enqueue()`
+    #. job properties can be defined by parameters passed to
+       :meth:`.enqueue <core4.queue.job.CoreJob.enqueue>`
     #. job properties can be defined in configuration settings
     #. job properties can be defined as a class property
 
@@ -568,21 +570,3 @@ class CoreJob(CoreBase):
         return executable
 
 
-class DummyJob(CoreJob):
-    """
-    This is just a job-dummy for testing purposes.
-    """
-    author = 'mra'
-
-    def execute(self, *args, **kwargs):
-        import time
-        sleep = kwargs.get("sleep", None) or 3
-        until = core4.util.now() + dt.timedelta(seconds=sleep)
-        self.logger.info("just sleeping [%s] seconds", sleep)
-        n = 0
-        while core4.util.now() <= until:
-            n += 1
-            print("line %d at %s" %(n, core4.util.now()))
-            p = float(sleep - (until - core4.util.now()).total_seconds()) / sleep
-            self.progress(p, "running")
-            time.sleep(0.5)

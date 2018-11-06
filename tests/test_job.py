@@ -3,6 +3,7 @@
 
 import core4.config.test
 import core4.error
+import core4.queue.helper
 import core4.queue.job
 import core4.queue.main
 from tests.pytest_util import *
@@ -12,7 +13,7 @@ def test_init():
     job = core4.queue.job.CoreJob()
     with pytest.raises(AssertionError):
         job.validate()
-    job = core4.queue.job.DummyJob()
+    job = core4.queue.helper.DummyJob()
     assert job._id is None
     assert job.args == {}
     assert job.attempts == 1
@@ -33,7 +34,7 @@ def test_init():
     assert job.max_parallel is None
     assert job.worker is None
     assert job.priority == 0
-    assert job.name == 'core4.queue.job.DummyJob'
+    assert job.name == 'core4.queue.helper.DummyJob'
     assert job.query_at is None
     assert job.removed_at is None
     assert job.runtime is None
@@ -82,11 +83,11 @@ def test_validation2():
 
 
 def test_enqueue():
-    job = core4.queue.job.DummyJob(attempts=10)
+    job = core4.queue.helper.DummyJob(attempts=10)
     assert job.attempts == 10
     assert job.chain == []
 
-    job = core4.queue.job.DummyJob(
+    job = core4.queue.helper.DummyJob(
         defer_max=1, defer_time=2,  # inactive_time=4,
         max_parallel=5, worker=['A'], priority=6, arg1=100, arg2=200)
     assert job.attempts == 1
@@ -106,7 +107,7 @@ def test_config_cascade():
     class MyJob(core4.queue.job.CoreJob):
         author = "mra"
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={
@@ -139,6 +140,7 @@ def test_config_cascade():
             )
 
     job = MyJob()
+    print(job.config)
     assert job.attempts == 2
     assert job.author == "mra"
     assert job.defer_max == 999
@@ -155,7 +157,7 @@ def test_invalid_extra_config():
     class MyJob(core4.queue.job.CoreJob):
         author = "mra"
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={
@@ -178,7 +180,7 @@ def test_project_overwrite():
         author = "mra"
         schedule = "1 * * * *"
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={
@@ -204,7 +206,7 @@ def test_local_overwrite():
         author = "mra"
         schedule = "1 * * * *"
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={
@@ -235,7 +237,7 @@ def test_class_first():
         author = "mra"
         schedule = "1 * * * *"
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={
@@ -265,7 +267,7 @@ def test_class_first():
 def test_project_default():
     class MyJob(core4.queue.job.CoreJob):
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={
@@ -294,7 +296,7 @@ def test_author_inheritance():
     class MyParent(core4.queue.job.CoreJob):
         author = 'mra'
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={},
@@ -317,7 +319,7 @@ def test_schedule_inheritance():
         author = 'mra'
         schedule = '1 * * * *'
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={},
@@ -348,7 +350,7 @@ def test_frozen_init():
     class MyJob(core4.queue.job.CoreJob):
         author = 'mra'
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={},
@@ -368,7 +370,7 @@ def test_frozen_method():
     class MyJob(core4.queue.job.CoreJob):
         author = 'mra'
 
-        def make_config(self, *args, **kwargs):
+        def _make_config(self, *args, **kwargs):
             return core4.config.test.TestConfig(
                 project_name="tests",
                 project_dict={},
@@ -389,7 +391,7 @@ def test_frozen_method():
 
 def test_job_found():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.job.DummyJob)
+    q.enqueue(core4.queue.helper.DummyJob)
 
 
 def test_job_not_found():
@@ -406,7 +408,7 @@ class EnvJob(core4.queue.job.CoreJob):
     def execute(self, *args, **kwargs):
         self.defer("still waiting")
 
-    def make_config(self, *args, **kwargs):
+    def _make_config(self, *args, **kwargs):
         return core4.config.test.TestConfig(
             project_name="tests",
             project_dict={

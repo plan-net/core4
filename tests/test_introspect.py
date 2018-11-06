@@ -1,14 +1,11 @@
 import logging
 import os
-
 import pytest
 
-from pprint import pprint
 import core4.logger.mixin
 from core4.queue.job import CoreJob
 from core4.service.introspect import CoreIntrospector
 from tests.util import asset
-from core4.service.setup import CoreSetup
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +48,7 @@ class OkJob(HiddenJob):
 def test_load():
     intro = CoreIntrospector()
     jobs = list(intro.iter_job())
-    assert [j for j in jobs if j["name"] == "core4.queue.job.DummyJob"]
+    assert [j for j in jobs if j["name"] == "core4.queue.helper.DummyJob"]
     assert not [j for j in jobs if j["name"] == "core4.queue.job.CoreJob"]
     hidden_job = [j for j in jobs if "HiddenJob" in j["name"]][0]
     assert hidden_job["hidden"]
@@ -61,7 +58,8 @@ def test_load():
     ok_job = [j for j in jobs if "OkJob" in j["name"]][0]
     assert ok_job["schedule"] is None
     assert "this job is ok" in ok_job["doc"]
-    #pprint(jobs)
+    # pprint(jobs)
+
 
 def test_discover():
     intro = CoreIntrospector()

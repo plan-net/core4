@@ -3,6 +3,7 @@ DEFAULT:
 
 logging:
   mongodb: DEBUG
+  write_concern: 1
 
 sys:
   log: !connect mongodb://sys.log

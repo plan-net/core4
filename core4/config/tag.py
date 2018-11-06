@@ -2,7 +2,7 @@
 The :mod:`core4.config.tag` module implements the following helpers with core4
 configuration management:
 
-* :func:`connect_mongodb` to create :class:`.CoreCollection` object
+* :func:`connect_database` to create :class:`.CoreCollection` object
 * :class:`ConnectTag` to support the custom YAML tag `!!connect`
 """
 
@@ -14,7 +14,7 @@ import core4.util
 from core4.base.collection import SCHEME
 
 
-def connect_mongodb(conn_str, **kwargs):
+def connect_database(conn_str, async=False, **kwargs):
     """
     This function parses ``conn_str`` parameter and ``kwargs`` default
     parameters and returns :class:`.CoreCollection`. The format of the
@@ -35,7 +35,9 @@ def connect_mongodb(conn_str, **kwargs):
     specs = specs[0]
     opts = dict()
     opts["scheme"] = protocol
-    if kwargs.get(SCHEME[opts["scheme"]]["url"]) is not None and not isinstance(kwargs.get(SCHEME[opts["scheme"]]["url"]), str):
+    if ((kwargs.get(SCHEME[opts["scheme"]]["url"]) is not None)
+            and (not isinstance(
+                kwargs.get(SCHEME[opts["scheme"]]["url"]), str))):
         raise core4.error.Core4ConfigurationError("[mongo_url] expected str")
     default_url = kwargs.get(SCHEME[opts["scheme"]]["url"])
     if default_url is not None and default_url.startswith(protocol):
@@ -66,6 +68,7 @@ def connect_mongodb(conn_str, **kwargs):
     opts["hostname"] = hostname
     opts["database"] = database
     opts["collection"] = "/".join(collection)
+    opts["async"] = async
     if hostname:
         return core4.base.collection.CoreCollection(**opts)
     raise core4.error.Core4ConfigurationError("no mongo connected")
@@ -75,7 +78,7 @@ def connect_mongodb(conn_str, **kwargs):
 class ConnectTag(yaml.YAMLObject):
     """
     This class implements the custom YAML tag ``!connect``. See
-    :func:`connect_mongodb` about the format of the connection string.
+    :func:`connect_database` about the format of the connection string.
 
     This method implements the delegation pattern and passes all non-owned
     methods and properties to :class:`.CoreCollection`.
@@ -89,7 +92,7 @@ class ConnectTag(yaml.YAMLObject):
         after complete core4 configuration is provided with
         :meth:`.set_config`.
 
-        :param conn_str: connection string, see :func:`connect_mongodb``
+        :param conn_str: connection string, see :func:`connect_database``
         """
         if conn_str.count("://") == 0:
             raise core4.error.Core4ConfigurationError(
@@ -112,21 +115,30 @@ class ConnectTag(yaml.YAMLObject):
         """
         self.config = config
 
-    def connect(self):
+    def connect(self, async=False):
         """
-        Internal methods used to lazily establish the MongoDB connection when
-        requsted. Uses :func:`connect_mongodb` to connect.
+        Used to lazily establish the MongoDB connection when requested. Uses
+        :func:`connect_database` to connect.
 
+        :param async: if ``True`` connects with :mod:`motor`, else with
+                      :mod:`pymongo` (default).
         :return: :class:`.CoreCollection`
         """
 
         if self._mongo is None:
-            kwargs = {
-                "mongo_url": self.config.get("mongo_url"),
-                "mongo_database": self.config.get("mongo_database")
-            }
-            self._mongo = connect_mongodb(self.conn_str, **kwargs)
+            params = {"mongo_url": self.config.get("mongo_url"),
+                      "mongo_database": self.config.get("mongo_database"),
+                      "async": async}
+            self._mongo = connect_database(self.conn_str, **params)
         return self._mongo
+
+    def connect_async(self):
+        """
+        Same as :meth:`.connect` with ``async=True``.
+
+        :return: :class:`.CoreCollection`
+        """
+        return self.connect(async=True)
 
     def __getattr__(self, item):
         return getattr(self.connect(), item)
