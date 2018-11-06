@@ -222,7 +222,7 @@ user-specific configuration file located in ``~/core4/local.yaml``::
 logging
 -------
 
-core4 ships with 4 log-levels: ERROR/WARNING/INFO and DEBUG.
+core4 ships with 4 log-levels: CRITICAL/ERROR/WARNING/INFO and DEBUG.
 For a job to be able to start logging, it hast to inherit from the ConfigurationMixin:
 
 
@@ -233,13 +233,19 @@ For a job to be able to start logging, it hast to inherit from the Configuration
 
 
     class Log(CoreLoggerMixin, CoreJob):
-        def execute(self):
-            ...
+        def __init__(self):
+            self.setup_logging()
 
 
 Logging is as simple as calling the required method within self.logger::
 
+    self.logger.critical("A critical, unexpected error appeared")
+    self.logger.error("An exception or other expected error has been raised")
+    self.logger.warning("This is a warning")
     self.logger.info("This is just another info message")
+    self.logger.debug("This is a debug message, it is only shown in case of an error")
+
+
 
 You can either use the .format-method of a string or format it the oldschool way::
 
@@ -250,8 +256,8 @@ cookie handling
 ---------------
 
 For passing arguments from one job to another, or to keep track of job-specific information that hast to be preserved
-inbetween multiple runs, CoreCookies have been implemented.
-cookies are identified with the qual_name of the job using them.
+inbetween multiple runs, CoreCookies can be used.
+cookies are identified by the qual_name of the job using them.
 
 Think of it as enhanced browser-cookies, a store for multiple key-value pairs.
 
@@ -302,8 +308,8 @@ structuring of jobs
 -------------------
 CoreJobs can inherit from any other Classes.
 If the inherit from other CoreJobs, all class-properties get inherited too.
-BaseJobs that themselfs have no schedule and should not be called directly can set the ``hidden`` flag, so that this job
-will not be listed within a ``coco -j`` and is therfore not visible to the user.
+Baseclasses themselfs have no schedule and should not be called directly, therefore they can set the ``hidden`` flag,
+so that this job will not be listed within a ``coco -j`` and is not visible to the user.
 
 .. code-block:: python
 
