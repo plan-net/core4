@@ -141,19 +141,23 @@ Within the code, a job can defer itself::
 
     self.defer("This job has been defered due to various reasons.")
 
+Or enqueue other jobs by their qual_name::
+
+    self.queue.enqueue("core.queue.job.DummyJob", sleep=120)
+
 Jobs and their states can be monitored and controlled via the "coco" script.
 For further information about possible arguments please visit: :ref:`configuration management <config>`.
 
 
 collection handling
 -------------------
-core4 ships a great configuration management that should be used to handle multiple database-connections.
+core4 ships a great configuration management that can be used to handle multiple different database-connections.
+Whether to achieve different databases for different jobs, or to simply read from production data while writing to
+your local database, everythings possible.
 
-
-The plugin-configuration is located within the project itself and is the most obvious place to put collections used
-within that plugin. The following configuration will seperate the collections so that the datbase that is read from
-(registers/cash_register)  branches to the production database while all writing collections (high/low/mid) branch to
-localhost so that no production-data is affected::
+The example below takes advantage of core4s configuration-inheritance to achieve exactly that.
+All keys have to first be set within the plugin-configuration itself so that they can be overwritten by the
+user-specific configuration file located in ``~/core4/local.yaml``::
 
     mongo_url: mongodb://usr:pwd@localhost:27017
     mongo_database: bakery
