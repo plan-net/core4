@@ -140,7 +140,7 @@ localhost so that no production-data is affected::
     cash_register: mongodb://usr:pwd@production_database:27017/registers/cash_register
     low_values: mongodb://low
     mid_values: mongodb://mid
-    high: mongodb://high
+    high_values: mongodb://high
 
 
 
