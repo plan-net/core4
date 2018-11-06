@@ -85,6 +85,26 @@ Explanation:
 Down below you can find a more detailed instruction about various aspects of writing CoreJobs:
 
 
+Principles
+----------
+
+CoreJobs implement the logic layer of the core architecture. Jobs can
+broadly be categorised into
+
+CoreJobs can be broadly categorised into:
+
+-   extraction jobs, scanners and feed readers representing inbound
+    interfaces
+
+-   load jobs for saving inbound data to the database
+
+-   transformation, analysis and aggregation job
+
+-   export jobs and feeds representing the outbound interfaces
+
+This differentiation is only from a conceptional view point. All jobs
+are irrespective of their goal and purpose implemented as CoreJobs.
+
 
 runtime behavior
 ----------------
@@ -304,27 +324,6 @@ will not be listed within a ``coco -j`` and is therfore not visible to the user.
             result = self.static_mult(x, y)
             self.logger.info("Got result within the multiplication: [%d]", result)
 
-
-
-Principles
-----------
-
-CoreJobs implement the logic layer of the core architecture. Jobs can
-broadly be categorised into
-
-CoreJobs can be broadly categorised into:
-
--   extraction jobs, scanners and feed readers representing inbound
-    interfaces
-
--   load jobs for saving inbound data to the database
-
--   transformation, analysis and aggregation job
-
--   export jobs and feeds representing the outbound interfaces
-
-This differentiation is only from a conceptional view point. All jobs
-are irrespective of their goal and purpose implemented as CoreJobs.
 
 Best practices
 --------------
