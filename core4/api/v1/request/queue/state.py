@@ -111,7 +111,7 @@ class QueueHandler(CoreRequestHandler):
             - **error** (*int*): number of jobs in state *error*
             - **inactive** (*int*): number of jobs in state *inactive*
 
-        Errors:
+        Raises:
             401: Unauthorized
 
         Examples:

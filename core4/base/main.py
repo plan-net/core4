@@ -254,6 +254,7 @@ class CoreBase:
         """
         format a message given only by args.
         message hast to be the first parameter, formatting second.
+
         :param args: args
         :return: formatted message.
         """

@@ -178,7 +178,7 @@ class CoreApiContainer(CoreBase):
 class CoreApplication(tornado.web.Application):
     """
     Represents a wrapper class around :class:`tornado.web.Application`. This
-    wrapper extends applications' properties with a `.container` property
+    wrapper extends applications' properties with a ``.container`` property
     referencing the :class:`.CoreApiContainer` object.
     """
 
@@ -288,17 +288,19 @@ def serve(*args, port=None, name=None, **kwargs):
     :class:`.CoreApiContainer` class. The container delivers the following
     default endpoints under it's ``root``:
 
-    * ``/login`` serving :class:`core4.api.v1.request.login.LoginHandler``
-    * ``/logout`` serving :class:`core4.api.v1.request.logout.LogoutHandler``
+    * ``/login`` serving
+      :class:`core4.api.v1.request.standard.login.LoginHandler`
+    * ``/logout`` serving
+      :class:`core4.api.v1.request.standard.logout.LogoutHandler`
     * ``/profile`` serving
-      :class:`core4.api.v1.request.profile.ProfileHandler``
+      :class:`core4.api.v1.request.standard.profile.ProfileHandler`
 
     .. note:: This method creates the required core4 environment including
               the standard core4 folders (see config setting ``folder``,
               the default users and roles (see config setting
               ``admin_username``, ``admin_realname`` and ``admin_password``.
 
-    :param args: class dervived from :class:`CoreApiContainer`
+    :param args: class dervived from :class:`.CoreApiContainer`
     :param port: to serve, defaults to core4 config ``api.port``
     :param name: to identify the server, defaults to hostname
     :param kwargs: passed to the :class:`tornado.web.Application` objects

@@ -36,7 +36,7 @@ class ProfileHandler(CoreRequestHandler):
                   ``sys.user`` but from the user token exchanged between
                   client and server.
 
-        Errors:
+        Raises:
             401: Unauthorized
 
         Examples:

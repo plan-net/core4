@@ -29,7 +29,7 @@ class LoginHandler(CoreRequestHandler):
 
             - **token** (*str*): the created authorization token
 
-        Errors:
+        Raises:
             401: Unauthorized
 
         Examples:
@@ -103,8 +103,8 @@ class LoginHandler(CoreRequestHandler):
         Returns:
             dict with empty data element
 
-        Errors:
-            none
+        Raises:
+            None
 
         Examples:
             >>> url = "http://localhost:5001/core4/api/v1/login"

@@ -6,12 +6,13 @@ and provides the following endpoints:
 * ``/core4/api/v1/logout`` - :class:`.LogoutHandler` (default handler)
 * ``/core4/api/v1/profile`` - :class:`.ProfileHandler` (default handler)
 * ``/core4/api/v1/queue`` - :class:`.QueueHandler`
+* ``/core4/api/v1/jobs`` - :class:`.JobHandler`
 * ``/core4/api/v1/jobs/poll`` - :class:`.JobStream`
-* ``/core4/api/v1/jobs/job`` - :class:`.JobHandler`
+* ``/core4/api/v1/enqueue`` - :class:`.JobPost`
 
 Additionally the server creates an endless loop to query collection
 ``sys.stat`` continuously with :class:`.QueueStatus` to support the
-:class:`.QueueHandler``.
+:class:`.QueueHandler`.
 
 Start the server with::
 

@@ -27,6 +27,7 @@ STATE_STOPPED = (
     core4.queue.job.STATE_INACTIVE,
     core4.queue.job.STATE_ERROR)
 
+# todo: needs to check authorisation
 
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     """
@@ -73,7 +74,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             - **page_count**: the total number of pages
             - **per_page**: the number of elements per page
 
-        Errors:
+        Raises:
             401: Unauthorized
 
         Examples:
@@ -118,7 +119,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             data element with job attributes, see
             :class:`core4.queue.job.CoreJob`.
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             401: Unauthorized
             404: job not found
@@ -190,7 +191,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         Returns:
             see :meth:`.get`
 
-        Errors:
+        Raises:
             see :meth:`.get`
 
         Examples:
@@ -278,7 +279,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         Returns:
             data element with ``True`` for success, else ``False``
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             400: requires job _id
             401: Unauthorized
@@ -308,8 +309,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def put(self, request=None):
         """
         Methods:
-            /jobs/<action>/<_id> - manage job in ``sys.queue``, this is
-            delete, kill and restart.
+            /jobs/<action>/<_id> - manage job in ``sys.queue``
 
         Parameters:
             action(str): ``delete``, ``kill`` or ``restart``
@@ -321,7 +321,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             - **OK** (str) for actions delete and kill
             - **_id** (str) with new job ``_id`` for action restart
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             400: requires action and job _id
             400: failed to restart job
@@ -555,19 +555,22 @@ class JobPost(JobHandler):
 
     def get(self, *args, **kwargs):
         """
-        not implemented, raises 405 - Method not allowed
+        Raises:
+            405 - Method not allowed (not implemented)
         """
         raise HTTPError(405)
 
     def delete(self, *args, **kwargs):
         """
-        not implemented, raises 405 - Method not allowed
+        Raises:
+            405 - Method not allowed (not implemented)
         """
         raise HTTPError(405)
 
     def put(self, *args, **kwargs):
         """
-        not implemented, raises 405 - Method not allowed
+        Raises:
+            405 - Method not allowed (not implemented)
         """
         raise HTTPError(405)
 
@@ -609,7 +612,7 @@ class JobPost(JobHandler):
             - **_id**: of the enqueued job
             - **name**: of the enqueued job
 
-        Errors:
+        Raises:
             400: job exists with args
             401: Unauthorized
             404: cannot instantiate job
@@ -695,7 +698,7 @@ class JobStream(JobPost):
         Returns:
             JSON stream with job attributes
 
-        Errors:
+        Raises:
             401: Unauthorized
             404: cannot instantiate job
 
@@ -753,7 +756,7 @@ class JobStream(JobPost):
         Returns:
             JSON stream with job attributes
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             401: Unauthorized
             404: job not found

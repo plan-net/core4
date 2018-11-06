@@ -13,11 +13,11 @@ from tornado.web import RequestHandler, HTTPError
 
 import core4.util
 import core4.util.node
-from core4.util.pager import PageResult
 from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
-from core4.util.pager import CorePager
+from core4.util.pager import PageResult
+
 tornado.escape.json_encode = json_encode
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
@@ -42,7 +42,7 @@ class BaseHandler(CoreBase):
         """
         Answer preflight / OPTIONS request with 200
         """
-        #self.set_status(200)
+        # self.set_status(200)
         self.finish()
 
     def set_default_headers(self):
@@ -72,7 +72,7 @@ class BaseHandler(CoreBase):
         Raises 401 error if authentication and authorization fails.
         """
         self.identifier = ObjectId()
-        if(self.request.method == 'OPTIONS'):
+        if (self.request.method == 'OPTIONS'):
             # preflight / OPTIONS should always pass
             return
         if not (self.request.query_arguments or self.request.body_arguments):
@@ -97,8 +97,8 @@ class BaseHandler(CoreBase):
         Decodes an argument from the request.
 
         Overwritten method from :class`torando.web.RequestHandler` used as
-        a filter for both `get_argument()` and for values extracted from the
-        url and passed to `get()`/`post()`/etc.
+        a filter for both ``.get_argument()`` and for values extracted from the
+        url and passed to ``get()``. ``post()``.
 
         The name of the argument is provided if known, but may be None
         (e.g. for unnamed groups in the url regex).
@@ -137,16 +137,15 @@ class BaseHandler(CoreBase):
                                   strip=False, **kwargs)
         return ret
 
-
     async def verify_user(self):
         """
         Extracts client's authorization from
 
-        # Basic Authorization header, or from
-        # Bearer Authorization header, or from
-        # token parameter (query string or json body), or from
-        # token parameter from the cookie, or from
-        # passed username and password parameters (query string or json body)
+        #. Basic Authorization header, or from
+        #. Bearer Authorization header, or from
+        #. token parameter (query string or json body), or from
+        #. token parameter from the cookie, or from
+        #. passed username and password parameters (query string or json body)
 
         In case a valid username and password is provided, the token is
         created, see :meth:`.create_token`.
@@ -228,7 +227,7 @@ class BaseHandler(CoreBase):
         and sets the required headers and cookie. The token expiration time can
         be set with core4 config key ``api.token.expiration``.
 
-        :param username:to be packaged into the web token
+        :param username: to be packaged into the web token
         :return: JSON web token (str)
         """
         secs = self.config.api.token.expiration
@@ -449,6 +448,7 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
     def flash(self, level, message, *vars):
         """
         Add a flash message with
+
         :param level: DEBUG, INFO, WARNING or ERROR
         :param message: str to flash
         """
