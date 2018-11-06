@@ -88,10 +88,7 @@ Down below you can find a more detailed instruction about various aspects of wri
 Principles
 ----------
 
-CoreJobs implement the logic layer of the core architecture. Jobs can
-broadly be categorised into
-
-CoreJobs can be broadly categorised into:
+CoreJobs implement the logic layer of the core architecture. CoreJobs can broadly be categorised into
 
 -   extraction jobs, scanners and feed readers representing inbound
     interfaces
