@@ -140,7 +140,7 @@ localhost so that no production-data is affected::
     cash_register: mongodb://usr:pwd@production_database:27017/registers/cash_register
     low_values: mongodb://low
     mid_values: mongodb://mid
-    high: mongodb://high
+    high_values: mongodb://high
 
 
 
@@ -209,8 +209,8 @@ For a job to be able to start logging, it hast to inherit from the Configuration
 
 
     class Log(CoreLoggerMixin, CoreJob):
-        def __init__(self):
-            pass
+        def execute(self):
+            ...
 
 
 Logging is as simple as calling the required method within self.logger::
