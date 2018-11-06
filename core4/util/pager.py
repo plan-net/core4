@@ -209,7 +209,26 @@ class CorePager:
         )
 
     async def length(self, filter):
+        """
+        Needs to be implemented with every pager. The passed filter is
+        to be applied.
+
+        :param filter: variant, depends on the pager implementation
+        :return: total number (int) of filtered records
+        """
         raise NotImplementedError('requires implementation')
 
     async def query(self, skip, limit, filter, sort_by):
+        """
+        Needs to be implemented with every pager. The passed ``skip`` attribute
+        is the number of records to skip. The ``limit`` attribute is the number
+        of records to retrieve. The passed ``filter`` and ``sort_by``
+        attributes are to be applied in the search.
+
+        :param skip: number (int) of records to skip
+        :param limit: number (int) of records to retrieve
+        :param filter: variant, depends on the pager implementation
+        :param sort_by: variant, depends on the pager implementation
+        :return: list of dict
+        """
         raise NotImplementedError('requires implementation')
