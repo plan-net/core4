@@ -17,6 +17,13 @@ creating those insights without having the user think about the underlying softw
 core4 takes care of everything that is essential to using and operating such a distributed system,
 from central logging and configuration to deployment, all this while scaling to the 100ths of servers.
 
+CoreJobs
+--------
+
+CoreJobs implement the logic layer of the core architecture and enables the user to fully automate their business logic
+within a fault-tolerant distributed system. Core    Jobs are the starting point for any Data-engineer or -scientist and
+provides a lot of possibilities to easily control the runtime-behavior within the framework.
+
 Example
 --------
 
