@@ -21,7 +21,6 @@ class QueueStatus(CoreBase):
     def __init__(self):
         super().__init__()
         self.data = None
-        self.sys_stat = self.config.sys.stat.connect_async()
 
     async def update(self):
         """
@@ -29,7 +28,8 @@ class QueueStatus(CoreBase):
         state ````pending``, ``deferred``, ``failed``, ``running``, ``killed``,
         ``error`` or ``inactive``.
         """
-        cur = self.sys_stat.find(projection={"_id": 0}).sort(
+        sys_stat = self.config.sys.stat.connect_async()
+        cur = sys_stat.find(projection={"_id": 0}).sort(
             "timestamp", -1).limit(1)
         doc = await cur.to_list(length=1)
         if doc:
@@ -44,7 +44,7 @@ class QueueStatus(CoreBase):
                 f = {"timestamp": {"$gt": last}}
             else:
                 f = {}
-            cursor = self.sys_stat.find(
+            cursor = sys_stat.find(
                 filter=f, projection={"_id": 0}).sort(
                 "timestamp", 1)
             async for doc in cursor:

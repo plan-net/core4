@@ -12,6 +12,7 @@ import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.util import json_encode
 from core4.queue.main import CoreQueue
+from core4.util.pager import CorePager
 
 STATE_FINAL = (
     core4.queue.job.STATE_COMPLETE,
@@ -28,6 +29,9 @@ STATE_STOPPED = (
 
 
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
+    """
+    Get job listing, job details, kill, delete and restart jobs.
+    """
 
     def initialize(self):
         self.queue = CoreQueue()
@@ -46,93 +50,66 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def get(self, _id=None):
         """
-        Job listing with ``/jobs`` and job details with ``/jobs/<_id>``.
+        Paginated job listing with ``/jobs``,  and single job details with
+        ``/jobs/<_id>``.
 
         Methods:
             /jobs - jobs listing
 
         Parameters:
-            None
+            per_page (int): number of jobs per page
+            page (int): requested page (starts counting with ``0``)
+            sort (str): sort field
+            order (int): sort direction (``1`` for ascending, ``-1`` for
+                         descending)
 
         Returns:
-            data element wirh job attributes, see
-            :class:`core4.queue.job.CoreJob`.
+            data element with list of job attributes as dictionaries. For
+            pagination the following top level attributes are returned:
+
+            - **total_count**: the total number of records
+            - **count**: the number of records in current page
+            - **page**: current page (starts counting with ``0``)
+            - **page_count**: the total number of pages
+            - **per_page**: the number of elements per page
 
         Errors:
             401: Unauthorized
 
         Examples:
             >>> from requests import get, post
+            >>> from pprint import pprint
+            >>> import random
             >>> url = "http://localhost:5001/core4/api/v1"
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
-            >>> rv = get(url + "/jobs", headers=h)
+            >>>
+            >>> name = "core4.queue.helper.DummyJob"
+            >>> for i in range(50):
+            >>>     args = {"sleep": i, "id": random.randint(0, 100)}
+            >>>     rv = post(url + "/enqueue?name=" + name, headers=h, json=args)
+            >>>     print(i, rv.status_code, "-", rv.json()["message"])
+            >>>     assert rv.status_code == 200
+            >>> rv = get(url + "/jobs?per_page=10&sort=args.id&order=-1", headers=h)
+            >>> rv
+            <Response [200]>
             >>> rv.json()
             {
-                '_id': '5bdaf01ade8b691e49e19558',
+                '_id': '5be13b56de8b69468b7ff0b2',
                 'code': 200,
                 'message': 'OK',
-                'timestamp': '2018-11-01T12:22:50.131383',
-                'data': [
-                    {
-                        '_id': '5bd72861de8b69147a275e22',
-                        'args': {
-                            'i': 4,
-                            'sleep': 23
-                        },
-                        'attempts': 1,
-                        'attempts_left': 1,
-                        'enqueued': {
-                            'at': '2018-10-29T15:33:53',
-                            'hostname': 'mra.devops',
-                            'parent_id': None,
-                            'username': 'mra'
-                        },
-                        'finished_at': None,
-                        'killed_at': '2018-10-29T15:34:07.084000',
-                        'locked': None,
-                        'name': 'core4.queue.helper.DummyJob',
-                        'priority': 0,
-                        'removed_at': None,
-                        'runtime': 21.0,
-                        'started_at': '2018-10-29T15:33:54',
-                        'state': 'killed',
-                        'trial': 1,
-                        'wall_at': None,
-                        'zombie_at': None
-                    },
-                    {
-                        '_id': '5bdaef7ede8b691db888cb36',
-                        'args': {
-                            'i': 4, 'sleep': 10
-                        },
-                        'attempts': 1,
-                        'attempts_left': 1,
-                        'enqueued': {
-                            'at': '2018-11-01T12:20:14',
-                            'hostname': 'mra.devops',
-                            'parent_id': None,
-                            'username': 'mra'
-                        },
-                        'finished_at': None,
-                        'killed_at': None,
-                        'locked': None,
-                        'name': 'core4.queue.helper.DummyJob',
-                        'priority': 0,
-                        'removed_at': None,
-                        'runtime': None,
-                        'started_at': None,
-                        'state': 'pending',
-                        'trial': 0,
-                        'wall_at': None,
-                        'zombie_at': None
-                    }
-                ]
+                'timestamp': '2018-11-06T06:57:26.660093',
+                'total_count': 50.0,
+                'count': 10,
+                'page': 0,
+                'page_count': 5,
+                'per_page': 10,
+                'data': [ ... ]
             }
 
         Methods:
-            /jobs/<_id> - jobs details
+            /jobs/<_id> - job details
 
         Parameters:
             _id (str): job _id to get details
@@ -193,6 +170,36 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             ret = await self.get_listing()
         self.reply(ret)
 
+    async def post(self, _id=None):
+        """
+        Same as ``GET``. Paginated job listing with ``/jobs`` and single job
+        details with ``/jobs/<_id>``. Additionally this method parses a
+        ``filter`` attribute to filter jobs.
+
+        Methods:
+            /jobs - jobs listing
+
+        Parameters:
+            per_page (int): number of jobs per page
+            page (int): requested page (starts counting with ``0``)
+            sort (str): sort field
+            order (int): sort direction (``1`` for ascending, ``-1`` for
+                         descending)
+            filter (dict): MongoDB query
+
+        Returns:
+            see :meth:`.get`
+
+        Errors:
+            see :meth:`.get`
+
+        Examples:
+            >>> # example continues from above
+            >>> args = {"page": "0", "filter": {"args.sleep": {"$lte": 5}}}
+            >>> post(url + "/jobs", headers=h, json=args)
+        """
+        await self.get(_id)
+
     def parse_id(self, _id):
         """
         parses str into :class:`bson.objectid.ObjectId` and raises
@@ -213,13 +220,28 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
         :return: list of dict
         """
-        # todo: requires pagination
-        cur = self.collection("queue").find(
-            projection=self.project_job_listing()).sort("_id", 1)
-        ret = []
-        async for doc in cur:
-            ret.append(doc)
-        return ret
+
+        async def _length(filter):
+            return await self.collection("queue").count_documents(filter)
+
+        async def _query(skip, limit, filter, sort_by):
+            cur = self.collection("queue").find(
+                filter).skip(skip).sort(*sort_by).limit(limit)
+            return await cur.to_list(length=limit)
+
+        per_page = int(self.get_argument("per_page", 10))
+        current_page = int(self.get_argument("page", 0))
+        query_filter = self.get_argument("filter", {})
+        sort_by = self.get_argument("sort", "_id")
+        sort_order = self.get_argument("order", 1)
+
+        pager = CorePager(per_page=int(per_page),
+                          current_page=int(current_page),
+                          length=_length, query=_query,
+                          sort_by=[sort_by, int(sort_order)],
+                          filter=query_filter)
+        pager.initialise(current_page=current_page)
+        return await pager.page()
 
     async def get_detail(self, _id):
         """
@@ -508,6 +530,47 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             "username": self.current_user
         }
 
+    async def get_queue_count(self):
+        """
+        Retrieves aggregated information about ``sys.queue`` state. This is
+
+        * ``n`` - the number of jobs in the given state
+        * ``state`` - job state
+        * ``flags`` - job flags ``zombie``, ``wall``, ``removed`` and
+          ``killed``
+
+        :return: dict
+        """
+        cur = self.collection("queue").aggregate(self.pipeline_queue_count())
+        ret = {}
+        async for doc in cur:
+            ret[doc["state"]] = doc["n"]
+        return ret
+
+
+class JobPost(JobHandler):
+    """
+    Post new job.
+    """
+
+    def get(self, *args, **kwargs):
+        """
+        not implemented, raises 405 - Method not allowed
+        """
+        raise HTTPError(405)
+
+    def delete(self, *args, **kwargs):
+        """
+        not implemented, raises 405 - Method not allowed
+        """
+        raise HTTPError(405)
+
+    def put(self, *args, **kwargs):
+        """
+        not implemented, raises 405 - Method not allowed
+        """
+        raise HTTPError(405)
+
     async def post(self, _id=None):
         """
         Methods:
@@ -609,25 +672,12 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         await self.collection("stat").insert_one(state)
         return job
 
-    async def get_queue_count(self):
-        """
-        Retrieves aggregated information about ``sys.queue`` state. This is
 
-        * ``n`` - the number of jobs in the given state
-        * ``state`` - job state
-        * ``flags`` - job flags ``zombie``, ``wall``, ``removed`` and
-          ``killed``
-
-        :return: dict
-        """
-        cur = self.collection("queue").aggregate(self.pipeline_queue_count())
-        ret = {}
-        async for doc in cur:
-            ret[doc["state"]] = doc["n"]
-        return ret
-
-
-class JobStream(JobHandler):
+class JobStream(JobPost):
+    """
+    Stream job attributes until job reached final state (``ERROR``,
+    ``INACTIVE``, ``KILLED``).
+    """
 
     def initialize(self):
         super().initialize()
@@ -640,18 +690,19 @@ class JobStream(JobHandler):
             /jobs/poll - stream job attributes
 
         Parameters:
-            None
+            _id (str): job _id
 
         Returns:
             JSON stream with job attributes
 
         Errors:
-            400: job exists with args
             401: Unauthorized
             404: cannot instantiate job
 
         Examples:
-            >>> rv = post(url + "/jobs?name=" + name, headers=h, json={"sleep": 20})
+            >>> from requests import post, get
+            >>> import json
+            >>> rv = post(url + "/enqueue?name=" + name, headers=h, json={"sleep": 20})
             >>> _id = rv.json()["data"]["_id"]
             >>> rv = get(url + "/jobs/poll/" + _id, headers=h, stream=True)
             >>> for line in rv.iter_lines():
@@ -659,13 +710,12 @@ class JobStream(JobHandler):
             >>>         data = json.loads(line.decode("utf-8"))
             >>>         locked = data.get("locked")
             >>>         state = data.get("state")
-            >>>         print("{:6.2f}% - {}".format(locked["progress_value"] * 100. if locked else 100, state))
-            100.00% - pending
-              0.04% - running
-             25.13% - running
-             50.17% - running
-             75.22% - running
-            100.00% - complete
+            >>>         if locked:
+            >>>             print(locked["progress_value"], state)
+            0.00045184999999996477 running
+            0.2524361 running
+            0.5028721 running
+            0.75340995 running
         """
         oid = self.parse_id(_id)
         last = None

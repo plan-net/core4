@@ -19,6 +19,7 @@ from core4.api.v1.application import CoreApiServerTool, CoreApiContainer, serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobStream
+from core4.api.v1.request.queue.job import JobPost
 #from core4.api.v1.request.queue.job import JobSummary
 from core4.api.v1.request.queue.state import QueueHandler
 from core4.api.v1.request.queue.state import QueueStatus
@@ -154,6 +155,7 @@ class LocalTestServer:
                 #(r'/jobs/summary', JobSummary),
                 (r'/jobs/poll/?(.*)', JobStream),
                 (r'/jobs/?(.*)', JobHandler),
+                (r'/enqueue', JobPost),
                 (r'/kill', StopHandler)
             ]
         return CoreApiTestServer
@@ -177,7 +179,7 @@ def test_server_test(test_server):
 
 def test_enqueue(test_server, queue):
     rv = test_server.post(
-        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=1))
+        "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=1))
     assert rv.status_code == 200
     job_id = rv.json()["data"]["_id"]
     worker = core4.queue.worker.CoreWorker()
@@ -225,7 +227,7 @@ def test_queue(test_server, queue):
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     rv = test_server.post(
-        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
+        "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     rv = test_server.get("/queue", stream=True)
     assert rv.status_code == 200
@@ -246,7 +248,7 @@ def test_queue(test_server, queue):
 
 def test_getter(test_server, queue):
     rv = test_server.post(
-        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
+        "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
     rv = test_server.get("/jobs")
@@ -255,7 +257,7 @@ def test_getter(test_server, queue):
     assert rv.json()["data"][0]["state"] == "pending"
 
     rv = test_server.post(
-        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
+        "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
     assert rv.status_code == 200
     j2 = rv.json()["data"]["_id"]
 
@@ -266,7 +268,7 @@ def test_getter(test_server, queue):
     assert rv.json()["data"][1]["state"] == "pending"
 
     rv = test_server.post(
-        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
+        "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
     assert rv.status_code == 400
 
     rv = test_server.get("/jobs")
@@ -283,7 +285,7 @@ def test_getter(test_server, queue):
 
 def test_flag(test_server, queue):
     rv = test_server.post(
-        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
+        "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
     rv = test_server.delete("/jobs")
@@ -322,7 +324,7 @@ class ErrorJob(core4.queue.job.CoreJob):
 
 def test_restart_error(test_server, queue):
     rv = test_server.post(
-        "/jobs", json=dict(name="tests.api.test_job.ErrorJob", sleep=5))
+        "/enqueue", json=dict(name="tests.api.test_job.ErrorJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
@@ -366,7 +368,7 @@ def test_kill(test_server, queue):
     t.start()
 
     rv = test_server.post(
-        "/jobs", json=dict(name="core4.queue.helper.DummyJob", sleep=600))
+        "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=600))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
@@ -421,7 +423,7 @@ def test_restart_deferred(test_server, queue):
     t.start()
 
     rv = test_server.post(
-        "/jobs", json=dict(name="tests.api.test_job.DeferJob"))
+        "/enqueue", json=dict(name="tests.api.test_job.DeferJob"))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 

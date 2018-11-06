@@ -1,4 +1,4 @@
-from collections import __init__
+import collections
 
 
 class Singleton(type):

@@ -18,7 +18,7 @@ def reset(tmpdir):
     core4.logger.mixin.logon()
     yield
     # singletons
-    core4.util.Singleton._instances = {}
+    core4.util.tool.Singleton._instances = {}
     # os environment
     dels = []
     for k in os.environ:

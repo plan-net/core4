@@ -13,10 +13,11 @@ from tornado.web import RequestHandler, HTTPError
 
 import core4.util
 import core4.util.node
+from core4.util.pager import PageResult
 from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
-
+from core4.util.pager import CorePager
 tornado.escape.json_encode = json_encode
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
@@ -90,6 +91,52 @@ class BaseHandler(CoreBase):
                 if self.verify_access():
                     return
             self.write_error(401)
+
+    def decode_argument(self, value, name=None):
+        """
+        Decodes an argument from the request.
+
+        Overwritten method from :class`torando.web.RequestHandler` used as
+        a filter for both `get_argument()` and for values extracted from the
+        url and passed to `get()`/`post()`/etc.
+
+        The name of the argument is provided if known, but may be None
+        (e.g. for unnamed groups in the url regex).
+        """
+        if isinstance(value, (bytes, str)):
+            return super().decode_argument(value, name)
+        return value
+
+    def get_argument(self, name, default=object(), *args, **kwargs):
+        """Returns the value of the argument with the given name.
+
+        If default is not provided, the argument is considered to be
+        required, and we raise a `MissingArgumentError` if it is missing.
+
+        If the argument appears in the url more than once, we return the
+        last value.
+
+        The returned value is always unicode.
+        """
+        ret = self._get_argument(name, default, source=self.request.arguments,
+                                 *args, strip=False, **kwargs)
+        return ret
+
+    def get_arguments(self, name, *args, **kwargs):
+        """Returns a list of the arguments with the given name.
+
+        If the argument is not present, returns an empty list.
+
+        The returned values are always unicode.
+        """
+
+        # Make sure `get_arguments` isn't accidentally being called with a
+        # positional argument that's assumed to be a default (like in
+        # `get_argument`.)
+        ret = self._get_arguments(name, source=self.request.arguments, *args,
+                                  strip=False, **kwargs)
+        return ret
+
 
     async def verify_user(self):
         """
@@ -362,12 +409,26 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
                 chunk = chunk.to_string()
             else:
                 chunk = chunk.to_dict('rec')
-        if isinstance(chunk, (dict, list)) or self.wants_json():
-            chunk = self._build_json(
+        elif isinstance(chunk, PageResult):
+            page = self._build_json(
                 code=self.get_status(),
                 message=self._reason,
-                data=chunk
+                data=chunk.body,
             )
+            page["page_count"] = chunk.page_count
+            page["total_count"] = chunk.total_count
+            page["page"] = chunk.page
+            page["per_page"] = chunk.per_page
+            page["count"] = chunk.count
+            self.finish(page)
+            return
+        elif isinstance(chunk, (dict, list)) or self.wants_json():
+            pass
+        chunk = self._build_json(
+            code=self.get_status(),
+            message=self._reason,
+            data=chunk
+        )
         self.finish(chunk)
 
     def _build_json(self, message, code, **kwargs):
