@@ -120,7 +120,7 @@ A :class:`.PageResult` variable passed to :meth:`.reply` returns additional
 attributes. See :ref:`pagination`.
 
 
-.. _default-response
+.. _default-response:
 
 response format
 ###############
@@ -176,6 +176,8 @@ This handler returns the following response::
         'error': 'this is the ErrorTestHandler',
     }
 
+
+.. _pagination:
 
 pagination
 ##########
