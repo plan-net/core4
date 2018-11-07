@@ -7,12 +7,13 @@ ReST API and widgets
 core4 features an API and mini applications (AKA widgets). The implementation
 of an API endpoint starts with a :class:`.CoreRequestHandler`::
 
-    from core4.api.v1.main import CoreRequestHandler
+    from core4.api.v1.request.main import CoreRequestHandler
 
     class TestHandler(CoreRequestHandler):
 
     def get(self):
-        return "hello world"
+        self.reply("hello world")
+
 
 This handler supports only the ``GET`` method and all other method requests
 raise a ``405 - Method not allowed`` error.
@@ -28,6 +29,7 @@ All request handlers have to be attached to a
             (r'/test', TestHandler)
         ]
 
+
 The ``root`` property specifies the URL prefix. Therefore the actual
 ``TestHandler`` endpoint is ``/test-server/test``. The default ``root`` prefix
 is the project name.
@@ -37,6 +39,7 @@ Use the :meth:`serve` method to start the container::
     from core4.api.v1.application import serve
 
     serve(TestServer)
+
 
 You can attach multiple :class:`.CoreApplicationContainer` classes to a server
 as in the following example::
@@ -81,7 +84,7 @@ the :class:`.QueueHandler`.
 
 To create a public request handler set the ``protected`` property accordingly::
 
-    from core4.api.v1.main import CoreRequestHandler
+    from core4.api.v1.request.main import CoreRequestHandler
 
     class TestHandler(CoreRequestHandler):
 
@@ -116,6 +119,7 @@ into a json dict (application/json), a HTML table (text/html), a CSV format
 A :class:`.PageResult` variable passed to :meth:`.reply` returns additional
 attributes. See :ref:`pagination`.
 
+
 .. _default-response
 
 response format
@@ -129,15 +133,15 @@ The standard json resopnse carries the following attributes:
 * ``timestamp`` - the timestamp of the request/response
 * ``data`` - the payload
 
-Furthermore core4 adds a header key ``Token`` after verified login
-(see :class:`LoginHandler <core4.api.v1.request.standard.login.LoginHandler>`)
-and after the refresh period has expired. The purpose of these refresh token
-is to allow the client to extend the session. The client must replace the
-current token (which is still valid) with the refresh token to continue access.
+The reponse of the example request handler above is::
 
-After successful login a cookie is set which replicates the token. The purpose
-of this cookie is to allow clients to use the cookie to continue access instead
-of sending the token.
+    {
+        '_id': '5be13b56de8b69468b7ff0b2',
+        'code': 200,
+        'message': 'OK',
+        'timestamp': '2018-11-06T06:57:26.660093',
+        'data': "hello world"
+    }
 
 
 error response format
@@ -151,6 +155,26 @@ full stacktrace.
 
 All resource handlers derived from :class:`.CoreRequestHandler` feature a
 method :meth:`.abort` to send a HTTP error response to the client.
+
+**Example**::
+
+    from core4.api.v1.request.main import CoreRequestHandler
+
+    class ErrorTestHandler(CoreRequestHandler):
+
+    def get(self):
+        self.abort(400, "this is the ErrorTestHandler")
+
+
+This handler returns the following response::
+
+    {
+        '_id': '5be2d1fcde8b69105ee8b35b',
+        'code': 400,
+        'message': 'Bad Request',
+        'timestamp': '2018-11-07T11:52:28.682515'
+        'error': 'this is the ErrorTestHandler',
+    }
 
 
 pagination
@@ -197,7 +221,8 @@ to authenticate a user with his or her password:
 
 
 After successful login, the response body and the HTTP header contain the login
-token. The HTTP header also holds a secure cookie which contains the token.
+token. The HTTP header also holds a secure cookie which contains the token
+(see :class:`LoginHandler <core4.api.v1.request.standard.login.LoginHandler>`).
 
 The client is supposed to send this token or the cookie with each request. The
 token can also be sent as a query parameter. For security reason this is not
@@ -245,9 +270,14 @@ to a protected resource using the token::
     get("http://localhost:5001/core4/api/v1/profile", cookies=signin.cookies)
     <Response [200]>
 
+
 If the creation time of the token is older than 1h, then a refresh
 token is created and sent with the HTTP header (field ``token``).
 This refresh time can be configured with setting ``api.token.refresh``.
+
+The purpose of these refresh token is to allow the client to extend the
+session. The client must replace the current token (which is still valid) with
+the refresh token to continue access.
 
 The lifetime of the initial token is 8h.
 
@@ -295,7 +325,7 @@ static files
 ############
 
 You can specify a folder and URL to serve static files with
-:class:`CoreApiContainer`:
+your :class:`CoreApiContainer`:
 
 * **path** defines the relative or absolute path of the static file folder
 * **default_filename** defines the file name to serve from folders (defaults to
@@ -357,33 +387,109 @@ The response format of this request handler::
 argument parsing
 ################
 
-:mod:`tornado` supports with various argument parsing methods. See
-`request handler input
+:mod:`tornado` supports argument parsing. See `request handler input
 <https://www.tornadoweb.org/en/stable/web.html?highlight=get_argument#input>`_.
 
-core4 extends the general purpose methods :meth:`.get_argument` and
-:meth:`.get_arguments` to extract arguments from a json body.
+core4 extends the general purpose methods :meth:`.get_argument` to additionally
+facilitate the extraction of arguments from a json content body.
 
-**Example::
+:meth:`.CoreRequestHandler.get_argument` also processes an optional argument
+``as_type`` to convert argument types. The method parses the types ``int``,
+``float``,  ``bool`` (using :meth:`parse_boolean
+<core4.util.data.parse_boolean>`), ``str``, ``dict`` and ``list`` (using
+:mod:`json.loads`) and ``datetime`` (:meth:`dateutil.parser.parse`).
+
+The following request handler demonstrates the standardised parsing of
+date/time arguments. The ``GET`` method expects the arguments as query
+parameters. The ``POST`` method expects the arguments as valid json
+attributes. Both methods are based on the same implementation logic and
+:meth:`.get_argument` combines parsing from the query string, from the
+json body and also from the URL-encoded form (not in scope of this example)::
+
+    import datetime
+    from core4.api.v1.application import CoreApiContainer, serve
+    from core4.api.v1.request.main import CoreRequestHandler
 
 
-advantages of async
-###################
+    class ArgTestHandler(CoreRequestHandler):
 
-tbd.
+        def get(self):
+            dt = self.get_argument("dt", as_type=datetime.datetime, default=None)
+            if dt:
+                delta = (datetime.datetime.utcnow() - dt).total_seconds()
+            else:
+                delta = 0
+            self.reply(
+                "got: %s (%dsec. to now)" % (dt, delta))
 
+
+    class CoreApiServer(CoreApiContainer):
+        root = "args"
+        rules = [
+            (r'/test', ArgTestHandler)
+        ]
+
+
+    if __name__ == '__main__':
+        serve(CoreApiServer)
+
+
+The following commands login and test the date/time parsing using query
+parameters with the ``GET`` method::
+
+    >>> from requests import get, post
+    >>>
+    >>> signin = get("http://localhost:5001/args/login?username=admin&password=hans")
+    >>>
+    >>> # query parameter, date only
+    >>> rv = get("http://localhost:5001/args/test?dt=2018-11-07", cookies=signin.cookies)
+    >>> rv.json()
+    {
+        '_id': '5be30a20de8b69343bd90680',
+        'code': 200,
+        'data': 'got: 2018-11-07 00:00:00 (57120sec. to now)',
+        'message': 'OK',
+        'timestamp': '2018-11-07T15:52:00.304976'
+    }
+    >>>
+    >>> # query parameter, date and time
+    >>> rv = get("http://localhost:5001/args/test?dt=1971-06-14T07:30:00", cookies=signin.cookies)
+    >>> rv.json()
+    {
+        '_id': '5be30a42de8b69343bd90685',
+        'code': 200,
+        'data': 'got: 1971-06-14 07:30:00 (1495873354sec. to now)',
+        'message': 'OK',
+        'timestamp': '2018-11-07T15:52:34.883295'
+    }
+    >>>
+    >>> # query parameter, date, time and timezone
+    >>> rv = get("http://localhost:5001/args/test?dt=1971-06-14T07:30:00 CET", cookies=signin.cookies)
+    >>> rv.json()
+    {
+        '_id': '5be30a56de8b69343bd9068a',
+        'code': 200,
+        'data': 'got: 1971-06-14 06:30:00 (1495876974sec. to now)',
+        'message': 'OK',
+        'timestamp': '2018-11-07T15:52:54.510046'
+    }
+
+The following commands test the same date/time parsing using json bodies
+with the ``POST`` method::
+
+    >>> payload = {"dt": "1971-06-14T07:30:00 CET"}
+    >>> rv = post("http://localhost:5001/args/test", json=payload, cookies=signin.cookies)
+    >>> rv.json()
+    {
+        '_id': '5be30ae5de8b69343ba1448a',
+        'code': 200,
+        'data': 'got: 1971-06-14 06:30:00 (1495877117sec. to now)',
+        'message': 'OK',
+        'timestamp': '2018-11-07T15:55:17.417723'
+    }
 
 
 todos:
 
-* class property/config handling
-* support API special argumnt parsing (objectId, datetime)
-* check required request handler properties (author, title, description)
-* async support to authorize (load role)
-* how to handle warnings, e.g. the signature has expired as an additional warning to 401 with error "Unauthorized"
-* request handler default properties management by configuration
-* verify well-structured documentation
 * how to handle i18n in backend, i.e. wrt to emails
-* password strength in FE
-* user/role management api
-* add collected serve application to coco
+*
