@@ -167,18 +167,18 @@ class LocalTestServer:
 
 
 @pytest.fixture()
-def test_server():
+def http():
     return LocalTestServer()
 
 
-def test_server_test(test_server):
-    rv = test_server.get("/profile")
+def test_server_test(http):
+    rv = http.get("/profile")
     assert rv.status_code == 200
-    test_server.stop()
+    http.stop()
 
 
-def test_enqueue(test_server, queue):
-    rv = test_server.post(
+def test_enqueue(http, queue):
+    rv = http.post(
         "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=1))
     assert rv.status_code == 200
     job_id = rv.json()["data"]["_id"]
@@ -186,21 +186,21 @@ def test_enqueue(test_server, queue):
     worker.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-    rv = test_server.get("/jobs/" + job_id)
+    rv = http.get("/jobs/" + job_id)
     assert rv.status_code == 200
     assert rv.json()["data"]["runtime"] >= 1.0
     assert rv.json()["data"]["state"] == "complete"
     assert rv.json()["data"]["args"] == {"sleep": 1}
-    test_server.stop()
+    http.stop()
 
 
-def test_async_enqueue(test_server, queue):
+def test_async_enqueue(http, queue):
     worker = core4.queue.worker.CoreWorker()
     t = multiprocessing.Process(target=worker.start, name="test-worker-1")
     t.start()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-    rv = test_server.post(
+    rv = http.post(
         "/jobs/poll", json=dict(name="core4.queue.helper.DummyJob", sleep=3),
         stream=True)
     assert rv.status_code == 200
@@ -217,19 +217,19 @@ def test_async_enqueue(test_server, queue):
     #assert states[-1] is None
     queue.halt(now=True)
     t.join()
-    test_server.stop()
+    http.stop()
 
 
-def test_queue(test_server, queue):
+def test_queue(http, queue):
     worker = core4.queue.worker.CoreWorker()
     t = multiprocessing.Process(target=worker.start, name="test-worker-1")
     t.start()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-    rv = test_server.post(
+    rv = http.post(
         "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
-    rv = test_server.get("/queue", stream=True)
+    rv = http.get("/queue", stream=True)
     assert rv.status_code == 200
     states = []
     for line in rv.iter_lines():
@@ -240,79 +240,79 @@ def test_queue(test_server, queue):
                 break
     queue.halt(now=True)
     t.join()
-    test_server.stop()
+    http.stop()
     assert states == [['pending', 'timestamp'],
                       ['running', 'timestamp'],
                       ['timestamp']]
 
 
-def test_getter(test_server, queue):
-    rv = test_server.post(
+def test_getter(http, queue):
+    rv = http.post(
         "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
-    rv = test_server.get("/jobs")
+    rv = http.get("/jobs")
     assert rv.status_code == 200
     assert len(rv.json()["data"]) == 1
     assert rv.json()["data"][0]["state"] == "pending"
 
-    rv = test_server.post(
+    rv = http.post(
         "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
     assert rv.status_code == 200
     j2 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/jobs")
+    rv = http.get("/jobs")
     assert rv.status_code == 200
     assert len(rv.json()["data"]) == 2
     assert rv.json()["data"][0]["state"] == "pending"
     assert rv.json()["data"][1]["state"] == "pending"
 
-    rv = test_server.post(
+    rv = http.post(
         "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=4))
     assert rv.status_code == 400
 
-    rv = test_server.get("/jobs")
+    rv = http.get("/jobs")
     assert rv.status_code == 200
     assert len(rv.json()["data"]) == 2
     act = [i["_id"] for i in rv.json()["data"]]
     assert sorted(act) == sorted([j1, j2])
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
 
-    test_server.stop()
+    http.stop()
 
-def test_flag(test_server, queue):
-    rv = test_server.post(
+def test_flag(http, queue):
+    rv = http.post(
         "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
-    rv = test_server.delete("/jobs")
+    rv = http.delete("/jobs")
     assert rv.status_code == 400
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
 
-    rv = test_server.delete("/jobs/" + j1)
+    rv = http.delete("/jobs/" + j1)
     assert rv.status_code == 200
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is not None
 
-    rv = test_server.put("/jobs/kill/" + j1)
+    rv = http.put("/jobs/kill/" + j1)
     assert rv.status_code == 200
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["killed_at"] is not None
 
-    test_server.stop()
+    http.stop()
 
 import core4.queue.job
 
@@ -322,13 +322,13 @@ class ErrorJob(core4.queue.job.CoreJob):
     def execute(self, *args, **kwargs):
         raise RuntimeError("expected failure")
 
-def test_restart_error(test_server, queue):
-    rv = test_server.post(
+def test_restart_error(http, queue):
+    rv = http.post(
         "/enqueue", json=dict(name="tests.api.test_job.ErrorJob", sleep=5))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
@@ -337,76 +337,76 @@ def test_restart_error(test_server, queue):
     worker.work_jobs()
 
     while True:
-        rv = test_server.get("/jobs/" + j1)
+        rv = http.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "error":
             break
 
-    rv = test_server.put("/jobs/" + j1 + "?action=restart")
+    rv = http.put("/jobs/" + j1 + "?action=restart")
     assert rv.status_code == 200
     j2 = rv.json()["data"]["new_id"]
 
-    rv2 = test_server.get("/jobs/" + j2)
+    rv2 = http.get("/jobs/" + j2)
     assert rv2.status_code == 200
     assert rv2.json()["data"]["state"] == "pending"
     assert rv2.json()["data"]["_id"] == j2
     assert rv2.json()["data"]["enqueued"]["parent_id"] == j1
 
-    rv3 = test_server.get("/jobs/" + j1)
+    rv3 = http.get("/jobs/" + j1)
     assert rv3.status_code == 200
     assert rv3.json()["data"]["state"] == "error"
     assert rv3.json()["data"]["_id"] == j1
     assert rv3.json()["data"]["enqueued"]["child_id"] == j2
 
-    test_server.stop()
+    http.stop()
 
 
-def test_kill(test_server, queue):
+def test_kill(http, queue):
 
     worker = core4.queue.worker.CoreWorker()
     t = multiprocessing.Process(target=worker.start, name="test-worker-1")
     t.start()
 
-    rv = test_server.post(
+    rv = http.post(
         "/enqueue", json=dict(name="core4.queue.helper.DummyJob", sleep=600))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
 
-    rv = test_server.put("/jobs/" + j1 + "?action=xxx")
+    rv = http.put("/jobs/" + j1 + "?action=xxx")
     assert rv.status_code == 400
 
     while True:
-        rv = test_server.get("/jobs/" + j1)
+        rv = http.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "running":
             break
 
-    rv = test_server.put("/jobs/" + j1 + "?action=kill")
+    rv = http.put("/jobs/" + j1 + "?action=kill")
     assert rv.status_code == 200
 
     while True:
-        rv = test_server.get("/jobs/" + j1)
+        rv = http.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "killed":
             break
 
-    rv = test_server.put("/jobs/" + j1 + "?action=delete")
+    rv = http.put("/jobs/" + j1 + "?action=delete")
     assert rv.status_code == 200
 
     while True:
-        rv = test_server.get("/jobs/" + j1)
+        rv = http.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["journal"]:
             break
 
     queue.halt(now=True)
     t.join()
-    test_server.stop()
+    http.stop()
 
 class DeferJob(core4.queue.job.CoreJob):
     author = "mra"
@@ -416,37 +416,37 @@ class DeferJob(core4.queue.job.CoreJob):
     def execute(self, *args, **kwargs):
         self.defer("expected defer")
 
-def test_restart_deferred(test_server, queue):
+def test_restart_deferred(http, queue):
 
     worker = core4.queue.worker.CoreWorker()
     t = multiprocessing.Process(target=worker.start, name="test-worker-1")
     t.start()
 
-    rv = test_server.post(
+    rv = http.post(
         "/enqueue", json=dict(name="tests.api.test_job.DeferJob"))
     assert rv.status_code == 200
     j1 = rv.json()["data"]["_id"]
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["state"] == "pending"
     assert rv.json()["data"]["removed_at"] is None
 
     while True:
-        rv = test_server.get("/jobs/" + j1)
+        rv = http.get("/jobs/" + j1)
         assert rv.status_code == 200
         if rv.json()["data"]["state"] == "deferred":
             break
 
-    rv = test_server.get("/jobs/" + j1)
+    rv = http.get("/jobs/" + j1)
     assert rv.status_code == 200
     assert rv.json()["data"]["trial"] == 1
 
-    rv = test_server.put("/jobs/" + j1 + "?action=restart")
+    rv = http.put("/jobs/" + j1 + "?action=restart")
     assert rv.status_code == 200
 
     while True:
-        rv = test_server.get("/jobs/" + j1)
+        rv = http.get("/jobs/" + j1)
         assert rv.status_code == 200
         data = rv.json()["data"]
         if data["trial"] == 2 and data["state"] == "deferred":
@@ -454,4 +454,4 @@ def test_restart_deferred(test_server, queue):
 
     queue.halt(now=True)
     t.join()
-    test_server.stop()
+    http.stop()
