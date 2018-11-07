@@ -1,7 +1,8 @@
 import asyncio
 import base64
+import time
 import traceback
-
+import dateutil.parser
 import datetime
 import jwt
 import mimeparse
@@ -13,6 +14,7 @@ from tornado.web import RequestHandler, HTTPError
 
 import core4.util
 import core4.util.node
+from core4.util.data import parse_boolean
 from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
@@ -75,11 +77,11 @@ class BaseHandler(CoreBase):
         if (self.request.method == 'OPTIONS'):
             # preflight / OPTIONS should always pass
             return
-        if not (self.request.query_arguments or self.request.body_arguments):
-            if self.request.body:
-                body_arguments = json_decode(self.request.body.decode("UTF-8"))
-                for k, v in body_arguments.items():
-                    self.request.arguments.setdefault(k, []).append(v)
+        # if not (self.request.query_arguments or self.request.body_arguments):
+        #     if self.request.body:
+        #         body_arguments = json_decode(self.request.body.decode("UTF-8"))
+        #         for k, v in body_arguments.items():
+        #             self.request.arguments.setdefault(k, []).append(v)
         if self.request.body:
             body_arguments = json_decode(self.request.body.decode("UTF-8"))
             for k, v in body_arguments.items():
@@ -94,11 +96,7 @@ class BaseHandler(CoreBase):
 
     def decode_argument(self, value, name=None):
         """
-        Decodes an argument from the request.
-
-        Overwritten method from :class`torando.web.RequestHandler` used as
-        a filter for both ``.get_argument()`` and for values extracted from the
-        url and passed to ``get()``. ``post()``.
+        Decodes bytes and str from the request.
 
         The name of the argument is provided if known, but may be None
         (e.g. for unnamed groups in the url regex).
@@ -107,8 +105,10 @@ class BaseHandler(CoreBase):
             return super().decode_argument(value, name)
         return value
 
-    def get_argument(self, name, default=object(), *args, **kwargs):
-        """Returns the value of the argument with the given name.
+    def get_argument(self, name, default=object(), as_type=None, *args,
+                     **kwargs):
+        """
+        Returns the value of the argument with the given name.
 
         If default is not provided, the argument is considered to be
         required, and we raise a `MissingArgumentError` if it is missing.
@@ -116,25 +116,52 @@ class BaseHandler(CoreBase):
         If the argument appears in the url more than once, we return the
         last value.
 
-        The returned value is always unicode.
+        If ``as_type`` is provided, then the variable type is converted. The
+        method supports the following variable types:
+
+        * int
+        * float
+        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
+        * str
+        * dict - using :mod:`json.loads`
+        * list - using :mod:`json.loads`
+        * datetime - using :meth:`dateutil.parser.parse`
+
+        :param name: variable name
+        :param default: value
+        :param as_type: Python variable type
+        :return: value
         """
         ret = self._get_argument(name, default, source=self.request.arguments,
                                  *args, strip=False, **kwargs)
-        return ret
-
-    def get_arguments(self, name, *args, **kwargs):
-        """Returns a list of the arguments with the given name.
-
-        If the argument is not present, returns an empty list.
-
-        The returned values are always unicode.
-        """
-
-        # Make sure `get_arguments` isn't accidentally being called with a
-        # positional argument that's assumed to be a default (like in
-        # `get_argument`.)
-        ret = self._get_arguments(name, source=self.request.arguments, *args,
-                                  strip=False, **kwargs)
+        if as_type and ret is not None:
+            try:
+                if as_type == bool:
+                    if isinstance(ret, bool):
+                        return ret
+                    return parse_boolean(ret, error=True)
+                if as_type == dict:
+                    if isinstance(ret, dict):
+                        return ret
+                    return json_decode(ret)
+                if as_type == list:
+                    if isinstance(ret, list):
+                        return ret
+                    return json_decode(ret)
+                if as_type == datetime.datetime:
+                    if isinstance(ret, datetime.datetime):
+                        dt = ret
+                    else:
+                        dt = dateutil.parser.parse(ret)
+                    if dt.tzinfo is None:
+                        return dt
+                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
+                    return datetime.datetime.fromtimestamp(
+                        time.mktime(utc_struct_time))
+                return as_type(ret)
+            except:
+                self.abort(400, "parameter [{}] expected as_type [{}]".format(
+                    name, as_type.__name__))
         return ret
 
     async def verify_user(self):
