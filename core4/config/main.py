@@ -14,6 +14,7 @@ import core4.config.tag
 import core4.util
 import core4.util.tool
 from core4.error import Core4ConfigurationError
+from core4.util.data import parse_boolean
 
 CONFIG_EXTENSION = ".yaml"
 STANDARD_CONFIG = pkg_resources.resource_filename(
@@ -22,22 +23,6 @@ USER_CONFIG = os.path.expanduser("~/core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
 DEFAULT = "DEFAULT"
-
-
-def parse_boolean(value):
-    """
-    Translates the passed value into a bool. If not pattern for ``True`` or
-    ``False`` matches the passed value, then the actual value is returned.
-
-    :param value: string representing ``True`` or ``False``
-    :return: evaluated string as ``True`` or ``False`` or the original string
-             value no pattern matches.
-    """
-    if value.lower() in ("yes", "y", "on", "1", "true", "t"):
-        return True
-    elif value.lower() in ("no", "n", "off", "0", "false", "f"):
-        return False
-    return value
 
 
 def type_ident(a, b):

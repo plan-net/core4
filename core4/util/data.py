@@ -28,3 +28,32 @@ def utc2local(dt):
     #       add UTC info, convert to local timezone, and remove tz info?
     return dt.replace(tzinfo=datetime.timezone.utc).astimezone(
         LOCAL_TZ).replace(tzinfo=None)
+
+
+def parse_boolean(value, error=False):
+    """
+    Translates the passed value into a bool. With ``error == False`` (default)
+    and no pattern for ``True`` or ``False`` matches the passed value, then the
+    actual value is returned. With ``error == True`` the method raises a
+    :class:`TypeError` if no valid representative for ``True``/``False`` is
+    provided.
+
+    Valid strings are (case insensitive):
+
+    * yes/no
+    * y/n
+    * on/off
+    * true/false
+    * t/f
+
+    :param value: string representing ``True`` or ``False``
+    :return: evaluated string as ``True`` or ``False`` or the original string
+             value no pattern matches.
+    """
+    if value.lower() in ("yes", "y", "on", "1", "true", "t"):
+        return True
+    elif value.lower() in ("no", "n", "off", "0", "false", "f"):
+        return False
+    if error:
+        raise TypeError("failed to parse bool from [%s]" % value)
+    return value
