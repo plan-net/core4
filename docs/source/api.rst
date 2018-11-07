@@ -487,9 +487,3 @@ with the ``POST`` method::
         'message': 'OK',
         'timestamp': '2018-11-07T15:55:17.417723'
     }
-
-
-todos:
-
-* how to handle i18n in backend, i.e. wrt to emails
-*
