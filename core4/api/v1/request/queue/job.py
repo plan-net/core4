@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
-
+import core4.error
 import core4.queue.job
 import core4.queue.query
 import core4.util
@@ -212,7 +212,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         try:
             return ObjectId(_id)
         except:
-            self.abort(400, "failed to parse job _id [{}]".format(_id))
+            raise HTTPError(400, "failed to parse job _id [%s]", _id)
 
     async def get_listing(self):
         """
@@ -230,11 +230,11 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                 filter).skip(skip).sort(*sort_by).limit(limit)
             return await cur.to_list(length=limit)
 
-        per_page = int(self.get_argument("per_page", 10))
-        current_page = int(self.get_argument("page", 0))
-        query_filter = self.get_argument("filter", {})
-        sort_by = self.get_argument("sort", "_id")
-        sort_order = self.get_argument("order", 1)
+        per_page = int(self.get_argument("per_page", default=10))
+        current_page = int(self.get_argument("page", default=0))
+        query_filter = self.get_argument("filter", default={})
+        sort_by = self.get_argument("sort", default="_id")
+        sort_order = self.get_argument("order", default=1)
 
         pager = CorePager(per_page=int(per_page),
                           current_page=int(current_page),
@@ -265,7 +265,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         else:
             doc["journal"] = False
         if not doc:
-            raise HTTPError(404, "job_id [{}] not found".format(_id))
+            raise HTTPError(404, "job_id [%s] not found", _id)
         return doc
 
     async def delete(self, _id=None):
@@ -301,7 +301,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         if _id:
             oid = self.parse_id(_id)
             if not await self.remove_job(oid):
-                raise HTTPError(404, "job _id [{}] not found".format(oid))
+                raise HTTPError(404, "job _id [%s] not found", oid)
         else:
             raise HTTPError(400, "requires job _id")
         self.reply(True)
@@ -354,7 +354,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                 "kill": self.kill_job
             }
             if action not in action_method:
-                self.abort(400, "requires action in (delete, restart, kill)")
+                raise HTTPError(
+                    400, "requires action in (delete, restart, kill)")
             self.reply(await action_method[action](oid))
         raise HTTPError(400, "requires action and job_id")
 
@@ -384,7 +385,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             self.logger.warning(
                 "flagged job [%s] to %s at [%s]", oid, message, at)
             return True
-        raise HTTPError(404, "failed to flag job [%s] to %s" % (oid, message))
+        raise HTTPError(404, "failed to flag job [%s] to %s", oid, message)
 
     async def remove_job(self, oid):
         """
@@ -424,7 +425,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                 self.logger.warning('successfully restarted [%s] '
                                     'with [%s]', oid, new_id)
                 return {"old_id": oid, "new_id": new_id}
-        raise HTTPError(404, "failed to restart job [%s]" % oid)
+        raise HTTPError(404, "failed to restart job [%s]", oid)
 
     async def restart_waiting(self, _id):
         """
@@ -484,9 +485,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                         await self.collection("lock").delete_one({"_id": _id})
                         await self.make_stat()
                         return new_doc["_id"]
-            raise HTTPError(400, "cannot restart job [%s] in state [%s]" % (
-                _id, job["state"]
-            ))
+            raise HTTPError(400, "cannot restart job [%s] in state [%s]", _id,
+                            job["state"])
         return None
 
     async def lock_job(self, identifier, _id):
@@ -656,7 +656,7 @@ class JobPost(JobHandler):
         try:
             job = self.queue.job_factory(name, **args)
         except Exception:
-            self.abort(404, "cannot instantiate job [{}]".format(name))
+            raise HTTPError(404, "cannot instantiate job [%s]", name)
         job.__dict__["attempts_left"] = job.__dict__["attempts"]
         job.__dict__["state"] = core4.queue.job.STATE_PENDING
         job.__dict__["enqueued"] = self.who()
@@ -664,8 +664,8 @@ class JobPost(JobHandler):
         try:
             ret = await self.collection("queue").insert_one(doc)
         except pymongo.errors.DuplicateKeyError:
-            self.abort(400, "job [{}] exists with args {}".format(
-                job.qual_name(), job.args))
+            raise HTTPError(400, "job [%s] exists with args %s",
+                job.qual_name(), job.args)
         job.__dict__["_id"] = ret.inserted_id
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(

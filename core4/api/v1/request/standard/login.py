@@ -2,7 +2,7 @@ import core4.queue.helper
 import core4.util
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.role.main import Role
-
+from tornado.web import HTTPError
 
 class LoginHandler(CoreRequestHandler):
     title = "login and password reset"
@@ -127,15 +127,15 @@ class LoginHandler(CoreRequestHandler):
                 'timestamp': '2018-10-31T12:54:50.106412'
             }
         """
-        email = self.get_argument("email", None)
-        token = self.get_argument("token", None)
-        password = self.get_argument("password", None)
+        email = self.get_argument("email", default=None)
+        token = self.get_argument("token", default=None)
+        password = self.get_argument("password", default=None)
         if email:
             await self._start_password_reset(email)
         elif token and password:
             await self._finish_password_reset(token, password)
         else:
-            self.abort(400)
+            raise HTTPError(400)
 
     async def _start_password_reset(self, email):
         # internal method to create and send the password reset token

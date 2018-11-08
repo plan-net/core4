@@ -33,7 +33,7 @@ def setup(tmpdir):
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
     os.environ["CORE4_OPTION_api__token__expiration"] = "!!int 60"
-    os.environ["CORE4_OPTION_api__setting__debug"] = "!!bool False"
+    os.environ["CORE4_OPTION_api__setting__debug"] = "!!bool True"
     os.environ["CORE4_OPTION_api__setting__cookie_secret"] = "blabla"
     os.environ["CORE4_OPTION_worker__min_free_ram"] = "!!int 32"
     conn = pymongo.MongoClient(MONGO_URL)
@@ -68,9 +68,9 @@ class ArgsHandler(CoreRequestHandler):
 
     def get(self):
         ret = {}
-        a1 = self.get_argument("a1", None)
+        a1 = self.get_argument("a1", default=None)
         ret["a1"] = "%s = %s" % (type(a1), a1)
-        a2 = self.get_argument("a2", None, as_type=int)
+        a2 = self.get_argument("a2", default=None, as_type=int)
         ret["a2"] = "%s = %s" % (type(a2), a2)
         # a3 = self.get_arguments("a3")
         # ret["a3"] = "%s = %s" %(type(a3), a3)
@@ -169,7 +169,7 @@ def test_query_args(http):
 
     rv = http.get("/args?a5=xyz")
     assert rv.status_code == 400
-    assert rv.json()["error"] == 'parameter [a5] expected as_type [bool]'
+    assert 'parameter [a5] expected as_type [bool]' in rv.json()["error"]
 
     rv = http.get("/args?a6=123.456")
     assert rv.status_code == 200
@@ -254,7 +254,7 @@ def test_json_args(http):
 
     rv = http.post("/args", json={"a5": "xyz"})
     assert rv.status_code == 400
-    assert rv.json()["error"] == 'parameter [a5] expected as_type [bool]'
+    assert 'parameter [a5] expected as_type [bool]' in rv.json()["error"]
 
     rv = http.post("/args", json={"a6": 123.456})
     assert rv.status_code == 200
@@ -279,6 +279,11 @@ def test_json_args(http):
     assert rv.status_code == 200
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2009-01-01 11:55:12"
+
+def test_conv_error(http):
+    rv = http.get('/args?a8=9999-aa-bb')
+    assert rv.status_code == 400
+    assert "parameter [a8] expected as_type [datetime]" in rv.json()["error"]
 
 
 if __name__ == '__main__':
