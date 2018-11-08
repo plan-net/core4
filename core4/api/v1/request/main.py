@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import base64
 import time
@@ -19,10 +20,11 @@ from core4.api.v1.role.main import Role
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
 from core4.util.pager import PageResult
-
+import core4.error
 tornado.escape.json_encode = json_encode
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
+
 
 
 class BaseHandler(CoreBase):
@@ -105,8 +107,7 @@ class BaseHandler(CoreBase):
             return super().decode_argument(value, name)
         return value
 
-    def get_argument(self, name, default=object(), as_type=None, *args,
-                     **kwargs):
+    def get_argument(self, name, as_type=None, *args, **kwargs):
         """
         Returns the value of the argument with the given name.
 
@@ -132,7 +133,8 @@ class BaseHandler(CoreBase):
         :param as_type: Python variable type
         :return: value
         """
-        ret = self._get_argument(name, default, source=self.request.arguments,
+        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
+        ret = self._get_argument(name, source=self.request.arguments,
                                  *args, strip=False, **kwargs)
         if as_type and ret is not None:
             try:
@@ -158,10 +160,15 @@ class BaseHandler(CoreBase):
                     utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
                     return datetime.datetime.fromtimestamp(
                         time.mktime(utc_struct_time))
+                if as_type == ObjectId:
+                    if isinstance(ret, ObjectId):
+                        return ret
+                    return ObjectId(ret)
                 return as_type(ret)
             except:
-                self.abort(400, "parameter [{}] expected as_type [{}]".format(
-                    name, as_type.__name__))
+                raise core4.error.ArgumentParsingError(
+                    "parameter [%s] expected as_type [%s]", name,
+                    as_type.__name__) from None
         return ret
 
     async def verify_user(self):
@@ -200,8 +207,8 @@ class BaseHandler(CoreBase):
                 source = ("token", "Auth Bearer")
         else:
             token = self.get_argument("token", default=None)
-            username = self.get_argument("username", None)
-            password = self.get_argument("password", None)
+            username = self.get_argument("username", default=None)
+            password = self.get_argument("password", default=None)
             if token is not None:
                 source = ("token", "args")
             elif username and password:
@@ -304,7 +311,7 @@ class BaseHandler(CoreBase):
             return jwt.decode(token, key=secret, algorithms=[algorithm],
                               verify=True)
         except jwt.InvalidSignatureError:
-            self.abort(401, "signature verification failed")
+            raise HTTPError("signature verification failed")
         except jwt.ExpiredSignatureError:
             return {}
 
@@ -534,7 +541,7 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         }
         if "exc_info" in kwargs:
             error = traceback.format_exception_only(*kwargs["exc_info"][0:2])
-            if not self.settings.get("serve_traceback"):
+            if self.settings.get("serve_traceback"):
                 error += traceback.format_tb(kwargs["exc_info"][2])
             var["error"] = "\n".join(error)
         elif "error" in kwargs:
@@ -548,16 +555,23 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
 
-    def abort(self, status_code, message=None):
-        """
-        Abort the request/response cycle with an error. Raises
-        :class:`tornado.web.HTTPError`.
-
-        :param status_code: valid HTTP status code
-        :param message: additional message
-        """
-        self.write_error(status_code, error=message)
-        raise HTTPError(status_code, "Abort: %s" % message)
+    # def abort(self, status_code, message=None, exc_info=False):
+    #     """
+    #     Abort the request/response cycle with an error. Raises
+    #     :class:`tornado.web.HTTPError`.
+    #
+    #     :param status_code: valid HTTP status code
+    #     :param message: additional message
+    #     :param exc_info: pass exception info as message if ``True``
+    #     """
+    #     if exc_info:
+    #         exc = "---".join(
+    #             traceback.format_exception_only(*sys.exc_info()[0:2]))
+    #         self.write_error(status_code, error=exc)
+    #         raise HTTPError(status_code, "Abort: %s" % exc)
+    #     else:
+    #         self.write_error(status_code, error=message)
+    #         raise HTTPError(status_code, "Abort: %s" % message)
 
     def log_exception(self, typ, value, tb):
         """
@@ -573,7 +587,9 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
                 logger = self.logger.warning
             else:
                 logger = self.logger.error
-            logger(value)
+            logger(
+                "\n".join(traceback.format_exception_only(typ, value)).strip()
+            )
         else:
             self.logger.error(
                 "%s\n%s",

@@ -1,5 +1,5 @@
 from core4.api.v1.request.main import CoreRequestHandler
-import tornado.web
+from tornado.web import HTTPError
 
 
 class DefaultHandler(CoreRequestHandler):
@@ -16,10 +16,9 @@ class DefaultHandler(CoreRequestHandler):
 
     async def prepare(self):
         await super().prepare()
-        self.abort(
-            404, "{}://{}{}".format(
-                self.request.protocol, self.request.host,
-                self.request.path))
+        raise HTTPError(
+            404, "%s://%s%s", self.request.protocol, self.request.host,
+                self.request.path)
 
     def check_xsrf_cookie(self):
         pass

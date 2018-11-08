@@ -1,7 +1,7 @@
 from core4.api.v1.application import serve, CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
 from tests.api.test_job import LocalTestServer, StopHandler, setup
-
+from tornado.web import HTTPError
 
 class FlashHandler(CoreRequestHandler):
 
@@ -19,7 +19,7 @@ class ErrorHandler(CoreRequestHandler):
 
     def get(self, variant):
         if variant == "/abort":
-            self.abort(409, "this is so not possible")
+            raise HTTPError(409, "this is so not possible")
         raise RuntimeError("this is unexpected")
 
 
@@ -64,7 +64,8 @@ def test_error_short():
     assert data["code"] == 404
     assert data["message"] == "Not Found"
     msg = data["error"].strip()
-    assert msg == "http://localhost:5555/core4/api/v2/xxx"
+    assert msg == "tornado.web.HTTPError: HTTP 404: Not Found " \
+                  "(http://localhost:5555/core4/api/v2/xxx)"
     server.stop()
 
 
@@ -99,5 +100,6 @@ def test_abort():
     data = rv.json()
     assert data["code"] == 409
     assert data["message"] == "Conflict"
-    assert data["error"] == "this is so not possible"
+    assert data["error"] == "tornado.web.HTTPError: HTTP 409: " \
+                            "Conflict (this is so not possible)\n"
     server.stop()
