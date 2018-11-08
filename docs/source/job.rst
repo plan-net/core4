@@ -256,6 +256,10 @@ You can either use the .format-method of a string or format it the oldschool way
     self.logger.warning("This value is a double: [%d] and here is its string-representation: [%s]",double(1), str(1))
 
 
+The DEBUG level will not be logged by default. It will only be written when an error has occured. This way, one can
+write multiple DEBUG messages that may help him indentify an error but would otherwise clutter the output.
+
+
 cookie handling
 ---------------
 
