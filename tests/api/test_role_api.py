@@ -18,7 +18,7 @@ from core4.api.v1.application import CoreApiContainer
 # from core4.api.v1.request.queue.job import JobSummary
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.role.model import CoreRole
-from tests.api2.test_response import LocalTestServer, StopHandler
+from tests.api.test_response import LocalTestServer, StopHandler
 
 ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'

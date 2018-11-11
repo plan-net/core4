@@ -5,7 +5,7 @@ import pytest
 
 from core4.api.v1.application import CoreApiContainer, serve
 from core4.api.v1.request.main import CoreRequestHandler
-from tests.api2.test_response import setup, LocalTestServer, StopHandler
+from tests.api.test_response import setup, LocalTestServer, StopHandler
 
 print(setup)
 

@@ -8,7 +8,7 @@ from core4.util.pager import CorePager
 import pandas as pd
 
 
-from tests.api2.test_response import LocalTestServer, StopHandler, setup
+from tests.api.test_response import LocalTestServer, StopHandler, setup
 
 print(setup)
 
