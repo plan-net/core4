@@ -245,14 +245,20 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "certfile": cert_file,
                 "keyfile": key_file,
             }
-        server = tornado.httpserver.HTTPServer(
-            router, **http_args)
+
+        loop = tornado.ioloop.IOLoop()
+        loop.make_current()
+
+        server = tornado.httpserver.HTTPServer(router, **http_args)
         port = port or self.config.api.port
         server.listen(port)
         self.logger.info(
             "open %ssecure socket on port [%d]",
             "" if http_args.get("ssl_options") else "NOT ", port)
-        tornado.ioloop.IOLoop.current().start()
+
+        loop.start()
+        loop.clear_current()
+        loop.close(all_fds=True)
 
 
 def serve(*args, port=None, name=None, **kwargs):
