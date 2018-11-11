@@ -2,12 +2,12 @@ import os
 
 import pymongo
 import pymongo.errors
-
+from bson.objectid import ObjectId
 import core4.const
-from core4.api.v1.role import Role
+from core4.api.v1.request.role.model import CoreRole
 from core4.base import CoreBase
 from core4.util.tool import Singleton
-
+import core4.util.crypt
 
 def once(f):
     """
@@ -40,6 +40,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         """
         self.make_folder()
         self.make_role()
+        self.make_user()
         self.make_queue()
         self.make_stdout()
         self.make_stat()
@@ -63,7 +64,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         mkdir(self.config.folder.temp)
 
     @once
-    def make_role(self):
+    def make_user(self):
         """
         Creates API administration user as defined in core4 configuration
         settings
@@ -76,13 +77,15 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         # todo: we might want to add a standard user role with the minimum
         # set of perms required, like /profile
         try:
-            Role(
+            self.config.sys.role.insert_one(dict(
                 name=self.config.api.admin_username,
                 realname=self.config.api.admin_realname,
-                password=self.config.api.admin_password,
+                password=core4.util.crypt.pwd_context.hash(
+                    self.config.api.admin_password),
                 email=self.config.api.contact,
+                etag=ObjectId(),
                 perm=[core4.const.COP]
-            ).save()
+            ))
         except pymongo.errors.DuplicateKeyError:
             pass
 
@@ -137,3 +140,29 @@ class CoreSetup(CoreBase, metaclass=Singleton):
             if "ttl" in self.config.sys.stdout.index_information():
                 self.config.sys.stdout.drop_index(index_or_name="ttl")
                 self.logger.warning("removed index [ttl] from [sys.stdout]")
+
+    @once
+    def make_role(self):
+        """
+        Creates collection ``sys.role`` and its index on ``user`` and
+        ``email``.
+        """
+        if "unique_name" not in self.config.sys.role.index_information():
+            self.config.sys.role.create_index(
+                [
+                    ("name", pymongo.ASCENDING)
+                ],
+                unique=True,
+                name="unique_name"
+            )
+            self.logger.info("created index [unique_name] on [sys.role]")
+        if "unique_email" not in self.config.sys.role.index_information():
+            self.config.sys.role.create_index(
+                [
+                    ("email", pymongo.ASCENDING)
+                ],
+                unique=True,
+                name="unique_email",
+                partialFilterExpression={"email": {"$exists": True}}
+            )
+            self.logger.info("created index [unique_email] on [sys.role]")
