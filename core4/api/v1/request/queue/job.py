@@ -227,7 +227,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
         async def _query(skip, limit, filter, sort_by):
             cur = self.collection("queue").find(
-                filter).skip(skip).sort(*sort_by).limit(limit)
+                filter).sort(*sort_by).skip(skip).limit(limit)
             return await cur.to_list(length=limit)
 
         per_page = int(self.get_argument("per_page", default=10))
@@ -241,7 +241,6 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                           length=_length, query=_query,
                           sort_by=[sort_by, int(sort_order)],
                           filter=query_filter)
-        pager.initialise(current_page=current_page)
         return await pager.page()
 
     async def get_detail(self, _id):
