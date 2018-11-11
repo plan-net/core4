@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# todo: requires refactoring
 
 import os
 import unittest
