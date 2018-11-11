@@ -2,7 +2,7 @@ import core4.logger
 import core4.queue.helper
 import core4.queue.job
 import core4.queue.main
-
+import time
 
 class ErrorJob(core4.queue.job.CoreJob):
     """

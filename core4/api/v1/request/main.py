@@ -1,30 +1,30 @@
-import sys
 import asyncio
 import base64
-import time
 import traceback
-import dateutil.parser
+
 import datetime
+import dateutil.parser
 import jwt
 import mimeparse
 import pandas as pd
+import time
 import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
 
+import core4.error
 import core4.util
 import core4.util.node
-from core4.util.data import parse_boolean
-from core4.api.v1.role.main import Role
+from core4.api.v1.request.role.model import CoreRole
 from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
+from core4.util.data import parse_boolean
 from core4.util.pager import PageResult
-import core4.error
+
 tornado.escape.json_encode = json_encode
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
-
 
 
 class BaseHandler(CoreBase):
@@ -92,7 +92,7 @@ class BaseHandler(CoreBase):
             user = await self.verify_user()
             if user:
                 self.current_user = user.name
-                if self.verify_access():
+                if await self.verify_access():
                     return
             self.write_error(401)
 
@@ -219,10 +219,8 @@ class BaseHandler(CoreBase):
         if token:
             payload = self.parse_token(token)
             username = payload.get("name")
-            try:
-                # user = await self.load_user(username)
-                user = Role().load_one(name=username)
-            except:
+            user = await CoreRole().find_one(name=username)
+            if user is None:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
             else:
@@ -241,8 +239,7 @@ class BaseHandler(CoreBase):
                 return user
         elif username and password:
             try:
-                # user = await self.load_user(username)
-                user = Role().load_one(name=username)
+                user = await CoreRole().find_one(name=username)
             except:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
@@ -252,6 +249,7 @@ class BaseHandler(CoreBase):
                     self.logger.debug(
                         "successfully loaded [%s] by [%s] from [%s]",
                         username, *source)
+                    await user.login()
                     return user
         return None
 
@@ -272,7 +270,7 @@ class BaseHandler(CoreBase):
         token = self.create_jwt(secs, payload)
         self.set_secure_cookie("token", token)
         self.set_header("token", token)
-        self.logger.debug("updated token [%s]", self.current_user)
+        self.logger.debug("updated token [%s]", username)
         return token
 
     def create_jwt(self, secs, payload):
@@ -315,7 +313,7 @@ class BaseHandler(CoreBase):
         except jwt.ExpiredSignatureError:
             return {}
 
-    def verify_access(self):
+    async def verify_access(self):
         """
         Verifies the user has access to the resource. This method requires
         implementation
@@ -348,7 +346,7 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         self.error_text_page = self.config.api.error_text_page
         self._flash = []
 
-    def verify_access(self):
+    async def verify_access(self):
         """
         Verifies the user has access to the handler using
         :meth:`User.has_api_access`.
@@ -357,11 +355,11 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         """
         try:
             # todo: do we really want to load the role 2x
-            user = Role().load_one(name=self.current_user)
+            user = await CoreRole().find_one(name=self.current_user)
         except:
             self.logger.warning("username [%s] not found", self.current_user)
         else:
-            if user.has_api_access(self.qual_name()):
+            if await user.has_api_access(self.qual_name()):
                 return True
         return False
 
@@ -596,3 +594,9 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
                 "\n".join(traceback.format_exception_only(typ, value)).strip(),
                 "\n".join(traceback.format_tb(tb))
             )
+
+    def parse_objectid(self, _id):
+        try:
+            return ObjectId(_id)
+        except:
+            raise HTTPError(400, "failed to parse ObjectId [%s]", _id)

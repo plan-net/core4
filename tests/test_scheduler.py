@@ -15,7 +15,8 @@ import core4.util.tool
 from core4.queue.main import CoreQueue
 from core4.queue.scheduler import CoreScheduler
 from tests.test_worker import worker, mongodb, queue
-from tests.util import asset
+
+# from tests.util import asset
 
 w = worker
 m = mongodb
@@ -24,6 +25,14 @@ q = queue
 ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
+
+
+def asset(*filename, exists=True):
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, ASSET_FOLDER, *filename)
+    if not exists or os.path.exists(filename):
+        return filename
+    raise FileNotFoundError(filename)
 
 
 @pytest.fixture(autouse=True)
@@ -223,7 +232,6 @@ def test_gap(mongodb):
             {'name': re.compile(e)}) == c
 
 
-
 class ValidSchedule3(InvalidSchedule):
     author = "mra"
     schedule = "28 * * * *"
@@ -232,6 +240,7 @@ class ValidSchedule3(InvalidSchedule):
 class ValidSchedule4(InvalidSchedule):
     author = "mra"
     schedule = "* * * * *"
+
 
 @pytest.mark.timeout(30)
 def test_loop(queue, scheduler):
