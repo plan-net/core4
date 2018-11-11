@@ -2,13 +2,17 @@ import pytest
 from core4.api.v1.application import serve, CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.queue.job import JobHandler, JobPost
-
-
-from tests.api.test_job import LocalTestServer, StopHandler, setup
 import random
 import pymongo
 from core4.util.pager import CorePager
 import pandas as pd
+
+
+from tests.api2.test_response import LocalTestServer, StopHandler, setup
+
+print(setup)
+
+
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
@@ -18,6 +22,7 @@ class SimpleHandler(CoreRequestHandler):
 
     def get(self):
         self.reply("OK")
+
 
 def data():
     segment = ["segment A", "segment B", "segement C", "segment D",
@@ -53,9 +58,9 @@ class PagingHandler(CoreRequestHandler):
                 inplace=True)
             return t.to_dict("rec")
 
-        per_page = int(self.get_argument("per_page", 10))
-        current_page = int(self.get_argument("page", 0))
-        sort_by = self.get_argument("sort", [])
+        per_page = int(self.get_argument("per_page", default=10))
+        current_page = int(self.get_argument("page", default=0))
+        sort_by = self.get_argument("sort", default=[])
 
         pager = CorePager(per_page=per_page, current_page=current_page,
                           length=_length, query=_query, sort_by=sort_by)
@@ -78,10 +83,6 @@ class MyTestServer(LocalTestServer):
         return CoreApiTestServer
 
 
-
-@pytest.fixture(autouse=True)
-def reset(mongodb):
-    mongodb.drop_database(MONGO_DATABASE)
 
 @pytest.fixture
 def mongodb():
@@ -112,6 +113,7 @@ def http():
     server = MyTestServer()
     yield server
     server.stop()
+
 
 def test_simple(http):
     rv = http.get("/simple")

@@ -70,6 +70,7 @@ setup(
         "tornado>=5.1",
         "pandas>=0.23",
         "motor>=2.0.0",
+        "passlib>=1.7.0"
     ],
     extras_require={
         "tests": [

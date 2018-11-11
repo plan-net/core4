@@ -1,13 +1,16 @@
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.role.main import Role
+from core4.api.v1.request.role.model import CoreRole
 from core4.error import Core4RoleNotFound
-
+from bson.objectid import ObjectId
+import core4.error
+from tornado.web import HTTPError
+import pymongo.errors
 
 class ProfileHandler(CoreRequestHandler):
     title = "details for the logged in user"
     author = "mra"
 
-    def get(self):
+    async def get(self):
         """
         User and role details for the current logged in user.
 
@@ -65,13 +68,47 @@ class ProfileHandler(CoreRequestHandler):
                 }
             }
         """
-        try:
-            user = Role().load_one(name=self.current_user)
-        except:
+        user = await CoreRole().find_one(name=self.current_user)
+        if user is None:
             raise Core4RoleNotFound("unknown user [{}]".format(
                 self.current_user
             ))
+        doc = await user.detail()
+        doc["token_expires"] = self.token_exp
+        self.reply(doc)
+
+    async def put(self):
+        user = await CoreRole().find_one(name=self.current_user)
+        if user is None:
+            raise Core4RoleNotFound("unknown user [{}]".format(
+                self.current_user
+            ))
+        kwargs = dict(
+            etag=self.get_argument(
+                "etag", as_type=ObjectId),
+            realname=self.get_argument(
+                "realname", as_type=str, default=None),
+            email=self.get_argument(
+                "email", as_type=str, default=None),
+            password=self.get_argument(
+                "password", as_type=str, default=None)
+        )
+        for k, v in kwargs.items():
+            if v is not None:
+                user.data[k].set(v)
+        try:
+            saved = await user.save()
+        except (AttributeError, TypeError, core4.error.Core4ConflictError,
+                core4.error.ArgumentParsingError) as exc:
+            raise HTTPError(400, exc.args[0])
+        except pymongo.errors.DuplicateKeyError:
+            raise HTTPError(400, "name or email exists")
+        except core4.error.Core4RoleNotFound as exc:
+            raise HTTPError(400, "role [%s] not found", exc.args[0])
+        except:
+            raise
         else:
-            doc = user.detail()
-            doc["token_expires"] = self.token_exp
-            self.reply(doc)
+            if saved:
+                self.reply(user.to_response())
+            else:
+                self.reply("no changes")
