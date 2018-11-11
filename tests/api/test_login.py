@@ -10,7 +10,7 @@ import tornado.gen
 import core4.logger.mixin
 import core4.service
 from core4.api.v1.application import CoreApiContainer
-from tests.api2.test_response import setup, LocalTestServer, StopHandler
+from tests.api.test_response import setup, LocalTestServer, StopHandler
 from core4.api.v1.request.role.model import CoreRole
 from core4.api.v1.request.role.main import RoleHandler
 from core4.queue.worker import CoreWorker
