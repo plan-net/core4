@@ -1,6 +1,5 @@
 import collections
 
-
 class Singleton(type):
     """
     Singleton metaclass, see
@@ -62,3 +61,4 @@ def dict_merge(dct, merge_dct, add_keys=True):
             dct[k] = merge_dct[k]
 
     return dct
+

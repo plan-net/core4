@@ -181,8 +181,8 @@ class CorePager:
         if self.current_page < 0:
             self.current_page = await self.page_count + page
 
-        if ((await self.page_count == 0)
-                or (self.current_page >= await self.page_count)):
+        page_count = await self.page_count
+        if (page_count == 0 or self.current_page >= page_count):
             return PageResult(
                 code=200,
                 message="OK",
