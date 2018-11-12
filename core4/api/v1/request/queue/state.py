@@ -2,7 +2,7 @@ from tornado import gen
 from tornado.iostream import StreamClosedError
 
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.util import json_encode
+from core4.util.data import json_encode
 from core4.base import CoreBase
 
 QUERY_SLEEP = 1.

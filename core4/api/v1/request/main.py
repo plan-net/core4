@@ -17,9 +17,8 @@ import core4.error
 import core4.util
 import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
-from core4.api.v1.util import json_encode, json_decode
 from core4.base.main import CoreBase
-from core4.util.data import parse_boolean
+from core4.util.data import parse_boolean, json_encode, json_decode
 from core4.util.pager import PageResult
 
 tornado.escape.json_encode = json_encode

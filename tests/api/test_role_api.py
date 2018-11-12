@@ -5,7 +5,6 @@ import pymongo
 import pytest
 
 import core4.api.v1.request.role.field
-import core4.api.v1.util
 import core4.error
 import core4.logger
 import core4.queue.main
@@ -13,6 +12,7 @@ import core4.queue.worker
 import core4.service.setup
 import core4.util
 import core4.util.crypt
+import core4.util.data
 import core4.util.tool
 from core4.api.v1.application import CoreApiContainer
 # from core4.api.v1.request.queue.job import JobSummary
@@ -63,7 +63,7 @@ def setup(tmpdir):
 
 
 def json_decode(resp):
-    return core4.api.v1.util.json_decode(resp.body.decode("utf-8"))
+    return core4.util.data.json_decode(resp.body.decode("utf-8"))
 
 
 class CoreApiTestServer(CoreApiContainer):
