@@ -79,15 +79,13 @@ class BaseHandler(CoreBase):
         if (self.request.method == 'OPTIONS'):
             # preflight / OPTIONS should always pass
             return
-        # if not (self.request.query_arguments or self.request.body_arguments):
-        #     if self.request.body:
-        #         body_arguments = json_decode(self.request.body.decode("UTF-8"))
-        #         for k, v in body_arguments.items():
-        #             self.request.arguments.setdefault(k, []).append(v)
         if self.request.body:
             body_arguments = json_decode(self.request.body.decode("UTF-8"))
             for k, v in body_arguments.items():
                 self.request.arguments.setdefault(k, []).append(v)
+        await self.prepare_protection()
+
+    async def prepare_protection(self):
         if self.protected:
             user = await self.verify_user()
             if user:
