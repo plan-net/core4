@@ -71,7 +71,7 @@ class CoreApiContainer(CoreBase):
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
-            #self.logger.critical("have %s = %s", attr, kwargs[attr])
+            self.logger.debug("have %s = %s", attr, kwargs[attr])
         self._rules = handlers or kwargs.get("handlers", [])
         self._pool = None
         self.default_routes = [
