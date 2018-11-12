@@ -10,7 +10,7 @@ import core4.queue.query
 import core4.util
 import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.util import json_encode
+from core4.util.data import json_encode
 from core4.queue.main import CoreQueue
 from core4.util.pager import CorePager
 
