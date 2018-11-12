@@ -4,6 +4,8 @@ import core4.util.node
 from core4.api.v1.application import CoreApiContainer, serve
 from core4.api.v1.request.main import CoreRequestHandler
 
+# see API definition at
+# https://docs.google.com/document/d/18xyMu5TsJCpkPFtU75nTGvYKUs3dE1uGFdQiWz8HImM/edit?usp=sharing
 
 class BaseHandler(CoreRequestHandler):
     protected = False

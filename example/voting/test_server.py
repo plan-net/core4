@@ -28,7 +28,7 @@ def create_session(question, data={}):
 
 
 #register()
-#create_session("Are you important", data={"tag": "test"})
+create_session("This is the meeting question", data={"tag": "test"})
 
 def listing():
     rv = get(URL + "/session", json={"token": "secret_token"})
@@ -44,8 +44,8 @@ def open_session(sid):
 
 
 sid = "5be8ad3bde8b694326bce5ff"
-listing()
-detail(sid)
+#listing()
+#detail(sid)
 
 #open_session(sid)
 
@@ -61,12 +61,12 @@ def create_session2():
 
 
 #create_session2()
-listing()
+#listing()
 
 sid2 = "5be8ae65de8b694326bce642"
 #open_session(sid)
 #open_session(sid)
-listing()
+#listing()
 
 
 def close_session(sid):
@@ -80,7 +80,7 @@ def close_session(sid):
 
 #close_session(sid)
 #listing()
-detail(sid)
+#detail(sid)
 
 def event(id, data={}):
     rv = post(
@@ -106,6 +106,6 @@ def event(id, data={}):
 
 #open_session("5be958b8de8b6975631ff7f0")
 #event("mra2")
-event("bzi2")
+#event("bzi2")
 
 #close_session("5be958b8de8b6975631ff7f0")
