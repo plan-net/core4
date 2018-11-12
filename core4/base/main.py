@@ -10,6 +10,7 @@ import logging.handlers
 import os
 import re
 import sys
+import importlib
 
 import core4.config.main
 import core4.config.map
@@ -145,6 +146,8 @@ class CoreBase:
         """
         module = sys.modules.get(self.project)
         if self.project != CORE4:
+            if module is None:
+                module = importlib.import_module(self.project)
             if hasattr(module, "__project__"):
                 if module.__project__ == CORE4:
                     return os.path.join(
