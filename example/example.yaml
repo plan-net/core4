@@ -1,0 +1,8 @@
+DEFAULT:
+  mongo_database: voting
+
+auth_token: secret_token
+collection:
+  client: !connect mongodb://client
+  session: !connect mongodb://session
+  event: !connect mongodb://event
