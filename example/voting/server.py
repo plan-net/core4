@@ -1,8 +1,12 @@
+import tornado.gen
+from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
 
 import core4.util.node
 from core4.api.v1.application import CoreApiContainer, serve
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.util.data import json_encode
+
 
 # see API definition at
 # https://docs.google.com/document/d/18xyMu5TsJCpkPFtU75nTGvYKUs3dE1uGFdQiWz8HImM/edit?usp=sharing
@@ -39,16 +43,24 @@ class BaseHandler(CoreRequestHandler):
             raise HTTPError(404, "no open session")
         return doc
 
+    async def get_session(self, session_id):
+        doc = await self.session_collection.find_one({"_id": session_id})
+        if doc is None:
+            raise HTTPError(404, "session_id [{}] not found".format(
+                str(session_id)))
+        doc["session_id"] = doc.pop("_id")
+        return doc
+
 
 class RegisterHandler(BaseHandler):
     author = 'mra'
 
     async def post(self):
-        _id = self.get_argument("_id", as_type=str)
+        id = self.get_argument("id", as_type=str)
         now = core4.util.node.mongo_now()
         ret = await self.client_collection.update_one(
             {
-                "_id": _id,
+                "_id": id,
             },
             update={
                 "$set": {
@@ -60,7 +72,7 @@ class RegisterHandler(BaseHandler):
             },
             upsert=True
         )
-        self.reply({"_id": _id, "created": ret.upserted_id is not None})
+        self.reply({"id": id, "created": ret.upserted_id is not None})
 
 
 class SessionHandler(BaseHandler):
@@ -70,7 +82,8 @@ class SessionHandler(BaseHandler):
         doc = {
             "question": self.get_argument("question", as_type=str),
             "data": self.get_argument("data", as_type=dict, default={}),
-            "state": "CLOSED"
+            "state": "CLOSED",
+            "created_at": core4.util.node.now()
         }
         await self.session_collection.insert_one(doc)
         doc["session_id"] = doc.pop("_id")
@@ -79,8 +92,7 @@ class SessionHandler(BaseHandler):
     async def get(self, session_id):
         if session_id:
             oid = self.parse_objectid(session_id)
-            doc = await self.session_collection.find_one({"_id": oid})
-            doc["session_id"] = doc.pop("_id")
+            doc = await self.get_session(oid)
             self.reply(doc)
         else:
             ret = []
@@ -167,6 +179,7 @@ class StartSessionHandler(SessionHandler):
         )
         return ret.modified_count == 1
 
+
 class StopSessionHandler(StartSessionHandler):
     author = 'mra'
 
@@ -214,32 +227,55 @@ class SessionStateHandler(BaseHandler):
         self.set_header('cache-control', 'no-cache')
 
     async def get(self, session_id=None):
-        oid = self.parse_id(session_id)
-        # last = None
-        # exit = False
-        # while not exit:
-        #     doc = await self.get_detail(oid)
-        #     if doc["state"] in STATE_FINAL:
-        #         exit = True
-        #         self.finish(doc)
-        #     elif last is None or doc != last:
-        #         last = doc
-        #         js = json_encode(doc, indent=None, separators=(',', ':'))
-        #         try:
-        #             self.write(js + "\n\n")
-        #             self.logger.info(
-        #                 "serving [%s] with [%d] byte",
-        #                 self.current_user, len(js))
-        #             await self.flush()
-        #         except StreamClosedError:
-        #             self.logger.info("stream closed")
-        #             exit = True
-        #         except Exception:
-        #             self.logger.error("stream error", exc_info=True)
-        #             exit = True
-        #     await gen.sleep(1.)
+        last = None
+        exit = False
+        oid = self.parse_objectid(session_id)
+        while not exit:
+            doc = await self.get_session(oid)
+            count = await self.get_count(oid)
+            ret = {
+                "state": doc["state"],
+                "n": count
+            }
+            if doc["state"] == "CLOSED":
+                exit = True
+                self.finish(ret)
+            elif last is None or ret != last:
+                last = ret
+                js = json_encode(ret, indent=None, separators=(',', ':'))
+                try:
+                    self.write(js + "\n\n")
+                    self.logger.info(
+                        "serving [%s] with [%d] byte",
+                        self.current_user, len(js))
+                    await self.flush()
+                except StreamClosedError:
+                    self.logger.info("stream closed")
+                    exit = True
+                except Exception:
+                    self.logger.error("stream error", exc_info=True)
+                    exit = True
+            await tornado.gen.sleep(0.5)
 
-
+    async def get_count(self, session_id):
+        cursor = self.event_collection.aggregate([
+            {
+                "$match": {
+                    "session_id": session_id
+                }
+            },
+            {
+                "$group": {
+                    "_id": "__ALL__",
+                    "n": {
+                        "$sum": 1
+                    }
+                }
+            }
+        ])
+        async for doc in cursor:
+            return doc["n"]
+        return 0
 
 class VotingApp(CoreApiContainer):
     root = "/voting/v1"
