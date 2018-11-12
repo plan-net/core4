@@ -259,6 +259,9 @@ You can either use the .format-method of a string or format it the oldschool way
 The DEBUG level will not be logged by default. It will only be written when an error has occured. This way, one can
 write multiple DEBUG messages that may help him indentify an error but would otherwise clutter the output.
 
+A job will log all raised expections that are piped to either std::out or std::error by default.
+
+
 
 cookie handling
 ---------------
