@@ -13,7 +13,7 @@ class CoreStaticFileHandler(BaseHandler, StaticFileHandler):
         BaseHandler.__init__(self)
         StaticFileHandler.__init__(self, *args, **kwargs)
 
-    def verify_access(self):
+    async def verify_access(self):
         """
         There are no additional authorization requirements for static content.
 
