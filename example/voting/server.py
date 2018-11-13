@@ -198,11 +198,11 @@ class EventHandler(BaseHandler):
     async def post(self):
         _id = self.get_argument("id", as_type=str)
         data = self.get_argument("data", as_type=dict, default={})
-        now = core4.util.node.mongo_now()
+        now = core4.util.node.now().timestamp()
         session = await self.get_current()
         ret = await self.event_collection.update_one(
             {
-                "client_id": _id,
+                "user_id": _id,
                 "session_id": session["_id"]
             },
             update={
@@ -296,6 +296,30 @@ class CSVHandler(BaseHandler):
         self.reply("read dataframe in shape %s" %(str(df.shape)))
 
 
+class ResultHandler(BaseHandler):
+
+    async def post(self):
+        ts = await self.timeseries()
+        self.reply(ts)
+
+    async def timeseries(self):
+        data = []
+        async for doc in self.event_collection.find().sort("question", 1):
+            doc["session_id"] = doc.pop("_id")
+            doc["user_data"] = await self.get_user_data(doc["user_id"])
+            data.append(doc)
+        df = pd.DataFrame(data)
+        df.sort_values(["session_id", "timestamp"], inplace=True)
+        return df
+
+    async def get_user_data(self, user):
+        doc = await self.csv_collection.find_one({"id": user})
+        if not doc:
+            return {}
+        else:
+            return doc
+
+
 class VotingApp(CoreApiContainer):
     root = "/voting/v1"
     rules = [
@@ -306,6 +330,7 @@ class VotingApp(CoreApiContainer):
         ("/event", EventHandler),
         ("/poll/?(.*)", SessionStateHandler),
         ("/csv", CSVHandler),
+        ("/result", ResultHandler),
     ]
 
 

@@ -309,3 +309,29 @@ def test_upload(http):
     assert rv.json()["data"] == "read dataframe in shape (10, 4)"
     assert rv.status_code == 200
 
+
+def test_result(http):
+    test_upload(http)
+
+    data = test_4_session(http)
+
+    rv = http.post("/start/" + data[0]["session_id"],
+                   json={"token": "secret_token"})
+    assert rv.status_code == 200
+
+    def make_events():
+        for i in range(12):
+            rv = http.post(
+                "/event",
+                json={"token": "secret_token", "id": "user-%d" % (i + 1)})
+            assert rv.status_code == 201
+        rv = http.post("/stop/" + data[0]["session_id"],
+                       json={"token": "secret_token"})
+        assert rv.status_code == 200
+
+    make_events()
+    rv = http.post("/result", json={"token": "secret_token"})
+    assert rv.status_code == 200
+    from pprint import pprint
+    pprint(rv.json()["data"])
+
