@@ -79,9 +79,13 @@ class BaseHandler(CoreBase):
             # preflight / OPTIONS should always pass
             return
         if self.request.body:
-            body_arguments = json_decode(self.request.body.decode("UTF-8"))
-            for k, v in body_arguments.items():
-                self.request.arguments.setdefault(k, []).append(v)
+            try:
+                body_arguments = json_decode(self.request.body.decode("UTF-8"))
+            except:
+                pass
+            else:
+                for k, v in body_arguments.items():
+                    self.request.arguments.setdefault(k, []).append(v)
         await self.prepare_protection()
 
     async def prepare_protection(self):

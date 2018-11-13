@@ -1,0 +1,11 @@
+id,sex,age,industry
+user1,m,30,finance
+user2,m,32,finance
+user3,m,34,utilities
+user4,f,36,utilities
+user5,f,38,automotive
+user6,m,40,automotive
+user7,m,42,automotive
+user8,f,44,banking
+user9,m,46,automotive
+user10,m,48,banking
