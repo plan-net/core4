@@ -273,3 +273,9 @@ def test_polling(http):
     data = rv.json()
     data.pop("timestamp")
     assert data == {'state': 'CLOSED', 'n': 50}
+
+
+def test_poll_404(http):
+    rv = http.post("/start/5bea5366de8b694c0389ea79",
+                   json={"token": "secret_token"})
+    assert rv.status_code == 404
