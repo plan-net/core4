@@ -83,7 +83,7 @@ class SessionHandler(BaseHandler):
             "question": self.get_argument("question", as_type=str),
             "data": self.get_argument("data", as_type=dict, default={}),
             "state": "CLOSED",
-            "created_at": core4.util.node.now()
+            "created_at": core4.util.node.mongo_now()
         }
         await self.session_collection.insert_one(doc)
         doc["session_id"] = doc.pop("_id")
@@ -235,7 +235,8 @@ class SessionStateHandler(BaseHandler):
             count = await self.get_count(oid)
             ret = {
                 "state": doc["state"],
-                "n": count
+                "n": count,
+                "timestamp": core4.util.node.mongo_now()
             }
             if doc["state"] == "CLOSED":
                 exit = True
