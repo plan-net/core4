@@ -270,4 +270,6 @@ def test_polling(http):
     assert s[-1] == "CLOSED"
     rv = http.get("/poll/" + data[0]["session_id"],
                   json={"token": "secret_token"}, stream=True)
-    assert rv.json() == {'state': 'CLOSED', 'n': 50}
+    data = rv.json()
+    data.pop("timestamp")
+    assert data == {'state': 'CLOSED', 'n': 50}
