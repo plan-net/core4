@@ -368,7 +368,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :param message: logging helper string
         :return: ``True`` for success, else ``False``
         """
-        at = core4.util.node.now()
+        at = core4.util.node.mongo_now()
         ret = await self.collection("queue").update_one(
             {
                 "_id": oid,
@@ -512,7 +512,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         record into ``sys.stat``.
         """
         state = await self.get_queue_count()
-        state["timestamp"] = core4.util.node.now().timestamp()
+        state["timestamp"] = core4.util.node.mongo_now().timestamp()
         await self.collection("stat").insert_one(state)
 
     def who(self):
@@ -670,7 +670,7 @@ class JobPost(JobHandler):
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
         state = await self.get_queue_count()
-        state["timestamp"] = core4.util.node.now().timestamp()
+        state["timestamp"] = core4.util.node.mongo_now().timestamp()
         await self.collection("stat").insert_one(state)
         return job
 
