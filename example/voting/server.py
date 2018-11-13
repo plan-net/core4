@@ -1,11 +1,12 @@
 import tornado.gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
-
+import pandas as pd
 import core4.util.node
 from core4.api.v1.application import CoreApiContainer, serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.data import json_encode
+from io import StringIO
 
 
 # see API definition at
@@ -36,6 +37,10 @@ class BaseHandler(CoreRequestHandler):
     @property
     def event_collection(self):
         return self.collection("event")
+
+    @property
+    def csv_collection(self):
+        return self.collection("csv")
 
     async def get_current(self):
         doc = await self.session_collection.find_one({"state": "OPEN"})
@@ -278,6 +283,19 @@ class SessionStateHandler(BaseHandler):
             return doc["n"]
         return 0
 
+
+class CSVHandler(BaseHandler):
+
+    def post(self):
+        files = self.request.files["file"]
+        info = files[0]
+        body = info["body"].decode("utf-8")
+        df = pd.read_csv(StringIO(body))
+        for rec in df.to_dict("rec"):
+            self.csv_collection.insert_one(rec)
+        self.reply("read dataframe in shape %s" %(str(df.shape)))
+
+
 class VotingApp(CoreApiContainer):
     root = "/voting/v1"
     rules = [
@@ -287,6 +305,7 @@ class VotingApp(CoreApiContainer):
         ("/stop/?(.*)", StopSessionHandler),
         ("/event", EventHandler),
         ("/poll/?(.*)", SessionStateHandler),
+        ("/csv", CSVHandler),
     ]
 
 

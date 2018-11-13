@@ -141,6 +141,27 @@ def test_open_session(http):
     return data
 
 
+def test_open_session_url_param(http):
+    data = helper_session_0(http)
+    rv = http.post("/start/" + data["session_id"],
+                   json={"token": "secret_token"})
+    assert rv.status_code == 200
+    rv = http.get("/session/" + data["session_id"] + "?token=secret_token")
+    assert rv.status_code == 200
+    data = rv.json()["data"]
+    assert data["state"] == "OPEN"
+
+    rv = http.post("/start/" + data["session_id"],
+                   json={"token": "secret_token"})
+    assert rv.status_code == 200
+
+    rv = http.get("/session/" + data["session_id"] + "?token=secret_token")
+    assert rv.status_code == 200
+    data = rv.json()["data"]
+    assert data["state"] == "OPEN"
+    return data
+
+
 def test_unknown_session(http):
     sid = "5be9e1e7de8b6958c33b8e1f"
     rv = http.post("/start/" + sid,
@@ -279,3 +300,12 @@ def test_poll_404(http):
     rv = http.post("/start/5bea5366de8b694c0389ea79",
                    json={"token": "secret_token"})
     assert rv.status_code == 404
+
+
+def test_upload(http):
+    source = os.path.join(os.path.dirname(__file__), "asset/sample.csv")
+    files = {'file': open(source, 'rb')}
+    rv = http.post("/csv?token=secret_token", files=files)
+    assert rv.json()["data"] == "read dataframe in shape (10, 4)"
+    assert rv.status_code == 200
+

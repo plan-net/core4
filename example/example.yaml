@@ -6,3 +6,4 @@ collection:
   client: !connect mongodb://client
   session: !connect mongodb://session
   event: !connect mongodb://event
+  csv: !connect mongodb://csv
