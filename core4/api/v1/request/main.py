@@ -95,7 +95,7 @@ class BaseHandler(CoreBase):
                 self.current_user = user.name
                 if await self.verify_access():
                     return
-            self.write_error(401)
+            raise HTTPError(401)
 
     def decode_argument(self, value, name=None):
         """
