@@ -71,7 +71,7 @@ class CoreApiContainer(CoreBase):
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
-            self.logger.debug("have %s = %s", attr, kwargs[attr])
+            #self.logger.debug("have %s = %s", attr, kwargs[attr])
         self._rules = handlers or kwargs.get("handlers", [])
         self._pool = None
         self.default_routes = [
@@ -99,17 +99,23 @@ class CoreApiContainer(CoreBase):
 
     def _log(self, handler):
         # internal logging method
-        if handler.get_status() < 400:
-            meth = handler.logger.info
-        elif handler.get_status() < 500:
-            meth = handler.logger.warning
+        if getattr(handler, "logger", None) is None:
+            logger = self.logger
+            identifier = self.identifier
         else:
-            meth = handler.logger.error
+            logger = handler.logger
+            identifier = handler.identifier
+        if handler.get_status() < 400:
+            meth = logger.info
+        elif handler.get_status() < 500:
+            meth = logger.warning
+        else:
+            meth = logger.error
         request_time = 1000.0 * handler.request.request_time()
         meth("[%d] [%s %s] in [%.2fms] by [%s] from [%s]",
              handler.get_status(), handler.request.method,
              handler.request.path, request_time, handler.current_user,
-             self.identifier, extra={"identifier": handler.identifier})
+             self.identifier, extra={"identifier": identifier})
 
     def get_root(self, path=None):
         """
@@ -246,9 +252,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "keyfile": key_file,
             }
 
-        loop = tornado.ioloop.IOLoop()
-        loop.make_current()
-
         server = tornado.httpserver.HTTPServer(router, **http_args)
         port = port or self.config.api.port
         server.listen(port)
@@ -256,9 +259,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             "open %ssecure socket on port [%d]",
             "" if http_args.get("ssl_options") else "NOT ", port)
 
-        loop.start()
-        loop.clear_current()
-        loop.close(all_fds=True)
+        tornado.ioloop.IOLoop().current().start()
 
 
 def serve(*args, port=None, name=None, **kwargs):
