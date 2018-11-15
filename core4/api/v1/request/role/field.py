@@ -1,3 +1,7 @@
+"""
+This module delivers the :class:`.CoreRole` field types.
+"""
+
 import re
 
 import datetime
@@ -18,6 +22,11 @@ JOB_READ_RIGHT = 'r'
 
 
 class Field:
+    """
+    The base class of all :class:`.CoreRole` attributes. Field objects support
+    value getting and setting, validation, and MongoDB document as well as
+    HTTP request response features.
+    """
     default = None
     field_type = None
 
@@ -28,9 +37,17 @@ class Field:
         self.set(kwargs.get(self.key, self.default))
 
     def initialise(self):
+        """
+        use to initialise the field object
+        """
         pass
 
     def set(self, value):
+        """
+        use to set the field value
+
+        :param value: to set
+        """
         self.__dict__["value"] = value
 
     def __setattr__(self, key, value):
@@ -40,6 +57,11 @@ class Field:
         super().__setattr__(key, value)
 
     def validate_type(self):
+        """
+        Validates the value type based on :attr:`.field_type`.
+
+        Raises :class:`TypeError`
+        """
         if self.value is None:
             return
         if not isinstance(self.value, self.field_type):
@@ -48,23 +70,48 @@ class Field:
             ))
 
     def validate_value(self):
+        """
+        Validates the value, i.e. if a :attr:`.required`` field is not
+        ``None``.
+
+        Raises :class:`AttributeError`
+        """
         if self.required:
             if self.value is None:
                 raise AttributeError("field [{}] is mandatory".format(
                     self.key))
 
-    def to_mongo(self):
+    def to_doc(self):
+        """
+        Translates the field value into a valid MongoDB value.
+
+        :return: variant
+        """
         return self.value
 
     def to_response(self):
+        """
+        Translates the field value into a valid HTTP resposne value.
+
+        :return: variant
+        """
         return self.value
 
 
 class ObjectIdField(Field):
+    """
+    Handles role ``_id`` and ``etag`` attribute and verifies the
+    value is of type :class:`.ObjectId``.
+    """
     field_type = ObjectId
 
 
 class StringField(Field):
+    """
+    Handles string attributes. Additional attribute properties
+    are :attr:`.required` to indicate non-optional fields and :attr:`regex`
+    to perform value validation.
+    """
     field_type = str
 
     def __init__(self, *args, regex=None, **kwargs):
@@ -86,15 +133,33 @@ class StringField(Field):
 
 
 class BoolField(Field):
+    """
+    Handles bool attributes with default value ``True``.
+    """
     default = True
     field_type = bool
 
 
 class TimestampField(Field):
+    """
+    Handles :class:`datetime.datetime` attributes.
+    """
     field_type = datetime.datetime
 
 
 class PermField(Field):
+    """
+    Handles the ``perm`` attribute, a list of strings with the following
+    permission protocols:
+
+    * ``cop`` - administrative role
+    * ``job://[qual_name]/[xr]`` - job read and execution permission
+    * ``api://[qual_name]`` - api access permission
+    * ``app://[key]`` - app key permission
+    * ``mongodb://[database]`` - MongoDB database access permission (read-only)
+
+    Raises :class:`AttributeError` if the permission protocol is not valid.
+    """
     field_type = list
 
     def initialise(self):
@@ -114,6 +179,10 @@ class PermField(Field):
 
 
 class PasswordField(Field):
+    """
+    Handles the password field. The class uses :mod:`core4.util.crypt`
+    functions to create an assymetric hash value.
+    """
     field_type = str
 
     def __init__(self, *args, **kwargs):
@@ -128,6 +197,11 @@ class PasswordField(Field):
 
 
 class RoleField(Field):
+    """
+    Handles the role attribute of a :class:`.CoreRole` object. The role
+    attribute stores the list of role names in :attr:`.name` and the role ids
+    in :attr:`._id`.
+    """
     field_type = list
 
     def initialise(self):
@@ -138,7 +212,5 @@ class RoleField(Field):
     def to_response(self):
         return self.name
 
-    def to_mongo(self):
+    def to_doc(self):
         return self._id
-
-
