@@ -174,7 +174,7 @@ class CorePager:
 
     async def page(self, page=None):
         """
-        :return: total number of documents without filter
+        :return: :class:`.PageResult`
         """
         page = page or self.current_page
         self.current_page = page
