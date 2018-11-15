@@ -360,7 +360,7 @@ def test_unknown_role(http):
         "role": ["test_role1", "test_role2", "test_role3"],
     }
     rv = http.post("/roles", json=data)
-    assert rv.json()["code"] == 400
+    assert rv.json()["code"] == 404
     assert "role [test_role3] not found" in rv.json()["error"]
 
 
