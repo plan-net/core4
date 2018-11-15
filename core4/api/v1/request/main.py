@@ -41,7 +41,7 @@ class BaseHandler(CoreBase):
     #: handler description
     description = None
 
-    async def options(self):
+    async def options(self, *args, **kwargs):
         """
         Answer preflight / OPTIONS request with 200
         """
