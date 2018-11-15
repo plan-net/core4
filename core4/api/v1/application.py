@@ -83,18 +83,18 @@ class CoreApiContainer(CoreBase):
         kwargs["default_handler_class"] = DefaultHandler
         kwargs["default_handler_args"] = ()
         kwargs["log_function"] = self._log
-        if self.path:
-            kwargs["static_path"] = self.path
-            if self.default_filename:
-                kwargs["default_filename"] = self.default_filename
-            if self.static_url:
-                kwargs["static_url_prefix"] = self.get_root(self.static_url)
-                if not kwargs["static_url_prefix"].endswith("/"):
-                    kwargs["static_url_prefix"] += "/"
-                if not kwargs["static_url_prefix"].startswith("/"):
-                    kwargs["static_url_prefix"] = kwargs[
-                                                      "static_url_prefix"][1:]
-            kwargs["static_handler_class"] = CoreStaticFileHandler
+        # if self.path:
+        #     kwargs["static_path"] = self.path
+        #     if self.default_filename:
+        #         kwargs["default_filename"] = self.default_filename
+        #     if self.static_url:
+        #         kwargs["static_url_prefix"] = self.get_root(self.static_url)
+        #         if not kwargs["static_url_prefix"].endswith("/"):
+        #             kwargs["static_url_prefix"] += "/"
+        #         if not kwargs["static_url_prefix"].startswith("/"):
+        #             kwargs["static_url_prefix"] = kwargs[
+        #                                               "static_url_prefix"][1:]
+        #     kwargs["static_handler_class"] = CoreStaticFileHandler
         self._settings = kwargs
 
     def _log(self, handler):
