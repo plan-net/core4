@@ -1,6 +1,7 @@
 import pymongo.errors
-from tornado.web import HTTPError
 from bson.objectid import ObjectId
+from tornado.web import HTTPError
+
 import core4.error
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
@@ -56,6 +57,8 @@ class RoleHandler(CoreRequestHandler):
                 sort_order=self.get_argument(
                     "order", as_type=int, default=1),
             )
+            for doc in ret.body:
+                doc.pop("password", None)
             self.reply(ret)
         else:
             oid = self.parse_objectid(_id)
@@ -129,7 +132,5 @@ class RoleHandler(CoreRequestHandler):
                 self.reply(True)
             else:
                 self.reply(False)
-
-
 
 
