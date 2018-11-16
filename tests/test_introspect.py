@@ -70,3 +70,7 @@ def test_discover():
         assert "name" in project[name].keys()
         assert "title" in project[name].keys()
         assert "built" in project[name].keys()
+
+def test_api_container():
+    intro = CoreIntrospector()
+    intro.iter_api_container()
