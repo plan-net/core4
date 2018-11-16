@@ -8,9 +8,11 @@ import traceback
 
 import core4.base
 import core4.queue.job
+import core4.api.v1.application
 from core4.util.tool import Singleton
 
 JOB_CLASS = core4.queue.job.CoreJob
+API_CONTAINER_CLASS = core4.api.v1.application.CoreApiContainer
 
 
 class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
@@ -25,6 +27,7 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
         self.old_stdout = sys.stdout
         self._project = []
         self._job = {}
+        self._api_container = {}
         self._module = {}
         self._loaded = False
 
@@ -106,6 +109,37 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
                 "python": executable
             }
 
+    def iter_api_container(self):
+        self._load()
+        for qual_name, cls in self._api_container.items():
+            try:
+                obj = cls()
+                if obj.hidden is None:
+                    continue
+                exception = None
+            except Exception as exc:
+                exc_info = sys.exc_info()
+                exception = {
+                    "exception": repr(exc_info[1]),
+                    "traceback": traceback.format_exception(*exc_info)
+                }
+                self.logger.error("cannot instantiate api container [%s]",
+                                  qual_name, exc_info=exc_info)
+
+            for route in cls.rules:
+                print(cls().get_alias(), qual_name, route[0], route[1])
+                # yield {
+                #     "name": qual_name,
+                #     "author": obj.author,
+                #     "schedule": obj.schedule,
+                #     "hidden": obj.hidden,
+                #     "doc": obj.__doc__,
+                #     "tag": obj.tag,
+                #     "valid": validate,
+                #     "exception": exception,
+                #     "python": executable
+                # }
+
     def _load(self):
         # internal method to collect core4 project packages and iterate
         #   its modules and classes
@@ -172,6 +206,10 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
                 if mro == JOB_CLASS:
                     self.logger.debug("found job [%s]", cls.qual_name())
                     self._job[cls.qual_name()] = cls
+                elif mro == API_CONTAINER_CLASS:
+                    self.logger.debug("found api container [%s]",
+                                      cls.qual_name())
+                    self._api_container[cls.qual_name()] = cls
 
     def _import_module(self, name):
         # internal helper method to safely import a core4 module
