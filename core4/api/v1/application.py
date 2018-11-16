@@ -56,14 +56,10 @@ class CoreApiContainer(CoreBase):
     enabled = True
     #: root URL, defaults to the project name
     root = None
+    #: routing alias
+    alias = None
     #: list of tuples with route and :class:`.CoreRequestHandler`
     rules = []
-    #: path to static files
-    path = None
-    #: default static filename in a directory
-    default_filename = "index.html"
-    #: url attached to :attr:`.root` to serve static files
-    static_url = 'static'
     #: number of executor threads/processes (experimental)
     max_workers = 10
 
@@ -116,6 +112,9 @@ class CoreApiContainer(CoreBase):
              handler.get_status(), handler.request.method,
              handler.request.path, request_time, handler.current_user,
              self.identifier, extra={"identifier": identifier})
+
+    def get_alias(self):
+        return self.alias or self.get_root()
 
     def get_root(self, path=None):
         """
@@ -261,6 +260,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
         tornado.ioloop.IOLoop().current().start()
 
+    def serve_all(self, port=None, name=None, **kwargs):
+        pass
 
 def serve(*args, port=None, name=None, **kwargs):
     """
