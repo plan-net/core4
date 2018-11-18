@@ -2,7 +2,8 @@ import multiprocessing
 import requests
 import time
 from core4.base import CoreBase
-from core4.api.v1.application import serve, CoreApiContainer
+from core4.api.v1.application import CoreApiContainer
+from core4.api.v1.tool import serve
 from core4.api.v1.request.main import CoreRequestHandler
 from tornado.ioloop import IOLoop
 
@@ -79,6 +80,7 @@ class ClientServer(CoreBase):
         rv = self.get("/kill")
         assert rv.status_code == 200
         self.process.join()
+
 
 if __name__ == '__main__':
     class ApiTest(CoreApiContainer):
