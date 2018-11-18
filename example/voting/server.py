@@ -3,8 +3,9 @@ from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
 import pandas as pd
 import core4.util.node
-from core4.api.v1.application import CoreApiContainer, serve
+from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.tool import serve
 from core4.util.data import json_encode
 from io import StringIO
 
