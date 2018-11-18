@@ -282,7 +282,9 @@ def test_polling(http):
     ret = []
     for line in rv.iter_lines():
         if line:
-            ret.append(core4.util.data.json_decode(line.decode("utf-8")))
+            line = line.decode("utf-8")
+            line = line[len("data: "):]
+            ret.append(core4.util.data.json_decode(line))
     t.join()
     n = [i["n"] for i in ret]
     assert n == sorted(n)
@@ -291,7 +293,9 @@ def test_polling(http):
     assert s[-1] == "CLOSED"
     rv = http.get("/poll/" + data[0]["session_id"],
                   json={"token": "secret_token"}, stream=True)
-    data = rv.json()
+    line = rv.content.decode("utf-8")
+    line = line[len("data: "):]
+    data = core4.util.data.json_decode(line)
     data.pop("timestamp")
     assert data == {'state': 'CLOSED', 'n': 50}
 

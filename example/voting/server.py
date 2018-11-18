@@ -246,12 +246,18 @@ class SessionStateHandler(BaseHandler):
             }
             if doc["state"] == "CLOSED":
                 exit = True
-                self.finish(ret)
+                js = json_encode(ret, indent=None, separators=(',', ':'))
+                self.write("data: " + js + "\n\n")
+                self.logger.info(
+                    "serving [%s] with [%d] byte",
+                    self.current_user, len(js))
+                await self.flush()
+                self.finish()
             elif last is None or ret != last:
                 last = ret
                 js = json_encode(ret, indent=None, separators=(',', ':'))
                 try:
-                    self.write(js + "\n\n")
+                    self.write("data: " + js + "\n\n")
                     self.logger.info(
                         "serving [%s] with [%d] byte",
                         self.current_user, len(js))
