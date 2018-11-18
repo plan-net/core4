@@ -1,3 +1,7 @@
+"""
+core4 :class:`.CoreRequestHandler`, based on :mod:`tornado`
+:class:`RequestHandler <tornado.web.RequestHandler>`.
+"""
 import base64
 import traceback
 
