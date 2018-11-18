@@ -45,6 +45,8 @@ class CoreApiContainer(CoreBase):
     The :class:`CoreApiContainer` class is a container for tornado's
     ``Application`` objects. The container encapsulates endpoint resources
     under the same :attr:`.root` URL defined by the :attr:`.root` attribute.
+
+    The default ``root`` is the project name.
     """
 
     #: if ``True`` then the application container is autmatically deployed
