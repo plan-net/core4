@@ -5,10 +5,10 @@ from tornado.web import HTTPError
 class DefaultHandler(CoreRequestHandler):
     title = "default handler"
     author = "mra"
+    protected = False
 
     """
-    Handles all non-existing endpoints throwing ``404`` - ``Not Found`` if the
-    user is not logged in, else ``401`` - ``Unauthorized``.
+    Handles all non-existing endpoints throwing ``404`` - ``Not Found``. 
     """
 
     def initialize(self, *args, status_code=404, **kwargs):
