@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import traceback
 
@@ -26,12 +25,16 @@ tornado.escape.json_encode = json_encode
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
 
 
-class BaseHandler(CoreBase):
+class CoreRequestHandler(CoreBase, RequestHandler):
     """
-    Base class of :class:`.CoreRequestHandler` and
-    :class:`.CoreStaticFileHandler`.
-    """
+    The base class to all custom core4 API request handlers. Typically you
+    inherit from this class to implement request handlers::
 
+        class TestHandler(CoreRequestHandler):
+
+            def get(self):
+                return "hello world"
+    """
     #: `True` if the handler requires authentication and authorization
     protected = True
     #: handler title
@@ -41,11 +44,25 @@ class BaseHandler(CoreBase):
     #: handler description
     description = None
 
+    #: this class supports the following content types
+    supported_types = [
+        "text/html",
+        "text/plain",
+        "text/csv",
+        "application/json"
+    ]
+
+    def __init__(self, *args, **kwargs):
+        CoreBase.__init__(self)
+        RequestHandler.__init__(self, *args, **kwargs)
+        self.error_html_page = self.config.api.error_html_page
+        self.error_text_page = self.config.api.error_text_page
+        self._flash = []
+
     async def options(self):
         """
         Answer preflight / OPTIONS request with 200
         """
-        # self.set_status(200)
         self.finish()
 
     def set_default_headers(self):
@@ -75,7 +92,7 @@ class BaseHandler(CoreBase):
         Raises 401 error if authentication and authorization fails.
         """
         self.identifier = ObjectId()
-        if (self.request.method == 'OPTIONS'):
+        if self.request.method == 'OPTIONS':
             # preflight / OPTIONS should always pass
             return
         if self.request.body:
@@ -89,6 +106,11 @@ class BaseHandler(CoreBase):
         await self.prepare_protection()
 
     async def prepare_protection(self):
+        """
+        This is the authentication and authorization part of :meth:`.prepare`.
+
+        Raises ``401 - Unauthorized``.
+        """
         if self.protected:
             user = await self.verify_user()
             if user:
@@ -96,81 +118,6 @@ class BaseHandler(CoreBase):
                 if await self.verify_access():
                     return
             raise HTTPError(401)
-
-    def decode_argument(self, value, name=None):
-        """
-        Decodes bytes and str from the request.
-
-        The name of the argument is provided if known, but may be None
-        (e.g. for unnamed groups in the url regex).
-        """
-        if isinstance(value, (bytes, str)):
-            return super().decode_argument(value, name)
-        return value
-
-    def get_argument(self, name, as_type=None, *args, **kwargs):
-        """
-        Returns the value of the argument with the given name.
-
-        If default is not provided, the argument is considered to be
-        required, and we raise a `MissingArgumentError` if it is missing.
-
-        If the argument appears in the url more than once, we return the
-        last value.
-
-        If ``as_type`` is provided, then the variable type is converted. The
-        method supports the following variable types:
-
-        * int
-        * float
-        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
-        * str
-        * dict - using :mod:`json.loads`
-        * list - using :mod:`json.loads`
-        * datetime - using :meth:`dateutil.parser.parse`
-
-        :param name: variable name
-        :param default: value
-        :param as_type: Python variable type
-        :return: value
-        """
-        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
-        ret = self._get_argument(name, source=self.request.arguments,
-                                 *args, strip=False, **kwargs)
-        if as_type and ret is not None:
-            try:
-                if as_type == bool:
-                    if isinstance(ret, bool):
-                        return ret
-                    return parse_boolean(ret, error=True)
-                if as_type == dict:
-                    if isinstance(ret, dict):
-                        return ret
-                    return json_decode(ret)
-                if as_type == list:
-                    if isinstance(ret, list):
-                        return ret
-                    return json_decode(ret)
-                if as_type == datetime.datetime:
-                    if isinstance(ret, datetime.datetime):
-                        dt = ret
-                    else:
-                        dt = dateutil.parser.parse(ret)
-                    if dt.tzinfo is None:
-                        return dt
-                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
-                    return datetime.datetime.fromtimestamp(
-                        time.mktime(utc_struct_time))
-                if as_type == ObjectId:
-                    if isinstance(ret, ObjectId):
-                        return ret
-                    return ObjectId(ret)
-                return as_type(ret)
-            except:
-                raise core4.error.ArgumentParsingError(
-                    "parameter [%s] expected as_type [%s]", name,
-                    as_type.__name__) from None
-        return ret
 
     async def verify_user(self):
         """
@@ -314,38 +261,80 @@ class BaseHandler(CoreBase):
         except jwt.ExpiredSignatureError:
             return {}
 
-    async def verify_access(self):
+    def decode_argument(self, value, name=None):
         """
-        Verifies the user has access to the resource. This method requires
-        implementation
+        Decodes bytes and str from the request.
+
+        The name of the argument is provided if known, but may be None
+        (e.g. for unnamed groups in the url regex).
         """
-        raise NotImplementedError
+        if isinstance(value, (bytes, str)):
+            return super().decode_argument(value, name)
+        return value
 
+    def get_argument(self, name, as_type=None, *args, **kwargs):
+        """
+        Returns the value of the argument with the given name.
 
-class CoreRequestHandler(BaseHandler, RequestHandler):
-    """
-    The base class to all custom core4 API request handlers. Typically you
-    inherit from this class to implement request handlers::
+        If default is not provided, the argument is considered to be
+        required, and we raise a `MissingArgumentError` if it is missing.
 
-        class TestHandler(CoreRequestHandler):
+        If the argument appears in the url more than once, we return the
+        last value.
 
-            def get(self):
-                return "hello world"
-    """
-    #: this class supports the following content types
-    supported_types = [
-        "text/html",
-        "text/plain",
-        "text/csv",
-        "application/json"
-    ]
+        If ``as_type`` is provided, then the variable type is converted. The
+        method supports the following variable types:
 
-    def __init__(self, *args, **kwargs):
-        BaseHandler.__init__(self)
-        RequestHandler.__init__(self, *args, **kwargs)
-        self.error_html_page = self.config.api.error_html_page
-        self.error_text_page = self.config.api.error_text_page
-        self._flash = []
+        * int
+        * float
+        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
+        * str
+        * dict - using :mod:`json.loads`
+        * list - using :mod:`json.loads`
+        * datetime - using :meth:`dateutil.parser.parse`
+
+        :param name: variable name
+        :param default: value
+        :param as_type: Python variable type
+        :return: value
+        """
+        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
+        ret = self._get_argument(name, source=self.request.arguments,
+                                 *args, strip=False, **kwargs)
+        if as_type and ret is not None:
+            try:
+                if as_type == bool:
+                    if isinstance(ret, bool):
+                        return ret
+                    return parse_boolean(ret, error=True)
+                if as_type == dict:
+                    if isinstance(ret, dict):
+                        return ret
+                    return json_decode(ret)
+                if as_type == list:
+                    if isinstance(ret, list):
+                        return ret
+                    return json_decode(ret)
+                if as_type == datetime.datetime:
+                    if isinstance(ret, datetime.datetime):
+                        dt = ret
+                    else:
+                        dt = dateutil.parser.parse(ret)
+                    if dt.tzinfo is None:
+                        return dt
+                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
+                    return datetime.datetime.fromtimestamp(
+                        time.mktime(utc_struct_time))
+                if as_type == ObjectId:
+                    if isinstance(ret, ObjectId):
+                        return ret
+                    return ObjectId(ret)
+                return as_type(ret)
+            except:
+                raise core4.error.ArgumentParsingError(
+                    "parameter [%s] expected as_type [%s]", name,
+                    as_type.__name__) from None
+        return ret
 
     async def verify_access(self):
         """
@@ -363,12 +352,6 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
             if await user.has_api_access(self.qual_name()):
                 return True
         return False
-
-    async def run_in_executor(self, meth, *args):
-        loop = asyncio.get_event_loop()
-        future = loop.run_in_executor(
-            self.application.container.executor, meth, *args)
-        return await future
 
     def _wants(self, value, set_content=True):
         # internal method to very the client's accept header
@@ -554,24 +537,6 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
 
-    # def abort(self, status_code, message=None, exc_info=False):
-    #     """
-    #     Abort the request/response cycle with an error. Raises
-    #     :class:`tornado.web.HTTPError`.
-    #
-    #     :param status_code: valid HTTP status code
-    #     :param message: additional message
-    #     :param exc_info: pass exception info as message if ``True``
-    #     """
-    #     if exc_info:
-    #         exc = "---".join(
-    #             traceback.format_exception_only(*sys.exc_info()[0:2]))
-    #         self.write_error(status_code, error=exc)
-    #         raise HTTPError(status_code, "Abort: %s" % exc)
-    #     else:
-    #         self.write_error(status_code, error=message)
-    #         raise HTTPError(status_code, "Abort: %s" % message)
-
     def log_exception(self, typ, value, tb):
         """
         Override to customize logging of uncaught exceptions.
@@ -597,6 +562,15 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
             )
 
     def parse_objectid(self, _id):
+        """
+        Helper method to translate a str into a
+        :class:`bson.objectid.ObjectId`.
+
+        Raises ``400 - Bad Request``
+
+        :param _id: str to parse
+        :return: :class:`bson.objectid.ObjectId`
+        """
         try:
             return ObjectId(_id)
         except:
