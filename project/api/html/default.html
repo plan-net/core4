@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>my Test2</title>
+    <script src="{{ url('/stat1/asset/js/test.js') }}"></script>
+</head>
+<body>
+
+<img src="asset/head.png">
+<img src="{{ url('stat1/asset/head.png') }}">
+
+{% from project.api.server1 import ProjectServer1 %}
+
+<img src="{{ ProjectServer1.url('stat1/asset/head.png') }}">
+
+{{ handler.qual_name() }}<br/>
+{{ timer }}
+
+</body>
+</html>

@@ -51,6 +51,7 @@ def setup(tmpdir):
 
 
 class CoreApiTestServer(CoreApiContainer):
+    enabled = False
     rules = [
         (r'/kill', StopHandler),
         (r'/roles/?(.*)', RoleHandler),
