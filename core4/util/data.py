@@ -73,6 +73,7 @@ class JsonEncoder(json.JSONEncoder):
     * :class:`bson.objectid.ObjectId` into str
     * :mod:`numpy` conversion of bool, integer, floating and ndarray
     """
+
     def default(self, obj):
         if isinstance(obj, np.datetime64):
             # this is a hack around pandas bug, see
