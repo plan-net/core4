@@ -47,6 +47,8 @@ class CoreRequestHandler(CoreBase, RequestHandler):
     author = None
     #: handler description
     description = None
+    #: tag listing
+    tag = []
 
     #: this class supports the following content types
     supported_types = [
