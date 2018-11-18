@@ -489,3 +489,25 @@ with the ``POST`` method::
         'message': 'OK',
         'timestamp': '2018-11-07T15:55:17.417723'
     }
+
+
+static file serving
+###################
+
+* with variable injection
+* without variable injection
+* disclaimer for leightweight serving
+
+
+config overwrite
+################
+
+tbd.
+
+
+multiple process serving
+########################
+
+tbd.
+
+

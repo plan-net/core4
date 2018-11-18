@@ -38,6 +38,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         for container_cls in args:
             container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
+            if not container_obj.enabled:
+                self.logger.warning("starting NOT enabled container [%s]",
+                                    container_obj.qual_name())
             if root in roots:
                 raise core4.error.Core4SetupError(
                     "routing root [{}] duplicate with [{}]".format(

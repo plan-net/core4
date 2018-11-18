@@ -7,10 +7,14 @@ import pytest
 import requests
 import time
 
+import core4.config.test
 import core4.error
 import core4.logger.mixin
 import core4.service
-from core4.api.v1.tool import serve_all
+from core4.api.v1.application import CoreApiContainer
+from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.test import StopHandler
+from core4.api.v1.tool import serve_all, serve
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
@@ -141,3 +145,58 @@ def test_favicon(token):
     assert rv.status_code == 200
 
 
+class RequestTest(CoreRequestHandler):
+    author = "mra"
+
+    def get(self):
+        self.reply("OK")
+
+
+class ApiTest(CoreApiContainer):
+    rules = [
+        (r'/test', RequestTest),
+        (r'/kill', StopHandler)
+    ]
+
+    def _make_config(self, *args, **kwargs):
+        return core4.config.test.TestConfig(
+            project_name="tests",
+            project_dict={},
+            local_dict={
+                "api": {
+                    "setting": {
+                        "cookie_secret": "bliblablub"
+                    }
+                },
+                "tests": {
+                    "api": {
+                        "test_container": {
+                            "ApiTest": {
+                                "root": "changed",
+                                "enabled": False
+                            }
+                        }
+                    },
+                }
+            }, **kwargs
+        )
+
+
+def test_config_overwrite():
+    def runner():
+        serve(ApiTest, port=5555)
+
+    server = multiprocessing.Process(target=runner)
+    server.start()
+    while True:
+        try:
+            requests.get("http://localhost:5555/changed/profile", timeout=1)
+            break
+        except:
+            pass
+        time.sleep(1)
+    rv = requests.get("http://localhost:5555/changed/login"
+                      "?username=admin&password=hans")
+    assert rv.status_code == 200
+    requests.get("http://localhost:5555/changed/kill")
+    server.join()

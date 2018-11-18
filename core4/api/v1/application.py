@@ -57,6 +57,7 @@ class CoreApiContainer(CoreBase):
     rules = []
 
     def __init__(self, handlers=None, **kwargs):
+        self.upwind += ["enabled", "root"]
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
@@ -73,6 +74,11 @@ class CoreApiContainer(CoreBase):
         kwargs["default_handler_args"] = ()
         kwargs["log_function"] = self._log
         self._settings = kwargs
+        # upwind class properties from configuration
+        for prop in ("enabled", "root"):
+            if prop in self.class_config:
+                if self.class_config[prop] is not None:
+                    setattr(self, prop, self.class_config[prop])
 
     def _log(self, handler):
         # internal logging method
