@@ -1,5 +1,6 @@
 import pytest
-from core4.api.v1.application import serve, CoreApiContainer
+from core4.api.v1.application import CoreApiContainer
+from core4.api.v1.tool import serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.queue.job import JobHandler, JobPost
 import random

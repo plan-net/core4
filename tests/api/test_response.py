@@ -12,7 +12,8 @@ from tornado.web import HTTPError
 
 import core4.logger.mixin
 import core4.service
-from core4.api.v1.application import serve, CoreApiContainer
+from core4.api.v1.application import CoreApiContainer
+from core4.api.v1.tool import serve
 from core4.api.v1.request.main import CoreRequestHandler
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
