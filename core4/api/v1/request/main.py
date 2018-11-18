@@ -63,7 +63,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         self.error_text_page = self.config.api.error_text_page
         self._flash = []
 
-    async def options(self):
+    async def options(self, *args, **kwargs):
         """
         Answer preflight / OPTIONS request with 200
         """
