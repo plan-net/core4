@@ -68,7 +68,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
         return tornado.routing.RuleRouter(routes)
 
-    def serve(self, *args, port=None, name=None, **kwargs):
+    def serve(self, *args, port=None, name=None, reuse_port=True, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -77,6 +77,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param port: to listen, defaults to ``5001``, see core4 configuration
                      setting ``api.port``
         :param name: to identify the server
+        :param reuse_port: tells the kernel to reuse a local socket in
+                           ``TIME_WAIT`` state, defaults to ``True``
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         self.identifier = name or core4.util.node.get_hostname()
@@ -85,7 +87,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         setup = core4.service.setup.CoreSetup()
         setup.make_all()
 
-        router = self.make_routes(*args, **kwargs)
+        self.router = self.make_routes(*args, **kwargs)
         http_args = {}
         cert_file = self.config.api.crt_file
         key_file = self.config.api.key_file
@@ -96,16 +98,24 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "keyfile": key_file,
             }
 
-        server = tornado.httpserver.HTTPServer(router, **http_args)
+        server = tornado.httpserver.HTTPServer(self.router, **http_args)
         port = port or self.config.api.port
-        server.listen(port)
+        server.bind(port, reuse_port=reuse_port)
+        server.start()
         self.logger.info(
             "open %ssecure socket on port [%d]",
             "" if http_args.get("ssl_options") else "NOT ", port)
 
-        tornado.ioloop.IOLoop().current().start()
+        try:
+            tornado.ioloop.IOLoop().current().start()
+        except KeyboardInterrupt:
+            tornado.ioloop.IOLoop().current().stop()
+            raise SystemExit()
+        except:
+            raise
 
-    def serve_all(self, filter=None, port=None, name=None, **kwargs):
+    def serve_all(self, filter=None, port=None, reuse_port=True, name=None,
+                  **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -114,6 +124,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                        :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
         :param port: to listen, defaults to ``5001``, see core4 configuration
                      setting ``api.port``
+        :param reuse_port: tells the kernel to reuse a local socket in
+                           ``TIME_WAIT`` state, defaults to ``True``
         :param name: to identify the server
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
@@ -142,10 +154,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             cls = getattr(module, clsname)
             self.logger.debug("added [%s]", api["name"])
             clist.append(cls)
-        self.serve(*clist, port=port, name=name, **kwargs)
+        self.serve(*clist, port=port, name=name, reuse_port=reuse_port,
+                   **kwargs)
 
 
-def serve(*args, port=None, name=None, **kwargs):
+def serve(*args, port=None, name=None, reuse_port=True, **kwargs):
     """
     Serve one or multiple :class:`.CoreApiContainer` classes.
 
@@ -192,12 +205,15 @@ def serve(*args, port=None, name=None, **kwargs):
     :param args: class dervived from :class:`.CoreApiContainer`
     :param port: to serve, defaults to core4 config ``api.port``
     :param name: to identify the server, defaults to hostname
+    :param reuse_port: tells the kernel to reuse a local socket in
+                       ``TIME_WAIT`` state, defaults to ``True``
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
-    CoreApiServerTool().serve(*args, port=port, name=name, **kwargs)
+    CoreApiServerTool().serve(*args, port=port, name=name,
+                              reuse_port=reuse_port, **kwargs)
 
 
-def serve_all(*filter, port=None, name=None, **kwargs):
+def serve_all(*filter, port=None, name=None, reuse_port=True, **kwargs):
     """
     Serve all enabled core :class:`.CoreApiContainer` classes.
 
@@ -213,9 +229,12 @@ def serve_all(*filter, port=None, name=None, **kwargs):
                    of the :class:`.CoreApiContainer` to be served.
     :param port: to serve, defaults to core4 config ``api.port``
     :param name: to identify the server, defaults to hostname
+    :param reuse_port: tells the kernel to reuse a local socket in
+                       ``TIME_WAIT`` state, defaults to ``True``
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
-    CoreApiServerTool().serve_all(*filter, port=port, name=name, **kwargs)
+    CoreApiServerTool().serve_all(*filter, port=port, name=name,
+                                  reuse_port=reuse_port, **kwargs)
 
 
 if __name__ == '__main__':
