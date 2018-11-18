@@ -1,10 +1,12 @@
-import datetime
+"""
+General purpose helper methods related to node information like hostname,
+username, clock and process identifier (PID).
+"""
 import getpass
 import os
 
+import datetime
 import socket
-# todo: needs to be modified
-from flask_login import current_user
 
 
 def get_hostname():
@@ -20,8 +22,6 @@ def get_username():
     """
     if 'SUDO_USER' in os.environ:
         return os.environ['SUDO_USER']
-    if current_user and hasattr(current_user, 'username'):
-        return current_user.username
     return getpass.getuser()
 
 

@@ -251,8 +251,7 @@ class CoreRole(CoreBase):
         Translates the role attributes into a Python dict.
 
         :param response: translate into dict ready for MongoDB (``False``) or
-        for request response (``True``). Defaults to ``False``.
-
+                         for request response (``True``). Defaults to ``False``
         :return: dict
         """
         doc = {}

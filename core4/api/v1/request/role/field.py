@@ -58,7 +58,8 @@ class Field:
 
     def validate_type(self):
         """
-        Validates the value type based on :attr:`.field_type`.
+        Validates the value type based on
+        :attr:`.field_type <Field.field_type>`.
 
         Raises :class:`TypeError`
         """

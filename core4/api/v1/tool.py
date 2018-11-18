@@ -1,5 +1,5 @@
 """
-Helper tools :meth:`serve`` and :meth:`serve_all` with the underlying
+Helper tools :meth:`.serve`` and :meth:`.serve_all` with the underlying
 :class:`.CoreApiServerTool`.
 """
 import importlib
@@ -18,7 +18,7 @@ from core4.logger import CoreLoggerMixin
 
 class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     """
-    Helper class to :meth:`serve` :class:`CoreApiContainer` classes.
+    Helper class to :meth:`.serve` :class:`CoreApiContainer` classes.
     """
 
     def make_routes(self, *args, **kwargs):
@@ -152,7 +152,7 @@ def serve(*args, port=None, name=None, **kwargs):
     Additional keyword arguments are passed to the
     :class:`tornado.web.Application` object. Good to know keyword arguments
     with their default values from core4 configuration section ``api.setting``
-    are::
+    are:
 
     * ``debug`` - defaults to ``True``
     * ``compress_response`` - defaults to ``True``

@@ -125,12 +125,12 @@ def test_cookie(token):
 
 
 def test_304(token):
-    rv = requests.get("http://localhost:5555/project/stat1/asset/large.jpg")
+    rv = requests.get("http://localhost:5555/project/stat1/asset/head.png")
     assert rv.status_code == 200
     headers = {
         "If-Modified-Since": rv.headers["Last-Modified"]
     }
-    rv = requests.get("http://localhost:5555/project/stat1/asset/large.jpg",
+    rv = requests.get("http://localhost:5555/project/stat1/asset/head.png",
                       headers=headers)
     assert rv.status_code == 304
     assert rv.content == b''

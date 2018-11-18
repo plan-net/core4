@@ -1,3 +1,6 @@
+"""
+General purpose data management helpers.
+"""
 import json
 
 import bson.objectid

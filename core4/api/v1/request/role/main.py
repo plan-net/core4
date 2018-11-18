@@ -278,21 +278,20 @@ class RoleHandler(CoreRequestHandler):
             name (str): unique name of the user or role.
             realname (str): of the user or role
             is_active (bool): disable login and permission cascade with
-                              ``True``
+            ``True``
             role (list): of role names assigned
             email (str): for actual users; for roles the email attribute is
-                         expected to be undefined or ``None``
+            expected to be undefined or ``None``
             password (str): for actual users; for roles the password attribute
-                            is expected to be undefined or ``None``
-            perm (list): of permission protocols
-
-        For valid permission protocols see ``POST`` method.
+            is expected to be undefined or ``None``
+            perm (list): of permission protocols. For valid permission
+            protocols see ``POST`` method.
 
         Returns:
             If the requested update did not change any attribute, then
             ``no changes`` is returned in the data element. If changes have
             been applied successfully, then the data element contains the
-            updated user/role attributes:
+            updated user/role attributes.
 
             - **name** (*str*): of the user or role
             - **realname** (*str*): of the user or role
@@ -319,7 +318,7 @@ class RoleHandler(CoreRequestHandler):
             {
                 '_id': '5bed2012de8b6973715571a8',
                 'code': 400,
-                'error': 'tornado.web.HTTPError: HTTP 400: Bad Request (name or email exists)\n\n...',
+                'error': 'tornado.web.HTTPError: HTTP 400: Bad Request (name or email exists)...',
                 'message': 'Bad Request',
                 'timestamp': '2018-11-15T07:28:18.724144'
             }
@@ -329,7 +328,6 @@ class RoleHandler(CoreRequestHandler):
             >>>              "etag": "5bed1271de8b6973711e9713"}, headers=h)
             >>> rv
             <Response [200]>
-
             {
                 '_id': '5bed2026de8b6973715571b8',
                 'code': 200,

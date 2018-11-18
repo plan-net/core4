@@ -1,7 +1,7 @@
 """
 This module delivers the :class:`.CoreApplication` derived from
 :class:`tornado.web.Application`, :class:`.CoreApiContainer` encapsulating
-one or more applications and a helper method :meth:`serve` utilising
+one or more applications and a helper method :meth:`.serve` utilising
 :class:`.CoreApiServerTool` for server and endpoint management.
 
 A blueprint for server definition and startup is::
@@ -20,7 +20,7 @@ A blueprint for server definition and startup is::
         serve(CoreApiServer)
 
 
-Please note that :meth:`serve` can handle one or multiple
+Please note that :meth:`.serve` can handle one or multiple
 :class:`.CoreApiServer` objects with multiple endpoints and resources as in
 the following example::
 
@@ -130,7 +130,7 @@ class CoreApiContainer(CoreBase):
         """
         Parses the :class:`CoreApiContainer` objects' rules, attached the
         :attr:`.root` url and creates the :class:`.CoreApplication` objects
-        passing the settings from :meth:`serve`.
+        passing the settings from :meth:`.serve`.
 
         :return: :class:`.CoreApplication` instance
         """

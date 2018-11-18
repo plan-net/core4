@@ -131,9 +131,9 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
 
         * ``doc`` - handler's doc string
         * ``enabled`` - if ``True`` the project is in scope of
-          :meth:`serve_all`
+          :meth:`.serve_all`
         * ``exception`` - with type and traceback in case of errors
-        * ``name`` - :meth:`.qual_name <core4.api.v1.application.CoreApiContainer.qual_name`
+        * ``name`` - :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
           of the :class:`.CoreApiContainer`
         * ``rules`` - list of tuples with routing, :class:`.CoreRequestHandler`
           and intialisation arguments

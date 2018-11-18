@@ -1,3 +1,6 @@
+"""
+Pagination support
+"""
 import collections
 
 import math
@@ -15,17 +18,17 @@ class CorePager:
     #. the query method to collect data for the requested page
     #. the length (total count) of the total data set.
 
-    The :class:`.CorePager` method :meth:`.will then return a
-    :class:`PageResult` wich can be handled properly by
+    The :class:`.CorePager` method :meth:`.page` will then return a
+    :class:`PageResult` which can be handled properly by
     :class:`.CoreRequestHandler` method
-    :meth:`.reply <.CoreRequestHandler.reply`.
+    :meth:`.reply <.CoreRequestHandler.reply>`.
 
     **Example:**
 
     The following example is based on
-    :class:`core4.api.v1.request.queue.JobHandler` HTTP method ``GET`` witho no
-    parameter. This request returns the active jobs from ``sys.queue`  with
-    pagination;:
+    :class:`core4.api.v1.request.queue.JobHandler` HTTP method ``GET`` with no
+    parameter. This request returns the active jobs from ``sys.queue``  with
+    pagination::
 
         class JobHandler(CoreRequestHandler):
 
@@ -69,9 +72,9 @@ class CorePager:
     creates a dict ``._collection`` to store asynchronous MongoDB connections
     using :mod:`motor`. The ``.collection`` method instantiated each connection
     to a collection with the special ``.connect_async`` methods. All handlers
-    which follow tornado's async paradigm have to use ``.connect_async`'. By
-    default, the access via ``.config.sys[name]`` implicetely uses the
-    ``.connect'` method using synchronous :mod:`pymongo`.
+    which follow tornado's async paradigm have to use ``.connect_async``. By
+    default, the access via ``.config.sys[name]`` implicitely uses the
+    ``.connect`` method using synchronous :mod:`pymongo`.
 
     The request handlers ``.get`` method forwards the request to async
     ``.get_listing``. This method defines two inline methods ``_length``
@@ -80,11 +83,11 @@ class CorePager:
     These methods have to process a ``filter`` and a ``skip``, ``limit``, and
     ``sort_by`` attribute respectively.
 
-    After passing the request arguments these methods are
-    specified in the ``CorePager`` instance. This object's ``.page`` method
-    returns a :class:`.PageResult` named tuple. This object type is
-    automatically handled by :class:`.CoreRequestHandler` standard
-    :meth:`.reply <.CoreRequestHandler.reply>` method.
+    After passing the request arguments these methods are specified in the
+    ``CorePager`` instance. This object's ``.page`` method returns a
+    :class:`.PageResult` named tuple. This object type is automatically handled
+    by :class:`.CoreRequestHandler` standard
+    :meth:`.reply <core4.api.v1.request.main.CoreRequestHandler.reply>` method.
     """
 
     PAGE_ATTR = (

@@ -1,4 +1,9 @@
+"""
+General helper tools.
+"""
+
 import collections
+
 
 class Singleton(type):
     """
@@ -61,4 +66,3 @@ def dict_merge(dct, merge_dct, add_keys=True):
             dct[k] = merge_dct[k]
 
     return dct
-

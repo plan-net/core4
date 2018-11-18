@@ -1,10 +1,10 @@
-###############
-request handler
-###############
+################
+request handlers
+################
 
 
-standard request handler
-########################
+parent handler
+##############
 
 .. automodule:: core4.api.v1.request.main
     :members:
@@ -19,8 +19,8 @@ static file handler
     :show-inheritance:
 
 
-default request handler
-#######################
+default handler
+###############
 
 .. automodule:: core4.api.v1.request.default
     :members:

@@ -8,8 +8,3 @@ api.v1
    application
    server
    request/index
-   util
-   role/main
-   role/field
-
-
