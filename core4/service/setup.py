@@ -39,11 +39,11 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         setup *all* core4 environment prerequisites
         """
         self.make_folder()
-        self.make_role()
-        self.make_user()
         self.make_queue()
         self.make_stdout()
         self.make_stat()
+        self.make_role()
+        self.make_user()
 
     @once
     def make_folder(self):
