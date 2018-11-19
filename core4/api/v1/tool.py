@@ -5,7 +5,7 @@ Helper tools :meth:`.serve`` and :meth:`.serve_all` with the underlying
 import importlib
 
 import tornado.routing
-from tornado.web import StaticFileHandler
+import tornado.httpserver
 import core4.error
 import core4.service.introspect
 import core4.util
@@ -46,10 +46,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     "routing root [{}] duplicate with [{}]".format(
                         root, container_cls.qual_name())
                 )
-            tornado_app = container_obj.make_application()
+            application = container_obj.make_application()
             routes.append(
                 tornado.routing.Rule(tornado.routing.PathMatches(
-                    root + ".*"), tornado_app)
+                    root + ".*"), application)
             )
             roots.add(root)
         # add 404 root / project not found handler
@@ -58,8 +58,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 (
                     r'/(favicon.ico)',
                     CoreStaticFileHandler,
-                    {"path": "./request/_static"
-                }),
+                    {"path": "./request/_static"}
+                ),
                 tornado.routing.Rule(
                     tornado.routing.AnyMatches(), DefaultHandler
                 ),
@@ -71,7 +71,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
         return tornado.routing.RuleRouter(routes)
 
-    def serve(self, *args, port=None, name=None, reuse_port=True, **kwargs):
+    def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
+              **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -79,6 +80,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param args: one or more :class:`CoreApiContainer` classes
         :param port: to listen, defaults to ``5001``, see core4 configuration
                      setting ``api.port``
+        :param address: IP address or hostname.  If it's a hostname, the server
+                        will listen on all IP addresses associated with the
+                        name.  Address may be an empty string or None to listen
+                        on all  available interfaces.
         :param name: to identify the server
         :param reuse_port: tells the kernel to reuse a local socket in
                            ``TIME_WAIT`` state, defaults to ``True``
@@ -100,15 +105,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "certfile": cert_file,
                 "keyfile": key_file,
             }
-
         server = tornado.httpserver.HTTPServer(self.router, **http_args)
         port = port or self.config.api.port
-        server.bind(port, reuse_port=reuse_port)
+        server.bind(port, address=address, reuse_port=reuse_port)
         server.start()
-        self.logger.info(
-            "open %ssecure socket on port [%d]",
-            "" if http_args.get("ssl_options") else "NOT ", port)
-
+        self.logger.info("open %ssecure socket on port [%d]",
+                         "" if http_args.get("ssl_options") else "NOT ", port)
         try:
             tornado.ioloop.IOLoop().current().start()
         except KeyboardInterrupt:
@@ -117,8 +119,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         except:
             raise
 
-    def serve_all(self, filter=None, port=None, reuse_port=True, name=None,
-                  **kwargs):
+    def serve_all(self, filter=None, port=None, address=None, reuse_port=True,
+                  name=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -127,6 +129,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                        :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
         :param port: to listen, defaults to ``5001``, see core4 configuration
                      setting ``api.port``
+        :param address: IP address or hostname.  If it's a hostname, the server
+                        will listen on all IP addresses associated with the
+                        name.  Address may be an empty string or None to listen
+                        on all  available interfaces.
         :param reuse_port: tells the kernel to reuse a local socket in
                            ``TIME_WAIT`` state, defaults to ``True``
         :param name: to identify the server
@@ -161,7 +167,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                    **kwargs)
 
 
-def serve(*args, port=None, name=None, reuse_port=True, **kwargs):
+def serve(*args, port=None, address=None, name=None, reuse_port=True,
+          **kwargs):
     """
     Serve one or multiple :class:`.CoreApiContainer` classes.
 
@@ -207,6 +214,10 @@ def serve(*args, port=None, name=None, reuse_port=True, **kwargs):
 
     :param args: class dervived from :class:`.CoreApiContainer`
     :param port: to serve, defaults to core4 config ``api.port``
+    :param address: IP address or hostname.  If it's a hostname, the server
+                    will listen on all IP addresses associated with the name.
+                    Address may be an empty string or None to listen on all
+                    available interfaces.
     :param name: to identify the server, defaults to hostname
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
@@ -216,7 +227,8 @@ def serve(*args, port=None, name=None, reuse_port=True, **kwargs):
                               reuse_port=reuse_port, **kwargs)
 
 
-def serve_all(*filter, port=None, name=None, reuse_port=True, **kwargs):
+def serve_all(*filter, port=None, address=None, name=None, reuse_port=True,
+              **kwargs):
     """
     Serve all enabled core :class:`.CoreApiContainer` classes.
 
@@ -231,6 +243,10 @@ def serve_all(*filter, port=None, name=None, reuse_port=True, **kwargs):
                    :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
                    of the :class:`.CoreApiContainer` to be served.
     :param port: to serve, defaults to core4 config ``api.port``
+    :param address: IP address or hostname.  If it's a hostname, the server
+                    will listen on all IP addresses associated with the name.
+                    Address may be an empty string or None to listen on all
+                    available interfaces.
     :param name: to identify the server, defaults to hostname
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
@@ -241,4 +257,4 @@ def serve_all(*filter, port=None, name=None, reuse_port=True, **kwargs):
 
 
 if __name__ == '__main__':
-    serve_all()
+    serve_all("example.voting")
