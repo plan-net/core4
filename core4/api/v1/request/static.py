@@ -125,7 +125,7 @@ class CoreStaticFileHandler(CoreRequestHandler, StaticFileHandler):
                 self.absolute_path = abspath
                 if include_body:
                     mimetype = magic.Magic(mime=True).from_file(abspath)
-                    if mimetype.startswith("text/"):
+                    if mimetype == "text/html":
                         variable = self.variable or {}
                         variable.update(self.get_variable())
                         self.render(abspath, **variable)
