@@ -511,3 +511,14 @@ multiple process serving
 tbd.
 
 
+access core4 config from HTML files
+###################################
+
+tbd.
+
+
+example vue rendering
+#####################
+
+core static file with global variable injection
+static file with single endpoint to js rendered page
