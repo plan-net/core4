@@ -1,13 +1,15 @@
+from io import StringIO
+
+import pandas as pd
 import tornado.gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
-import pandas as pd
+
 import core4.util.node
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.tool import serve
 from core4.util.data import json_encode
-from io import StringIO
 
 
 # see API definition at
@@ -300,7 +302,7 @@ class CSVHandler(BaseHandler):
         df = pd.read_csv(StringIO(body))
         for rec in df.to_dict("rec"):
             self.csv_collection.insert_one(rec)
-        self.reply("read dataframe in shape %s" %(str(df.shape)))
+        self.reply("read dataframe in shape %s" % (str(df.shape)))
 
 
 class ResultHandler(BaseHandler):
@@ -312,10 +314,11 @@ class ResultHandler(BaseHandler):
     async def timeseries(self):
         data = []
         async for doc in self.event_collection.find().sort("question", 1):
-            doc["session_id"] = doc.pop("_id")
             doc["user_data"] = await self.get_user_data(doc["user_id"])
             data.append(doc)
         df = pd.DataFrame(data)
+        if df.empty:
+            return df
         df.sort_values(["session_id", "timestamp"], inplace=True)
         return df
 
@@ -325,6 +328,15 @@ class ResultHandler(BaseHandler):
             return {}
         else:
             return doc
+
+
+class ResetHandler(BaseHandler):
+    author = 'mra'
+
+    async def post(self, session_id):
+        ret = await self.event_collection.delete_many(
+            {"session_id": self.parse_objectid(session_id)})
+        self.reply({"removed": ret.deleted_count})
 
 
 class VotingApp(CoreApiContainer):
@@ -338,6 +350,7 @@ class VotingApp(CoreApiContainer):
         ("/poll/?(.*)", SessionStateHandler),
         ("/csv", CSVHandler),
         ("/result", ResultHandler),
+        ("/reset/(.+)", ResetHandler),
     ]
 
 

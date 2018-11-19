@@ -7,8 +7,11 @@ from threading import Thread
 import core4.service.setup
 import core4.util.data
 import core4.util.tool
+import core4.logger.mixin
 from core4.api.v1.test import ClientServer
 from example.voting.server import VotingApp
+import pandas as pd
+
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'voting_test'
@@ -18,14 +21,15 @@ MONGO_DATABASE = 'voting_test'
 def setup(tmpdir):
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
+    os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
+    os.environ["CORE4_OPTION_example__DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
     os.environ["CORE4_OPTION_api__setting__debug"] = "!!bool True"
     os.environ["CORE4_OPTION_api__setting__cookie_secret"] = "blabla"
-    os.environ[
-        "CORE4_OPTION_example__DEFAULT__mongo_database"] = MONGO_DATABASE
     conn = pymongo.MongoClient(MONGO_URL)
     conn.drop_database(MONGO_DATABASE)
     core4.logger.mixin.logon()
+    core4.service.setup.CoreSetup().make_all()
     yield
     # conn.drop_database(MONGO_DATABASE)
     for i, j in core4.service.setup.CoreSetup.__dict__.items():
@@ -339,3 +343,28 @@ def test_result(http):
     from pprint import pprint
     pprint(rv.json()["data"])
 
+
+def test_reset(http):
+    test_event(http)
+    rv = http.post("/result", json={"token": "secret_token"})
+    assert rv.status_code == 200
+    df = pd.DataFrame(rv.json()["data"])
+    session = df.session_id.unique()[0]
+    assert df.shape[0] == 11
+    rv = http.post("/reset/" + session, json={"token": "secret_token"})
+    assert rv.status_code == 200
+    assert rv.json()["data"] == {"removed": 11}
+
+    rv = http.post("/result", json={"token": "secret_token"})
+    assert rv.status_code == 200
+    assert rv.json()["data"] == []
+
+
+def test_reset_unknown(http):
+    rv = http.post("/result", json={"token": "secret_token"})
+    assert rv.status_code == 200
+    assert rv.json()["data"] == []
+
+    sid = "5bf31eedde8b697b18b76b09"
+    rv = http.post("/reset/" + sid, json={"token": "secret_token"})
+    assert rv.status_code == 200
