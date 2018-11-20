@@ -10,6 +10,7 @@ from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.tool import serve
 from core4.util.data import json_encode
+from core4.api.v1.tool import CoreStaticFileHandler
 
 
 # see API definition at
@@ -338,6 +339,11 @@ class ResetHandler(BaseHandler):
             {"session_id": self.parse_objectid(session_id)})
         self.reply({"removed": ret.deleted_count})
 
+class VotingAppHandler(CoreRequestHandler):
+    author = "agr"
+
+    def get(self):
+	    self.render("webapps/voting/dist/index.html")
 
 class VotingApp(CoreApiContainer):
     root = "/voting/v1"
@@ -351,6 +357,9 @@ class VotingApp(CoreApiContainer):
         ("/csv", CSVHandler),
         ("/result", ResultHandler),
         ("/reset/(.+)", ResetHandler),
+        ("/voting", VotingAppHandler),
+        ("/voting/dist/(.*)", CoreStaticFileHandler, {"path": "./webapps/voting/dist"}),
+
     ]
 
 
