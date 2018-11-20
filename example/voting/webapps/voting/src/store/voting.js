@@ -66,7 +66,7 @@ const actions = {
     const next = payload || getters.question
     Api.startQuestion(next.session_id).then(val => {
       commit('set_current_question', val)
-      Vue.SSE(`${axios.defaults.baseURL}/poll/${next.session_id}?token=secret_token`, { format: 'json' })
+      Vue.SSE(`${axios.defaults.baseURL}poll/${next.session_id}?token=secret_token`, { format: 'json' })
         .then(sse => {
           commit('set_server_side_events', sse)
           dispatch('showNotification', {
