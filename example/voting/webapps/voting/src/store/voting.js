@@ -66,7 +66,8 @@ const actions = {
     const next = payload || getters.question
     Api.startQuestion(next.session_id).then(val => {
       commit('set_current_question', val)
-      Vue.SSE(`${axios.defaults.baseURL}poll/${next.session_id}?token=secret_token`, { format: 'json' })
+      const path = (`${axios.defaults.baseURL}/poll/${next.session_id}?token=secret_token`).replace('//poll', '/poll')
+      Vue.SSE(path, { format: 'json' })
         .then(sse => {
           commit('set_server_side_events', sse)
           dispatch('showNotification', {
@@ -76,9 +77,9 @@ const actions = {
             console.error('lost connection; giving up!', e)
             sse.close()
           })
-          sse.subscribe('update', message => {
+          sse.subscribe('', message => {
             const seconds = (new Date(message.timestamp).getTime() - new Date(getters.question.started_at).getTime()) / 1000
-            // console.log(Object.assign(message, { seconds }))
+            console.log(Object.assign(message, { seconds }))
             commit('update_current_question', Object.assign(message, { seconds }))
           })
         })
