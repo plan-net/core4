@@ -343,7 +343,7 @@ class VotingAppHandler(CoreRequestHandler):
     author = "agr"
 
     def get(self):
-	    self.render("webapps/voting/dist/index.html", core_api="5001/voting/v1")
+	    self.render("webapps/voting/dist/index.html", core_api="./")
 
 class VotingApp(CoreApiContainer):
     root = "/voting/v1"
