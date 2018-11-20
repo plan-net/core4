@@ -16,49 +16,49 @@
         <v-data-table :headers="headers" :items="questions" :search="search" :rows-per-page-items="[10,25,50, {'text':'Alle','value':-1}]"
           rows-per-page-text="Elemente pro Seite">
           <template slot="items" slot-scope="props">
-            <td>
-              <pre></pre>
-              <v-icon small class="mr-2">
-                question_answer
-              </v-icon>{{props.item.question}}</td>
-            <td class="text-xs-right">
-              <v-layout align-center justify-end row fill-height class="pnbi-button-bar">
-                <v-tooltip bottom>
-                  <v-btn slot="activator" small flat icon
-                  :to="`result/${props.item.session_id}`">
-                    <v-icon small class="grey--text">
-                      bar_chart
-                    </v-icon>
-                  </v-btn>
-                  <span>Ergebnisse</span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <v-btn slot="activator" small flat icon
-                  :to="`question/${props.item.session_id}`"
-                  >
-                    <v-icon small class="grey--text">
-                      play_circle_filled
-                    </v-icon>
-                  </v-btn>
-                  <span>Frage öffnen</span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <v-btn slot="activator" small flat icon @click.stop="setCurrentItem(props.item)">
-                    <v-icon small class="grey--text">
-                      edit
-                    </v-icon>
-                  </v-btn>
-                  <span>Editieren</span>
-                </v-tooltip>
-                <v-tooltip bottom>
-                  <v-btn small slot="activator" icon @click.stop="setDeleteItem(props.item)">
-                    <v-icon small class="grey--text">delete
-                    </v-icon>
-                  </v-btn>
-                  <span>Löschen</span>
-                </v-tooltip>
-              </v-layout>
-            </td>
+            <tr @click="$router.push(`question/${props.item.session_id}`)">
+
+              <td>
+                <pre></pre>
+                <v-icon small class="mr-2">
+                  question_answer
+                </v-icon>{{props.item.question}}</td>
+              <td class="text-xs-right">
+                <v-layout align-center justify-end row fill-height class="pnbi-button-bar">
+                  <v-tooltip bottom>
+                    <v-btn slot="activator" small flat icon :to="`result/${props.item.session_id}`">
+                      <v-icon small class="grey--text">
+                        bar_chart
+                      </v-icon>
+                    </v-btn>
+                    <span>Ergebnisse</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <v-btn slot="activator" small flat icon @click.stop="$router.push(`question/${props.item.session_id}`)">
+                      <v-icon small class="accent--text">
+                        play_circle_filled
+                      </v-icon>
+                    </v-btn>
+                    <span>Frage öffnen</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <v-btn slot="activator" small flat icon @click.stop="setCurrentItem(props.item)">
+                      <v-icon small class="grey--text">
+                        edit
+                      </v-icon>
+                    </v-btn>
+                    <span>Editieren</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <v-btn small slot="activator" icon @click.stop="setDeleteItem(props.item)">
+                      <v-icon small class="grey--text">delete
+                      </v-icon>
+                    </v-btn>
+                    <span>Löschen</span>
+                  </v-tooltip>
+                </v-layout>
+              </td>
+            </tr>
           </template>
           <template slot="pageText" slot-scope="props">
             {{ props.pageStart }} - {{ props.pageStop }} von {{ props.itemsLength }}
@@ -78,15 +78,15 @@
 <script>
 import QuestionCrud from '@/components/QuestionCrud'
 import {
-  mapGetters, mapActions
+  mapGetters,
+  mapActions
 } from 'vuex'
 export default {
   name: 'admin',
   components: {
     QuestionCrud
   },
-  created () {
-  },
+  created () {},
   methods: {
     ...mapActions(['fetchQuestions', 'setCurrentQuestion']),
     setDeleteItem (item) {
@@ -124,14 +124,14 @@ export default {
   computed: {
     ...mapGetters(['questions'])
     /* ,
-          newQuestionDialogOpen: {
-            get: function (newVal) {
-              return this.internalNewQuestionDialogOpen
-            },
-            set: function (newVal) {
-              this.internalNewQuestionDialogOpen = newVal
-            }
-          } */
+            newQuestionDialogOpen: {
+              get: function (newVal) {
+                return this.internalNewQuestionDialogOpen
+              },
+              set: function (newVal) {
+                this.internalNewQuestionDialogOpen = newVal
+              }
+            } */
   }
 }
 
