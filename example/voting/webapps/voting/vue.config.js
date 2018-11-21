@@ -4,7 +4,7 @@ module.exports = {
   lintOnSave: true,
   baseUrl: process.env.NODE_ENV === 'production' ? './voting/dist' : './',
   devServer: {
-    port: 3000
+    port: 8080
   },
   configureWebpack: {
     resolve: {

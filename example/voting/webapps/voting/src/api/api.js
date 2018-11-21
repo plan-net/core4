@@ -54,6 +54,14 @@ export default {
       })
       .catch(error => Promise.reject(error.response))
   },
+  resetQuestion (sessionId) {
+    return axios
+      .post(`/reset/${sessionId}`, addSecretToken({}))
+      .then(result => {
+        return result.data
+      })
+      .catch(error => Promise.reject(error.response))
+  },
   dummyVote (payload) {
     return axios
       .post(`/event`, addSecretToken(payload))

@@ -1,21 +1,35 @@
 <template>
   <div>
     <v-layout v-if="question" column>
-      <hr>
-      <br>
-      <h2 class="headline">Frage: {{question.question}}</h2>
-      <br>
-      <h3 class="title">Zeit: {{question.seconds |seconds}}</h3>
-      <br>
-      <div>Stimmen: {{question.n}} / X</div>
-      <br>
+      <v-layout align-center justify-center row fill-height wrap>
+        <v-flex xs12 lg10 class="question-container pt-5">
+         <!--  <v-progress-linear :indeterminate="true"></v-progress-linear> -->
+
+          <h2 class="display-3 white--text text-xs-center mb-3">
+            {{question.question}}
+            <v-tooltip right style="position: absolute;">
+              <v-btn slot="activator" icon style="top: -6px;" @click="resetQuestion(question)">
+                <v-icon style="opacity: .5" class="grey--text">clear</v-icon>
+              </v-btn>
+              <span>Zurücksetzen</span>
+            </v-tooltip>
+          </h2>
+        </v-flex>
+        <v-flex xs12 class="text-xs-center pt-3 mt-3">
+          <percent></percent>
+        </v-flex>
+      </v-layout>
+      <!-- <h3 class="display-2 white--text text-xs-center mb-3">{{question.seconds |seconds}}</h3> -->
+      <!-- <h4 class="display-1 white--text text-xs-center mb-3">{{votes}} / {{peopleCount}}</h4> -->
       <!--       <pre>{{question}}</pre>
       <br> -->
-      <v-flex xs2>
-        <v-btn color="primary" flat :to="`/result/${question.session_id}`" :disabled="question.state === 'OPEN'">
-        Ergebnis
-      </v-btn>
-      </v-flex>
+      <!--       <v-layout align-center justify-end row fill-height>
+        <v-flex xs3>
+          <v-btn color="accent" small :to="`/result/${question.session_id}`" :disabled="question.state === 'OPEN'">
+            Ergebnis
+          </v-btn>
+        </v-flex>
+      </v-layout> -->
     </v-layout>
     <v-layout v-else></v-layout>
   </div>
@@ -25,30 +39,56 @@ import {
   mapGetters,
   mapActions
 } from 'vuex'
+import Percent from '@/components/Percent'
 export default {
-  components: {},
+  components: {
+    Percent
+  },
   created () {},
   methods: {
-    ...mapActions([])
+    ...mapActions(['resetQuestion'])
   },
   mounted () {},
-  filters: {
-    seconds: function (value) {
-      if (value != null) {
-        let dSecs = (value > 9 ? value : '0' + value)
-        return `${dSecs} Sekunden`
-      }
-    }
-  },
+
   data () {
     return {}
   },
-  watch: {
-
-  },
+  watch: {},
   computed: {
-    ...mapGetters(['question'])
+    ...mapGetters(['question', 'peopleCount']),
+    votes () {
+      try {
+        return this.question.n || 0
+      } catch (err) {}
+      return 0
+    }/* ,
+    percent () {
+      try {
+        const p = this.question.n / this.peopleCount
+        if (isNaN(p)) {
+          throw new Error('No Number')
+        }
+        return (p * 100).toFixed(2)
+      } catch (err) {}
+      return 0
+    } */
   }
 }
 
 </script>
+<style lang="scss" scoped>
+.question-container{
+  position: relative;
+  &:before{
+    opacity: 0;
+    position: absolute;
+    top: -2px;
+    content:'';
+    width: 50%;
+    left: 25%;
+    height: 2px;
+    background-color: rgba(255,255,255,.1);
+
+  }
+}
+</style>

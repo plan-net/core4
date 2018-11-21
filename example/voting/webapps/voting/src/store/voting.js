@@ -1,5 +1,5 @@
 /* import sim from '@/api/sim' */
-import { clone } from 'pnbi-base/src/helper'
+import { clone, unique } from 'pnbi-base/src/helper'
 import Api from '@/api/api'
 import Vue from 'vue'
 import axios from 'axios'
@@ -35,12 +35,6 @@ const actions = {
     Api.fetchResult().then(val => {
       commit('set_result', val)
       if (sid != null) {
-        /*         const result = val.filter(val2 => {
-          console.log(val2.session_id)
-          return val2.session_id === sid
-        })
-        console.log(result)
-        commit('set_current_result', result) */
         dispatch('setCurrentResult', { session_id: sid })
       } else {
         try {
@@ -51,7 +45,6 @@ const actions = {
   },
   setCurrentResult ({ commit, getters }, payload) {
     const result = getters.results.filter(val => val.session_id === payload.session_id)
-    console.log(result, payload, '#############')
     commit('set_current_result', result)
   },
   saveQuestion ({ commit, dispatch }, payload) {
@@ -90,18 +83,36 @@ const actions = {
     })
   },
   stopQuestion ({ commit, dispatch, getters }, payload) {
+    return new Promise(resolve => {
+      const next = payload || getters.question
+      Api.stopQuestion(next.session_id).then(val => {
+        try {
+          getters.sse.close()
+        } catch (err) {}
+        dispatch('showNotification', {
+          text: `Die Frage "${next.question}" wurde gestoppt.`
+        }, { root: true })
+        commit('update_current_question', { state: 'CLOSED' })
+        resolve()
+        // commit('set_current_question', null)
+      }).catch(err => {
+        console.error('Failed to connect to server', err)
+      })
+    })
+  },
+  resetQuestion ({ commit, dispatch, getters }, payload) {
     const next = payload || getters.question
-    Api.stopQuestion(next.session_id).then(val => {
+    Api.resetQuestion(next.session_id).then(val => {
       try {
         getters.sse.close()
       } catch (err) {}
       dispatch('showNotification', {
-        text: `Die Frage "${next.question}" wurde gestoppt.`
+        text: `Die Frage "${next.question}" wurde zurückgesetzt.`
       }, { root: true })
-      commit('update_current_question', { state: 'CLOSED' })
+      dispatch('fetchQuestions', next.session_id)
       // commit('set_current_question', null)
     }).catch(err => {
-      console.error('Failed to connect to server', err)
+      console.error('Error resetting question', err)
     })
   },
   updateCurrentQuestion ({ commit, getters }, payload) {
@@ -110,6 +121,7 @@ const actions = {
   setCurrentQuestion ({ commit, getters }, payload) {
     if (payload && payload.session_id != null) {
       const current = getters.questions.find(val => val.session_id === payload.session_id)
+      console.log(current.question)
       commit('set_current_question', current)
     } else {
       commit('set_current_question', null)
@@ -143,6 +155,21 @@ const getters = {
   sse (state) {
     return state.sse
   },
+  peopleCount (state) {
+    const question = state.questions.find(val => {
+      if (val.data.q != null) {
+        const q = Number.parseInt(val.data.q)
+        if (isNaN(q) === false) {
+          return true
+        }
+      }
+      return false
+    })
+    if (question != null) {
+      return question.data.q
+    }
+    return 150
+  },
   questions (state) {
     return state.questions
   },
@@ -151,6 +178,20 @@ const getters = {
   },
   results (state) {
     return state.results
+  },
+  clusteredResults (state) {
+    if (state.results != null) {
+      const results = unique(state.results.map(val => val.session_id))
+      const cluster = results.map(val => {
+        return {
+          session_id: val,
+          question: state.questions.find(val3 => val3.session_id === val),
+          result: state.results.filter(val2 => val2.session_id === val)
+        }
+      })
+
+      return cluster
+    }
   },
   result (state) {
     return state.result

@@ -5,6 +5,9 @@ import store from './store'
 import VeeValidate from 'vee-validate'
 import VueSSE from 'vue-sse'
 import PnbiBase from 'pnbi-base/src'
+/* import VueParticles from 'vue-particles'
+
+Vue.use(VueParticles) */
 
 Vue.use(PnbiBase, {
   router,

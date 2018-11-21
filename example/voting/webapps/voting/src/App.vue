@@ -1,16 +1,16 @@
 <template>
-<!--   <div id="app">
+  <!--   <div id="app">
     <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/about">About</router-link>
     </div>
     <router-view/>
   </div> -->
-    <pnbi-webapp>
+  <pnbi-webapp full-width>
     <side-navigation slot="navigation-slot"></side-navigation>
     <div slot="router">
       <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
-        <router-view/>
+        <router-view />
       </transition>
     </div>
   </pnbi-webapp>
@@ -23,6 +23,7 @@ export default {
     SideNavigation
   }
 }
+
 </script>
 <style lang="scss">
 
