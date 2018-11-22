@@ -225,6 +225,7 @@ const getters = {
         })
         const all = sex.m + sex.w
         ret.sex = [sex.m / all, sex.w / all].map(val => val * 100) // Geschlech in % von allen wählern
+        ret.countrys = [20, 40, 50, 30]
         return ret
       })
 

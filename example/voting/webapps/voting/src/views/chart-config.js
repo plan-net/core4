@@ -20,12 +20,13 @@ export const column = {
   }],
   plotOptions: {
     series: {
+      pointWidth: 100,
       dataLabels: {
         enabled: true,
         format: '{y}%',
         style: {
           fontWeight: 'bold',
-          color: '#7da1b9',
+          color: '#37474F',
           'textOutline': '0px contrast',
           'fontSize': '14px'
         }
@@ -33,6 +34,7 @@ export const column = {
     }
   },
   tooltip: {
+    enabled: false,
     backgroundColor: '#37474F',
     headerFormat: '',
     pointFormat: '{point.y:,.0f}%',
@@ -48,17 +50,27 @@ export const column = {
     labels: {
       style: {
         color: '#fff',
-        fontSize: '12px',
+        fontSize: '16px',
         fontWeight: '400'
       }
-    }
+    },
+    lineWidth: 0,
+    minorGridLineWidth: 0,
+    lineColor: 'transparent',
+    minorTickLength: 0,
+    tickLength: 0
   },
   yAxis: {
-    lineColor: '#ddd',
-    lineWidth: 1,
+    lineWidth: 0,
+    minorGridLineWidth: 0,
+    lineColor: 'transparent',
+    minorTickLength: 0,
+    tickLength: 0,
+    gridLineColor: 'transparent',
     min: 3,
     max: 100,
     labels: {
+      enabled: false,
       style: {
         color: '#fff'
       },

@@ -4,7 +4,7 @@
     <div style="overflow:hidden">
       <particles></particles>
     </div>
-      <v-btn style="position: absolute; opacity: .1" :disabled="!question" color="accent" @click="dummyVote()">Vote</v-btn>
+      <v-btn style="position: absolute; opacity: 0" :disabled="!question" color="accent" @click="dummyVote()">Vote</v-btn>
 
       <v-layout align-center justify-end row>
         <v-flex xs12 sm12 md10 lg8>

@@ -17,7 +17,7 @@
             </v-layout>
           </div>
           <v-btn fab dark large color="primary" class="next-btn">
-            <v-icon large dark>keyboard_arrow_right</v-icon>
+            <v-icon large dark @click="gotoNextQuestion(value.question)">keyboard_arrow_right</v-icon>
           </v-btn>
         </v-flex>
       </v-layout>
@@ -44,6 +44,9 @@ export default {
       this.setCurrentQuestion(q)
       // not ussed for now!!!
       // this.setCurrentResult(q)
+    },
+    gotoNextQuestion () {
+      console.log('item', this.iChartsOptions)
     }
   },
   mounted () {
@@ -72,12 +75,12 @@ export default {
   watch: {},
   computed: {
     iChartsOptions () {
-    // not working in dev  reload page
+    // not working in dev reload page
     // beacuase fetch only on mounted
       if (this.clusteredResults) {
         const tmp = this.clusteredResults.map(val => {
           const tplPlusSeries = getChartTemplate()
-          tplPlusSeries.series = { data: val.sex }
+          tplPlusSeries.series = { data: val.sex, data2: val.countrys }
           tplPlusSeries.xAxis.categories = ['Male', 'Female']
           tplPlusSeries.question = val.question
           return tplPlusSeries
@@ -118,14 +121,20 @@ export default {
 
 </style>
 <style scoped lang="scss">
+  .title {
+    font-size: 30px !important;
+  }
   $k-height: 500px;
   $k-height2: $k-height/2 - 20px;
 
   .pnbi-card {
     padding: 8px;
     position: relative;
+    // height: 60vh;
+    // padding-top: 20%;
 
     .next-btn {
+      // display: none;
       top: $k-height2;
       right: -35px;
       position: absolute;
@@ -149,7 +158,6 @@ export default {
       border: 1px solid white;
       width: inherit;
     }
-
     >div {
       // border: 1px solid rgba(255,255,255,.05);
     }
