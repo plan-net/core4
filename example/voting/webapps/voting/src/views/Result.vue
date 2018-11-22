@@ -2,24 +2,33 @@
   <v-container :fluid="false">
     <pnbi-page header-type="3" small v-if="timeout">
       <v-layout row wrap class="mt-3" align-center justify-center >
-        <v-flex xs10 v-for="(value, key) in iChartsOptions" :key="key" class="pnbi-card">
-          <div>
-            <h3 class="title white--text text-xs-center pt-3">{{value.question.question}}</h3>
-             <v-layout row class="chart-element" wrap>
-              <v-flex xs12>
-                <v-layout column align-center justify-end fill-height>
-                  <v-flex class="pt-4">
-                    <chart :options="value"></chart>
-                  </v-flex>
-                </v-layout>
-              </v-flex>
 
-            </v-layout>
-          </div>
-          <v-btn fab dark large color="primary" class="next-btn">
-            <v-icon large dark @click="gotoNextQuestion(value.question)">keyboard_arrow_right</v-icon>
-          </v-btn>
-        </v-flex>
+        <v-carousel hide-delimiters height="1000" :cycle="false">
+          <v-carousel-item
+            v-for="(value, key) in iChartsOptions"
+            :key="key">
+            <div>
+              <h3 class="title white--text text-xs-center pt-5">{{value.question.question}}</h3>
+              <v-layout column class="chart-element">
+                <v-flex xs12>
+                  <v-layout column align-center justify-end fill-height>
+                    <v-flex class="pt-4">
+                      <chart :options="value"></chart>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+                <v-flex xs12>
+                  <v-layout column align-center justify-end fill-height>
+                    <v-flex class="pt-4">
+                      <chart :options="iChartsOptions2[key]"></chart>
+                    </v-flex>
+                  </v-layout>
+                </v-flex>
+              </v-layout>
+            </div>
+          </v-carousel-item>
+        </v-carousel>
+
       </v-layout>
       <!-- <pre class="white--text">{{clusteredResults[1].result}}</pre> -->
     <!--   <pre>{{chartsOptions}}</pre> -->
@@ -46,7 +55,7 @@ export default {
       // this.setCurrentResult(q)
     },
     gotoNextQuestion () {
-      console.log('item', this.iChartsOptions)
+      console.log('item', this.iChartsOptions2)
     }
   },
   mounted () {
@@ -80,8 +89,22 @@ export default {
       if (this.clusteredResults) {
         const tmp = this.clusteredResults.map(val => {
           const tplPlusSeries = getChartTemplate()
-          tplPlusSeries.series = { data: val.sex, data2: val.countrys }
+          tplPlusSeries.series = { data: val.sex }
           tplPlusSeries.xAxis.categories = ['Male', 'Female']
+          tplPlusSeries.question = val.question
+          return tplPlusSeries
+        })
+        return tmp
+      }
+    },
+    iChartsOptions2 () {
+    // not working in dev reload page
+    // beacuase fetch only on mounted
+      if (this.clusteredResults) {
+        const tmp = this.clusteredResults.map(val => {
+          const tplPlusSeries = getChartTemplate()
+          tplPlusSeries.series = { data: val.countrys }
+          tplPlusSeries.xAxis.categories = ['Germany', 'France', 'England', 'Poland']
           tplPlusSeries.question = val.question
           return tplPlusSeries
         })
@@ -121,10 +144,13 @@ export default {
 
 </style>
 <style scoped lang="scss">
+  .v-carousel {
+    background-color: #364650;
+  }
   .title {
     font-size: 30px !important;
   }
-  $k-height: 500px;
+  $k-height: 1000px;
   $k-height2: $k-height/2 - 20px;
 
   .pnbi-card {

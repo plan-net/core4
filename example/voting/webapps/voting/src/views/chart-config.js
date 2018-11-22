@@ -1,7 +1,8 @@
 export const column = {
   chart: {
     type: 'column',
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
+    marginTop: 20
   },
   title: null,
   colors: ['#fff'],
@@ -10,7 +11,7 @@ export const column = {
       enabled: true,
       format: '{y:,.0f}%',
       style: {
-        color: '#37474F',
+        color: '#fff',
         fontWeight: 600,
         textOutline: '2px contrast'
       },
@@ -24,9 +25,11 @@ export const column = {
       dataLabels: {
         enabled: true,
         format: '{y}%',
+        crop: false,
+        overflow: 'none',
         style: {
           fontWeight: 'bold',
-          color: '#37474F',
+          color: '#fff',
           'textOutline': '0px contrast',
           'fontSize': '14px'
         }
