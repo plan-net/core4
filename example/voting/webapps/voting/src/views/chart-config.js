@@ -23,11 +23,11 @@ export const column = {
       pointWidth: 100,
       dataLabels: {
         enabled: true,
-        format: '{y}%',
+        format: '{y:.2f}%',
         style: {
           fontWeight: 'bold',
           color: '#37474F',
-          'textOutline': '0px contrast',
+          'textOutline': '1px contrast',
           'fontSize': '14px'
         }
       }
