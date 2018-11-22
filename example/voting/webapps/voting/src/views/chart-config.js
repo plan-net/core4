@@ -9,9 +9,9 @@ export const column = {
   series: [{
     dataLabels: {
       enabled: true,
-      format: '{y:,.0f}%',
+      format: '{y:,.1f}%',
       style: {
-        color: '#fff',
+        color: 'red',
         fontWeight: 600,
         textOutline: '2px contrast'
       },
@@ -24,7 +24,7 @@ export const column = {
       pointWidth: 100,
       dataLabels: {
         enabled: true,
-        format: '{y}%',
+        format: '{y:,.1f}%',
         crop: false,
         overflow: 'none',
         style: {
