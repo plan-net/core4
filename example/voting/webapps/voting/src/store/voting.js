@@ -213,6 +213,7 @@ const getters = {
           m: 0,
           w: 0
         }
+        console.log('resultCompleteRaw', resultCompleteRaw)
         resultCompleteRaw.forEach(val => {
           try {
             if (val.user_data.sex === 'm') {
@@ -226,7 +227,7 @@ const getters = {
         // SEX
         const MALES_ALL = 158
         const FEMALES_ALL = 39
-        ret.sex = [sex.m / MALES_ALL, sex.w / FEMALES_ALL].map(val => val * 100) // Geschlecht in % von allen wählern
+        ret.sex = [sex.m / MALES_ALL, sex.w / FEMALES_ALL].map(val => Math.round(val * 100)) // Geschlecht in % von allen wählern
         // SEX END
         // Countries
         const COUNTRIES_ALL = {
@@ -251,13 +252,14 @@ const getters = {
         // TODO
         // 1. Distict countries for voting for categories ["Germany", "Italy", "Switzerland"]
         // 2. Series Array mit selber Reihenfolge wie categories [20, 10, 5]
+
         ret.countrys = {
           categories: ['Germany', 'Italy', 'Switzerland'],
           series: [20, 10, 5]
         }
         // use in Result.vue to populate Countries Array
-        console.log(COUNTRIES_ALL)
-        ret.countrys = [20, 40, 50, 30]
+        console.log('COUNTRIES_ALL', COUNTRIES_ALL, val)
+        // ret.countrys = [20, 40, 50, 30]
         // Countries END
         return ret
       })

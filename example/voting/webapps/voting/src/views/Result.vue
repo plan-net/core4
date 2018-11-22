@@ -20,7 +20,7 @@
                 <v-flex xs12>
                   <v-layout column align-center justify-end fill-height>
                     <v-flex class="pt-4">
-                      <chart :options="iChartsOptions2[key]"></chart>
+                      <chart :options="iChartsOptionsCountrys[key]"></chart>
                     </v-flex>
                   </v-layout>
                 </v-flex>
@@ -97,14 +97,14 @@ export default {
         return tmp
       }
     },
-    iChartsOptions2 () {
+    iChartsOptionsCountrys () {
     // not working in dev reload page
     // beacuase fetch only on mounted
       if (this.clusteredResults) {
         const tmp = this.clusteredResults.map(val => {
           const tplPlusSeries = getChartTemplate()
-          tplPlusSeries.series = { data: val.countrys }
-          tplPlusSeries.xAxis.categories = ['Germany', 'France', 'England', 'Poland']
+          tplPlusSeries.series = { data: val.countrys.series }
+          tplPlusSeries.xAxis.categories = val.countrys.categories
           tplPlusSeries.question = val.question
           return tplPlusSeries
         })
