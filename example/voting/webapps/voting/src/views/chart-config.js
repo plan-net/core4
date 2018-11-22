@@ -4,7 +4,7 @@ export const column = {
     backgroundColor: 'transparent'
   },
   title: null,
-  colors: ['#7da1b9', '#7da1b9'],
+  colors: ['#fff'],
   series: [{
     dataLabels: {
       enabled: true,
@@ -47,7 +47,7 @@ export const column = {
     categories: ['Male', 'Female'],
     labels: {
       style: {
-        color: '#3f515d',
+        color: '#fff',
         fontSize: '12px',
         fontWeight: '400'
       }
@@ -59,7 +59,9 @@ export const column = {
     min: 3,
     max: 100,
     labels: {
-      color: '#fff',
+      style: {
+        color: '#fff'
+      },
       format: '{value}%'
     }
   }
