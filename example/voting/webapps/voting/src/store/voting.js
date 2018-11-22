@@ -223,9 +223,42 @@ const getters = {
           } catch (err) {
           }
         })
-        const all = sex.m + sex.w
-        ret.sex = [sex.m / all, sex.w / all].map(val => val * 100) // Geschlech in % von allen wählern
+        // SEX
+        const MALES_ALL = 158
+        const FEMALES_ALL = 39
+        ret.sex = [sex.m / MALES_ALL, sex.w / FEMALES_ALL].map(val => val * 100) // Geschlecht in % von allen wählern
+        // SEX END
+        // Countries
+        const COUNTRIES_ALL = {
+          'Germany': 108,
+          'Ukraine': 5,
+          'Switzerland': 7,
+          'China': 2,
+          'France': 9,
+          'Poland': 12,
+          'United Kingdom': 1,
+          'Italy': 13,
+          'United States': 3,
+          'Austria': 8,
+          'United Arab Emirates': 5,
+          'Spain': 3,
+          'Belgium': 9,
+          'Russia': 5,
+          'Korea': 1,
+          'India': 1,
+          'not specified': 5
+        }
+        // TODO
+        // 1. Distict countries for voting for categories ["Germany", "Italy", "Switzerland"]
+        // 2. Series Array mit selber Reihenfolge wie categories [20, 10, 5]
+        ret.countrys = {
+          categories: ['Germany', 'Italy', 'Switzerland'],
+          series: [20, 10, 5]
+        }
+        // use in Result.vue to populate Countries Array
+        console.log(COUNTRIES_ALL)
         ret.countrys = [20, 40, 50, 30]
+        // Countries END
         return ret
       })
 
