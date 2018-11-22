@@ -15,8 +15,8 @@
             <div class="pt-2">
 
               <v-btn small :disabled="!question" v-if="(question || {}).state === 'OPEN'" color="primary" @click="stopQuestion(question)">
-                Stoppen</v-btn>
-              <v-btn small :disabled="!question" v-else color="accent" @click="startQuestion(question)">Starten</v-btn>
+                STOP</v-btn>
+              <v-btn small :disabled="!question" v-else color="accent" @click="startQuestion(question)">START</v-btn>
 
             </div>
             <v-btn large flat icon dark @click="next">

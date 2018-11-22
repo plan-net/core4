@@ -1,60 +1,19 @@
 <template>
   <v-container :fluid="false">
-    <pnbi-page header-type="3" small>
-      <!--       <v-layout align-center justify-end row>
-        <v-flex xs12 sm12 md10 lg8>
-          <v-layout align-start justify-end>
-            <v-btn class="extra-large" flat icon dark @click="next">
-              <v-icon style="font-size: 60px;">keyboard_arrow_right</v-icon>
-            </v-btn>
-          </v-layout>
-        </v-flex>
-      </v-layout> -->
-      <v-layout row wrap class="mt-3" align-center justify-center>
-        <v-flex xs8 v-for="(value, key) in clusteredResults" :key="key" class="pnbi-card">
+    <pnbi-page header-type="3" small v-if="timeout">
+      <v-layout row wrap class="mt-3" align-center justify-center >
+        <v-flex xs10 v-for="(value, key) in iChartsOptions" :key="key" class="pnbi-card">
           <div>
             <h3 class="title white--text text-xs-center pt-3">{{value.question.question}}</h3>
-            <v-layout row class="chart-element" wrap>
-              <v-flex xs3>
+             <v-layout row class="chart-element" wrap>
+              <v-flex xs12>
                 <v-layout column align-center justify-end fill-height>
-                  <v-flex>
-                    chart
+                  <v-flex class="pt-4">
+                    <chart :options="value"></chart>
                   </v-flex>
-                  <div class="legende">
-                    m f
-                  </div>
                 </v-layout>
               </v-flex>
-              <v-flex xs3>
-                <v-layout column align-center justify-end fill-height>
-                  <v-flex>
-                    chart
-                  </v-flex>
-                  <div class="legende">
-                    m f
-                  </div>
-                </v-layout>
-              </v-flex>
-              <v-flex xs3>
-                <v-layout column align-center justify-end fill-height>
-                  <v-flex>
-                    chart
-                  </v-flex>
-                  <div class="legende">
-                    m f
-                  </div>
-                </v-layout>
-              </v-flex>
-              <v-flex xs3>
-                <v-layout column align-center justify-end fill-height>
-                  <v-flex>
-                    chart
-                  </v-flex>
-                  <div class="legende">
-                    m f
-                  </div>
-                </v-layout>
-              </v-flex>
+
             </v-layout>
           </div>
           <v-btn fab dark large color="primary" class="next-btn">
@@ -62,35 +21,70 @@
           </v-btn>
         </v-flex>
       </v-layout>
+      <!-- <pre class="white--text">{{clusteredResults[1].result}}</pre> -->
+    <!--   <pre>{{chartsOptions}}</pre> -->
     </pnbi-page>
   </v-container>
 
 </template>
 <script>
+import { Chart } from 'highcharts-vue'
+import { getChartTemplate } from './chart-config.js'
 import {
   mapGetters,
   mapActions
 } from 'vuex'
 export default {
-  components: {},
-  created () {},
+  components: {
+    Chart
+  },
   methods: {
     ...mapActions(['fetchQuestions', 'setCurrentQuestion', 'setCurrentResult', 'fetchResult']),
     next (q) {
       this.setCurrentQuestion(q)
-      this.setCurrentResult(q)
+      // not ussed for now!!!
+      // this.setCurrentResult(q)
     }
   },
   mounted () {
-    const currentSid = this.$route.params.sid
-    this.fetchQuestions(currentSid)
-    this.fetchResult(currentSid)
+    // const currentSid = this.$route.params.sid
+    this.fetchQuestions()
+    // highcharts-vue is a piece of shit
+    // it took me 2 hours in the evening to show
+    // the fucking chart with this bullshit
+    // on reload chart was not there
+    // use vue-highcharts (maybe, beeter test)
+    window.setTimeout(function () {
+      this.fetchResult()
+    }.bind(this), 100)
+    window.setTimeout(function () {
+      this.fetchResult()
+    }.bind(this), 200)
+    window.setTimeout(function () {
+      this.timeout = true
+    }.bind(this), 300)
   },
   data () {
-    return {}
+    return {
+      timeout: null
+    }
   },
   watch: {},
   computed: {
+    iChartsOptions () {
+    // not working in dev  reload page
+    // beacuase fetch only on mounted
+      if (this.clusteredResults) {
+        const tmp = this.clusteredResults.map(val => {
+          const tplPlusSeries = getChartTemplate()
+          tplPlusSeries.series = { data: val.sex }
+          tplPlusSeries.xAxis.categories = ['Male', 'Female']
+          tplPlusSeries.question = val.question
+          return tplPlusSeries
+        })
+        return tmp
+      }
+    },
     ...mapGetters(['question', 'questions', 'result', 'peopleCount', 'clusteredResults'])
   }
 }
@@ -124,7 +118,7 @@ export default {
 
 </style>
 <style scoped lang="scss">
-  $k-height: 600px;
+  $k-height: 500px;
   $k-height2: $k-height/2 - 20px;
 
   .pnbi-card {

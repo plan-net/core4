@@ -5,9 +5,9 @@ import store from './store'
 import VeeValidate from 'vee-validate'
 import VueSSE from 'vue-sse'
 import PnbiBase from 'pnbi-base/src'
-/* import VueParticles from 'vue-particles'
-
-Vue.use(VueParticles) */
+import HighchartsVue from 'highcharts-vue'
+import '@/config/highcharts'
+Vue.use(HighchartsVue)
 
 Vue.use(PnbiBase, {
   router,
@@ -29,7 +29,7 @@ VeeValidate.Validator.extend('json', {
     }
   }
 })
-
+// server sent events
 Vue.use(VueSSE)
 Vue.config.productionTip = false
 

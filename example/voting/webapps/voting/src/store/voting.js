@@ -15,15 +15,34 @@ const state = {
 const actions = {
   dummyVote ({ commit, dispatch, getters }, sid) {
     // const current = getters.question
-    Api.dummyVote({ id: Math.random() * Math.random() })
+    const shuffleArray = arr => arr
+      .map(a => [Math.random(), a])
+      .sort((a, b) => a[0] - b[0])
+      .map(a => a[1])
+
+    const ids = ['user-1',
+      'user-6',
+      'user-2',
+      'user-3',
+      'user-4',
+      'user-5',
+      'user-7',
+      'user-8',
+      'user-9',
+      'user-10',
+      'user-11']
+    const random = shuffleArray(ids)[0]
+    Api.dummyVote({ id: random })
   },
   fetchQuestions ({ commit, dispatch, getters }, sid) {
     Api.fetchQuestions().then(val => {
       commit('set_questions', val)
+      const qs = getters.questions
       if (sid != null) {
         dispatch('setCurrentQuestion', { session_id: sid })
+      } else {
+        dispatch('setCurrentQuestion', { session_id: qs[0].session_id })
       }
-      const qs = getters.questions
       qs.forEach(val => {
         if (val.state === 'OPEN') {
           dispatch('stopQuestion', val)
@@ -34,13 +53,14 @@ const actions = {
   fetchResult ({ commit, dispatch, getters }, sid) {
     Api.fetchResult().then(val => {
       commit('set_result', val)
-      if (sid != null) {
+      /* if (sid != null) {
         dispatch('setCurrentResult', { session_id: sid })
       } else {
         try {
+          console.log(val[0].session_id)
           dispatch('setCurrentResult', { session_id: val[0].session_id })
         } catch (err) {}
-      }
+      } */
     })
   },
   setCurrentResult ({ commit, getters }, payload) {
@@ -72,7 +92,7 @@ const actions = {
           })
           sse.subscribe('', message => {
             const seconds = (new Date(message.timestamp).getTime() - new Date(getters.question.started_at).getTime()) / 1000
-            console.log(Object.assign(message, { seconds }))
+            console.info(Object.assign(message, { seconds }))
             commit('update_current_question', Object.assign(message, { seconds }))
           })
         })
@@ -121,7 +141,6 @@ const actions = {
   setCurrentQuestion ({ commit, getters }, payload) {
     if (payload && payload.session_id != null) {
       const current = getters.questions.find(val => val.session_id === payload.session_id)
-      console.log(current.question)
       commit('set_current_question', current)
     } else {
       commit('set_current_question', null)
@@ -183,15 +202,36 @@ const getters = {
     if (state.results != null) {
       const results = unique(state.results.map(val => val.session_id))
       const cluster = results.map(val => {
-        return {
+        const resultCompleteRaw = state.results.filter(val2 => val2.session_id === val)
+
+        const ret = {
           session_id: val,
           question: state.questions.find(val3 => val3.session_id === val),
-          result: state.results.filter(val2 => val2.session_id === val)
+          result: resultCompleteRaw
         }
+        const sex = {
+          m: 0,
+          w: 0
+        }
+        resultCompleteRaw.forEach(val => {
+          try {
+            if (val.user_data.sex === 'm') {
+              sex.m++
+            } else {
+              sex.w++
+            }
+          } catch (err) {
+          }
+        })
+        const all = sex.m + sex.w
+        ret.sex = [sex.m / all, sex.w / all].map(val => val * 100) // Geschlech in % von allen wählern
+        return ret
       })
 
       return cluster
     }
+
+    return null
   },
   result (state) {
     return state.result

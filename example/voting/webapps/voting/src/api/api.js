@@ -69,30 +69,5 @@ export default {
         return result.data
       })
       .catch(error => Promise.reject(error.response))
-  },
-  startLongPolling (sessionId) {
-    /*     return Vue.SSE(`http://localhost:5001/voting/v1/poll/${sessionId}?token=secret_token`, { format: 'json' })
-      .then(sse => {
-        console.log(sse, '------')
-      }) */
-    /*     return axios
-      .get(
-        `/poll/${sessionId}`,
-        { params: addSecretToken({}),
-          responseType: 'stream',
-          headers: {
-            'Accept': 'application/pdf'
-          } }
-      )
-      .then(result => {
-        console.log('result', result)
-        return result.data
-      })
-      .catch(error => Promise.reject(error.response)) */
   }
 }
-/* , {
-  headers: {
-    'Content-Type': 'text/event-stream'
-  }
-} */

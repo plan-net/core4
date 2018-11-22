@@ -19,7 +19,7 @@
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title class="text--accent-4">
-              Fragen
+              Voting
             </v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>
@@ -30,7 +30,7 @@
           </v-list-tile-action>
           <v-list-tile-content>
             <v-list-tile-title class="text--accent-4">
-              Ergebnis
+              Results
             </v-list-tile-title>
           </v-list-tile-content>
         </v-list-tile>

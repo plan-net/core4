@@ -51,14 +51,24 @@ Particle.prototype = {
 }
 const MAX_PARTICLES = 280
 // const COLOURS = ['#d70f14']
-const COLOURS = ['#3f515d']
+// const COLOURS = ['#3f515d']
+const COLOURS = ['#69D2E7', '#A7DBD8', '#E0E4CC', '#F38630', '#FA6900', '#FF4E50', '#F9D423']
 export default {
   watch: {
     votes (newVal) {
       if (newVal) {
+        // creates 5 bubbles on every vote++
         this.spawn(window.random(window.innerWidth), window.random(window.innerHeight))
         this.spawn(window.random(window.innerWidth), window.random(window.innerHeight))
-        this.spawn(window.random(window.innerWidth), window.random(window.innerHeight))
+        window.setTimeout(function () {
+          this.spawn(window.random(window.innerWidth), window.random(window.innerHeight))
+        }.bind(this), 111)
+        window.setTimeout(function () {
+          this.spawn(window.random(window.innerWidth), window.random(window.innerHeight))
+        }.bind(this), 222)
+        window.setTimeout(function () {
+          this.spawn(window.random(window.innerWidth), window.random(window.innerHeight))
+        }.bind(this), 333)
       }
     }
   },

@@ -11,11 +11,11 @@
               <v-btn slot="activator" icon style="top: -6px;" @click="resetQuestion(question)">
                 <v-icon style="opacity: .5" class="grey--text">clear</v-icon>
               </v-btn>
-              <span>Zurücksetzen</span>
+              <span>Reset question</span>
             </v-tooltip>
           </h2>
         </v-flex>
-        <v-flex xs12 class="text-xs-center pt-3 mt-3">
+        <v-flex xs12 class="text-xs-center pt-3 mt-3" v-if="(question || {}).state === 'OPEN'">
           <percent></percent>
         </v-flex>
       </v-layout>

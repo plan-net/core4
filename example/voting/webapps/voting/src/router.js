@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Voting from './views/Voting.vue'
 import Admin from './views/Admin.vue'
+// import Result from './views/Result.vue'
 
 Vue.use(Router)
 
@@ -17,20 +17,11 @@ export default new Router({
       }
     },
     {
-      path: '/voting',
-      name: 'voting',
-      component: Voting,
-      meta: {
-        auth: false,
-        title: 'TODO'
-      }
-    },
-    {
       path: '/question/:sid?',
       name: 'questions',
       meta: {
         auth: false,
-        title: 'Fragen'
+        title: 'Voting'
       },
       // route level code-splitting
       // this generates a separate chunk (about.[hash].js) for this route
@@ -42,8 +33,9 @@ export default new Router({
       name: 'result',
       meta: {
         auth: false,
-        title: 'Ergebnis'
+        title: 'Result'
       },
+      // component: Result
       // route level code-splitting
       // this generates a separate chunk (about.[hash].js) for this route
       // which is lazy-loaded when the route is visited.

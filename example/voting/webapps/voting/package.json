@@ -10,6 +10,8 @@
     "test:e2e": "vue-cli-service test:e2e"
   },
   "dependencies": {
+    "highcharts": "^6.2.0",
+    "highcharts-vue": "^1.2.0",
     "pnbi-base": "https://github.com/marekmru/pnbi-base.git#mmr.CORE4-39_2610",
     "vue-sse": "^1.0.2"
   },
