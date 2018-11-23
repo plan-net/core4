@@ -202,6 +202,7 @@ const getters = {
     if (state.results != null) {
       const results = unique(state.results.map(val => val.session_id))
       const cluster = results.map(val => {
+        console.log(val)
         const resultCompleteRaw = state.results.filter(val2 => val2.session_id === val)
 
         const ret = {
@@ -213,7 +214,6 @@ const getters = {
           m: 0,
           w: 0
         }
-        console.log('resultCompleteRaw', resultCompleteRaw)
         resultCompleteRaw.forEach(val => {
           try {
             if (val.user_data.sex === 'm') {
@@ -227,38 +227,52 @@ const getters = {
         // SEX
         const MALES_ALL = 158
         const FEMALES_ALL = 39
-        ret.sex = [sex.m / MALES_ALL, sex.w / FEMALES_ALL].map(val => Math.round(val * 100)) // Geschlecht in % von allen wählern
+        ret.sex = [sex.m / MALES_ALL, sex.w / FEMALES_ALL].map(val => val * 100) // Geschlecht in % von allen wählern
         // SEX END
         // Countries
         const COUNTRIES_ALL = {
-          'Germany': 108,
-          'Ukraine': 5,
-          'Switzerland': 7,
-          'China': 2,
-          'France': 9,
-          'Poland': 12,
-          'United Kingdom': 1,
-          'Italy': 13,
-          'United States': 3,
-          'Austria': 8,
-          'United Arab Emirates': 5,
-          'Spain': 3,
-          'Belgium': 9,
-          'Russia': 5,
-          'Korea': 1,
-          'India': 1,
-          'not specified': 5
+          'Germany': { all: 108, real: 0 },
+          'Ukraine': { all: 5, real: 0 },
+          'Switzerland': { all: 7, real: 0 },
+          'China': { all: 2, real: 0 },
+          'France': { all: 9, real: 0 },
+          'Poland': { all: 12, real: 0 },
+          'United Kingdom': { all: 1, real: 0 },
+          'Italy': { all: 13, real: 0 },
+          'United States': { all: 3, real: 0 },
+          'Austria': { all: 8, real: 0 },
+          'United Arab Emirates': { all: 5, real: 0 },
+          'Spain': { all: 3, real: 0 },
+          'Belgium': { all: 9, real: 0 },
+          'Russia': { all: 5, real: 0 },
+          'Korea': { all: 1, real: 0 },
+          'India': { all: 1, real: 0 },
+          'not specified': { all: 5, real: 0 }
         }
+        let countryTmp = []
+        resultCompleteRaw.forEach(val => {
+          console.log(val.user_data.country)
+          try {
+            COUNTRIES_ALL[val.user_data.country].real = COUNTRIES_ALL[val.user_data.country].real + 1
+          } catch (err) {}
+        })
+        Object.keys(COUNTRIES_ALL).forEach(val => {
+          if (COUNTRIES_ALL[val].real > 0) {
+            countryTmp.push(
+              { category: val, value: COUNTRIES_ALL[val].real / COUNTRIES_ALL[val].all }
+            )
+          }
+        })
         // TODO
         // 1. Distict countries for voting for categories ["Germany", "Italy", "Switzerland"]
         // 2. Series Array mit selber Reihenfolge wie categories [20, 10, 5]
 
-        ret.countrys = {
+        /*         ret.countrys = {
           categories: ['Germany', 'Italy', 'Switzerland'],
           series: [20, 10, 5]
-        }
+        } */
         // use in Result.vue to populate Countries Array
-        console.log('COUNTRIES_ALL', COUNTRIES_ALL, val)
+        // console.log('COUNTRIES_ALL', COUNTRIES_ALL, val)
         // ret.countrys = [20, 40, 50, 30]
         // Countries END
         return ret
