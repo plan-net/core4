@@ -109,18 +109,19 @@ class CoreApiInspector(CoreBase):
             meth = handler.__dict__.get(m, None)
             if meth is not None:
                 docstring = meth.__doc__
-                html = self.make_html(docstring)
-                method[m] = {
-                    "doc": docstring,
-                    "html": html["body"],
-                    "parser_error": html["error"],
-                    "parts": html["parts"],
-                    "extra_parts": html["extra_parts"]
-                }
-                if html["error"]:
-                    self.logger.error("encountered [%d] errors with [%s]:\n%s",
-                                      len(html["error"]), name,
-                                      "\n".join(html["error"]))
+                if docstring:
+                    html = self.make_html(docstring)
+                    method[m] = {
+                        "doc": docstring,
+                        "html": html["body"],
+                        "parser_error": html["error"],
+                        "parts": html["parts"],
+                        "extra_parts": html["extra_parts"]
+                    }
+                    if html["error"]:
+                        self.logger.error("encountered [%d] errors with [%s]:\n%s",
+                                          len(html["error"]), name,
+                                          "\n".join(html["error"]))
         return method
 
 
