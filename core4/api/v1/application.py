@@ -166,6 +166,18 @@ class CoreApiContainer(CoreBase):
                 "(str, handler)")
         return CoreApplication(rules, self, **self._settings)
 
+    def register(self, route, cls, *args):
+        self.logger.debug("registering [%s] at [%s]",
+                          cls.qual_name(), route)
+        hostname = core4.util.node.get_hostname()
+        identifier = self.identifier
+        # self.config.sys.api.update_one(
+        #     filter={"_id": cls.qual_name()},
+        #     update={
+        #         "$set": {
+        #
+        #         }
+        #     })
 
 class CoreApplication(tornado.web.Application):
     """
