@@ -142,7 +142,6 @@ class CoreApiContainer(CoreBase):
         """
         rules = []
         roots = set()
-        self.logger.info("startup [%s]", self.get_root())
         for rule in self.default_routes + self._rules + self.rules:
             if isinstance(rule, (tuple, list)):
                 if len(rule) >= 2:
@@ -159,14 +158,13 @@ class CoreApiContainer(CoreBase):
                                     tornado.routing.PathMatches(match),
                                     *rule[1:]))
                         else:
-                            self.logger.warning("route [%s] already exists",
-                                                match)
+                            self.logger.error("route [%s] already exists",
+                                              match)
                         continue
             raise core4.error.Core4SetupError(
                 "routing requires list of tuples "
                 "(str, handler)")
-        app = CoreApplication(rules, self, **self._settings)
-        return app
+        return CoreApplication(rules, self, **self._settings)
 
 
 class CoreApplication(tornado.web.Application):
