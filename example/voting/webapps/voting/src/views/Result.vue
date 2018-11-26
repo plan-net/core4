@@ -9,17 +9,18 @@
             :key="key">
             <div>
               <h3 class="title white--text text-xs-center pt-5">{{value.question.question}}</h3>
+
               <v-layout column class="chart-element">
                 <v-flex xs12>
                   <v-layout column align-center justify-end fill-height>
-                    <v-flex class="pt-4">
+                    <v-flex class="pt-5">
                       <chart :options="value"></chart>
                     </v-flex>
                   </v-layout>
                 </v-flex>
                 <v-flex xs12>
                   <v-layout column align-center justify-end fill-height>
-                    <v-flex class="pt-4">
+                    <v-flex xs12 class="pt-5">
                       <chart :options="iChartsOptionsCountrys[key]"></chart>
                     </v-flex>
                   </v-layout>
@@ -91,6 +92,7 @@ export default {
           const tplPlusSeries = getChartTemplate()
           tplPlusSeries.series = { data: val.sex }
           tplPlusSeries.xAxis.categories = ['Male', 'Female']
+          tplPlusSeries.title.text = 'By sex'
           tplPlusSeries.question = val.question
           return tplPlusSeries
         })
@@ -103,9 +105,10 @@ export default {
       if (this.clusteredResults) {
         const tmp = this.clusteredResults.map(val => {
           const tplPlusSeries = getChartTemplate()
-          tplPlusSeries.series = { data: val.countrys.series }
-          tplPlusSeries.xAxis.categories = val.countrys.categories
+          tplPlusSeries.series = { data: val.countries.series }
+          tplPlusSeries.xAxis.categories = val.countries.categories
           tplPlusSeries.question = val.question
+          tplPlusSeries.title.text = 'By nationality'
           return tplPlusSeries
         })
         return tmp
@@ -117,11 +120,6 @@ export default {
 
 </script>
 <style scoped lang="css">
-  div>>>.extra-large {
-    width: 60px;
-    height: 60px;
-  }
-
   div>>>.gradient-1 {
     height: auto !important;
     background: linear-gradient(120deg, #2a373f 70%, #2f404a 70%);
@@ -130,18 +128,6 @@ export default {
   div>>>.pnbi-page-header {
     display: none;
   }
-
-  .seconds {
-    position: fixed;
-    bottom: 29px;
-    right: 35px;
-    opacity: .2;
-  }
-
-  .pnbi-card {
-    padding: 8px;
-  }
-
 </style>
 <style scoped lang="scss">
   .v-carousel {
@@ -161,29 +147,29 @@ export default {
 
     .next-btn {
       // display: none;
-      top: $k-height2;
+/*       top: $k-height2;
       right: -35px;
-      position: absolute;
+      position: absolute; */
     }
   }
 
   .pnbi-card>div {
-    height: $k-height;
+    height: auto;
     background-color: #364650;
   }
 
   .chart-element {
-    height: calc(100% - 45px);
+    height: 100%;
     position: relative;
 
-    .legende {
+/*     .legende {
       text-align: center;
       bottom: 0;
       color: #fff;
       text-align: center;
       border: 1px solid white;
       width: inherit;
-    }
+    } */
     >div {
       // border: 1px solid rgba(255,255,255,.05);
     }

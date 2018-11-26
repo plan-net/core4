@@ -59,21 +59,13 @@ Highcharts.setOptions({
   },
   plotOptions: {
     column: {
-      borderWidth: 0,
-      colorByPoint: true,
+      xxxborderWidth: 0,
+      xxxcolorByPoint: true,
       maxPointWidth: 60
-    },
-    pie: {
-      allowPointSelect: true,
-      cursor: 'pointer',
-      dataLabels: {
-        enabled: false
-      },
-      showInLegend: true
     }
   },
   title: {
-    text: ''
+    text: 'Title'
   },
   xAxis: {
     tickColor: 'transparent'

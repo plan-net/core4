@@ -2,9 +2,20 @@ export const column = {
   chart: {
     type: 'column',
     backgroundColor: 'transparent',
-    marginTop: 20
+    borderWidth: 0,
+    plotBorderWidth: 0,
+    marginTop: 60,
+    width: 1000
+    /*     paddingTop: 120,
+    marginTop: 40 */
   },
-  title: null,
+  title: {
+    text: 'Example with bold text',
+    xxxalign: 'left',
+    /*     x: 0,
+    y: -5, */
+    style: { 'color': '#fff', 'fontSize': '18px' }
+  },
   colors: ['#fff'],
   series: [{
     dataLabels: {
@@ -15,7 +26,7 @@ export const column = {
         fontWeight: 600,
         textOutline: '2px contrast'
       },
-      x: 2,
+      x: 20,
       y: 5
     }
   }],
@@ -37,10 +48,10 @@ export const column = {
     }
   },
   tooltip: {
-    enabled: false,
+    enabled: true,
     backgroundColor: '#37474F',
     headerFormat: '',
-    pointFormat: '{point.y:,.0f}%',
+    pointFormat: '{point.y:,.1f}%',
     style: {
       color: '#fff',
       padding: 0,
@@ -53,7 +64,7 @@ export const column = {
     labels: {
       style: {
         color: '#fff',
-        fontSize: '16px',
+        fontSize: '15px',
         fontWeight: '400'
       }
     },
@@ -66,14 +77,14 @@ export const column = {
   yAxis: {
     lineWidth: 0,
     minorGridLineWidth: 0,
-    lineColor: 'transparent',
+    lineColor: '#4b616e',
     minorTickLength: 0,
     tickLength: 0,
-    gridLineColor: 'transparent',
+    gridLineColor: '#4b616e',
     min: 3,
     max: 100,
     labels: {
-      enabled: false,
+      enabled: true,
       style: {
         color: '#fff'
       },
