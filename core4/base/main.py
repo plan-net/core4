@@ -281,3 +281,27 @@ class CoreBase:
         """
         self.logger.critical("unhandled exception", exc_info=args)
         self.sys_excepthook(*args)
+
+    @classmethod
+    def module(cls):
+        project = ".".join(cls.qual_name().split(".")[:-1])
+        if project not in sys.modules:
+            return importlib.import_module(project)
+        return sys.modules[project]
+
+    @classmethod
+    def version(cls):
+        project = cls.qual_name().split(".")[0]
+        if project not in sys.modules:
+            mod = importlib.import_module(project)
+        else:
+            mod = sys.modules[project]
+        return mod.__version__
+
+    @classmethod
+    def pathname(cls):
+        return os.path.dirname(cls.module().__file__)
+
+    @classmethod
+    def filename(cls):
+        return cls.module().__file__

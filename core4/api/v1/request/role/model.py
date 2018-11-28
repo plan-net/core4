@@ -134,8 +134,16 @@ class CoreRole(CoreBase):
         :param plain: clear text password
         :return: ``True`` if the role is active and the password matches
         """
-        return (self.is_active
-                and core4.util.crypt.pwd_context.verify(plain, self.password))
+        if self.is_active:
+            try:
+                return core4.util.crypt.pwd_context.verify(
+                    plain, self.password)
+            except ValueError:
+                return False
+            except:
+                raise
+        return False
+
 
     def _check_user(self):
         """
