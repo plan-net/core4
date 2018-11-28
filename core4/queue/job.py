@@ -332,10 +332,11 @@ class CoreJob(CoreBase):
     zombie_time = None
 
     _frozen_ = False
+    upwind = ["log_level"] + list(CONFIG_ARGS)
 
     def __init__(self, *args, **kwargs):
         # attributes raised from self.class_config.* to self.*
-        self.upwind += list(CONFIG_ARGS)
+        #self.upwind = self.__class__.upwind + list(CONFIG_ARGS)
         # reset properties not to be inherited
         for prop, default in NOT_INHERITED.items():
             if prop not in self.__class__.__dict__:

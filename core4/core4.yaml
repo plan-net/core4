@@ -88,8 +88,11 @@ api:
   key_file: ~
   allow_origin: "*"
   port: 5001
-  error_html_page: ./_static/error.html
-  error_text_page: ./_static/error.txt
+  default_template: api/v1/request/_static
+  error_html_page: error.html
+  error_text_page: error.txt
+  card_html_page: card.html
+  help_html_page: help.html
   contact: mail@mailer.com
   reset_password:
     expiration: 28800  # 8h

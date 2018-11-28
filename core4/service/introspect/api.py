@@ -1,8 +1,9 @@
 import importlib
 import os
+import re
 import textwrap
 from io import StringIO
-import re
+
 import docutils.parsers.rst.directives.body
 import docutils.parsers.rst.roles
 import sphinx.ext.napoleon
@@ -12,6 +13,12 @@ from docutils.parsers.rst.directives import register_directive
 from core4.base.main import CoreBase
 
 EXPECTED_PARTS = ("method", "parameter", "return", "error", "example")
+
+register_directive("method", docutils.parsers.rst.directives.body.Rubric)
+for role in ("exc", "meth", "mod", "class"):
+    docutils.parsers.rst.roles.register_local_role(
+        role, docutils.parsers.rst.roles.generic_custom_role)
+
 
 class CoreApiInspector(CoreBase):
 
@@ -32,10 +39,62 @@ class CoreApiInspector(CoreBase):
             napoleon_use_keyword=True
         )
 
-    register_directive("method", docutils.parsers.rst.directives.body.Rubric)
-    for role in ("exc", "meth", "mod", "class"):
-        docutils.parsers.rst.roles.register_local_role(
-            role, docutils.parsers.rst.roles.generic_custom_role)
+    def container_info(self, container):
+        if isinstance(container, str):
+            parts = container.split(".")
+            modname = ".".join(parts[:-1])
+            clsname = parts[-1]
+            try:
+                mod = importlib.import_module(modname)
+                cls = getattr(mod, clsname)
+                obj = cls()
+            except:
+                self.logger.error("failed to inspect [%s]", container)
+                raise StopIteration
+        else:
+            obj = container
+        self.logger.info("inspecting [%s] at [%s]", container, obj.root)
+        for rule in obj.iter_rule():
+            self.logger.debug("testing %s", rule)
+            handler = rule[1]
+            yield self.handler_info(handler)
+            # handler_name = self.handler_qual_name(handler)
+            # yield dict(
+            #     qual_name=handler_name,
+            #     version=self.handler_version(handler),
+            #     author=getattr(handler, "author", None),
+            #     title=getattr(handler, "title", None),
+            #     method=self.handler_methods(handler, handler_name)
+            # )
+            # for m in method:
+            #     testname = os.path.join("/tmp", m.upper() + "-" +
+            #                             handler_name + ".html")
+            #     self.logger.debug("wrote [%s]", testname)
+            #     open(testname, "w").write(method[m]["html"])
+
+
+    def handler_info(self, handler):
+        handler_name = self.handler_qual_name(handler)
+        return dict(
+            qual_name=handler_name,
+            version=self.handler_version(handler),
+            author=getattr(handler, "author", None),
+            title=getattr(handler, "title", None),
+            method=self.handler_methods(handler, handler_name)
+        )
+
+    def handler_qual_name(self, handler):
+        qn_func = getattr(handler, "qual_name", None)
+        if qn_func:
+            return qn_func()
+        else:
+            return handler.__name__
+
+    def handler_version(self, handler):
+        version = getattr(handler, "version", None)
+        if version:
+            return version()
+        return None
 
     def make_html(self, doc):
         dedent = textwrap.dedent(doc)
@@ -60,48 +119,8 @@ class CoreApiInspector(CoreBase):
             'error': errors,
             'body': parts['fragment'],
             'parts': expected,
-            'extra_parts': extra
+            'extra_parts': list(extra)
         }
-
-    def info(self, qual_name):
-        parts = qual_name.split(".")
-        modname = ".".join(parts[:-1])
-        clsname = parts[-1]
-        try:
-            mod = importlib.import_module(modname)
-            cls = getattr(mod, clsname)
-            obj = cls()
-        except:
-            self.logger.error("failed to inspect [%s]", qual_name)
-            return None
-        self.logger.debug("inspecting [%s] at [%s]", qual_name,
-                          obj.root)
-        for rule in obj.rules:
-            self.logger.debug("testing [%s]", rule)
-            quality = {}
-            handler = rule[1]
-            handler_name = self.handler_qual_name(handler)
-            author = getattr(handler, "author", None)
-            title = getattr(handler, "title", None)
-            method = self.handler_methods(handler, handler_name)
-            quality["author"] = author is not None
-            quality["title"] = title is not None
-            # self.logger.debug("%s: author = %s", handler_name, author)
-            # self.logger.debug("%s: title = %s", handler_name, title)
-            # self.logger.debug("%s: quality = %s", handler_name, quality)
-            self.logger.debug("%s: method = %s", handler_name, method)
-            for m in method:
-                testname = os.path.join("/tmp", m.upper() + "-" +
-                                        handler_name + ".html")
-                self.logger.debug("wrote [%s]", testname)
-                open(testname, "w").write(method[m]["html"])
-
-    def handler_qual_name(self, handler):
-        qn_func = getattr(handler, "qual_name", None)
-        if qn_func:
-            return qn_func()
-        else:
-            return handler.__name__
 
     def handler_methods(self, handler, name):
         method = {}
@@ -109,26 +128,35 @@ class CoreApiInspector(CoreBase):
             meth = handler.__dict__.get(m, None)
             if meth is not None:
                 docstring = meth.__doc__
+                method[m] = {
+                    "doc": None,
+                    "html": None,
+                    "parser_error": None,
+                    "parts": None,
+                    "extra_parts": None
+                }
                 if docstring:
                     html = self.make_html(docstring)
-                    method[m] = {
+                    method[m].update({
                         "doc": docstring,
                         "html": html["body"],
                         "parser_error": html["error"],
                         "parts": html["parts"],
                         "extra_parts": html["extra_parts"]
-                    }
+                    })
                     if html["error"]:
-                        self.logger.error("encountered [%d] errors with [%s]:\n%s",
-                                          len(html["error"]), name,
-                                          "\n".join(html["error"]))
+                        self.logger.error(
+                            "encountered [%d] errors with [%s]:\n%s",
+                            len(html["error"]), name,
+                            "\n".join(html["error"]))
         return method
 
 
 if __name__ == '__main__':
-    from core4.logger.mixin import logon
-
-    logon()
-    inspect = CoreApiInspector()
-    inspect.info("core4.api.v1.server.CoreApiServer")
+    # from core4.logger.mixin import logon
+    # logon()
+    # inspect = CoreApiInspector()
+    # inspect.info("core4.api.v1.server.CoreApiServer")
     # inspect.info("project.api.server1.ProjectServer1")
+    from core4.api.v1.tool import serve_all
+    serve_all(filter=["core4", "project.api.server1"])

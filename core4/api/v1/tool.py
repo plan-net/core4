@@ -15,6 +15,7 @@ from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
+# from core4.service.introspect.api import CoreApiInspector
 
 
 class CoreApiServerTool(CoreBase, CoreLoggerMixin):
@@ -47,13 +48,19 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     "routing root [{}] duplicate with [{}]".format(
                         root, container_cls.qual_name())
                 )
-            self.register(container_obj, protocol, address, port, root)
+            self.register(
+                container_obj, protocol, address, port, root
+            )
             application = container_obj.make_application()
             routes.append(
                 tornado.routing.Rule(tornado.routing.PathMatches(
                     root + ".*"), application)
             )
             roots.add(root)
+        routes.append(self.default_static())
+        return tornado.routing.RuleRouter(routes)
+
+    def default_static(self):
         # add 404 root / project not found and favicon handler
         nf_app = CoreApplication([
             (
@@ -64,29 +71,29 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             tornado.routing.Rule(
                 tornado.routing.AnyMatches(), DefaultHandler
             )], self)
-        routes.append(tornado.routing.Rule(tornado.routing.AnyMatches(),
-                                           nf_app))
-        return tornado.routing.RuleRouter(routes)
+        return tornado.routing.Rule(tornado.routing.AnyMatches(), nf_app)
 
     def register(self, application, protocol, address, port, root):
         hostname = core4.util.node.get_hostname()
         url = "%s://%s:%d%s" % (protocol, address or hostname, port, root)
         now = core4.util.node.mongo_now()
-        ret = self.config.sys.app.update_one(
-            {
-                "_id": url
-            },
+        doc = {
+            "url": url,
+            "hostname": hostname,
+            "protocol": protocol,
+            "address": address,
+            "port": port,
+            "root": root,
+            "container": application.qual_name()
+        }
+        self.config.sys.app.update_one(
+            doc,
             update={
                 "$setOnInsert": {
-                    "created": now
+                    "created": now,
                 },
                 "$set": {
-                    "updated": now,
-                    "container": application.qual_name(),
-                    "address": address,
-                    "port": port,
-                    "hostname": hostname,
-                    "root": root,
+                    "updated": now
                 }
             },
             upsert=True)

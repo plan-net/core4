@@ -9,6 +9,7 @@ and provides the following endpoints:
 * ``/core4/api/v1/jobs`` - :class:`.JobHandler`
 * ``/core4/api/v1/jobs/poll`` - :class:`.JobStream`
 * ``/core4/api/v1/enqueue`` - :class:`.JobPost`
+* ``/core4/api/v1/info`` - :class:`.CoreInfo`
 
 Additionally the server creates an endless loop to query collection
 ``sys.stat`` continuously with :class:`.QueueStatus` to support the
@@ -28,6 +29,7 @@ from core4.api.v1.request.queue.job import JobStream
 from core4.api.v1.request.queue.state import QueueHandler
 from core4.api.v1.request.queue.state import QueueStatus
 from core4.api.v1.request.role.main import RoleHandler
+from core4.api.v1.request.standard.info import InfoHandler
 from core4.api.v1.tool import serve
 
 # sys.stat query object
@@ -42,6 +44,7 @@ class CoreApiServer(CoreApiContainer):
     """
     root = "/core4/api/v1"
     rules = [
+        (r'/?', InfoHandler),
         (r'/queue', QueueHandler, dict(source=publisher)),
         (r'/jobs/poll/?(.*)', JobStream),
         (r'/jobs/?(.*)', JobHandler),

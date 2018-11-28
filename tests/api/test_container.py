@@ -200,3 +200,38 @@ def test_config_overwrite():
     assert rv.status_code == 200
     requests.get("http://localhost:5555/changed/kill")
     server.join()
+
+
+@pytest.fixture()
+def token2():
+    server = multiprocessing.Process(target=serve_all,
+                                     kwargs={
+                                         "filter": [
+                                             "project.api",
+                                             "core4",
+                                             "tests.api.test_container"
+                                         ],
+                                         "port": 5557})
+    server.start()
+    while True:
+        try:
+            requests.get("http://localhost:5557/project/profile", timeout=1)
+            break
+        except:
+            pass
+        time.sleep(1)
+    signin = requests.get(
+        "http://localhost:5557/project/login?username=admin&password=hans")
+    token = signin.json()["data"]["token"]
+    yield token
+    requests.get("http://localhost:5557/project/kill")
+    server.join()
+
+
+def test_serve_different(token, token2):
+    signin = requests.get(
+        "http://localhost:5557/core4/api/v1/login?username=admin&password=hans")
+    rv = requests.get("http://localhost:5557/core4/api/v1/info",
+                      cookies=signin.cookies)
+    assert rv.status_code == 200
+    print(rv.json())

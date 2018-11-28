@@ -27,6 +27,12 @@ the following example::
     serve(CoreApiServer, CoreAnotherpiAServer)
 """
 
+# import tornado.escape
+import base64
+
+import tornado.routing
+import tornado.routing
+import tornado.web
 import tornado.web
 
 import core4.error
@@ -38,6 +44,11 @@ from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.base.main import CoreBase
+
+# import tornado.escape
+
+XCARD = "/_xcard_"
+XCOLL = "/_xcoll_"
 
 
 class CoreApiContainer(CoreBase):
@@ -55,9 +66,9 @@ class CoreApiContainer(CoreBase):
     root = None
     #: list of tuples with route and :class:`.CoreRequestHandler`
     rules = []
+    upwind = ["log_level", "enabled", "root"]
 
     def __init__(self, handlers=None, **kwargs):
-        self.upwind += ["enabled", "root"]
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
@@ -79,6 +90,7 @@ class CoreApiContainer(CoreBase):
             if prop in self.class_config:
                 if self.class_config[prop] is not None:
                     setattr(self, prop, self.class_config[prop])
+        self.rule_lookup = {}
 
     def _log(self, handler):
         # internal logging method
@@ -132,6 +144,12 @@ class CoreApiContainer(CoreBase):
             return root + path
         return root
 
+    def iter_rule(self):
+        for rule in self.default_routes + self._rules + self.rules:
+            ret = list(rule[:])
+            ret[0] = self.get_root(ret[0])
+            yield ret
+
     def make_application(self):
         """
         Parses the :class:`CoreApiContainer` objects' rules, attached the
@@ -142,42 +160,32 @@ class CoreApiContainer(CoreBase):
         """
         rules = []
         roots = set()
-        for rule in self.default_routes + self._rules + self.rules:
+        for rule in self.iter_rule():
             if isinstance(rule, (tuple, list)):
                 if len(rule) >= 2:
                     routing = rule[0]
                     cls = rule[1]
                     if isinstance(routing, str):
-                        match = self.get_root(routing)
-                        if not match in roots:
-                            self.logger.info("starting [%s] with [%s]", match,
-                                             cls.__name__)
-                            roots.add(match)
+                        if routing not in roots:
+                            rule_name = base64.b16encode(
+                                bytes(routing, encoding="utf-8")).decode()
+                            self.logger.info("starting [%s] with [%s]",
+                                             routing, cls.__name__)
+                            roots.add(routing)
                             rules.append(
                                 tornado.routing.Rule(
-                                    tornado.routing.PathMatches(match),
-                                    *rule[1:]))
+                                    tornado.routing.PathMatches(routing),
+                                    *rule[1:], name=rule_name))
+                            self.rule_lookup[rule_name] = rule[1:]
                         else:
                             self.logger.error("route [%s] already exists",
-                                              match)
+                                              routing)
                         continue
             raise core4.error.Core4SetupError(
                 "routing requires list of tuples "
                 "(str, handler)")
         return CoreApplication(rules, self, **self._settings)
 
-    def register(self, route, cls, *args):
-        self.logger.debug("registering [%s] at [%s]",
-                          cls.qual_name(), route)
-        hostname = core4.util.node.get_hostname()
-        identifier = self.identifier
-        # self.config.sys.api.update_one(
-        #     filter={"_id": cls.qual_name()},
-        #     update={
-        #         "$set": {
-        #
-        #         }
-        #     })
 
 class CoreApplication(tornado.web.Application):
     """
@@ -190,3 +198,21 @@ class CoreApplication(tornado.web.Application):
         super().__init__(handlers, *args, **kwargs)
         self.container = container
         self.identifier = container.identifier
+        get_root = getattr(self.container, "get_root", None)
+        if get_root:
+            self.root = get_root()
+        else:
+            self.root = None
+
+    def find_handler(self, request, **kwargs):
+        if request.path == self.root:
+            if "_xcard" in request.query_arguments:
+                cls = self.container.rule_lookup[
+                    request.query_arguments["_xcard"][0].decode("utf-8")]
+                request.method = "XCARD"
+                return self.get_handler_delegate(request, *cls)
+            # return self.get_handler_delegate(
+            #     request,
+            #     self.settings['default_handler_class'],
+            #     self.settings.get('default_handler_args', {}))
+        return super().find_handler(request, **kwargs)

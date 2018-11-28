@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ handler.__class__.__name__ }}</title>
+    <link rel="stylesheet" type="text/css" href="simple.css">
+</head>
+<a>
+
+<h1>{{ handler.qual_name() }}</h1>
+
+<ul>
+    <li><b>AUTHOR:</b> {{ handler.author }}</li>
+    <li><b>TITLE:</b> {{ handler.title }}</li>
+    <li><b>ROOT:</b> {{ url() }}</li>
+    <li><b>ENTRY:</b> <a href="{{ entry }}">{{ entry }}</a></li>
+
+</ul>
+
+<hr/>
+
+{% for method in doc %}
+
+    <h2>{{ method.upper() }}</h2>
+
+    {% raw doc[method]["html"] %}
+
+    <hr/>
+
+{% end %}
+
+</body>
+</html>

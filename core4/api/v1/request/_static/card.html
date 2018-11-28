@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ handler.__class__.__name__ }}</title>
+</head>
+<a>
+
+<h1>{{ handler.__class__.__name__ }}</h1>
+
+<ul>
+    <li><b>AUTHOR:</b> {{ handler.author }}</li>
+    <li><b>TITLE:</b> {{ handler.title }}</li>
+    <li><b>QUAL_NAME:</b> {{ handler.qual_name() }}</li>
+    <li><b>ROOT:</b> {{ url() }}</li>
+    <li><b>ENTRY:</b> <a href="{{ entry }}">{{ entry }}</a></li>
+
+    {% import inspect %}
+    {% import importlib %}
+
+    {% set module = importlib.import_module(handler.__class__.__module__) %}
+
+    <li><b>FILE:</b> {{ inspect.getfile(module) }}</li>
+
+</ul>
+
+<a href="{{ handler.request.full_url() }}">BACK TO URI</a>
+
+<hr/>
+
+    x-ref:
+
+</body>
+</html>

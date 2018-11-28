@@ -16,3 +16,4 @@ def test_init():
     inspect.info("core4.api.v1.server.CoreApiServerXXX")
     inspect.info("core4.api.v1.server.XXX.CoreApiServer")
     inspect.info("project.api.server1.ProjectServer1")
+

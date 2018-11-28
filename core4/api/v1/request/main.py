@@ -4,7 +4,8 @@ core4 :class:`.CoreRequestHandler`, based on :mod:`tornado`
 """
 import base64
 import traceback
-
+from inspect import signature
+import importlib
 import datetime
 import dateutil.parser
 import jwt
@@ -15,7 +16,7 @@ import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
-
+import os
 import core4.error
 import core4.util
 import core4.util.node
@@ -39,17 +40,19 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             def get(self):
                 return "hello world"
     """
+    SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT",
+                         "OPTIONS", "XCARD")
+
     #: `True` if the handler requires authentication and authorization
     protected = True
     #: handler title
     title = None
     #: handler author
     author = None
-    #: handler description
-    description = None
     #: tag listing
     tag = []
-
+    #: template path, if not defined use absolte or relative path
+    template_path = None
     #: this class supports the following content types
     supported_types = [
         "text/html",
@@ -57,12 +60,19 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         "text/csv",
         "application/json"
     ]
+    upwind = ["log_level", "template_path"]
 
     def __init__(self, *args, **kwargs):
         CoreBase.__init__(self)
         RequestHandler.__init__(self, *args, **kwargs)
+        self.default_template = self.config.api.default_template
+        if self.default_template and not self.default_template.startswith("/"):
+            self.default_template = os.path.join(
+                os.path.dirname(core4.__file__), self.default_template)
         self.error_html_page = self.config.api.error_html_page
         self.error_text_page = self.config.api.error_text_page
+        self.card_html_page = self.config.api.card_html_page
+        self.help_html_page = self.config.api.help_html_page
         self._flash = []
 
     async def options(self, *args, **kwargs):
@@ -173,24 +183,26 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         if token:
             payload = self.parse_token(token)
             username = payload.get("name")
-            user = await CoreRole().find_one(name=username)
-            if user is None:
-                self.logger.warning(
-                    "failed to load [%s] by [%s] from [%s]", username, *source)
-            else:
-                self.token_exp = datetime.datetime.fromtimestamp(
-                    payload["exp"])
-                renew = self.config.api.token.refresh
-                if (core4.util.node.now()
-                    - datetime.datetime.fromtimestamp(
-                            payload["timestamp"])).total_seconds() > renew:
-                    self.create_token(username)
-                    self.logger.debug("refresh token [%s] to [%s]", username,
-                                      self.token_exp)
-                self.logger.debug(
-                    "successfully loaded [%s] by [%s] from [%s] expiring [%s]",
-                    username, *source, self.token_exp)
-                return user
+            if username:
+                user = await CoreRole().find_one(name=username)
+                if user is None:
+                    self.logger.warning(
+                        "failed to load [%s] by [%s] from [%s]", username,
+                        *source)
+                else:
+                    self.token_exp = datetime.datetime.fromtimestamp(
+                        payload["exp"])
+                    renew = self.config.api.token.refresh
+                    if (core4.util.node.now()
+                        - datetime.datetime.fromtimestamp(
+                                payload["timestamp"])).total_seconds() > renew:
+                        self.create_token(username)
+                        self.logger.debug("refresh token [%s] to [%s]",
+                                          username, self.token_exp)
+                    self.logger.debug(
+                        "successfully loaded [%s] by [%s] from [%s] "
+                        "expiring [%s]", username, *source, self.token_exp)
+                    return user
         elif username and password:
             try:
                 user = await CoreRole().find_one(name=username)
@@ -539,9 +551,9 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             self.finish(ret)
         elif self.wants_html():
             ret["contact"] = self.config.api.contact
-            self.render(self.error_html_page, **ret)
+            self.render_default(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
-            self.render(self.error_text_page, **var)
+            self.render_default(self.error_text_page, **var)
 
     def log_exception(self, typ, value, tb):
         """
@@ -581,3 +593,57 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             return ObjectId(_id)
         except:
             raise HTTPError(400, "failed to parse ObjectId [%s]", _id)
+
+    def xcard(self):
+        self.request.method = "GET"
+        if self.get_argument("help", as_type=bool, default=False):
+            self.help()
+        else:
+            self.card()
+
+    def help(self):
+        inspect = core4.service.introspect.api.CoreApiInspector()
+        doc = inspect.handler_info(self.__class__)
+        self.render_default(self.help_html_page, doc=doc["method"])
+
+    def card(self):
+        self.render_default(self.card_html_page)
+
+    def get_template_namespace(self):
+        namespace = super().get_template_namespace()
+        container = getattr(self.application, "container", None)
+        if container is not None and getattr(container, "url", None):
+            namespace["url"] = self.application.container.url
+            xcard = self.request.query_arguments.get("_xcard", None)
+            entry = None
+            if xcard:
+                xcard = xcard[0].decode("utf-8")
+                rule = self.application.container.rule_lookup.get(xcard, None)
+                if rule is not None:
+                    cls = rule[0]
+                    get_meth = cls.__dict__.get("get", None)
+                    if get_meth is not None:
+                        sig = signature(get_meth)
+                        args = [None] * (len(sig.parameters) - 1)
+                        entry = self.application.reverse_url(xcard, *args)
+            namespace["entry"] = entry
+        return namespace
+
+    def get_template_path(self):
+        if self.template_path:
+            if self.template_path.startswith("/"):
+                path = self.template_path
+            else:
+                path = os.path.join(self.pathname(), self.template_path)
+        else:
+            path = self.pathname()
+        return path
+
+    def render_default(self, template_name, **kwargs):
+        if template_name.startswith("/"):
+            return self.render(template_name, **kwargs)
+        return self.render(
+            os.path.join(self.default_template, template_name), **kwargs)
+
+    def static_url(self, path, include_host=None, **kwargs):
+        return None

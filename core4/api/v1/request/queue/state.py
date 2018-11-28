@@ -70,9 +70,6 @@ class QueueHandler(CoreRequestHandler):
         :param source: data source to watch and deliver (:class:`.QueueStatus`)
         """
         self.source = source
-        self.set_header('content-type', 'text/event-stream')
-        self.set_header('cache-control', 'no-cache')
-        self.exit = False
 
     async def _publish(self, data):
         # internal method to stream data from QueueStatus object
@@ -136,6 +133,9 @@ class QueueHandler(CoreRequestHandler):
             {'running': 1, 'timestamp': 1541017556.893435, 'killed': 1}
             {'timestamp': 1541017567.382534, 'killed': 1}
         """
+        self.set_header('content-type', 'text/event-stream')
+        self.set_header('cache-control', 'no-cache')
+        self.exit = False
         await self._publish(self.source.data)
         last = self.source.data
         while not self.exit:

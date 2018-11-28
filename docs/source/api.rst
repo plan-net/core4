@@ -497,12 +497,25 @@ static file serving
 * with variable injection
 * without variable injection
 * disclaimer for leightweight serving
+* with url function
 
 
 config overwrite
 ################
 
 tbd.
+
+
+handler access in templates
+###########################
+
+tbd.
+
+
+card view
+#########
+
+tbd., ends with /_xcard_
 
 
 multiple process serving
@@ -522,3 +535,9 @@ example vue rendering
 
 core static file with global variable injection
 static file with single endpoint to js rendered page
+
+
+api/widget collection
+#####################
+
+tbd.

@@ -4,14 +4,15 @@ from bson.objectid import ObjectId
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
+
 import core4.error
 import core4.queue.job
 import core4.queue.query
 import core4.util
 import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.util.data import json_encode
 from core4.queue.main import CoreQueue
+from core4.util.data import json_encode
 from core4.util.pager import CorePager
 
 STATE_FINAL = (
@@ -26,6 +27,7 @@ STATE_STOPPED = (
     core4.queue.job.STATE_KILLED,
     core4.queue.job.STATE_INACTIVE,
     core4.queue.job.STATE_ERROR)
+
 
 # todo: needs to check authorisation
 
@@ -552,27 +554,6 @@ class JobPost(JobHandler):
     Post new job.
     """
 
-    def get(self, *args, **kwargs):
-        """
-        Raises:
-            405 - Method not allowed (not implemented)
-        """
-        raise HTTPError(405)
-
-    def delete(self, *args, **kwargs):
-        """
-        Raises:
-            405 - Method not allowed (not implemented)
-        """
-        raise HTTPError(405)
-
-    def put(self, *args, **kwargs):
-        """
-        Raises:
-            405 - Method not allowed (not implemented)
-        """
-        raise HTTPError(405)
-
     async def post(self, _id=None):
         """
         Methods:
@@ -664,7 +645,7 @@ class JobPost(JobHandler):
             ret = await self.collection("queue").insert_one(doc)
         except pymongo.errors.DuplicateKeyError:
             raise HTTPError(400, "job [%s] exists with args %s",
-                job.qual_name(), job.args)
+                            job.qual_name(), job.args)
         job.__dict__["_id"] = ret.inserted_id
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
@@ -680,11 +661,6 @@ class JobStream(JobPost):
     Stream job attributes until job reached final state (``ERROR``,
     ``INACTIVE``, ``KILLED``).
     """
-
-    def initialize(self):
-        super().initialize()
-        self.set_header('content-type', 'text/event-stream')
-        self.set_header('cache-control', 'no-cache')
 
     async def get(self, _id=None):
         """
@@ -719,6 +695,10 @@ class JobStream(JobPost):
             0.5028721 running
             0.75340995 running
         """
+        if _id == "":
+            self.reply("OK")
+        self.set_header('content-type', 'text/event-stream')
+        self.set_header('cache-control', 'no-cache')
         oid = self.parse_id(_id)
         last = None
         exit = False
