@@ -58,9 +58,9 @@ class CoreCollection:
     @property
     def connection(self):
         """
-        Database connection factory, featuring the following protocols:
+        Database connection factory, featuring the following protocols::
 
-        * mongodb:// with MongoDB
+            mongodb://  # MongoDB
 
         :return: database connection
         """

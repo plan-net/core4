@@ -1,3 +1,6 @@
+from tornado.web import HTTPError
+
+
 class Core4Error(Exception):
     """
     This is the base class of all core4 exceptions.
@@ -56,3 +59,9 @@ class CoreJobExists(Core4Error):
     name/qual_name and job arguments.
     """
 
+class CoreHTTPError(HTTPError):
+    def __init__(self, log_message=None, *args, status_code=400, **kwargs):
+        super().__init__(status_code, log_message, *args, **kwargs)
+
+class ArgumentParsingError(CoreHTTPError):
+    pass

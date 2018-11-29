@@ -1,8 +1,8 @@
 import core4.queue.helper
 import core4.util
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.role.main import Role
-
+from tornado.web import HTTPError
+from core4.api.v1.request.role.model import CoreRole
 
 class LoginHandler(CoreRequestHandler):
     title = "login and password reset"
@@ -29,7 +29,7 @@ class LoginHandler(CoreRequestHandler):
 
             - **token** (*str*): the created authorization token
 
-        Errors:
+        Raises:
             401: Unauthorized
 
         Examples:
@@ -73,7 +73,7 @@ class LoginHandler(CoreRequestHandler):
         if user:
             token = self.create_token(user.name)
             self.current_user = user.name
-            user.login()
+            await user.login()
             return self.reply({
                 "token": token
             })
@@ -103,8 +103,8 @@ class LoginHandler(CoreRequestHandler):
         Returns:
             dict with empty data element
 
-        Errors:
-            none
+        Raises:
+            None
 
         Examples:
             >>> url = "http://localhost:5001/core4/api/v1/login"
@@ -127,21 +127,21 @@ class LoginHandler(CoreRequestHandler):
                 'timestamp': '2018-10-31T12:54:50.106412'
             }
         """
-        email = self.get_argument("email", None)
-        token = self.get_argument("token", None)
-        password = self.get_argument("password", None)
+        email = self.get_argument("email", default=None)
+        token = self.get_argument("token", default=None)
+        password = self.get_argument("password", default=None)
         if email:
             await self._start_password_reset(email)
         elif token and password:
             await self._finish_password_reset(token, password)
         else:
-            self.abort(400)
+            raise HTTPError(400)
 
     async def _start_password_reset(self, email):
         # internal method to create and send the password reset token
         self.logger.debug("enter password reset for [%s]", email)
         try:
-            user = Role().load_one(email=email)
+            user = await CoreRole().find_one(email=email)
         except:
             self.logger.warning("email [%s] not found", email)
         else:
@@ -162,11 +162,11 @@ class LoginHandler(CoreRequestHandler):
         # internal method to set the updated password
         payload = self.parse_token(token)
         try:
-            user = Role().load_one(name=payload["name"])
+            user = await CoreRole().find_one(name=payload["name"])
         except:
             self.logger.warning("user [%s] not found", payload["name"])
         user.password = password
-        user.save()
+        await user.save()
         self.logger.debug(
             "finish password reset for user [%s]", payload["name"])
         self.reply("OK")
@@ -181,9 +181,3 @@ class LoginHandler(CoreRequestHandler):
             realname=realname,
             token=token
         )
-
-    # async def load_user(self, username):
-    #     doc = await self.motor.core4test.sys.role.find_one({'name': username})
-    #     doc["password_hash"] = doc["password"]
-    #     del doc["password"]
-    #     return Role(**doc)

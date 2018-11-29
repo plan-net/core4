@@ -3,18 +3,19 @@ import socket
 
 import core4.base
 import core4.util
-from core4.util import lazyproperty
+import core4.util.node
+from core4.util.tool import lazyproperty
 
 
 class CoreDiscovery(core4.base.CoreBase):
 
     @lazyproperty
     def ip_address(self):
-        return socket.gethostbyname(core4.util.get_hostname())
+        return socket.gethostbyname(core4.util.node.get_hostname())
 
     @lazyproperty
     def hostname(self):
-        return core4.util.get_hostname()
+        return core4.util.node.get_hostname()
 
     @lazyproperty
     def cpu_count(self):
@@ -25,7 +26,7 @@ class CoreDiscovery(core4.base.CoreBase):
         return [d.mountpoint for d in psutil.disk_partitions(all=False)]
 
     def get_disk_usage(self):
-        now = core4.util.now()
+        now = core4.util.node.now()
         for mp in self.mountpoints:
             du = psutil.disk_usage(mp)
             if du.total > 0:
@@ -38,7 +39,7 @@ class CoreDiscovery(core4.base.CoreBase):
                 }
 
     def get_cpu_usage(self):
-        now = core4.util.now()
+        now = core4.util.node.now()
         for (n, cpu) in enumerate(psutil.cpu_times_percent(percpu=True)):
             yield {
                 "cpu": n,
@@ -52,7 +53,7 @@ class CoreDiscovery(core4.base.CoreBase):
     def get_memory_usage(self):
         memory = psutil.virtual_memory()
         return {
-            "timestamp": core4.util.now(),
+            "timestamp": core4.util.node.now(),
             "total": memory.total,
             "available": memory.available,
             "used": memory.total - memory.available,

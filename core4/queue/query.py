@@ -9,6 +9,7 @@ from collections import OrderedDict
 import datetime
 
 import core4.util
+import core4.util.node
 
 
 class QueryMixin:
@@ -39,7 +40,7 @@ class QueryMixin:
                         {"heartbeat": None},
                         {
                             "heartbeat": {
-                                "$gte": core4.util.mongo_now() -
+                                "$gte": core4.util.node.mongo_now() -
                                         datetime.timedelta(seconds=timeout)
                             }
                         }
@@ -57,10 +58,10 @@ class QueryMixin:
         data = []
         for doc in cur:
             if doc["heartbeat"]:
-                doc["heartbeat"] = (core4.util.mongo_now() -
+                doc["heartbeat"] = (core4.util.node.mongo_now() -
                                     doc["heartbeat"].replace(microsecond=0))
             if doc.get("loop", None):
-                doc["loop_time"] = (core4.util.mongo_now() -
+                doc["loop_time"] = (core4.util.node.mongo_now() -
                                     doc["loop"].replace(microsecond=0))
             else:
                 doc["loop_time"] = None

@@ -69,7 +69,9 @@ setup(
         "PyJWT>=1.6",
         "tornado>=5.1",
         "pandas>=0.23",
-        "motor>=2.0.0",
+        "motor>=2.0",
+        "passlib>=1.7",
+        "python-magic>=0.4"
     ],
     extras_require={
         "tests": [

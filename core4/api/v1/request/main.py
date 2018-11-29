@@ -1,32 +1,44 @@
-import asyncio
+"""
+core4 :class:`.CoreRequestHandler`, based on :mod:`tornado`
+:class:`RequestHandler <tornado.web.RequestHandler>`.
+"""
 import base64
 import traceback
 
 import datetime
+import dateutil.parser
 import jwt
 import mimeparse
 import pandas as pd
+import time
 import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
 
+import core4.error
 import core4.util
-from core4.api.v1.role.main import Role
-from core4.api.v1.util import json_encode, json_decode
+import core4.util.node
+from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
+from core4.util.data import parse_boolean, json_encode, json_decode
+from core4.util.pager import PageResult
 
 tornado.escape.json_encode = json_encode
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
 
 
-class BaseHandler(CoreBase):
+class CoreRequestHandler(CoreBase, RequestHandler):
     """
-    Base class of :class:`.CoreRequestHandler` and
-    :class:`.CoreStaticFileHandler`.
-    """
+    The base class to all custom core4 API request handlers. Typically you
+    inherit from this class to implement request handlers::
 
+        class TestHandler(CoreRequestHandler):
+
+            def get(self):
+                return "hello world"
+    """
     #: `True` if the handler requires authentication and authorization
     protected = True
     #: handler title
@@ -35,12 +47,28 @@ class BaseHandler(CoreBase):
     author = None
     #: handler description
     description = None
+    #: tag listing
+    tag = []
 
-    async def options(self):
+    #: this class supports the following content types
+    supported_types = [
+        "text/html",
+        "text/plain",
+        "text/csv",
+        "application/json"
+    ]
+
+    def __init__(self, *args, **kwargs):
+        CoreBase.__init__(self)
+        RequestHandler.__init__(self, *args, **kwargs)
+        self.error_html_page = self.config.api.error_html_page
+        self.error_text_page = self.config.api.error_text_page
+        self._flash = []
+
+    async def options(self, *args, **kwargs):
         """
         Answer preflight / OPTIONS request with 200
         """
-        #self.set_status(200)
         self.finish()
 
     def set_default_headers(self):
@@ -70,35 +98,42 @@ class BaseHandler(CoreBase):
         Raises 401 error if authentication and authorization fails.
         """
         self.identifier = ObjectId()
-        if(self.request.method == 'OPTIONS'):
+        if self.request.method == 'OPTIONS':
             # preflight / OPTIONS should always pass
             return
-        if not (self.request.query_arguments or self.request.body_arguments):
-            if self.request.body:
+        if self.request.body:
+            try:
                 body_arguments = json_decode(self.request.body.decode("UTF-8"))
+            except:
+                pass
+            else:
                 for k, v in body_arguments.items():
                     self.request.arguments.setdefault(k, []).append(v)
-        if self.request.body:
-            body_arguments = json_decode(self.request.body.decode("UTF-8"))
-            for k, v in body_arguments.items():
-                self.request.arguments.setdefault(k, []).append(v)
+        await self.prepare_protection()
+
+    async def prepare_protection(self):
+        """
+        This is the authentication and authorization part of :meth:`.prepare`.
+
+        Raises ``401 - Unauthorized``.
+        """
         if self.protected:
             user = await self.verify_user()
             if user:
                 self.current_user = user.name
-                if self.verify_access():
+                if await self.verify_access():
                     return
-            self.write_error(401)
+            raise HTTPError(401)
 
     async def verify_user(self):
         """
         Extracts client's authorization from
 
-        # Basic Authorization header, or from
-        # Bearer Authorization header, or from
-        # token parameter (query string or json body), or from
-        # token parameter from the cookie, or from
-        # passed username and password parameters (query string or json body)
+        #. Basic Authorization header, or from
+        #. Bearer Authorization header, or from
+        #. token parameter (query string or json body), or from
+        #. token parameter from the cookie, or from
+        #. passed username and password parameters (query string or json body)
 
         In case a valid username and password is provided, the token is
         created, see :meth:`.create_token`.
@@ -126,8 +161,8 @@ class BaseHandler(CoreBase):
                 source = ("token", "Auth Bearer")
         else:
             token = self.get_argument("token", default=None)
-            username = self.get_argument("username", None)
-            password = self.get_argument("password", None)
+            username = self.get_argument("username", default=None)
+            password = self.get_argument("password", default=None)
             if token is not None:
                 source = ("token", "args")
             elif username and password:
@@ -138,17 +173,15 @@ class BaseHandler(CoreBase):
         if token:
             payload = self.parse_token(token)
             username = payload.get("name")
-            try:
-                # user = await self.load_user(username)
-                user = Role().load_one(name=username)
-            except:
+            user = await CoreRole().find_one(name=username)
+            if user is None:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
             else:
                 self.token_exp = datetime.datetime.fromtimestamp(
                     payload["exp"])
                 renew = self.config.api.token.refresh
-                if (core4.util.now()
+                if (core4.util.node.now()
                     - datetime.datetime.fromtimestamp(
                             payload["timestamp"])).total_seconds() > renew:
                     self.create_token(username)
@@ -160,8 +193,7 @@ class BaseHandler(CoreBase):
                 return user
         elif username and password:
             try:
-                # user = await self.load_user(username)
-                user = Role().load_one(name=username)
+                user = await CoreRole().find_one(name=username)
             except:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
@@ -171,6 +203,7 @@ class BaseHandler(CoreBase):
                     self.logger.debug(
                         "successfully loaded [%s] by [%s] from [%s]",
                         username, *source)
+                    await user.login()
                     return user
         return None
 
@@ -180,18 +213,18 @@ class BaseHandler(CoreBase):
         and sets the required headers and cookie. The token expiration time can
         be set with core4 config key ``api.token.expiration``.
 
-        :param username:to be packaged into the web token
+        :param username: to be packaged into the web token
         :return: JSON web token (str)
         """
         secs = self.config.api.token.expiration
         payload = {
             'name': username,
-            'timestamp': core4.util.now().timestamp()
+            'timestamp': core4.util.node.now().timestamp()
         }
         token = self.create_jwt(secs, payload)
         self.set_secure_cookie("token", token)
         self.set_header("token", token)
-        self.logger.debug("updated token [%s]", self.current_user)
+        self.logger.debug("updated token [%s]", username)
         return token
 
     def create_jwt(self, secs, payload):
@@ -208,7 +241,8 @@ class BaseHandler(CoreBase):
             seconds=secs)
         secret = self.config.api.token.secret
         algorithm = self.config.api.token.algorithm
-        self.token_exp = (core4.util.now() + expires).replace(microsecond=0)
+        self.token_exp = (core4.util.node.now()
+                          + expires).replace(microsecond=0)
         payload["exp"] = self.token_exp
         token = jwt.encode(payload, secret, algorithm)
         return token.decode("utf-8")
@@ -229,44 +263,86 @@ class BaseHandler(CoreBase):
             return jwt.decode(token, key=secret, algorithms=[algorithm],
                               verify=True)
         except jwt.InvalidSignatureError:
-            self.abort(401, "signature verification failed")
+            raise HTTPError("signature verification failed")
         except jwt.ExpiredSignatureError:
             return {}
 
-    def verify_access(self):
+    def decode_argument(self, value, name=None):
         """
-        Verifies the user has access to the resource. This method requires
-        implementation
+        Decodes bytes and str from the request.
+
+        The name of the argument is provided if known, but may be None
+        (e.g. for unnamed groups in the url regex).
         """
-        raise NotImplementedError
+        if isinstance(value, (bytes, str)):
+            return super().decode_argument(value, name)
+        return value
 
+    def get_argument(self, name, as_type=None, *args, **kwargs):
+        """
+        Returns the value of the argument with the given name.
 
-class CoreRequestHandler(BaseHandler, RequestHandler):
-    """
-    The base class to all custom core4 API request handlers. Typically you
-    inherit from this class to implement request handlers::
+        If default is not provided, the argument is considered to be
+        required, and we raise a `MissingArgumentError` if it is missing.
 
-        class TestHandler(CoreRequestHandler):
+        If the argument appears in the url more than once, we return the
+        last value.
 
-            def get(self):
-                return "hello world"
-    """
-    #: this class supports the following content types
-    supported_types = [
-        "text/html",
-        "text/plain",
-        "text/csv",
-        "application/json"
-    ]
+        If ``as_type`` is provided, then the variable type is converted. The
+        method supports the following variable types:
 
-    def __init__(self, *args, **kwargs):
-        BaseHandler.__init__(self)
-        RequestHandler.__init__(self, *args, **kwargs)
-        self.error_html_page = self.config.api.error_html_page
-        self.error_text_page = self.config.api.error_text_page
-        self._flash = []
+        * int
+        * float
+        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
+        * str
+        * dict - using :mod:`json.loads`
+        * list - using :mod:`json.loads`
+        * datetime - using :meth:`dateutil.parser.parse`
 
-    def verify_access(self):
+        :param name: variable name
+        :param default: value
+        :param as_type: Python variable type
+        :return: value
+        """
+        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
+        ret = self._get_argument(name, source=self.request.arguments,
+                                 *args, strip=False, **kwargs)
+        if as_type and ret is not None:
+            try:
+                if as_type == bool:
+                    if isinstance(ret, bool):
+                        return ret
+                    return parse_boolean(ret, error=True)
+                if as_type == dict:
+                    if isinstance(ret, dict):
+                        return ret
+                    return json_decode(ret)
+                if as_type == list:
+                    if isinstance(ret, list):
+                        return ret
+                    return json_decode(ret)
+                if as_type == datetime.datetime:
+                    if isinstance(ret, datetime.datetime):
+                        dt = ret
+                    else:
+                        dt = dateutil.parser.parse(ret)
+                    if dt.tzinfo is None:
+                        return dt
+                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
+                    return datetime.datetime.fromtimestamp(
+                        time.mktime(utc_struct_time))
+                if as_type == ObjectId:
+                    if isinstance(ret, ObjectId):
+                        return ret
+                    return ObjectId(ret)
+                return as_type(ret)
+            except:
+                raise core4.error.ArgumentParsingError(
+                    "parameter [%s] expected as_type [%s]", name,
+                    as_type.__name__) from None
+        return ret
+
+    async def verify_access(self):
         """
         Verifies the user has access to the handler using
         :meth:`User.has_api_access`.
@@ -275,19 +351,13 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         """
         try:
             # todo: do we really want to load the role 2x
-            user = Role().load_one(name=self.current_user)
+            user = await CoreRole().find_one(name=self.current_user)
         except:
             self.logger.warning("username [%s] not found", self.current_user)
         else:
-            if user.has_api_access(self.qual_name()):
+            if await user.has_api_access(self.qual_name()):
                 return True
         return False
-
-    async def run_in_executor(self, meth, *args):
-        loop = asyncio.get_event_loop()
-        future = loop.run_in_executor(
-            self.application.container.executor, meth, *args)
-        return await future
 
     def _wants(self, value, set_content=True):
         # internal method to very the client's accept header
@@ -360,19 +430,33 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
                 chunk = chunk.to_string()
             else:
                 chunk = chunk.to_dict('rec')
-        if isinstance(chunk, (dict, list)) or self.wants_json():
-            chunk = self._build_json(
+        elif isinstance(chunk, PageResult):
+            page = self._build_json(
                 code=self.get_status(),
                 message=self._reason,
-                data=chunk
+                data=chunk.body,
             )
+            page["page_count"] = chunk.page_count
+            page["total_count"] = chunk.total_count
+            page["page"] = chunk.page
+            page["per_page"] = chunk.per_page
+            page["count"] = chunk.count
+            self.finish(page)
+            return
+        elif isinstance(chunk, (dict, list)) or self.wants_json():
+            pass
+        chunk = self._build_json(
+            code=self.get_status(),
+            message=self._reason,
+            data=chunk
+        )
         self.finish(chunk)
 
     def _build_json(self, message, code, **kwargs):
         # internal method to wrap the response
         ret = {
             "_id": self.identifier,
-            "timestamp": core4.util.now(),
+            "timestamp": core4.util.node.now(),
             "message": message,
             "code": code
         }
@@ -386,6 +470,7 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
     def flash(self, level, message, *vars):
         """
         Add a flash message with
+
         :param level: DEBUG, INFO, WARNING or ERROR
         :param message: str to flash
         """
@@ -444,7 +529,7 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
         }
         if "exc_info" in kwargs:
             error = traceback.format_exception_only(*kwargs["exc_info"][0:2])
-            if not self.settings.get("serve_traceback"):
+            if self.settings.get("serve_traceback"):
                 error += traceback.format_tb(kwargs["exc_info"][2])
             var["error"] = "\n".join(error)
         elif "error" in kwargs:
@@ -457,17 +542,6 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
             self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
-
-    def abort(self, status_code, message=None):
-        """
-        Abort the request/response cycle with an error. Raises
-        :class:`tornado.web.HTTPError`.
-
-        :param status_code: valid HTTP status code
-        :param message: additional message
-        """
-        self.write_error(status_code, error=message)
-        raise HTTPError(status_code, "Abort: %s" % message)
 
     def log_exception(self, typ, value, tb):
         """
@@ -483,10 +557,27 @@ class CoreRequestHandler(BaseHandler, RequestHandler):
                 logger = self.logger.warning
             else:
                 logger = self.logger.error
-            logger(value)
+            logger(
+                "\n".join(traceback.format_exception_only(typ, value)).strip()
+            )
         else:
             self.logger.error(
                 "%s\n%s",
                 "\n".join(traceback.format_exception_only(typ, value)).strip(),
                 "\n".join(traceback.format_tb(tb))
             )
+
+    def parse_objectid(self, _id):
+        """
+        Helper method to translate a str into a
+        :class:`bson.objectid.ObjectId`.
+
+        Raises ``400 - Bad Request``
+
+        :param _id: str to parse
+        :return: :class:`bson.objectid.ObjectId`
+        """
+        try:
+            return ObjectId(_id)
+        except:
+            raise HTTPError(400, "failed to parse ObjectId [%s]", _id)

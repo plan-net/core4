@@ -21,7 +21,7 @@ class LogoutHandler(CoreRequestHandler):
         Returns:
             data element with ``OK``
 
-        Errors:
+        Raises:
             401: Unauthorized
 
         Examples:

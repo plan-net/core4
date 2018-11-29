@@ -16,6 +16,7 @@ import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
 import core4.util
+import core4.util.node
 
 libc = ctypes.CDLL(None)
 c_stdout = ctypes.c_void_p.in_dll(libc, 'stdout')
@@ -77,7 +78,7 @@ class CoreWorkerProcess(core4.base.CoreBase,
                 },
                 update={
                     "$set": {
-                        "timestamp": core4.util.mongo_now(),
+                        "timestamp": core4.util.node.mongo_now(),
                         "stdout": u8body
                     }
                 },

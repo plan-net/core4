@@ -4,13 +4,15 @@ from bson.objectid import ObjectId
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
-
+import core4.error
 import core4.queue.job
 import core4.queue.query
 import core4.util
+import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.util import json_encode
+from core4.util.data import json_encode
 from core4.queue.main import CoreQueue
+from core4.util.pager import CorePager
 
 STATE_FINAL = (
     core4.queue.job.STATE_COMPLETE,
@@ -25,8 +27,12 @@ STATE_STOPPED = (
     core4.queue.job.STATE_INACTIVE,
     core4.queue.job.STATE_ERROR)
 
+# todo: needs to check authorisation
 
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
+    """
+    Get job listing, job details, kill, delete and restart jobs.
+    """
 
     def initialize(self):
         self.queue = CoreQueue()
@@ -45,93 +51,66 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def get(self, _id=None):
         """
-        Job listing with ``/jobs`` and job details with ``/jobs/<_id>``.
+        Paginated job listing with ``/jobs``,  and single job details with
+        ``/jobs/<_id>``.
 
         Methods:
             /jobs - jobs listing
 
         Parameters:
-            None
+            per_page (int): number of jobs per page
+            page (int): requested page (starts counting with ``0``)
+            sort (str): sort field
+            order (int): sort direction (``1`` for ascending, ``-1`` for
+                         descending)
 
         Returns:
-            data element wirh job attributes, see
-            :class:`core4.queue.job.CoreJob`.
+            data element with list of job attributes as dictionaries. For
+            pagination the following top level attributes are returned:
 
-        Errors:
+            - **total_count**: the total number of records
+            - **count**: the number of records in current page
+            - **page**: current page (starts counting with ``0``)
+            - **page_count**: the total number of pages
+            - **per_page**: the number of elements per page
+
+        Raises:
             401: Unauthorized
 
         Examples:
             >>> from requests import get, post
+            >>> from pprint import pprint
+            >>> import random
             >>> url = "http://localhost:5001/core4/api/v1"
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
-            >>> rv = get(url + "/jobs", headers=h)
+            >>>
+            >>> name = "core4.queue.helper.DummyJob"
+            >>> for i in range(50):
+            >>>     args = {"sleep": i, "id": random.randint(0, 100)}
+            >>>     rv = post(url + "/enqueue?name=" + name, headers=h, json=args)
+            >>>     print(i, rv.status_code, "-", rv.json()["message"])
+            >>>     assert rv.status_code == 200
+            >>> rv = get(url + "/jobs?per_page=10&sort=args.id&order=-1", headers=h)
+            >>> rv
+            <Response [200]>
             >>> rv.json()
             {
-                '_id': '5bdaf01ade8b691e49e19558',
+                '_id': '5be13b56de8b69468b7ff0b2',
                 'code': 200,
                 'message': 'OK',
-                'timestamp': '2018-11-01T12:22:50.131383',
-                'data': [
-                    {
-                        '_id': '5bd72861de8b69147a275e22',
-                        'args': {
-                            'i': 4,
-                            'sleep': 23
-                        },
-                        'attempts': 1,
-                        'attempts_left': 1,
-                        'enqueued': {
-                            'at': '2018-10-29T15:33:53',
-                            'hostname': 'mra.devops',
-                            'parent_id': None,
-                            'username': 'mra'
-                        },
-                        'finished_at': None,
-                        'killed_at': '2018-10-29T15:34:07.084000',
-                        'locked': None,
-                        'name': 'core4.queue.helper.DummyJob',
-                        'priority': 0,
-                        'removed_at': None,
-                        'runtime': 21.0,
-                        'started_at': '2018-10-29T15:33:54',
-                        'state': 'killed',
-                        'trial': 1,
-                        'wall_at': None,
-                        'zombie_at': None
-                    },
-                    {
-                        '_id': '5bdaef7ede8b691db888cb36',
-                        'args': {
-                            'i': 4, 'sleep': 10
-                        },
-                        'attempts': 1,
-                        'attempts_left': 1,
-                        'enqueued': {
-                            'at': '2018-11-01T12:20:14',
-                            'hostname': 'mra.devops',
-                            'parent_id': None,
-                            'username': 'mra'
-                        },
-                        'finished_at': None,
-                        'killed_at': None,
-                        'locked': None,
-                        'name': 'core4.queue.helper.DummyJob',
-                        'priority': 0,
-                        'removed_at': None,
-                        'runtime': None,
-                        'started_at': None,
-                        'state': 'pending',
-                        'trial': 0,
-                        'wall_at': None,
-                        'zombie_at': None
-                    }
-                ]
+                'timestamp': '2018-11-06T06:57:26.660093',
+                'total_count': 50.0,
+                'count': 10,
+                'page': 0,
+                'page_count': 5,
+                'per_page': 10,
+                'data': [ ... ]
             }
 
         Methods:
-            /jobs/<_id> - jobs details
+            /jobs/<_id> - job details
 
         Parameters:
             _id (str): job _id to get details
@@ -140,7 +119,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             data element with job attributes, see
             :class:`core4.queue.job.CoreJob`.
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             401: Unauthorized
             404: job not found
@@ -192,6 +171,36 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             ret = await self.get_listing()
         self.reply(ret)
 
+    async def post(self, _id=None):
+        """
+        Same as ``GET``. Paginated job listing with ``/jobs`` and single job
+        details with ``/jobs/<_id>``. Additionally this method parses a
+        ``filter`` attribute to filter jobs.
+
+        Methods:
+            /jobs - jobs listing
+
+        Parameters:
+            per_page (int): number of jobs per page
+            page (int): requested page (starts counting with ``0``)
+            sort (str): sort field
+            order (int): sort direction (``1`` for ascending, ``-1`` for
+                         descending)
+            filter (dict): MongoDB query
+
+        Returns:
+            see :meth:`.get`
+
+        Raises:
+            see :meth:`.get`
+
+        Examples:
+            >>> # example continues from above
+            >>> args = {"page": "0", "filter": {"args.sleep": {"$lte": 5}}}
+            >>> post(url + "/jobs", headers=h, json=args)
+        """
+        await self.get(_id)
+
     def parse_id(self, _id):
         """
         parses str into :class:`bson.objectid.ObjectId` and raises
@@ -203,7 +212,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         try:
             return ObjectId(_id)
         except:
-            self.abort(400, "failed to parse job _id [{}]".format(_id))
+            raise HTTPError(400, "failed to parse job _id [%s]", _id)
 
     async def get_listing(self):
         """
@@ -212,13 +221,27 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
         :return: list of dict
         """
-        # todo: requires pagination
-        cur = self.collection("queue").find(
-            projection=self.project_job_listing()).sort("_id", 1)
-        ret = []
-        async for doc in cur:
-            ret.append(doc)
-        return ret
+
+        async def _length(filter):
+            return await self.collection("queue").count_documents(filter)
+
+        async def _query(skip, limit, filter, sort_by):
+            cur = self.collection("queue").find(
+                filter).sort(*sort_by).skip(skip).limit(limit)
+            return await cur.to_list(length=limit)
+
+        per_page = int(self.get_argument("per_page", default=10))
+        current_page = int(self.get_argument("page", default=0))
+        query_filter = self.get_argument("filter", default={})
+        sort_by = self.get_argument("sort", default="_id")
+        sort_order = self.get_argument("order", default=1)
+
+        pager = CorePager(per_page=int(per_page),
+                          current_page=int(current_page),
+                          length=_length, query=_query,
+                          sort_by=[sort_by, int(sort_order)],
+                          filter=query_filter)
+        return await pager.page()
 
     async def get_detail(self, _id):
         """
@@ -241,7 +264,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         else:
             doc["journal"] = False
         if not doc:
-            raise HTTPError(404, "job_id [{}] not found".format(_id))
+            raise HTTPError(404, "job_id [%s] not found", _id)
         return doc
 
     async def delete(self, _id=None):
@@ -255,7 +278,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         Returns:
             data element with ``True`` for success, else ``False``
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             400: requires job _id
             401: Unauthorized
@@ -277,7 +300,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         if _id:
             oid = self.parse_id(_id)
             if not await self.remove_job(oid):
-                raise HTTPError(404, "job _id [{}] not found".format(oid))
+                raise HTTPError(404, "job _id [%s] not found", oid)
         else:
             raise HTTPError(400, "requires job _id")
         self.reply(True)
@@ -285,8 +308,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def put(self, request=None):
         """
         Methods:
-            /jobs/<action>/<_id> - manage job in ``sys.queue``, this is
-            delete, kill and restart.
+            /jobs/<action>/<_id> - manage job in ``sys.queue``
 
         Parameters:
             action(str): ``delete``, ``kill`` or ``restart``
@@ -298,7 +320,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             - **OK** (str) for actions delete and kill
             - **_id** (str) with new job ``_id`` for action restart
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             400: requires action and job _id
             400: failed to restart job
@@ -331,7 +353,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                 "kill": self.kill_job
             }
             if action not in action_method:
-                self.abort(400, "requires action in (delete, restart, kill)")
+                raise HTTPError(
+                    400, "requires action in (delete, restart, kill)")
             self.reply(await action_method[action](oid))
         raise HTTPError(400, "requires action and job_id")
 
@@ -345,7 +368,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :param message: logging helper string
         :return: ``True`` for success, else ``False``
         """
-        at = core4.util.now()
+        at = core4.util.node.mongo_now()
         ret = await self.collection("queue").update_one(
             {
                 "_id": oid,
@@ -361,7 +384,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             self.logger.warning(
                 "flagged job [%s] to %s at [%s]", oid, message, at)
             return True
-        raise HTTPError(404, "failed to flag job [%s] to %s" % (oid, message))
+        raise HTTPError(404, "failed to flag job [%s] to %s", oid, message)
 
     async def remove_job(self, oid):
         """
@@ -401,7 +424,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                 self.logger.warning('successfully restarted [%s] '
                                     'with [%s]', oid, new_id)
                 return {"old_id": oid, "new_id": new_id}
-        raise HTTPError(404, "failed to restart job [%s]" % oid)
+        raise HTTPError(404, "failed to restart job [%s]", oid)
 
     async def restart_waiting(self, _id):
         """
@@ -461,9 +484,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                         await self.collection("lock").delete_one({"_id": _id})
                         await self.make_stat()
                         return new_doc["_id"]
-            raise HTTPError(400, "cannot restart job [%s] in state [%s]" % (
-                _id, job["state"]
-            ))
+            raise HTTPError(400, "cannot restart job [%s] in state [%s]", _id,
+                            job["state"])
         return None
 
     async def lock_job(self, identifier, _id):
@@ -490,7 +512,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         record into ``sys.stat``.
         """
         state = await self.get_queue_count()
-        state["timestamp"] = core4.util.now().timestamp()
+        state["timestamp"] = core4.util.node.mongo_now().timestamp()
         await self.collection("stat").insert_one(state)
 
     def who(self):
@@ -502,10 +524,54 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         """
         x_real_ip = self.request.headers.get("X-Real-IP")
         return {
-            "at": core4.util.mongo_now(),
+            "at": core4.util.node.mongo_now(),
             "hostname": x_real_ip or self.request.remote_ip,
             "username": self.current_user
         }
+
+    async def get_queue_count(self):
+        """
+        Retrieves aggregated information about ``sys.queue`` state. This is
+
+        * ``n`` - the number of jobs in the given state
+        * ``state`` - job state
+        * ``flags`` - job flags ``zombie``, ``wall``, ``removed`` and
+          ``killed``
+
+        :return: dict
+        """
+        cur = self.collection("queue").aggregate(self.pipeline_queue_count())
+        ret = {}
+        async for doc in cur:
+            ret[doc["state"]] = doc["n"]
+        return ret
+
+
+class JobPost(JobHandler):
+    """
+    Post new job.
+    """
+
+    def get(self, *args, **kwargs):
+        """
+        Raises:
+            405 - Method not allowed (not implemented)
+        """
+        raise HTTPError(405)
+
+    def delete(self, *args, **kwargs):
+        """
+        Raises:
+            405 - Method not allowed (not implemented)
+        """
+        raise HTTPError(405)
+
+    def put(self, *args, **kwargs):
+        """
+        Raises:
+            405 - Method not allowed (not implemented)
+        """
+        raise HTTPError(405)
 
     async def post(self, _id=None):
         """
@@ -545,7 +611,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             - **_id**: of the enqueued job
             - **name**: of the enqueued job
 
-        Errors:
+        Raises:
             400: job exists with args
             401: Unauthorized
             404: cannot instantiate job
@@ -589,7 +655,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         try:
             job = self.queue.job_factory(name, **args)
         except Exception:
-            self.abort(404, "cannot instantiate job [{}]".format(name))
+            raise HTTPError(404, "cannot instantiate job [%s]", name)
         job.__dict__["attempts_left"] = job.__dict__["attempts"]
         job.__dict__["state"] = core4.queue.job.STATE_PENDING
         job.__dict__["enqueued"] = self.who()
@@ -597,36 +663,23 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         try:
             ret = await self.collection("queue").insert_one(doc)
         except pymongo.errors.DuplicateKeyError:
-            self.abort(400, "job [{}] exists with args {}".format(
-                job.qual_name(), job.args))
+            raise HTTPError(400, "job [%s] exists with args %s",
+                job.qual_name(), job.args)
         job.__dict__["_id"] = ret.inserted_id
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
         state = await self.get_queue_count()
-        state["timestamp"] = core4.util.now().timestamp()
+        state["timestamp"] = core4.util.node.mongo_now().timestamp()
         await self.collection("stat").insert_one(state)
         return job
 
-    async def get_queue_count(self):
-        """
-        Retrieves aggregated information about ``sys.queue`` state. This is
 
-        * ``n`` - the number of jobs in the given state
-        * ``state`` - job state
-        * ``flags`` - job flags ``zombie``, ``wall``, ``removed`` and
-          ``killed``
-
-        :return: dict
-        """
-        cur = self.collection("queue").aggregate(self.pipeline_queue_count())
-        ret = {}
-        async for doc in cur:
-            ret[doc["state"]] = doc["n"]
-        return ret
-
-
-class JobStream(JobHandler):
+class JobStream(JobPost):
+    """
+    Stream job attributes until job reached final state (``ERROR``,
+    ``INACTIVE``, ``KILLED``).
+    """
 
     def initialize(self):
         super().initialize()
@@ -639,18 +692,19 @@ class JobStream(JobHandler):
             /jobs/poll - stream job attributes
 
         Parameters:
-            None
+            _id (str): job _id
 
         Returns:
             JSON stream with job attributes
 
-        Errors:
-            400: job exists with args
+        Raises:
             401: Unauthorized
             404: cannot instantiate job
 
         Examples:
-            >>> rv = post(url + "/jobs?name=" + name, headers=h, json={"sleep": 20})
+            >>> from requests import post, get
+            >>> import json
+            >>> rv = post(url + "/enqueue?name=" + name, headers=h, json={"sleep": 20})
             >>> _id = rv.json()["data"]["_id"]
             >>> rv = get(url + "/jobs/poll/" + _id, headers=h, stream=True)
             >>> for line in rv.iter_lines():
@@ -658,13 +712,12 @@ class JobStream(JobHandler):
             >>>         data = json.loads(line.decode("utf-8"))
             >>>         locked = data.get("locked")
             >>>         state = data.get("state")
-            >>>         print("{:6.2f}% - {}".format(locked["progress_value"] * 100. if locked else 100, state))
-            100.00% - pending
-              0.04% - running
-             25.13% - running
-             50.17% - running
-             75.22% - running
-            100.00% - complete
+            >>>         if locked:
+            >>>             print(locked["progress_value"], state)
+            0.00045184999999996477 running
+            0.2524361 running
+            0.5028721 running
+            0.75340995 running
         """
         oid = self.parse_id(_id)
         last = None
@@ -702,7 +755,7 @@ class JobStream(JobHandler):
         Returns:
             JSON stream with job attributes
 
-        Errors:
+        Raises:
             400: failed to parse job _id
             401: Unauthorized
             404: job not found

@@ -18,7 +18,7 @@ def reset(tmpdir):
     core4.logger.mixin.logon()
     yield
     # singletons
-    core4.util.Singleton._instances = {}
+    core4.util.tool.Singleton._instances = {}
     # os environment
     dels = []
     for k in os.environ:
@@ -70,3 +70,7 @@ def test_discover():
         assert "name" in project[name].keys()
         assert "title" in project[name].keys()
         assert "built" in project[name].keys()
+
+def test_api_container():
+    intro = CoreIntrospector()
+    intro.iter_api_container()

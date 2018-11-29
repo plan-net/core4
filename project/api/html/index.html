@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>my Test</title>
+</head>
+<body>
+{{ handler.qual_name() }}<br/>
+
+{{ testvar }}<br/>
+
+{% from project.api.server1 import ProjectServer1 %}
+{% from project.api.server2 import ProjectServer2 %}
+
+<a href="{{ ProjectServer1.url('/stat1/index.html') }}">goto static 1</a><br/>
+<a href="{{ ProjectServer2.url('/stat2/index.html') }}">goto static 2</a><br/>
+<a href="{{ url('/req1') }}">req1</a>
+
+</body>
+</html>

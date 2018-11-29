@@ -6,12 +6,13 @@ and provides the following endpoints:
 * ``/core4/api/v1/logout`` - :class:`.LogoutHandler` (default handler)
 * ``/core4/api/v1/profile`` - :class:`.ProfileHandler` (default handler)
 * ``/core4/api/v1/queue`` - :class:`.QueueHandler`
+* ``/core4/api/v1/jobs`` - :class:`.JobHandler`
 * ``/core4/api/v1/jobs/poll`` - :class:`.JobStream`
-* ``/core4/api/v1/jobs/job`` - :class:`.JobHandler`
+* ``/core4/api/v1/enqueue`` - :class:`.JobPost`
 
 Additionally the server creates an endless loop to query collection
 ``sys.stat`` continuously with :class:`.QueueStatus` to support the
-:class:`.QueueHandler``.
+:class:`.QueueHandler`.
 
 Start the server with::
 
@@ -20,11 +21,14 @@ Start the server with::
 
 from tornado.ioloop import IOLoop
 
-from core4.api.v1.application import CoreApiContainer, serve
+from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.queue.job import JobHandler
+from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.queue.job import JobStream
 from core4.api.v1.request.queue.state import QueueHandler
 from core4.api.v1.request.queue.state import QueueStatus
+from core4.api.v1.request.role.main import RoleHandler
+from core4.api.v1.tool import serve
 
 # sys.stat query object
 publisher = QueueStatus()
@@ -36,13 +40,13 @@ class CoreApiServer(CoreApiContainer):
     Default :class:`.CoreApiContainer` serving the standard core4 endpoints
     at ``/core4/api/v1``.
     """
-    root = "core4/api/v1"
+    root = "/core4/api/v1"
     rules = [
         (r'/queue', QueueHandler, dict(source=publisher)),
-        # todo: requires implementation
-        # (r'/jobs/summary', JobSummary),
         (r'/jobs/poll/?(.*)', JobStream),
-        (r'/jobs/?(.*)', JobHandler)
+        (r'/jobs/?(.*)', JobHandler),
+        (r'/enqueue', JobPost),
+        (r'/roles/?(.*)', RoleHandler),
     ]
 
 

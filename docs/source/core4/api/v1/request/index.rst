@@ -8,5 +8,6 @@ endpoints and request handlers
    main
    standard
    queue
+   role
 
 

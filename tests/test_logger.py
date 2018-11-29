@@ -11,6 +11,7 @@ import core4.config
 import core4.error
 import core4.logger
 import core4.config.test
+import core4.util.tool
 import project.ident
 import tests.util
 import core4.util
@@ -32,7 +33,7 @@ class TestLogging(unittest.TestCase):
 
         logging.shutdown()
         importlib.reload(logging)
-        core4.util.Singleton._instances = {}
+        core4.util.tool.Singleton._instances = {}
         core4.logger.mixin.CoreLoggerMixin.completed = False
 
         self.mongo.drop_database('core4test')
@@ -52,7 +53,7 @@ class TestLogging(unittest.TestCase):
         tests.util.drop_env()
         logging.shutdown()
         importlib.reload(logging)
-        core4.util.Singleton._instances = {}
+        core4.util.tool.Singleton._instances = {}
         self.drop_logs()
         core4.logger.mixin.CoreLoggerMixin.completed = False
 
