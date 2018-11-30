@@ -8,12 +8,23 @@
 
 <h1>{{ handler.__class__.__name__ }}</h1>
 
+<hr/>
+
 <ul>
     <li><b>AUTHOR:</b> {{ handler.author }}</li>
     <li><b>TITLE:</b> {{ handler.title }}</li>
     <li><b>QUAL_NAME:</b> {{ handler.qual_name() }}</li>
+    <li><b>RULE-ID:</b> {{ rule_id }}</li>
+    <li><b>ROUTE:</b> {{ pattern }}</li>
+    <li><b>HOST:</b> {{ host }}</li>
     <li><b>ROOT:</b> {{ url() }}</li>
-    <li><b>ENTRY:</b> <a href="{{ entry }}">{{ entry }}</a></li>
+    <li><b>REVERSE:</b>
+        {% if reverse_url %}
+            <a href="{{ host }}{{ reverse_url }}">
+                {{ host }}{{ reverse_url }}
+            </a>
+        {% end %}
+    </li>
 
     {% import inspect %}
     {% import importlib %}
@@ -24,11 +35,9 @@
 
 </ul>
 
-<a href="{{ handler.request.full_url() }}">BACK TO URI</a>
-
 <hr/>
 
-    x-ref:
+    {{ current_user }}
 
 </body>
 </html>

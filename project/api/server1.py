@@ -5,6 +5,7 @@ import project.api.server2
 from core4.api.v1.test import StopHandler
 from tornado.web import StaticFileHandler
 import core4.util.node
+from core4.api.v1.request.standard.login import LoginHandler
 
 
 class MyStatic(CoreStaticFileHandler):
@@ -30,6 +31,8 @@ class ProjectServer1(CoreApiContainer):
         (r"/classic/(.*)", StaticFileHandler, {
             "path": "./html"
         }),
+        (r"/login", LoginHandler),
+        (r"/login1", LoginHandler, { "test": "blay<y"}),
     ]
 
 if __name__ == '__main__':

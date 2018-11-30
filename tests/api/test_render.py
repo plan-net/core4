@@ -99,6 +99,8 @@ def test_url_func(http):
 
 
 if __name__ == '__main__':
-    from core4.api.v1.tool import serve
-    from core4.api.v1.server import CoreApiServer
-    serve(CoreApiTestServer, CoreApiServer)
+    from core4.api.v1.tool import serve, serve_all
+    serve_all(filter=["project.api", "core4.api.v1.server",
+                      "example"])  # , name=sys.argv[1], port=int(sys.argv[2]))
+    # from core4.api.v1.server import CoreApiServer
+    # serve(CoreApiTestServer, CoreApiServer)

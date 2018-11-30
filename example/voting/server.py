@@ -229,12 +229,9 @@ class EventHandler(BaseHandler):
 class SessionStateHandler(BaseHandler):
     author = 'mra'
 
-    def initialize(self):
-        super().initialize()
+    async def get(self, session_id=None):
         self.set_header('content-type', 'text/event-stream')
         self.set_header('cache-control', 'no-cache')
-
-    async def get(self, session_id=None):
         last = None
         exit = False
         oid = self.parse_objectid(session_id)

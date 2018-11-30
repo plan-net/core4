@@ -10,12 +10,10 @@ import tornado.routing
 import core4.error
 import core4.service.introspect
 import core4.util.node
-from core4.api.v1.application import CoreApplication
+from core4.api.v1.application import CoreApplication, RootContainer
 from core4.api.v1.request.default import DefaultHandler
-from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
-# from core4.service.introspect.api import CoreApiInspector
 
 
 class CoreApiServerTool(CoreBase, CoreLoggerMixin):
@@ -37,8 +35,13 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         routes = []
         roots = set()
-        for container_cls in args:
-            container_obj = container_cls(**kwargs)
+        RootContainer.routes = {}
+        RootContainer.application = {}
+        for container_cls in list(args) + [RootContainer]:
+            base_url = "%s://%s:%d" %(
+                protocol, address or core4.util.node.get_hostname(), port
+            )
+            container_obj = container_cls(base_url=base_url, **kwargs)
             root = container_obj.get_root()
             if not container_obj.enabled:
                 self.logger.warning("starting NOT enabled container [%s]",
@@ -48,56 +51,56 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     "routing root [{}] duplicate with [{}]".format(
                         root, container_cls.qual_name())
                 )
-            self.register(
-                container_obj, protocol, address, port, root
-            )
+            # self.register(
+            #     container_obj, protocol, address, port, root
+            # )
             application = container_obj.make_application()
             routes.append(
                 tornado.routing.Rule(tornado.routing.PathMatches(
                     root + ".*"), application)
             )
             roots.add(root)
-        routes.append(self.default_static())
+        # routes.append(self.default_static())
         return tornado.routing.RuleRouter(routes)
 
-    def default_static(self):
-        # add 404 root / project not found and favicon handler
-        nf_app = CoreApplication([
-            (
-                r'/(favicon.ico)',
-                CoreStaticFileHandler,
-                {"path": "./request/_static"}
-            ),
-            tornado.routing.Rule(
-                tornado.routing.AnyMatches(), DefaultHandler
-            )], self)
-        return tornado.routing.Rule(tornado.routing.AnyMatches(), nf_app)
+    # def default_static(self):
+    #     # add 404 root / project not found and favicon handler
+    #     nf_app = CoreApplication([
+    #         (
+    #             r'/(favicon.ico)',
+    #             CoreStaticFileHandler,
+    #             {"path": "./request/_static"}
+    #         ),
+    #         tornado.routing.Rule(
+    #             tornado.routing.AnyMatches(), DefaultHandler
+    #         )], self)
+    #     return tornado.routing.Rule(tornado.routing.AnyMatches(), nf_app)
 
-    def register(self, application, protocol, address, port, root):
-        hostname = core4.util.node.get_hostname()
-        url = "%s://%s:%d%s" % (protocol, address or hostname, port, root)
-        now = core4.util.node.mongo_now()
-        doc = {
-            "url": url,
-            "hostname": hostname,
-            "protocol": protocol,
-            "address": address,
-            "port": port,
-            "root": root,
-            "container": application.qual_name()
-        }
-        self.config.sys.app.update_one(
-            doc,
-            update={
-                "$setOnInsert": {
-                    "created": now,
-                },
-                "$set": {
-                    "updated": now
-                }
-            },
-            upsert=True)
-        self.logger.info("registered [%s]", url)
+    # def register(self, application, protocol, address, port, root):
+    #     hostname = core4.util.node.get_hostname()
+    #     url = "%s://%s:%d%s" % (protocol, address or hostname, port, root)
+    #     now = core4.util.node.mongo_now()
+    #     doc = {
+    #         "url": url,
+    #         "hostname": hostname,
+    #         "protocol": protocol,
+    #         "address": address,
+    #         "port": port,
+    #         "root": root,
+    #         "container": application.qual_name()
+    #     }
+    #     self.config.sys.app.update_one(
+    #         doc,
+    #         update={
+    #             "$setOnInsert": {
+    #                 "created": now,
+    #             },
+    #             "$set": {
+    #                 "updated": now
+    #             }
+    #         },
+    #         upsert=True)
+    #     self.logger.info("registered [%s]", url)
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
               **kwargs):
@@ -291,5 +294,9 @@ def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
 
 
 if __name__ == '__main__':
-    serve_all(filter=["project.api", "core4",
+        # from core4.service.introspect import CoreIntrospector
+        # intro = CoreIntrospector()
+        # for pro in intro.iter_project():
+        #     print(pro)
+    serve_all(filter=["project.api", # "core4",
                       "example"])  # , name=sys.argv[1], port=int(sys.argv[2]))

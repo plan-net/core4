@@ -29,7 +29,6 @@ from core4.api.v1.request.queue.job import JobStream
 from core4.api.v1.request.queue.state import QueueHandler
 from core4.api.v1.request.queue.state import QueueStatus
 from core4.api.v1.request.role.main import RoleHandler
-from core4.api.v1.request.standard.info import InfoHandler
 from core4.api.v1.tool import serve
 
 # sys.stat query object
@@ -42,9 +41,8 @@ class CoreApiServer(CoreApiContainer):
     Default :class:`.CoreApiContainer` serving the standard core4 endpoints
     at ``/core4/api/v1``.
     """
-    root = "/core4/api/v1"
+    root = "/core4/coco/v1/"
     rules = [
-        (r'/?', InfoHandler),
         (r'/queue', QueueHandler, dict(source=publisher)),
         (r'/jobs/poll/?(.*)', JobStream),
         (r'/jobs/?(.*)', JobHandler),

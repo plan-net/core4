@@ -27,9 +27,9 @@ the following example::
     serve(CoreApiServer, CoreAnotherpiAServer)
 """
 
-# import tornado.escape
-import base64
+import hashlib
 
+# import tornado.escape
 import tornado.routing
 import tornado.routing
 import tornado.web
@@ -40,15 +40,16 @@ import core4.service.setup
 import core4.util
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
+from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.standard.file import FileHandler
+from core4.api.v1.request.standard.info import InfoHandler
 from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
+from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
 
 # import tornado.escape
-
-XCARD = "/_xcard_"
-XCOLL = "/_xcoll_"
 
 
 class CoreApiContainer(CoreBase):
@@ -60,7 +61,7 @@ class CoreApiContainer(CoreBase):
     The default ``root`` is the project name.
     """
 
-    #: if ``True`` then the application container is autmatically deployed
+    #: if ``True`` then the application container is automatically deployed
     enabled = True
     #: root URL, defaults to the project name
     root = None
@@ -68,29 +69,22 @@ class CoreApiContainer(CoreBase):
     rules = []
     upwind = ["log_level", "enabled", "root"]
 
-    def __init__(self, handlers=None, **kwargs):
+    def __init__(self, base_url=None, **kwargs):
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
             # self.logger.debug("have %s = %s", attr, kwargs[attr])
-        self._rules = handlers or kwargs.get("handlers", [])
-        self._pool = None
-        self.default_routes = [
-            ("/login", LoginHandler),
-            ("/logout", LogoutHandler),
-            ("/profile", ProfileHandler),
-        ]
-        # kwargs["login_url"] = self.get_root() + "/login"
         kwargs["default_handler_class"] = DefaultHandler
         kwargs["default_handler_args"] = ()
         kwargs["log_function"] = self._log
         self._settings = kwargs
+        self.base_url = base_url
         # upwind class properties from configuration
         for prop in ("enabled", "root"):
             if prop in self.class_config:
                 if self.class_config[prop] is not None:
                     setattr(self, prop, self.class_config[prop])
-        self.rule_lookup = {}
+        # self.rule_lookup = []
 
     def _log(self, handler):
         # internal logging method
@@ -145,7 +139,7 @@ class CoreApiContainer(CoreBase):
         return root
 
     def iter_rule(self):
-        for rule in self.default_routes + self._rules + self.rules:
+        for rule in self.rules:
             ret = list(rule[:])
             ret[0] = self.get_root(ret[0])
             yield ret
@@ -160,6 +154,7 @@ class CoreApiContainer(CoreBase):
         """
         rules = []
         roots = set()
+        routes = {}
         for rule in self.iter_rule():
             if isinstance(rule, (tuple, list)):
                 if len(rule) >= 2:
@@ -167,16 +162,18 @@ class CoreApiContainer(CoreBase):
                     cls = rule[1]
                     if isinstance(routing, str):
                         if routing not in roots:
-                            rule_name = base64.b16encode(
-                                bytes(routing, encoding="utf-8")).decode()
-                            self.logger.info("starting [%s] with [%s]",
-                                             routing, cls.__name__)
+                            md5 = hashlib.md5(
+                                routing.encode("utf-8")).hexdigest()
+                            self.logger.info("starting [%s] with [%s] as [%s]",
+                                             routing, cls.__name__, md5)
                             roots.add(routing)
                             rules.append(
                                 tornado.routing.Rule(
                                     tornado.routing.PathMatches(routing),
-                                    *rule[1:], name=rule_name))
-                            self.rule_lookup[rule_name] = rule[1:]
+                                    *rule[1:], name=md5))
+                            if issubclass(cls, CoreRequestHandler):
+                                routes.setdefault(cls.qual_name(), {})
+                                routes[cls.qual_name()][md5] = rule
                         else:
                             self.logger.error("route [%s] already exists",
                                               routing)
@@ -184,7 +181,12 @@ class CoreApiContainer(CoreBase):
             raise core4.error.Core4SetupError(
                 "routing requires list of tuples "
                 "(str, handler)")
-        return CoreApplication(rules, self, **self._settings)
+        app = CoreApplication(rules, self, **self._settings)
+        for qual_name in routes:
+            RootContainer.routes.setdefault(qual_name, {})
+            for m in routes[qual_name]:
+                RootContainer.routes[qual_name][m] = {"app": app, "rule": routes[qual_name][m]}
+        return app
 
 
 class CoreApplication(tornado.web.Application):
@@ -198,21 +200,43 @@ class CoreApplication(tornado.web.Application):
         super().__init__(handlers, *args, **kwargs)
         self.container = container
         self.identifier = container.identifier
-        get_root = getattr(self.container, "get_root", None)
-        if get_root:
-            self.root = get_root()
-        else:
-            self.root = None
+        # get_root = getattr(self.container, "get_root", None)
+        # if get_root:
+        #     self.root = os.path.join(get_root(), XCARD)
+        # else:
+        #     self.root = None
 
     def find_handler(self, request, **kwargs):
-        if request.path == self.root:
-            if "_xcard" in request.query_arguments:
-                cls = self.container.rule_lookup[
-                    request.query_arguments["_xcard"][0].decode("utf-8")]
-                request.method = "XCARD"
-                return self.get_handler_delegate(request, *cls)
-            # return self.get_handler_delegate(
-            #     request,
-            #     self.settings['default_handler_class'],
-            #     self.settings.get('default_handler_args', {}))
+        start = "/core4/api/v1/info/"
+        if request.path.startswith(start) and len(request.path) > len(start):
+            parts = request.path[len(start):].split("/")
+            section = parts[0]
+            qual_name = parts[1]
+            rule_id = parts[2]
+            lookup = RootContainer.routes.get(qual_name, None)
+            if lookup:
+                cls = lookup[rule_id]["rule"]
+                if cls:
+                    if section == "card":
+                        request.method = "XCARD"
+                    else:
+                        request.method = "XHELP"
+                    return self.get_handler_delegate(request, *cls[1:])
         return super().find_handler(request, **kwargs)
+
+    def lookup(self, qual_name, rule_id):
+        return RootContainer.routes.get(qual_name, {}).get(rule_id, None)
+
+
+class RootContainer(CoreApiContainer):
+    root = ""
+    rules = [
+        (r"/core4/api/v1/login", LoginHandler),
+        (r"/core4/api/v1/logout", LogoutHandler),
+        (r"/core4/api/v1/profile", ProfileHandler),
+        (r"/core4/api/v1/file/(.+/.*)", FileHandler),
+        (r'/core4/api/v1/info', InfoHandler),
+        (r'/(.*)', CoreStaticFileHandler, {"path": "./request/_static"})
+    ]
+    routes = {}
+    apps = {}

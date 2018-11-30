@@ -21,6 +21,7 @@ import core4.error
 import core4.util
 import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
+
 from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode
 from core4.util.pager import PageResult
@@ -41,7 +42,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
                 return "hello world"
     """
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT",
-                         "OPTIONS", "XCARD")
+                         "OPTIONS", "XCARD", "XHELP")
 
     #: `True` if the handler requires authentication and authorization
     protected = True
@@ -74,6 +75,9 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         self.card_html_page = self.config.api.card_html_page
         self.help_html_page = self.config.api.help_html_page
         self._flash = []
+
+    def initialize(self, *args, **kwargs):
+        pass
 
     async def options(self, *args, **kwargs):
         """
@@ -108,7 +112,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         Raises 401 error if authentication and authorization fails.
         """
         self.identifier = ObjectId()
-        if self.request.method == 'OPTIONS':
+        if self.request.method in ('OPTIONS', 'XCARD', 'XHELP'):
             # preflight / OPTIONS should always pass
             return
         if self.request.body:
@@ -210,7 +214,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
             else:
-                if user.verify_password(password):
+                if user and user.verify_password(password):
                     self.token_exp = None
                     self.logger.debug(
                         "successfully loaded [%s] by [%s] from [%s]",
@@ -596,37 +600,41 @@ class CoreRequestHandler(CoreBase, RequestHandler):
 
     def xcard(self):
         self.request.method = "GET"
-        if self.get_argument("help", as_type=bool, default=False):
-            self.help()
-        else:
-            self.card()
+        self.card()
 
-    def help(self):
+    def xhelp(self):
+        self.request.method = "GET"
         inspect = core4.service.introspect.api.CoreApiInspector()
         doc = inspect.handler_info(self.__class__)
         self.render_default(self.help_html_page, doc=doc["method"])
 
     def card(self):
-        self.render_default(self.card_html_page)
+        rule_id = self.request.path.split("/")[-1]
+        lookup = self.application.lookup(self.qual_name(), rule_id)
+        get = getattr(self, "get", None)
+        reverse = None
+        if get is not None:
+            sig = signature(get)
+            narg = [""] * len(sig.parameters)
+            try:
+                reverse = lookup["app"].reverse_url(rule_id, *narg)
+            except:
+                pass
+        self.render_default(
+            self.card_html_page,
+            pattern=lookup["rule"][0],
+            url=lookup["app"].container.url,
+            host=lookup["app"].container.base_url,
+            rule_id=rule_id,
+            reverse_url=reverse
+        )
 
     def get_template_namespace(self):
         namespace = super().get_template_namespace()
         container = getattr(self.application, "container", None)
-        if container is not None and getattr(container, "url", None):
-            namespace["url"] = self.application.container.url
-            xcard = self.request.query_arguments.get("_xcard", None)
-            entry = None
-            if xcard:
-                xcard = xcard[0].decode("utf-8")
-                rule = self.application.container.rule_lookup.get(xcard, None)
-                if rule is not None:
-                    cls = rule[0]
-                    get_meth = cls.__dict__.get("get", None)
-                    if get_meth is not None:
-                        sig = signature(get_meth)
-                        args = [None] * (len(sig.parameters) - 1)
-                        entry = self.application.reverse_url(xcard, *args)
-            namespace["entry"] = entry
+        if container is not None:
+            if getattr(container, "url", None):
+                namespace["url"] = self.application.container.url
         return namespace
 
     def get_template_path(self):
@@ -642,8 +650,8 @@ class CoreRequestHandler(CoreBase, RequestHandler):
     def render_default(self, template_name, **kwargs):
         if template_name.startswith("/"):
             return self.render(template_name, **kwargs)
-        return self.render(
-            os.path.join(self.default_template, template_name), **kwargs)
+        self.absolute_path = os.path.join(self.default_template, template_name)
+        return self.render(self.absolute_path, **kwargs)
 
     def static_url(self, path, include_host=None, **kwargs):
         return None

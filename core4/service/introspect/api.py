@@ -74,9 +74,21 @@ class CoreApiInspector(CoreBase):
 
 
     def handler_info(self, handler):
+        if isinstance(handler, str):
+            parts = handler.split(".")
+            modname = ".".join(parts[:-1])
+            clsname = parts[-1]
+            try:
+                mod = importlib.import_module(modname)
+                cls = getattr(mod, clsname)
+                handler = cls
+            except:
+                self.logger.error("failed to inspect [%s]", handler)
+                raise
         handler_name = self.handler_qual_name(handler)
         return dict(
             qual_name=handler_name,
+            class_name=handler_name.split(".")[-1],
             version=self.handler_version(handler),
             author=getattr(handler, "author", None),
             title=getattr(handler, "title", None),
@@ -127,6 +139,7 @@ class CoreApiInspector(CoreBase):
         for m in ("post", "get", "put", "delete", "head", "patch", "options"):
             meth = handler.__dict__.get(m, None)
             if meth is not None:
+                print("***", meth)
                 docstring = meth.__doc__
                 method[m] = {
                     "doc": None,

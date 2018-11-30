@@ -10,7 +10,6 @@ import sys
 import traceback
 
 import core4.api.v1.application
-import core4.api.v1.application
 import core4.base
 import core4.queue.job
 from core4.util.tool import Singleton
@@ -176,9 +175,14 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
         self._noout()
         self._project = []
         for pkg in pkgutil.iter_modules():
+            if "example" in pkg[1]:
+                print("HE")
             if pkg[2]:
+                print(pkg[1])
                 filename = os.path.abspath(
                     os.path.join(pkg[0].path, pkg[1], "__init__.py"))
+                if "example" in filename:
+                    print("HE")
                 with open(filename, "r", encoding="utf-8") as fh:
                     body = fh.read()
                 if core4.base.main.is_core4_project(body):
@@ -269,3 +273,4 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
             "stderr": stderr
         }
         return mod, exception, stdout, stderr
+
