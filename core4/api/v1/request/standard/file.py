@@ -21,14 +21,15 @@ class FileHandler(CoreRequestHandler, StaticFileHandler):
     protected = False
 
     @gen.coroutine
-    def get(self, path, include_body=True):
-        left = os.path.join(self.application.container.root, "file")
-        uri_split = self.request.uri[len(left)+1:].split("/")
-        rule_name = uri_split[0]
-        handler = self.application.container.rule_lookup[rule_name][0]
-        self.root = handler.pathname()
-        uri = "/".join(uri_split[1:])
-        #self.request.uri = os.path.join(left, uri)
-        #self.request.path, sep, self.request.query = uri.partition('?')
-        path_split = path.split("/")
-        super().get("/".join(path_split[1:]), include_body)
+    def get(self, mode, md5_qual_name, md5_route, path, include_body=True):
+        (app, container, pattern, cls, *args) = self.application.find_md5(
+            md5_qual_name, md5_route)
+        if mode == "project":
+            self.root = cls.pathname()
+        else:
+            self.root = self.default_static
+        self.request.uri = path
+        self.request.path, sep, self.request.query = self.request.uri.partition('?')
+        self.absolute_path = os.path.join(self.root, self.request.path)
+        self.validate_absolute_path(self.root, self.absolute_path)
+        return super().get(path, include_body)
