@@ -3,9 +3,11 @@ core4 :class:`.CoreRequestHandler`, based on :mod:`tornado`
 :class:`RequestHandler <tornado.web.RequestHandler>`.
 """
 import base64
+import hashlib
+import os
+import re
 import traceback
-from inspect import signature
-import importlib
+
 import datetime
 import dateutil.parser
 import jwt
@@ -16,14 +18,14 @@ import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
-import os
+
+import core4.const
 import core4.error
 import core4.util
 import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
-
 from core4.base.main import CoreBase
-from core4.util.data import parse_boolean, json_encode, json_decode
+from core4.util.data import parse_boolean, json_encode, json_decode, unre_url
 from core4.util.pager import PageResult
 
 tornado.escape.json_encode = json_encode
@@ -52,8 +54,12 @@ class CoreRequestHandler(CoreBase, RequestHandler):
     author = None
     #: tag listing
     tag = []
-    #: template path, if not defined use absolte or relative path
+    #: template path, if not defined use absolute or relative path
     template_path = None
+    #: static file path, if not defined use relative path
+    static_path = None
+    #: link to card page (can be overwritten)
+    card_link = None
     #: this class supports the following content types
     supported_types = [
         "text/html",
@@ -61,15 +67,31 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         "text/csv",
         "application/json"
     ]
-    upwind = ["log_level", "template_path"]
+    upwind = ["log_level", "template_path", "static_path"]
 
     def __init__(self, *args, **kwargs):
+        """
+        Instantiation of request handlers passes all ``*args`` and ``**kwargs``
+        to :mod:`tornado` handler instantiation method. The following keywords
+        represent special ``**kwargs`` processed by core4:
+
+        * ``title`` - to overwrite the default title of the request handler
+        * ``card_link`` - to overwrite the default link to the card page
+        """
         CoreBase.__init__(self)
         RequestHandler.__init__(self, *args, **kwargs)
+        self.title = (kwargs.pop("title", None)
+                      or self.__class__.title)
+        self.card_link = (kwargs.pop("card_link", None)
+                          or self.__class__.card_link)
         self.default_template = self.config.api.default_template
         if self.default_template and not self.default_template.startswith("/"):
             self.default_template = os.path.join(
                 os.path.dirname(core4.__file__), self.default_template)
+        self.default_static = self.config.api.default_static
+        if self.default_static and not self.default_static.startswith("/"):
+            self.default_static = os.path.join(
+                os.path.dirname(core4.__file__), self.default_static)
         self.error_html_page = self.config.api.error_html_page
         self.error_text_page = self.config.api.error_text_page
         self.card_html_page = self.config.api.card_html_page
@@ -112,7 +134,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         Raises 401 error if authentication and authorization fails.
         """
         self.identifier = ObjectId()
-        if self.request.method in ('OPTIONS', 'XCARD', 'XHELP'):
+        if self.request.method in ('OPTIONS'):
             # preflight / OPTIONS should always pass
             return
         if self.request.body:
@@ -599,35 +621,51 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             raise HTTPError(400, "failed to parse ObjectId [%s]", _id)
 
     def xcard(self):
+        """
+        Prepares the ``card`` page.
+        :return: result of :meth:`.card`
+        """
         self.request.method = "GET"
-        self.card()
+        parts = self.request.path.split("/")
+        md5_rule_id = parts[-1]
+        md5_qual_name = parts[-2]
+        (app, container, pattern, cls, *args) = self.application.find_md5(
+            md5_qual_name, md5_rule_id)
+        return self.card(unre_url(pattern))
 
-    def xhelp(self):
-        self.request.method = "GET"
-        inspect = core4.service.introspect.api.CoreApiInspector()
-        doc = inspect.handler_info(self.__class__)
-        self.render_default(self.help_html_page, doc=doc["method"])
+    def card(self, get_url):
+        """
+        Renders the card page. The default
+        :param get_url:
+        :return:
+        """
+        return self.render_default(self.card_html_page, GET=get_url)
 
-    def card(self):
-        rule_id = self.request.path.split("/")[-1]
-        lookup = self.application.lookup(self.qual_name(), rule_id)
-        get = getattr(self, "get", None)
-        reverse = None
-        if get is not None:
-            sig = signature(get)
-            narg = [""] * len(sig.parameters)
-            try:
-                reverse = lookup["app"].reverse_url(rule_id, *narg)
-            except:
-                pass
-        self.render_default(
-            self.card_html_page,
-            pattern=lookup["rule"][0],
-            url=lookup["app"].container.url,
-            host=lookup["app"].container.base_url,
-            rule_id=rule_id,
-            reverse_url=reverse
-        )
+    def static_url(self, path, include_host=None, **kwargs):
+        prefix = ""
+        if include_host:
+            prefix = "%s://%s" % (self.request.protocol, self.request.host)
+        if path.startswith("/"):
+            mode = "/default/"
+        else:
+            mode = "/project/"
+            path = "/" + path
+        url = prefix + core4.const.FILE_URL + mode
+        url += self.qual_hash() + "/"
+        url += self.route_hash()
+        url += path
+        return url
+
+    @classmethod
+    def qual_hash(cls):
+        return hashlib.md5(cls.qual_name().encode("utf-8")).hexdigest()
+
+    def route_hash(self):
+        for rule in self.application.wildcard_router.rules:
+            route = rule.matcher.match(self.request)
+            if route is not None:
+                return rule.name
+        return None
 
     def get_template_namespace(self):
         namespace = super().get_template_namespace()
@@ -647,11 +685,19 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             path = self.pathname()
         return path
 
+    # def get_static_path(self):
+    #     if self.static_path:
+    #         if self.static_path.startswith("/"):
+    #             path = self.static_path
+    #         else:
+    #             path = os.path.join(self.pathname(), self.static_path)
+    #     else:
+    #         path = self.pathname()
+    #     return path
+
     def render_default(self, template_name, **kwargs):
         if template_name.startswith("/"):
             return self.render(template_name, **kwargs)
         self.absolute_path = os.path.join(self.default_template, template_name)
         return self.render(self.absolute_path, **kwargs)
 
-    def static_url(self, path, include_host=None, **kwargs):
-        return None
