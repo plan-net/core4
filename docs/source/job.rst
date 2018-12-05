@@ -24,16 +24,6 @@ CoreJobs implement the logic layer of the core architecture and enables the user
 within a fault-tolerant distributed system. Core    Jobs are the starting point for any Data-engineer or -scientist and
 provides a lot of possibilities to easily control the runtime-behavior within the framework.
 
-
-
-UNTERTREILEN IN:
-
-* runtime behavior
-* collection handling
-* cookie handling
-* logging
-* file handling
-
 Example
 --------
 
