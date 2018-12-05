@@ -4,13 +4,13 @@ All classes inheriting from :class:`.CoreBase` provide the standard features of
 core4 classes.
 """
 
+import importlib
 import inspect
 import logging
 import logging.handlers
 import os
 import re
 import sys
-import importlib
 
 import core4.config.main
 import core4.config.map
@@ -112,6 +112,13 @@ class CoreBase:
                         project = pathname.pop(-1)
                         break
         return project
+
+    @classmethod
+    def project_path(cls):
+        project = cls.get_project()
+        if project not in sys.modules:
+            return importlib.import_module(project)
+        return os.path.dirname(sys.modules[project].__file__)
 
     def __repr__(self):
         """
