@@ -1,8 +1,9 @@
 """
 This module delivers the :class:`.CoreApplication` derived from
 :class:`tornado.web.Application`, :class:`.CoreApiContainer` encapsulating
-one or more applications and a helper method :meth:`.serve` utilising
-:class:`.CoreApiServerTool` for server and endpoint management.
+one or more applications and helper method :meth:`.serve` and
+:meth:`.serve_all` utilising :class:`.CoreApiServerTool` for server and
+endpoint management.
 
 A blueprint for server definition and startup is::
 
@@ -29,51 +30,51 @@ the following example::
 
 import hashlib
 
-# import tornado.escape
 import tornado.routing
-import tornado.routing
-import tornado.web
 import tornado.web
 
+import core4.const
 import core4.error
 import core4.service.setup
-import core4.util
+import core4.util.data
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.request.standard.file import FileHandler
 from core4.api.v1.request.standard.info import InfoHandler
 from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
-from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
-
-# import tornado.escape
 
 
 class CoreApiContainer(CoreBase):
     """
-    The :class:`CoreApiContainer` class is a container for tornado's
-    ``Application`` objects. The container encapsulates endpoint resources
-    under the same :attr:`.root` URL defined by the :attr:`.root` attribute.
+    The :class:`CoreApiContainer` class is a container for a single or multiple
+    :class:`.CoreRequestHandler` which is based on torando's class
+    :class:`tornado.web.RequestHandler`. A container encapsulates endpoint
+    resources under the same :attr:`.root` URL defined by the :attr:`.root`
+    attribute.
 
     The default ``root`` is the project name.
     """
 
-    #: if ``True`` then the application container is automatically deployed
+    #: if ``True`` then the application container is deployed with serve_all
     enabled = True
     #: root URL, defaults to the project name
     root = None
-    #: list of tuples with route and :class:`.CoreRequestHandler`
+    #: list of tuples with route, request handler (i.e.
+    #  :class:`.CoreRequestHandler` or class:`tornado.web.RequestHandler`
+    #  derived class
     rules = []
+
     upwind = ["log_level", "enabled", "root"]
 
     def __init__(self, base_url=None, **kwargs):
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
-            # self.logger.debug("have %s = %s", attr, kwargs[attr])
         kwargs["default_handler_class"] = DefaultHandler
         kwargs["default_handler_args"] = ()
         kwargs["log_function"] = self._log
@@ -84,14 +85,15 @@ class CoreApiContainer(CoreBase):
             if prop in self.class_config:
                 if self.class_config[prop] is not None:
                     setattr(self, prop, self.class_config[prop])
-        # self.rule_lookup = []
 
     def _log(self, handler):
         # internal logging method
         if getattr(handler, "logger", None) is None:
+            # regular logging
             logger = self.logger
             identifier = self.identifier
         else:
+            # CoreRequestHandler logging
             logger = handler.logger
             identifier = handler.identifier
         if handler.get_status() < 400:
@@ -109,11 +111,11 @@ class CoreApiContainer(CoreBase):
     @classmethod
     def url(cls, *args):
         """
-        Class method to prefix the passed, optional URL with the ``root`` using
+        Class method to prefix the passed, optional URL with ``root`` using
         :meth:`.get_root`.
 
         :param args: optional URL str
-        :return: absolute path
+        :return: absolute URI path from :attr:`root`
         """
         return cls().get_root(*args)
 
@@ -139,53 +141,72 @@ class CoreApiContainer(CoreBase):
         return root
 
     def iter_rule(self):
-        for rule in self.rules:
-            ret = list(rule[:])
-            ret[0] = self.get_root(ret[0])
-            yield ret
+        """
+        Returns the rooted request handler as defined by the container's
+        :attr:`rules` attribute.
+
+        :return: list of tuples with route, request handler and handler
+                 parameters
+        """
+        return ((self.get_root(ret[0]), *ret[1:]) for ret in self.rules)
 
     def make_application(self):
         """
-        Parses the :class:`CoreApiContainer` objects' rules, attached the
-        :attr:`.root` url and creates the :class:`.CoreApplication` objects
-        passing the settings from :meth:`.serve`.
+        Validates and pre-processes :class:`CoreApiContainer` rules and
+        transfers a handler lookup dictionary to :class:`RootContainer`.
 
         :return: :class:`.CoreApplication` instance
         """
+        unique = set()
         rules = []
-        roots = set()
         routes = {}
         for rule in self.iter_rule():
             if isinstance(rule, (tuple, list)):
                 if len(rule) >= 2:
                     routing = rule[0]
                     cls = rule[1]
-                    if isinstance(routing, str):
-                        if routing not in roots:
-                            md5 = hashlib.md5(
-                                routing.encode("utf-8")).hexdigest()
-                            self.logger.info("starting [%s] with [%s] as [%s]",
-                                             routing, cls.__name__, md5)
-                            roots.add(routing)
+                    if (isinstance(routing, str)
+                            and issubclass(cls, tornado.web.RequestHandler)):
+                        md5_route = hashlib.md5(
+                            routing.encode("utf-8")).hexdigest()
+                        if md5_route not in unique:
+                            # self.logger.debug(
+                            #     "starting [%s] as [%s] with [%s]",
+                            #     routing, md5_route, cls.__name__)
+                            unique.add(md5_route)
                             rules.append(
                                 tornado.routing.Rule(
                                     tornado.routing.PathMatches(routing),
-                                    *rule[1:], name=md5))
+                                    *rule[1:], name=md5_route))
+                            # lookup applies to core request handlers only
                             if issubclass(cls, CoreRequestHandler):
-                                routes.setdefault(cls.qual_name(), {})
-                                routes[cls.qual_name()][md5] = rule
+                                md5_qual_name = hashlib.md5(
+                                    cls.qual_name().encode(
+                                        "utf-8")).hexdigest()
+                                routes.setdefault(md5_qual_name, {})
+                                routes[md5_qual_name][md5_route] = (
+                                    self, *rule)
                         else:
-                            self.logger.error("route [%s] already exists",
-                                              routing)
+                            raise core4.error.Core4SetupError(
+                                "route [%s] already exists" % routing)
                         continue
             raise core4.error.Core4SetupError(
-                "routing requires list of tuples "
-                "(str, handler)")
+                "routing requires list of tuples (str, handler, *args)")
         app = CoreApplication(rules, self, **self._settings)
-        for qual_name in routes:
-            RootContainer.routes.setdefault(qual_name, {})
-            for m in routes[qual_name]:
-                RootContainer.routes[qual_name][m] = {"app": app, "rule": routes[qual_name][m]}
+        # transfer routes lookup with handler/routing md5 and app to container
+        for md5_qual_name in routes:
+            RootContainer.routes.setdefault(md5_qual_name, {})
+            for md5_route in routes[md5_qual_name]:
+                RootContainer.routes[md5_qual_name][md5_route] = (
+                    app, *routes[md5_qual_name][md5_route])
+                self.logger.info(
+                    "started [%s] on [%s], pattern [%s] as [%s/%s]",
+                    routes[md5_qual_name][md5_route][2].__name__,
+                    core4.util.data.unre_url(
+                        routes[md5_qual_name][md5_route][1]),
+                    routes[md5_qual_name][md5_route][1],
+                    md5_qual_name,
+                    md5_route)
         return app
 
 
@@ -193,49 +214,86 @@ class CoreApplication(tornado.web.Application):
     """
     Represents a wrapper class around :class:`tornado.web.Application`. This
     wrapper extends applications' properties with a ``.container`` property
-    referencing the :class:`.CoreApiContainer` object.
+    referencing the :class:`.CoreApiContainer` object and delivers special
+    processing for the *card* and *help* handler requests.
     """
 
     def __init__(self, handlers, container, *args, **kwargs):
         super().__init__(handlers, *args, **kwargs)
         self.container = container
         self.identifier = container.identifier
-        # get_root = getattr(self.container, "get_root", None)
-        # if get_root:
-        #     self.root = os.path.join(get_root(), XCARD)
-        # else:
-        #     self.root = None
 
     def find_handler(self, request, **kwargs):
-        start = "/core4/api/v1/info/"
-        if request.path.startswith(start) and len(request.path) > len(start):
-            parts = request.path[len(start):].split("/")
-            section = parts[0]
-            qual_name = parts[1]
-            rule_id = parts[2]
-            lookup = RootContainer.routes.get(qual_name, None)
-            if lookup:
-                cls = lookup[rule_id]["rule"]
-                if cls:
-                    if section == "card":
-                        request.method = "XCARD"
-                    else:
-                        request.method = "XHELP"
-                    return self.get_handler_delegate(request, *cls[1:])
+        """
+        todo: requires documentation
+        :param request:
+        :param kwargs:
+        :return:
+        """
+        if request.path.startswith(core4.const.CARD_URL):
+            parts = request.path.split("/")
+            md5_qual_name = parts[-2]
+            md5_rule_id = parts[-1]
+            (app, container, pattern, cls, *args) = self.find_md5(
+                md5_qual_name, md5_rule_id)
+            request.method = core4.const.CARD_METHOD
+            return self.get_handler_delegate(request, cls, *args)
         return super().find_handler(request, **kwargs)
 
-    def lookup(self, qual_name, rule_id):
-        return RootContainer.routes.get(qual_name, {}).get(rule_id, None)
+    def find_md5(self, md5_qual_name, md5_route=None):
+        """
+        Find the passed ``qual_name`` and optional ``routing`` MD5 digest in
+        the bundled lookup built during the creation of applications
+        (:meth:`.make_application).
+
+        :param md5_qual_name: find the request handler based on
+                              :class:`.CoreRequestHandler` by the ``qual_name``
+                              MD5 digest.
+        :param md5_route: find the request handler route based on
+                          :class:`.CoreRequestHandler` by the ``qual_name``
+                          and routing pattern MD5 digests.
+        :return: tuple of (:class:`.CoreApiContainer`, pattern, class,
+                 arguments)
+        """
+        handler = RootContainer.routes.get(md5_qual_name)
+        if md5_route:
+            return handler.get(md5_route)
+        return list(handler.values())[0]
+
+    def handler_help(self, cls):
+        """
+        Delivers dict with help information about the passed
+        :class:`.CoreRequestHandler` class
+
+        :param cls: :class:`.CoreRequestHandler` class
+        :return: dict as delivered by :meth:`.CoreApiInspectir.handler_info`
+        """
+        from core4.service.introspect.api import CoreApiInspector
+        inspect = core4.service.introspect.api.CoreApiInspector()
+        return inspect.handler_info(cls)
 
 
 class RootContainer(CoreApiContainer):
+    """
+    This class is automatically attached to each server with :meth:`serve``
+    or :meth:`serve_all` to deliver the following standard request handlers
+    with core4:
+
+    * ``/login`` with :class:`.LoginHandler`
+    * ``/logout`` with :class:`.LogoutHandler`
+    * ``/profile`` with :class:`.ProfileHandler`
+    * ``/file`` for static file access with :class:`FileHandler`
+    * ``/info`` with :class:`.InfoHandler`
+    * ``/`` for ``favicon.ico`` delivery with :class:`.CoreStaticFileHandler`
+    """
     root = ""
     rules = [
-        (r"/core4/api/v1/login", LoginHandler),
-        (r"/core4/api/v1/logout", LogoutHandler),
-        (r"/core4/api/v1/profile", ProfileHandler),
-        (r"/core4/api/v1/file/(.+/.*)", FileHandler),
-        (r'/core4/api/v1/info', InfoHandler),
+        (core4.const.CORE4_API + r"/login", LoginHandler),
+        (core4.const.CORE4_API + r"/logout", LogoutHandler),
+        (core4.const.CORE4_API + r"/profile", ProfileHandler),
+        (core4.const.CORE4_API + r"/file/(default|project)/(.+?)/(.+?)/(.+)$",
+         FileHandler),
+        (core4.const.CORE4_API + r'/info/?(.*)', InfoHandler),
         (r'/(.*)', CoreStaticFileHandler, {"path": "./request/_static"})
     ]
     routes = {}
