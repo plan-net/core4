@@ -41,7 +41,7 @@ class CoreApiServer(CoreApiContainer):
     Default :class:`.CoreApiContainer` serving the standard core4 endpoints
     at ``/core4/api/v1``.
     """
-    root = "/core4/coco/v1/"
+    root = "/coco/v1/"
     rules = [
         (r'/queue', QueueHandler, dict(source=publisher)),
         (r'/jobs/poll/?(.*)', JobStream),
