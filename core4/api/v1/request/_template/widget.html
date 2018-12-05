@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ handler.__class__.__name__ }}</title>
+</head>
+<a>
+
+<h1>{{ handler.__class__.__name__ }}</h1>
+
+<hr/>
+
+    {% for widget in collection %}
+        <h2>
+            {{ widget["qual_name"] }}
+        </h2>
+        <blockquote>
+            {% raw widget["description"] %}
+            <ul>
+                <li>
+                    project: {{ widget["project"] }}
+                </li>
+                <li>
+                    author: {{ widget["author"] }}
+                </li>
+                <li>
+                    version: {{ widget["version"] }}
+                </li>
+                <li>
+                    qual_name ID: {{ widget["qual_name_id"] }}
+                </li>
+            </ul>
+            <blockquote>
+                {% for route in widget["route"] %}
+                    <h3>
+                        <a href="{{ route['url'] }}">{{ route["url"] }}</a>
+                    </h3>
+                    <ul>
+                        <li>
+                            title: {{ route["title"] }}
+                        </li>
+                        <li>
+                            arguments: {{ route["args"] }}
+                        </li>
+                        <li>
+                            route ID: {{ route["routing_id"] }}
+                        </li>
+                        <li>
+                            coutainer: {{ route["container"] }}
+                        </li>
+                        <li>
+                            <a href="{{ route['help_url'] }}">help</a>
+                        </li>
+                        <li>
+                            <a href="{{ route['card_url'] }}">card</a>
+                        </li>
+                    </ul>
+                {% end %}
+            </blockquote>
+        </blockquote>
+        <hr/>
+    {% end %}
+
+</ul>
+
+<hr/>
+
+</body>
+</html>
