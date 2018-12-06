@@ -36,6 +36,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     Get job listing, job details, kill, delete and restart jobs.
     """
 
+    author = "mra"
+    title = "job manager"
+
     def initialize(self):
         self.queue = CoreQueue()
         self._collection = {}
@@ -57,7 +60,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         ``/jobs/<_id>``.
 
         Methods:
-            /jobs - jobs listing
+            GET /jobs - jobs listing
 
         Parameters:
             per_page (int): number of jobs per page
@@ -112,7 +115,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             }
 
         Methods:
-            /jobs/<_id> - job details
+            GET /jobs/<_id> - job details
 
         Parameters:
             _id (str): job _id to get details
@@ -180,7 +183,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         ``filter`` attribute to filter jobs.
 
         Methods:
-            /jobs - jobs listing
+            POST /jobs - jobs listing
 
         Parameters:
             per_page (int): number of jobs per page
@@ -272,7 +275,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def delete(self, _id=None):
         """
         Methods:
-            /jobs/<_id> - delete job from ``sys.queue``
+            DELETE /jobs/<_id> - delete job from ``sys.queue``
 
         Parameters:
             _id (str): job _id to delete
@@ -310,7 +313,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def put(self, request=None):
         """
         Methods:
-            /jobs/<action>/<_id> - manage job in ``sys.queue``
+            PUT /jobs/<action>/<_id> - manage job in ``sys.queue``
 
         Parameters:
             action(str): ``delete``, ``kill`` or ``restart``
@@ -554,10 +557,13 @@ class JobPost(JobHandler):
     Post new job.
     """
 
+    author = "mra"
+    title = "enqueue job"
+
     async def post(self, _id=None):
         """
         Methods:
-            /jobs/<_id> - enqueue job
+            POST /jobs - enqueue job
 
         Parameters:
             args (dict): arguments to be passed to the job
@@ -662,10 +668,13 @@ class JobStream(JobPost):
     ``INACTIVE``, ``KILLED``).
     """
 
+    author = "mra"
+    title = "job state stream"
+
     async def get(self, _id=None):
         """
         Methods:
-            /jobs/poll - stream job attributes
+            GET /jobs/poll/<_id> - stream job attributes
 
         Parameters:
             _id (str): job _id
@@ -727,10 +736,34 @@ class JobStream(JobPost):
     async def post(self, _id=None):
         """
         Methods:
-            /jobs/poll - enqueue job and stream job progress
+            POST /jobs/poll - enqueue job and stream job progress
 
         Parameters:
-            see ``POST`` of :class:`core4.api.v1.request.queue.job.JobHandler`
+            args (dict): arguments to be passed to the job
+            attempts (int): maximum number of execution attempts after job
+                            failure before the job enters the final ``error``
+                            state
+            chain (list of str): list of jobs to be started after successful
+                                 job completion
+            defer_time (int): seconds to wait before restart after defer
+            defer_max (int): maximum number of seconds to defer the job before
+                             the job turns inactive
+            dependency (list of str): jobs which need to be completed before
+                                      execution start
+            error_time (int): seconds to wait before job restart after failure
+            force (bool): if ``True`` then ignore worker resource limits and
+                          launch the job
+            max_parallel (int): maximum number jobs to run in parallel on the
+                                same node
+            priority (int): to execute the job with >0 higher and <0 lower
+                            priority (defaults to 0)
+            python (str): Python executable to be used for dedicated Python
+                          virtual environment
+            wall_time (int): number of seconds before a running job turns into
+                             a non-stopping job
+            worker (list of str): eligable to execute the job
+            zombie_time (int): number of seconds before a job turns into a
+                               zombie non-stopping job
 
         Returns:
             JSON stream with job attributes

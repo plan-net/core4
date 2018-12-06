@@ -2,8 +2,8 @@ from tornado import gen
 from tornado.iostream import StreamClosedError
 
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.util.data import json_encode
 from core4.base import CoreBase
+from core4.util.data import json_encode
 
 QUERY_SLEEP = 1.
 PUBLISH_SLEEP = 0.5
@@ -45,8 +45,7 @@ class QueueStatus(CoreBase):
             else:
                 f = {}
             cursor = sys_stat.find(
-                filter=f, projection={"_id": 0}).sort(
-                "timestamp", 1)
+                filter=f, projection={"_id": 0}).sort("timestamp", 1)
             async for doc in cursor:
                 update.append(doc)
                 last = doc["timestamp"]
@@ -62,6 +61,9 @@ class QueueHandler(CoreRequestHandler):
     collection ``sys.stat``. The stream with the latest state and delivers
     updates in JSON format whenever new records arrive in ``sys.stat``.
     """
+
+    author = "mra"
+    title = "queue state stream"
 
     def initialize(self, source):
         """
@@ -93,6 +95,9 @@ class QueueHandler(CoreRequestHandler):
 
     async def get(self):
         """
+        Methods:
+            GET / - stream ``sys.stat``
+
         Parameters:
             None
 

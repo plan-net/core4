@@ -140,7 +140,7 @@ class RoleHandler(CoreRequestHandler):
         Get users/roles listing and details.
 
         Methods:
-            GET /roles/ - user/role listing
+            GET /roles - user/role listing
 
         Arguments:
             test: hello world
@@ -270,7 +270,7 @@ class RoleHandler(CoreRequestHandler):
         """
         Update user/role attributes.
 
-        Method:
+        Methods:
             PUT /roles/<_id> - user/role update
 
         Parameters:
@@ -301,7 +301,7 @@ class RoleHandler(CoreRequestHandler):
             - **email** (*list*): of the user (not role)
             - **perm** (*list*): of cascading permission protocols
 
-        Errors:
+        Raises:
             400 Bad Request: AttributeError
             400 Bad Request: TypeError
             400 Bad Request: Core4ConflictError
