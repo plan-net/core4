@@ -20,6 +20,9 @@ class LoginHandler(CoreRequestHandler):
         Login using *Basic Auth* header, *Bearer Auth* header, token parameter,
         token cookie or username/password parameter.
 
+        Methods:
+            POST /
+
         Parameters:
             username (str): requesting login
             password (str): requesting login
@@ -86,6 +89,9 @@ class LoginHandler(CoreRequestHandler):
         """
         User password reset.
 
+        Methods:
+            PUT /
+
         Parameters:
             email (str): of the user who requests to reset his password
             token (str): of the authenticated user
@@ -104,7 +110,7 @@ class LoginHandler(CoreRequestHandler):
             dict with empty data element
 
         Raises:
-            None
+            400 Bad Request: if no email or token/password is sent
 
         Examples:
             >>> url = "http://localhost:5001/core4/api/v1/login"

@@ -15,6 +15,14 @@ class LogoutHandler(CoreRequestHandler):
         """
         Logout an authenticated user.
 
+        .. note:: This request resets the secure cookie. Further actions have
+                  to be taken by the client itself, e.g. resetting the token
+                  or resetting client basic authentication. The latter
+                  typically requires to restart the client.
+
+        Methods:
+            POST /
+
         Parameters:
             None
 
