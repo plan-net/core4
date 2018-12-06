@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ handler.__class__.__name__ }}</title>
+</head>
+<a>
+
+<h1>{{ qual_name }}</h1>
+
+<ul>
+    <li><b>AUTHOR:</b> {{ author }}</li>
+    <li><b>TITLE:</b> {{ title }}</li>
+    <li><b>RULE ID:</b> {{ rule_id }}</li>
+    <li><b>ROOT:</b> <a href="{{ url }}">{{ url }}</a></li>
+    <li><b>PROTECTED:</b> {{ protected }}</li>
+    <li><b>ICON:</b> {{ icon }}</li>
+    <li><b>ARGS:</b> {{ args }}</li>
+    <li><b>CONTAINER:</b> {{ container }}</li>
+    <li><b>PROJECT:</b> {{ project }}</li>
+    <li><b>VERSION:</b> {{ version }}</li>
+    <li><b>CARD:</b> <a href="{{ card_url }}">{{ card_url }}</a></li>
+    <li><b>MISSING</b>
+        <ul>
+            {% if author is None %} <li> AUTHOR </li> {% end %}
+            {% if not title %} <li> TITLE </li> {% end %}
+            {% if method %}
+                {% for elem in method %}
+                    {% if elem["parts"] %}
+                        {% for part in elem["parts"] %}
+                            {% if not elem["parts"][part] %}
+                                <li>
+                                    {{ elem["method"].upper() }} - section
+                                    <i> {{ part }} </i>
+                                </li>
+                            {% end %}
+                        {% end %}
+                    {% else %}
+                        <li>
+                            {{ elem["method"].upper() }} documentation
+                        </li>
+                    {% end %}
+                {% end %}
+            {% end %}
+        </ul>
+    </li>
+
+</ul>
+
+<hr/>
+
+{% for elem in method %}
+
+    <h2>{{ elem["method"].upper() }}</h2>
+
+    {% raw elem["html"] %}
+
+    <hr/>
+
+{% end %}
+
+</body>
+</html>

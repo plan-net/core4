@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ handler.__class__.__name__ }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ static_url('/default.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <a>
 
@@ -11,17 +13,16 @@
 <hr/>
 
 <ul>
-    <li><b>AUTHOR:</b> {{ handler.author }}</li>
     <li><b>TITLE:</b> {{ handler.title }}</li>
+    <li><b>RULE ID:</b> {{ rule_id }}</li>
+    <li><b>AUTHOR:</b> {{ handler.author }}</li>
     <li><b>QUAL_NAME:</b> {{ handler.qual_name() }}</li>
-    <li><b>RULE-ID:</b> {{ rule_id }}</li>
-    <li><b>ROUTE:</b> {{ pattern }}</li>
-    <li><b>HOST:</b> {{ host }}</li>
-    <li><b>ROOT:</b> {{ url() }}</li>
+    <li><b>ICON:</b> <i class="material-icons">{{ handler.icon }}</i></li>
+    <li><b>HELP:</b> <a href="{{ help_url }}">{{ help_url }}</a></li>
     <li><b>REVERSE:</b>
-        {% if reverse_url %}
-            <a href="{{ host }}{{ reverse_url }}">
-                {{ host }}{{ reverse_url }}
+        {% if GET %}
+            <a href="{{ GET }}">
+                {{ GET }}
             </a>
         {% end %}
     </li>
@@ -36,8 +37,6 @@
 </ul>
 
 <hr/>
-
-    {{ current_user }}
 
 </body>
 </html>

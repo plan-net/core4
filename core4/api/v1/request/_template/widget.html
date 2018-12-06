@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ handler.__class__.__name__ }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ static_url('/default.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <a>
 
@@ -26,9 +28,6 @@
                 <li>
                     version: {{ widget["version"] }}
                 </li>
-                <li>
-                    qual_name ID: {{ widget["qual_name_id"] }}
-                </li>
             </ul>
             <blockquote>
                 {% for route in widget["route"] %}
@@ -43,10 +42,13 @@
                             arguments: {{ route["args"] }}
                         </li>
                         <li>
-                            route ID: {{ route["routing_id"] }}
+                            rule ID: {{ route["rule_id"] }}
                         </li>
                         <li>
                             coutainer: {{ route["container"] }}
+                        </li>
+                        <li>
+                            icon: <i class="material-icons">{{ route["icon"] }}</i>
                         </li>
                         <li>
                             <a href="{{ route['help_url'] }}">help</a>
