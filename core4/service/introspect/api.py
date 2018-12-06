@@ -1,66 +1,22 @@
 import importlib
 import re
-from io import StringIO
 
-import docutils.parsers.rst.directives.body
-import docutils.parsers.rst.roles
-import sphinx.ext.napoleon
-from docutils import core
 import core4.util.data
 from core4.base.main import CoreBase
 
-EXPECTED_PARTS = ("method", "parameter", "return", "error", "example")
+EXPECTED_PARTS = ("method", "parameter", "return", "raise", "example")
 
 
 class CoreApiInspector(CoreBase):
 
-    # def container_info(self, container):
-    #     if isinstance(container, str):
-    #         parts = container.split(".")
-    #         modname = ".".join(parts[:-1])
-    #         clsname = parts[-1]
-    #         try:
-    #             mod = importlib.import_module(modname)
-    #             cls = getattr(mod, clsname)
-    #             obj = cls()
-    #         except:
-    #             self.logger.error("failed to inspect [%s]", container)
-    #             raise StopIteration
-    #     else:
-    #         obj = container
-    #     self.logger.info("inspecting [%s] at [%s]", container, obj.root)
-    #     for rule in obj.iter_rule():
-    #         self.logger.debug("testing %s", rule)
-    #         handler = rule[1]
-    #         yield self.handler_info(handler)
-    #         # handler_name = self.handler_qual_name(handler)
-    #         # yield dict(
-    #         #     qual_name=handler_name,
-    #         #     version=self.handler_version(handler),
-    #         #     author=getattr(handler, "author", None),
-    #         #     title=getattr(handler, "title", None),
-    #         #     method=self.handler_methods(handler, handler_name)
-    #         # )
-    #         # for m in method:
-    #         #     testname = os.path.join("/tmp", m.upper() + "-" +
-    #         #                             handler_name + ".html")
-    #         #     self.logger.debug("wrote [%s]", testname)
-    #         #     open(testname, "w").write(method[m]["html"])
-
-    # def handler_version(self, handler):
-    #     version = getattr(handler, "version", None)
-    #     if version:
-    #         return version()
-    #     return None
-
     def handler_info(self, handler):
         """
-        Provides documentation about the methods of the passed
-        :class:`.CoreRequestHandler`.
+        Provides documentation about methods of the passed
+        :class:`.CoreRequestHandler`:
 
         :param handler: either ``qual_name`` (str) or a class derived from
                         :class:`.CoreRequestHandler`
-        :return:
+        :return: result of :meth:`.handler_methods`
         """
         if isinstance(handler, str):
             parts = handler.split(".")
@@ -73,7 +29,6 @@ class CoreApiInspector(CoreBase):
             except:
                 self.logger.error("failed to inspect [%s]", handler)
                 raise
-        handler_name = self.handler_qual_name(handler)
         return self.handler_methods(handler)
 
     def handler_qual_name(self, handler):
@@ -122,12 +77,13 @@ class CoreApiInspector(CoreBase):
         :param handler: :class:`.CoreRequestHandler` class
         :return: dict with attributes described above
         """
-        method = {}
-        for m in ("post", "get", "put", "delete", "head", "patch", "options"):
-            meth = handler.__dict__.get(m, None)
-            if meth is not None:
-                docstring = meth.__doc__
-                method[m] = {
+        listing = []
+        for method in ("get", "post", "put", "delete", "patch", "options", "head"):
+            func = handler.__dict__.get(method, None)
+            if func is not None:
+                docstring = func.__doc__
+                data = {
+                    "method": method,
                     "doc": None,
                     "html": None,
                     "parser_error": None,
@@ -136,7 +92,7 @@ class CoreApiInspector(CoreBase):
                 }
                 if docstring:
                     html = self._make_html(docstring)
-                    method[m].update({
+                    data.update({
                         "doc": docstring,
                         "html": html["body"],
                         "parser_error": html["error"],
@@ -149,7 +105,8 @@ class CoreApiInspector(CoreBase):
                             len(html["error"]),
                             self.handler_qual_name(handler),
                             "\n".join(html["error"]))
-        return method
+                listing.append(data)
+        return listing
 
     def _make_html(self, doc):
         expected = dict([(k, False) for k in EXPECTED_PARTS])
