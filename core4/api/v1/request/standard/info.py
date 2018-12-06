@@ -246,6 +246,7 @@ class InfoHandler(CoreRequestHandler):
                      *args) in collection[qual_name]["route"]:
                     rule = rule_part(container, md5_route, pattern, cls, args)
                     doc["route"].append(rule)
+                doc["route"].sort(key=lambda r: r["rule_id"])
                 listing.append(doc)
             ret = {"collection": listing}
             template = "widget.html"
