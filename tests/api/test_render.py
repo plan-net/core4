@@ -64,7 +64,7 @@ class RenderingHandler3(RenderingHandler):
     template_path = "template"
 
     def get(self):
-        self.render_default("card.html", GET=None)
+        self.render_default("card.html", GET=None, rule_id=None, help_url=None)
 
 class CardHandler(RenderingHandler):
     title = "card handler"
@@ -196,9 +196,9 @@ def test_server_test(http):
     assert rv.status_code == 200
     rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
-    # pprint(rv.json())
+    pprint(rv.json())
     lh = 'core4.api.v1.request.standard.login.LoginHandler'
-    login_handler = [h for h in rv.json()["data"]
+    login_handler = [h for h in rv.json()["data"]["collection"]
                      if h["qual_name"] == lh][0]
     rv = http.get(login_handler["route"][0]["help_url"])
     assert rv.status_code == 200
@@ -218,7 +218,8 @@ def test_title_args(http):
     rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
-    internal_handler = [h for h in rv.json()["data"] if h["qual_name"] == qn]
+    internal_handler = [h for h in rv.json()["data"]["collection"]
+                        if h["qual_name"] == qn]
     internal_handler[0]["route"][0]["title"] == "custom title 1"
     internal_handler[0]["route"][1]["title"] == "internal test 1"
     # pprint(internal_handler)
@@ -230,15 +231,18 @@ def test_help(http):
     rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
-    internal_handler = [h for h in rv.json()["data"] if h["qual_name"] == qn]
+    internal_handler = [h for h in rv.json()["data"]["collection"]
+                        if h["qual_name"] == qn]
     url = internal_handler[0]["route"][0]["help_url"]
     rv = http.get(url)
     assert rv.status_code == 200
-    pprint(rv.json())
+    # pprint(rv.json())
     data = rv.json()["data"]
-    assert data["route"]["title"] == "custom title 1"
-    assert "get" in data["doc"]
-    assert "post" in data["doc"]
+    assert data["title"] == "custom title 1"
+    assert len([m for m in data["method"] if m["method"] == "get"]) == 1
+    assert len([m for m in data["method"] if m["method"] == "post"]) == 1
+    assert len([m for m in data["method"] if m["method"] == "put"]) == 0
+    assert len([m for m in data["method"] if m["method"] == "delete"]) == 0
 
 
 def test_server_not_unique():
@@ -257,7 +261,8 @@ def test_card(http):
     rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
-    internal_handler = [h for h in rv.json()["data"] if h["qual_name"] == qn]
+    internal_handler = [h for h in rv.json()["data"]["collection"]
+                        if h["qual_name"] == qn]
     internal_handler[0]["route"][0]["title"] == "custom title 1"
     internal_handler[0]["route"][1]["title"] == "internal test 1"
 
@@ -283,7 +288,6 @@ def test_render(http):
     assert rv.status_code == 200
     body = rv.content.decode("utf-8")
     url = "/core4/api/v1/file/project" \
-          "/db53cbff74c1ad855fe519eeda2ee677" \
           "/2f9c7924e975f580eaa242d56654182e" \
           "/template/test.css"
     assert url in body
@@ -293,14 +297,12 @@ def test_render(http):
            '    font-size: 3em;\n' \
            '}' in rv.content.decode("utf-8")
     url = "/core4/api/v1/file/project" \
-          "/db53cbff74c1ad855fe519eeda2ee677" \
           "/2f9c7924e975f580eaa242d56654182e/template/head.png"
     rv = http.get(url)
     assert rv.content[0:10] == b'\x89PNG\r\n\x1a\n\x00\x00'
     assert rv.content[-10:] == b'\x00\x00IEND\xaeB`\x82'
 
     url = "/core4/api/v1/file/default" \
-          "/db53cbff74c1ad855fe519eeda2ee677" \
           "/2f9c7924e975f580eaa242d56654182e/favicon.ico"
     rv = http.get(url)
     assert rv.content[0:10] == b'\x00\x00\x01\x00\x03\x00\x10\x10\x00\x00'
@@ -319,7 +321,6 @@ def test_render_title(http):
     "hello world: rendering handler 1" in body
     css = '/core4/api/v1/file' \
           '/project' \
-          '/3fafc251fdbbd7fe76b21b2b3e2ae532' \
           '/6633bad7e2f6813257693276a5cfa6d8' \
           '/template/test.css'
     assert 'href="' + css + '"' in body
@@ -336,19 +337,16 @@ def test_render_default(http):
     "hello world: rendering handler 2" in body
     css = '/core4/api/v1/file' \
           '/default' \
-          '/9b5aa0c1a256cb9551ccde906d912d03' \
           '/d55c5bcb1c6b46d31e007c20248f68f9' \
           '/default.css'
     assert 'href="' + css + '"' in body
     css_nf1 = "/core4/api/v1/file" \
               "/project" \
-              "/9b5aa0c1a256cb9551ccde906d912d03" \
               "/d55c5bcb1c6b46d31e007c20248f68f9" \
               "/not_found.css"
     assert 'href="' + css_nf1 + '"' in body
     css_nf2 = "/core4/api/v1/file" \
               "/default" \
-              "/9b5aa0c1a256cb9551ccde906d912d03" \
               "/d55c5bcb1c6b46d31e007c20248f68f9" \
               "/not_found.css"
     assert 'href="' + css_nf2 + '"' in body
@@ -356,7 +354,7 @@ def test_render_default(http):
     rv = http.get(css)
     assert rv.status_code == 200
     css_body = rv.content.decode("utf-8")
-    assert "// core4 default css" in css_body
+    assert "core4 default css" in css_body
 
     rv = http.get(css_nf1)
     assert rv.status_code == 404
@@ -374,7 +372,7 @@ def test_card_handler(http):
     rv = http.get("/tests/card")
     assert rv.status_code == 200
     print(rv.content)
-    card = "0f465136b6238198edf0ce3576e52b96/f30b6d2fb2e3ab8a3f90ccd483f17ac1"
+    card = "f30b6d2fb2e3ab8a3f90ccd483f17ac1"
     rv = http.get("/core4/api/v1/info/card/" + card)
     assert rv.status_code == 200
     print(rv.content)
