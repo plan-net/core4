@@ -10,8 +10,7 @@ import tornado.routing
 import core4.error
 import core4.service.introspect
 import core4.util.node
-from core4.api.v1.application import CoreApplication, RootContainer
-from core4.api.v1.request.default import DefaultHandler
+from core4.api.v1.application import RootContainer
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
 
@@ -38,7 +37,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         RootContainer.routes = {}
         RootContainer.application = {}
         for container_cls in list(args) + [RootContainer]:
-            base_url = "%s://%s:%d" %(
+            base_url = "%s://%s:%d" % (
                 protocol, address or core4.util.node.get_hostname(), port
             )
             container_obj = container_cls(base_url=base_url, **kwargs)
@@ -48,9 +47,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                                     container_obj.qual_name())
             if root in roots:
                 raise core4.error.Core4SetupError(
-                    "routing root [{}] duplicate with [{}]".format(
+                    "routing root [{}] already exists [{}]".format(
                         root, container_cls.qual_name())
                 )
+            self.logger.info("successfully registered container [%s]",
+                             container_cls.qual_name())
             # self.register(
             #     container_obj, protocol, address, port, root
             # )
@@ -294,9 +295,9 @@ def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
 
 
 if __name__ == '__main__':
-        # from core4.service.introspect import CoreIntrospector
-        # intro = CoreIntrospector()
-        # for pro in intro.iter_project():
-        #     print(pro)
-    serve_all(filter=["project.api", # "core4",
+    # from core4.service.introspect import CoreIntrospector
+    # intro = CoreIntrospector()
+    # for pro in intro.iter_project():
+    #     print(pro)
+    serve_all(filter=["project.api",  # "core4",
                       "example"])  # , name=sys.argv[1], port=int(sys.argv[2]))

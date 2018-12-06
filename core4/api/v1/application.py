@@ -180,12 +180,11 @@ class CoreApiContainer(CoreBase):
                                     *rule[1:], name=md5_route))
                             # lookup applies to core request handlers only
                             if issubclass(cls, CoreRequestHandler):
-                                md5_qual_name = hashlib.md5(
-                                    cls.qual_name().encode(
-                                        "utf-8")).hexdigest()
-                                routes.setdefault(md5_qual_name, {})
-                                routes[md5_qual_name][md5_route] = (
-                                    self, *rule)
+                                # md5_qual_name = hashlib.md5(
+                                #     cls.qual_name().encode(
+                                #         "utf-8")).hexdigest()
+                                # routes.setdefault(md5_route, {})
+                                routes[md5_route] = (self, *rule)
                         else:
                             raise core4.error.Core4SetupError(
                                 "route [%s] already exists" % routing)
@@ -194,19 +193,15 @@ class CoreApiContainer(CoreBase):
                 "routing requires list of tuples (str, handler, *args)")
         app = CoreApplication(rules, self, **self._settings)
         # transfer routes lookup with handler/routing md5 and app to container
-        for md5_qual_name in routes:
-            RootContainer.routes.setdefault(md5_qual_name, {})
-            for md5_route in routes[md5_qual_name]:
-                RootContainer.routes[md5_qual_name][md5_route] = (
-                    app, *routes[md5_qual_name][md5_route])
-                self.logger.info(
-                    "started [%s] on [%s], pattern [%s] as [%s/%s]",
-                    routes[md5_qual_name][md5_route][2].__name__,
-                    core4.util.data.unre_url(
-                        routes[md5_qual_name][md5_route][1]),
-                    routes[md5_qual_name][md5_route][1],
-                    md5_qual_name,
-                    md5_route)
+        for md5_route in routes:
+            RootContainer.routes[md5_route] = (app, *routes[md5_route])
+            self.logger.info(
+                "started [%s] on [%s], pattern [%s] as [%s]",
+                routes[md5_route][2].__name__,
+                core4.util.data.unre_url(
+                    routes[md5_route][1]),
+                routes[md5_route][1],
+                md5_route)
         return app
 
 
@@ -232,15 +227,13 @@ class CoreApplication(tornado.web.Application):
         """
         if request.path.startswith(core4.const.CARD_URL):
             parts = request.path.split("/")
-            md5_qual_name = parts[-2]
             md5_rule_id = parts[-1]
-            (app, container, pattern, cls, *args) = self.find_md5(
-                md5_qual_name, md5_rule_id)
+            (app, container, pattern, cls, *args) = self.find_md5(md5_rule_id)
             request.method = core4.const.CARD_METHOD
             return self.get_handler_delegate(request, cls, *args)
         return super().find_handler(request, **kwargs)
 
-    def find_md5(self, md5_qual_name, md5_route=None):
+    def find_md5(self, md5_qual_name):
         """
         Find the passed ``qual_name`` and optional ``routing`` MD5 digest in
         the bundled lookup built during the creation of applications
@@ -255,10 +248,7 @@ class CoreApplication(tornado.web.Application):
         :return: tuple of (:class:`.CoreApiContainer`, pattern, class,
                  arguments)
         """
-        handler = RootContainer.routes.get(md5_qual_name)
-        if md5_route:
-            return handler.get(md5_route)
-        return list(handler.values())[0]
+        return RootContainer.routes.get(md5_qual_name)
 
     def handler_help(self, cls):
         """
@@ -291,7 +281,7 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r"/login", LoginHandler),
         (core4.const.CORE4_API + r"/logout", LogoutHandler),
         (core4.const.CORE4_API + r"/profile", ProfileHandler),
-        (core4.const.CORE4_API + r"/file/(default|project)/(.+?)/(.+?)/(.+)$",
+        (core4.const.CORE4_API + r"/file/(default|project)/(.+?)/(.+)$",
          FileHandler),
         (core4.const.CORE4_API + r'/info/?(.*)', InfoHandler),
         (r'/(.*)', CoreStaticFileHandler, {"path": "./request/_static"})

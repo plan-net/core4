@@ -60,6 +60,8 @@ class CoreRequestHandler(CoreBase, RequestHandler):
     static_path = None
     #: link to card page (can be overwritten)
     card_link = None
+    #: default material icon
+    icon = "copyright"
     #: this class supports the following content types
     supported_types = [
         "text/html",
@@ -77,6 +79,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
 
         * ``title`` - to overwrite the default title of the request handler
         * ``card_link`` - to overwrite the default link to the card page
+        * ``icon`` - to overwrite the default material icon
         """
         CoreBase.__init__(self)
         RequestHandler.__init__(self, *args, **kwargs)
@@ -84,6 +87,8 @@ class CoreRequestHandler(CoreBase, RequestHandler):
                       or self.__class__.title)
         self.card_link = (kwargs.pop("card_link", None)
                           or self.__class__.card_link)
+        self.card_link = (kwargs.pop("icon", None)
+                          or self.__class__.icon)
         self.default_template = self.config.api.default_template
         if self.default_template and not self.default_template.startswith("/"):
             self.default_template = os.path.join(
@@ -628,18 +633,19 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         self.request.method = "GET"
         parts = self.request.path.split("/")
         md5_rule_id = parts[-1]
-        md5_qual_name = parts[-2]
+        #md5_qual_name = parts[-2]
         (app, container, pattern, cls, *args) = self.application.find_md5(
-            md5_qual_name, md5_rule_id)
-        return self.card(unre_url(pattern))
+            md5_rule_id)
+        help_url = "/".join([core4.const.INFO_URL, md5_rule_id])
+        return self.card(unre_url(pattern), md5_rule_id, help_url)
 
-    def card(self, get_url):
+    def card(self, url, rule_id, help_url):
         """
         Renders the card page. The default
         :param get_url:
         :return:
         """
-        return self.render_default(self.card_html_page, GET=get_url)
+        return self.render_default(self.card_html_page, GET=url, rule_id=rule_id, help_url=help_url)
 
     def static_url(self, path, include_host=None, **kwargs):
         prefix = ""
@@ -651,14 +657,10 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             mode = "/project/"
             path = "/" + path
         url = prefix + core4.const.FILE_URL + mode
-        url += self.qual_hash() + "/"
+        #url += self.qual_hash() + "/"
         url += self.route_hash()
         url += path
         return url
-
-    @classmethod
-    def qual_hash(cls):
-        return hashlib.md5(cls.qual_name().encode("utf-8")).hexdigest()
 
     def route_hash(self):
         for rule in self.application.wildcard_router.rules:
