@@ -165,7 +165,7 @@ class ApiTest(CoreApiContainer):
             local_dict={
                 "api": {
                     "setting": {
-                        "cookie_secret": "bliblablub"
+                        "cookie_secret": "blabla"
                     }
                 },
                 "tests": {
@@ -190,15 +190,29 @@ def test_config_overwrite():
     server.start()
     while True:
         try:
-            requests.get("http://localhost:5555/changed/profile", timeout=1)
+            requests.get("http://localhost:5555/core4/api/v1/profile",
+                         timeout=1)
             break
         except:
             pass
         time.sleep(1)
-    rv = requests.get("http://localhost:5555/changed/login"
-                      "?username=admin&password=hans")
+    signin = requests.get("http://localhost:5555/core4/api/v1/login"
+                          "?username=admin&password=hans")
+    assert signin.status_code == 200
+    rv = requests.get("http://localhost:5555/core4/api/v1/login",
+                      cookies=signin.cookies)
     assert rv.status_code == 200
-    requests.get("http://localhost:5555/changed/kill")
+
+    rv = requests.get("http://localhost:5555/core4/api/v1/profile",
+                      cookies=signin.cookies)
+    assert rv.status_code == 200
+
+    rv = requests.get("http://localhost:5555/changed/test",
+                       cookies=signin.cookies)
+    assert rv.status_code == 200
+    rv = requests.get("http://localhost:5555/changed/kill",
+                       cookies=signin.cookies)
+    assert rv.status_code == 200
     server.join()
 
 
@@ -208,20 +222,20 @@ def token2():
                                      kwargs={
                                          "filter": [
                                              "project.api",
-                                             "core4",
+                                             "core4.api.v1.server",
                                              "tests.api.test_container"
                                          ],
                                          "port": 5557})
     server.start()
     while True:
         try:
-            requests.get("http://localhost:5557/project/profile", timeout=1)
+            requests.get("http://localhost:5557/core4/api/v1/profile", timeout=1)
             break
         except:
             pass
         time.sleep(1)
     signin = requests.get(
-        "http://localhost:5557/project/login?username=admin&password=hans")
+        "http://localhost:5557/core4/api/v1/login?username=admin&password=hans")
     token = signin.json()["data"]["token"]
     yield token
     requests.get("http://localhost:5557/project/kill")
@@ -234,4 +248,3 @@ def test_serve_different(token, token2):
     rv = requests.get("http://localhost:5557/core4/api/v1/info",
                       cookies=signin.cookies)
     assert rv.status_code == 200
-    print(rv.json())

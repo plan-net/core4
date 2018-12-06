@@ -6,7 +6,13 @@ from core4.api.v1.test import StopHandler
 from tornado.web import StaticFileHandler
 import core4.util.node
 from core4.api.v1.request.standard.login import LoginHandler
+import core4.api.v1.request.main
 
+
+class TestHandler3(core4.api.v1.request.main.CoreRequestHandler):
+
+    def get(self):
+        self.render("html/index.html", testvar="123")
 
 class MyStatic(CoreStaticFileHandler):
 
@@ -32,7 +38,8 @@ class ProjectServer1(CoreApiContainer):
             "path": "./html"
         }),
         (r"/login", LoginHandler),
-        (r"/login1", LoginHandler, { "test": "blay<y"}),
+        (r"/req3", TestHandler3),
+        (r"/login1", LoginHandler, { "test": "blay"}),
     ]
 
 if __name__ == '__main__':

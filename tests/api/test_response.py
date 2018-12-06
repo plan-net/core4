@@ -15,6 +15,8 @@ import core4.service
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.tool import serve
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.standard.profile import ProfileHandler
+
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
@@ -59,7 +61,7 @@ class StopHandler(CoreRequestHandler):
 
 
 class LocalTestServer:
-    base_url = "/core4/api/v1"
+    base_url = "/test"
 
     def __init__(self):
         self.port = 5555
@@ -68,38 +70,42 @@ class LocalTestServer:
         self.process.start()
         while True:
             try:
-                url = self.url("/profile")
-                requests.get(url, timeout=1)
+                url = self.url("/core4/api/v1/profile", base=False)
+                rv = requests.get(url, timeout=1)
                 break
             except:
-                pass
+               pass
             time.sleep(1)
             tornado.gen.sleep(1)
         self.signin = requests.get(
-            self.url("/login?username=admin&password=hans"))
+            self.url("/core4/api/v1/login?username=admin&password=hans", base=False))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 
-    def url(self, url):
-        return "http://localhost:{}{}".format(self.port, self.base_url) + url
+    def url(self, url, base=True):
+        if base:
+            b = self.base_url
+        else:
+            b = ""
+        return "http://localhost:{}{}".format(self.port, b) + url
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url, base, **kwargs):
         if self.token:
             kwargs.setdefault("headers", {})[
                 "Authorization"] = "Bearer " + self.token
-        return requests.request(method, self.url(url), **kwargs)
+        return requests.request(method, self.url(url, base), **kwargs)
 
-    def get(self, url, **kwargs):
-        return self.request("GET", url, **kwargs)
+    def get(self, url, base=True, **kwargs):
+        return self.request("GET", url, base, **kwargs)
 
-    def post(self, url, **kwargs):
-        return self.request("POST", url, **kwargs)
+    def post(self, url, base=True, **kwargs):
+        return self.request("POST", url, base, **kwargs)
 
-    def put(self, url, **kwargs):
-        return self.request("PUT", url, **kwargs)
+    def put(self, url, base=True, **kwargs):
+        return self.request("PUT", url, base, **kwargs)
 
-    def delete(self, url, **kwargs):
-        return self.request("DELETE", url, **kwargs)
+    def delete(self, url, base=True, **kwargs):
+        return self.request("DELETE", url, base, **kwargs)
 
     def run(self):
 

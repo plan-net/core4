@@ -69,7 +69,6 @@ class PagingHandler(CoreRequestHandler):
 
 
 class MyTestServer(LocalTestServer):
-    base_url = "/core4/api/v1"
 
     def start(self, *args, **kwargs):
         class CoreApiTestServer(CoreApiContainer):

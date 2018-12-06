@@ -1,7 +1,5 @@
-// test css
-
 body {
+    font-size: 33pt;
     font-family: monospace;
     color: red;
-    font-size: 3em;
 }
