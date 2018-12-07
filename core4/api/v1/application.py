@@ -274,8 +274,7 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r"/login", LoginHandler),
         (core4.const.CORE4_API + r"/logout", LogoutHandler),
         (core4.const.CORE4_API + r"/profile", ProfileHandler),
-        (core4.const.CORE4_API + r"/file/(default|project)/(.+?)/(.+)$",
-         FileHandler),
+        (core4.const.CORE4_API + r"/file/(.*)", FileHandler),
         (core4.const.CORE4_API + r'/info/?(.*)', InfoHandler),
         (r'/(.*)', CoreStaticFileHandler, {"path": "./request/_static"})
     ]

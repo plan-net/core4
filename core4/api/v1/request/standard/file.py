@@ -2,6 +2,10 @@ import os
 
 from tornado import gen
 from tornado.web import StaticFileHandler
+from core4.base.main import CoreBase
+import core4
+import core4.const
+from bson.objectid import ObjectId
 
 from core4.api.v1.request.main import CoreRequestHandler
 
@@ -26,46 +30,28 @@ class FileHandler(CoreRequestHandler, StaticFileHandler):
     """
     author = "mra"
     title = "static file handler for request handler rule ID"
-    protected = False
 
-    @gen.coroutine
-    def get(self, mode, md5_route, path, include_body=True):
+    def __init__(self, *args, **kwargs):
+        CoreRequestHandler.__init__(self, *args, **kwargs)
+        StaticFileHandler.__init__(self, *args, **kwargs)
+        self.default_static = self.config.api.default_static
+        if self.default_static and not self.default_static.startswith("/"):
+            self.default_static = os.path.join(
+                os.path.dirname(core4.__file__), self.default_static)
+
+    async def prepare(self):
         """
-        Retrieve content from default static path (``mode == 'default'``) or
-        from the :class:`.CoreRequestHandler` static path
-        (``mode == 'project'``).
-
-        Methods:
-            GET /file/<mode>/<rule_id>/<path>
-
-        Parameters:
-            mode (str): ``default`` to deliver from core4 default static path,
-                ``project`` to deliver from request handler static path
-            rule_id (str): route ID of the :class:`.CoreRequestHandler`
-            path (str): file name relative to the default or project static
-                path
-
-        Returns:
-            body content
-
-        Raises:
-            404: Not Found
-
-        Examples:
-            >>> from requests import get
-            >>> url = "http://localhost:5001/core4/api/v1"
-            >>> get("http://localhost:5001/core4/api/v1/file/default/e9aebdd95287d83f97f14ce07b4852fd/default.css")
-            <Response [200]>
+        parases the URL and directs the request to the
+        :class:`CoreRequestHandler` static folder or the default static folder
+        as defined by core4 config ``api.default_static``.
         """
+        path = self.request.path[len(core4.const.INFO_URL)+1:]
+        (mode, md5_route, *path) = path.split("/")
         (app, container, pattern, cls, *args) = self.application.find_md5(
             md5_route)
         if mode == "project":
             self.root = cls.pathname()
         else:
             self.root = self.default_static
-        self.request.uri = path
-        self.request.path, sep, self.request.query = self.request.uri.partition(
-            '?')
-        self.absolute_path = os.path.join(self.root, self.request.path)
-        self.validate_absolute_path(self.root, self.absolute_path)
-        return super().get(path, include_body)
+        self.path_args = ["/".join(path)]
+        self.identifier = ObjectId()
