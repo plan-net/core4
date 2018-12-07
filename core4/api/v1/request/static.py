@@ -54,7 +54,7 @@ class CoreStaticFileHandler(CoreRequestHandler, StaticFileHandler):
     def initialize(self, path=None, default_filename=DEFAULT_FILENAME,
                    inject=None, protected=None):
         """
-        Processes all parameters passed in :class:`.CoreApiContainer` ``rules``
+        Processes all parameters passed in :class:`.` ``rules``
         specification.
 
         :param path: source directory
@@ -114,24 +114,8 @@ class CoreStaticFileHandler(CoreRequestHandler, StaticFileHandler):
         :meth:`.render` to inject variables from :meth:`.initialize` and from
         :meth:`.get_variable`.
 
-        .. note:: this is an unprotected resource
-
-        Methods:
-            GET /<path>
-
-        Parameters:
-            None
-
-        Returns:
-            body content
-
-        Raises:
-            404 Not Found
-
-        Examples:
-            >>> from requests import get
-            >>> get("http://localhost:5001/favicon.ico")
-            <Response [200]>
+        :param path: source file
+        :param include_body: deliver body, defaults to ``True``
         """
         abspath = os.path.join(self.root, path)
         if abspath.startswith(self.root):
