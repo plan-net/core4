@@ -221,10 +221,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def get_listing(self):
         """
-        Retrieve job listing from ``sys.queue`` using
-        :meth:`.project_job_listing` to select job attributes.
+        Retrieve job listing from ``sys.queue``.
 
-        :return: list of dict
+        :return: :class:`.PageResult`
         """
 
         async def _length(filter):

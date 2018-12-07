@@ -61,47 +61,33 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     root + ".*"), application)
             )
             roots.add(root)
-        # routes.append(self.default_static())
         return tornado.routing.RuleRouter(routes)
 
-    # def default_static(self):
-    #     # add 404 root / project not found and favicon handler
-    #     nf_app = CoreApplication([
-    #         (
-    #             r'/(favicon.ico)',
-    #             CoreStaticFileHandler,
-    #             {"path": "./request/_static"}
-    #         ),
-    #         tornado.routing.Rule(
-    #             tornado.routing.AnyMatches(), DefaultHandler
-    #         )], self)
-    #     return tornado.routing.Rule(tornado.routing.AnyMatches(), nf_app)
-
-    # def register(self, application, protocol, address, port, root):
-    #     hostname = core4.util.node.get_hostname()
-    #     url = "%s://%s:%d%s" % (protocol, address or hostname, port, root)
-    #     now = core4.util.node.mongo_now()
-    #     doc = {
-    #         "url": url,
-    #         "hostname": hostname,
-    #         "protocol": protocol,
-    #         "address": address,
-    #         "port": port,
-    #         "root": root,
-    #         "container": application.qual_name()
-    #     }
-    #     self.config.sys.app.update_one(
-    #         doc,
-    #         update={
-    #             "$setOnInsert": {
-    #                 "created": now,
-    #             },
-    #             "$set": {
-    #                 "updated": now
-    #             }
-    #         },
-    #         upsert=True)
-    #     self.logger.info("registered [%s]", url)
+    def register(self, application, protocol, address, port, root):
+        hostname = core4.util.node.get_hostname()
+        url = "%s://%s:%d%s" % (protocol, address or hostname, port, root)
+        now = core4.util.node.mongo_now()
+        doc = {
+            "url": url,
+            "hostname": hostname,
+            "protocol": protocol,
+            "address": address,
+            "port": port,
+            "root": root,
+            "container": application.qual_name()
+        }
+        self.config.sys.app.update_one(
+            doc,
+            update={
+                "$setOnInsert": {
+                    "created": now,
+                },
+                "$set": {
+                    "updated": now
+                }
+            },
+            upsert=True)
+        self.logger.info("registered [%s]", url)
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
               **kwargs):

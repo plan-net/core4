@@ -256,3 +256,5 @@ class InfoHandler(CoreRequestHandler):
             self.reply(ret)
         else:
             self.render_default(template, **ret)
+
+

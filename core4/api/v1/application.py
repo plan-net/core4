@@ -170,9 +170,6 @@ class CoreApiContainer(CoreBase):
                         md5_route = hashlib.md5(
                             routing.encode("utf-8")).hexdigest()
                         if md5_route not in unique:
-                            # self.logger.debug(
-                            #     "starting [%s] as [%s] with [%s]",
-                            #     routing, md5_route, cls.__name__)
                             unique.add(md5_route)
                             rules.append(
                                 tornado.routing.Rule(
@@ -180,10 +177,6 @@ class CoreApiContainer(CoreBase):
                                     *rule[1:], name=md5_route))
                             # lookup applies to core request handlers only
                             if issubclass(cls, CoreRequestHandler):
-                                # md5_qual_name = hashlib.md5(
-                                #     cls.qual_name().encode(
-                                #         "utf-8")).hexdigest()
-                                # routes.setdefault(md5_route, {})
                                 routes[md5_route] = (self, *rule)
                         else:
                             raise core4.error.Core4SetupError(

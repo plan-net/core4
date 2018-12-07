@@ -11,15 +11,19 @@ of an API endpoint starts with a :class:`.CoreRequestHandler`::
 
     class TestHandler(CoreRequestHandler):
 
+    author = "mra"
+    title = "test handler"
+
     def get(self):
         self.reply("hello world")
 
 
-This handler supports only the ``GET`` method and all other method requests
-raise a ``405 - Method not allowed`` error.
+This handler supports the ``GET`` method and all other method requests raise a
+``405 - Method not allowed`` error.
 
-All request handlers have to be attached to a
-:class:`.CoreApplicationContainer`::
+Next, attach the request handler to a :class:`.CoreApplicationContainer`. Such
+a container bundles all request handlers from a functional point of view. From
+a technical point of view, all request handlers have the same URL prefix::
 
     from core4.api.v1.application import CoreApiContainer
 
@@ -30,7 +34,7 @@ All request handlers have to be attached to a
         ]
 
 
-The ``root`` property specifies the URL prefix. Therefore the actual
+The ``root`` property specifies this URL prefix. Therefore the actual
 ``TestHandler`` endpoint is ``/test-server/test``. The default ``root`` prefix
 is the project name.
 
@@ -41,26 +45,17 @@ Use the :meth:`serve` method to start the container::
     serve(TestServer)
 
 
-You can attach multiple :class:`.CoreApplicationContainer` classes to a server
-as in the following example::
+You can start multiple :class:`.CoreApplicationContainer` classes with a single
+server as in the following example::
 
     server(TestServer1, TestServer2)
-
-
-The diagram below depicts the relationship between
-:class:`.CoreRequestHandler`, :class:`.CoreApplicationContainer` and
-:class:`.CoreApplication`.
-
-.. figure:: _static/api.png
-   :scale: 100 %
-   :alt: API class relations
 
 
 routing rules
 #############
 
 core4 is using the same routine rules as :mod:`tornado`. See for example
-`Tornado Application Configuration <https://www.tornadoweb.org/en/stable/web.html#application-configuration>`_
+`Tornado Application Configuration <https://www.tornadoweb.org/en/stable/web.html#application-configuration>`_.
 
 
 protected handlers
@@ -75,9 +70,10 @@ handlers. All other users must have a permission pattern matching the
 :meth:`.qual_name <core4.base.main.CoreBase.qual_name>` of the resource.
 
 To access the :class:`.QueueHandler` resource located at
-``core4.api.v1.request.queue.state.QueueHandler`` the user must have a role
-with permission ``api://core4.api.v1.request.queue.state.QueueHandler``. Please
-note that the permission string represents a pattern. Therefore the permission
+``core4.api.v1.request.queue.state.QueueHandler`` the user must for example
+have a role with permission
+``api://core4.api.v1.request.queue.state.QueueHandler``. Please note that the
+permission string represents a pattern. Therefore the permission
 ``api://core4.api.v1.request.queue`` grants access to all handlers located
 below this :meth:`.qual_name <core4.base.main.CoreBase.qual_name>` including
 the :class:`.QueueHandler`.
@@ -102,8 +98,8 @@ To create a response you can use :mod:`tornado` methods like
 :meth:`.finish <tornado.web.finish>` as well as the templating mechanics of
 :mod:`tornado` like :meth:`.render <tornado.web.render>`.
 
-core4 introduces one additional method :meth:`.reply` to create the following
-media types:
+core4 introduces two additional method :meth:`.reply` and
+:meth:`.render_default`. :meth:`.reply` creates the following media types:
 
 * application/json
 * text/html
@@ -147,33 +143,31 @@ The reponse of the example request handler above is::
 error response format
 #####################
 
-If the API throws an exception or returns a HTTP status code greater than 200,
+If the API throws an exception or returns a HTTP status code of 400 or above,
 then the response does not contain the payload ``data`` attribute. Instead an
 ``error`` attribute carries a short description of the error. If the server
 has been started in **DEBUG** mode, then this ``error`` attribute contains the
 full stacktrace.
 
-All resource handlers derived from :class:`.CoreRequestHandler` feature a
-method :meth:`.abort` to send a HTTP error response to the client.
-
 **Example**::
 
     from core4.api.v1.request.main import CoreRequestHandler
+    from tornado.web import HTTPError
 
     class ErrorTestHandler(CoreRequestHandler):
 
     def get(self):
-        self.abort(400, "this is the ErrorTestHandler")
+        raise HTTPError(409, "this is the ErrorTestHandler")
 
 
 This handler returns the following response::
 
     {
         '_id': '5be2d1fcde8b69105ee8b35b',
-        'code': 400,
-        'message': 'Bad Request',
-        'timestamp': '2018-11-07T11:52:28.682515'
-        'error': 'this is the ErrorTestHandler',
+        'code': 409,
+        'message': 'Conflict',
+        'timestamp': '2018-11-07T11:52:28.682515',
+        'error': 'tornado.web.HTTPError: HTTP 409: Conflict (this is the ErrorTestHandler)\n'
     }
 
 
@@ -192,23 +186,70 @@ information about current page:
 * ``count`` - the number of records in the current page
 * ``per_page`` - the requested number of records per page
 
-**Example**::
+**Example**:
 
-            >>> rv = get(url + "/jobs?per_page=10&sort=args.id&order=-1",
-                         headers=h)
-            >>> rv.json()
-            {
-                '_id': '5be13b56de8b69468b7ff0b2',
-                'code': 200,
-                'message': 'OK',
-                'timestamp': '2018-11-06T06:57:26.660093',
-                'total_count': 50.0,
-                'count': 10,
-                'page': 0,
-                'page_count': 5,
-                'per_page': 10,
-                'data': [ ... ]
-            }
+The :class:`.CoreApiRequest` :meth:`.JobHandler.get` method returns a paginated
+job listing. The method collecting and paginating this job listing is
+:meth:`.JobHandler.get_listing`::
+
+    async def get_listing(self):
+        """
+        Retrieve job listing from ``sys.queue``.
+
+        :return: :class:`.PageResult`
+        """
+
+        async def _length(filter):
+            return await self.collection("queue").count_documents(filter)
+
+        async def _query(skip, limit, filter, sort_by):
+            cur = self.collection("queue").find(
+                filter).sort(*sort_by).skip(skip).limit(limit)
+            return await cur.to_list(length=limit)
+
+        per_page = int(self.get_argument("per_page", default=10))
+        current_page = int(self.get_argument("page", default=0))
+        query_filter = self.get_argument("filter", default={})
+        sort_by = self.get_argument("sort", default="_id")
+        sort_order = self.get_argument("order", default=1)
+
+        pager = CorePager(per_page=int(per_page),
+                          current_page=int(current_page),
+                          length=_length, query=_query,
+                          sort_by=[sort_by, int(sort_order)],
+                          filter=query_filter)
+        return await pager.page()
+
+
+The following example session authenticates and retrieves a page from
+``sys.queue``::
+
+    from requests import get
+
+    # authenticate
+    signin = get("http://localhost:5001/core4/api/v1/login"
+                 "?username=admin&password=hans")
+    token = signin.json()["data"]["token"]
+    header = {"Authorization": "Bearer " + token}
+
+    # get results
+    rv = get(
+        "http://localhost:5001/coco/v1/jobs?per_page=10&sort=args.id&order=-1",
+        headers=header)
+    rv.json()
+    {
+        '_id': '5c0a3ff2de8b697b10f8dd0f',
+        'code': 200,
+        'message': 'OK',
+        'timestamp': '2018-12-07T09:40:02.906633',
+        'page': 0,
+        'page_count': 1,
+        'per_page': 10,
+        'total_count': 1.0,
+        'count': 1,
+        'data': [ ... # removed for brevity
+        ]
+    }
 
 
 authentication
@@ -295,8 +336,8 @@ Each request handler requires the following class properties:
 The class doc string is optional and should provide a general introduction to
 the purpose of the handler.
 
-Each method ``GET``, ``POST``, ``DELETE``, and ``PUT`` requires the following
-documentation sections. Please note that we use sphinx extension
+Each implemented method ``GET``, ``POST``, ``DELETE``, etc. requires the
+following documentation sections. Please note that we use sphinx extension
 :mod:`sphinxcontrib-napoleon` for endpoint documentation.
 
 * **Methods** - for seperate routing handlers, e.g. with or without URL
