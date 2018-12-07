@@ -54,7 +54,7 @@ class CoreStaticFileHandler(CoreRequestHandler, StaticFileHandler):
     def initialize(self, path=None, default_filename=DEFAULT_FILENAME,
                    inject=None, protected=None):
         """
-        Processes all parameters passed in :class:`.` ``rules``
+        Processes all parameters passed in :class:`.CoreApiContainer` ``rules``
         specification.
 
         :param path: source directory
