@@ -20,7 +20,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     Helper class to :meth:`.serve` :class:`CoreApiContainer` classes.
     """
 
-    def make_routes(self, protocol, port, address, *args, **kwargs):
+    def make_routes(self, *args, **kwargs):
         """
         Based on the list of :class:`.CoreApiContainer` classes this method
         creates the required routing :class:`tornado.routing.RuleRouter`
@@ -37,10 +37,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         RootContainer.routes = {}
         RootContainer.application = {}
         for container_cls in list(args) + [RootContainer]:
-            base_url = "%s://%s:%d" % (
-                protocol, address or core4.util.node.get_hostname(), port
-            )
-            container_obj = container_cls(base_url=base_url, **kwargs)
+            container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
             if not container_obj.enabled:
                 self.logger.warning("starting NOT enabled container [%s]",
@@ -52,9 +49,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 )
             self.logger.info("successfully registered container [%s]",
                              container_cls.qual_name())
-            # self.register(
-            #     container_obj, protocol, address, port, root
-            # )
             application = container_obj.make_application()
             routes.append(
                 tornado.routing.Rule(tornado.routing.PathMatches(
@@ -63,18 +57,16 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             roots.add(root)
         return tornado.routing.RuleRouter(routes)
 
-    def register(self, application, protocol, address, port, root):
+    def register(self, protocol, address, port):
         hostname = core4.util.node.get_hostname()
-        url = "%s://%s:%d%s" % (protocol, address or hostname, port, root)
+        url = "%s://%s:%d/" % (protocol, address or hostname, port)
         now = core4.util.node.mongo_now()
         doc = {
             "url": url,
             "hostname": hostname,
             "protocol": protocol,
             "address": address,
-            "port": port,
-            "root": root,
-            "container": application.qual_name()
+            "port": port
         }
         self.config.sys.app.update_one(
             doc,
@@ -126,11 +118,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             proto = "https"
 
         port = port or self.config.api.port
-        self.router = self.make_routes(proto, port, address, *args, **kwargs)
+        self.router = self.make_routes(*args, **kwargs)
 
         server = tornado.httpserver.HTTPServer(self.router, **http_args)
         server.bind(port, address=address, reuse_port=reuse_port)
         server.start()
+        self.register(proto, address, port)
         self.logger.info("open %ssecure socket on port [%d]",
                          "" if http_args.get("ssl_options") else "NOT ", port)
         try:

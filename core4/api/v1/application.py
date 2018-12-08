@@ -71,7 +71,7 @@ class CoreApiContainer(CoreBase):
 
     upwind = ["log_level", "enabled", "root"]
 
-    def __init__(self, base_url=None, **kwargs):
+    def __init__(self, **kwargs):
         CoreBase.__init__(self)
         for attr in ("debug", "compress_response", "cookie_secret"):
             kwargs[attr] = kwargs.get(attr, self.config.api.setting[attr])
@@ -79,7 +79,6 @@ class CoreApiContainer(CoreBase):
         kwargs["default_handler_args"] = ()
         kwargs["log_function"] = self._log
         self._settings = kwargs
-        self.base_url = base_url
         # upwind class properties from configuration
         for prop in ("enabled", "root"):
             if prop in self.class_config:
