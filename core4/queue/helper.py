@@ -1,10 +1,13 @@
 import datetime as dt
+import tornado.template
 
-import core4.util
+import core4.logger
 import core4.queue.main
+import core4.queue.worker
+import core4.service.setup
+import core4.util
 import core4.util.node
 from core4.queue.job import CoreJob
-import tornado.template
 
 
 def enqueue(job, **kwargs):
@@ -18,7 +21,30 @@ def enqueue(job, **kwargs):
     else:
         kwargs["cls"] = job
     queue = core4.queue.main.CoreQueue()
-    queue.enqueue(**kwargs)
+    return queue.enqueue(**kwargs)
+
+
+def execute(job, **kwargs):
+    """
+    Helper method to enqueue and immediatly execute a job in foreground. This
+    method is used in development::
+
+        execute(DummyJob, sleep=15)
+
+
+    :param job: qual_name or job class
+    :param kwargs: job arguments
+    """
+    setup = core4.service.setup.CoreSetup()
+    setup.make_all()
+    core4.logger.logon()
+    kwargs["manual_execute"] = core4.util.node.mongo_now().isoformat()
+    doc = enqueue(job, **kwargs)
+    worker = core4.queue.worker.CoreWorker(name="manual")
+    if not worker.start_job(doc, sub=False):
+        queue = core4.queue.main.CoreQueue()
+        queue.remove_job(doc._id)
+        worker.remove_jobs()
 
 
 class DummyJob(CoreJob):
@@ -55,14 +81,14 @@ class MailerJob(CoreJob):
         if not isinstance(recipients, list):
             recipients = [recipients]
         msg.append("FROM: ?")
-        msg.append("TO: %s" %(", ".join(recipients)))
-        msg.append("SUBJECT: %s" %(subject))
+        msg.append("TO: %s" % (", ".join(recipients)))
+        msg.append("SUBJECT: %s" % (subject))
         msg.append("")
         t = tornado.template.Template(template)
         kwargs["recipients"] = ", ".join(recipients)
         kwargs["subject"] = subject
         for k, v in kwargs.items():
-            msg.append("variable %s = %s" %(k, v))
+            msg.append("variable %s = %s" % (k, v))
         msg.append(t.generate(**kwargs).decode("utf-8"))
         print("\n".join(msg))
         self.logger.debug("send mail:\n%s", "\n".join(msg))

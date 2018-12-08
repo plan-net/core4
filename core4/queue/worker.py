@@ -39,6 +39,7 @@ import core4.queue.job
 import core4.queue.main
 import core4.queue.query
 import core4.service.setup
+import core4.queue.process
 import core4.util
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
@@ -283,7 +284,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             self.logger.debug('successfully reserved [%s]', data["_id"])
             return data
 
-    def start_job(self, job):
+    def start_job(self, job, sub=True):
         """
         Spawns the passed job if there are enough free resources by launching
         a seperate Python interpreter and communicating the job ``_id``.
@@ -339,16 +340,20 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         else:
             job.logger.info("start execution with [%s]", executable)
             try:
-                proc = subprocess.Popen(
-                    [
-                        executable,
-                        "-c", "from core4.queue.process import _start; "
-                              "_start()"
-                    ],
-                    env=os.environ,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE
-                )
+                if sub:
+                    proc = subprocess.Popen(
+                        [
+                            executable,
+                            "-c", "from core4.queue.process import _start; "
+                                  "_start()"
+                        ],
+                        env=os.environ,
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE
+                    )
+                else:
+                    return core4.queue.process.CoreWorkerProcess().start(
+                        job._id)
             except Exception:
                 self.fail_hard(job)
             else:

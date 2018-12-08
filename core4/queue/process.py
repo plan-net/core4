@@ -54,14 +54,17 @@ class CoreWorkerProcess(core4.base.CoreBase,
             job.execute(**job.args)
         except core4.error.CoreJobDeferred:
             self.queue.set_defer(job)
+            return False
         except:
             job.__dict__["attempts_left"] -= 1
             self.queue.set_failed(job)
+            return False
         else:
             job.__dict__["attempts_left"] -= 1
             self.queue.set_complete(job)
             job.cookie.set("last_runtime", job.finished_at)
             job.progress(1.0, "execution end marker", force=True)
+            return True
         finally:
             # todo: this one is a race condition in testing
             self._redirect_stdout(saved_stdout_fd)
