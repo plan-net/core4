@@ -34,7 +34,7 @@ class CoreWorkerProcess(core4.base.CoreBase,
     ``sys.stdout``.
     """
 
-    def start(self, job_id):
+    def start(self, job_id, redirect=True):
         """
         :param job_id: str representing a :class:`bson.objectid.ObjectId`
         """
@@ -45,10 +45,11 @@ class CoreWorkerProcess(core4.base.CoreBase,
         job = self.queue.load_job(_id)
         self.drop_privilege()
 
-        self.original_stdout_fd = sys.stdout.fileno()
-        saved_stdout_fd = os.dup(self.original_stdout_fd)
-        tfile = tempfile.TemporaryFile(mode='w+b')
-        self._redirect_stdout(tfile.fileno())
+        if redirect:
+            self.original_stdout_fd = sys.stdout.fileno()
+            saved_stdout_fd = os.dup(self.original_stdout_fd)
+            tfile = tempfile.TemporaryFile(mode='w+b')
+            self._redirect_stdout(tfile.fileno())
 
         try:
             job.execute(**job.args)
@@ -66,29 +67,30 @@ class CoreWorkerProcess(core4.base.CoreBase,
             job.progress(1.0, "execution end marker", force=True)
             return True
         finally:
-            # todo: this one is a race condition in testing
-            self._redirect_stdout(saved_stdout_fd)
-            tfile.flush()
-            tfile.seek(0, io.SEEK_SET)
-            body = tfile.read()
-            try:
-                u8body = body.decode('utf-8')
-            except:
-                u8body = body
-            self.config.sys.stdout.update_one(
-                filter={
-                    "_id": job._id,
-                },
-                update={
-                    "$set": {
-                        "timestamp": core4.util.node.mongo_now(),
-                        "stdout": u8body
-                    }
-                },
-                upsert=True
-            )
-            os.close(saved_stdout_fd)
-            tfile.close()
+            if redirect:
+                # todo: this one is a race condition in testing
+                self._redirect_stdout(saved_stdout_fd)
+                tfile.flush()
+                tfile.seek(0, io.SEEK_SET)
+                body = tfile.read()
+                try:
+                    u8body = body.decode('utf-8')
+                except:
+                    u8body = body
+                self.config.sys.stdout.update_one(
+                    filter={
+                        "_id": job._id,
+                    },
+                    update={
+                        "$set": {
+                            "timestamp": core4.util.node.mongo_now(),
+                            "stdout": u8body
+                        }
+                    },
+                    upsert=True
+                )
+                os.close(saved_stdout_fd)
+                tfile.close()
 
     def _redirect_stdout(self, to_fd):
         """

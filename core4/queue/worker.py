@@ -284,7 +284,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             self.logger.debug('successfully reserved [%s]', data["_id"])
             return data
 
-    def start_job(self, job, sub=True):
+    def start_job(self, job, spawn=True):
         """
         Spawns the passed job if there are enough free resources by launching
         a seperate Python interpreter and communicating the job ``_id``.
@@ -340,7 +340,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         else:
             job.logger.info("start execution with [%s]", executable)
             try:
-                if sub:
+                if spawn:
                     proc = subprocess.Popen(
                         [
                             executable,
@@ -353,7 +353,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     )
                 else:
                     return core4.queue.process.CoreWorkerProcess().start(
-                        job._id)
+                        job._id, redirect=False)
             except Exception:
                 self.fail_hard(job)
             else:

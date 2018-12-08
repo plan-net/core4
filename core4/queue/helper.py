@@ -41,7 +41,7 @@ def execute(job, **kwargs):
     kwargs["manual_execute"] = core4.util.node.mongo_now().isoformat()
     doc = enqueue(job, **kwargs)
     worker = core4.queue.worker.CoreWorker(name="manual")
-    if not worker.start_job(doc, sub=False):
+    if not worker.start_job(doc, spawn=False):
         queue = core4.queue.main.CoreQueue()
         queue.remove_job(doc._id)
         worker.remove_jobs()
