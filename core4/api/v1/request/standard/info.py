@@ -2,7 +2,7 @@ import core4.const
 # import core4.service.introspect.api
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.data import unre_url, rst2html
-
+import core4.util.node
 
 class InfoHandler(CoreRequestHandler):
     title = "endpoint information"
@@ -250,7 +250,7 @@ class InfoHandler(CoreRequestHandler):
                 listing.append(doc)
             ret = {"collection": listing}
             template = "widget.html"
-
+        ret["timestamp"] = core4.util.node.mongo_now()
         wants_json = self.get_argument("json", as_type=bool, default=False)
         if self.wants_json() or wants_json:
             self.reply(ret)
