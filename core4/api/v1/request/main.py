@@ -3,9 +3,7 @@ core4 :class:`.CoreRequestHandler`, based on :mod:`tornado`
 :class:`RequestHandler <tornado.web.RequestHandler>`.
 """
 import base64
-import hashlib
 import os
-import re
 import traceback
 
 import datetime
@@ -102,6 +100,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         self.card_html_page = self.config.api.card_html_page
         self.help_html_page = self.config.api.help_html_page
         self._flash = []
+        self.user = None
 
     def initialize(self, *args, **kwargs):
         pass
@@ -162,6 +161,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             user = await self.verify_user()
             if user:
                 self.current_user = user.name
+                self.user = user
                 if await self.verify_access():
                     return
             raise HTTPError(401)
@@ -392,14 +392,8 @@ class CoreRequestHandler(CoreBase, RequestHandler):
 
         :return: ``True`` for success, else ``False``
         """
-        try:
-            # todo: do we really want to load the role 2x
-            user = await CoreRole().find_one(name=self.current_user)
-        except:
-            self.logger.warning("username [%s] not found", self.current_user)
-        else:
-            if await user.has_api_access(self.qual_name()):
-                return True
+        if self.user and await self.user.has_api_access(self.qual_name()):
+            return True
         return False
 
     def _wants(self, value, set_content=True):
@@ -633,7 +627,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         self.request.method = "GET"
         parts = self.request.path.split("/")
         md5_rule_id = parts[-1]
-        #md5_qual_name = parts[-2]
+        # md5_qual_name = parts[-2]
         (app, container, pattern, cls, *args) = self.application.find_md5(
             md5_rule_id)
         help_url = "/".join([core4.const.INFO_URL, md5_rule_id])
@@ -645,7 +639,8 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         :param get_url:
         :return:
         """
-        return self.render_default(self.card_html_page, GET=url, rule_id=rule_id, help_url=help_url)
+        return self.render_default(self.card_html_page, GET=url,
+                                   rule_id=rule_id, help_url=help_url)
 
     def static_url(self, path, include_host=None, **kwargs):
         prefix = ""
@@ -657,7 +652,7 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             mode = "/project/"
             path = "/" + path
         url = prefix + core4.const.FILE_URL + mode
-        #url += self.qual_hash() + "/"
+        # url += self.qual_hash() + "/"
         url += self.route_hash()
         url += path
         return url
@@ -702,4 +697,3 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             return self.render(template_name, **kwargs)
         self.absolute_path = os.path.join(self.default_template, template_name)
         return self.render(self.absolute_path, **kwargs)
-
