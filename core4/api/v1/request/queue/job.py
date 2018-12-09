@@ -38,6 +38,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     author = "mra"
     title = "job manager"
+    tag = ["job management"]
 
     def initialize(self):
         self.queue = CoreQueue()
@@ -558,6 +559,7 @@ class JobPost(JobHandler):
 
     author = "mra"
     title = "enqueue job"
+    tag = ["job management"]
 
     async def post(self, _id=None):
         """
@@ -669,6 +671,7 @@ class JobStream(JobPost):
 
     author = "mra"
     title = "job state stream"
+    tag = ["job management"]
 
     async def get(self, _id=None):
         """

@@ -214,6 +214,7 @@ class InfoHandler(CoreRequestHandler):
                 "protocol": self.request.protocol,
                 "project": cls.get_project(),
                 "protected": cls.protected,
+                "tag": cls.tag
             }
 
         if ids:

@@ -64,6 +64,7 @@ class QueueHandler(CoreRequestHandler):
 
     author = "mra"
     title = "queue state stream"
+    tag = ["job management"]
 
     def initialize(self, source):
         """

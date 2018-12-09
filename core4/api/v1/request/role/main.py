@@ -10,6 +10,7 @@ from core4.api.v1.request.role.model import CoreRole
 class RoleHandler(CoreRequestHandler):
     title = "role and user management"
     author = "mra"
+    tag = ["role management"]
 
     async def post(self, _id=None):
         """

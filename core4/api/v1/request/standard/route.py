@@ -10,8 +10,21 @@ class RouteHandler(CoreRequestHandler):
         collection = self.config.sys.handler.connect_async()
         data = []
 
-        async for doc in collection.find(
-                {"visited": {"$ne": None}}).sort("rule_id", 1):
+        per_page = int(self.get_argument("per_page", default=10))
+        current_page = int(self.get_argument("page", default=0))
+        query_filter = self.get_argument("filter", as_type=dict, default=None)
+        sort_by = self.get_argument("sort", default="_id")
+        sort_order = self.get_argument("order", default=1)
+
+        if query_filter:
+            f = {"$and": [
+                {"visited": {"$ne": None}},
+                query_filter
+            ]}
+        else:
+            f = {"visited": {"$ne": None}}
+
+        async for doc in collection.find(f).sort("rule_id", 1):
             if await self.user.has_api_access(doc["qual_name"]):
                 data.append(doc)
 
@@ -20,12 +33,6 @@ class RouteHandler(CoreRequestHandler):
 
         async def _query(skip, limit, filter, sort_by):
             return data[skip:skip + limit]
-
-        per_page = int(self.get_argument("per_page", default=10))
-        current_page = int(self.get_argument("page", default=0))
-        query_filter = self.get_argument("filter", default={})
-        sort_by = self.get_argument("sort", default="_id")
-        sort_order = self.get_argument("order", default=1)
 
         pager = CorePager(per_page=int(per_page),
                           current_page=int(current_page),
