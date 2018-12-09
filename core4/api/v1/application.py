@@ -79,6 +79,7 @@ class CoreApiContainer(CoreBase):
         kwargs["default_handler_args"] = ()
         kwargs["log_function"] = self._log
         self._settings = kwargs
+        self.started = None
         # upwind class properties from configuration
         for prop in ("enabled", "root"):
             if prop in self.class_config:
@@ -194,6 +195,7 @@ class CoreApiContainer(CoreBase):
                     routes[md5_route][1]),
                 routes[md5_route][1],
                 md5_route)
+        self.started = core4.util.node.mongo_now()
         return app
 
 
