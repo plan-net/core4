@@ -14,8 +14,6 @@ import core4.base
 import core4.queue.job
 from core4.util.tool import Singleton
 
-JOB_CLASS = core4.queue.job.CoreJob
-API_CONTAINER_CLASS = core4.api.v1.application.CoreApiContainer
 
 
 class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
@@ -235,10 +233,10 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
             if cls in self._job:
                 continue
             for mro in cls.__mro__:
-                if mro == JOB_CLASS:
+                if mro == core4.queue.job.CoreJob:
                     self.logger.debug("found job [%s]", cls.qual_name())
                     self._job[cls.qual_name()] = cls
-                elif mro == API_CONTAINER_CLASS:
+                elif mro == core4.api.v1.application.CoreApiContainer:
                     self.logger.debug("found api container [%s]",
                                       cls.qual_name())
                     self._api_container[cls.qual_name()] = cls
