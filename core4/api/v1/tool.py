@@ -62,7 +62,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         url = "%s://%s:%d/" % (protocol, address or hostname, port)
         now = core4.util.node.mongo_now()
         doc = {
-            "url": url,
+            "_id": url,
             "hostname": hostname,
             "protocol": protocol,
             "address": address,
@@ -75,7 +75,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     "created": now,
                 },
                 "$set": {
-                    "updated": now
+                    "updated": now,
+                    "visited": None,
                 }
             },
             upsert=True)
