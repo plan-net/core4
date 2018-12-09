@@ -68,6 +68,8 @@ def worker(name):
 
 def app(name, port, filter):
     core4.logger.mixin.logon()
+    if port:
+        port = int(port)
     core4.api.v1.tool.serve_all(name=name, port=port, filter=filter or None)
 
 
