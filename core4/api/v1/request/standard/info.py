@@ -5,7 +5,7 @@ from core4.util.data import unre_url, rst2html
 import core4.util.node
 
 class InfoHandler(CoreRequestHandler):
-    title = "endpoint information"
+    title = "server endpoint information"
     author = "mra"
 
     def get(self, ids=None):
