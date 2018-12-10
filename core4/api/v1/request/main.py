@@ -16,6 +16,7 @@ import tornado.escape
 import tornado.httputil
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
+import tornado.template
 
 import core4.const
 import core4.error
@@ -87,10 +88,10 @@ class CoreRequestHandler(CoreBase, RequestHandler):
                           or self.__class__.card_link)
         self.card_link = (kwargs.pop("icon", None)
                           or self.__class__.icon)
-        self.default_template = self.config.api.default_template
-        if self.default_template and not self.default_template.startswith("/"):
-            self.default_template = os.path.join(
-                os.path.dirname(core4.__file__), self.default_template)
+        # self.default_template = self.config.api.default_template
+        # if self.default_template and not self.default_template.startswith("/"):
+        #     self.default_template = os.path.join(
+        #         os.path.dirname(core4.__file__), self.default_template)
         self.default_static = self.config.api.default_static
         if self.default_static and not self.default_static.startswith("/"):
             self.default_static = os.path.join(
@@ -576,9 +577,9 @@ class CoreRequestHandler(CoreBase, RequestHandler):
             self.finish(ret)
         elif self.wants_html():
             ret["contact"] = self.config.api.contact
-            self.render_default(self.error_html_page, **ret)
+            self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
-            self.render_default(self.error_text_page, **var)
+            self.render(self.error_text_page, **var)
 
     def log_exception(self, typ, value, tb):
         """
@@ -639,8 +640,8 @@ class CoreRequestHandler(CoreBase, RequestHandler):
         :param get_url:
         :return:
         """
-        return self.render_default(self.card_html_page, GET=url,
-                                   rule_id=rule_id, help_url=help_url)
+        return self.render(self.card_html_page, GET=url,
+                           rule_id=rule_id, help_url=help_url)
 
     def static_url(self, path, include_host=None, **kwargs):
         prefix = ""
@@ -672,28 +673,30 @@ class CoreRequestHandler(CoreBase, RequestHandler):
                 namespace["url"] = self.application.container.url
         return namespace
 
-    def get_template_path(self):
-        if self.template_path:
-            if self.template_path.startswith("/"):
-                path = self.template_path
-            else:
-                path = os.path.join(self.pathname(), self.template_path)
-        else:
-            path = self.pathname()
-        return path
-
-    # def get_static_path(self):
-    #     if self.static_path:
-    #         if self.static_path.startswith("/"):
-    #             path = self.static_path
+    # def get_template_path(self):
+    #     if self.template_path:
+    #         if self.template_path.startswith("/"):
+    #             path = self.template_path
     #         else:
-    #             path = os.path.join(self.pathname(), self.static_path)
+    #             path = os.path.join(self.pathname(), self.template_path)
     #     else:
     #         path = self.pathname()
     #     return path
+    #
+    # def create_template_loader(self, template_path):
+    #     settings = self.application.settings
+    #     kwargs = {}
+    #     if "autoescape" in settings:
+    #         # autoescape=None means "no escaping", so we have to be sure
+    #         # to only pass this kwarg if the user asked for it.
+    #         kwargs["autoescape"] = settings["autoescape"]
+    #     if "template_whitespace" in settings:
+    #         kwargs["whitespace"] = settings["template_whitespace"]
+    #     return tornado.template.Loader(template_path, **kwargs)
 
-    def render_default(self, template_name, **kwargs):
-        if template_name.startswith("/"):
-            return self.render(template_name, **kwargs)
-        self.absolute_path = os.path.join(self.default_template, template_name)
-        return self.render(self.absolute_path, **kwargs)
+
+    # def render_default(self, template_name, **kwargs):
+    #     if template_name.startswith("/"):
+    #         return self.render(template_name, **kwargs)
+    #     self.absolute_path = os.path.join(self.default_template, template_name)
+    #     return self.render(self.absolute_path, **kwargs)

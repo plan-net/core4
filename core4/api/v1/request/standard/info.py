@@ -1,8 +1,8 @@
 import core4.const
-# import core4.service.introspect.api
+import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.data import unre_url, rst2html
-import core4.util.node
+
 
 class InfoHandler(CoreRequestHandler):
     title = "server endpoint information"
@@ -225,7 +225,7 @@ class InfoHandler(CoreRequestHandler):
             ret = handler_part(cls)
             ret.update(rule_part(container, md5_route, pattern, cls, args))
             ret["method"] = self.application.handler_help(cls)
-            template = "help.html"
+            template = "template/help.html"
         else:
             collection = {}
             # container is RootContainer
@@ -250,12 +250,10 @@ class InfoHandler(CoreRequestHandler):
                 doc["route"].sort(key=lambda r: r["rule_id"])
                 listing.append(doc)
             ret = {"collection": listing}
-            template = "widget.html"
+            template = "template/widget.html"
         ret["timestamp"] = core4.util.node.mongo_now()
         wants_json = self.get_argument("json", as_type=bool, default=False)
         if self.wants_json() or wants_json:
             self.reply(ret)
         else:
-            self.render_default(template, **ret)
-
-
+            self.render(template, **ret)

@@ -64,7 +64,7 @@ class RenderingHandler3(RenderingHandler):
     template_path = "template"
 
     def get(self):
-        self.render_default("card.html", GET=None, rule_id=None, help_url=None)
+        self.render("template/test.html")
 
 class CardHandler(RenderingHandler):
     title = "card handler"
@@ -291,6 +291,7 @@ def test_render(http):
           "/2f9c7924e975f580eaa242d56654182e" \
           "/template/test.css"
     assert url in body
+    pprint(body)
     rv = http.get(url)
     assert 'body {\n    font-family: monospace;\n' \
            '    color: red;\n' \
@@ -366,6 +367,7 @@ def test_render_default(http):
 def test_render_template(http):
     rv = http.get("/test1/render3")
     assert rv.status_code == 200
+    assert "hello world from include" in rv.content.decode("utf-8")
 
 
 def test_card_handler(http):
