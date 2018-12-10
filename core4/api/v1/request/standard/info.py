@@ -2,7 +2,7 @@ import core4.const
 import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.data import unre_url, rst2html
-
+from tornado.web import HTTPError
 
 class InfoHandler(CoreRequestHandler):
     title = "server endpoint information"
@@ -48,6 +48,7 @@ class InfoHandler(CoreRequestHandler):
 
         Raises:
             401 Unauthorized:
+            403 Forbidden: allowed to cops only
 
         Examples:
             >>> from requests import get, post, delete, put
@@ -217,6 +218,8 @@ class InfoHandler(CoreRequestHandler):
                 "tag": cls.tag
             }
 
+        if not self.user.is_admin():
+            raise HTTPError(403, "allowed to cops, only")
         if ids:
             parts = ids.split("/")
             md5_route = parts[0]
