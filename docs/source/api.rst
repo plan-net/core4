@@ -541,6 +541,12 @@ static file serving
 * with url function
 
 
+single page applications (SPA)
+##############################
+
+tbd.
+
+
 config overwrite
 ################
 
