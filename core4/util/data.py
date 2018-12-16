@@ -154,24 +154,6 @@ def json_decode(value, **kwargs):
     return None
 
 
-def unre_url(pattern):
-    if pattern.startswith('^'):
-        pattern = pattern[1:]
-    if pattern.endswith('$'):
-        pattern = pattern[:-1]
-    ret = []
-    for part in pattern.split("/"):
-        part1 = re.sub(r"\\\((.*)\\\)", r"<\1>", part)
-        subs = part1.count("(")
-        if subs > 0 and part1.count(")") == subs:
-            break
-        ret.append(part1.replace("<", "(").replace(">", ")"))
-    result = "/".join(ret)
-    if not result:
-        return "/"
-    return result
-
-
 def rst2html(doc):
     dedent = textwrap.dedent(doc)
     google = sphinx.ext.napoleon.GoogleDocstring(

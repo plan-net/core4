@@ -5,10 +5,10 @@ from tornado.web import StaticFileHandler
 
 import core4
 import core4.const
-from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.main import CoreRequestHandler, CoreEtagMixin
 
 
-class FileHandler(CoreRequestHandler, StaticFileHandler):
+class CoreFileHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
     """
     The static file handler delivers files based on
     :class:`.CoreRequestHandler` static folder settings and the specified
@@ -35,6 +35,7 @@ class FileHandler(CoreRequestHandler, StaticFileHandler):
     title = "static file handler for request handler rule ID"
     default_filename = "index.html"
     icon = "memory"
+    enter_url = "/"
 
     def __init__(self, *args, **kwargs):
         CoreRequestHandler.__init__(self, *args, **kwargs)
@@ -68,15 +69,3 @@ class FileHandler(CoreRequestHandler, StaticFileHandler):
         self.path_args = ["/".join(path)]
         self.identifier = ObjectId()
         await self.prepare_protection()
-
-    def compute_etag(self):
-        """
-        Sets the ``Etag`` header based on static url version.
-
-        See inherited method from :class:`tornado.web.StaticFileHandler`. This
-        method skips Etag computation for special endpoints, i.e. ``card`` and
-        ``help``.
-        """
-        if self.absolute_path is None:
-            return None
-        return super().compute_etag()
