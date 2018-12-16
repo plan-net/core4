@@ -1,14 +1,16 @@
+from tornado.web import HTTPError
+
 import core4.const
 import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.util.data import unre_url, rst2html
-from tornado.web import HTTPError
+from core4.util.data import rst2html
+
 
 class InfoHandler(CoreRequestHandler):
     title = "server endpoint information"
     author = "mra"
 
-    def get(self, ids=None):
+    async def get(self, ids=None):
         """
         Retrieve API endpoint listing and details for the current tornado
         server.
@@ -40,7 +42,7 @@ class InfoHandler(CoreRequestHandler):
               - **icon** (str): icon label
               - **pattern** (str): for routing
               - **container** (str): :class:`.CoreApiContainer` ``qual_name``
-              - **rule_id** (str): rule ID (MD5 digest) of this route
+              - **route_id** (str): rule ID (MD5 digest) of this route
               - **help_url** (str): help endpoint for the request handler
               - **card_url** (str): card page endpoint for the request handler
               - **title** (str): of this route
@@ -84,7 +86,7 @@ class InfoHandler(CoreRequestHandler):
                                     'help_url': '/core4/api/v1/info/3437b1b348dcce91f4949f4d6ad416aa',
                                     'icon': 'copyright',
                                     'pattern': '/coco/v1/jobs/?(.*)',
-                                    'rule_id': '3437b1b348dcce91f4949f4d6ad416aa',
+                                    'route_id': '3437b1b348dcce91f4949f4d6ad416aa',
                                     'title': 'job manager',
                                     'url': '/coco/v1/jobs'
                                 }
@@ -96,7 +98,7 @@ class InfoHandler(CoreRequestHandler):
             }
 
         Methods:
-            GET /info/<rule_id> - endpoint details
+            GET /info/<route_id> - endpoint details
 
         Parameters:
             json (bool): retrieve JSON format, defaults to ``False`` (HTML)
@@ -167,7 +169,7 @@ class InfoHandler(CoreRequestHandler):
                          'protected': True,
                          'protocol': 'http',
                          'qual_name': 'core4.api.v1.request.standard.info.InfoHandler',
-                         'rule_id': 'e9aebdd95287d83f97f14ce07b4852fd',
+                         'route_id': 'e9aebdd95287d83f97f14ce07b4852fd',
                          'title': 'endpoint information',
                          'url': '/core4/api/v1/info',
                          'version': '0.0.1'},
@@ -177,28 +179,30 @@ class InfoHandler(CoreRequestHandler):
         """
 
         def rule_part(container, md5_route, pattern, cls, args):
+            rule_attr = {}
             if args:
-                title = args.pop().get("title", cls.title)
+                kwargs = args[0]
             else:
-                title = cls.title
-            if args:
-                icon = args.pop().get("icon", cls.icon)
-            else:
-                icon = cls.icon
+                kwargs = {}
+            for attr, value in self.propagate_property(cls, kwargs):
+                rule_attr[attr] = value
             return {
-                "rule_id": md5_route,
-                "pattern": pattern,
-                "url": unre_url(pattern),
+                "route_id": md5_route,
+                "pattern": pattern or "/",
+                # "url": unre_url(pattern),
                 "args": args,
-                "title": title,
-                "icon": icon,
+                "title": rule_attr.get("title"),
+                "icon": rule_attr.get("icon"),
                 "container": container.qual_name(),
                 "card_url": "%s/%s" % (
                     core4.const.CARD_URL,
-                    md5_route
-                ),
+                    md5_route),
                 "help_url": "%s/%s" % (
                     core4.const.INFO_URL,
+                    md5_route
+                ),
+                "enter_url": rule_attr.get("enter_url") or "%s/%s" % (
+                    core4.const.ENTER_URL,
                     md5_route
                 )
             }
@@ -218,7 +222,7 @@ class InfoHandler(CoreRequestHandler):
                 "tag": cls.tag
             }
 
-        if not self.user.is_admin():
+        if self.user is not None and not await self.user.is_admin():
             raise HTTPError(403, "allowed to cops, only")
         if ids:
             parts = ids.split("/")
@@ -250,7 +254,7 @@ class InfoHandler(CoreRequestHandler):
                      *args) in collection[qual_name]["route"]:
                     rule = rule_part(container, md5_route, pattern, cls, args)
                     doc["route"].append(rule)
-                doc["route"].sort(key=lambda r: r["rule_id"])
+                doc["route"].sort(key=lambda r: r["route_id"])
                 listing.append(doc)
             ret = {"collection": listing}
             template = "template/widget.html"

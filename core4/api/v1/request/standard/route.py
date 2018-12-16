@@ -44,7 +44,7 @@ class RouteHandler(CoreRequestHandler):
               authentication and authorization
             - **protocol** (*str*): ``http`` or ``https``
             - **qual_name** (*str*): of the :class:`.CoreRequestHandler`
-            - **rule_id** (*str*): MD5 digest of the route
+            - **route_id** (*str*): MD5 digest of the route
             - **tag** (*list*): of tag lables assigned to the
               :class:`.CoreRequestHandler`
             - **title** (*str*): of the :class:`.CoreRequestHandler`
@@ -93,7 +93,7 @@ class RouteHandler(CoreRequestHandler):
                         'protected': True,
                         'protocol': 'https',
                         'qual_name': 'core4.api.v1.request.standard.route.RouteHandler',
-                        'rule_id': '04e5f7635c0664033f920b028b20ef7a',
+                        'route_id': '04e5f7635c0664033f920b028b20ef7a',
                         'tag': [],
                         'title': 'core4 api/widget endpoint collection',
                         'url': '/core4/api/v1/info/collection',
@@ -117,7 +117,7 @@ class RouteHandler(CoreRequestHandler):
                         'protected': True,
                         'protocol': 'https',
                         'qual_name': 'core4.api.v1.request.standard.profile.ProfileHandler',
-                        'rule_id': '1baebadac9588d0c3c67e2728f47ee9b',
+                        'route_id': '1baebadac9588d0c3c67e2728f47ee9b',
                         'tag': [],
                         'title': 'details for the logged in user',
                         'url': '/core4/api/v1/profile',
@@ -134,7 +134,7 @@ class RouteHandler(CoreRequestHandler):
         current_page = int(self.get_argument("page", default=0))
         query_filter = self.get_argument("filter", as_type=dict, default=None)
         sort_by = self.get_argument("sort", as_type=list,
-                                    default=[("rule_id", 1)])
+                                    default=[("route_id", 1)])
 
         if query_filter:
             filter_by = {"$and": [
