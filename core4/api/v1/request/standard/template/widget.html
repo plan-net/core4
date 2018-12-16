@@ -6,7 +6,7 @@
     <title>{{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="stylesheet" href="{{ static_url('/widget/minimal.css') }}">
+    <link rel="stylesheet" href="{{ default_static('/widget/minimal.css') }}">
 </head>
 <body>
 
@@ -61,7 +61,7 @@
         <blockquote>
             {% for route in widget["route"] %}
             <h3>
-                <a href="{{ route['url'] }}">{{ route["url"] }}</a>
+                <a href="{{ route['enter_url'] }}">{{ route["pattern"] }}</a>
             </h3>
             <ul>
                 <li>
@@ -71,7 +71,7 @@
                     arguments: {{ route["args"] }}
                 </li>
                 <li>
-                    rule ID: {{ route["rule_id"] }}
+                    rule ID: {{ route["route_id"] }}
                 </li>
                 <li>
                     coutainer: {{ route["container"] }}

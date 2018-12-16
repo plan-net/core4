@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ handler.__class__.__name__ }}</title>
+    <title>HELP {{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" type="text/css" href="{{ static_url('/widget/default.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ default_static('widget/default.css') }}">
 </head>
 <a>
 
@@ -13,8 +13,8 @@
 <ul>
     <li><b>AUTHOR:</b> {{ author }}</li>
     <li><b>TITLE:</b> {{ title }}</li>
-    <li><b>RULE ID:</b> {{ rule_id }}</li>
-    <li><b>ROOT:</b> <a href="{{ url }}">{{ url }}</a></li>
+    <li><b>ENTER:</b> <a href="{{ enter_url }}">{{ enter_url }}</a></li>
+    <li><b>RULE ID:</b> {{ route_id }}</li>
     <li><b>PROTECTED:</b> {{ protected }}</li>
     <li><b>ICON:</b> {{ icon }}</li>
     <li><b>ARGS:</b> {{ args }}</li>
