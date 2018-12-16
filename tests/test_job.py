@@ -104,7 +104,7 @@ def test_init():
     assert job.max_parallel is None
     assert job.worker is None
     assert job.priority == 0
-    assert job.name == 'core4.queue.helper.DummyJob'
+    assert job.name == 'core4.queue.helper.job.DummyJob'
     assert job.query_at is None
     assert job.removed_at is None
     assert job.runtime is None
