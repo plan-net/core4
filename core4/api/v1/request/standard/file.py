@@ -1,12 +1,10 @@
 import os
 
-from tornado import gen
+from bson.objectid import ObjectId
 from tornado.web import StaticFileHandler
-from core4.base.main import CoreBase
+
 import core4
 import core4.const
-from bson.objectid import ObjectId
-
 from core4.api.v1.request.main import CoreRequestHandler
 
 
@@ -16,42 +14,69 @@ class FileHandler(CoreRequestHandler, StaticFileHandler):
     :class:`.CoreRequestHandler` static folder settings and the specified
     core4 default static folder.
 
-    To serve static files, the templates must use the :meth:`.static_url`
-    method. If the path starts with a leading slash (``/``), then the method
-    translates the static file request into
-    ``/core4/api/v1/file/default//<md5_route>/<path>``. If the
-    path does *not* start with a leading slash, then the method translates the
-    static file request into ``/core4/api/v1/file/project/<md5_route>/<path>``.
-    Watch the ``default`` versus ``project`` modifier in both URLs. All
-    ``project`` file requests are delivered according to the rendering
-    :class:`.CoreRequestHandler` static file settings. All ``default`` file
-    requests are delivered according to the global core4 static file settings
-    as defined by config attribute ``api.default_static``
+    To serve static files, the templates must use :meth:`.static_url` and
+    :meth:`.default_static` method.
+    If :meth:`.static_url` addresses an URL with a leading slash (``/``), then
+    the method translates the static file request into
+    ``/core4/api/v1/file/abc/<md5_route>/<path>``. If the path does *not* start
+    with a leading slash, then :meth:`.static_url` translates the static file
+    request into ``/core4/api/v1/file/rel/<md5_route>/<path>``. Watch the
+    ``abs`` versus ``rel`` modifier in both URLs. Absolute paths address files
+    from project root directory. Relative paths address files from the
+    specified static folder of the handler.
+
+    Default file requests are delivered according to the global core4 static
+    file settings as defined by config attribute ``api.default_static``
+
+    .. note:: This handler is used internally by core4. Normally you do not
+              use or inherit from this handler.
     """
     author = "mra"
     title = "static file handler for request handler rule ID"
+    default_filename = "index.html"
+    icon = "memory"
 
     def __init__(self, *args, **kwargs):
         CoreRequestHandler.__init__(self, *args, **kwargs)
         StaticFileHandler.__init__(self, *args, **kwargs)
-        self.default_static = self.config.api.default_static
-        if self.default_static and not self.default_static.startswith("/"):
-            self.default_static = os.path.join(
-                os.path.dirname(core4.__file__), self.default_static)
 
     async def prepare(self):
         """
-        parases the URL and directs the request to the
-        :class:`CoreRequestHandler` static folder or the default static folder
-        as defined by core4 config ``api.default_static``.
+        Parses the URL and sets the static file ``.root`` and ``.path_args``
+        accordingly. Furthermore this method verifies authorization and access
+        permissions.
         """
-        path = self.request.path[len(core4.const.INFO_URL)+1:]
+        default_static = self.config.api.default_static
+        if default_static and not default_static.startswith("/"):
+            default_static = os.path.join(os.path.dirname(core4.__file__),
+                                          default_static)
+        path = self.request.path[len(core4.const.INFO_URL) + 1:]
         (mode, md5_route, *path) = path.split("/")
         (app, container, pattern, cls, *args) = self.application.find_md5(
             md5_route)
-        if mode == "project":
-            self.root = cls.pathname()
+        if mode == "def":
+            root = default_static
+        elif mode == "pro":
+            if args:
+                kwargs = args[0]
+            else:
+                kwargs = {}
+            root = cls.set_path("static_path", container, **kwargs)
         else:
-            self.root = self.default_static
+            root = default_static
+        self.root = root
         self.path_args = ["/".join(path)]
         self.identifier = ObjectId()
+        await self.prepare_protection()
+
+    def compute_etag(self):
+        """
+        Sets the ``Etag`` header based on static url version.
+
+        See inherited method from :class:`tornado.web.StaticFileHandler`. This
+        method skips Etag computation for special endpoints, i.e. ``card`` and
+        ``help``.
+        """
+        if self.absolute_path is None:
+            return None
+        return super().compute_etag()
