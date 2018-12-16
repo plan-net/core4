@@ -309,7 +309,3 @@ class CoreBase:
     @classmethod
     def pathname(cls):
         return os.path.dirname(cls.module().__file__)
-
-    @classmethod
-    def filename(cls):
-        return cls.module().__file__
