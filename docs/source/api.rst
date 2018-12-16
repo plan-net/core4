@@ -535,6 +535,8 @@ with the ``POST`` method::
 static file serving
 ###################
 
+* static_url ... to same folder as handler or container by default or folder static_path
+* default_status ... to default static folder
 * with variable injection
 * without variable injection
 * disclaimer for leightweight serving
@@ -564,6 +566,8 @@ card view
 
 tbd., ends with /_xcard_
 
+demo for custom card with setinterval
+
 
 multiple process serving
 ########################
@@ -588,3 +592,21 @@ api/widget collection
 #####################
 
 tbd.
+
+
+download/upload
+###############
+
+tbd.
+
+
+handler arguments at rules
+##########################
+
+tbd.
+
+
+include
+#######
+
+only from same template_path, not path processing
