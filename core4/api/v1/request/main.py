@@ -70,6 +70,10 @@ class CoreBaseHandler(CoreBase):
 
     upwind = ["log_level", "template_path", "static_path"]
 
+    supported_types = [
+        "text/html",
+    ]
+
     def __init__(self, *args, **kwargs):
         """
         Instantiates the handler and sets error, card and help sources.
@@ -85,6 +89,8 @@ class CoreBaseHandler(CoreBase):
         self.card_html_page = rel(self.config.api.card_html_page)
         self.help_html_page = rel(self.config.api.help_html_page)
         self.started = core4.util.node.mongo_now()
+        self._flash = []
+        self.user = None
 
     def propagate_property(self, source, kwargs):
         """
@@ -474,6 +480,103 @@ class CoreBaseHandler(CoreBase):
                 return rule.name
         return None
 
+    def write_error(self, status_code, **kwargs):
+        """
+        Write and finish the request/response cycle with error.
+
+        :param status_code: valid HTTP status code
+        :param exc_info: Python exception object
+        """
+        self.set_status(status_code)
+        var = {
+            "code": status_code,
+            "message": tornado.httputil.responses[status_code],
+            "_id": self.identifier,
+        }
+        if "exc_info" in kwargs:
+            error = traceback.format_exception_only(*kwargs["exc_info"][0:2])
+            if self.settings.get("serve_traceback"):
+                error += traceback.format_tb(kwargs["exc_info"][2])
+            var["error"] = "\n".join(error)
+        elif "error" in kwargs:
+            var["error"] = kwargs["error"]
+        ret = self._build_json(**var)
+        if self.wants_json():
+            self.finish(ret)
+        elif self.wants_html():
+            ret["contact"] = self.config.api.contact
+            self.render(self.error_html_page, **ret)
+        elif self.wants_text() or self.wants_csv():
+            self.render(self.error_text_page, **var)
+
+    def _build_json(self, message, code, **kwargs):
+        # internal method to wrap the response
+        ret = {
+            "_id": self.identifier,
+            "timestamp": core4.util.node.now(),
+            "message": message,
+            "code": code
+        }
+        for extra in ("error", "data"):
+            if extra in kwargs:
+                ret[extra] = kwargs[extra]
+        if self._flash:
+            ret["flash"] = self._flash
+        return ret
+
+    def _wants(self, value, set_content=True):
+        # internal method to very the client's accept header
+        expect = self.guess_content_type() == value
+        if expect and set_content:
+            self.set_header("Content-Type", value + "; charset=UTF-8")
+        return expect
+
+    def wants_json(self):
+        """
+        Tests the client's ``Accept`` header for ``application/json`` and
+        sets the corresponding response ``Content-Type``.
+
+        :return: ``True`` if best guess is JSON
+        """
+        return self._wants("application/json")
+
+    def wants_html(self):
+        """
+        Tests the client's ``Accept`` header for ``text/html`` and
+        sets the corresponding response ``Content-Type``.
+
+        :return: ``True`` if best guess is HTML
+        """
+        return self._wants("text/html")
+
+    def wants_text(self):
+        """
+        Tests the client's ``Accept`` header for ``text/plain`` and
+        sets the corresponding response ``Content-Type``.
+
+        :return: ``True`` if best guess is plain text
+        """
+        return self._wants("text/plain")
+
+    def wants_csv(self):
+        """
+        Tests the client's ``Accept`` header for ``text/csv`` and
+        sets the corresponding response ``Content-Type``.
+
+        :return: ``True`` if best guess is CSV
+        """
+        return self._wants("text/csv")
+
+    def guess_content_type(self):
+        """
+        Guesses the client's ``Accept`` header using :mod:`mimeparse` against
+        the supported :attr:`.supported_types`.
+
+        :return: best match (str)
+        """
+        return mimeparse.best_match(
+            self.supported_types, self.request.headers.get("accept", ""))
+
 
 class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
@@ -504,8 +607,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         """
         CoreBaseHandler.__init__(self, *args, **kwargs)
         RequestHandler.__init__(self, *args, **kwargs)
-        self._flash = []
-        self.user = None
 
     def initialize(self, *args, **kwargs):
         """Hook for subclass initialization called for each request.
@@ -740,59 +841,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             return True
         return False
 
-    def _wants(self, value, set_content=True):
-        # internal method to very the client's accept header
-        expect = self.guess_content_type() == value
-        if expect and set_content:
-            self.set_header("Content-Type", value + "; charset=UTF-8")
-        return expect
-
-    def wants_json(self):
-        """
-        Tests the client's ``Accept`` header for ``application/json`` and
-        sets the corresponding response ``Content-Type``.
-
-        :return: ``True`` if best guess is JSON
-        """
-        return self._wants("application/json")
-
-    def wants_html(self):
-        """
-        Tests the client's ``Accept`` header for ``text/html`` and
-        sets the corresponding response ``Content-Type``.
-
-        :return: ``True`` if best guess is HTML
-        """
-        return self._wants("text/html")
-
-    def wants_text(self):
-        """
-        Tests the client's ``Accept`` header for ``text/plain`` and
-        sets the corresponding response ``Content-Type``.
-
-        :return: ``True`` if best guess is plain text
-        """
-        return self._wants("text/plain")
-
-    def wants_csv(self):
-        """
-        Tests the client's ``Accept`` header for ``text/csv`` and
-        sets the corresponding response ``Content-Type``.
-
-        :return: ``True`` if best guess is CSV
-        """
-        return self._wants("text/csv")
-
-    def guess_content_type(self):
-        """
-        Guesses the client's ``Accept`` header using :mod:`mimeparse` against
-        the supported :attr:`.supported_types`.
-
-        :return: best match (str)
-        """
-        return mimeparse.best_match(
-            self.supported_types, self.request.headers.get("accept", ""))
-
     def reply(self, chunk):
         """
         Wraps Tornado's ``.write`` method and finishes the request/response
@@ -832,21 +880,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             data=chunk
         )
         self.finish(chunk)
-
-    def _build_json(self, message, code, **kwargs):
-        # internal method to wrap the response
-        ret = {
-            "_id": self.identifier,
-            "timestamp": core4.util.node.now(),
-            "message": message,
-            "code": code
-        }
-        for extra in ("error", "data"):
-            if extra in kwargs:
-                ret[extra] = kwargs[extra]
-        if self._flash:
-            ret["flash"] = self._flash
-        return ret
 
     def flash(self, level, message, *vars):
         """
@@ -894,35 +927,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         :param vars: optional str template variables
         """
         self.flash("ERROR", message % vars)
-
-    def write_error(self, status_code, **kwargs):
-        """
-        Write and finish the request/response cycle with error.
-
-        :param status_code: valid HTTP status code
-        :param exc_info: Python exception object
-        """
-        self.set_status(status_code)
-        var = {
-            "code": status_code,
-            "message": tornado.httputil.responses[status_code],
-            "_id": self.identifier,
-        }
-        if "exc_info" in kwargs:
-            error = traceback.format_exception_only(*kwargs["exc_info"][0:2])
-            if self.settings.get("serve_traceback"):
-                error += traceback.format_tb(kwargs["exc_info"][2])
-            var["error"] = "\n".join(error)
-        elif "error" in kwargs:
-            var["error"] = kwargs["error"]
-        ret = self._build_json(**var)
-        if self.wants_json():
-            self.finish(ret)
-        elif self.wants_html():
-            ret["contact"] = self.config.api.contact
-            self.render(self.error_html_page, **ret)
-        elif self.wants_text() or self.wants_csv():
-            self.render(self.error_text_page, **var)
 
     def parse_objectid(self, _id):
         """
