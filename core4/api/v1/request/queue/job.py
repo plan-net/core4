@@ -56,7 +56,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def get(self, _id=None):
         """
         Paginated job listing with ``/jobs``,  and single job details with
-        ``/jobs/<_id>``.
+        ``/jobs/<_id>``. Only jobs with read/execute access permissions granted
+        to the current user are returned.
 
         Methods:
             GET /jobs - jobs listing
@@ -220,7 +221,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def get_listing(self):
         """
-        Retrieve job listing from ``sys.queue``.
+        Retrieve job listing from ``sys.queue``. Only jobs with read/execute
+        access permissions granted to the current user are returned.
 
         :return: :class:`.PageResult`
         """
@@ -254,7 +256,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def get_detail(self, _id):
         """
         Retrieve job listing from ``sys.queue`` and ``sys.journal`` using
-        :meth:`.project_job_listing` to select job attributes.
+        :meth:`.project_job_listing` to select job attributes. Only jobs with
+        read/execute access permissions granted to the current user are
+        returned.
 
         :param _id: job _id
         :return: dict of job attributes
@@ -279,6 +283,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def delete(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be deleted.
+
         Methods:
             DELETE /jobs/<_id> - delete job from ``sys.queue``
 
@@ -292,6 +299,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             400: failed to parse job _id
             400: requires job _id
             401: Unauthorized
+            403: Forbidden
             404: job _id not found
 
         Examples:
@@ -317,6 +325,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def put(self, request=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be updated.
+
         Methods:
             PUT /jobs/<action>/<_id> - manage job in ``sys.queue``
 
@@ -335,6 +346,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             400: requires action and job _id
             400: failed to restart job
             401: Unauthorized
+            403: Forbidden
             404: job _id not found
 
         Examples:
@@ -381,7 +393,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def update(self, oid, attr, message):
         """
         Update the passed job attribute, used with ``removed_at`` and
-        ``killed_at``
+        ``killed_at``. Only jobs with execute access permissions granted to the
+        current user  can be deleted.
 
         :param oid: :class:`bson.objectid.ObjectId` of the job
         :param attr: job attribute to update
@@ -579,6 +592,9 @@ class JobPost(JobHandler):
 
     async def post(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be posted.
+
         Methods:
             POST /jobs - enqueue job
 
@@ -618,6 +634,7 @@ class JobPost(JobHandler):
         Raises:
             400: job exists with args
             401: Unauthorized
+            403: Forbidden
             404: cannot instantiate job
 
         Examples:
@@ -693,6 +710,9 @@ class JobStream(JobPost):
 
     async def get(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be streamed.
+
         Methods:
             GET /jobs/poll/<_id> - stream job attributes
 
@@ -704,6 +724,7 @@ class JobStream(JobPost):
 
         Raises:
             401: Unauthorized
+            403: Forbidden
             404: cannot instantiate job
 
         Examples:
@@ -755,6 +776,9 @@ class JobStream(JobPost):
 
     async def post(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be enqueued and streamed.
+
         Methods:
             POST /jobs/poll - enqueue job and stream job progress
 
@@ -791,6 +815,7 @@ class JobStream(JobPost):
         Raises:
             400: failed to parse job _id
             401: Unauthorized
+            403: Forbidden
             404: job not found
 
         Examples:

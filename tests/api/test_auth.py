@@ -278,7 +278,6 @@ def test_job_listing(http):
     assert rv.status_code == 200
 
 
-
 def test_job_access(http):
     token3 = add_job_user(http, "user3", perm=[
         "api://core4.api.v1.request.queue.job.*",
@@ -335,8 +334,6 @@ def test_job_access(http):
 
     rv = http.delete("/tests/jobs/" + job_id, token=token4)
     assert rv.status_code == 200
-
-
 
 
 if __name__ == '__main__':
