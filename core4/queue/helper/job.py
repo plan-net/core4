@@ -77,9 +77,9 @@ class ApiJob(CoreJob):
                 for route in widget["route"]:
                     route.update(base)
                     route["full_url"] = "{protocol:s}://" \
-                                        "{host:s}{url:s}".format(**route)
+                                        "{host:s}{enter_url:s}".format(**route)
                     self.logger.debug("collected [%s] with [%s]",
-                                      route["url"], route["qual_name"])
+                                      route["full_url"], route["qual_name"])
                     self.update_widget(route, now)
 
     def update_widget(self, route, now):

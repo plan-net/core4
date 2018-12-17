@@ -1,4 +1,5 @@
 import multiprocessing
+from pprint import pprint
 
 import pytest
 import requests
@@ -8,10 +9,13 @@ from tornado.ioloop import IOLoop
 
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool import serve
+from core4.queue.helper.functool import execute
+from core4.queue.helper.job import ApiJob
 from tests.api.test_response import setup
 
 _ = setup
@@ -32,6 +36,7 @@ class CoreApiTestServer1(CoreApiContainer):
         (r'/static1', CoreStaticFileHandler, {"path": "static1"}),
         (r'/roles/?(.*)', RoleHandler),
         (r'/enqueue', JobPost),
+        (r'/jobs/?(.*)', JobHandler),
     )
 
 
@@ -60,18 +65,22 @@ class HttpServer:
     def url(self, url):
         return "http://localhost:{}".format(self.port) + url
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url, base=True, **kwargs):
+        if base:
+            u = self.url(url)
+        else:
+            u = url
         if "token" in kwargs:
             token = kwargs.pop("token")
             if token is not None:
                 kwargs.setdefault("headers", {})[
                     "Authorization"] = "Bearer " + token
-            return requests.request(method, self.url(url), **kwargs)
+            return requests.request(method, u, **kwargs)
         else:
             if self.token:
                 kwargs.setdefault("headers", {})[
                     "Authorization"] = "Bearer " + self.token
-            return requests.request(method, self.url(url),
+            return requests.request(method, u,
                                     cookies=self.signin.cookies, **kwargs)
 
     def get(self, url, **kwargs):
@@ -110,7 +119,7 @@ def add_user(http, username):
     rv = http.post("/tests/roles",
                    json={
                        "name": username,
-                       "role": ["user"],
+                       "role": ["standard_user"],
                        "email": username + "@mail.com",
                        "password": username
                    })
@@ -132,6 +141,38 @@ def test_server_test(http):
     assert rv.status_code == 401
     rv = http.get("/tests/enqueue", token=token)
     assert rv.status_code == 401
+    rv = http.get("/core4/api/v1/logout", token=token)
+    assert rv.status_code == 200
+    rv = http.get("/core4/api/v1/info/collection", token=token)
+    assert rv.status_code == 200
+    pprint(rv.json())
+
+
+def test_collection_job(http):
+    execute(ApiJob)
+    token = add_user(http, "user1")
+    rv = http.get("/core4/api/v1/info/collection", token=token)
+    for elem in rv.json()["data"]:
+        rv = http.get(elem["full_url"], token=token, base=False)
+        assert rv.status_code in (401, 200)
+
+    rv = http.get("/core4/api/v1/info/collection")
+    check = {
+        'core4.api.v1.request.queue.job.JobPost': 401,
+        'core4.api.v1.request.role.main.RoleHandler': 401,
+        'core4.api.v1.request.queue.job.JobHandler': 401,
+        'core4.api.v1.request.standard.route.RouteHandler': 200,
+        'core4.api.v1.request.standard.profile.ProfileHandler': 200,
+        'core4.api.v1.request.standard.file.CoreFileHandler': 200,
+        'core4.api.v1.request.standard.login.LoginHandler': 200,
+        'core4.api.v1.request.standard.logout.LogoutHandler': 200,
+        'core4.api.v1.request.static.CoreStaticFileHandler': 200
+    }
+    for elem in rv.json()["data"]:
+        qual_name = elem["qual_name"]
+        if qual_name in check:
+            rv = http.get(elem["full_url"], token=token, base=False)
+            assert check[qual_name] == rv.status_code
 
 
 if __name__ == '__main__':
