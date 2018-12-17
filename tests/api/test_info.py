@@ -186,5 +186,13 @@ def test_link(http):
         "utf-8")
 
 
+def test_404(http):
+    rv = http.get("/core4/api/v1/bla")
+    assert rv.status_code == 404
+    rv = http.get("/tests/abc")
+    assert rv.status_code == 404
+
+
+
 if __name__ == '__main__':
     serve(CoreApiTestServer1)

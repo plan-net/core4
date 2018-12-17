@@ -86,6 +86,19 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 etag=ObjectId(),
                 perm=[core4.const.COP]
             ))
+            self.logger.info("created user [%s]",
+                             self.config.api.admin_username)
+        except pymongo.errors.DuplicateKeyError:
+            pass
+        try:
+            self.config.sys.role.insert_one(dict(
+                name=self.config.api.user_rolename,
+                realname=self.config.api.user_realname,
+                etag=ObjectId(),
+                perm=self.config.api.user_permission
+            ))
+            self.logger.info("created user [%s]",
+                             self.config.api.user_rolename)
         except pymongo.errors.DuplicateKeyError:
             pass
 

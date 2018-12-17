@@ -41,7 +41,7 @@ import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.request.standard.file import CoreFileHandler
-from core4.api.v1.request.standard.info import InfoHandler
+from core4.api.v1.request.info import InfoHandler
 from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
@@ -221,17 +221,12 @@ class CoreApplication(tornado.web.Application):
                 parts.pop()
             md5_route_id = parts.pop()
             return self.find_md5(md5_route_id)
-
         if request.path.startswith(core4.const.CARD_URL):
             (app, container, pattern, cls, *args) = _find()
             request.method = core4.const.CARD_METHOD
             return self.get_handler_delegate(request, cls, *args)
         elif request.path.startswith(core4.const.ENTER_URL):
             ret = _find()
-            # if ret is None:
-            #     request.method = "POST"
-            #     return self.get_handler_delegate(
-            #         request, CoreStaticFileHandler)
             (app, container, pattern, cls, *args) = ret
             if issubclass(cls, CoreStaticFileHandler):
                 request.method = "POST"

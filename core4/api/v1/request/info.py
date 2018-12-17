@@ -232,7 +232,7 @@ class InfoHandler(CoreRequestHandler):
             ret = handler_part(cls)
             ret.update(rule_part(container, md5_route, pattern, cls, args))
             ret["method"] = self.application.handler_help(cls)
-            template = "template/help.html"
+            template = "standard/template/help.html"
         else:
             collection = {}
             # container is RootContainer
@@ -257,7 +257,7 @@ class InfoHandler(CoreRequestHandler):
                 doc["route"].sort(key=lambda r: r["route_id"])
                 listing.append(doc)
             ret = {"collection": listing}
-            template = "template/widget.html"
+            template = "standard/template/widget.html"
         ret["timestamp"] = core4.util.node.mongo_now()
         wants_json = self.get_argument("json", as_type=bool, default=False)
         if self.wants_json() or wants_json:
