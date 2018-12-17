@@ -163,7 +163,7 @@ def test_login_extended(http):
 
 def test_roles(http):
     rv = http.get("/roles")
-    assert len(rv.json()["data"]) == 1
+    assert len(rv.json()["data"]) == 2
 
 
 def test_profile_cascade(http):
@@ -213,7 +213,7 @@ def test_profile_cascade(http):
 def test_restricted_user(http):
     rv = http.get("/roles")
     assert rv.status_code == 200
-    assert len(rv.json()["data"]) == 1
+    assert len(rv.json()["data"]) == 2
     rv = http.post("/roles", json=dict(
         name="user",
         realname="test user",
@@ -225,7 +225,7 @@ def test_restricted_user(http):
     etag = rv.json()["data"]["etag"]
     assert rv.status_code == 200
     rv = http.get("/roles")
-    assert len(rv.json()["data"]) == 2
+    assert len(rv.json()["data"]) == 3
     admin_token = http.token
     http.token = None
     rv = http.get("/core4/api/v1/login?username=user&password=password", base=False)
