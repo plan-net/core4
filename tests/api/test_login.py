@@ -245,7 +245,7 @@ def test_restricted_user(http):
 
     http.token = token
     rv = http.get("/core4/api/v1/profile", base=False)
-    assert rv.status_code == 401
+    assert rv.status_code == 403
 
 
 def test_password_reset(http):

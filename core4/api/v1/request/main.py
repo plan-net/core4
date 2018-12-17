@@ -163,6 +163,7 @@ class CoreBaseHandler(CoreBase):
                 self.user = user
                 if await self.verify_access():
                     return
+                raise HTTPError(403)
             raise HTTPError(401)
 
     async def verify_access(self):

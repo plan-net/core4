@@ -29,8 +29,6 @@ STATE_STOPPED = (
     core4.queue.job.STATE_ERROR)
 
 
-# todo: needs to check authorisation
-
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     """
     Get job listing, job details, kill, delete and restart jobs.

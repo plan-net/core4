@@ -112,7 +112,6 @@ def http():
 
 
 def add_user(http, username):
-    rolename = "role_" + username
     # rv = http.post("/tests/roles", json={"name": rolename,
     #                                      "perm": ["api://core4.api.v1.*"]})
     # assert rv.status_code == 200
@@ -130,6 +129,26 @@ def add_user(http, username):
     assert conn.status_code == 200
     return conn.json()["data"]["token"]
 
+def add_job_user(http, username, perm):
+    # rolename = "role_" + username
+    # rv = http.post("/tests/roles", json={"name": rolename,
+    #                                      "perm": ["api://core4.api.v1.*"]})
+    # assert rv.status_code == 200
+    rv = http.post("/tests/roles",
+                   json={
+                       "name": username,
+                       "role": ["standard_user"],
+                       "email": username + "@mail.com",
+                       "password": username,
+                       "perm": perm
+                   })
+    assert rv.status_code == 200
+    conn = http.get(
+        "/core4/api/v1/login?username=" + username + "&password=" + username,
+        token=None)
+    assert conn.status_code == 200
+    return conn.json()["data"]["token"]
+
 
 def test_server_test(http):
     rv = http.get("/core4/api/v1/profile")
@@ -138,9 +157,9 @@ def test_server_test(http):
     rv = http.get("/core4/api/v1/profile", token=token)
     assert rv.status_code == 200
     rv = http.get("/tests/roles", token=token)
-    assert rv.status_code == 401
+    assert rv.status_code == 403
     rv = http.get("/tests/enqueue", token=token)
-    assert rv.status_code == 401
+    assert rv.status_code == 403
     rv = http.get("/core4/api/v1/logout", token=token)
     assert rv.status_code == 200
     rv = http.get("/core4/api/v1/info/collection", token=token)
@@ -158,9 +177,9 @@ def test_collection_job(http):
 
     rv = http.get("/core4/api/v1/info/collection")
     check = {
-        'core4.api.v1.request.queue.job.JobPost': 401,
-        'core4.api.v1.request.role.main.RoleHandler': 401,
-        'core4.api.v1.request.queue.job.JobHandler': 401,
+        'core4.api.v1.request.queue.job.JobPost': 403,
+        'core4.api.v1.request.role.main.RoleHandler': 403,
+        'core4.api.v1.request.queue.job.JobHandler': 403,
         'core4.api.v1.request.standard.route.RouteHandler': 200,
         'core4.api.v1.request.standard.profile.ProfileHandler': 200,
         'core4.api.v1.request.standard.file.CoreFileHandler': 200,
@@ -174,6 +193,18 @@ def test_collection_job(http):
             rv = http.get(elem["full_url"], token=token, base=False)
             assert check[qual_name] == rv.status_code
 
+
+def test_enqeuue(http):
+    token = add_job_user(
+        http, "user1", ["api://core4.api.v1.request.queue.job.JobPost"])
+    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
+                   token=token)
+    assert rv.status_code == 200
+    token = add_job_user(
+        http, "user2", ["api://core4.api.v1.request.queue.job.JobHandler"])
+    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
+                   token=token)
+    assert rv.status_code == 403
 
 if __name__ == '__main__':
     serve(CoreApiTestServer1)
