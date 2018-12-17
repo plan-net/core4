@@ -225,25 +225,30 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :return: :class:`.PageResult`
         """
 
-        async def _length(filter):
-            return await self.collection("queue").count_documents(filter)
-
-        async def _query(skip, limit, filter, sort_by):
-            cur = self.collection("queue").find(
-                filter).sort(*sort_by).skip(skip).limit(limit)
-            return await cur.to_list(length=limit)
-
         per_page = int(self.get_argument("per_page", default=10))
         current_page = int(self.get_argument("page", default=0))
         query_filter = self.get_argument("filter", default={})
         sort_by = self.get_argument("sort", default="_id")
         sort_order = self.get_argument("order", default=1)
 
+        data = []
+        async for doc in self.collection("queue").find(query_filter).sort(
+                [(sort_by, int(sort_order))]):
+            if await self.user.has_job_access(doc["name"]):
+                data.append(doc)
+
+        async def _length(*args, **kwargs):
+            return len(data)
+
+        async def _query(skip, limit, *args, **kwargs):
+            return data[skip:(skip + limit)]
+
         pager = CorePager(per_page=int(per_page),
                           current_page=int(current_page),
                           length=_length, query=_query,
-                          sort_by=[sort_by, int(sort_order)],
-                          filter=query_filter)
+                          #sort_by=[sort_by, int(sort_order)],
+                          #filter=query_filter
+        )
         return await pager.page()
 
     async def get_detail(self, _id):
@@ -268,7 +273,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             doc["journal"] = False
         if not doc:
             raise HTTPError(404, "job_id [%s] not found", _id)
-        return doc
+        if await self.user.has_job_access(doc["name"]):
+            return doc
+        raise HTTPError(403)
 
     async def delete(self, _id=None):
         """
@@ -358,8 +365,18 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             if action not in action_method:
                 raise HTTPError(
                     400, "requires action in (delete, restart, kill)")
+            await self._access_by_id(oid)
             self.reply(await action_method[action](oid))
         raise HTTPError(400, "requires action and job_id")
+
+    async def _access_by_id(self, oid):
+        doc = await self.collection("queue").find_one(
+            filter={"_id": oid},
+            projection=["name"])
+        if not doc:
+            raise HTTPError(404, "job_id [%s] not found", oid)
+        if not await self.user.has_job_exec_access(doc["name"]):
+           raise HTTPError(403)
 
     async def update(self, oid, attr, message):
         """
@@ -371,8 +388,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :param message: logging helper string
         :return: ``True`` for success, else ``False``
         """
+        await self._access_by_id(oid)
         at = core4.util.node.mongo_now()
-        ret = await self.collection("queue").update_one(
+        ret =  await self.collection("queue").update_one(
             {
                 "_id": oid,
                 attr: None
@@ -642,6 +660,8 @@ class JobPost(JobHandler):
             job = self.queue.job_factory(name, **args)
         except Exception:
             raise HTTPError(404, "cannot instantiate job [%s]", name)
+        if not await self.user.has_job_exec_access(name):
+            raise HTTPError(403)
         job.__dict__["attempts_left"] = job.__dict__["attempts"]
         job.__dict__["state"] = core4.queue.job.STATE_PENDING
         job.__dict__["enqueued"] = self.who()

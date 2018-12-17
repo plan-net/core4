@@ -426,13 +426,24 @@ class CoreRole(CoreBase):
         self.data["etag"].set(None)
         return True
 
-    def has_job_access(self, qual_name):
-        # todo: requires implementation
-        pass
+    async def _job_access(self, qual_name, access):
+        if await self.is_admin():
+            return True
+        for p in await self.casc_perm():
+            (*proto, qn, acc) = p.split("/")
+            if proto[0] == "job:":
+                if re.match(qn, qual_name):
+                    if acc.lower() in access:
+                        return True
+        return False
 
-    def has_job_exec_access(self, qual_name):
-        # todo: requires implementation
-        pass
+    async def has_job_access(self, qual_name):
+        return await self._job_access(
+            qual_name, (JOB_EXECUTION_RIGHT, JOB_READ_RIGHT))
+
+    async def has_job_exec_access(self, qual_name):
+        return await self._job_access(
+            qual_name, (JOB_EXECUTION_RIGHT))
 
     async def is_admin(self):
         """

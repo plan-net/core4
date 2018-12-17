@@ -129,6 +129,7 @@ def add_user(http, username):
     assert conn.status_code == 200
     return conn.json()["data"]["token"]
 
+
 def add_job_user(http, username, perm):
     # rolename = "role_" + username
     # rv = http.post("/tests/roles", json={"name": rolename,
@@ -205,6 +206,138 @@ def test_enqeuue(http):
     rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
                    token=token)
     assert rv.status_code == 403
+
+
+import core4.queue.job
+
+
+class MyJob(core4.queue.job.CoreJob):
+    author = "mra"
+
+
+def test_job_listing(http):
+    for i in range(0, 10):
+        rv = http.post("/tests/enqueue", json={
+            "name": "core4.queue.helper.job.DummyJob",
+            "id": i + 1
+        })
+        assert rv.status_code == 200
+
+    for i in range(0, 6):
+        rv = http.post("/tests/enqueue", json={
+            "name": "tests.api.test_auth.MyJob",
+            "id": i + 1
+        })
+        assert rv.status_code == 200
+    rv = http.get("/tests/jobs")
+    assert rv.json()["total_count"] == 16
+
+    token1 = add_job_user(http, "user1", perm=[
+        "api://core4.api.v1.request.queue.job.*",
+        "job://core4.queue.helper.job.*/r"
+    ])
+    rv = http.get("/tests/jobs", token=token1)
+    assert rv.json()["total_count"] == 10
+
+    token2 = add_job_user(http, "user2", perm=[
+        "api://core4.api.v1.request.queue.job.*",
+        "job://core4.queue.helper.*/x"
+    ])
+    rv = http.get("/tests/jobs", token=token2)
+    assert rv.json()["total_count"] == 10
+
+    token3 = add_job_user(http, "user3", perm=[
+        "api://core4.api.v1.request.queue.job.*",
+        "job://tests.+/r"
+    ])
+    rv = http.get("/tests/jobs", token=token3)
+    assert rv.json()["total_count"] == 6
+
+    rv = http.post("/tests/enqueue", token=token3, json={
+        "name": "tests.api.test_auth.MyJob"
+    })
+    assert rv.status_code == 403
+
+    token4 = add_job_user(http, "user4", perm=[
+        "api://core4.api.v1.request.queue.job.*",
+        "job://tests.+/x"
+    ])
+    rv = http.get("/tests/jobs", token=token4)
+    assert rv.json()["total_count"] == 6
+
+    rv = http.post("/tests/enqueue", token=token4, json={
+        "name": "tests.api.test_auth.MyJob"
+    })
+    assert rv.status_code == 200
+    job_id = rv.json()["data"]["_id"]
+
+    rv = http.get("/tests/jobs", token=token4)
+    assert rv.json()["total_count"] == 7
+
+    rv = http.get("/tests/jobs/" + job_id, token=token4)
+    assert rv.status_code == 200
+
+
+
+def test_job_access(http):
+    token3 = add_job_user(http, "user3", perm=[
+        "api://core4.api.v1.request.queue.job.*",
+        "job://tests.+/r"
+    ])
+    rv = http.get("/tests/jobs", token=token3)
+    assert rv.status_code == 200
+    assert rv.json()["total_count"] == 0
+
+    rv = http.post("/tests/enqueue", token=token3, json={
+        "name": "tests.api.test_auth.MyJob"
+    })
+    assert rv.status_code == 403
+
+    token4 = add_job_user(http, "user4", perm=[
+        "api://core4.api.v1.request.queue.job.*",
+        "job://tests.+/x"
+    ])
+    rv = http.get("/tests/jobs", token=token4)
+    assert rv.json()["total_count"] == 0
+
+    rv = http.post("/tests/enqueue", token=token4, json={
+        "name": "tests.api.test_auth.MyJob"
+    })
+    assert rv.status_code == 200
+    job_id = rv.json()["data"]["_id"]
+
+    rv = http.get("/tests/jobs", token=token4)
+    assert rv.json()["total_count"] == 1
+
+    rv = http.get("/tests/jobs", token=token3)
+    assert rv.json()["total_count"] == 1
+
+    rv = http.get("/tests/jobs/" + job_id, token=token4)
+    assert rv.status_code == 200
+
+    rv = http.get("/tests/jobs/" + job_id, token=token3)
+    assert rv.status_code == 200
+
+    rv = http.delete("/tests/jobs/" + job_id, token=token3)
+    assert rv.status_code == 403
+
+    rv = http.put("/tests/jobs/" + job_id + "?action=kill", token=token3)
+    assert rv.status_code == 403
+
+    rv = http.put("/tests/jobs/" + job_id + "?action=kill", token=token4)
+    assert rv.status_code == 200
+
+    rv = http.put("/tests/jobs/" + job_id + "?action=restart", token=token3)
+    assert rv.status_code == 403
+
+    rv = http.put("/tests/jobs/" + job_id + "?action=restart", token=token4)
+    assert rv.status_code == 400
+
+    rv = http.delete("/tests/jobs/" + job_id, token=token4)
+    assert rv.status_code == 200
+
+
+
 
 if __name__ == '__main__':
     serve(CoreApiTestServer1)
