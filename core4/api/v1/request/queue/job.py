@@ -723,9 +723,10 @@ class JobStream(JobPost):
             JSON stream with job attributes
 
         Raises:
-            401: Unauthorized
-            403: Forbidden
-            404: cannot instantiate job
+            401 Bad Request: failed to parse job _id
+            401 Unauthorized
+            403 Forbidden
+            404 cannot instantiate job
 
         Examples:
             >>> from requests import post, get
@@ -746,7 +747,7 @@ class JobStream(JobPost):
             0.75340995 running
         """
         if _id == "":
-            self.reply("OK")
+            raise HTTPError(400, "failed to parse job _id")
         self.set_header('content-type', 'text/event-stream')
         self.set_header('cache-control', 'no-cache')
         oid = self.parse_id(_id)
