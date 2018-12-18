@@ -71,7 +71,8 @@ setup(
         "pandas>=0.23",
         "motor>=2.0",
         "passlib>=1.7",
-        "python-magic>=0.4"
+        "python-magic>=0.4",
+        "docutils>=0.14"
     ],
     extras_require={
         "tests": [

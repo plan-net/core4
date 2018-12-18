@@ -1,4 +1,6 @@
 import core4.queue.helper
+import core4.queue.helper.job
+import core4.queue.helper.functool
 import core4.util
 from core4.api.v1.request.main import CoreRequestHandler
 from tornado.web import HTTPError
@@ -19,6 +21,9 @@ class LoginHandler(CoreRequestHandler):
         """
         Login using *Basic Auth* header, *Bearer Auth* header, token parameter,
         token cookie or username/password parameter.
+
+        Methods:
+            POST /
 
         Parameters:
             username (str): requesting login
@@ -86,6 +91,9 @@ class LoginHandler(CoreRequestHandler):
         """
         User password reset.
 
+        Methods:
+            PUT /
+
         Parameters:
             email (str): of the user who requests to reset his password
             token (str): of the authenticated user
@@ -104,7 +112,7 @@ class LoginHandler(CoreRequestHandler):
             dict with empty data element
 
         Raises:
-            None
+            400 Bad Request: if no email or token/password is sent
 
         Examples:
             >>> url = "http://localhost:5001/core4/api/v1/login"
@@ -173,8 +181,8 @@ class LoginHandler(CoreRequestHandler):
 
     def _send_mail(self, email, realname, token):
         # internal method to send the password reset token
-        core4.queue.helper.enqueue(
-            core4.queue.helper.MailerJob,
+        core4.queue.helper.functool.enqueue(
+            core4.queue.helper.job.MailerJob,
             template="",
             recipients=email,
             subject="core4: your password reset request",

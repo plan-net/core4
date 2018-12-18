@@ -5,6 +5,7 @@ Usage:
   coco --init [PROJECT]
   coco --halt
   coco --worker [IDENTIFIER]
+  coco --application [IDENTIFIER] [--port=PORT] [--filter=FILTER...]
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -39,11 +40,12 @@ from bson.objectid import ObjectId
 from docopt import docopt
 
 import core4
+import core4.api.v1.tool
 import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
-import core4.queue.worker
 import core4.queue.scheduler
+import core4.queue.worker
 import core4.service.project
 import core4.util
 import core4.util.data
@@ -62,6 +64,13 @@ def worker(name):
     w = core4.queue.worker.CoreWorker(name=name)
     print("start worker [%s]" % (w.identifier))
     w.start()
+
+
+def app(name, port, filter):
+    core4.logger.mixin.logon()
+    if port:
+        port = int(port)
+    core4.api.v1.tool.serve_all(name=name, port=port, filter=filter or None)
 
 
 def scheduler(name):
@@ -132,7 +141,6 @@ def listing(*state):
         kwargs["state"] = {
             "$in": filter
         }
-    header = False
     rec = []
     mx = 0
     for job in QUEUE.get_job_listing(**kwargs):
@@ -300,6 +308,9 @@ def main():
         halt()
     elif args["--worker"]:
         worker(args["IDENTIFIER"])
+    elif args["--application"]:
+        print(args)
+        app(args["IDENTIFIER"], args["--port"], args["--filter"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:

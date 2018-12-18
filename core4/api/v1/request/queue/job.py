@@ -4,14 +4,15 @@ from bson.objectid import ObjectId
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
+
 import core4.error
 import core4.queue.job
 import core4.queue.query
 import core4.util
 import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.util.data import json_encode
 from core4.queue.main import CoreQueue
+from core4.util.data import json_encode
 from core4.util.pager import CorePager
 
 STATE_FINAL = (
@@ -27,12 +28,15 @@ STATE_STOPPED = (
     core4.queue.job.STATE_INACTIVE,
     core4.queue.job.STATE_ERROR)
 
-# todo: needs to check authorisation
 
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     """
     Get job listing, job details, kill, delete and restart jobs.
     """
+
+    author = "mra"
+    title = "job manager"
+    tag = ["job management"]
 
     def initialize(self):
         self.queue = CoreQueue()
@@ -52,10 +56,11 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     async def get(self, _id=None):
         """
         Paginated job listing with ``/jobs``,  and single job details with
-        ``/jobs/<_id>``.
+        ``/jobs/<_id>``. Only jobs with read/execute access permissions granted
+        to the current user are returned.
 
         Methods:
-            /jobs - jobs listing
+            GET /jobs - jobs listing
 
         Parameters:
             per_page (int): number of jobs per page
@@ -110,7 +115,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             }
 
         Methods:
-            /jobs/<_id> - job details
+            GET /jobs/<_id> - job details
 
         Parameters:
             _id (str): job _id to get details
@@ -178,7 +183,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         ``filter`` attribute to filter jobs.
 
         Methods:
-            /jobs - jobs listing
+            POST /jobs - jobs listing
 
         Parameters:
             per_page (int): number of jobs per page
@@ -216,19 +221,11 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def get_listing(self):
         """
-        Retrieve job listing from ``sys.queue`` using
-        :meth:`.project_job_listing` to select job attributes.
+        Retrieve job listing from ``sys.queue``. Only jobs with read/execute
+        access permissions granted to the current user are returned.
 
-        :return: list of dict
+        :return: :class:`.PageResult`
         """
-
-        async def _length(filter):
-            return await self.collection("queue").count_documents(filter)
-
-        async def _query(skip, limit, filter, sort_by):
-            cur = self.collection("queue").find(
-                filter).sort(*sort_by).skip(skip).limit(limit)
-            return await cur.to_list(length=limit)
 
         per_page = int(self.get_argument("per_page", default=10))
         current_page = int(self.get_argument("page", default=0))
@@ -236,17 +233,32 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         sort_by = self.get_argument("sort", default="_id")
         sort_order = self.get_argument("order", default=1)
 
+        data = []
+        async for doc in self.collection("queue").find(query_filter).sort(
+                [(sort_by, int(sort_order))]):
+            if await self.user.has_job_access(doc["name"]):
+                data.append(doc)
+
+        async def _length(*args, **kwargs):
+            return len(data)
+
+        async def _query(skip, limit, *args, **kwargs):
+            return data[skip:(skip + limit)]
+
         pager = CorePager(per_page=int(per_page),
                           current_page=int(current_page),
                           length=_length, query=_query,
-                          sort_by=[sort_by, int(sort_order)],
-                          filter=query_filter)
+                          #sort_by=[sort_by, int(sort_order)],
+                          #filter=query_filter
+        )
         return await pager.page()
 
     async def get_detail(self, _id):
         """
         Retrieve job listing from ``sys.queue`` and ``sys.journal`` using
-        :meth:`.project_job_listing` to select job attributes.
+        :meth:`.project_job_listing` to select job attributes. Only jobs with
+        read/execute access permissions granted to the current user are
+        returned.
 
         :param _id: job _id
         :return: dict of job attributes
@@ -265,12 +277,17 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             doc["journal"] = False
         if not doc:
             raise HTTPError(404, "job_id [%s] not found", _id)
-        return doc
+        if await self.user.has_job_access(doc["name"]):
+            return doc
+        raise HTTPError(403)
 
     async def delete(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be deleted.
+
         Methods:
-            /jobs/<_id> - delete job from ``sys.queue``
+            DELETE /jobs/<_id> - delete job from ``sys.queue``
 
         Parameters:
             _id (str): job _id to delete
@@ -282,6 +299,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             400: failed to parse job _id
             400: requires job _id
             401: Unauthorized
+            403: Forbidden
             404: job _id not found
 
         Examples:
@@ -307,8 +325,11 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def put(self, request=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be updated.
+
         Methods:
-            /jobs/<action>/<_id> - manage job in ``sys.queue``
+            PUT /jobs/<action>/<_id> - manage job in ``sys.queue``
 
         Parameters:
             action(str): ``delete``, ``kill`` or ``restart``
@@ -325,6 +346,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             400: requires action and job _id
             400: failed to restart job
             401: Unauthorized
+            403: Forbidden
             404: job _id not found
 
         Examples:
@@ -355,21 +377,33 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             if action not in action_method:
                 raise HTTPError(
                     400, "requires action in (delete, restart, kill)")
+            await self._access_by_id(oid)
             self.reply(await action_method[action](oid))
         raise HTTPError(400, "requires action and job_id")
+
+    async def _access_by_id(self, oid):
+        doc = await self.collection("queue").find_one(
+            filter={"_id": oid},
+            projection=["name"])
+        if not doc:
+            raise HTTPError(404, "job_id [%s] not found", oid)
+        if not await self.user.has_job_exec_access(doc["name"]):
+           raise HTTPError(403)
 
     async def update(self, oid, attr, message):
         """
         Update the passed job attribute, used with ``removed_at`` and
-        ``killed_at``
+        ``killed_at``. Only jobs with execute access permissions granted to the
+        current user  can be deleted.
 
         :param oid: :class:`bson.objectid.ObjectId` of the job
         :param attr: job attribute to update
         :param message: logging helper string
         :return: ``True`` for success, else ``False``
         """
+        await self._access_by_id(oid)
         at = core4.util.node.mongo_now()
-        ret = await self.collection("queue").update_one(
+        ret =  await self.collection("queue").update_one(
             {
                 "_id": oid,
                 attr: None
@@ -552,31 +586,17 @@ class JobPost(JobHandler):
     Post new job.
     """
 
-    def get(self, *args, **kwargs):
-        """
-        Raises:
-            405 - Method not allowed (not implemented)
-        """
-        raise HTTPError(405)
-
-    def delete(self, *args, **kwargs):
-        """
-        Raises:
-            405 - Method not allowed (not implemented)
-        """
-        raise HTTPError(405)
-
-    def put(self, *args, **kwargs):
-        """
-        Raises:
-            405 - Method not allowed (not implemented)
-        """
-        raise HTTPError(405)
+    author = "mra"
+    title = "enqueue job"
+    tag = ["job management"]
 
     async def post(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be posted.
+
         Methods:
-            /jobs/<_id> - enqueue job
+            POST /jobs - enqueue job
 
         Parameters:
             args (dict): arguments to be passed to the job
@@ -614,6 +634,7 @@ class JobPost(JobHandler):
         Raises:
             400: job exists with args
             401: Unauthorized
+            403: Forbidden
             404: cannot instantiate job
 
         Examples:
@@ -656,6 +677,8 @@ class JobPost(JobHandler):
             job = self.queue.job_factory(name, **args)
         except Exception:
             raise HTTPError(404, "cannot instantiate job [%s]", name)
+        if not await self.user.has_job_exec_access(name):
+            raise HTTPError(403)
         job.__dict__["attempts_left"] = job.__dict__["attempts"]
         job.__dict__["state"] = core4.queue.job.STATE_PENDING
         job.__dict__["enqueued"] = self.who()
@@ -664,7 +687,7 @@ class JobPost(JobHandler):
             ret = await self.collection("queue").insert_one(doc)
         except pymongo.errors.DuplicateKeyError:
             raise HTTPError(400, "job [%s] exists with args %s",
-                job.qual_name(), job.args)
+                            job.qual_name(), job.args)
         job.__dict__["_id"] = ret.inserted_id
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
@@ -681,15 +704,17 @@ class JobStream(JobPost):
     ``INACTIVE``, ``KILLED``).
     """
 
-    def initialize(self):
-        super().initialize()
-        self.set_header('content-type', 'text/event-stream')
-        self.set_header('cache-control', 'no-cache')
+    author = "mra"
+    title = "job state stream"
+    tag = ["job management"]
 
     async def get(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be streamed.
+
         Methods:
-            /jobs/poll - stream job attributes
+            GET /jobs/poll/<_id> - stream job attributes
 
         Parameters:
             _id (str): job _id
@@ -698,8 +723,10 @@ class JobStream(JobPost):
             JSON stream with job attributes
 
         Raises:
-            401: Unauthorized
-            404: cannot instantiate job
+            401 Bad Request: failed to parse job _id
+            401 Unauthorized
+            403 Forbidden
+            404 cannot instantiate job
 
         Examples:
             >>> from requests import post, get
@@ -719,6 +746,10 @@ class JobStream(JobPost):
             0.5028721 running
             0.75340995 running
         """
+        if _id == "":
+            raise HTTPError(400, "failed to parse job _id")
+        self.set_header('content-type', 'text/event-stream')
+        self.set_header('cache-control', 'no-cache')
         oid = self.parse_id(_id)
         last = None
         exit = False
@@ -746,11 +777,38 @@ class JobStream(JobPost):
 
     async def post(self, _id=None):
         """
+        Only jobs with execute access permissions granted to the current user
+        can be enqueued and streamed.
+
         Methods:
-            /jobs/poll - enqueue job and stream job progress
+            POST /jobs/poll - enqueue job and stream job progress
 
         Parameters:
-            see ``POST`` of :class:`core4.api.v1.request.queue.job.JobHandler`
+            args (dict): arguments to be passed to the job
+            attempts (int): maximum number of execution attempts after job
+                            failure before the job enters the final ``error``
+                            state
+            chain (list of str): list of jobs to be started after successful
+                                 job completion
+            defer_time (int): seconds to wait before restart after defer
+            defer_max (int): maximum number of seconds to defer the job before
+                             the job turns inactive
+            dependency (list of str): jobs which need to be completed before
+                                      execution start
+            error_time (int): seconds to wait before job restart after failure
+            force (bool): if ``True`` then ignore worker resource limits and
+                          launch the job
+            max_parallel (int): maximum number jobs to run in parallel on the
+                                same node
+            priority (int): to execute the job with >0 higher and <0 lower
+                            priority (defaults to 0)
+            python (str): Python executable to be used for dedicated Python
+                          virtual environment
+            wall_time (int): number of seconds before a running job turns into
+                             a non-stopping job
+            worker (list of str): eligable to execute the job
+            zombie_time (int): number of seconds before a job turns into a
+                               zombie non-stopping job
 
         Returns:
             JSON stream with job attributes
@@ -758,6 +816,7 @@ class JobStream(JobPost):
         Raises:
             400: failed to parse job _id
             401: Unauthorized
+            403: Forbidden
             404: job not found
 
         Examples:

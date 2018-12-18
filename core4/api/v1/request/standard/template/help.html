@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HELP {{ handler.__class__.__name__ }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{{ default_static('widget/default.css') }}">
+</head>
+<a>
+
+<h1>{{ qual_name }}</h1>
+
+<ul>
+    <li><b>AUTHOR:</b> {{ author }}</li>
+    <li><b>TITLE:</b> {{ title }}</li>
+    <li><b>ENTER:</b> <a href="{{ enter_url }}">{{ enter_url }}</a></li>
+    <li><b>RULE ID:</b> {{ route_id }}</li>
+    <li><b>PROTECTED:</b> {{ protected }}</li>
+    <li><b>ICON:</b> <i class="material-icons">{{ icon }}</i>  - {{ icon }}</li>
+    <li><b>ARGS:</b> {{ args }}</li>
+    <li><b>CONTAINER:</b> {{ container }}</li>
+    <li><b>PROJECT:</b> {{ project }}</li>
+    <li><b>VERSION:</b> {{ version }}</li>
+    <li><b>CARD:</b> <a href="{{ card_url }}">{{ card_url }}</a></li>
+    <li><b>MISSING</b>
+        <ul>
+            {% if author is None %} <li> AUTHOR </li> {% end %}
+            {% if not title %} <li> TITLE </li> {% end %}
+            {% if method %}
+                {% for elem in method %}
+                    {% if elem["parts"] %}
+                        {% for part in elem["parts"] %}
+                            {% if not elem["parts"][part] %}
+                                <li>
+                                    {{ elem["method"].upper() }} - section
+                                    <i> {{ part }} </i>
+                                </li>
+                            {% end %}
+                        {% end %}
+                    {% else %}
+                        <li>
+                            {{ elem["method"].upper() }} documentation
+                        </li>
+                    {% end %}
+                {% end %}
+            {% end %}
+        </ul>
+    </li>
+
+</ul>
+
+<hr/>
+
+{% for elem in method %}
+
+    <h2>{{ elem["method"].upper() }}</h2>
+
+    {% raw elem["html"] %}
+
+    <hr/>
+
+{% end %}
+
+</body>
+</html>

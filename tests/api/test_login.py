@@ -1,23 +1,22 @@
-import re
 import logging
 import os
+import re
+
 import datetime
-import time
 import pymongo
 import pytest
-from tornado.ioloop import IOLoop
-import tornado.gen
+
 import core4.logger.mixin
 import core4.service
 from core4.api.v1.application import CoreApiContainer
-from tests.api.test_response import setup, LocalTestServer, StopHandler
-from core4.api.v1.request.role.model import CoreRole
 from core4.api.v1.request.role.main import RoleHandler
-from core4.queue.worker import CoreWorker
 from core4.queue.main import CoreQueue
+from core4.queue.worker import CoreWorker
+from tests.api.test_response import LocalTestServer, StopHandler
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
+
 
 @pytest.fixture(autouse=True)
 def setup(tmpdir):
@@ -72,23 +71,27 @@ def http():
 
 
 def test_server_test(http):
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.status_code == 200
 
 
 def test_login(http):
-    rv = http.get('/login?username=admin&password=hans')
+    rv = http.get("/core4/api/v1/login?username=admin&password=hans",
+                  base=False)
     assert rv.status_code == 200
-    rv = http.post('/login?username=admin&password=hans')
+    rv = http.post("/core4/api/v1/login?username=admin&password=hans",
+                   base=False)
     assert rv.status_code == 200
-    rv = http.post('/login', json={"username": "admin", "password": "hans"})
+    rv = http.post("/core4/api/v1/login", base=False,
+                   json={"username": "admin", "password": "hans"})
     assert rv.status_code == 200
 
 
 def test_invalid_login(http):
     token = http.token
     http.token = None
-    rv = http.post('/login', json={"username": "admin", "password": "xxx"})
+    rv = http.post("/core4/api/v1/login", base=False,
+                   json={"username": "admin", "password": "xxx"})
     assert rv.status_code == 401
     http.token = token
 
@@ -96,13 +99,13 @@ def test_invalid_login(http):
 def test_no_args(http):
     token = http.token
     http.token = None
-    rv = http.get('/login')
+    rv = http.get("/core4/api/v1/login", base=False)
     assert rv.status_code == 401
-    rv = http.get('/login?bla=1')
+    rv = http.get("/core4/api/v1/login?bla=1", base=False)
     assert rv.status_code == 401
-    rv = http.get('/login?username=abc')
+    rv = http.get('/core4/api/v1/login?username=abc', base=False)
     assert rv.status_code == 401
-    rv = http.get('/login?username=admin&password=1')
+    rv = http.get('/core4/api/v1/login?username=admin&password=1', base=False)
     assert rv.status_code == 401
     http.token = token
 
@@ -110,9 +113,10 @@ def test_no_args(http):
 def test_pass_auth(http):
     token = http.token
     http.token = None
-    rv = http.get('/profile')
+    rv = http.get('/core4/api/v1/profile', base=False)
     assert rv.status_code == 401
-    rv = http.get('/profile?username=admin&password=hans')
+    rv = http.get('/core4/api/v1/profile?username=admin&password=hans',
+                  base=False)
     assert rv.status_code == 200
     http.token = token
 
@@ -120,27 +124,29 @@ def test_pass_auth(http):
 def test_login_success(http):
     token = http.token
     http.token = None
-    rv = http.get('/profile?token=' + token)
+    rv = http.get('/core4/api/v1/profile?token=' + token, base=False)
     assert rv.status_code == 200
     http.token = token
 
+
 def test_login_expired(http):
-    rv = http.get('/profile')
+    rv = http.get('/core4/api/v1/profile', base=False)
     assert rv.status_code == 200
     t0 = datetime.datetime.now()
     while True:
-        rv = http.get('/profile')
+        rv = http.get('/core4/api/v1/profile', base=False)
         if rv.status_code != 200:
             break
     assert (datetime.datetime.now() - t0).total_seconds() > 8
     assert rv.status_code == 401
 
+
 def test_login_extended(http):
-    rv = http.get('/profile')
+    rv = http.get('/core4/api/v1/profile', base=False)
     assert rv.status_code == 200
     t0 = datetime.datetime.now()
     while True:
-        rv = http.get('/profile')
+        rv = http.get('/core4/api/v1/profile', base=False)
         if "token" in rv.headers:
             http.token = rv.headers["token"]
             break
@@ -148,15 +154,17 @@ def test_login_extended(http):
     assert round((datetime.datetime.now() - t0).total_seconds()) >= 4
     t0 = datetime.datetime.now()
     while True:
-        rv = http.get('/profile')
+        rv = http.get('/core4/api/v1/profile', base=False)
         if rv.status_code != 200:
             break
     assert round((datetime.datetime.now() - t0).total_seconds()) >= 8
     assert rv.status_code == 401
 
+
 def test_roles(http):
     rv = http.get("/roles")
-    assert len(rv.json()["data"]) == 1
+    assert len(rv.json()["data"]) == 2
+
 
 def test_profile_cascade(http):
     rv = http.post("/roles", json=dict(
@@ -182,11 +190,11 @@ def test_profile_cascade(http):
     assert rv.status_code == 200
     user_id = rv.json()["data"]["_id"]
     http.token = None
-    rv = http.get("/login?username=user&password=password")
+    rv = http.get("/core4/api/v1/login?username=user&password=password", base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.status_code == 200
     data = rv.json()["data"]
     assert data["name"] == "user"
@@ -205,7 +213,7 @@ def test_profile_cascade(http):
 def test_restricted_user(http):
     rv = http.get("/roles")
     assert rv.status_code == 200
-    assert len(rv.json()["data"]) == 1
+    assert len(rv.json()["data"]) == 2
     rv = http.post("/roles", json=dict(
         name="user",
         realname="test user",
@@ -217,14 +225,14 @@ def test_restricted_user(http):
     etag = rv.json()["data"]["etag"]
     assert rv.status_code == 200
     rv = http.get("/roles")
-    assert len(rv.json()["data"]) == 2
+    assert len(rv.json()["data"]) == 3
     admin_token = http.token
     http.token = None
-    rv = http.get("/login?username=user&password=password")
+    rv = http.get("/core4/api/v1/login?username=user&password=password", base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.json()["data"]["name"] == "user"
     assert rv.status_code == 200
 
@@ -236,8 +244,8 @@ def test_restricted_user(http):
     assert rv.status_code == 200
 
     http.token = token
-    rv = http.get("/profile")
-    assert rv.status_code == 401
+    rv = http.get("/core4/api/v1/profile", base=False)
+    assert rv.status_code == 403
 
 
 def test_password_reset(http):
@@ -255,24 +263,25 @@ def test_password_reset(http):
     admin_token = http.token
     http.token = None
 
-    rv = http.get("/login?username=user&password=password")
+    rv = http.get("/core4/api/v1/login?username=user&password=password", base=False)
     assert rv.status_code == 200
 
-    rv = http.put("/login?email=test@user.com")
+    rv = http.put("/core4/api/v1/login?email=test@user.com", base=False)
     assert rv.status_code == 200
 
     q = core4.queue.main.CoreQueue()
     data = list(q.config.sys.log.find())
     msg = [d for d in data if "send token" in d["message"]][0]
     token = re.search(r"token \[(.+?)\]", msg["message"]).groups()[0]
-    rv = http.put("/login?token=" + token + "&password=world")
+    rv = http.put("/core4/api/v1/login?token=" + token + "&password=world", base=False)
     assert rv.status_code == 200
 
-    rv = http.get("/login?username=user&password=password")
+    rv = http.get("/core4/api/v1/login?username=user&password=password", base=False)
     assert rv.status_code == 401
 
-    rv = http.get("/login?username=user&password=world")
+    rv = http.get("/core4/api/v1/login?username=user&password=world", base=False)
     assert rv.status_code == 200
+
 
 def test_login_inactive(http):
     rv = http.post("/roles", json=dict(
@@ -289,7 +298,7 @@ def test_login_inactive(http):
     admin_token = http.token
     http.token = None
 
-    rv = http.get("/login?username=user&password=password")
+    rv = http.get("/core4/api/v1/login?username=user&password=password", base=False)
     assert rv.status_code == 200
 
     http.token = admin_token
@@ -301,5 +310,6 @@ def test_login_inactive(http):
 
     http.token = None
 
-    rv = http.get("/login?username=user&password=password")
+    rv = http.get("/core4/api/v1/login?username=user&password=password", base=False)
     assert rv.status_code == 401
+

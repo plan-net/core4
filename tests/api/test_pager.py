@@ -69,7 +69,6 @@ class PagingHandler(CoreRequestHandler):
 
 
 class MyTestServer(LocalTestServer):
-    base_url = "/core4/api/v1"
 
     def start(self, *args, **kwargs):
         class CoreApiTestServer(CoreApiContainer):
@@ -164,7 +163,7 @@ def test_empty(http):
 def test_job_listing(http):
     for i in range(20, 1, -1):
         rv = http.post(
-            "/enqueue", json=dict(name="core4.queue.helper.DummyJob",
+            "/enqueue", json=dict(name="core4.queue.helper.job.DummyJob",
                                   sleep=1, id=i+1))
         assert rv.status_code == 200
     rv = http.get("/jobs?per_page=6")

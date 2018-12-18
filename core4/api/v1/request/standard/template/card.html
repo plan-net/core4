@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CARD {{ handler.__class__.__name__ }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" type="text/css" href="{{ default_static('widget/default.css') }}">
+</head>
+<div class="container">
+    <h1>{{ handler.__class__.__name__ }}</h1>
+ 
+    <hr/>
+    
+    <ul>
+        <li><b>AT:</b> {{ handler.started }}</li>
+        <li><b>TITLE:</b> {{ handler.title }}</li>
+        <li><b>AUTHOR:</b> {{ handler.author }}</li>
+        <li><b>QUAL_NAME:</b> {{ handler.qual_name() }}</li>
+        <li><b>ICON: <i class="material-icons">{{ handler.icon }}</i></b> - {{ handler.icon }}</li>
+        <li><b>ENTER:</b> <a href="{{ handler.enter_url }}">{{ handler.enter_url }}</a>
+        <li><b>HELP:</b> <a href="{{ handler.help_url }}">{{ handler.help_url }}</a>
+        </li>
+
+        {% import inspect %}
+        {% import importlib %}
+    
+        {% set module = importlib.import_module(handler.__class__.__module__) %}
+    
+        <li><b>FILE:</b> {{ inspect.getfile(module) }}</li>
+    
+    </ul>
+    
+    <hr/>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
+
+</body>
+</html>

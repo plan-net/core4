@@ -4,13 +4,13 @@ All classes inheriting from :class:`.CoreBase` provide the standard features of
 core4 classes.
 """
 
+import importlib
 import inspect
 import logging
 import logging.handlers
 import os
 import re
 import sys
-import importlib
 
 import core4.config.main
 import core4.config.map
@@ -77,13 +77,14 @@ class CoreBase:
         self._open_config()
         self._open_logging()
 
-    def get_project(self):
+    @classmethod
+    def get_project(cls):
         """
         Identifies the class project.
 
         :return: project (str)
         """
-        modstr = self.__class__.__module__
+        modstr = cls.__module__
         project = modstr.split('.')[0]
         module = sys.modules[project]
         # the following is a hack
@@ -102,15 +103,22 @@ class CoreBase:
                 with open(init_file, 'r') as fh:
                     body = fh.read()
                     if is_core4_project(body):
-                        self.__class__._short_qual_name = ".".join(
+                        cls._short_qual_name = ".".join(
                             list(reversed(pathname))
-                            + [self.__class__.__name__])
-                        self.__class__._long_qual_name = ".".join([
-                            CORE4, PREFIX, self.__class__._short_qual_name
+                            + [cls.__name__])
+                        cls._long_qual_name = ".".join([
+                            CORE4, PREFIX, cls._short_qual_name
                         ])
                         project = pathname.pop(-1)
                         break
         return project
+
+    @classmethod
+    def project_path(cls):
+        project = cls.get_project()
+        if project not in sys.modules:
+            return importlib.import_module(project)
+        return os.path.dirname(sys.modules[project].__file__)
 
     def __repr__(self):
         """
@@ -128,11 +136,11 @@ class CoreBase:
         :param short: defaults to ``False``
         :return: qual_name string
         """
+        project = cls.get_project()
         if cls._short_qual_name:  # pragma: no cover (see test_base.test_main)
             if short:
                 return cls._short_qual_name
             return cls._long_qual_name
-        project = cls.__module__.split('.')[0]
         if project != CORE4 and not short:
             return '.'.join([CORE4, PREFIX, cls.__module__, cls.__name__])
         return '.'.join([cls.__module__, cls.__name__])
@@ -281,3 +289,23 @@ class CoreBase:
         """
         self.logger.critical("unhandled exception", exc_info=args)
         self.sys_excepthook(*args)
+
+    @classmethod
+    def module(cls):
+        project = ".".join(cls.qual_name().split(".")[:-1])
+        if project not in sys.modules:
+            return importlib.import_module(project)
+        return sys.modules[project]
+
+    @classmethod
+    def version(cls):
+        project = cls.get_project()
+        if project not in sys.modules:
+            mod = importlib.import_module(project)
+        else:
+            mod = sys.modules[project]
+        return mod.__version__
+
+    @classmethod
+    def pathname(cls):
+        return os.path.dirname(cls.module().__file__)

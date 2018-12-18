@@ -3,6 +3,7 @@ This module implements CoreCollection, featuring database access.
 """
 
 import core4.error
+
 from core4.base.connector.mongo import make_connection as make_mongo_connection
 
 DEFAULT_SCHEME = 'mongodb'

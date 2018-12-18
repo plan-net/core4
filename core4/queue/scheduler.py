@@ -46,21 +46,19 @@ class CoreScheduler(CoreDaemon):
 
         The following attributes are saved:
 
-        * ``name`` (the :meth:`.qual_name`)
-        * ``author``
-        * ``schedule``
-        * ``hidden``
-        * ``doc``
-        * ``tag``
-        * ``valid``
-        * ``exception``
-        * ``python``
-        * ``created_at`` - this is the date/time when the job has be initially
-          released
-        * ``updated_at`` - thie is the date/time when the job has been released
-          lately. The attribute is ``None`` if the job has not been found
-          during last update.
-            }
+        * ``_ie`` - the :meth:`.qual_name`
+        * ``author`` - of the job
+        * ``schedule`` - in cron format
+        * ``hidden`` - job property
+        * ``doc`` - the doc string
+        * ``tag`` - list
+        * ``valid`` - indicates if the job is valid
+        * ``exception`` - exception raised with ``traceback``
+        * ``python`` - interpreter binary path
+        * ``created_at`` - the date/time when the job has be initially released
+        * ``updated_at`` - the date/time when the job has been released lately.
+          The attribute is ``None`` if the job has not been found during last
+          update.
         """
         intro = core4.service.introspect.CoreIntrospector()
         self.config.sys.job.update_many(

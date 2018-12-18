@@ -69,7 +69,7 @@ def json_decode(resp):
 class CoreApiTestServer(CoreApiContainer):
     rules = [
         (r'/kill', StopHandler),
-        (r'/roles/?(.*)', RoleHandler)
+        (r'/roles/?(.*)', RoleHandler),
     ]
 
 
@@ -221,7 +221,7 @@ def test_comparison():
 
 
 def test_server_test(http):
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.status_code == 200
 
 
@@ -322,7 +322,7 @@ def test_create(http, mongodb):
     data["password"] = "123456"
     rv = http.post("/roles", json=data)
     assert rv.json()["code"] == 200
-    assert mongodb.sys.role.count_documents({}) == 2
+    assert mongodb.sys.role.count_documents({}) == 3
     doc = mongodb.sys.role.find_one({"name": "mra"})
     assert doc is not None
 
@@ -403,7 +403,7 @@ def test_get(http):
     ret = rv.json()
     assert ret["page"] == 0
     assert ret["per_page"] == 4
-    assert ret["total_count"] == 11
+    assert ret["total_count"] == 12
     assert ret["page_count"] == 3
     names = []
     oid = []
@@ -418,7 +418,7 @@ def test_get(http):
     rv = http.get("/roles/" + oid[0])
     assert rv.status_code == 200
     ret = rv.json()["data"]
-    assert ret["name"] == "admin"
+    assert ret["name"] == "standard_user"
     assert ret["_id"] == oid[0]
     assert "password" not in ret
 
@@ -430,8 +430,8 @@ def test_empty(http):
     ret = rv.json()
     assert ret["page"] == 0
     assert ret["per_page"] == 4
-    assert ret["total_count"] == 0
-    assert ret["page_count"] == 0
+    assert ret["total_count"] == 1
+    assert ret["page_count"] == 1
     oid = "5be414ccde8b69542b70f4d7"
     rv = http.get('/roles/' + oid)
     assert rv.status_code == 404
@@ -486,27 +486,28 @@ def test_access(http):
     assert rv.status_code == 200
     admin_token = http.token
     http.token = None
-    rv = http.get("/login?username=user&password=123456")
+    rv = http.get("/core4/api/v1/login?username=user&password=123456",
+                  base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.status_code == 200
     etag1 = rv.json()["data"]["etag"]
     rv = http.get("/roles")
-    assert rv.status_code == 401
+    assert rv.status_code == 403
     data = {
         "realname": "preferred name"
     }
-    rv = http.put("/profile", json=data)
+    rv = http.put("/core4/api/v1/profile", json=data, base=False)
     assert rv.status_code == 400
     assert "MissingArgumentError" in rv.json()["error"]
 
     data["etag"] = etag1
-    rv = http.put("/profile", json=data)
+    rv = http.put("/core4/api/v1/profile", json=data, base=False)
     assert rv.status_code == 200
 
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.status_code == 200
     etag2 = rv.json()["data"]["etag"]
     assert rv.json()["data"]["realname"] == "preferred name"
@@ -516,18 +517,20 @@ def test_access(http):
         "password": "hello",
         "etag": etag2
     }
-    rv = http.put("/profile", json=data)
+    rv = http.put("/core4/api/v1/profile", json=data, base=False)
     assert rv.status_code == 200
     etag3 = rv.json()["data"]["etag"]
 
     http.token = None
-    rv = http.get("/login?username=user&password=123456")
+    rv = http.get("/core4/api/v1/login?username=user&password=123456",
+                  base=False)
     assert rv.status_code == 401
-    rv = http.get("/login?username=user&password=hello")
+    rv = http.get("/core4/api/v1/login?username=user&password=hello",
+                  base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.status_code == 200
 
     data = {
@@ -555,12 +558,12 @@ def test_access(http):
         "etag": etag3
     }
     http.token = token
-    rv = http.put("/profile", json=data)
+    rv = http.put("/core4/api/v1/profile", json=data, base=False)
     assert rv.status_code == 400
     assert "mail exists" in rv.json()["error"]
 
     data["email"] = "user3@mail.com"
-    rv = http.put("/profile", json=data)
+    rv = http.put("/core4/api/v1/profile", json=data, base=False)
     assert rv.status_code == 200
 
 
@@ -611,7 +614,7 @@ def test_update(http):
     rv = http.get("/roles")
     assert rv.status_code == 200
     assert sorted([r["name"] for r in rv.json()["data"]]) == [
-        "admin", "admin2"]
+        "admin", "admin2", "standard_user"]
 
 
 def test_update2(http):
@@ -631,7 +634,8 @@ def test_update2(http):
     admin_token = http.token
     http.token = None
 
-    rv = http.get("/profile?username=mra&password=654321")
+    rv = http.get("/core4/api/v1/profile?username=mra&password=654321",
+                  base=False)
     assert rv.status_code == 200
     etag2 = rv.json()["data"]["etag"]
 
@@ -642,7 +646,8 @@ def test_update2(http):
     assert rv.status_code == 200
 
     http.token = None
-    rv = http.get("/login?username=mra&password=666999666")
+    rv = http.get("/core4/api/v1/login?username=mra&password=666999666",
+                  base=False)
     assert rv.status_code == 200
 
 
@@ -818,8 +823,9 @@ def test_recursion(http):
     assert rv.status_code == 200
     assert rv.json()["data"]["role"] == ['test_role2', 'test_role3']
 
-
     # test1 = loop.run_sync(lambda: CoreRole.find_one(name="test_role1"))
     # assert test1.role == ['test_role2', 'test_role3']
     # assert loop.run_sync(test1.casc_perm) == ['app://1', 'app://2', 'app://3']
     #
+
+

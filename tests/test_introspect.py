@@ -48,7 +48,7 @@ class OkJob(HiddenJob):
 def test_load():
     intro = CoreIntrospector()
     jobs = list(intro.iter_job())
-    assert [j for j in jobs if j["name"] == "core4.queue.helper.DummyJob"]
+    assert [j for j in jobs if j["name"] == "core4.queue.helper.job.DummyJob"]
     assert not [j for j in jobs if j["name"] == "core4.queue.job.CoreJob"]
     hidden_job = [j for j in jobs if "HiddenJob" in j["name"]][0]
     assert hidden_job["hidden"]

@@ -1,8 +1,11 @@
+import time
+
 import core4.logger
 import core4.queue.helper
+import core4.queue.helper.job
 import core4.queue.job
 import core4.queue.main
-import time
+
 
 class ErrorJob(core4.queue.job.CoreJob):
     """
@@ -36,4 +39,4 @@ if __name__ == '__main__':
     core4.logger.logon()
     q = core4.queue.main.CoreQueue()
     # q._enqueue(ErrorJob)
-    q.enqueue(core4.queue.helper.DummyJob)
+    q.enqueue(core4.queue.helper.job.DummyJob)
