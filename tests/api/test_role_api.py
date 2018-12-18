@@ -322,7 +322,7 @@ def test_create(http, mongodb):
     data["password"] = "123456"
     rv = http.post("/roles", json=data)
     assert rv.json()["code"] == 200
-    assert mongodb.sys.role.count_documents({}) == 2
+    assert mongodb.sys.role.count_documents({}) == 3
     doc = mongodb.sys.role.find_one({"name": "mra"})
     assert doc is not None
 
@@ -403,7 +403,7 @@ def test_get(http):
     ret = rv.json()
     assert ret["page"] == 0
     assert ret["per_page"] == 4
-    assert ret["total_count"] == 11
+    assert ret["total_count"] == 12
     assert ret["page_count"] == 3
     names = []
     oid = []
@@ -418,7 +418,7 @@ def test_get(http):
     rv = http.get("/roles/" + oid[0])
     assert rv.status_code == 200
     ret = rv.json()["data"]
-    assert ret["name"] == "admin"
+    assert ret["name"] == "standard_user"
     assert ret["_id"] == oid[0]
     assert "password" not in ret
 
@@ -430,8 +430,8 @@ def test_empty(http):
     ret = rv.json()
     assert ret["page"] == 0
     assert ret["per_page"] == 4
-    assert ret["total_count"] == 0
-    assert ret["page_count"] == 0
+    assert ret["total_count"] == 1
+    assert ret["page_count"] == 1
     oid = "5be414ccde8b69542b70f4d7"
     rv = http.get('/roles/' + oid)
     assert rv.status_code == 404
@@ -495,7 +495,7 @@ def test_access(http):
     assert rv.status_code == 200
     etag1 = rv.json()["data"]["etag"]
     rv = http.get("/roles")
-    assert rv.status_code == 401
+    assert rv.status_code == 403
     data = {
         "realname": "preferred name"
     }
@@ -614,7 +614,7 @@ def test_update(http):
     rv = http.get("/roles")
     assert rv.status_code == 200
     assert sorted([r["name"] for r in rv.json()["data"]]) == [
-        "admin", "admin2"]
+        "admin", "admin2", "standard_user"]
 
 
 def test_update2(http):
@@ -829,4 +829,3 @@ def test_recursion(http):
     #
 
 
-2

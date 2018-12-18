@@ -197,7 +197,10 @@ def test_collection_job(http):
 
 def test_enqeuue(http):
     token = add_job_user(
-        http, "user1", ["api://core4.api.v1.request.queue.job.JobPost"])
+        http, "user1", [
+            "api://core4.api.v1.request.queue.job.JobPost",
+            "job://core4.queue.helper.*/x"
+        ])
     rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
                    token=token)
     assert rv.status_code == 200
