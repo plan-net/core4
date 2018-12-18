@@ -19,9 +19,13 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
     :class:`.CoreApiContainer` and processes the
     """
     SUPPORTED_METHODS = ("GET", "HEAD", "OPTIONS", "XCARD", "XHELP", "POST")
+    propagate = ("protected", "title", "author", "tag", "static_path",
+                 "icon", "default_filename")
+
     title = "core4 static file handler"
     author = "mra"
     path = None
+    default_filename = DEFAULT_FILENAME
 
     def __init__(self, *args, **kwargs):
         CoreBaseHandler.__init__(self, *args, **kwargs)
@@ -29,9 +33,10 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
             kwargs["path"] = self.path
         StaticFileHandler.__init__(self, *args, **kwargs)
 
-    def initialize(self, path=None, default_filename=DEFAULT_FILENAME, *args,
+    def initialize(self, path=None, default_filename=None, *args,
                    **kwargs):
         path = path or self.path or ""
+        default_filename = default_filename or self.default_filename
         StaticFileHandler.initialize(self, path, default_filename)
         for attr, value in self.propagate_property(self, kwargs):
             self.__dict__[attr] = value
@@ -45,7 +50,6 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
         else:
             base = parent.pathname()
         self.root = os.path.join(base, path)
-        self.default_filename = default_filename
 
     @classmethod
     def get_absolute_path(cls, root, path):

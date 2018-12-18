@@ -69,7 +69,8 @@ class CoreBaseHandler(CoreBase):
     icon = "copyright"
 
     upwind = ["log_level", "template_path", "static_path"]
-
+    propagate = ("protected", "title", "author", "tag", "template_path",
+                 "static_path", "enter_url", "icon")
     supported_types = [
         "text/html",
     ]
@@ -104,8 +105,7 @@ class CoreBaseHandler(CoreBase):
             :class:`.CoreApiContainer`
         :return: yield attribute name and value
         """
-        for attr in ("protected", "title", "author", "tag", "template_path",
-                     "static_path", "enter_url", "icon"):
+        for attr in self.propagate:
             val = kwargs.get(attr, None)
             if val is None:
                 yield attr, getattr(source, attr)

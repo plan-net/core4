@@ -294,4 +294,4 @@ class RootContainer(CoreApiContainer):
             "path": "./request/_static", "protected": False})
     ]
     routes = {}
-    apps = {}
+
