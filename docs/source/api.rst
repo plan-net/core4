@@ -57,6 +57,11 @@ routing rules
 core4 is using the same routine rules as :mod:`tornado`. See for example
 `Tornado Application Configuration <https://www.tornadoweb.org/en/stable/web.html#application-configuration>`_.
 
+One exception to the standard tornado routing pattern is the
+:class:`.CoreStaticFileHandler`. This handler must specify the path name and
+core4 will automatically append the directory/file name pattern
+``"(?:/(.*))?$"``.
+
 
 protected handlers
 ##################
@@ -73,7 +78,7 @@ To access the :class:`.QueueHandler` resource located at
 ``core4.api.v1.request.queue.state.QueueHandler`` the user must for example
 have a role with permission
 ``api://core4.api.v1.request.queue.state.QueueHandler``. Please note that the
-permission string represents a pattern. Therefore the permission
+permission string is a regular expression. Therefore the permission
 ``api://core4.api.v1.request.queue`` grants access to all handlers located
 below this :meth:`.qual_name <core4.base.main.CoreBase.qual_name>` including
 the :class:`.QueueHandler`.
@@ -90,6 +95,12 @@ To create a public request handler set the ``protected`` property accordingly::
         return "hello world"
 
 
+.. note:: The login handler at
+          :class:`core4.api.v1.request.standard.LoginHandler` and the top level
+          :class:`core4.api.v1.request.static.CoreStaticFileHandler` are not
+          protected.
+
+
 response creation
 #################
 
@@ -98,8 +109,8 @@ To create a response you can use :mod:`tornado` methods like
 :meth:`.finish <tornado.web.finish>` as well as the templating mechanics of
 :mod:`tornado` like :meth:`.render <tornado.web.render>`.
 
-core4 introduces two additional method :meth:`.reply` and
-:meth:`.render_default`. :meth:`.reply` creates the following media types:
+core4 introduces an additional method :meth:`.reply` and which supports the
+creation of the following media types:
 
 * application/json
 * text/html
@@ -121,7 +132,7 @@ attributes. See :ref:`pagination`.
 response format
 ###############
 
-The standard json resopnse carries the following attributes:
+The standard json response carries the following attributes:
 
 * ``_id`` - the request _id
 * ``code`` - the HTTP response code
@@ -138,6 +149,9 @@ The reponse of the example request handler above is::
         'timestamp': '2018-11-06T06:57:26.660093',
         'data': "hello world"
     }
+
+
+See :ref:`flashing` for an additional response element.
 
 
 error response format
@@ -177,8 +191,8 @@ pagination
 ##########
 
 Resource handlers which support pagination must return a :class:`PageResult`
-with :meth:`.reply`. This extends the standard json response with several
-information about current page:
+with :meth:`.reply`. This extends the standard json response with  information
+about the current page:
 
 * ``page_count`` - the total number of pages
 * ``total_count`` - the total number of records
@@ -259,7 +273,7 @@ The login resource handler :class:`.LoginHandler` accepts the following input
 to authenticate a user with his or her password:
 
 #. basic authorization header
-#. Username and password as query parameters
+#. username and password as query parameters
 #. username and password as json body attributes
 
 
@@ -268,8 +282,8 @@ token. The HTTP header also holds a secure cookie which contains the token
 (see :class:`LoginHandler <core4.api.v1.request.standard.login.LoginHandler>`).
 
 The client is supposed to send this token or the cookie with each request. The
-token can also be sent as a query parameter. For security reason this is not
-good practice, but possible.
+token can also be sent as a query parameter. For security reason this is
+possible though not good practice.
 
 The following example demonstrates the login procedure, responses and access
 to a protected resource using the token::
@@ -314,7 +328,7 @@ to a protected resource using the token::
     <Response [200]>
 
 
-If the creation time of the token is older than 1h, then a refresh
+If the creation time of the token is older than 1 hour, then a refresh
 token is created and sent with the HTTP header (field ``token``).
 This refresh time can be configured with setting ``api.token.refresh``.
 
@@ -322,7 +336,8 @@ The purpose of these refresh token is to allow the client to extend the
 session. The client must replace the current token (which is still valid) with
 the refresh token to continue access.
 
-The lifetime of the initial token is 8h.
+The lifetime of the initial token is 8 hours. For a smooth user experience
+a new refresh token is sent every hour.
 
 
 API documentation
@@ -356,7 +371,7 @@ templating
 ##########
 
 Use :mod:`tornado` templating system with method :meth:`.render` to render
-templates relative to the resource handler location::
+templates::
 
     class TestHandler(CoreRequestHandler):
 
@@ -364,30 +379,31 @@ templates relative to the resource handler location::
             self.render("template.html")
 
 
-static files
-############
+By default the template path is relative to the resource handler location. You
+can modify the template path by setting the ``.template_path`` variable either
+as a class property or as a handler argument::
 
-You can specify a folder and URL to serve static files with
-your :class:`CoreApiContainer`:
 
-* **path** defines the relative or absolute path of the static file folder
-* **default_filename** defines the file name to serve from folders (defaults to
-  ``index.html``)
-* **static_url** defines the URL after ``root`` prefix to serve static files
+    class TestHandler(CoreRequestHandler):
 
-**Example**::
+        template_path = "template"
 
-    class CoreApiServer(CoreApiContainer):
-        root = "test"
-        path = "html"
-        default_filename = "index.htm"
-        static_url = 'files'
+        def get(self):
+            self.render("template.html") # located in <handler>/template
 
-        rules = [
-        ]
 
-This container serves only static files from directory ``./html``
+A relative ``.template_path`` as in the example above addresses a directory
+relative to the resource handler. An absolute ``.template_path`` addresses a
+directory from the project root::
 
+    class TestHandler(CoreRequestHandler):
+
+        template_path = "/api/template"
+        def get(self):
+            self.render("template.html") # located in <project>/api/template
+
+
+.. _flashing:
 
 message flashing
 ################
@@ -433,7 +449,7 @@ argument parsing
 :mod:`tornado` supports argument parsing. See `request handler input
 <https://www.tornadoweb.org/en/stable/web.html?highlight=get_argument#input>`_.
 
-core4 extends the general purpose methods :meth:`.get_argument` to additionally
+core4 extends the general purpose method :meth:`.get_argument` to additionally
 facilitate the extraction of arguments from a json content body.
 
 :meth:`.CoreRequestHandler.get_argument` also processes an optional argument
@@ -517,6 +533,7 @@ parameters with the ``GET`` method::
         'timestamp': '2018-11-07T15:52:54.510046'
     }
 
+
 The following commands test the same date/time parsing using json bodies
 with the ``POST`` method::
 
@@ -541,6 +558,33 @@ static file serving
 * without variable injection
 * disclaimer for leightweight serving
 * with url function
+
+OLD:
+static files
+############
+
+You can specify a folder and URL to serve static files with
+your :class:`CoreApiContainer`:
+
+* **path** defines the relative or absolute path of the static file folder
+* **default_filename** defines the file name to serve from folders (defaults to
+  ``index.html``)
+* **static_url** defines the URL after ``root`` prefix to serve static files
+
+**Example**::
+
+    class CoreApiServer(CoreApiContainer):
+        root = "test"
+        path = "html"
+        default_filename = "index.htm"
+        static_url = 'files'
+
+        rules = [
+        ]
+
+This container serves only static files from directory ``./html``
+
+
 
 
 single page applications (SPA)
