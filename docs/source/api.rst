@@ -604,9 +604,9 @@ extra endpoints of each handler
 
 Each handler has three additional endpoints associated with the resource:
 
-# a help page (``help_url``)
-# a card page (``card_url``)
-# an entry URL (``enter_url``)
+#. a help page (``help_url``)
+#. a card page (``card_url``)
+#. an entry URL (``enter_url``)
 
 The help page delivers well formatted endpoint documentation in HTML following
 the guiding principles described at :ref:`api_docs`. The card page provides
@@ -636,13 +636,15 @@ when the user enters the API's landing page::
             return self.reply("OK")
 
 
+.. _rule_arguments:
+
 handler arguments at rules
 ##########################
 
 Certain handler properties can be overwritten within the ``rules`` property of
 the :class:`.CoreApiContainer` class. These are the following properties:
 
-* ``protected`
+* ``protected``
 * ``title``
 * ``author``
 * ``tag``
@@ -724,13 +726,6 @@ core static file with global variable injection
 static file with single endpoint to js rendered page
 
 
-handler arguments at rules
-##########################
-
-tbd.
-
-
-
 single page applications (SPA)
 ##############################
 
@@ -747,13 +742,62 @@ static file with single endpoint to js rendered page
 config overwrite
 ################
 
-tbd.
+Similar to jobs you can specify a core4 configuration specific for a
+:class:`.CoreRequestHandler`. The following attributes overrule the handler's
+class properties and arguments defined by the :class:`.CoreApiContainer` (see
+:ref:`rule_arguments`):
+
+* log_level
+* template_path
+* static_path
+
+Assume the following resource ``MyHandler`` is located at
+``project/api/v1/handler.py``::
+
+    class MyHandler(CoreRequestHandler):
+
+        author = "mra"
+        title = "API introduction"
+        template_path = "/project/api/templates"
+        icon = "help"
+
+        def get(self):
+            return self.render("index.html")
+
+
+You can overwrite for example the ``template_path`` setting with the following
+core4 local configuration::
+
+    project:
+      api:
+        v1:
+          handler:
+            MyHandler:
+              template_path: /srv/www/custom_templates
 
 
 multiple process serving
 ########################
 
-tbd.
+core4 is based on the tornado web framework and asynchronous network library.
+Tornado should run on Unix-based platforms. Mac OS X and windows are generally
+supported but only recommended for development and testing systems.
+
+Due to the Python GIL (Global Interpreter Lock), it is necessary to run
+multiple Python processes to take full advantage of multi-CPU machines. The
+tornado maintainers recommend to run one process per CPU.
+
+The most simple setup for core4 is to run multiple instances on a multi-core
+server, e.g. to start eight independent ``serve`` or ``serve_all`` commands on
+an eight-core server. This means that the following shell command is to be
+spawned multiple, i.e. eight times::
+
+    $ coco --application --filter core4.api.v1.server --port 8080 --reuse-port
+
+
+The ``--reuse-port`` option (defaults to ``True``) tells the kernel to reuse a
+local socket in ``TIME_WAIT`` state which essentially means that all proccesses
+listen and share the same port, i.e. 8080 in this scenario.
 
 
 download
@@ -770,7 +814,7 @@ the following example::
 
 For uploading files and especially large files see for example
 
-* `Tornado server does not receive big files`_
+* `Server does not receive big files`_
 * `Mime-type of the stream request body output`_
 
 
