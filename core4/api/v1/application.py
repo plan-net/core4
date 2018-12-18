@@ -49,6 +49,8 @@ from core4.api.v1.request.standard.route import RouteHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
 
+STATIC_PATTERN = "(?:/(.*))?$"
+
 
 class CoreApiContainer(CoreBase):
     """
@@ -158,7 +160,7 @@ class CoreApiContainer(CoreBase):
                     if (isinstance(routing, str)
                             and issubclass(cls, tornado.web.RequestHandler)):
                         if issubclass(cls, CoreStaticFileHandler):
-                            routing += "(?:/(.*))?$"
+                            routing += STATIC_PATTERN
                         md5_route = hashlib.md5(
                             routing.encode("utf-8")).hexdigest()
                         if md5_route not in unique:
