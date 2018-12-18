@@ -189,8 +189,7 @@ class InfoHandler(CoreRequestHandler):
             return {
                 "route_id": md5_route,
                 "pattern": pattern or "/",
-                # "url": unre_url(pattern),
-                "args": args,
+                "args": "%s" %(args),
                 "title": rule_attr.get("title"),
                 "icon": rule_attr.get("icon"),
                 "container": container.qual_name(),
