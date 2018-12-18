@@ -340,6 +340,8 @@ The lifetime of the initial token is 8 hours. For a smooth user experience
 a new refresh token is sent every hour.
 
 
+.. _api_cods:
+
 API documentation
 #################
 
@@ -399,6 +401,7 @@ directory from the project root::
     class TestHandler(CoreRequestHandler):
 
         template_path = "/api/template"
+
         def get(self):
             self.render("template.html") # located in <project>/api/template
 
@@ -552,75 +555,184 @@ with the ``POST`` method::
 static file serving
 ###################
 
-* static_url ... to same folder as handler or container by default or folder static_path
-* default_status ... to default static folder
-* with variable injection
-* without variable injection
-* disclaimer for leightweight serving
-* with url function
+You can specify the folder to serve static files with your request handler::
 
-OLD:
-static files
-############
+    class TestHandler(CoreRequestHandler):
 
-You can specify a folder and URL to serve static files with
-your :class:`CoreApiContainer`:
+        template_path = "/api/template"
+        static_path = "/api/template"
 
-* **path** defines the relative or absolute path of the static file folder
-* **default_filename** defines the file name to serve from folders (defaults to
-  ``index.html``)
-* **static_url** defines the URL after ``root`` prefix to serve static files
+        def get(self):
+            self.render("template.html") # located in <project>/api/template
 
-**Example**::
 
-    class CoreApiServer(CoreApiContainer):
-        root = "test"
-        path = "html"
-        default_filename = "index.htm"
-        static_url = 'files'
+This will deliver template files and static files from the same directory
+relative to ``TestHandler`` project root at ``/api/template``. You have to
+address static files in your template files with the ``static_url`` directive::
 
+    <link rel="stylesheet" type="text/css" href="{{ static_url('style.css') }}">
+
+and for example::
+
+    <img src="{{ static_url('image.png') }}"\>
+
+Both directivrs serve static files ``style.css`` and ``image.png`` from the
+specified static directory.
+
+core4 also ships with a default static directory which can used to serve
+default styles for example::
+
+    <link rel="stylesheet" type="text/css" href="{{ default_static('default.css') }}">
+
+This default static directory is specified by the core4 config key
+``api.default_static``. The default value is ``api/v1/request/_static`` and is
+interpreted as a relative path to the core4 package directory. You can
+overwrite this setting and also address absolute folders in your file systems.
+In the current core4 release the following
+default files are defined and are expected to exist in the overwritten default
+static folder:
+
+.. todo:: requires the list of default static files
+
+
+.. warning:: Tornado is not as efficient as a fully fledged web server like
+             nginx or apache and should be used only to serve low-traffic
+             static sites.
+
+extra endpoints of each handler
+###############################
+
+Each handler has three additional endpoints associated with the resource:
+
+# a help page (``help_url``)
+# a card page (``card_url``)
+# an entry URL (``enter_url``)
+
+The help page delivers well formatted endpoint documentation in HTML following
+the guiding principles described at :ref:`api_docs`. The card page provides
+relevant endpoint information and can be customised with the
+:meth:`.CoreBaseHandler.card` method. The entry URL is the landing page of the
+API which defaults to the API ``GET`` method and can be customised with the
+handler's class property ``enter_url``.
+
+The following example customises the card page by using a custom template file.
+The default card template is located at
+``core4/api/v1/request/standard/template``::
+
+    class TestHandler(CoreRequestHandler):
+
+        def card(self):
+            self.render("template/card.html") # located in <handler>/api/template
+
+
+The following example customises the ``enter_url`` and redirects to Serviceplan
+when the user enters the API's landing page::
+
+    class TestHandler(CoreRequestHandler):
+
+        enter_url = "http://www.serviceplan.com"
+
+        def get(self):
+            return self.reply("OK")
+
+
+handler arguments at rules
+##########################
+
+Certain handler properties can be overwritten within the ``rules`` property of
+the :class:`.CoreApiContainer` class. These are the following properties:
+
+* ``protected`
+* ``title``
+* ``author``
+* ``tag``
+* ``template_path``
+* ``static_path``
+* ``default_filename``
+* ``enter_url``
+* ``icon``
+
+This is especially useful when serving static files with
+:class:`.CoreStaticFileHandler`::
+
+    class TestContainer(CoreApiContainer):
+        root = "/test-server"
         rules = [
+            (r'/help', CoreStaticFileHandler, {
+                "title": "API introduction",
+                "path": "/api/static/help",
+                "default_filename": "default.html",
+                "protected": False,
+                "author": "mra",
+                "icon": "help"})
         ]
 
-This container serves only static files from directory ``./html``
 
+This is more efficient than subclassing from :class:`.CoreStaticFileHandler` to
+define these properties as in the following example::
 
+    class HelpHandler(CoreStaticFileServer):
 
+        author = "mra"
+        title = "API introduction"
+        path = "/api/static/help"
+        default_filename = "default.html"
+        protected = False
+        icon = "help"
 
-single page applications (SPA)
-##############################
-
-tbd.
-
-
-config overwrite
-################
-
-tbd.
+    class TestContainer(CoreApiContainer):
+        root = "/test-server"
+        rules = [
+            (r'/help', HelpHandler)
+        ]
 
 
 handler access in templates
 ###########################
 
+Template rendering uses the :mod:`tornado` mechanics described at
+`Tornado - Flexible Output Generation`_. The :class:`.CoreRequestHandler`
+provides additional handler properties available as properties and methods:
+
+* ``request``: request object
+* ``qual_name``: of the handler
+* ``project``: of the handler
+* ``author``: of the handler
+* ``tag``: list of the handler
+* ``title``: of the handler
+* ``template_path``: of the handler
+* ``static_path``: of the handler
+* ``log_level``: of the handler
+* ``token_exp``: expiration date of the current authentication token
+* ``started``: start date/time of the request
+* ``protected``: indicates if the handler is public or not
+* ``config``: core4 configuration dictionary
+* ``class_config``: class section of core4 configuration dictionary
+* ``icon``: of the handler
+* ``identifier``: of the request
+* ``user``: user object, see :class:`core4.api.v1.role.model.CoreRole`
+* ``enter_url``: landing page URL of the handler
+* ``application``: object of the handler, and ``application.container`` with
+  the container object of the application and handler
+* ``_flash``:
+
+
+example vue rendering
+#####################
+
+core static file with global variable injection
+static file with single endpoint to js rendered page
+
+
+handler arguments at rules
+##########################
+
 tbd.
 
 
-card view
-#########
 
-tbd., ends with /_xcard_
-
-demo for custom card with setinterval
-
-
-multiple process serving
-########################
-
-tbd.
-
-
-access core4 config from HTML files
-###################################
+single page applications (SPA)
+##############################
 
 tbd.
 
@@ -632,25 +744,36 @@ core static file with global variable injection
 static file with single endpoint to js rendered page
 
 
-api/widget collection
-#####################
+config overwrite
+################
 
 tbd.
 
 
-download/upload
-###############
+multiple process serving
+########################
 
 tbd.
 
 
-handler arguments at rules
-##########################
+download
+########
 
-tbd.
+Download is supported with a :meth:`.CoreRequestHandler.download` method. See
+the following example::
+
+    class DownloadHandler(CoreRequestHandler):
+
+        async def get(self):
+            await self.download("./static1/asset/test.dat", "test.dat")
 
 
-include
-#######
+For uploading files and especially large files see for example
 
-only from same template_path, not path processing
+* `Tornado server does not receive big files`_
+* `Mime-type of the stream request body output`_
+
+
+.. _Tornado - Flexible Output Generation: https://www.tornadoweb.org/en/stable/template.html
+.. _Server does not receive big files: https://stackoverflow.com/questions/36688827/tornado-server-does-not-receive-big-files
+.. _Mime-type of the stream request body output: https://stackoverflow.com/questions/25529804/tornado-mime-type-of-the-stream-request-body-output

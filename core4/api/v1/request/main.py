@@ -16,6 +16,8 @@ import tornado.httputil
 import tornado.template
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
+import tornado.iostream
+import tornado.gen
 
 import core4.const
 import core4.error
@@ -29,6 +31,7 @@ from core4.util.pager import PageResult
 tornado.escape.json_encode = json_encode
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
+MB = 1024 * 1024
 
 
 class CoreEtagMixin:
@@ -943,3 +946,22 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             return ObjectId(_id)
         except:
             raise HTTPError(400, "failed to parse ObjectId [%s]", _id)
+
+    async def download(self, source, filename, chunk_size=MB):
+        self.set_header('Content-Type', 'application/octet-stream')
+        self.set_header('Content-Disposition',
+                        'attachment; filename=' + os.path.basename(filename))
+        with open(source, 'rb') as f:
+            while True:
+                try:
+                    data = f.read(chunk_size)
+                    await self.flush()
+                    if not data:
+                        break
+                    self.write(data)
+                except tornado.iostream.StreamClosedError:
+                    print("NO")
+                    break
+                finally:
+                    await tornado.gen.sleep(0.000000001)  # 1 nanosecond
+        self.finish()
