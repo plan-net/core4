@@ -67,5 +67,9 @@ class CoreFileHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
             root = default_static
         self.root = root
         self.path_args = ["/".join(path)]
+        full_path = os.path.join(self.root, self.path_args[0])
+        if not os.path.exists(full_path):
+            self.logger.error(
+                "static file not found [%s]", full_path)
         self.identifier = ObjectId()
         await self.prepare_protection()
