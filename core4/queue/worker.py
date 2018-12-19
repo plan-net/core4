@@ -558,9 +558,9 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
     def collect_stats(self):
         """
-        Collects cpu and memory, inserts it as tuple into self.stats_collector
-        cpu is computed via CPU-Utilization/(idle-time+io-wait)
-        free RAM is in MB.
+        Collects cpu and memory, inserts it as tuple into self.stats_collector.
+        CPU is computed via CPU-Utilization/(idle-time+io-wait) free RAM is in
+        MB.
         """
         ret = self.config.sys.worker.update_one(
             {"_id": self.identifier},

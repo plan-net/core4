@@ -38,6 +38,7 @@
    access
    deploy
    tools
+   faq
    about
    core4/index
 

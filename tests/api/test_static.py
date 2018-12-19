@@ -24,6 +24,14 @@ class StopHandler(CoreRequestHandler):
         IOLoop.current().stop()
 
 
+class DownloadHandler(CoreRequestHandler):
+
+    protected = False
+
+    async def get(self):
+        await self.download("./static1/asset/test.dat", "test.dat")
+
+
 class StaticTest2(CoreStaticFileHandler):
     path = "static1"
 
@@ -35,6 +43,7 @@ class CoreApiTestServer1(CoreApiContainer):
         (r'/static1', CoreStaticFileHandler, {"path": "static1"}),
         (r'/static2', StaticTest2),
         (r'/public2', StaticTest2, {"protected": False}),
+        (r'/download1', DownloadHandler),
     ]
 
 
@@ -190,6 +199,12 @@ def test_public_class(http):
     assert rv.status_code == 200
     rv = http.get("/tests/public2/sub/../test.css")
     assert rv.status_code == 200
+
+
+# def test_download(http):
+#     url = http.url("/tests/download1")
+#     rv = requests.get(url)
+#     assert rv.status_code == 200
 
 
 if __name__ == '__main__':

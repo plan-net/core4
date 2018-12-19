@@ -212,9 +212,6 @@ class CoreApplication(tornado.web.Application):
         Card page requests are forwarded to the handler's
         :meth:`.CoreRequestHandler.xcard` method (``XCARD``). Enter landing
         page requests are forwarded to the handler's ``GET`` method.
-        :param request:
-        :param kwargs:
-        :return:
         """
 
         def _find():
@@ -241,7 +238,7 @@ class CoreApplication(tornado.web.Application):
         """
         Find the passed ``qual_name`` and optional ``routing`` MD5 digest in
         the bundled lookup built during the creation of applications
-        (:meth:`.make_application).
+        (:meth:`.make_application`).
 
         :param md5_qual_name: find the request handler based on
                               :class:`.CoreRequestHandler` by the ``qual_name``
@@ -294,4 +291,4 @@ class RootContainer(CoreApiContainer):
             "path": "./request/_static", "protected": False})
     ]
     routes = {}
-    apps = {}
+
