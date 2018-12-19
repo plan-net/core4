@@ -63,8 +63,10 @@ def make_project(package_name=None):
             targetfile = targetfile.replace("__py__", "py")
             fulltarget = os.path.join(targetpath, targetfile)
             fullsource = os.path.join(root, file)
-            with open(fullsource, "r", encoding="utf-8") as fh:
+            print("creating [%s] " % (fullsource), end="")
+            with open(fullsource, "r") as fh:
                 body = fh.read()
-            Template(body).stream(**kwargs).dump(fulltarget)
-            print("created", fulltarget)
+            if len(body) > 0:
+                Template(body).stream(**kwargs).dump(fulltarget)
+            print("created")
     print("done.")
