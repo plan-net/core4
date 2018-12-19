@@ -59,8 +59,8 @@ setup(
     install_requires=[
         "pymongo>=3.7",
         "python-dateutil>=2.7",
-        "Flask>=1.0",
-        "Flask-Login>=0.4",
+        #"Flask>=1.0",
+        #"Flask-Login>=0.4",
         "PyYaml>=3.12",
         "psutil>=5.4",
         "docopt>=0.6",
