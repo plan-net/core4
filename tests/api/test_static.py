@@ -206,6 +206,7 @@ def test_public_class(http):
 #     rv = requests.get(url)
 #     assert rv.status_code == 200
 
+
 if __name__ == '__main__':
     # from core4.api.v1.tool import serve, serve_all
     # serve_all(filter=[
