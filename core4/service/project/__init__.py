@@ -45,9 +45,9 @@ def make_project(package_name=None):
         if i.strip().lower() == "yes":
             break
 
-    if os.path.exists(kwargs["package_name"]):
-        print("\nproject exists")
-        sys.exit(1)
+    # if os.path.exists(kwargs["package_name"]):
+    #     print("\nproject exists")
+    #     sys.exit(1)
     print()
     template = os.path.join(os.path.dirname(__file__), "template")
     for root, dirs, files in os.walk(template):
@@ -63,10 +63,12 @@ def make_project(package_name=None):
             targetfile = targetfile.replace("__py__", "py")
             fulltarget = os.path.join(targetpath, targetfile)
             fullsource = os.path.join(root, file)
-            print("creating [%s] " % (fullsource), end="")
-            with open(fullsource, "r") as fh:
-                body = fh.read()
-            if len(body) > 0:
+            print("%s " % (fulltarget), end="")
+            if os.path.exists(fulltarget):
+                print("skipped")
+            else:
+                with open(fullsource, "r") as fh:
+                    body = fh.read()
                 Template(body).stream(**kwargs).dump(fulltarget)
-            print("created")
+                print("created")
     print("done.")

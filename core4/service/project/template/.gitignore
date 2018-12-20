@@ -38,3 +38,7 @@ nosetests.xml
 # PyBuilder
 target/
 .idea/*
+
+# core4
+.venv/*
+local.yaml
