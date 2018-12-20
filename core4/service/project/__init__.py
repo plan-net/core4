@@ -69,12 +69,20 @@ def make_project(package_name=None, package_description=None, auto=False):
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
         > {repository:s}
+
+    This repository will have an initial commit and two branches:
+        1. master
+        2. develop
         
     To share this git repository with other users you have to manually 
     synchronise this bare repository with a git repository accessible by your
     team. Once this has been done, you can remove the bare repository on this
     computer and update your git connection accordingly in 
         > .git/config
+        
+    To start working on your project, enter the Python virtual environment with
+        $ cd ./{project:s}
+        $ . start_env
     """.format(
         root=root_path, project=kwargs["package_name"], venv=VENV,
         repository=REPOSITORY, exist=exist, fullpath=full_path))
@@ -136,12 +144,21 @@ def make_project(package_name=None, package_description=None, auto=False):
         print("\ninitial commit")
         print("--------------\n")
 
-        print("    intial commit ... ", end="")
         git_dir = ["--git-dir", os.path.join(full_path, ".git"),
                    "--work-tree", full_path]
+
+        print("    intial commit ... ", end="")
         sh.git(git_dir + ["add", "*"])
         sh.git(git_dir + ["commit", ".", "-m", "initial commit"])
         sh.git(git_dir + ["push"])
+        print("done")
+
+        print("    create branch develop ... ", end="")
+        sh.git(git_dir + ["checkout", "-b", "develop"])
+        sh.git(git_dir + ["push", "origin", "develop"])
+        sh.git(git_dir + ["branch", "--set-upstream-to", "origin/develop",
+                          "develop"])
+        sh.git(git_dir + ["checkout", "master"])
         print("done")
 
         print("    move %s to %s ... " %(temp_repos_path, full_path), end="")
