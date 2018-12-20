@@ -2,7 +2,7 @@
 coco - core control utililty.
 
 Usage:
-  coco --init [PROJECT]
+  coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
   coco --application [IDENTIFIER] [--port=PORT] [--filter=FILTER...]
@@ -30,6 +30,7 @@ Options:
   -x --halt       immediate system halt
   -h --help       Show this screen.
   -v --version    Show version.
+  -y --yes        Assume yes on all requests.
 """
 
 import json
@@ -298,8 +299,8 @@ def enqueue(qual_name, *args):
     print(job._id)
 
 
-def init(name):
-    core4.service.project.make_project(name)
+def init(name, description, yes=False):
+    core4.service.project.make_project(name, description, yes)
 
 
 def main():
@@ -320,7 +321,7 @@ def main():
     elif args["--enqueue"]:
         enqueue(args["QUAL_NAME"], *args["ARGS"])
     elif args["--init"]:
-        init(args["PROJECT"])
+        init(args["PROJECT"], args["DESCRIPTION"], args["--yes"])
     elif args["--alive"]:
         alive()
     elif args["--info"]:

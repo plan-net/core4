@@ -14,7 +14,7 @@ def input_loop(message, identifier=False):
                 print("this is not a valid package name\n")
 
 
-def make_project(package_name=None):
+def make_project(package_name=None, package_description=None, auto=False):
     """
     Interactive method used by :mod:`.coco` to create a new project.
     The project templates are located in directory ``/template``. A combination
@@ -25,7 +25,7 @@ def make_project(package_name=None):
     """
     kwargs = {
         "package_name": package_name,
-        "package_description": "",
+        "package_description": package_description,
         "package_version": "0.0.1"
     }
     if kwargs["package_name"] and not kwargs["package_name"].isidentifier():
@@ -38,13 +38,16 @@ def make_project(package_name=None):
         kwargs["package_name"] = input_loop("Name: ", identifier=True)
     else:
         print("Name:", kwargs["package_name"])
-    kwargs["package_description"] = input_loop("Description: ")
+    if kwargs["package_description"] is None:
+        kwargs["package_description"] = input_loop("Description: ")
+    else:
+        print("Description:", kwargs["package_description"])
     print()
-    while True:
+    while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
         if i.strip().lower() == "yes":
             break
-
+    sys.exit(1)
     # if os.path.exists(kwargs["package_name"]):
     #     print("\nproject exists")
     #     sys.exit(1)
