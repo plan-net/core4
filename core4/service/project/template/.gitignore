@@ -40,5 +40,6 @@ target/
 .idea/*
 
 # core4
-.venv/*
+.venv
 local.yaml
+.repos

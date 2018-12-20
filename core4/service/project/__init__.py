@@ -1,7 +1,13 @@
 import os
 import sys
+import sh
+import tempfile
 
+from venv import EnvBuilder
 from jinja2 import Template
+
+VENV = ".venv"
+REPOSITORY = ".repos"
 
 
 def input_loop(message, identifier=False):
@@ -33,7 +39,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         sys.exit(1)
     print()
     print("core4 project creation")
-    print("=====================")
+    print("======================")
     if kwargs["package_name"] is None:
         kwargs["package_name"] = input_loop("Name: ", identifier=True)
     else:
@@ -42,16 +48,66 @@ def make_project(package_name=None, package_description=None, auto=False):
         kwargs["package_description"] = input_loop("Description: ")
     else:
         print("Description:", kwargs["package_description"])
-    print()
+    root_path = os.path.abspath(".")
+    full_path = os.path.join(root_path, kwargs["package_name"])
+    if os.path.exists(full_path):
+        exist = "WARNING! The directory exists. Missing project files will " \
+                "be created. All\n    existing files will not be touched."
+    else:
+        exist = "The directory does not exists and will be created. All " \
+                "project files will\n    be created."
+    print("""
+    A project directory ./{project:s} will be created at
+        > {fullpath:s}
+    
+    {exist:s}
+
+    Inside this project directory, a Python virtual environment will be created 
+    if it does not exist, yet at
+        > {venv:s}/{project:s}
+    
+    Inside this project directory a bare git repository will be created if it
+    does not exist, yet at
+        > {repository:s}
+        
+    To share this git repository with other users you have to manually 
+    synchronise this bare repository with a git repository accessible by your
+    team. Once this has been done, you can remove the bare repository on this
+    computer and update your git connection accordingly in 
+        > .git/config
+    """.format(
+        root=root_path, project=kwargs["package_name"], venv=VENV,
+        repository=REPOSITORY, exist=exist, fullpath=full_path))
+
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
         if i.strip().lower() == "yes":
             break
-    sys.exit(1)
-    # if os.path.exists(kwargs["package_name"]):
-    #     print("\nproject exists")
-    #     sys.exit(1)
-    print()
+
+    print("\nbare git repository")
+    print("-------------------\n")
+    repos_path = os.path.join(full_path, REPOSITORY)
+
+    initial_commit = False
+    temp_repos_path = None
+    if not os.path.exists(repos_path):
+
+        temp_path = tempfile.mkdtemp()
+        temp_repos_path = os.path.join(temp_path, REPOSITORY)
+        print("    %s ... " %(temp_repos_path), end="")
+        sh.git(["init", "--shared", "--bare", temp_repos_path])
+        print("created")
+
+        print("    clone into %s ... " %(full_path), end="")
+        sh.git(["clone", "file://%s" % (temp_repos_path), full_path])
+        print("done")
+
+        initial_commit = True
+    else:
+        print("    clone %s ... skipped" %(repos_path))
+
+    print("\ncopy files")
+    print("----------\n")
     template = os.path.join(os.path.dirname(__file__), "template")
     for root, dirs, files in os.walk(template):
         targetpath = root[len(template):].replace(
@@ -66,7 +122,7 @@ def make_project(package_name=None, package_description=None, auto=False):
             targetfile = targetfile.replace("__py__", "py")
             fulltarget = os.path.join(targetpath, targetfile)
             fullsource = os.path.join(root, file)
-            print("%s " % (fulltarget), end="")
+            print("    %s ... " % (os.path.abspath(fulltarget)), end="")
             if os.path.exists(fulltarget):
                 print("skipped")
             else:
@@ -74,4 +130,37 @@ def make_project(package_name=None, package_description=None, auto=False):
                     body = fh.read()
                 Template(body).stream(**kwargs).dump(fulltarget)
                 print("created")
-    print("done.")
+
+    if initial_commit:
+
+        print("\ninitial commit")
+        print("--------------\n")
+
+        print("    intial commit ... ", end="")
+        git_dir = ["--git-dir", os.path.join(full_path, ".git"),
+                   "--work-tree", full_path]
+        sh.git(git_dir + ["add", "*"])
+        sh.git(git_dir + ["commit", ".", "-m", "initial commit"])
+        sh.git(git_dir + ["push"])
+        print("done")
+
+        print("    move %s to %s ... " %(temp_repos_path, full_path), end="")
+        sh.mv(temp_repos_path, full_path + "/")
+        print("done")
+
+        print("    move origin to %s  ... " %(repos_path), end="")
+        sh.git(git_dir + ["remote", "set-url", "origin",
+                          "file://" + repos_path])
+        print("done")
+
+    venv = os.path.join(full_path, VENV, kwargs["package_name"])
+    if not os.path.exists(venv):
+
+        print("\nPython virtual environment")
+        print("--------------------------\n")
+
+        print("    create at %s ... " %(venv), end="")
+
+        builder = EnvBuilder()
+        builder.create(venv)
+        print("done")

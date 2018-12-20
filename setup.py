@@ -73,7 +73,8 @@ setup(
         "passlib>=1.7",
         "python-magic>=0.4",
         "docutils>=0.14",
-        "Sphinx==1.8.2"
+        "Sphinx==1.8.2",
+        "sh==1.12.14"
     ],
     extras_require={
         "tests": [
