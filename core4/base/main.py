@@ -20,6 +20,7 @@ import core4.logger.filter
 import core4.util
 from core4.const import CORE4, PREFIX
 
+_except_hook = None
 
 def is_core4_project(body):
     return re.match(r'.*\_\_project\_\_\s*\=\s*[\"\']{1,3}'
@@ -205,6 +206,7 @@ class CoreBase:
                     self.__dict__[k] = self.config.base[k]
 
     def _open_logging(self):
+        global _except_hook
         # internal method to open and attach logging
         self.logger_name = self.qual_name(short=False)
         logger = logging.getLogger(self.logger_name)
@@ -218,8 +220,8 @@ class CoreBase:
         # pass object reference into logging and enable lazy property access
         #   and late binding
         self.logger = core4.logger.CoreLoggingAdapter(logger, self)
-        if CoreBase.sys_excepthook is None:
-            CoreBase.sys_excepthook = sys.excepthook
+        if _except_hook is None:
+            _except_hook = sys.excepthook
             sys.excepthook = self.excepthook
 
     def _log_progress(self, p, *args):
@@ -288,7 +290,7 @@ class CoreBase:
         logger with logging level ``CRITICAL``.
         """
         self.logger.critical("unhandled exception", exc_info=args)
-        self.sys_excepthook(*args)
+        _except_hook(*args)
 
     @classmethod
     def module(cls):
