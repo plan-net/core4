@@ -17,6 +17,8 @@ Usage:
   coco --kill [ID | QUAL_NAME]...
   coco (--pause | --resume) [PROJECT]
   coco --mode
+  coco --build
+  coco --release
   coco --version
 
 Options:
@@ -51,6 +53,8 @@ import core4.service.project
 import core4.util
 import core4.util.data
 import core4.util.node
+from core4.service.operation.build import build, release
+
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -338,6 +342,10 @@ def main():
         detail(*args["ID"])
     elif args["--mode"]:
         mode()
+    elif args["--build"]:
+        build()
+    elif args["--release"]:
+        release()
     else:
         raise SystemExit("nothing to do.")
 
