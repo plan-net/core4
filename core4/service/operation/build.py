@@ -7,6 +7,14 @@ import textwrap
 
 from core4.base.main import CoreBase
 
+# 1 .. no project
+# 2 .. release problem (already exists or not found)
+# 3 .. wrong branch (master or develop)
+# 4 .. no clean working tree
+# 5 .. no changes
+# 6 .. version continuity problem
+# 7 .. not merged
+
 NO_PROJECT = "WARNING!\nThis is not a core4 project."
 
 PENDING_RELEASE = "WARNING!\nPending {release:s} found. You cannot " \
@@ -77,7 +85,7 @@ class CoreBuilder(CoreBase):
 
     def pending_release(self):
         for line in sh.git(["branch", "-a", "--no-color"]).split("\n"):
-            match = re.match(r"(release-\d+\.\d+\.\d+)", line.strip())
+            match = re.match(r".+\s+(release-\d+\.\d+\.\d+)", line)
             if match:
                 return match.groups()[0]
         return None
@@ -175,7 +183,7 @@ class CoreBuilder(CoreBase):
         sh.git(["push", "origin", "--delete", release])
 
 
-def build():
+def build(*args):
     project = os.path.basename(os.path.abspath(os.curdir))
     b = CoreBuilder(project)
 
@@ -184,43 +192,46 @@ def build():
 
     b.step("verify core4 project")
     if not b.is_project():
-        b.exit(NO_PROJECT)
+        b.exit(NO_PROJECT, 1)
     b.ok()
 
     b.step("no pending release")
     pending_release = b.pending_release()
     if pending_release is not None:
-        b.exit(PENDING_RELEASE.format(release=pending_release))
+        b.exit(PENDING_RELEASE.format(release=pending_release), 2)
     b.ok()
 
     b.step("this is branch [develop]")
     branch = b.current_branch()
     if branch != "develop":
-        b.exit(NOT_DEVELOP.format(branch=branch))
+        b.exit(NOT_DEVELOP.format(branch=branch), 3)
     b.ok()
 
     b.step("working tree is clean")
     if not b.is_clean():
-        b.exit(NOT_CLEAN.format())
+        b.exit(NOT_CLEAN.format(), 4)
     b.ok()
 
     b.step("commits exist")
     if not b.has_commits("master", "develop"):
-        b.exit(NO_BUILD_COMMITS.format())
+        b.exit(NO_BUILD_COMMITS.format(), 5)
     b.ok()
 
     print()
     b.headline("define next release version")
     print("current local release: [%d.%d.%d]\n" % (b.major, b.minor, b.build))
     # todo: could be that local latest is different to remote latest
-    major = b.get_number("major", b.major)
-    minor = b.get_number("minor", b.minor)
-    num = b.get_number("build", b.build + 1)
+    if args:
+        (major, minor, num, *_) = args
+    else:
+        major = b.get_number("major", b.major)
+        minor = b.get_number("minor", b.minor)
+        num = b.get_number("build", b.build + 1)
 
     print()
     if (major, minor, num) <= (b.major, b.minor, b.build):
         b.exit("WARNING!\nCurrent release is higher/equal to next release "
-               "[%d.%d.%d]. Please update the next release version.")
+               "[%d.%d.%d]. Please update the next release version.", 6)
 
     print("next release: [%d.%d.%d]\n" % (major, minor, num))
 
@@ -252,24 +263,24 @@ def release():
 
     b.step("verify core4 project")
     if not b.is_project():
-        b.exit(NO_PROJECT)
+        b.exit(NO_PROJECT, 1)
     b.ok()
 
     b.step("pending release")
     pending_release = b.pending_release()
     if pending_release is None:
-        b.exit(NO_PENDING_RELEASE)
+        b.exit(NO_PENDING_RELEASE, 2)
     b.ok()
 
     b.step("this is branch [master]")
     branch = b.current_branch()
     if branch != "master":
-        b.exit(NOT_MASTER.format(branch=branch))
+        b.exit(NOT_MASTER.format(branch=branch), 3)
     b.ok()
 
     b.step("working tree is clean")
     if not b.is_clean():
-        b.exit(NOT_CLEAN.format())
+        b.exit(NOT_CLEAN.format(), 4)
     b.ok()
 
     # b.step("commits exist")
@@ -283,7 +294,7 @@ def release():
         next_major, next_minor, next_build
     ))
     if not b.is_merged(pending_release):
-        b.exit(NOT_MERGED.format(release=pending_release, branch="master"))
+        b.exit(NOT_MERGED.format(release=pending_release, branch="master"), 7)
     b.ok()
 
     b.step("release [{:s}.{:s}.{:s}] has been merged into [develop]".format(
@@ -291,7 +302,7 @@ def release():
     ))
     b.checkout("develop")
     if not b.is_merged(pending_release):
-        b.exit(NOT_MERGED.format(release=pending_release, branch="develop"))
+        b.exit(NOT_MERGED.format(release=pending_release, branch="develop"), 7)
     b.checkout("master")
     b.ok()
 
