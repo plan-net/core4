@@ -103,6 +103,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         temp_path = tempfile.mkdtemp()
         temp_repos_path = os.path.join(temp_path, REPOSITORY)
         print("    %s ... " %(temp_repos_path), end="")
+        os.makedirs(temp_repos_path)
         sh.git(["init", "--shared", "--bare", temp_repos_path])
         print("created")
 
