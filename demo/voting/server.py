@@ -21,12 +21,12 @@ class BaseHandler(CoreRequestHandler):
 
     async def prepare_protection(self):
         token = self.get_argument("token", as_type=str)
-        if token != self.config.example.auth_token:
+        if token != self.config.demo.auth_token:
             self.write_error(401)
 
     def collection(self, name):
         if name not in self.__dict__:
-            coll = self.config.example.collection[name]
+            coll = self.config.demo.collection[name]
             self.__dict__[name] = coll.connect_async()
         return self.__dict__[name]
 
