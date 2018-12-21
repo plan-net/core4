@@ -749,7 +749,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
 
         Raises 401 error if authentication and authorization fails.
         """
-        await super().prepare()
         if self.request.body:
             try:
                 body_arguments = json_decode(self.request.body.decode("UTF-8"))
@@ -758,6 +757,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             else:
                 for k, v in body_arguments.items():
                     self.request.arguments.setdefault(k, []).append(v)
+        await super().prepare()
 
     def decode_argument(self, value, name=None):
         """

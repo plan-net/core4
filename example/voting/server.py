@@ -10,7 +10,7 @@ from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.tool import serve
 from core4.util.data import json_encode
-from core4.api.v1.tool import CoreStaticFileHandler
+from core4.api.v1.request.static import CoreStaticFileHandler
 
 
 # see API definition at
@@ -21,6 +21,7 @@ class BaseHandler(CoreRequestHandler):
 
     async def prepare_protection(self):
         token = self.get_argument("token", as_type=str)
+        print('token', token)
         if token != self.config.example.auth_token:
             self.write_error(401)
 
@@ -336,11 +337,10 @@ class ResetHandler(BaseHandler):
             {"session_id": self.parse_objectid(session_id)})
         self.reply({"removed": ret.deleted_count})
 
-class VotingAppHandler(CoreRequestHandler):
-    author = "agr"
-
-    def get(self):
-	    self.render("webapps/voting/dist/index.html", core_api="./")
+#class VotingAppHandler(CoreRequestHandler):
+#   author = "agr"
+#  def get(self):
+#	    self.render("webapps/voting/dist/index.html")
 
 class VotingApp(CoreApiContainer):
     root = "/voting/v1"
@@ -354,8 +354,8 @@ class VotingApp(CoreApiContainer):
         ("/csv", CSVHandler),
         ("/result", ResultHandler),
         ("/reset/(.+)", ResetHandler),
-        ("/voting", VotingAppHandler),
-        ("/voting/dist/(.*)", CoreStaticFileHandler, {"path": "./webapps/voting/dist"})
+        #("/html", VotingAppHandler),
+        ("/html/", CoreStaticFileHandler, {"path": "./webapps/voting/dist", "protected": False})
     ]
 
 
