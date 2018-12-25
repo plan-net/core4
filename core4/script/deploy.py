@@ -62,5 +62,6 @@ else:
     print("installing [{}] from [{}]".format(project, remote))
     with open(upgrade_script, "w", encoding="utf-8") as fh:
         fh.write("git+" + remote + "\n")
-        fh.write(CORE4_REMOTE + "\n")
+        if project != "core4":
+            fh.write(CORE4_REMOTE + "\n")
     pipmain(["install", "--requirement", upgrade_script])
