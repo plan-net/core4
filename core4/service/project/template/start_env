@@ -1,3 +1,13 @@
 source {{ full_path }}/{{ venv }}/{{ package_name }}/bin/activate
-export PYTHONPATH=$PYTHONPATH:{{ core4_home }}
-export PATH=$PATH:{{ python_path }}
+_OLD_PYTHONPATH=$PYTHONPATH
+stop_env () {
+    # reset old environment variables
+    if [ -n "$_OLD_PYTHONPATH" ] ; then
+        PYTHONPATH="$_OLD_PYTHONPATH"
+        export PYTHONPATH
+        unset _OLD_PYTHONPATH
+    fi
+    deactivate
+}
+PYTHONPATH=$PYTHONPATH:{{ core4_home }}
+PATH=$PATH:{{ python_path }}
