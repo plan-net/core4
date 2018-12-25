@@ -4,18 +4,35 @@ core4
 
 prerequisites 
 -------------
-core4 depends on the following prerequisites.
 
+core4 depends on the following prerequisites.
 
 * Python 3.5
 * MongoDB database instance version 3.6.4 or higher up-and-running, 
   download from https://www.mongodb.com/download-center#community
-* Pipenv - Python development workflows for humans. See 
-  https://github.com/pypa/pipenv
+* pip
+* git
 
 
 installation
 ------------
+
+Open up a shell and execute the following shell commands::
+
+    # create core4 home directory 
+    mkdir ~/core4
+    cd ~/core4
+
+    # install Python 3 virtual environment
+    python3 -m venv core4
+
+    # enter virtual environment
+    source core4/bin/activate
+
+    # install core4
+    pip install git+ssh://git.bi.plan-net.com/srv/git/core4.git
+
+
 
 .. todo:: document how to install and how to create core4 projects    
 
