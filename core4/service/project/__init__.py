@@ -53,6 +53,8 @@ def make_project(package_name=None, package_description=None, auto=False):
     full_path = os.path.join(root_path, kwargs["package_name"])
     core4_home = os.path.abspath(
         os.path.join(core4.base.main.CoreBase.project_path(), '..'))
+    kwargs["full_path"] = full_path
+    kwargs["core4_home"] = core4_home
     if os.path.exists(full_path):
         exist = "WARNING! The directory exists. Missing project files will " \
                 "be created. All\n    existing files will not be touched."
