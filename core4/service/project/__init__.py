@@ -56,6 +56,8 @@ def make_project(package_name=None, package_description=None, auto=False):
     python_path = os.path.abspath(os.path.dirname(sys.executable))
     kwargs["python_path"] = python_path
     kwargs["core4_home"] = core4_home
+    kwargs["full_path"] = full_path
+    kwargs["venv"] = VENV
     if os.path.exists(full_path):
         exist = "WARNING! The directory exists. Missing project files will " \
                 "be created. All\n    existing files will not be touched."
@@ -63,14 +65,14 @@ def make_project(package_name=None, package_description=None, auto=False):
         exist = "The directory does not exists and will be created. All " \
                 "project files will\n    be created."
     print("""
-    A project directory ./{project:s} will be created at
-        > {fullpath:s}
+    A project directory ./{package_name:s} will be created at
+        > {full_path:s}
     
     {exist:s}
 
     Inside this project directory, a Python virtual environment will be created 
     if it does not exist, yet at
-        > {venv:s}/{project:s}
+        > {venv:s}/{package_name:s}
     
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
@@ -87,7 +89,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         > .git/config
         
     To start working on your project, enter the Python virtual environment with
-        $ cd ./{project:s}
+        $ cd ./{package_name:s}
         $ . start_env
         
     This will add core4 package via the $PYTHONPATH variable and core4 scripts
@@ -96,8 +98,8 @@ def make_project(package_name=None, package_description=None, auto=False):
         > PYTHONPATH=$PYTHONPATH:{core4_home:s}
         > PATH=$PATH:{python_path:s}
     """.format(
-        root=root_path, project=kwargs["package_name"], venv=VENV,
-        repository=REPOSITORY, exist=exist, fullpath=full_path,
+        root=root_path, package_name=kwargs["package_name"], venv=VENV,
+        repository=REPOSITORY, exist=exist, full_path=full_path,
         core4_home=core4_home, python_path=python_path))
 
     while not auto and True:

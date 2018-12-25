@@ -1,3 +1,3 @@
-source {{ full_path }}/{{ venv }}/{{ project_name }}/bin/activate
+source {{ full_path }}/{{ venv }}/{{ package_name }}/bin/activate
 export PYTHONPATH=$PYTHONPATH:{{ core4_home }}
 export PATH=$PATH:{{ python_path }}
