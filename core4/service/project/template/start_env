@@ -1,1 +1,3 @@
 source .venv/{{ package_name }}/bin/activate
+export PYTHONPATH=/home/mra/PycharmProjects/core4
+export PATH=$PATH:/home/mra/PycharmProjects/core4/.venv/core4/bin

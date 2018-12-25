@@ -1,16 +1,28 @@
-# -*- coding: utf-8 -*-
+import os
 
 import setuptools
 from setuptools import find_packages
 
 import {{ package_name }}
 
+
+def read_install_requires():
+    source = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                          "install_requires.txt"))
+    if os.path.exists(source):
+        with open(source, "r", encoding="utf-8") as fh:
+            return [pkg.strip() for pkg in fh.readlines()]
+    return []
+
+
 setuptools.setup(
     name="{{ package_name }}",
     version={{ package_name }}.__version__,
-    description="{{ package_description }}",
+    description="{{ package_name }}.description",
     packages = find_packages(exclude=['docs', 'tests*']),
-    install_requires=[],
+    install_requires=read_install_requires() + [
+        # put your package requirements here or into install_requires.txt
+    ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Programming Language :: Python',

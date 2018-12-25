@@ -2,6 +2,7 @@ import os
 import sys
 import sh
 import tempfile
+import core4.base.main
 
 from venv import EnvBuilder
 from jinja2 import Template
@@ -32,7 +33,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     kwargs = {
         "package_name": package_name,
         "package_description": package_description,
-        "package_version": "0.0.1"
+        "package_version": "0.0.1",
     }
     if kwargs["package_name"] and not kwargs["package_name"].isidentifier():
         print("this is not a valid package name")
@@ -50,6 +51,8 @@ def make_project(package_name=None, package_description=None, auto=False):
         print("Description:", kwargs["package_description"])
     root_path = os.path.abspath(".")
     full_path = os.path.join(root_path, kwargs["package_name"])
+    core4_home = os.path.abspath(
+        os.path.join(core4.base.main.CoreBase.project_path(), '..'))
     if os.path.exists(full_path):
         exist = "WARNING! The directory exists. Missing project files will " \
                 "be created. All\n    existing files will not be touched."
@@ -83,9 +86,16 @@ def make_project(package_name=None, package_description=None, auto=False):
     To start working on your project, enter the Python virtual environment with
         $ cd ./{project:s}
         $ . start_env
+        
+    This will add core4 package via the $PYTHONPATH variable and core4 scripts
+    via the $PATH variable:
+    
+        > PYTHONPATH=$PYTHONPATH:{core4_home:s}
+        > PATH=$PATH:{core4_home:s}/{venv:s}/core4/bin
     """.format(
         root=root_path, project=kwargs["package_name"], venv=VENV,
-        repository=REPOSITORY, exist=exist, fullpath=full_path))
+        repository=REPOSITORY, exist=exist, fullpath=full_path,
+        core4_home=core4_home))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
@@ -179,6 +189,7 @@ def make_project(package_name=None, package_description=None, auto=False):
 
         print("    create at %s ... " %(venv), end="")
 
-        builder = EnvBuilder()
+        builder = EnvBuilder(system_site_packages=False, clear=False,
+                             symlinks=False, upgrade=False, with_pip=True)
         builder.create(venv)
         print("done")
