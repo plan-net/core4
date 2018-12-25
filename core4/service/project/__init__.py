@@ -98,7 +98,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     """.format(
         root=root_path, project=kwargs["package_name"], venv=VENV,
         repository=REPOSITORY, exist=exist, fullpath=full_path,
-        core4_home=core4_home))
+        core4_home=core4_home, python_path=python_path))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
