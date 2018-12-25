@@ -1,5 +1,5 @@
 """
-coco - core control utililty.
+coco - core4 control utililty.
 
 Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
