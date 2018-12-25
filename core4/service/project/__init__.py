@@ -94,7 +94,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     via the $PATH variable:
     
         > PYTHONPATH=$PYTHONPATH:{core4_home:s}
-        > PATH=$PATH:{{ python_path }}/bin
+        > PATH=$PATH:{ python_path }/bin
     """.format(
         root=root_path, project=kwargs["package_name"], venv=VENV,
         repository=REPOSITORY, exist=exist, fullpath=full_path,
