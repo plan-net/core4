@@ -133,6 +133,8 @@ def make_project(package_name=None, package_description=None, auto=False):
             "__name__", kwargs["package_name"])
         if targetpath.startswith("/"):
             targetpath = targetpath[1:]
+        if targetpath.endswith("__pycache__"):
+            continue
         targetpath = os.path.join(kwargs["package_name"], targetpath)
         if not os.path.exists(targetpath):
             os.mkdir(targetpath)
