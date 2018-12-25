@@ -30,7 +30,7 @@ Open up a shell and execute the following shell commands::
     source core4/bin/activate
 
     # install core4
-    pip install git+ssh://git.bi.plan-net.com/srv/git/core4.git
+    pip install git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.ops
 
 
 
