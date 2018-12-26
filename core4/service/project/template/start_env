@@ -1,7 +1,7 @@
 source {{ full_path }}/{{ venv }}/{{ package_name }}/bin/activate
 _OLD_PYTHONPATH=$PYTHONPATH
 stop_env () {
-    expott PYTHONPATH="$_OLD_PYTHONPATH"
+    export PYTHONPATH="$_OLD_PYTHONPATH"
     unset _OLD_PYTHONPATH
     deactivate
 }
