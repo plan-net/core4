@@ -3,6 +3,7 @@ _OLD_PYTHONPATH=$PYTHONPATH
 stop_env () {
     export PYTHONPATH="$_OLD_PYTHONPATH"
     unset _OLD_PYTHONPATH
+    unset -f stop_env
     deactivate
 }
 PYTHONPATH={{ core4_home }}:$PYTHONPATH
