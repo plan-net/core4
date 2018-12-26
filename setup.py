@@ -43,7 +43,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/m-rau/core4",
-    packages=find_packages(exclude=['docs', 'tests*', 'project']),
+    packages=find_packages(exclude=['docs', 'tests*', 'project', 'demo',
+                                    'example', 'other']),
     package_data={
         '':
             ["core4.yaml"]
