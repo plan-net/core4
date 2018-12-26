@@ -90,7 +90,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         
     To start working on your project, enter the Python virtual environment with
         $ cd ./{package_name:s}
-        $ . start_env
+        $ . enter_env
         
     This will add core4 package via the $PYTHONPATH variable and core4 scripts
     via the $PATH variable:

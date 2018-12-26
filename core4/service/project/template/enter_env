@@ -1,9 +1,9 @@
 source {{ full_path }}/{{ venv }}/{{ package_name }}/bin/activate
 _OLD_PYTHONPATH=$PYTHONPATH
-stop_env () {
+exit_env () {
     export PYTHONPATH="$_OLD_PYTHONPATH"
     unset _OLD_PYTHONPATH
-    unset -f stop_env
+    unset -f exit_env
     deactivate
 }
 PYTHONPATH={{ core4_home }}:$PYTHONPATH

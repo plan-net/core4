@@ -24,7 +24,7 @@ folder structure::
      |- tests                ... unit tests
      |- README.md            ... long description
      |- setup.py             ... setup file
-     |- start_env            ... shell script to enter the project environment
+     |- enter_env            ... shell script to enter the project environment
      '- project1             ... project root
         |- __init__.py       ... main Python file carrying project meta data
         '- project1.yaml     ... configuraiton file
