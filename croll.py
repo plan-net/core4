@@ -1,16 +1,4 @@
-"""
-cadmin - core4 administration and rollout utililty.
-
-Usage:
-  cadmin --deploy PROJECT REPOSITORY
-
-Options:
-  -d --deploy     deploy project
-  -h --help       Show this screen.
-"""
-
 CORE4_REMOTE = "git+ssh://git.bi.plan-net.com/srv/git/core4.git@master"
-
 
 import sys
 
@@ -43,7 +31,7 @@ try:
     project = sys.argv[1]
     remote = sys.argv[2]
 except:
-    raise AttributeError("usage: deploy.py PROJECT REPOSITORY")
+    raise AttributeError("usage: python3 croll.py PROJECT REPOSITORY")
 
 python_executable = os.path.abspath(os.path.join(project, "bin", "python"))
 upgrade_script = os.path.abspath(
