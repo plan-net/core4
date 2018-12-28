@@ -3,7 +3,7 @@ import sys
 import sh
 import tempfile
 import core4.base.main
-
+import subprocess
 from venv import EnvBuilder
 from jinja2 import Template
 
@@ -19,6 +19,11 @@ def input_loop(message, identifier=False):
                 return i
             elif identifier:
                 print("this is not a valid package name\n")
+
+
+def printout(*args):
+    print(*args, end="")
+    sys.stdout.flush()
 
 
 def make_project(package_name=None, package_description=None, auto=False):
@@ -51,11 +56,6 @@ def make_project(package_name=None, package_description=None, auto=False):
         print("Description:", kwargs["package_description"])
     root_path = os.path.abspath(".")
     full_path = os.path.join(root_path, kwargs["package_name"])
-    core4_home = os.path.abspath(
-        os.path.join(core4.base.main.CoreBase.project_path(), '..'))
-    python_path = os.path.abspath(os.path.dirname(sys.executable))
-    kwargs["python_path"] = python_path
-    kwargs["core4_home"] = core4_home
     kwargs["full_path"] = full_path
     kwargs["venv"] = VENV
     if os.path.exists(full_path):
@@ -72,7 +72,7 @@ def make_project(package_name=None, package_description=None, auto=False):
 
     Inside this project directory, a Python virtual environment will be created 
     if it does not exist, yet at
-        > {venv:s}/{package_name:s}
+        > {venv:s}
     
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
@@ -91,16 +91,12 @@ def make_project(package_name=None, package_description=None, auto=False):
     To start working on your project, enter the Python virtual environment with
         $ cd ./{package_name:s}
         $ . enter_env
-        
-    This will add core4 package via the $PYTHONPATH variable and core4 scripts
-    via the $PATH variable:
-    
-        > PYTHONPATH=$PYTHONPATH:{core4_home:s}
-        > PATH=$PATH:{python_path:s}
+
+    To exit the Python virtual environment type
+        $ exit_env        
     """.format(
         root=root_path, package_name=kwargs["package_name"], venv=VENV,
-        repository=REPOSITORY, exist=exist, full_path=full_path,
-        core4_home=core4_home, python_path=python_path))
+        repository=REPOSITORY, exist=exist, full_path=full_path))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
@@ -117,12 +113,12 @@ def make_project(package_name=None, package_description=None, auto=False):
 
         temp_path = tempfile.mkdtemp()
         temp_repos_path = os.path.join(temp_path, REPOSITORY)
-        print("    %s ... " %(temp_repos_path), end="")
+        printout("    %s ... " %(temp_repos_path))
         os.makedirs(temp_repos_path)
         sh.git(["init", "--shared", "--bare", temp_repos_path])
         print("created")
 
-        print("    clone into %s ... " %(full_path), end="")
+        printout("    clone into %s ... " %(full_path))
         sh.git(["clone", "file://%s" % (temp_repos_path), full_path])
         print("done")
 
@@ -148,7 +144,7 @@ def make_project(package_name=None, package_description=None, auto=False):
             targetfile = targetfile.replace("__py__", "py")
             fulltarget = os.path.join(targetpath, targetfile)
             fullsource = os.path.join(root, file)
-            print("    %s ... " % (os.path.abspath(fulltarget)), end="")
+            printout("    %s ... " % (os.path.abspath(fulltarget)))
             if os.path.exists(fulltarget):
                 print("skipped")
             else:
@@ -165,13 +161,13 @@ def make_project(package_name=None, package_description=None, auto=False):
         git_dir = ["--git-dir", os.path.join(full_path, ".git"),
                    "--work-tree", full_path]
 
-        print("    intial commit ... ", end="")
+        printout("    intial commit ... ")
         sh.git(git_dir + ["add", "*"])
         sh.git(git_dir + ["commit", ".", "-m", "initial commit"])
         sh.git(git_dir + ["push"])
         print("done")
 
-        print("    create branch develop ... ", end="")
+        printout("    create branch develop ... ")
         sh.git(git_dir + ["checkout", "-b", "develop"])
         sh.git(git_dir + ["push", "origin", "develop"])
         sh.git(git_dir + ["branch", "--set-upstream-to", "origin/develop",
@@ -179,24 +175,36 @@ def make_project(package_name=None, package_description=None, auto=False):
         sh.git(git_dir + ["checkout", "master"])
         print("done")
 
-        print("    move %s to %s ... " %(temp_repos_path, full_path), end="")
+        printout("    move %s to %s ... " %(temp_repos_path, full_path))
         sh.mv(temp_repos_path, full_path + "/")
         print("done")
 
-        print("    move origin to %s  ... " %(repos_path), end="")
+        printout("    move origin to %s  ... " %(repos_path))
         sh.git(git_dir + ["remote", "set-url", "origin",
                           "file://" + repos_path])
         print("done")
 
-    venv = os.path.join(full_path, VENV, kwargs["package_name"])
+    venv = os.path.join(full_path, VENV)
     if not os.path.exists(venv):
 
         print("\nPython virtual environment")
         print("--------------------------\n")
 
-        print("    create at %s ... " %(venv), end="")
-
+        printout("    create at %s ... " %(venv))
         builder = EnvBuilder(system_site_packages=False, clear=False,
                              symlinks=False, upgrade=False, with_pip=True)
         builder.create(venv)
+        print("done")
+
+        printout("    install project ... ")
+        pip_cmd = os.path.join(venv, "bin", "pip")
+        proc = subprocess.Popen([pip_cmd, "install", "-e", full_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc.wait()
+        print("done")
+
+        base = core4.base.main.CoreBase()
+        core4_repository = base.config.core4_origin
+        printout("    install core4 ... ")
+        proc = subprocess.Popen([pip_cmd, "install", core4_repository], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc.wait()
         print("done")
