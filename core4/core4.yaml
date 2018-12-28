@@ -29,6 +29,7 @@ folder:
   process: proc
   archive: arch
   temp: temp
+  home: /home/mra/PycharmProjects
 
 # logging setup
 logging:
@@ -111,3 +112,5 @@ api:
     - api://core4.api.v1.request.standard.*
 
   verify_ssl: True
+
+core4_origin: git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.ops
