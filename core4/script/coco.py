@@ -36,7 +36,9 @@ Options:
 """
 
 import json
+import os
 import re
+import subprocess
 from pprint import pprint
 
 from bson.objectid import ObjectId
@@ -55,6 +57,13 @@ import core4.util.data
 import core4.util.node
 from core4.service.operation.build import build, release
 
+VENV_PYTHON = ".venv/bin/python"
+ENQUEUE_COMMAND = """
+from core4.queue.main import CoreQueue
+queue = CoreQueue()
+job = queue.enqueue("{qual_name:s}")
+print(job._id)
+"""
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -299,8 +308,23 @@ def enqueue(qual_name, *args):
                 raise json.JSONDecodeError("failed to parse %s" % (s), s, 0)
     else:
         data = {}
-    job = QUEUE.enqueue(name=qual_name[0], **data)
-    print(job._id)
+    try:
+        job_id = QUEUE.enqueue(name=qual_name[0], **data)._id
+    except ImportError:
+        project = qual_name[0].split(".")[0]
+        home = QUEUE.config.folder.home
+        python_path = os.path.join(home, project, VENV_PYTHON)
+        command = ENQUEUE_COMMAND.format(qual_name=qual_name[0])
+        proc = subprocess.Popen(
+            [python_path, "-c", command], stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        (stdout, stderr) = proc.communicate()
+        if stderr:
+            raise ImportError(stderr.decode("utf-8").strip())
+        job_id = stdout.decode("utf-8").strip()
+    except:
+        raise
+    print(job_id)
 
 
 def init(name, description, yes=False):
