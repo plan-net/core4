@@ -5,6 +5,7 @@ example by :mod:`core4.queue.worker` and :mod:`core4.queue.process`.
 
 import importlib
 import sys
+import os
 import traceback
 
 import pymongo.errors
@@ -58,6 +59,34 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
     .. todo:: link to queue API once it is there
     """
 
+    def _xxx_enqueue(self, cls=None, name=None, by=None, **kwargs):
+        if cls is None:
+            path = sys.executable.split("/")
+            while True:
+                if len(path) == 0:
+                    break
+                if path[-1] == ".venv":
+                    break
+                path.pop(-1)
+            if path:
+                env = path[-2]
+            else:
+                raise RuntimeError()
+            project = name.split(".")[0]
+            print(env, project)
+            if env != project:
+                root = os.path.join(self.config.folder.home, project, ".venv", project, "bin", "python")
+                import subprocess
+                cmd = 'from core4.queue.helper.functool import enqueue; enqueue(job="%s")' %(name)
+                print(root)
+                print(cmd)
+                osenv = {"PYTHONPATH": "/home/mra/PycharmProjects/core4/.venv/core4/lib/python3.5/site-packages/"}
+                proc = subprocess.Popen([root, "-c", cmd], env=osenv)
+                proc.wait()
+                return
+            print(sys.executable)
+        self._enqueue(cls, name, by, **kwargs)
+
     def enqueue(self, cls=None, name=None, by=None, **kwargs):
         """
         Enqueues the passed job identified by it's :meth:`.qual_name`. The job
@@ -86,10 +115,12 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         doc = job.serialise()
         try:
             ret = self.config.sys.queue.insert_one(doc)
-        except pymongo.errors.DuplicateKeyError as exc:
+        except pymongo.errors.DuplicateKeyError:
             raise core4.error.CoreJobExists(
                 "job [{}] exists with args {}".format(
                     job.qual_name(), job.args))
+        except:
+            raise
         self.make_stat()
         job.__dict__["_id"] = ret.inserted_id
         job.__dict__["identifier"] = ret.inserted_id
