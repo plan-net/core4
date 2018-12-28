@@ -1,1 +1,18 @@
-source .venv/core4/bin/activate
+if [[ $0 != $BASH_SOURCE ]]; then
+  SCRIPT=`realpath $BASH_SOURCE`
+  cd `dirname $SCRIPT`
+  VIRTUAL_ENV_DISABLE_PROMPT=1
+  _OLD_CORE4_PS1="$PS1"
+  source ./.venv/bin/activate
+  export CORE4_PROJECT=$(basename $(pwd))
+  PS1="($CORE4_PROJECT) $PS1"
+  exit_env () {
+    PS1="$_OLD_CORE4_PS1"
+    unset _OLD_CORE4_PS1
+    unset -f exit_env
+    unset CORE4_PROJECT
+    deactivate
+  }
+else
+  echo "script must be sourced with . enter_env"
+fi
