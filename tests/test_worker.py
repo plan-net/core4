@@ -184,7 +184,7 @@ def test_setup():
     worker.start()
 
 
-@pytest.mark.timeout(30)
+#@pytest.mark.timeout(30)
 def test_maintenance():
     queue = core4.queue.main.CoreQueue()
     queue.enter_maintenance()
@@ -301,7 +301,8 @@ def test_start_job():
     assert job.identifier == job._id
     assert job._id is not None
     assert job.wall_time is None
-    worker.start_job(job)
+    worker.at = core4.util.node.now()
+    worker.start_job(job.serialise())
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.5)
     assert queue.config.sys.queue.count_documents({}) == 0
@@ -543,7 +544,7 @@ def test_remove_error(queue, worker):
 
 @pytest.mark.timeout(30)
 def test_nonstop(queue, worker):
-    job = queue.enqueue(core4.queue.helper.job.DummyJob, sleep=3, wall_time=1)
+    job = queue.enqueue(core4.queue.helper.job.DummyJob, sleep=5, wall_time=1)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.1)
@@ -735,7 +736,7 @@ class RestartErrorTest(core4.queue.job.CoreJob):
         raise RuntimeError("expected failure")
 
 
-# @pytest.mark.timeout(30)
+@pytest.mark.timeout(30)
 def test_restart_error(queue, worker):
     job = queue.enqueue(RestartErrorTest)
     worker.start(1)
@@ -901,12 +902,12 @@ def test_no_resources(queue):
     worker2 = WorkerNoCPU(name="testRes_2")
     worker3 = WorkerNoRAM(name="testRes_3")
     worker4 = WorkerNoRAM(name="testRes_4")
-    worker1.work_jobs()
-    worker2.work_jobs()
-    worker3.work_jobs()
-    worker4.work_jobs()
+    for worker in (worker1, worker2, worker3, worker4):
+        worker.at = core4.util.node.now()
+        worker.work_jobs()
     assert queue.config.sys.queue.count_documents({"state": "pending"}) == 1
     worker5 = WorkerHasRes(name="testRes")
+    worker5.at = core4.util.node.now()
     worker5.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
@@ -935,6 +936,7 @@ class WorkerNoRAM(core4.queue.worker.CoreWorker):
 def test_no_resources_force(queue):
     job = queue.enqueue(core4.queue.helper.job.DummyJob, force=True)
     worker = WorkerNoCPU(name="testRes_1")
+    worker.at = core4.util.node.now()
     worker.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
@@ -943,6 +945,7 @@ def test_no_resources_force(queue):
     job2 = queue.enqueue(core4.queue.helper.job.DummyJob, force=True,
                          node="testRes2")
     worker2 = WorkerNoRAM(name="testRes2")
+    worker2.at = core4.util.node.now()
     worker2.work_jobs()
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
@@ -954,7 +957,8 @@ def test_no_resources_force(queue):
 def test_worker_has_resources(queue):
     job = queue.enqueue(core4.queue.helper.job.DummyJob)
     worker = WorkerNoCPU(name="testRes")
-    worker.start_job(job)
+    worker.at = core4.util.node.now()
+    worker.start_job(job.serialise())
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
     data = list(queue.config.sys.log.find())
@@ -967,3 +971,28 @@ class WorkerHasRes(core4.queue.worker.CoreWorker):
 
     def avg_stats(self):
         return (70, 1024)
+
+
+@pytest.mark.timeout(30)
+def test_project_process(queue):
+    queue.enqueue(core4.queue.helper.job.DummyJob)
+    worker = core4.queue.worker.CoreWorker()
+    worker.at = core4.util.node.now()
+    worker.work_jobs()
+    while queue.config.sys.queue.count_documents({}) > 0:
+        print("waiting")
+        time.sleep(1)
+
+
+
+# OK: job with syntax error
+# OK: job with exception
+# OK: unknown job
+# OK: no home set
+# OK: remove
+# OK: restart
+# OK: kill
+# OK: detail
+# make stats
+# chist
+
