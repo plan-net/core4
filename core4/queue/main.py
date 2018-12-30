@@ -337,7 +337,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        # todo: stats
         self.make_stat('restart_waiting', _id)
         return ret.modified_count == 1
 

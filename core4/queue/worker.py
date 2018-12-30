@@ -171,8 +171,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             raise RuntimeError(
                 "failed to update job [{}] state [starting]".format(
                     doc["_id"]))
-        # todo: check when make_stat is necessary
-        self.queue.make_stat('start_job', str(doc["_id"]))
+        self.queue.make_stat('request_start_job', str(doc["_id"]))
         self.logger.info("launching [%s] with _id [%s]", doc["name"],
                          doc["_id"])
         self.queue.exec_project(doc["name"], EXECUTE_COMMAND,
