@@ -36,14 +36,12 @@ Options:
 """
 
 import json
-import os
 import re
-import subprocess
 from pprint import pprint
 
 from bson.objectid import ObjectId
 from docopt import docopt
-
+import datetime
 import core4
 import core4.api.v1.tool
 import core4.logger.mixin
@@ -57,11 +55,10 @@ import core4.util.data
 import core4.util.node
 from core4.service.operation.build import build, release
 
-VENV_PYTHON = ".venv/bin/python"
 ENQUEUE_COMMAND = """
 from core4.queue.main import CoreQueue
 queue = CoreQueue()
-job = queue.enqueue("{qual_name:s}")
+job = queue.enqueue("{qual_name:s}", {args:s})
 print(job._id)
 """
 
@@ -180,6 +177,12 @@ def listing(*state):
             job["attempts_left"] -= 1
         flag = "".join([k[0].upper() if job[k] else "." for k in
                         ["zombie_at", "wall_at", "removed_at", "killed_at"]])
+        if job["state"] == "running":
+            addon = core4.util.node.mongo_now() - job["started_at"]
+            runtime = addon.total_seconds()
+        else:
+            runtime = job["runtime"] or 0
+        runtime = datetime.timedelta(seconds=runtime)
         print(
             job["_id"],
             "{:8.8s}".format(job["state"]),
@@ -194,8 +197,7 @@ def listing(*state):
                 core4.util.data.utc2local(job["enqueued"]["at"]))),
             "{:11s}".format(str(core4.util.node.mongo_now() - (
                     job["enqueued"]["at"] or core4.util.node.mongo_now()))),
-            "{:11s}".format(str(core4.util.node.mongo_now() - (
-                    job["started_at"] or core4.util.node.mongo_now()))),
+            "{:11s}".format(str(runtime)),
             job["name"]
         )
 
@@ -248,10 +250,9 @@ def detail(*_id):
                 _id.append(job["_id"])
                 break
         else:
-            job = QUEUE.find_job(oid)
-            pprint(job.serialise())
-            stdout = QUEUE.get_job_stdout(job._id)
+            pprint(QUEUE.job_detail(oid))
             print("-" * 80)
+            stdout = QUEUE.get_job_stdout(oid)
             print("STDOUT:\n" + str(stdout))
             break
 
@@ -311,17 +312,10 @@ def enqueue(qual_name, *args):
     try:
         job_id = QUEUE.enqueue(name=qual_name[0], **data)._id
     except ImportError:
-        project = qual_name[0].split(".")[0]
-        home = QUEUE.config.folder.home
-        python_path = os.path.join(home, project, VENV_PYTHON)
-        command = ENQUEUE_COMMAND.format(qual_name=qual_name[0])
-        proc = subprocess.Popen(
-            [python_path, "-c", command], stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-        (stdout, stderr) = proc.communicate()
-        if stderr:
-            raise ImportError(stderr.decode("utf-8").strip())
-        job_id = stdout.decode("utf-8").strip()
+        stdout = QUEUE.exec_project(qual_name[0], ENQUEUE_COMMAND,
+                                    qual_name=qual_name[0],
+                                    args="**%s" %(str(data)))
+        job_id = stdout
     except:
         raise
     print(job_id)
@@ -376,3 +370,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
