@@ -675,12 +675,12 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         state['event'] = {'name': event, 'data': args}
         self.sys_stat.insert_one(state)
 
-    def exec_project(self, qual_name, command, wait=True, *args, **kwargs):
+    def exec_project(self, name, command, wait=True, *args, **kwargs):
         """
         Execute command using the Python interpreter of the project's virtual
         environment.
 
-        :param qual_name: qual_name to extract project name
+        :param name: qual_name to extract project name
         :param command: Python commands to be executed
         :param wait: wait and return STDOUT (``True``) or return immediately
                      (defaults to ``False``).
@@ -689,7 +689,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
 
         :return: STDOUT if ``wait is True``, else nothing is returned
         """
-        project = qual_name.split(".")[0]
+        project = name.split(".")[0]
         home = self.config.folder.home
         python_path = None
         if home is not None:
@@ -705,6 +705,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if wait:
             (stdout, stderr) = proc.communicate()
-            if stderr:
-                raise ImportError(stderr.decode("utf-8").strip())
+            # if stderr:
+            #     raise ImportError(stderr.decode("utf-8").strip())
             return stdout.decode("utf-8").strip()
