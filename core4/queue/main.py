@@ -106,7 +106,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
-        self.make_stat()
+        self.make_stat('enqueue_job', job.qual_name())
         return job
 
     def job_factory(self, job, **kwargs):
@@ -270,8 +270,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        # todo: stat?
-        # self.make_stat()
+        self.make_stat('request_remove_job', _id)
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be remove at [%s]", _id, at)
@@ -339,7 +338,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             }
         )
         # todo: stats
-        # self.make_stat()
+        self.make_stat('restart_waiting', _id)
         return ret.modified_count == 1
 
     def _exec_restart(self, _id):
@@ -363,7 +362,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                                            **doc)
                     job.enqueued["child_id"] = new_job._id
                     self.journal(job.serialise())
-                    self.make_stat()
+                    self.make_stat('restart_stopped', _id)
                     self.unlock_job(_id)
                     return new_job._id
         return None
@@ -390,7 +389,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        # self.make_stat()
+        self.make_stat('request_kill_job', _id)
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be killed at [%s]", _id, at)
@@ -535,7 +534,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         if ret.deleted_count != 1:
             raise RuntimeError(
                 "failed to remove job [{}] from queue".format(job._id))
-        self.make_stat()
+        self.make_stat('complete_job', job._id)
         self.unlock_job(job._id)
         job.logger.info("done execution with [complete] "
                         "after [%d] sec.", runtime)
@@ -564,7 +563,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "query_at", "trial")
-        self.make_stat()
+        self.make_stat('defer_job', job._id)
         self.unlock_job(job._id)
         job.logger.info("done execution with [deferred] "
                         "after [%d] sec. and [%s] to go: %s", runtime,
@@ -586,7 +585,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         runtime = self._finish(job, core4.queue.job.STATE_INACTIVE)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "trial")
-        self.make_stat()
+        self.make_stat('inactivate_job', job._id)
         self.unlock_job(job._id)
         job.logger.error("done execution with [inactive] "
                          "after [%d] sec. and [%d] trials in [%s]", runtime,
@@ -618,7 +617,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "attempts_left", "query_at", "trial")
-        self.make_stat()
+        self.make_stat('failed_job', job._id)
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] "
                          "after [%d] sec. and [%d] attempts to go: %s\n%s",
@@ -657,12 +656,12 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.__dict__["removed_at"] = None
         self._update_job(job, "state", "runtime", "locked",
                          "trial", "last_error", "removed_at")
-        self.make_stat()
+        self.make_stat('kill_job', job._id)
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
 
-    def make_stat(self):
+    def make_stat(self, event, *args):
         """
         Collects current job state counts from ``sys.queue`` and inserts a
         record into ``sys.stat``.
@@ -674,6 +673,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 write_concern=pymongo.write_concern.WriteConcern(w=0))
         state = self.get_queue_count()
         state["timestamp"] = core4.util.node.now().timestamp()
+        state['event'] = {'name': event, 'data': args}
         self.sys_stat.insert_one(state)
 
     def exec_project(self, qual_name, command, wait=True, *args, **kwargs):

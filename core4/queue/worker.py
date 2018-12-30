@@ -24,22 +24,18 @@ To stop the worker start a new Python interpreter and go with::
 """
 
 import collections
-import os
-import subprocess
-import sys
-import traceback
+from datetime import timedelta
 
 import psutil
 import pymongo
-from datetime import timedelta
 
 import core4.base
 import core4.error
 import core4.queue.job
 import core4.queue.main
+import core4.queue.process
 import core4.queue.query
 import core4.service.setup
-import core4.queue.process
 import core4.util
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
@@ -59,6 +55,7 @@ KILL_COMMAND = """
 from core4.queue.main import CoreQueue
 CoreQueue()._exec_kill("{job_id:s}")
 """
+
 
 class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
     """
@@ -165,16 +162,17 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 "progress_value": None,
                 "progress": None,
                 "worker": self.identifier
-                #"username": None  # todo: this one is not set, yet
+                # "username": None  # todo: this one is not set, yet
             }
         }
         ret = self.config.sys.queue.update_one(
             filter={"_id": doc["_id"]}, update={"$set": update})
         if ret.raw_result["n"] != 1:
             raise RuntimeError(
-                "failed to update job [{}] state [starting]".format(doc["_id"]))
+                "failed to update job [{}] state [starting]".format(
+                    doc["_id"]))
         # todo: check when make_stat is necessary
-        #self.queue.make_stat()
+        self.queue.make_stat('start_job', str(doc["_id"]))
         self.logger.info("launching [%s] with _id [%s]", doc["name"],
                          doc["_id"])
         self.queue.exec_project(doc["name"], EXECUTE_COMMAND,
@@ -276,7 +274,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
             # check system resources
             cur_stats = self.avg_stats()
-            print(cur_stats[0])
             if ((cur_stats[0] > self.config.worker.max_cpu)
                     or (cur_stats[1] < self.config.worker.min_free_ram)):
                 if not data["force"]:
@@ -319,8 +316,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     ret = self.config.sys.queue.delete_one({"_id": doc["_id"]})
                     if ret.raw_result["n"] != 1:
                         raise RuntimeError(
-                            "failed to remove job [{}]".format(doc["_id"]))
-                    self.queue.make_stat()
+                            "failed to re<move job [{}]".format(doc["_id"]))
+                    self.queue.make_stat('remove_job', str(doc["_id"]))
                     self.logger.info(
                         "successfully journaled and removed job [%s]",
                         doc["_id"])
@@ -382,7 +379,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set non-stop job [%s]", doc["_id"])
-                # self.queue.make_stat()
+                self.queue.make_stat('flag_nonstop', str(doc["_id"]))
 
     def flag_zombie(self, doc):
         """
@@ -414,7 +411,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if ret.raw_result["n"] == 1:
                     self.logger.warning(
                         "successfully set zombie job [%s]", doc["_id"])
-                # self.queue.make_stat()
+                self.queue.make_stat('flag_zombie', str(doc["_id"]))
 
     def check_pid(self, doc):
         """
