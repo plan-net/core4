@@ -51,6 +51,14 @@ STEPS = (
     "flag_jobs",
     "collect_stats")
 
+EXECUTE_COMMAND = """
+from core4.queue.process import CoreWorkerProcess
+CoreWorkerProcess().start("{job_id:s}")
+"""
+KILL_COMMAND = """
+from core4.queue.main import CoreQueue
+CoreQueue()._exec_kill("{job_id:s}")
+"""
 
 class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
     """
@@ -140,34 +148,37 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         doc = self.get_next_job()
         if doc is None:
             return
-        try:
-            job = self.queue.job_factory(doc["name"]).deserialise(**doc)
-        except:
-            # very early exception, so fail hard
-            exc_info = sys.exc_info()
-            update = {
-                "state": core4.queue.job.STATE_ERROR,
-                "started_at": self.at,
-                "last_error": {
-                    "exception": repr(exc_info[1]),
-                    "traceback": traceback.format_exception(*exc_info),
-                }
+        self.start_job(doc)
+
+    def start_job(self, doc):
+        now = self.at
+        update = {
+            "state": core4.queue.job.STATE_RUNNING,
+            "started_at": now,
+            "query_at": None,
+            "trial": doc["trial"] + 1,
+            "locked": {
+                "at": now,
+                "heartbeat": now,
+                "hostname": core4.util.node.get_hostname(),
+                "pid": None,
+                "progress_value": None,
+                "progress": None,
+                "worker": self.identifier
+                #"username": None  # todo: this one is not set, yet
             }
-            self.logger.error(
-                "unexpected error during job instantiation", exc_info=exc_info)
-            ret = self.config.sys.queue.update_one(
-                filter={"_id": doc["_id"]},
-                update={"$set": update})
-            if ret.raw_result["n"] != 1:
-                raise RuntimeError(
-                    "failed to update job [{}] state [{}]".format(
-                        doc["_id"], core4.queue.job.STATE_FAILED))
-            self.queue.make_stat()
-        else:
-            if job.inactive_at and job.inactive_at <= self.at:
-                self.queue.set_inactivate(job)
-            else:
-                self.start_job(job)
+        }
+        ret = self.config.sys.queue.update_one(
+            filter={"_id": doc["_id"]}, update={"$set": update})
+        if ret.raw_result["n"] != 1:
+            raise RuntimeError(
+                "failed to update job [{}] state [starting]".format(doc["_id"]))
+        # todo: check when make_stat is necessary
+        #self.queue.make_stat()
+        self.logger.info("launching [%s] with _id [%s]", doc["name"],
+                         doc["_id"])
+        self.queue.exec_project(doc["name"], EXECUTE_COMMAND,
+                                wait=False, job_id=str(doc["_id"]))
 
     def get_next_job(self):
         """
@@ -265,6 +276,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
             # check system resources
             cur_stats = self.avg_stats()
+            print(cur_stats[0])
             if ((cur_stats[0] > self.config.worker.max_cpu)
                     or (cur_stats[1] < self.config.worker.min_free_ram)):
                 if not data["force"]:
@@ -283,113 +295,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             self.offset = data["_id"]
             self.logger.debug('successfully reserved [%s]', data["_id"])
             return data
-
-    def start_job(self, job, spawn=True):
-        """
-        Spawns the passed job if there are enough free resources by launching
-        a seperate Python interpreter and communicating the job ``_id``.
-
-        This method updates the job ``state``, ``started_at`` timestamp,
-        increases the ``trial``, sets the ``locked`` property, calculates the
-        ``inactive_at`` timestamp if not done, yet and resets the ``query_at``
-        attribute.
-
-        The execution process is spawned using :mod:`subprocess`
-        :class:`.Popen` and replicates current OS environment. Method
-        :func:`start` form :mod:`core4.queue.process` consumes the execution
-        request.
-
-        .. note:: This method does not call :meth:`.unlock_job`. This is done
-                  by :func:`start` of :mod:`core4.queue.process`
-
-        :param job: :class:`.CoreJob` object
-        """
-        at = core4.util.node.mongo_now()
-        update = {
-            "state": core4.queue.job.STATE_RUNNING,
-            "started_at": at,
-            "query_at": None,
-            "trial": job.trial + 1,
-            "locked": {
-                "at": self.at,
-                "heartbeat": self.at,
-                "hostname": self.hostname,
-                "pid": None,
-                "progress_value": None,
-                "progress": None,
-                "worker": self.identifier,
-                "username": None  # todo: this one is not set, yet
-            }
-        }
-        if job.inactive_at is None:
-            update["inactive_at"] = at + timedelta(
-                seconds=job.defer_max)
-            self.logger.debug("set inactive_at [%s]", update["inactive_at"])
-        ret = self.config.sys.queue.update_one(
-            filter={"_id": job._id}, update={"$set": update})
-        if ret.raw_result["n"] != 1:
-            raise RuntimeError(
-                "failed to update job [{}] state [starting]".format(job._id))
-        self.queue.make_stat()
-        for k, v in update.items():
-            job.__dict__[k] = v
-        try:
-            executable = job.find_executable()
-        except:
-            self.fail_hard(job)
-        else:
-            job.logger.info("start execution with [%s]", executable)
-            try:
-                if spawn:
-                    proc = subprocess.Popen(
-                        [
-                            executable,
-                            "-c", "from core4.queue.process import _start; "
-                                  "_start()"
-                        ],
-                        env=os.environ,
-                        stdin=subprocess.PIPE,
-                        stdout=subprocess.PIPE
-                    )
-                else:
-                    return core4.queue.process.CoreWorkerProcess().start(
-                        job._id, redirect=False)
-            except Exception:
-                self.fail_hard(job)
-            else:
-                ret = self.config.sys.queue.update_one(
-                    filter={
-                        "_id": job._id
-                    },
-                    update={
-                        "$set": {
-                            "locked.pid": proc.pid
-                        }
-                    }
-                )
-                if ret.raw_result["n"] != 1:
-                    raise RuntimeError(
-                        "failed to update job [{}] pid [{}]".format(
-                            job._id, proc.pid))
-                # self.queue.make_stat()
-                job_id = str(job._id).encode("utf-8")
-                proc.stdin.write(bytes(job_id))
-                proc.stdin.close()
-                self.logger.debug("successfully launched job [%s] with [%s]",
-                                  job._id, executable)
-
-    def fail_hard(self, job):
-        """
-        This method puts the job into ``error`` state due to early exceptions
-        before the job has even been launched. These issues arise either at
-        job class instantiation or subprocessing with
-        :mod:`core4.queue.process`.
-
-        :param job: :class:`core4.queue.job.CoreJob` object
-        """
-        self.logger.error("failed to instantiate job", exc_info=True)
-        job.__dict__["attempts_left"] = 0
-        self.queue.set_failed(job)
 
     def remove_jobs(self):
         """
@@ -445,7 +350,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             },
             projection=[
                 "_id", "wall_time", "wall_at", "zombie_time", "zombie_at",
-                "started_at", "locked.heartbeat", "locked.pid", "killed_at"
+                "started_at", "locked.heartbeat", "locked.pid", "killed_at",
+                "name"
             ]
         )
         for doc in cur:
@@ -535,8 +441,13 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             (found, proc) = self.pid_exists(doc)
             if found and proc:
                 proc.kill()
-                job = self.queue.load_job(doc["_id"])
-                self.queue.set_killed(job)
+            try:
+                self.queue._exec_kill(doc["_id"])
+            except ImportError:
+                self.queue.exec_project(doc["name"], KILL_COMMAND,
+                                        job_id=str(doc["_id"]))
+            except:
+                raise
 
     def pid_exists(self, doc):
         """
