@@ -204,7 +204,7 @@ class CoreDaemon(CoreBase):
                 if in_maintenance:
                     in_maintenance = False
                     self.logger.info("leaving maintenance")
-                self.at = core4.util.node.now()
+                self.at = core4.util.node.mongo_now()
                 self.run_step()
             time.sleep(self.wait_time)
 
