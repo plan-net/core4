@@ -165,6 +165,20 @@ class QueryMixin:
             projection=self.project_job_listing(),
             sort=[('_id', 1)])
 
+    def job_detail(self, _id):
+        """
+        full job details from ``sys.queue`` or ``sys.journal``.
+
+        :param _id: :class:`bson.objectid.ObjectId`
+        :return: dict
+        """
+        doc = self.config.sys.queue.find_one(
+            filter={"_id": _id})
+        if doc is None:
+            doc = self.config.sys.journal.find_one(
+                filter={"_id": _id})
+        return doc
+
     def project_job_listing(self):
         """
         Returns the ``sys.queue`` attributes to be projected in a job listing.
