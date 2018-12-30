@@ -106,7 +106,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
-        self.make_stat('enqueue_job', job.qual_name())
+        self.make_stat('enqueue_job', job._id)
         return job
 
     def job_factory(self, job, **kwargs):
@@ -270,10 +270,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        self.make_stat('request_remove_job', _id)
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be remove at [%s]", _id, at)
+            self.make_stat('request_remove_job', _id)
             return True
         self.logger.error("failed to flag job [%s] to be remove", _id)
         return False
@@ -300,6 +300,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         """
         if self._restart_waiting(_id):
             self.logger.warning('successfully restarted [%s]', _id)
+            self.make_stat('restart_waiting', _id)
             return _id
         else:
             try:
@@ -337,7 +338,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        self.make_stat('restart_waiting', _id)
         return ret.modified_count == 1
 
     def _exec_restart(self, _id):
