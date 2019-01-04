@@ -64,6 +64,10 @@ def make_project(package_name=None, package_description=None, auto=False):
     else:
         exist = "The directory does not exists and will be created. All " \
                 "project files will\n    be created."
+
+    base = core4.base.main.CoreBase()
+    core4_repository = base.config.core4_origin
+
     print("""
     A project directory ./{package_name:s} will be created at
         > {full_path:s}
@@ -73,6 +77,8 @@ def make_project(package_name=None, package_description=None, auto=False):
     Inside this project directory, a Python virtual environment will be created 
     if it does not exist, yet at
         > {venv:s}
+    
+    This Python virtual environment hosts core4 from {core4_repository:y}.
     
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
@@ -96,7 +102,8 @@ def make_project(package_name=None, package_description=None, auto=False):
         $ exit_env        
     """.format(
         root=root_path, package_name=kwargs["package_name"], venv=VENV,
-        repository=REPOSITORY, exist=exist, full_path=full_path))
+        repository=REPOSITORY, exist=exist, full_path=full_path,
+        core4_repository=base.config.core4_origin))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
@@ -203,8 +210,6 @@ def make_project(package_name=None, package_description=None, auto=False):
         proc.wait()
         print("done")
 
-        base = core4.base.main.CoreBase()
-        core4_repository = base.config.core4_origin
         printout("    install core4 ... ")
         proc = subprocess.Popen([pip_cmd, "install", core4_repository], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         proc.wait()
