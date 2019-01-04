@@ -7,6 +7,8 @@ import subprocess
 from venv import EnvBuilder
 from jinja2 import Template
 
+# todo: the script should also parse "." directory option
+
 VENV = ".venv"
 REPOSITORY = ".repos"
 
@@ -71,15 +73,15 @@ def make_project(package_name=None, package_description=None, auto=False):
     print("""
     A project directory ./{package_name:s} will be created at
         > {full_path:s}
-    
+
     {exist:s}
 
     Inside this project directory, a Python virtual environment will be created 
     if it does not exist, yet at
         > {venv:s}
-    
+
     This Python virtual environment hosts core4 from {core4_repository:s}.
-    
+
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
         > {repository:s}
@@ -87,13 +89,13 @@ def make_project(package_name=None, package_description=None, auto=False):
     This repository will have an initial commit and two branches:
         1. master
         2. develop
-        
+
     To share this git repository with other users you have to manually 
     synchronise this bare repository with a git repository accessible by your
     team. Once this has been done, you can remove the bare repository on this
     computer and update your git connection accordingly in 
         > .git/config
-        
+
     To start working on your project, enter the Python virtual environment with
         $ cd ./{package_name:s}
         $ . enter_env
@@ -116,23 +118,33 @@ def make_project(package_name=None, package_description=None, auto=False):
 
     initial_commit = False
     temp_repos_path = None
-    if not os.path.exists(repos_path):
+    git_path = os.path.join(full_path, ".git")
+    if not os.path.exists(git_path):
+        if os.path.exists(repos_path):
+            temp_path = tempfile.mkdtemp()
+            temp_repos_path = os.path.join(temp_path, REPOSITORY)
+            printout("    %s ... " % (temp_repos_path))
+            os.makedirs(temp_repos_path)
+            sh.git(["init", "--shared", "--bare", temp_repos_path])
+            print("created")
 
-        # todo: must not create another local repository if there is already a .git
-        temp_path = tempfile.mkdtemp()
-        temp_repos_path = os.path.join(temp_path, REPOSITORY)
-        printout("    %s ... " %(temp_repos_path))
-        os.makedirs(temp_repos_path)
-        sh.git(["init", "--shared", "--bare", temp_repos_path])
-        print("created")
+            printout("    clone into %s ... " % (full_path))
+            sh.git(["clone", "file://%s" % (temp_repos_path), full_path])
+            print("done")
 
-        printout("    clone into %s ... " %(full_path))
-        sh.git(["clone", "file://%s" % (temp_repos_path), full_path])
-        print("done")
-
-        initial_commit = True
+            initial_commit = True
+        else:
+            print("    clone %s ... skipped" % (repos_path))
     else:
-        print("    clone %s ... skipped" %(repos_path))
+        curr_dir = os.path.abspath(os.path.curdir)
+        os.chdir(os.path.abspath(os.path.dirname(git_path)))
+        origin_url = None
+        for line in sh.git("config", "--list").split("\n"):
+            if line.startswith("remote.origin.url="):
+                origin_url = line[len("remote.origin.url="):]
+                break
+        os.chdir(curr_dir)
+        print("    git origin %s ... exists" % (origin_url))
 
     print("\ncopy files")
     print("----------\n")
@@ -162,7 +174,6 @@ def make_project(package_name=None, package_description=None, auto=False):
                 print("created")
 
     if initial_commit:
-
         print("\ninitial commit")
         print("--------------\n")
 
@@ -183,22 +194,21 @@ def make_project(package_name=None, package_description=None, auto=False):
         sh.git(git_dir + ["checkout", "master"])
         print("done")
 
-        printout("    move %s to %s ... " %(temp_repos_path, full_path))
+        printout("    move %s to %s ... " % (temp_repos_path, full_path))
         sh.mv(temp_repos_path, full_path + "/")
         print("done")
 
-        printout("    move origin to %s  ... " %(repos_path))
+        printout("    move origin to %s  ... " % (repos_path))
         sh.git(git_dir + ["remote", "set-url", "origin",
                           "file://" + repos_path])
         print("done")
 
     venv = os.path.join(full_path, VENV)
     if not os.path.exists(venv):
-
         print("\nPython virtual environment")
         print("--------------------------\n")
 
-        printout("    create at %s ... " %(venv))
+        printout("    create at %s ... " % (venv))
         builder = EnvBuilder(system_site_packages=False, clear=False,
                              symlinks=False, upgrade=False, with_pip=True)
         builder.create(venv)
@@ -206,13 +216,18 @@ def make_project(package_name=None, package_description=None, auto=False):
 
         printout("    install project ... ")
         pip_cmd = os.path.join(venv, "bin", "pip")
-        proc = subprocess.Popen([pip_cmd, "install", "-e", full_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen([pip_cmd, "install", "-e", full_path],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         proc.wait()
         print("done")
 
         printout("    install core4 ... ")
-        proc = subprocess.Popen([pip_cmd, "install", core4_repository], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.wait()
+        proc = subprocess.Popen([pip_cmd, "install", core4_repository],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ret = proc.wait()
+        if ret != 0:
+            raise ConnectionError("failed to retrieve and install core4 "
+                                  "from %s" %(core4_repository))
         print("done")
 
     # todo: check if there is a ~/.core4/local.yaml or an /etc/core4/local.yaml
