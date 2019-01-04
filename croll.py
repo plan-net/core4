@@ -1,4 +1,4 @@
-CORE4_REMOTE = "git+ssh://git.bi.plan-net.com/srv/git/core4.git@master"
+CORE4_REMOTE = "git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env"
 
 import sys
 

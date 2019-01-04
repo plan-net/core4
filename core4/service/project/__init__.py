@@ -111,6 +111,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     temp_repos_path = None
     if not os.path.exists(repos_path):
 
+        # todo: must not create another local repository if there is already a .git
         temp_path = tempfile.mkdtemp()
         temp_repos_path = os.path.join(temp_path, REPOSITORY)
         printout("    %s ... " %(temp_repos_path))
@@ -208,3 +209,6 @@ def make_project(package_name=None, package_description=None, auto=False):
         proc = subprocess.Popen([pip_cmd, "install", core4_repository], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         proc.wait()
         print("done")
+
+    # todo: check if there is a ~/.core4/local.yaml or an /etc/core4/local.yaml
+    # todo: create if not exists
