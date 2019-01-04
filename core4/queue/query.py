@@ -177,6 +177,8 @@ class QueryMixin:
         if doc is None:
             doc = self.config.sys.journal.find_one(
                 filter={"_id": _id})
+            if doc is not None:
+                doc["journaled"] = True
         return doc
 
     def project_job_listing(self):

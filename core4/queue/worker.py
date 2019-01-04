@@ -147,7 +147,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             return
         self.start_job(doc)
 
-    def start_job(self, doc):
+    def start_job(self, doc, async=True):
         now = self.at
         update = {
             "state": core4.queue.job.STATE_RUNNING,
@@ -174,8 +174,12 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.queue.make_stat('request_start_job', str(doc["_id"]))
         self.logger.info("launching [%s] with _id [%s]", doc["name"],
                          doc["_id"])
-        self.queue.exec_project(doc["name"], EXECUTE_COMMAND,
-                                wait=False, job_id=str(doc["_id"]))
+        if async:
+            self.queue.exec_project(doc["name"], EXECUTE_COMMAND,
+                                    wait=False, job_id=str(doc["_id"]))
+        else:
+            from core4.queue.process import CoreWorkerProcess
+            CoreWorkerProcess().start(doc["_id"], redirect=False)
 
     def get_next_job(self):
         """

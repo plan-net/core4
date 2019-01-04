@@ -34,9 +34,14 @@ def execute(job, **kwargs):
     setup.make_all()
     core4.logger.logon()
     kwargs["manual_execute"] = core4.util.node.mongo_now().isoformat()
-    doc = enqueue(job, **kwargs)
+    enq_doc = enqueue(job, **kwargs)
     worker = core4.queue.worker.CoreWorker(name="manual")
-    if not worker.start_job(doc, spawn=False):
-        queue = core4.queue.main.CoreQueue()
-        queue.remove_job(doc._id)
-        worker.remove_jobs()
+    worker.at = core4.util.node.mongo_now()
+    worker.start_job(enq_doc.serialise(), async=False)
+    while True:
+        doc = worker.queue.job_detail(enq_doc._id)
+        if doc is not None:
+            if doc.get("journaled", False):
+                break
+    #worker.queue.remove_job(enq_doc._id)
+    #worker.remove_jobs()

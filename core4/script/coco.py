@@ -35,22 +35,20 @@ Options:
   -y --yes        Assume yes on all requests.
 """
 
+import datetime
 import json
 import re
 from pprint import pprint
 
 from bson.objectid import ObjectId
 from docopt import docopt
-import datetime
+
 import core4
-import core4.api.v1.tool
 import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
-import core4.queue.scheduler
 import core4.queue.worker
 import core4.service.project
-import core4.util
 import core4.util.data
 import core4.util.node
 from core4.service.operation.build import build, release
@@ -314,7 +312,7 @@ def enqueue(qual_name, *args):
     except ImportError:
         stdout = QUEUE.exec_project(qual_name[0], ENQUEUE_COMMAND,
                                     qual_name=qual_name[0],
-                                    args="**%s" %(str(data)))
+                                    args="**%s" % (str(data)))
         job_id = stdout
     except:
         raise
@@ -370,4 +368,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
