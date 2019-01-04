@@ -78,7 +78,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     if it does not exist, yet at
         > {venv:s}
     
-    This Python virtual environment hosts core4 from {core4_repository:y}.
+    This Python virtual environment hosts core4 from {core4_repository:s}.
     
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
