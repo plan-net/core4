@@ -53,6 +53,8 @@ This scenario runs a core4 environment and works with a local or remote git
 project clone. In this scenario the core4 developer builds and distributes 
 core4 project releases.
 
+The scenario is further devided 
+
 
 2. CORE4 PRODUCTION. 
 
@@ -71,8 +73,8 @@ project repository.
 .. todo:: how to pull request
 
 
-develop and maintain core4 projects
------------------------------------
+develop and maintain new core4 projects
+---------------------------------------
 
 In this scenario we will install core4 in ~/core4.home, create, setup, build
 and release a core4 project called "mypro".
@@ -217,7 +219,7 @@ Save and close the file. Your development project should now look like this:
     └── tests
 
 
-Directly execute the job with starting myjob.py directly as in:
+Directly execute the job with starting myjob.py as in:
 
     python mypro/myjob.py                                               #[16]#
     
@@ -290,6 +292,10 @@ relevant steps of this guideline so far.
     6. After successful tests & QA merge your source changes from release-0.0.2
        to branches develop (line #22) and master (line #23) and finally rollout 
        the release with `coco --release` line  (line #24).
+
+
+develop and maintain existing core4 projects
+--------------------------------------------
 
 
 core4 production
@@ -651,3 +657,39 @@ or directly execute the sphinx ``make`` command::
 
     $ cd ./docs
     $ make html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+für Marek:
+
+/home/mmr/.core4/local.yaml
+
+
+DEFAULT:
+  mongo_url: mongodb://core:654321@localhost:27017 ?????
+  mongo_database: core4dev
+
+logging:
+  mongodb: INFO
+  stderr: DEBUG
+  stdout: ~
+
+api:
+  setting:
+    # debug: True
+    cookie_secret: ich wollte ich wäre ein hühnchen
+#  token:
+#    expiration: 3600
+#    refresh: 3000
+  verify_ssl: False
