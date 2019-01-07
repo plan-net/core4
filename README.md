@@ -391,22 +391,22 @@ core4 production
 The basic principles to run core4 framework and projects in production is as
 follows: 
 
-    # create core4 production home                                      #[1]# 
+    # create core4 production home                                      #[35]# 
     mkdir ~/core4.prod
     cd ~/core4.prod
     
-    # download setup script                                             #[2]#
+    # download setup script                                             #[36]#
     export CORE4_REMOTE=ssh://git.bi.plan-net.com/srv/git/core4.git
     export CORE4_BRANCH=mra.env
     git archive --remote $CORE4_REMOTE $CORE4_BRANCH croll.py | tar -xO > croll.py
     
-    # install core4
+    # install core4                                                     #[37]#
     python3 croll.py core4 ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env
 
-    # install mypro
+    # install mypro                                                     #[38]#
     python3 croll.py mypro file:///home/mra/core4.home/mypro/.repos
 
-    # install another project
+    # install another project                                           #[39]#
     python3 croll.py pro2 file:///home/mra/core4.home/pro2/.repos
 
 
@@ -419,7 +419,27 @@ Be sure to update your local.yaml core4 project home residence:
 core4 further development
 -------------------------
 
-tbd.
+To develop core4 further, you have to clone (line #40) the source code, create
+a Python virtual environment (line #42), enter the environment (line #43) and
+install core4 in development mode (line #44):
+
+    # clone core4                                                       #[40]#
+    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+    
+    # enter clone                                                       #[41]#
+    cd core4
+    
+    # create Python virtual environment                                 #[42]#
+    python3 -m venv .venv
+    
+    # enter Python virtual environment                                  #[43]#
+    . enter_env 
+
+    # install core4 in development mode                                 #[44]#
+    pip install -e .
+
+
+Be sure to have your ~/.core4/local.yaml.
 
 
 further reads
@@ -432,7 +452,7 @@ sphinx documentation with
     $ make html
 
 
-And Ensure you understand PROJECT ENVIRONMENTS and PROJECT STRUCTURE. There are 
+Ensure you understand PROJECT ENVIRONMENTS and PROJECT STRUCTURE. There are 
 sections dedicated to the main backend components of core4 running in 
 environments and projects:
 
