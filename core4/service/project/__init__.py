@@ -120,7 +120,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     temp_repos_path = None
     git_path = os.path.join(full_path, ".git")
     if not os.path.exists(git_path):
-        if os.path.exists(repos_path):
+        if not os.path.exists(repos_path):
             temp_path = tempfile.mkdtemp()
             temp_repos_path = os.path.join(temp_path, REPOSITORY)
             printout("    %s ... " % (temp_repos_path))
