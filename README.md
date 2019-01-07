@@ -1,33 +1,6 @@
 core4
 ===== 
 
-Project Installation inkl. core4
-
-core4 nur Basis Installation
-    sys.queue management muss in das Environment wechseln
-    worker muss für .execute in das Environment wechseln
-    process muss mehr machen als jetzt (ab job_factory)
-    
-    
-der app server muss alle Projekte importen können damit er die Requests 
-    einbinden kann
-
-how to handle app servers' different dependencies
-=> run one app serve_all for each project
-
-how to handle enqueue and restart which are project dependent
-=> wrap with a pickup script running in the project environment
-
-how to know about installed projects
-=> have a home directory to search from
-
-how to setup project development
-=> clone project
-=> create python virtual environment
-=> enter environment
-=> install requirements
-=> install core4 or set PYTHONPATH
-
     
 prerequisites 
 -------------
@@ -442,6 +415,25 @@ install core4 in development mode (line #44):
 Be sure to have your ~/.core4/local.yaml.
 
 
+build documentation
+-------------------
+
+Documentation requires the "tests" variant to setup:
+
+    pip install -e .[tests]
+    cd docs
+    make html
+    
+
+regression tests
+----------------
+
+Regression tests require the "tests" variant to setup:
+
+    pip install -e .[tests]
+    pytest -x tests
+
+
 further reads
 -------------
 
@@ -478,72 +470,3 @@ MANAGEMENT.
 * CONFIGURATION MECHANICS
 * LOGGING
 * AUTHORIZATION AND ACCESS MANAGEMENT
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-setup development environment on ubuntu
----------------------------------------
-
-Install Pipenv following https://pipenv.readthedocs.io/en/latest/install/::
-
-    $ pip install --user pipenv
-    
-Pipenv is still under heavy development. Upgrade the package often with::
-
-    $ pip install --user --upgrade pipenv
-    
-Download core4 by cloning the Git repository from its current location, i.e.::
-
-    $ git clone ssh://git.bi.plan-net.com/srv/git/core4.git
-
-Setup your Python virtual environment with::
-
-    $ cd core4
-    $ pipenv install --python=3.5 -v -e .[tests]
-    $ pipenv shell
-
-Your're good to go now and extend core4 package.
-
-
-setup development environment on debian
----------------------------------------
-
-
-regression tests
-----------------
-
-The execution of regression tests require a MongoDB user ``core`` with password
-``654321``.
-
-    $ mongo admin --eval "db.createUser({'user': 'core', 'pwd': '654321', 'roles': [{'role': 'root', 'db': 'admin'}]})"
-
-Change into core4 directory and execute regression tests with::
-
-    $ cd core4
-    $ pipenv shell
-
-
-documentation
--------------
-
-After successful installation of the core4 package you can build the
-documentation (defaults to HTML format)::
-
-    $ python setup.py sphinx
-    
-or directly execute the sphinx ``make`` command::
-
-    $ cd ./docs
-    $ make html
