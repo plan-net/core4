@@ -98,6 +98,7 @@ export default {
         })
         return tmp
       }
+      return null
     },
     iChartsOptionsCountrys () {
     // not working in dev reload page
@@ -113,6 +114,7 @@ export default {
         })
         return tmp
       }
+      return null
     },
     ...mapGetters(['question', 'questions', 'result', 'peopleCount', 'clusteredResults'])
   }
