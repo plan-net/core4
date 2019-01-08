@@ -1,16 +1,14 @@
 import os
-import sys
-import sh
-import tempfile
-import core4.base.main
 import subprocess
+import sys
+import tempfile
 from venv import EnvBuilder
+
+import sh
 from jinja2 import Template
 
-# todo: the script should also parse "." directory option
-
-VENV = ".venv"
-REPOSITORY = ".repos"
+import core4.base.main
+from core4.const import VENV, REPOSITORY
 
 
 def input_loop(message, identifier=False):
@@ -227,7 +225,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         ret = proc.wait()
         if ret != 0:
             raise ConnectionError("failed to retrieve and install core4 "
-                                  "from %s" %(core4_repository))
+                                  "from %s" % (core4_repository))
         print("done")
 
     # todo: check if there is a ~/.core4/local.yaml or an /etc/core4/local.yaml

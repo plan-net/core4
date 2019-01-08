@@ -20,6 +20,7 @@ import core4.service.setup
 import core4.util
 import core4.util.node
 import core4.util.tool
+from core4.const import VENV_PYTHON
 from core4.base import CoreBase
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
@@ -30,7 +31,6 @@ STATE_STOPPED = (core4.queue.job.STATE_KILLED,
                  core4.queue.job.STATE_INACTIVE,
                  core4.queue.job.STATE_ERROR)
 
-VENV_PYTHON = ".venv/bin/python"
 RESTART_COMMAND = """
 from core4.queue.main import CoreQueue
 CoreQueue()._exec_restart("{job_id:s}")

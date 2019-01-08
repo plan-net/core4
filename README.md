@@ -58,19 +58,19 @@ Ensure all dependencies have been installed. This is Python 3.5, MongoDB, pip
 and git. Open up a shell and execute the following commands to install core4:
 
     # create core4 home                                                 #[1]# 
-    mkdir ~/core4.home
-    cd ~/core4.home
+    mkdir ~/core4.dev
+    cd ~/core4.dev
     
     # download setup script                                             #[2]#
     export CORE4_REMOTE=ssh://git.bi.plan-net.com/srv/git/core4.git
-    export CORE4_BRANCH=mra.env
+    export CORE4_BRANCH=mra.ops
     git archive --remote $CORE4_REMOTE $CORE4_BRANCH croll.py | tar -xO > croll.py
     
     # create core4 environment                                          #[3]#
     python3 croll.py core4 $CORE4_REMOTE@$CORE4_BRANCH
 
     # enter core4 environment                                           #[4]#
-    . core4/bin/activate
+    . core4/.venv/bin/activate
 
 
 Within core4 environment you can create and develop your project. Chose project 
@@ -318,7 +318,7 @@ recommended to install the project itself in development mode (line #31):
     source enter_env
     
     # install core4                                                     #[30]#
-    pip install -U git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env
+    pip install -U git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.ops
     
     # install project mypro from current directory in development mode  #[31]#
     pip install -e .    
@@ -370,17 +370,17 @@ follows:
     
     # download setup script                                             #[36]#
     export CORE4_REMOTE=ssh://git.bi.plan-net.com/srv/git/core4.git
-    export CORE4_BRANCH=mra.env
+    export CORE4_BRANCH=mra.ops
     git archive --remote $CORE4_REMOTE $CORE4_BRANCH croll.py | tar -xO > croll.py
     
     # install core4                                                     #[37]#
-    python3 croll.py core4 ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env
+    python3 croll.py core4 ssh://git.bi.plan-net.com/srv/git/core4.git@mra.ops
 
     # install mypro                                                     #[38]#
-    python3 croll.py mypro file:///home/mra/core4.home/mypro/.repos
+    python3 croll.py mypro file:///home/mra/core4.dev/mypro/.repos
 
     # install another project                                           #[39]#
-    python3 croll.py pro2 file:///home/mra/core4.home/pro2/.repos
+    python3 croll.py pro2 file:///home/mra/core4.dev/pro2/.repos
 
 
 Be sure to update your local.yaml core4 project home residence:
