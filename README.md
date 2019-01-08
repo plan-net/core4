@@ -27,7 +27,7 @@ project clone. In this scenario the core4 developer builds and distributes
 core4 project releases.
 
 The scenario is further divided into two sub-scenarios: 1) the creation and
-development of a new core4 project and 2) cloing and further developing an 
+development of a new core4 project and 2) cloning and further developing an 
 existing core4 project.
 
 
