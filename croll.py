@@ -38,9 +38,8 @@ def main(script, project, remote, executable=None):
         builder.create(os.path.join(project, ".venv"))
 
     if len(sys.argv) == 3:
-        os.execl(
-            python_executable, python_executable, script,
-            os.path.join(project, ".venv"), remote, "x")
+        os.execl(python_executable, python_executable, script, project, remote,
+                 "x")
     else:
         print("entering Python virtual environment in [{}]".format(project))
         print("installing [{}] from [{}]".format(project, remote))
