@@ -129,6 +129,37 @@ def worker_timing():
                "worker__execution_plan__flag_jobs"] = "!!float 3"
 
 
+class ProgressJob(core4.queue.job.CoreJob):
+    author = "mra"
+    progress_interval = 10
+
+    def execute(self, *args, **kwargs):
+        runtime = 5.
+        tx = core4.util.node.now() + datetime.timedelta(seconds=runtime)
+        n = 0
+        while True:
+            n += 1
+            t0 = core4.util.node.now()
+            if t0 >= tx:
+                break
+            p = 1. - (tx - t0).total_seconds() / runtime
+            self.progress(p, "at %d", n)
+            time.sleep(0.25)
+
+
+@pytest.mark.timeout(30)
+def test_progress1(queue, worker):
+    # fh = open("/tmp/test.txt", "w", encoding="utf-8")
+    # fh.write("%s\n" %(os.path.abspath(os.curdir)))
+    # fh.write("%s\n" %(sys.executable))
+    # fh.close()
+    queue.enqueue(ProgressJob)
+    worker.start(1)
+    worker.wait_queue()
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
+
 @pytest.mark.timeout(30)
 def test_register(caplog):
     pool = []
@@ -561,34 +592,6 @@ def test_nonstop(queue, worker):
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data
                 if "successfully set non-stop job" in d["message"]]) == 1
-
-
-class ProgressJob(core4.queue.job.CoreJob):
-    author = "mra"
-    progress_interval = 10
-
-    def execute(self, *args, **kwargs):
-        runtime = 5.
-        tx = core4.util.node.now() + datetime.timedelta(seconds=runtime)
-        n = 0
-        while True:
-            n += 1
-            t0 = core4.util.node.now()
-            if t0 >= tx:
-                break
-            p = 1. - (tx - t0).total_seconds() / runtime
-            self.progress(p, "at %d", n)
-            time.sleep(0.25)
-
-
-@pytest.mark.timeout(30)
-def test_progress1(queue, worker):
-    queue.enqueue(ProgressJob)
-    worker.start(1)
-    worker.wait_queue()
-    data = list(queue.config.sys.log.find())
-    assert sum([1 for d in data
-                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
 
 
 @pytest.mark.timeout(30)
