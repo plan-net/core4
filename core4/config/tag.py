@@ -72,7 +72,6 @@ def connect_database(conn_str, async=False, **kwargs):
     if hostname:
         return core4.base.collection.CoreCollection(**opts)
     raise core4.error.Core4ConfigurationError("no mongo connected")
-    return None
 
 
 class ConnectTag(yaml.YAMLObject):
