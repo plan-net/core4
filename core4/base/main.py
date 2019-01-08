@@ -77,6 +77,14 @@ class CoreBase:
         self.project = self.get_project()
         self._open_config()
         self._open_logging()
+        self.initialise_object()
+
+    def initialise_object(self):
+        """
+        Called after object instantiation. This method can be overwritte by
+        any subclass of :class:`CoreBase` to initialise object variables.
+        """
+        pass
 
     @classmethod
     def get_project(cls):
