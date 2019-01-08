@@ -1,4 +1,4 @@
-CORE4_REMOTE = "git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env"
+CORE4_REMOTE = "git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.ops"
 
 import sys
 
@@ -28,18 +28,19 @@ def imp(mod):
 
 def main(script, project, remote, executable=None):
     python_executable = executable or os.path.abspath(
-        os.path.join(project, "bin", "python"))
+        os.path.join(project, ".venv", "bin", "python"))
     upgrade_script = os.path.abspath(
-        os.path.join(project, "bin", "requirements.txt"))
+        os.path.join(project, ".venv", "bin", "requirements.txt"))
     if not os.path.exists(python_executable):
         print("install Python virtual environment in [{}]".format(project))
         builder = venv.EnvBuilder(system_site_packages=False, clear=False,
                                   symlinks=False, upgrade=False, with_pip=True)
-        builder.create(project)
+        builder.create(os.path.join(project, ".venv"))
 
     if len(sys.argv) == 3:
         os.execl(
-            python_executable, python_executable, script, project, remote, "x")
+            python_executable, python_executable, script,
+            os.path.join(project, ".venv"), remote, "x")
     else:
         print("entering Python virtual environment in [{}]".format(project))
         print("installing [{}] from [{}]".format(project, remote))
