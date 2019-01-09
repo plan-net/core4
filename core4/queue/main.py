@@ -693,6 +693,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         project = name.split(".")[0]
         home = self.config.folder.home
         python_path = None
+        currdir = os.curdir
         if home is not None:
             python_path = os.path.join(home, project, VENV_PYTHON)
             if not os.path.exists(python_path):
@@ -703,11 +704,11 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             python_path = sys.executable
         else:
             self.logger.debug("python found at [%s]", python_path)
+            os.chdir(os.path.join(home, project))
         command = command.format(*args, **kwargs)
         proc = subprocess.Popen([python_path, "-c", command],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        os.chdir(currdir)
         if wait:
             (stdout, stderr) = proc.communicate()
-            # if stderr:
-            #     raise ImportError(stderr.decode("utf-8").strip())
             return stdout.decode("utf-8").strip()
