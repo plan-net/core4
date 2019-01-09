@@ -121,6 +121,9 @@ class CoreScheduler(CoreDaemon):
         """
         self.wait_time = 1
         self.previous = None
+        doc = self.config.sys.job.find_one({"_id": "__schedule__"})
+        if doc:
+            self.previous = doc.get("schedule_at", None)
         super().loop()
 
     def run_step(self):
