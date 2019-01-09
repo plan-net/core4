@@ -13,6 +13,8 @@ from core4.service.introspect import CoreIntrospector
 print(CoreIntrospector().iter_all())
 """
 
+# todo: requires documentation
+# todo: refactor into CoreINtrospector
 
 class CoreProjectInspector(CoreBase):
 
@@ -68,8 +70,8 @@ class CoreProjectInspector(CoreBase):
                             yield (project, None)
             os.chdir(currpath)
         else:
-            yield (self.project, json.loads(CoreIntrospector().iter_all()))
-        raise StopIteration
+            ret = json.loads(CoreIntrospector().iter_all())
+            yield (self.project, ret)
 
     def summary(self):
         uptime = core4.util.node.uptime()

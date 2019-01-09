@@ -1,6 +1,9 @@
 """
 core4 package, module, project, job and API meta data collector.
 """
+
+# todo: requires documentation
+
 import importlib
 import inspect
 import io
@@ -27,7 +30,7 @@ except ImportError:
     from pip.operations import freeze
 
 
-class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
+class CoreIntrospector(core4.base.CoreBase):
     """
     The :class:`CoreIntro` class collects information about core4 projects,
     and jobs.
