@@ -563,6 +563,17 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf.logging.exception.capacity, 42)
         self.assertEqual(conf.logging.stderr, "INFO")
         self.assertNotIn("irrelevant", conf.logging.exception)
+        assert conf.db_info == "core@localhost:27017/core4test/sys.conf"
+
+    def test_read_no_db(self):
+        local = tests.util.asset("config/local3.yaml")
+        conf = MyConfig(project_config=None, config_file=local)
+        conf._load()
+        self.assertEqual(conf.folder.transfer, "transfer")
+        self.assertEqual(conf.logging.exception.capacity, 99)
+        self.assertEqual(conf.logging.stderr, "DEBUG")
+        self.assertNotIn("irrelevant", conf.logging.exception)
+        assert conf.db_info == "core@localhost:27017/core4test/sys.conf"
 
     def test_extra_read_db(self):
         self.mongo.core4test.sys.conf.insert_one({
@@ -873,6 +884,12 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(config_file=local)
         with self.assertRaises(core4.error.Core4ConfigurationError):
             _ = conf.config
+
+    def test_folder(self):
+        local = tests.util.asset("config/empty.yaml")
+        config = MyConfig(config_file=local)
+        assert config.get_folder("temp") == "/tmp/core4/temp"
+        assert config.get_folder("home") is None
 
 
 if __name__ == '__main__':

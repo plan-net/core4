@@ -230,6 +230,7 @@ class TestLogging(unittest.TestCase):
             self.assertIn(e, body[i])
 
     def test_class_level(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_base__log_level"] = "INFO"
         os.environ["CORE4_OPTION_tests__test_logger__C__log_level"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
