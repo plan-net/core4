@@ -68,7 +68,7 @@ class CoreDaemon(CoreBase):
         self.enter_phase("startup")
         self.create_env()
         self.cleanup()
-        self.collect_project()
+        #self.collect_project()
 
     def cleanup(self):
         """
@@ -111,7 +111,7 @@ class CoreDaemon(CoreBase):
                 "$set": {
                     "phase": {},
                     "heartbeat": None,
-                    "project": None
+                    #"project": None
                 }
             },
             upsert=True
@@ -136,25 +136,25 @@ class CoreDaemon(CoreBase):
         setup = core4.service.setup.CoreSetup()
         setup.make_all()
 
-    def collect_project(self):
-        """
-        Inquires existing core4 projects on the node using
-        :class:`.CoreIntrospector`. This method stores the identified projects
-        alongside some meta information in ``sys.worker``.
-
-        :return:
-        """
-        intro = core4.service.introspect.CoreIntrospector()
-        project = dict([(p["name"], p) for p in intro.iter_project()])
-        self.config.sys.worker.update_one(
-            {"_id": self.identifier},
-            update={
-                "$set": {
-                    "project": project
-                }
-            }
-        )
-        self.logger.info("registered projects")
+    # def collect_project(self):
+    #     """
+    #     Inquires existing core4 projects on the node using
+    #     :class:`.CoreIntrospector`. This method stores the identified projects
+    #     alongside some meta information in ``sys.worker``.
+    #
+    #     :return:
+    #     """
+    #     intro = core4.service.introspect.CoreIntrospector()
+    #     project = dict([(p["name"], p) for p in intro.iter_project()])
+    #     self.config.sys.worker.update_one(
+    #         {"_id": self.identifier},
+    #         update={
+    #             "$set": {
+    #                 "project": project
+    #             }
+    #         }
+    #     )
+    #     self.logger.info("registered projects")
 
     def enter_phase(self, phase):
         """
