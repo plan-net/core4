@@ -85,7 +85,8 @@ class CoreScheduler(CoreDaemon):
         for project, data in intro.list_project():
             self.logger.info("collecting classes from [%s]", project)
             for job in data["job"]:
-                if job["name"].split(".")[0] == project:
+                job_project = job["name"].split(".")[0]
+                if job_project != "core4" or (job_project == project):
                     self.logger.debug("registering job [%s]", job["name"])
                     update = job.copy()
                     del update["name"]
