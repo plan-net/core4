@@ -48,6 +48,7 @@ import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
+import core4.queue.scheduler
 import core4.service.project
 import core4.util.data
 import core4.util.node
