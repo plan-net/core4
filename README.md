@@ -119,7 +119,7 @@ modified if it already exists.
       stdout: ~
     
     folder:                                                             #[8]#
-      home: /home/mra/PycharmProjects
+      home: /home/<username>/core4.dev
     
 
 Enter the project's Python virtual environment
@@ -133,7 +133,7 @@ Start a worker in a shell:
     coco --worker                                                       #[10]#
 
 
-Test to enqueue a simple default job
+Test to enqueue a simple default job. Open up another shell and type:
 
     # test enqueue                                                      #[11]#
     coco --enqueue core4.queue.helper.job.DummyJob
@@ -285,10 +285,10 @@ project:
 
     # clone core4 project
     cd ~/core4.dev
-    git clone file:///home/mra/core4.home/mypro/.repos mypro            #[26]#
+    git clone file:///home/mra/core4.dev/mypro/.repos mypro             #[26]#
 
     # change to working tree                                            #[27]#
-    cd ~/core4.dev/mypro
+    cd mypro
 
 
 This has created the following file/folder structure:

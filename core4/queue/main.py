@@ -689,6 +689,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
 
         :return: STDOUT if ``wait is True``, else nothing is returned
         """
+        # todo: move to service.introspect
         project = name.split(".")[0]
         home = self.config.folder.home
         python_path = None

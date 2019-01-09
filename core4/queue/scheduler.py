@@ -3,7 +3,7 @@ from croniter import croniter
 
 import core4.queue.main
 import core4.queue.query
-import core4.service.introspect
+import core4.service.introspect.project
 import core4.util
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
@@ -60,7 +60,8 @@ class CoreScheduler(CoreDaemon):
           The attribute is ``None`` if the job has not been found during last
           update.
         """
-        intro = core4.service.introspect.CoreIntrospector()
+        #intro = core4.service.introspect.CoreIntrospector()
+        intro = core4.service.introspect.project.CoreProjectInspector()
         self.config.sys.job.update_many(
             filter={},
             update={
@@ -71,32 +72,36 @@ class CoreScheduler(CoreDaemon):
         )
         now = core4.util.node.mongo_now()
         self.job = {}
-        for job in intro.iter_job():
-            self.logger.debug("registering job [%s]", job["name"])
-            update = job.copy()
-            del update["name"]
-            update["updated_at"] = now
-            self.config.sys.job.update_one(
-                filter={
-                    "_id": job["name"]
-                },
-                update={
-                    "$set": update,
-                    "$setOnInsert": {
-                        "created_at": now
-                    },
-                },
-                upsert=True
-            )
-            if job["valid"] and job["schedule"]:
-                doc = self.config.sys.job.find_one(
-                    {"_id": job["name"]}, projection=["created_at"])
+        self.logger.info("start registration")
+        for project, data in intro.list_project():
+            self.logger.info("collecting classes from [%s]", project)
+            for job in data["job"]:
+                if job["name"].split(".")[0] == project:
+                    self.logger.debug("registering job [%s]", job["name"])
+                    update = job.copy()
+                    del update["name"]
+                    update["updated_at"] = now
+                    self.config.sys.job.update_one(
+                        filter={
+                            "_id": job["name"]
+                        },
+                        update={
+                            "$set": update,
+                            "$setOnInsert": {
+                                "created_at": now
+                            },
+                        },
+                        upsert=True
+                    )
+                    if job["valid"] and job["schedule"]:
+                        doc = self.config.sys.job.find_one(
+                            {"_id": job["name"]}, projection=["created_at"])
 
-                self.job[job["name"]] = {
-                    "updated_at": now,
-                    "schedule": job["schedule"],
-                    "created_at": doc["created_at"]
-                }
+                        self.job[job["name"]] = {
+                            "updated_at": now,
+                            "schedule": job["schedule"],
+                            "created_at": doc["created_at"]
+                        }
         self.logger.info("registered jobs")
 
     def loop(self):
@@ -159,3 +164,10 @@ class CoreScheduler(CoreDaemon):
             if next_time <= end:
                 ret.append((job_name, doc["schedule"]))
         return ret
+
+
+if __name__ == '__main__':
+    import core4.logger.mixin
+    core4.logger.mixin.logon()
+    scheduler = CoreScheduler()
+    scheduler.start()
