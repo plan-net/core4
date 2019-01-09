@@ -9,6 +9,15 @@ import core4.util.node
 from core4.queue.daemon import CoreDaemon
 
 
+# todo: should be more central, see coco.py
+ENQUEUE_COMMAND = """
+from core4.queue.main import CoreQueue
+queue = CoreQueue()
+job = queue.enqueue("{qual_name:s}", {args:s})
+print(job._id)
+"""
+
+
 class CoreScheduler(CoreDaemon):
     """
     The scheduler enqueues jobs available in core4 projects installed on the
@@ -126,13 +135,16 @@ class CoreScheduler(CoreDaemon):
         for job, schedule in jobs:
             self.logger.info("enqueue [%s] at [%s]", job, schedule)
             try:
-                self.queue.enqueue(name=job)
-                n += 1
+                self.queue.enqueue(name=job)._id
+            except ImportError:
+                self.queue.exec_project(job, ENQUEUE_COMMAND, qual_name=job)
             except core4.error.CoreJobExists:
                 self.logger.error("job [%s] exists", job)
             except Exception:
                 self.logger.critical("failed to enqueue [%s]", job,
                                      exc_info=True)
+            else:
+                n += 1
         self.previous = self.at
         self.config.sys.job.update_one(
             {
