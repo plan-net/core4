@@ -13,7 +13,7 @@ from core4.queue.daemon import CoreDaemon
 ENQUEUE_COMMAND = """
 from core4.queue.main import CoreQueue
 queue = CoreQueue()
-job = queue.enqueue("{qual_name:s}", {args:s})
+job = queue.enqueue("{qual_name:s}")
 print(job._id)
 """
 
