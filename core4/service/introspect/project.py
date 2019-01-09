@@ -62,9 +62,6 @@ class CoreProjectInspector(CoreBase):
                         if os.path.exists(pypath) and os.path.isfile(pypath):
                             # this is Python virtual environment:
                             out = queue.exec_project(project, ITER_COMMAND)
-                            #self.logger.info("ERROR: '%s'", error)
-                            #self.logger.info("STDOUT: '%s'", out)
-                            #yield (project, json.loads(out))
                             yield (project, json.loads(out))
                         else:
                             # no Python virtual environment:

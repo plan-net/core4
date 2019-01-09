@@ -102,6 +102,8 @@ class CoreScheduler(CoreDaemon):
                             "schedule": job["schedule"],
                             "created_at": doc["created_at"]
                         }
+                        self.logger.info("schedule [%s] at [%s]", job["name"],
+                                         job["schedule"])
         self.logger.info("registered jobs")
 
     def loop(self):
