@@ -53,6 +53,13 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
         sys.stderr.truncate(0)
         return stdout, stderr
 
+    def iter_all(self):
+        return {
+            "project": list(self.iter_project()),
+            "job": list(self.iter_job()),
+            "api_container": list(self.iter_api_container())
+        }
+
     def iter_project(self):
         """
         Iterator through all core4 projects. The following meta information is
