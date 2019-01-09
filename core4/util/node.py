@@ -2,14 +2,15 @@
 General purpose helper methods related to node information like hostname,
 username, clock and process identifier (PID).
 """
+import datetime
 import getpass
 import grp
 import os
 import pwd
-import time
-import datetime
-import psutil
 import socket
+import time
+
+import psutil
 
 
 def get_hostname():
@@ -29,6 +30,9 @@ def get_username():
 
 
 def get_groups():
+    """
+    :return: list of group of the current login's user name
+    """
     user = get_username()
     groups = [g.gr_name for g in grp.getgrall() if user in g.gr_mem]
     gid = pwd.getpwnam(user).pw_gid
@@ -58,6 +62,9 @@ def get_pid():
 
 
 def uptime():
+    """
+    :return: node's uptime in :class:`datetime.timedelta`
+    """
     return datetime.timedelta(
         seconds=time.time() - psutil.boot_time()
     )
