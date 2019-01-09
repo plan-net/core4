@@ -701,6 +701,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             self.logger.warning("python not found at [%s], use fallback",
                                 python_path)
             python_path = sys.executable
+        else:
+            self.logger.debug("python found at [%s]", python_path)
         command = command.format(*args, **kwargs)
         proc = subprocess.Popen([python_path, "-c", command],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
