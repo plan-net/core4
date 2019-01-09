@@ -562,6 +562,22 @@ class CoreConfig(collections.MutableMapping):
         return data
 
     def get_folder(self, key):
+        """
+        Retrieve core4 standard folder, i.e.
+
+        * transfer - to transfer files inbound/outbound
+        * process - to safely process files after transfer
+        * temp - for temporary files
+        * archive - for archived and compressed files
+        * home - for the home folder of all core4 projects
+
+        Use the appropriate key transfer, process, etc. Depending on the core4
+        configuration settings in section ``folder`` and the set ``root``
+        folder the method returns the requested full path name of the folder.
+
+        :param key: transfer, process, temp, archive or home
+        :return: full path name of the requested folder
+        """
         value = self._config["folder"].get(key)
         if value:
             if value.startswith("/"):
