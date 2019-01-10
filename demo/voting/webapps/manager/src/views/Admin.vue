@@ -71,7 +71,6 @@
           </template>
         </v-data-table>
       </pnbi-datatable>
-
     </div>
   </pnbi-page>
 </template>
@@ -88,10 +87,9 @@ export default {
   },
   created () {},
   methods: {
-    ...mapActions(['fetchQuestions', 'setCurrentQuestion']),
+    ...mapActions(['fetchQuestions', 'setCurrentQuestion', 'deleteQuestion']),
     setDeleteItem (item) {
-      this.setCurrentQuestion(item)
-      this.deleteDialogOpen = true
+      this.deleteQuestion(item.session_id)
     },
     setCurrentItem (item) {
       this.setCurrentQuestion(item)
@@ -114,8 +112,7 @@ export default {
         align: 'right',
         text: 'Aktionen',
         sortable: false
-      }
-      ],
+      }],
       itemToDelete: null,
       deleteDialogOpen: false,
       newQuestionDialogOpen: false
@@ -123,15 +120,6 @@ export default {
   },
   computed: {
     ...mapGetters(['questions'])
-    /* ,
-            newQuestionDialogOpen: {
-              get: function (newVal) {
-                return this.internalNewQuestionDialogOpen
-              },
-              set: function (newVal) {
-                this.internalNewQuestionDialogOpen = newVal
-              }
-            } */
   }
 }
 
