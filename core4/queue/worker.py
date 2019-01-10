@@ -63,6 +63,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
     identifier. This identifier defaults to the hostname of the worker and must
     be unique across the cluster.
     """
+    kind = "worker"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -473,16 +474,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         CPU is computed via CPU-Utilization/(idle-time+io-wait) free RAM is in
         MB.
         """
-        ret = self.config.sys.worker.update_one(
-            {"_id": self.identifier},
-            update={
-                "$set": {
-                    "heartbeat": self.at
-                }
-            }
-        )
-        if ret.raw_result["n"] != 1:
-            raise RuntimeError("failed to update heartbeat")
         # psutil already accounts for idle and io-wait (idle and waiting for IO), we are not interested in both.
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),

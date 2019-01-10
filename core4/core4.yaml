@@ -63,6 +63,10 @@ job:
   tag: ~
   progress_interval: 5
 
+daemon:
+  heartbeat: 15
+  alive_timeout: 60
+
 # worker settings
 worker:
   virtual_environment_home: ~
@@ -76,7 +80,6 @@ worker:
     flag_jobs: 10.0
     collect_stats: 20.0
   stdout_ttl: 604800  # 7d
-  alive_timeout: 60
 
 scheduler:
   interval: 1

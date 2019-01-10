@@ -31,7 +31,7 @@ class CoreScheduler(CoreDaemon):
     Note that the scheduler keeps track of the last scheduling time and catches
     up with all missed enqueuing, e.g. if the scheduler was down.
     """
-
+    kind = "scheduler"
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.schedule = None

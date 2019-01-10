@@ -30,7 +30,7 @@ class QueryMixin:
 
         :return: dict
         """
-        timeout = self.config.worker.alive_timeout
+        timeout = self.config.daemon.alive_timeout
         cur = self.config.sys.worker.aggregate([
             {
                 "$match": {
