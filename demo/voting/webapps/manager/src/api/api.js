@@ -38,6 +38,14 @@ export default {
       })
       .catch(error => Promise.reject(error.response))
   },
+  deleteQuestion (sessionId) {
+    return axios
+      .delete(`/session/${sessionId}`, { params: addSecretToken({}) })
+      .then(result => {
+        return result.data
+      })
+      .catch(error => Promise.reject(error.response))
+  },
   startQuestion (sessionId) {
     return axios
       .post(`/start/${sessionId}`, addSecretToken({}))
