@@ -19,6 +19,7 @@ Usage:
   coco --mode
   coco --build
   coco --release
+  coco --who
   coco --version
 
 Options:
@@ -30,8 +31,9 @@ Options:
   -l --list       job listing
   -d --detail     job details
   -x --halt       immediate system halt
-  -h --help       Show this screen.
-  -v --version    Show version.
+  -h --help       show this screen.
+  -v --version    show version.
+  -o --who        show system information
   -y --yes        Assume yes on all requests.
 """
 
@@ -47,8 +49,9 @@ import core4
 import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
-import core4.queue.worker
 import core4.queue.scheduler
+import core4.queue.worker
+import core4.service.introspect.project
 import core4.service.project
 import core4.util.data
 import core4.util.node
@@ -324,6 +327,30 @@ def init(name, description, yes=False):
     core4.service.project.make_project(name, description, yes)
 
 
+def who():
+    intro = core4.service.introspect.project.CoreProjectInspector()
+    summary = intro.summary()
+    pprint(summary)
+    print("USER:")
+    print("    {:s}, GROUPS: {}".format(summary["user"]["name"],
+                                        ", ".join(summary["user"]["group"])))
+    print("UPTIME:")
+    print("    {} ({:1.0f} sec.)".format(summary["uptime"]["text"],
+                                         summary["uptime"]["epoch"]))
+    print("CONFIGURATION:")
+    print("    {}".format(
+        "\n    ".join(
+            ("file://" + f for f in summary["config"]["files"])
+        )
+    ))
+    if summary["config"]["database"]:
+        print("    mongodb://{}".format(summary["config"]["database"]))
+    print("MONGODB:")
+    print("    {}".format(summary["database"]))
+    print("DIRECTORIES:")
+    for k in ("home", "transfer", "process", "archive", "temp"):
+        print("    {:<8s}: {}".format(k, summary["folder"][k]))
+
 def main():
     args = docopt(__doc__, help=True, version=core4.__version__)
     if args["--halt"]:
@@ -363,9 +390,14 @@ def main():
         build()
     elif args["--release"]:
         release()
+    elif args["--who"]:
+        who()
     else:
         raise SystemExit("nothing to do.")
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    # from core4.logger.mixin import logon
+    # logon()
+    who()

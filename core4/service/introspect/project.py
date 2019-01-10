@@ -40,7 +40,7 @@ class CoreProjectInspector(CoreBase):
         else:
             info = conn.connection.server_info()
             if info["ok"] == 1:
-                return conn.info_url
+                return "mongodb://" + "/".join(conn.info_url.split("/")[:-1])
             return None
 
     def list_folder(self):

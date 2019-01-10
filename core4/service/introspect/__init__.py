@@ -241,6 +241,7 @@ class CoreIntrospector(core4.base.CoreBase):
             "built": None,
             "title": None,
             "description": None,
+            "filename": None
         }
         module, *_ = self._import_module(pkg)
         if module:
@@ -248,7 +249,8 @@ class CoreIntrospector(core4.base.CoreBase):
                 "version": getattr(module, "__version__", None),
                 "built": getattr(module, "__built__", None),
                 "title": getattr(module, "title", None),
-                "description": getattr(module, "description", None)
+                "description": getattr(module, "description", None),
+                "filename": module.__file__
             })
         return module, record
 
