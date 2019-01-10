@@ -330,26 +330,41 @@ def init(name, description, yes=False):
 def who():
     intro = core4.service.introspect.project.CoreProjectInspector()
     summary = intro.summary()
-    pprint(summary)
     print("USER:")
-    print("    {:s}, GROUPS: {}".format(summary["user"]["name"],
-                                        ", ".join(summary["user"]["group"])))
+    print("  {:s} IN {}".format(summary["user"]["name"],
+                                ", ".join(summary["user"]["group"])))
     print("UPTIME:")
-    print("    {} ({:1.0f} sec.)".format(summary["uptime"]["text"],
-                                         summary["uptime"]["epoch"]))
+    print("  {} ({:1.0f} sec.)".format(summary["uptime"]["text"],
+                                       summary["uptime"]["epoch"]))
     print("CONFIGURATION:")
-    print("    {}".format(
-        "\n    ".join(
+    print("  {}".format(
+        "\n  ".join(
             ("file://" + f for f in summary["config"]["files"])
         )
     ))
     if summary["config"]["database"]:
-        print("    mongodb://{}".format(summary["config"]["database"]))
+        print("  mongodb://{}".format(summary["config"]["database"]))
     print("MONGODB:")
-    print("    {}".format(summary["database"]))
+    print("  {}".format(summary["database"]))
     print("DIRECTORIES:")
     for k in ("home", "transfer", "process", "archive", "temp"):
-        print("    {:<8s}: {}".format(k, summary["folder"][k]))
+        print("  {:<9s} {}".format(k + ":", summary["folder"][k]))
+    print("PROJECTS:")
+    for project in sorted(summary["project"].keys()):
+        modules = {}
+        for mod in summary["project"][project]["project"]:
+            modules[mod["name"]] = mod
+        print("  {} ({}) with Python {}, pip {}".format(
+            modules[project]["name"], modules[project]["version"],
+            summary["project"][project]["python_version"],
+            summary["project"][project]["pip"],
+        ))
+        for mod in sorted(modules.keys()):
+            if mod != project:
+                print("    {} ({})".format(
+                    modules[mod]["name"], modules[mod]["version"]
+                ))
+
 
 def main():
     args = docopt(__doc__, help=True, version=core4.__version__)
@@ -397,7 +412,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    # from core4.logger.mixin import logon
-    # logon()
-    who()
+    main()
