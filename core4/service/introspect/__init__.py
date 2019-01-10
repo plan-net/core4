@@ -18,6 +18,7 @@ from pip import __version__ as pip_version
 import core4.api.v1.application
 import core4.base
 import core4.queue.job
+import core4.util.node
 
 try:
     from pip import main as pipmain
@@ -312,3 +313,4 @@ class CoreIntrospector(core4.base.CoreBase):
             "stderr": stderr
         }
         return mod, exception, stdout, stderr
+

@@ -96,17 +96,17 @@ def scheduler(name):
 def alive():
     rec = []
     mx = 0
-    cols = ["loop", "loop_time", "heartbeat", "_id"]
-    for doc in QUEUE.get_worker():
+    cols = ["loop", "loop_time", "heartbeat", "kind", "_id"]
+    for doc in QUEUE.get_daemon():
         mx = max(0, len(doc["_id"]))
         rec.append([str(doc[k]) for k in cols])
     if rec:
-        print("{:19s} {:19s} {:19s} {:s}".format(*cols))
-        print(" ".join(["-" * i for i in [19, 19, 19, mx]]))
+        print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*cols))
+        print(" ".join(["-" * i for i in [19, 19, 19, 9, mx]]))
     else:
         print("no worker.")
     for doc in rec:
-        print("{:19s} {:19s} {:19s} {:s}".format(*doc))
+        print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*doc))
 
 
 def info():
@@ -364,6 +364,9 @@ def who():
                 print("    {} ({})".format(
                     modules[mod]["name"], modules[mod]["version"]
                 ))
+    print("DAEMONS:")
+    for daemon in summary["daemon"]:
+        print("  {kind:s}: {_id:s} (pid: {pid:d})".format(**daemon))
 
 
 def main():

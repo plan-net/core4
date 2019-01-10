@@ -1,22 +1,25 @@
+import json
 import os
 
 import core4.error
-from core4.base.main import CoreBase
-from core4.service.introspect import CoreIntrospector
-from core4.const import VENV_PYTHON
 import core4.queue.main
-import json
 import core4.util.node
+from core4.base.main import CoreBase
+from core4.const import VENV_PYTHON
+from core4.service.introspect import CoreIntrospector
+from core4.queue.query import QueryMixin
+
 
 ITER_COMMAND = """
 from core4.service.introspect import CoreIntrospector
 print(CoreIntrospector().iter_all())
 """
 
+
 # todo: requires documentation
 # todo: refactor into CoreINtrospector
 
-class CoreProjectInspector(CoreBase):
+class CoreProjectInspector(CoreBase, QueryMixin):
 
     def initialise_object(self):
         self.mongo_url = None
@@ -73,6 +76,10 @@ class CoreProjectInspector(CoreBase):
             ret = json.loads(CoreIntrospector().iter_all())
             yield (self.project, ret)
 
+    def iter_daemon(self):
+        hostname = core4.util.node.get_hostname()
+        return self.get_daemon(hostname)
+
     def summary(self):
         uptime = core4.util.node.uptime()
         return {
@@ -86,6 +93,7 @@ class CoreProjectInspector(CoreBase):
             },
             "uptime": {
                 "epoch": uptime.total_seconds(),
-                "text": "%s" %(uptime)
-            }
+                "text": "%s" % (uptime)
+            },
+            "daemon": list(self.iter_daemon())
         }

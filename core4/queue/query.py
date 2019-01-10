@@ -14,16 +14,17 @@ import core4.util.node
 
 class QueryMixin:
 
-    def get_worker(self):
+    def get_daemon(self, hostname=None):
         """
-        Retrieves information about all workers alive. This includes
+        Retrieves information about all daemons alive. This includes
 
-        * ``_id`` - the identifier of the worker
-        * ``loop`` - the date/time when the working entered looping in UTC
-        * ``loop_time`` - the timedelta of the worker looping
+        * ``_id`` - the identifier of the daemon
+        * ``loop`` - the date/time when the daemon entered looping in UTC
+        * ``loop_time`` - the timedelta of the daemon looping
         * ``heartbeat`` - the timedelta of the last heartbeat
+        * ``kind`` - worker or scheduler
 
-        .. note:: Workers are considered alive, if their heartbeat is not older
+        .. note:: Daemons are considered alive, if their heartbeat is not older
                   then current date/time (all in UTC) plus the alive timeout.
                   The alive timeout can be configured by config section
                   ``alive.timeout``.
@@ -31,7 +32,16 @@ class QueryMixin:
         :return: dict
         """
         timeout = self.config.daemon.alive_timeout
-        cur = self.config.sys.worker.aggregate([
+        pipeline = []
+        if hostname is not None:
+            pipeline += [
+                {
+                    "$match": {
+                        "hostname": hostname
+                    }
+                }
+            ]
+        pipeline += [
             {
                 "$match": {
                     "heartbeat": {"$exists": True},
@@ -50,11 +60,14 @@ class QueryMixin:
             {
                 "$project": {
                     "heartbeat": 1,
-                    "loop": "$phase.loop"
+                    "loop": "$phase.loop",
+                    "kind": 1,
+                    "pid": 1
                 }
             },
-            {"$sort": {"_id": 1}}
-        ])
+            {"$sort": {"kind":1, "_id": 1}}
+        ]
+        cur = self.config.sys.worker.aggregate(pipeline)
         data = []
         for doc in cur:
             if doc["heartbeat"]:
