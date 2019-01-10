@@ -98,7 +98,7 @@ class CoreBase:
         module = sys.modules[project]
         # the following is a hack
         if not hasattr(module, "__project__"):
-            source = module.__file__
+            source = os.path.abspath(module.__file__)
         elif project == '__main__':
             source = sys.argv[0]
         else:
