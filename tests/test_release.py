@@ -15,6 +15,7 @@ import core4.service.project
 import core4.service.setup
 import core4.util
 
+curr_dir = os.path.abspath(os.curdir)
 
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
@@ -25,6 +26,7 @@ def reset(tmpdir):
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
     core4.logger.mixin.logon()
     yield
+    os.chdir(curr_dir)
     # run @once methods
     for i, j in core4.service.setup.CoreSetup.__dict__.items():
         if callable(j):
