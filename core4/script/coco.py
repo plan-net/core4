@@ -55,6 +55,7 @@ import core4.service.introspect.project
 import core4.service.project
 import core4.util.data
 import core4.util.node
+import core4.api.v1.tool
 from core4.service.operation.build import build, release
 
 ENQUEUE_COMMAND = """
@@ -104,7 +105,7 @@ def alive():
         print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*cols))
         print(" ".join(["-" * i for i in [19, 19, 19, 9, mx]]))
     else:
-        print("no worker.")
+        print("no daemon.")
     for doc in rec:
         print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*doc))
 
