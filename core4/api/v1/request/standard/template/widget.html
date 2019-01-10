@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ handler.__class__.__name__ }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="{{ default_static('widget/minimal.css') }}">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="#">Start Bootstrap</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+            aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home
+                        <span class="sr-only">(current)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <h1>{{ handler.__class__.__name__ }}</h1>
+
+    {% for widget in collection %}
+    <h2>
+        {{ widget["qual_name"] }}
+    </h2>
+    <blockquote>
+        {% raw widget["description"] %}
+        <ul>
+            <li>
+                project: {{ widget["project"] }}
+            </li>
+            <li>
+                author: {{ widget["author"] }}
+            </li>
+            <li>
+                version: {{ widget["version"] }}
+            </li>
+        </ul>
+        <blockquote>
+            {% for route in widget["route"] %}
+            <h3>
+                <a href="{{ route['enter_url'] }}">{{ route["pattern"] }}</a>
+            </h3>
+            <ul>
+                <li>
+                    title: {{ route["title"] }}
+                </li>
+                <li>
+                    arguments: {{ route["args"] }}
+                </li>
+                <li>
+                    rule ID: {{ route["route_id"] }}
+                </li>
+                <li>
+                    coutainer: {{ route["container"] }}
+                </li>
+                <li>
+                    icon: <i class="material-icons">{{ route["icon"] }}</i>
+                </li>
+                <li>
+                    <a href="{{ route['help_url'] }}">help</a>
+                </li>
+                <li>
+                    <a href="{{ route['card_url'] }}">card</a>
+                </li>
+            </ul>
+            {% end %}
+        </blockquote>
+    </blockquote>
+    <hr />
+    {% end %}
+
+    </ul>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+<script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U"
+    crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>

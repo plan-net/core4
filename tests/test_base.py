@@ -280,3 +280,8 @@ def test_message_format():
     assert b.format_args("hello %s", "world") == "hello world"
     assert b.format_args("hello %(name)s", name="world") == "hello world"
     assert b.format_args("hello %(name)s") == "hello %(name)s"
+
+
+def test_version():
+    base = core4.base.main.CoreBase()
+    assert base.version() == core4.__version__

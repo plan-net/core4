@@ -4,13 +4,17 @@ example by :mod:`core4.queue.worker` and :mod:`core4.queue.process`.
 """
 
 import importlib
+import os
+import subprocess
 import sys
 import traceback
-
-import pymongo.errors
 from datetime import timedelta
+
 import pymongo.collection
+import pymongo.errors
 import pymongo.write_concern
+from bson.objectid import ObjectId
+
 import core4.error
 import core4.service.setup
 import core4.util
@@ -25,6 +29,12 @@ STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
 STATE_STOPPED = (core4.queue.job.STATE_KILLED,
                  core4.queue.job.STATE_INACTIVE,
                  core4.queue.job.STATE_ERROR)
+
+VENV_PYTHON = ".venv/bin/python"
+RESTART_COMMAND = """
+from core4.queue.main import CoreQueue
+CoreQueue()._exec_restart("{job_id:s}")
+"""
 
 
 class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
@@ -86,15 +96,17 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         doc = job.serialise()
         try:
             ret = self.config.sys.queue.insert_one(doc)
-        except pymongo.errors.DuplicateKeyError as exc:
+        except pymongo.errors.DuplicateKeyError:
             raise core4.error.CoreJobExists(
                 "job [{}] exists with args {}".format(
                     job.qual_name(), job.args))
-        self.make_stat()
+        except:
+            raise
         job.__dict__["_id"] = ret.inserted_id
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
+        self.make_stat('enqueue_job', job._id)
         return job
 
     def job_factory(self, job, **kwargs):
@@ -258,17 +270,20 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        #self.make_stat()
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be remove at [%s]", _id, at)
+            self.make_stat('request_remove_job', _id)
             return True
         self.logger.error("failed to flag job [%s] to be remove", _id)
         return False
 
     def restart_job(self, _id):
         """
-        Requests to restart the job with the passed ``_id``.
+        Requests to restart the job with the passed ``_id``. After trying to
+        restart waiting jobs the method tries to start stopped jobs in the
+        same environment. In case of ``ImportError`` the method launches the
+        project environment and executes :meth:`._exec_restart`.
 
         .. note:: Jobs in waiting state (``deferred`` and ``failed``) are
                   restarted by resetting their ``query_at`` attribute. Jobs in
@@ -281,13 +296,25 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                   attribute linking the newly created job.
 
         :param _id: :class:`bson.object.ObjectId`
-        :return: ``True`` if the request succeeded, else ``False``
+        :return: ``_id`` of the restarted or new job or None in case of error
         """
         if self._restart_waiting(_id):
             self.logger.warning('successfully restarted [%s]', _id)
+            self.make_stat('restart_waiting', _id)
             return _id
         else:
-            new_id = self._restart_stopped(_id)
+            try:
+                new_id = self._restart_stopped(_id)
+            except ImportError:
+                doc = self.config.sys.queue.find_one(
+                    {"_id": _id}, projection=["name"])
+                if doc is None:
+                    raise core4.error.CoreJobNotFound(
+                        "job [{}] not found".format(_id))
+                new_id = self.exec_project(
+                    doc["name"], RESTART_COMMAND, job_id=str(doc["_id"]))
+            except:
+                raise
             if new_id:
                 self.logger.warning('successfully restarted [%s] '
                                     'with [%s]', _id, new_id)
@@ -297,7 +324,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 return None
 
     def _restart_waiting(self, _id):
-        # internal method used by .restart_job
+        # internal method used by .restart_job to reset .query_at
         ret = self.config.sys.queue.update_one(
             {
                 "_id": _id,
@@ -311,8 +338,12 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        #self.make_stat()
         return ret.modified_count == 1
+
+    def _exec_restart(self, _id):
+        # internal method used by virtual python interpreter to restart job
+        oid = ObjectId(_id)
+        print(self._restart_stopped(oid))
 
     def _restart_stopped(self, _id):
         # internal method used by .restart_job
@@ -330,7 +361,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                                            **doc)
                     job.enqueued["child_id"] = new_job._id
                     self.journal(job.serialise())
-                    self.make_stat()
+                    self.make_stat('restart_stopped', _id)
                     self.unlock_job(_id)
                     return new_job._id
         return None
@@ -357,7 +388,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        #self.make_stat()
+        self.make_stat('request_kill_job', _id)
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be killed at [%s]", _id, at)
@@ -502,7 +533,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         if ret.deleted_count != 1:
             raise RuntimeError(
                 "failed to remove job [{}] from queue".format(job._id))
-        self.make_stat()
+        self.make_stat('complete_job', job._id)
         self.unlock_job(job._id)
         job.logger.info("done execution with [complete] "
                         "after [%d] sec.", runtime)
@@ -531,7 +562,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "query_at", "trial")
-        self.make_stat()
+        self.make_stat('defer_job', job._id)
         self.unlock_job(job._id)
         job.logger.info("done execution with [deferred] "
                         "after [%d] sec. and [%s] to go: %s", runtime,
@@ -553,7 +584,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         runtime = self._finish(job, core4.queue.job.STATE_INACTIVE)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "trial")
-        self.make_stat()
+        self.make_stat('inactivate_job', job._id)
         self.unlock_job(job._id)
         job.logger.error("done execution with [inactive] "
                          "after [%d] sec. and [%d] trials in [%s]", runtime,
@@ -585,13 +616,19 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "attempts_left", "query_at", "trial")
-        self.make_stat()
+        self.make_stat('failed_job', job._id)
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] "
                          "after [%d] sec. and [%d] attempts to go: %s\n%s",
                          state, runtime, job.attempts_left,
                          job.last_error["exception"],
                          "\n".join(job.last_error["traceback"]))
+
+    def _exec_kill(self, _id):
+        # internal method used by virtual python interpreter to kill job
+        oid = ObjectId(_id)
+        job = self.load_job(oid)
+        self.set_killed(job)
 
     def set_killed(self, job, exception="JobKilledByWorker"):
         """
@@ -618,12 +655,12 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.__dict__["removed_at"] = None
         self._update_job(job, "state", "runtime", "locked",
                          "trial", "last_error", "removed_at")
-        self.make_stat()
+        self.make_stat('kill_job', job._id)
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
 
-    def make_stat(self):
+    def make_stat(self, event, *args):
         """
         Collects current job state counts from ``sys.queue`` and inserts a
         record into ``sys.stat``.
@@ -635,4 +672,39 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 write_concern=pymongo.write_concern.WriteConcern(w=0))
         state = self.get_queue_count()
         state["timestamp"] = core4.util.node.now().timestamp()
+        state['event'] = {'name': event, 'data': args}
         self.sys_stat.insert_one(state)
+
+    def exec_project(self, name, command, wait=True, *args, **kwargs):
+        """
+        Execute command using the Python interpreter of the project's virtual
+        environment.
+
+        :param name: qual_name to extract project name
+        :param command: Python commands to be executed
+        :param wait: wait and return STDOUT (``True``) or return immediately
+                     (defaults to ``False``).
+        :param args: to be injected using Python method ``.format``
+        :param kwargs: to be injected using Python method ``.format``
+
+        :return: STDOUT if ``wait is True``, else nothing is returned
+        """
+        project = name.split(".")[0]
+        home = self.config.folder.home
+        python_path = None
+        if home is not None:
+            python_path = os.path.join(home, project, VENV_PYTHON)
+            if not os.path.exists(python_path):
+                python_path = None
+        if python_path is None:
+            self.logger.warning("python not found at [%s], use fallback",
+                                python_path)
+            python_path = sys.executable
+        command = command.format(*args, **kwargs)
+        proc = subprocess.Popen([python_path, "-c", command],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if wait:
+            (stdout, stderr) = proc.communicate()
+            # if stderr:
+            #     raise ImportError(stderr.decode("utf-8").strip())
+            return stdout.decode("utf-8").strip()

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="{{ static_url('web/test.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ static_url('test.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ static_url('test1.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ default_static('default.css') }}">
+</head>
+<body>
+title: {{ handler.title }}
+
+web/test1.html
+
+<img src="{{ static_url('web/head.png') }}"/>
+<img src="{{ default_static('favicon.ico') }}"/>
+
+</body>
+</html>

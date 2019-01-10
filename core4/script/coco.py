@@ -1,10 +1,11 @@
 """
-coco - core control utililty.
+coco - core4 control utililty.
 
 Usage:
-  coco --init [PROJECT]
+  coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
+  coco --application [IDENTIFIER] [--port=PORT] [--filter=FILTER...]
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -16,6 +17,8 @@ Usage:
   coco --kill [ID | QUAL_NAME]...
   coco (--pause | --resume) [PROJECT]
   coco --mode
+  coco --build
+  coco --release
   coco --version
 
 Options:
@@ -29,8 +32,10 @@ Options:
   -x --halt       immediate system halt
   -h --help       Show this screen.
   -v --version    Show version.
+  -y --yes        Assume yes on all requests.
 """
 
+import datetime
 import json
 import re
 from pprint import pprint
@@ -43,11 +48,17 @@ import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
-import core4.queue.scheduler
 import core4.service.project
-import core4.util
 import core4.util.data
 import core4.util.node
+from core4.service.operation.build import build, release
+
+ENQUEUE_COMMAND = """
+from core4.queue.main import CoreQueue
+queue = CoreQueue()
+job = queue.enqueue("{qual_name:s}", {args:s})
+print(job._id)
+"""
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -62,6 +73,13 @@ def worker(name):
     w = core4.queue.worker.CoreWorker(name=name)
     print("start worker [%s]" % (w.identifier))
     w.start()
+
+
+def app(name, port, filter):
+    core4.logger.mixin.logon()
+    if port:
+        port = int(port)
+    core4.api.v1.tool.serve_all(name=name, port=port, filter=filter or None)
 
 
 def scheduler(name):
@@ -132,7 +150,6 @@ def listing(*state):
         kwargs["state"] = {
             "$in": filter
         }
-    header = False
     rec = []
     mx = 0
     for job in QUEUE.get_job_listing(**kwargs):
@@ -158,6 +175,12 @@ def listing(*state):
             job["attempts_left"] -= 1
         flag = "".join([k[0].upper() if job[k] else "." for k in
                         ["zombie_at", "wall_at", "removed_at", "killed_at"]])
+        if job["state"] == "running":
+            addon = core4.util.node.mongo_now() - job["started_at"]
+            runtime = addon.total_seconds()
+        else:
+            runtime = job["runtime"] or 0
+        runtime = datetime.timedelta(seconds=runtime)
         print(
             job["_id"],
             "{:8.8s}".format(job["state"]),
@@ -172,8 +195,7 @@ def listing(*state):
                 core4.util.data.utc2local(job["enqueued"]["at"]))),
             "{:11s}".format(str(core4.util.node.mongo_now() - (
                     job["enqueued"]["at"] or core4.util.node.mongo_now()))),
-            "{:11s}".format(str(core4.util.node.mongo_now() - (
-                    job["started_at"] or core4.util.node.mongo_now()))),
+            "{:11s}".format(str(runtime)),
             job["name"]
         )
 
@@ -226,10 +248,9 @@ def detail(*_id):
                 _id.append(job["_id"])
                 break
         else:
-            job = QUEUE.find_job(oid)
-            pprint(job.serialise())
-            stdout = QUEUE.get_job_stdout(job._id)
+            pprint(QUEUE.job_detail(oid))
             print("-" * 80)
+            stdout = QUEUE.get_job_stdout(oid)
             print("STDOUT:\n" + str(stdout))
             break
 
@@ -286,12 +307,20 @@ def enqueue(qual_name, *args):
                 raise json.JSONDecodeError("failed to parse %s" % (s), s, 0)
     else:
         data = {}
-    job = QUEUE.enqueue(name=qual_name[0], **data)
-    print(job._id)
+    try:
+        job_id = QUEUE.enqueue(name=qual_name[0], **data)._id
+    except ImportError:
+        stdout = QUEUE.exec_project(qual_name[0], ENQUEUE_COMMAND,
+                                    qual_name=qual_name[0],
+                                    args="**%s" % (str(data)))
+        job_id = stdout
+    except:
+        raise
+    print(job_id)
 
 
-def init(name):
-    core4.service.project.make_project(name)
+def init(name, description, yes=False):
+    core4.service.project.make_project(name, description, yes)
 
 
 def main():
@@ -300,6 +329,9 @@ def main():
         halt()
     elif args["--worker"]:
         worker(args["IDENTIFIER"])
+    elif args["--application"]:
+        print(args)
+        app(args["IDENTIFIER"], args["--port"], args["--filter"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
@@ -309,7 +341,7 @@ def main():
     elif args["--enqueue"]:
         enqueue(args["QUAL_NAME"], *args["ARGS"])
     elif args["--init"]:
-        init(args["PROJECT"])
+        init(args["PROJECT"], args["DESCRIPTION"], args["--yes"])
     elif args["--alive"]:
         alive()
     elif args["--info"]:
@@ -326,6 +358,10 @@ def main():
         detail(*args["ID"])
     elif args["--mode"]:
         mode()
+    elif args["--build"]:
+        build()
+    elif args["--release"]:
+        release()
     else:
         raise SystemExit("nothing to do.")
 

@@ -4,14 +4,13 @@ Helper tools :meth:`.serve`` and :meth:`.serve_all` with the underlying
 """
 import importlib
 
+import tornado.httpserver
 import tornado.routing
-from tornado.web import StaticFileHandler
+
 import core4.error
 import core4.service.introspect
-import core4.util
-from core4.api.v1.application import CoreApplication
-from core4.api.v1.request.default import DefaultHandler
-from core4.api.v1.request.static import CoreStaticFileHandler
+import core4.util.node
+from core4.api.v1.application import RootContainer
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
 
@@ -35,7 +34,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         routes = []
         roots = set()
-        for container_cls in args:
+        RootContainer.routes = {}
+        RootContainer.application = {}
+        for container_cls in list(args) + [RootContainer]:
             container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
             if not container_obj.enabled:
@@ -43,35 +44,46 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                                     container_obj.qual_name())
             if root in roots:
                 raise core4.error.Core4SetupError(
-                    "routing root [{}] duplicate with [{}]".format(
+                    "routing root [{}] already exists [{}]".format(
                         root, container_cls.qual_name())
                 )
-            tornado_app = container_obj.make_application()
+            self.logger.info("successfully registered container [%s]",
+                             container_cls.qual_name())
+            application = container_obj.make_application()
             routes.append(
                 tornado.routing.Rule(tornado.routing.PathMatches(
-                    root + ".*"), tornado_app)
+                    root + ".*"), application)
             )
             roots.add(root)
-        # add 404 root / project not found handler
-        nf_app = CoreApplication(
-            [
-                (
-                    r'/(favicon.ico)',
-                    CoreStaticFileHandler,
-                    {"path": "./request/_static"
-                }),
-                tornado.routing.Rule(
-                    tornado.routing.AnyMatches(), DefaultHandler
-                ),
-            ],
-            self)
-        routes.append(tornado.routing.Rule(tornado.routing.AnyMatches(),
-                                           nf_app))
-        # favicon handler
-
         return tornado.routing.RuleRouter(routes)
 
-    def serve(self, *args, port=None, name=None, reuse_port=True, **kwargs):
+    def register(self, protocol, address, port):
+        hostname = core4.util.node.get_hostname()
+        url = "%s://%s:%d/" % (protocol, address or hostname, port)
+        now = core4.util.node.mongo_now()
+        doc = {
+            "_id": url,
+            "hostname": hostname,
+            "protocol": protocol,
+            "address": address,
+            "port": port
+        }
+        self.config.sys.app.update_one(
+            doc,
+            update={
+                "$setOnInsert": {
+                    "created": now,
+                },
+                "$set": {
+                    "updated": now,
+                    "visited": None,
+                }
+            },
+            upsert=True)
+        self.logger.info("registered [%s]", url)
+
+    def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
+              **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -79,6 +91,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param args: one or more :class:`CoreApiContainer` classes
         :param port: to listen, defaults to ``5001``, see core4 configuration
                      setting ``api.port``
+        :param address: IP address or hostname.  If it's a hostname, the server
+                        will listen on all IP addresses associated with the
+                        name.  Address may be an empty string or None to listen
+                        on all  available interfaces.
         :param name: to identify the server
         :param reuse_port: tells the kernel to reuse a local socket in
                            ``TIME_WAIT`` state, defaults to ``True``
@@ -90,25 +106,27 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         setup = core4.service.setup.CoreSetup()
         setup.make_all()
 
-        self.router = self.make_routes(*args, **kwargs)
         http_args = {}
         cert_file = self.config.api.crt_file
         key_file = self.config.api.key_file
+        proto = "http"
         if cert_file and key_file:
             self.logger.info("securing server with [%s]", cert_file)
             http_args["ssl_options"] = {
                 "certfile": cert_file,
                 "keyfile": key_file,
             }
+            proto = "https"
+
+        port = port or self.config.api.port
+        self.router = self.make_routes(*args, **kwargs)
 
         server = tornado.httpserver.HTTPServer(self.router, **http_args)
-        port = port or self.config.api.port
-        server.bind(port, reuse_port=reuse_port)
+        server.bind(port, address=address, reuse_port=reuse_port)
         server.start()
-        self.logger.info(
-            "open %ssecure socket on port [%d]",
-            "" if http_args.get("ssl_options") else "NOT ", port)
-
+        self.register(proto, address, port)
+        self.logger.info("open %ssecure socket on port [%d]",
+                         "" if http_args.get("ssl_options") else "NOT ", port)
         try:
             tornado.ioloop.IOLoop().current().start()
         except KeyboardInterrupt:
@@ -117,8 +135,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         except:
             raise
 
-    def serve_all(self, filter=None, port=None, reuse_port=True, name=None,
-                  **kwargs):
+    def serve_all(self, filter=None, port=None, address=None, name=None,
+                  reuse_port=True, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -127,6 +145,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                        :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
         :param port: to listen, defaults to ``5001``, see core4 configuration
                      setting ``api.port``
+        :param address: IP address or hostname.  If it's a hostname, the server
+                        will listen on all IP addresses associated with the
+                        name.  Address may be an empty string or None to listen
+                        on all  available interfaces.
         :param reuse_port: tells the kernel to reuse a local socket in
                            ``TIME_WAIT`` state, defaults to ``True``
         :param name: to identify the server
@@ -145,6 +167,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             if filter is None:
                 scope.append(api)
             else:
+                if not isinstance(filter, list):
+                    filter = [filter]
                 for f in filter:
                     if api["name"].startswith(f):
                         scope.append(api)
@@ -157,11 +181,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             cls = getattr(module, clsname)
             self.logger.debug("added [%s]", api["name"])
             clist.append(cls)
-        self.serve(*clist, port=port, name=name, reuse_port=reuse_port,
-                   **kwargs)
+        self.serve(*clist, port=port, name=name, address=address,
+                   reuse_port=reuse_port, **kwargs)
 
 
-def serve(*args, port=None, name=None, reuse_port=True, **kwargs):
+def serve(*args, port=None, address=None, name=None, reuse_port=True,
+          **kwargs):
     """
     Serve one or multiple :class:`.CoreApiContainer` classes.
 
@@ -207,16 +232,21 @@ def serve(*args, port=None, name=None, reuse_port=True, **kwargs):
 
     :param args: class dervived from :class:`.CoreApiContainer`
     :param port: to serve, defaults to core4 config ``api.port``
+    :param address: IP address or hostname.  If it's a hostname, the server
+                    will listen on all IP addresses associated with the name.
+                    Address may be an empty string or None to listen on all
+                    available interfaces.
     :param name: to identify the server, defaults to hostname
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
-    CoreApiServerTool().serve(*args, port=port, name=name,
+    CoreApiServerTool().serve(*args, port=port, address=address, name=name,
                               reuse_port=reuse_port, **kwargs)
 
 
-def serve_all(*filter, port=None, name=None, reuse_port=True, **kwargs):
+def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
+              **kwargs):
     """
     Serve all enabled core :class:`.CoreApiContainer` classes.
 
@@ -231,14 +261,23 @@ def serve_all(*filter, port=None, name=None, reuse_port=True, **kwargs):
                    :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
                    of the :class:`.CoreApiContainer` to be served.
     :param port: to serve, defaults to core4 config ``api.port``
+    :param address: IP address or hostname.  If it's a hostname, the server
+                    will listen on all IP addresses associated with the name.
+                    Address may be an empty string or None to listen on all
+                    available interfaces.
     :param name: to identify the server, defaults to hostname
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
-    CoreApiServerTool().serve_all(*filter, port=port, name=name,
-                                  reuse_port=reuse_port, **kwargs)
+    CoreApiServerTool().serve_all(filter, port, address, name, reuse_port,
+                                  **kwargs)
 
 
 if __name__ == '__main__':
-    serve_all()
+    # from core4.service.introspect import CoreIntrospector
+    # intro = CoreIntrospector()
+    # for pro in intro.iter_project():
+    #     print(pro)
+    serve_all(filter=["project.api",  # "core4",
+                      "example"])  # , name=sys.argv[1], port=int(sys.argv[2]))

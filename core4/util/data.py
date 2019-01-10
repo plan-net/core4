@@ -2,13 +2,40 @@
 General purpose data management helpers.
 """
 import json
+import re
+import textwrap
+from io import StringIO
 
 import bson.objectid
 import datetime
+import docutils.parsers.rst.directives.body
+import docutils.parsers.rst.roles
 import numpy as np
 import pandas as pd
+import sphinx.ext.napoleon
+from docutils import core
+from docutils.parsers.rst.directives import register_directive
 
 LOCAL_TZ = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+NAPOLEON = sphinx.ext.napoleon.Config(
+    napoleon_use_param=False,
+    napoleon_use_rtype=True,
+    napoleon_google_docstring=True,
+    napoleon_numpy_docstring=False,
+    napoleon_include_init_with_doc=True,
+    napoleon_include_private_with_doc=True,
+    napoleon_include_special_with_doc=True,
+    napoleon_use_admonition_for_examples=False,
+    napoleon_use_admonition_for_notes=True,
+    napoleon_use_admonition_for_references=True,
+    napoleon_use_ivar=True,
+    napoleon_use_keyword=True
+)
+
+register_directive("method", docutils.parsers.rst.directives.body.Rubric)
+for role in ("exc", "meth", "mod", "class", "ref", "doc", "attr"):
+    docutils.parsers.rst.roles.register_local_role(
+        role, docutils.parsers.rst.roles.generic_custom_role)
 
 
 def dfutc2local(col):
@@ -125,3 +152,18 @@ def json_decode(value, **kwargs):
     if value:
         return json.loads(value, **kwargs)
     return None
+
+
+def rst2html(doc):
+    dedent = textwrap.dedent(doc)
+    google = sphinx.ext.napoleon.GoogleDocstring(
+        docstring=dedent, config=NAPOLEON)
+    err = StringIO()
+    parts = core.publish_parts(source=str(google), writer_name="html",
+                               settings_overrides=dict(warning_stream=err))
+    err.seek(0)
+    errors = [line for line in err.read().split("\n") if line.strip()]
+    return {
+        'error': errors,
+        'body': parts['fragment']
+    }

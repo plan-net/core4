@@ -14,6 +14,9 @@ class ProfileHandler(CoreRequestHandler):
         """
         User and role details for the current logged in user.
 
+        Methods:
+            GET / - get current user details
+
         Parameters:
             None
 
@@ -78,6 +81,37 @@ class ProfileHandler(CoreRequestHandler):
         self.reply(doc)
 
     async def put(self):
+        """
+        Update user data, i.e. email, real name and password.
+
+        Methods:
+            PUT / - udpdate current user data
+
+        Parameters:
+            etag (str): to handle concurrency
+            email (str): new email
+            realname (str): new real name
+            password (str): new password
+
+        Returns:
+            data element with ``no changes`` (str) or updated user data, see
+            :meth:`.get`.
+
+        Raises:
+            400 Bad Request: AttributeError
+            400 Bad Request: TypeError
+            400 Bad Request: name or email exists
+            404 Bad Request: role not found
+            404 Bad Request: update with etag failed
+            401 Unauthorized:
+            500 Gateway Error: unknown user
+
+        Examples:
+            >>> from requests import put
+            >>> url = "http://localhost:5001/core4/api/v1"
+            >>> signin = post(url + "/login", json={"username": "admin", "password": "hans"})
+            >>> put(url + "/profile?etag=5bd9a6b0de8b6925021dc2b9&realname=Humphrey", cookies=signin.cookies).json()
+        """
         user = await CoreRole().find_one(name=self.current_user)
         if user is None:
             raise Core4RoleNotFound("unknown user [{}]".format(

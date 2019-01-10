@@ -43,7 +43,8 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/m-rau/core4",
-    packages=find_packages(exclude=['docs', 'tests*', 'project']),
+    packages=find_packages(exclude=['docs', 'tests*', 'project', 'demo',
+                                    'example', 'other']),
     package_data={
         '':
             ["core4.yaml"]
@@ -53,14 +54,13 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'coco=core4.script.coco:main'
+            'coco=core4.script.coco:main',
+            'chist=core4.script.chist:main',
         ],
     },
     install_requires=[
         "pymongo>=3.7",
         "python-dateutil>=2.7",
-        "Flask>=1.0",
-        "Flask-Login>=0.4",
         "PyYaml>=3.12",
         "psutil>=5.4",
         "docopt>=0.6",
@@ -71,7 +71,10 @@ setup(
         "pandas>=0.23",
         "motor>=2.0",
         "passlib>=1.7",
-        "python-magic>=0.4"
+        "python-magic>=0.4",
+        "docutils>=0.14",
+        "Sphinx==1.8.2",
+        "sh==1.12.14"
     ],
     extras_require={
         "tests": [
@@ -80,7 +83,6 @@ setup(
             "pytest-runner",
             "requests",
             "coverage",
-            "Sphinx",
             "sphinx-rtd-theme"
         ]
     },

@@ -1,139 +1,78 @@
 """
 core4 :class:`.CoreStaticFileHandler`, based on :mod:`tornado`
-:class:`StaticFileHandler <tornado.web.StaticFileHandler>`.
+:class:`StaticFileHandler <tornado.web.StaticFileHandler>` and
+:class:`.CoreBaseHandler`.
 
 """
 import os
-import sys
 
-import magic
-from tornado import gen
-from tornado.web import HTTPError, StaticFileHandler
+from tornado.web import StaticFileHandler
 
-from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.main import CoreBaseHandler, CoreEtagMixin
 
-#: default HTML filename
 DEFAULT_FILENAME = "index.html"
 
 
-class CoreStaticFileHandler(CoreRequestHandler, StaticFileHandler):
+class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
     """
-    In contrast to torando's :class:`StaticFileHandler` this handler serves
-    HTML and asset files from a directory *and* processes variables.
-
-    By default the handler is unprotected. The default HTML file name is
-    ``index.html`` (see :attr:`DEFAULT_FILENAME`)
+    core4 static file handler extends argument parsing with
+    :class:`.CoreApiContainer` and processes the
     """
+    SUPPORTED_METHODS = ("GET", "HEAD", "OPTIONS", "XCARD", "XHELP", "POST")
+    propagate = ("protected", "title", "author", "tag", "static_path",
+                 "icon", "default_filename")
 
-    protected = False
-    path = ""
+    title = "core4 static file handler"
+    author = "mra"
+    path = None
+    default_filename = DEFAULT_FILENAME
 
     def __init__(self, *args, **kwargs):
-        CoreRequestHandler.__init__(self, *args, **kwargs)
+        CoreBaseHandler.__init__(self, *args, **kwargs)
+        if "path" not in kwargs:
+            kwargs["path"] = self.path
         StaticFileHandler.__init__(self, *args, **kwargs)
 
-    def compute_etag(self):
-        """
-        Skipps ETag calculation for variables injected files`
+    def initialize(self, path=None, default_filename=None, *args,
+                   **kwargs):
+        path = path or self.path or ""
+        default_filename = default_filename or self.default_filename
+        StaticFileHandler.initialize(self, path, default_filename)
+        for attr, value in self.propagate_property(self, kwargs):
+            self.__dict__[attr] = value
+        if issubclass(self.__class__, CoreStaticFileHandler):
+            parent = self.application.container
+        else:
+            parent = self
+        if path.startswith("/"):
+            base = parent.project_path()
+            path = path[1:]
+        else:
+            base = parent.pathname()
+        self.root = os.path.join(base, path)
 
-        :return: result of inheritied method or None for variables' injected
-                 files
-        """
-        if self.return_etag:
-            return super().compute_etag()
-        return None
+    @classmethod
+    def get_absolute_path(cls, root, path):
+        """Returns the absolute location of ``path`` relative to ``root``.
 
-    async def verify_access(self):
+        ``root`` is the path configured for this `CoreStaticFileHandler`.
         """
-        There are no additional authorization requirements for static content.
-
-        :return: ``True``
-        """
-        return True
-
-    def initialize(self, path=None, default_filename=DEFAULT_FILENAME,
-                   inject=None, protected=None):
-        """
-        Processes all parameters passed in :class:`.CoreApiContainer` ``rules``
-        specification.
-
-        :param path: source directory
-        :param default_filename: HTML filename, defaults to
-                                 :attr:`DEFAULT_FILENAME`
-        :param inject: dict of variables inject
-        :param protected: requires authenticated users (``True``), defaults to
-                          ``False``
-        """
-        mod_file = sys.modules[self.application.container.__module__].__file__
-        mod_dir = os.path.dirname(mod_file)
         if path is None:
-            path = self.path
-        if not path.startswith(os.sep):
-            path = os.path.join(mod_dir, path)
-        self.root = os.path.abspath(path)
-        if not self.root.endswith(os.path.sep):
-            self.root += os.path.sep
-        self.default_filename = default_filename
-        self.variable = inject
-        self.return_etag = False
-        self.protected = protected or self.protected
+            path = ""
+        return super().get_absolute_path(root, path)
 
-    def head(self, path):
+    def post(self, *args, **kwargs):
         """
-        Process client's ``HEAD`` requiest
+        On top of the regular ``GET`` method the :class:`CoreStaticFileHandler`
+        implements ``POST`` to enter the landing page of the handler. See
+        :meth:`.CoreApplication.find_handler`.
 
-        :param path: source file
-        :return: result of :meth:`.get` without body
         """
-        return self.get(path, include_body=False)
-
-    def get_template_namespace(self):
-        """
-        Extend :mod:`tornado` namespace with
-        :meth:`url <core4.api.v1.application.CoreApiContainer.url`.
-
-        :return: dict with namespace
-        """
-        namespace = super().get_template_namespace()
-        namespace["url"] = self.application.container.url
-        return namespace
-
-    def get_variable(self):
-        """
-        Overwrite this method to inject additional variables to all source
-        files.
-
-        :return: empty dict by default
-        """
-        return {}
-
-    @gen.coroutine
-    def get(self, path, include_body=True):
-        """
-        Determine absolute path and MIME type of source file and use
-        :meth:`.render` to inject variables from :meth:`.initialize` and from
-        :meth:`.get_variable`.
-
-        :param path: source file
-        :param include_body: deliver body, defaults to ``True``
-        """
-        abspath = os.path.join(self.root, path)
-        if abspath.startswith(self.root):
-            if os.path.isdir(abspath):
-                abspath = os.path.join(abspath, self.default_filename)
-            if os.path.exists(abspath):
-                self.absolute_path = abspath
-                if include_body:
-                    mimetype = magic.Magic(mime=True).from_file(abspath)
-                    if mimetype == "text/html":
-                        variable = self.variable or {}
-                        variable.update(self.get_variable())
-                        self.render(abspath, **variable)
-                    else:
-                        self.return_etag = True
-                        yield super().get(path, include_body)
-                    return
-                else:
-                    assert self.request.method == "HEAD"
-                    return
-        raise HTTPError(404, abspath)
+        parts = self.request.path.split("/")
+        md5_route_id = parts[-1]
+        ret = self.application.find_md5(md5_route_id)
+        if ret is None:
+            return self.redirect("/")
+        (app, container, pattern, cls, *args) = ret
+        self.logger.info("redirecting to [%s]", pattern)
+        return self.redirect(pattern or "/")

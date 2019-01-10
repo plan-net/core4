@@ -19,7 +19,7 @@ from core4.util.data import parse_boolean
 CONFIG_EXTENSION = ".yaml"
 STANDARD_CONFIG = pkg_resources.resource_filename(
     "core4", "core4" + CONFIG_EXTENSION)
-USER_CONFIG = os.path.expanduser("~/core4/local" + CONFIG_EXTENSION)
+USER_CONFIG = os.path.expanduser("~/.core4/local" + CONFIG_EXTENSION)
 SYSTEM_CONFIG = "/etc/core4/local" + CONFIG_EXTENSION
 ENV_PREFIX = "CORE4_OPTION_"
 DEFAULT = "DEFAULT"

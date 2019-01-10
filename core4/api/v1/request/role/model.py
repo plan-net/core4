@@ -134,8 +134,16 @@ class CoreRole(CoreBase):
         :param plain: clear text password
         :return: ``True`` if the role is active and the password matches
         """
-        return (self.is_active
-                and core4.util.crypt.pwd_context.verify(plain, self.password))
+        if self.is_active:
+            try:
+                return core4.util.crypt.pwd_context.verify(
+                    plain, self.password)
+            except ValueError:
+                return False
+            except:
+                raise
+        return False
+
 
     def _check_user(self):
         """
@@ -418,13 +426,37 @@ class CoreRole(CoreBase):
         self.data["etag"].set(None)
         return True
 
-    def has_job_access(self, qual_name):
-        # todo: requires implementation
-        pass
+    async def _job_access(self, qual_name, access):
+        # verify access (r|x) to the passed qual_name
+        if await self.is_admin():
+            return True
+        for p in await self.casc_perm():
+            (*proto, qn, acc) = p.split("/")
+            if proto[0] == "job:":
+                if re.match(qn, qual_name):
+                    if acc.lower() in access:
+                        return True
+        return False
 
-    def has_job_exec_access(self, qual_name):
-        # todo: requires implementation
-        pass
+    async def has_job_access(self, qual_name):
+        """
+        Verify read/execute access to the passed job ``qual_name``
+        :param qual_name: of the job
+
+        :return: ``True`` if the user has access, else ``False``
+        """
+        return await self._job_access(
+            qual_name, (JOB_EXECUTION_RIGHT, JOB_READ_RIGHT))
+
+    async def has_job_exec_access(self, qual_name):
+        """
+        Verify execute access to the passed job ``qual_name``
+
+        :param qual_name: of the job
+        :return: ``True`` if the user has access, else ``False``
+        """
+        return await self._job_access(
+            qual_name, (JOB_EXECUTION_RIGHT))
 
     async def is_admin(self):
         """

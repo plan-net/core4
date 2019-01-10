@@ -59,7 +59,7 @@ def http():
 
 
 def test_server_test(http):
-    rv = http.get("/profile")
+    rv = http.get("/core4/api/v1/profile", base=False)
     assert rv.status_code == 200
 
 

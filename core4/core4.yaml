@@ -5,20 +5,22 @@ DEFAULT:
 
 # system collections
 sys:
+  admin: !connect mongodb://admin/dummy
+  app: !connect mongodb://sys.app
   conf: ~
   cookie: !connect mongodb://sys.cookie
-  log: !connect mongodb://sys.log
-  role: !connect mongodb://sys.role
-  quota: !connect mongodb://sys.quota
-  admin: !connect mongodb://admin/dummy
-  queue: !connect mongodb://sys.queue
-  journal: !connect mongodb://sys.journal
-  worker: !connect mongodb://sys.worker
+  handler: !connect mongodb://sys.handler
   job: !connect mongodb://sys.job
+  journal: !connect mongodb://sys.journal
   lock: !connect mongodb://sys.lock
-  stdout: !connect mongodb://sys.stdout
+  log: !connect mongodb://sys.log
+  queue: !connect mongodb://sys.queue
+  quota: !connect mongodb://sys.quota
+  role: !connect mongodb://sys.role
   stat: !connect mongodb://sys.stat
+  stdout: !connect mongodb://sys.stdout
   userdb: user!
+  worker: !connect mongodb://sys.worker
 
 # system folders
 folder:
@@ -27,6 +29,7 @@ folder:
   process: proc
   archive: arch
   temp: temp
+  home: ~
 
 # logging setup
 logging:
@@ -87,8 +90,11 @@ api:
   key_file: ~
   allow_origin: "*"
   port: 5001
-  error_html_page: ./_static/error.html
-  error_text_page: ./_static/error.txt
+  default_static: api/v1/request/_static
+  error_html_page: standard/template/error.html
+  error_text_page: standard/template/error.txt
+  card_html_page: standard/template/card.html
+  help_html_page: standard/template/help.html
   contact: mail@mailer.com
   reset_password:
     expiration: 28800  # 8h
@@ -100,3 +106,10 @@ api:
   admin_username: admin
   admin_realname: admin user
   admin_password: hans  # must be set
+  user_rolename: standard_user
+  user_realname: standard user group
+  user_permission:
+    - api://core4.api.v1.request.standard.*
+  verify_ssl: True
+
+core4_origin: git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env

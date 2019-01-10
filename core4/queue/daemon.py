@@ -83,6 +83,27 @@ class CoreDaemon(CoreBase):
 
         .. warning:: please note that the ``.identifier`` of the daemon must
                      not exist.
+
+        The meta data stored with each daemon is::
+
+        {
+            "_id" : "<identifier>",
+            "heartbeat" : <isoformat>,
+            "phase" : {
+                "startup" : <isoformat>,
+                "loop" : <isoformat>
+            },
+            "project" : {
+                "project" : {
+                    "built" : <isoformat>,
+                    "name" : "<str>",
+                    "description" : "<str>",
+                    "title" : "<str>",
+                    "version" : "<str>"
+                },
+                ...
+            }
+        }
         """
         self.config.sys.worker.update_one(
             {"_id": self.identifier},
@@ -183,7 +204,7 @@ class CoreDaemon(CoreBase):
                 if in_maintenance:
                     in_maintenance = False
                     self.logger.info("leaving maintenance")
-                self.at = core4.util.node.now()
+                self.at = core4.util.node.mongo_now()
                 self.run_step()
             time.sleep(self.wait_time)
 
