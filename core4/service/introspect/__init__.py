@@ -7,18 +7,18 @@ core4 package, module, project, job and API meta data collector.
 import importlib
 import inspect
 import io
+import json
 import os
 import pkgutil
 import sys
 import traceback
-import json
+
+from pip import __version__ as pip_version
 
 import core4.api.v1.application
 import core4.base
 import core4.queue.job
-from core4.util.tool import Singleton
 
-from pip import __version__ as pip_version
 try:
     from pip import main as pipmain
 except ImportError:
@@ -85,8 +85,9 @@ class CoreIntrospector(core4.base.CoreBase):
             yield (name, version or None)
 
     def get_python_version(self):
-        return float(
-            "%d.%d" % (sys.version_info.major, sys.version_info.minor))
+        return "%d.%d.%d" % (
+            sys.version_info.major, sys.version_info.minor,
+            sys.version_info.micro)
 
     def iter_project(self):
         """
@@ -211,12 +212,13 @@ class CoreIntrospector(core4.base.CoreBase):
         self._project = []
         for pkg in pkgutil.iter_modules():
             if pkg[2]:
-                self.logger.debug("work [%s]", pkg[1])
+                self.logger.debug("work [%s]", pkg[0])
                 try:
                     filename = os.path.abspath(
                         os.path.join(pkg[0].path, pkg[1], "__init__.py"))
                 except:
-                    self.logger.warning("silently ignored package [%s]", pkg[1])
+                    self.logger.warning("silently ignored package [%s]",
+                                        pkg[1])
                 else:
                     with open(filename, "r", encoding="utf-8") as fh:
                         body = fh.read()
@@ -310,4 +312,3 @@ class CoreIntrospector(core4.base.CoreBase):
             "stderr": stderr
         }
         return mod, exception, stdout, stderr
-
