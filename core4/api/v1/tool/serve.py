@@ -1,18 +1,17 @@
-"""
-Helper tools :meth:`.serve`` and :meth:`.serve_all` with the underlying
-:class:`.CoreApiServerTool`.
-"""
 import importlib
 
 import tornado.httpserver
 import tornado.routing
+from tornado import gen
 
+import core4.const
 import core4.error
-import core4.service.introspect
+import core4.service
 import core4.util.node
 from core4.api.v1.application import RootContainer
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
+from core4.util.data import rst2html
 
 
 class CoreApiServerTool(CoreBase, CoreLoggerMixin):
@@ -57,33 +56,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             roots.add(root)
         return tornado.routing.RuleRouter(routes)
 
-    def register(self, protocol, address, port):
-        hostname = core4.util.node.get_hostname()
-        url = "%s://%s:%d/" % (protocol, address or hostname, port)
-        now = core4.util.node.mongo_now()
-        doc = {
-            "_id": url,
-            "hostname": hostname,
-            "protocol": protocol,
-            "address": address,
-            "port": port
-        }
-        self.config.sys.app.update_one(
-            doc,
-            update={
-                "$setOnInsert": {
-                    "created": now,
-                },
-                "$set": {
-                    "updated": now,
-                    "visited": None,
-                }
-            },
-            upsert=True)
-        self.logger.info("registered [%s]", url)
-
+    # todo: routing requires documentation
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
-              **kwargs):
+              routing=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -100,33 +75,44 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                            ``TIME_WAIT`` state, defaults to ``True``
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
-        self.identifier = name or core4.util.node.get_hostname()
         self.setup_logging()
-
         setup = core4.service.setup.CoreSetup()
         setup.make_all()
+
+        name = name or "app"
+        self.identifier = "@".join([name, core4.util.node.get_hostname()])
+        self.hostname = core4.util.node.get_hostname()
+        self.port = port or self.config.api.port
+        self.address = address or self.hostname
 
         http_args = {}
         cert_file = self.config.api.crt_file
         key_file = self.config.api.key_file
-        proto = "http"
         if cert_file and key_file:
             self.logger.info("securing server with [%s]", cert_file)
             http_args["ssl_options"] = {
                 "certfile": cert_file,
                 "keyfile": key_file,
             }
-            proto = "https"
+            self.protocol = "https"
+        else:
+            self.protocol = "http"
 
-        port = port or self.config.api.port
+        self.routing = routing or "%s:%d" % (self.address, self.port)
+        self.routing = self.protocol + "://" + self.routing
+        if self.routing.endswith("/"):
+            self.routing = self.routing[:-1]
+
         self.router = self.make_routes(*args, **kwargs)
 
         server = tornado.httpserver.HTTPServer(self.router, **http_args)
-        server.bind(port, address=address, reuse_port=reuse_port)
+        server.bind(self.port, address=self.address, reuse_port=reuse_port)
         server.start()
-        self.register(proto, address, port)
         self.logger.info("open %ssecure socket on port [%d]",
-                         "" if http_args.get("ssl_options") else "NOT ", port)
+                         "" if http_args.get("ssl_options") else "NOT ",
+                         self.port)
+        self.register()
+        tornado.ioloop.IOLoop.current().spawn_callback(self.heartbeat)
         try:
             tornado.ioloop.IOLoop().current().start()
         except KeyboardInterrupt:
@@ -134,6 +120,83 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             raise SystemExit()
         except:
             raise
+        finally:
+            self.unregister()
+
+    async def heartbeat(self):
+        startup = core4.util.node.mongo_now()
+        sys_worker = self.config.sys.worker.connect_async()
+        sleep = self.config.daemon.heartbeat
+        await sys_worker.update_one(
+            {"_id": self.routing},
+            update={"$set": {
+                "heartbeat": None,
+                "hostname": self.hostname,
+                "protocol": self.protocol,
+                "address": self.address,
+                "port": self.port,
+                "kind": "app",
+                "pid": core4.util.node.get_pid()
+            }},
+            upsert=True
+        )
+        while True:
+            self.logger.debug("heartbeating")
+            nxt = gen.sleep(sleep)
+            doc = await sys_worker.find_one(
+                {"_id": "__halt__", "timestamp": {"$gte": startup}})
+            if doc is not None:
+                self.logger.debug("stop IOLoop now")
+                break
+            await sys_worker.update_one(
+                {"_id": self.routing},
+                {"$set": {"heartbeat": core4.util.node.mongo_now()}})
+            await nxt
+        await sys_worker.delete_one({"_id": self.routing})
+        tornado.ioloop.IOLoop.current().stop()
+
+    def register(self):
+        """
+        * routing
+        * pattern == route_id
+
+        :return:
+        """
+        self.logger.info("registering server [%s]", self.routing)
+        self.reset_handler()
+        coll = self.config.sys.handler
+        for md5_route, rule in RootContainer.routes.items():
+            (app, container, pattern, cls, *args) = rule
+            html = rst2html(str(cls.__doc__))
+            doc = dict(
+                routing=self.routing,
+                route_id=md5_route,
+                pattern=pattern,
+                args=str(args),
+                author=cls.author,
+                container=container.qual_name(),
+                description=html["body"],
+                error=html["error"],
+                hostname=self.hostname,
+                port=self.port,
+                icon=cls.icon,
+                project=cls.get_project(),
+                protected=cls.protected,
+                protocol=self.protocol,
+                qual_name=cls.qual_name(),
+                tag=cls.tag,
+                title=cls.title,
+                version=cls.version(),
+            )
+            coll.insert_one(doc)
+
+    def reset_handler(self):
+        self.config.sys.handler.delete_many(
+            {"hostname": self.hostname, "port": self.port})
+
+    def unregister(self):
+        self.logger.info("unregistering server [%s]", self.routing)
+        self.reset_handler()
 
     def serve_all(self, filter=None, port=None, address=None, name=None,
                   reuse_port=True, **kwargs):
@@ -183,101 +246,3 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             clist.append(cls)
         self.serve(*clist, port=port, name=name, address=address,
                    reuse_port=reuse_port, **kwargs)
-
-
-def serve(*args, port=None, address=None, name=None, reuse_port=True,
-          **kwargs):
-    """
-    Serve one or multiple :class:`.CoreApiContainer` classes.
-
-    Additional keyword arguments are passed to the
-    :class:`tornado.web.Application` object. Good to know keyword arguments
-    with their default values from core4 configuration section ``api.setting``
-    are:
-
-    * ``debug`` - defaults to ``True``
-    * ``compress_response`` - defaults to ``True``
-    * ``cookie_secret`` - no default defined
-
-    .. warning:: core4 configuration setting ``cookie_secret`` does not provide
-                 any defaults and must be set.
-
-    Additionally the following core4 config settings specify the tornado
-    application:
-
-    * ``crt_file`` and ``key_file`` for SSL support, if these settings are
-      ``None``, then SSL support is disabled
-    * ``allow_origin`` - server pattern to allow CORS (cross-origin resource
-      sharing)
-    * ``port`` - default port (5001)
-    * ``error_html_page`` - default error page with content type ``text/html``
-    * ``error_text_page`` - default error page with content tpe ``text/plain``
-
-    Each :class:`.CoreApiContainer` is defined by a unique ``root`` URL. This
-    ``root`` URL defaults to the project name and is specified in the
-    :class:`.CoreApiContainer` class. The container delivers the following
-    default endpoints under it's ``root``:
-
-    * ``/login`` serving
-      :class:`core4.api.v1.request.standard.login.LoginHandler`
-    * ``/logout`` serving
-      :class:`core4.api.v1.request.standard.logout.LogoutHandler`
-    * ``/profile`` serving
-      :class:`core4.api.v1.request.standard.profile.ProfileHandler`
-
-    .. note:: This method creates the required core4 environment including
-              the standard core4 folders (see config setting ``folder``,
-              the default users and roles (see config setting
-              ``admin_username``, ``admin_realname`` and ``admin_password``.
-
-    :param args: class dervived from :class:`.CoreApiContainer`
-    :param port: to serve, defaults to core4 config ``api.port``
-    :param address: IP address or hostname.  If it's a hostname, the server
-                    will listen on all IP addresses associated with the name.
-                    Address may be an empty string or None to listen on all
-                    available interfaces.
-    :param name: to identify the server, defaults to hostname
-    :param reuse_port: tells the kernel to reuse a local socket in
-                       ``TIME_WAIT`` state, defaults to ``True``
-    :param kwargs: passed to the :class:`tornado.web.Application` objects
-    """
-    CoreApiServerTool().serve(*args, port=port, address=address, name=name,
-                              reuse_port=reuse_port, **kwargs)
-
-
-def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
-              **kwargs):
-    """
-    Serve all enabled core :class:`.CoreApiContainer` classes.
-
-    To filter :class:`.CoreApiContainer` classes to be served use one or
-    multiple  ``filter`` arguments. All :class:`.CoreApiContainer` with a
-    :meth:`.qual_name <core4.base.main.CoreBase.qual_name>` starting with the
-    provided filters will be in scope of API application serving.
-
-    For other arguments see :meth:`serve`.
-
-    :param filter: one or multiple str values to filter
-                   :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
-                   of the :class:`.CoreApiContainer` to be served.
-    :param port: to serve, defaults to core4 config ``api.port``
-    :param address: IP address or hostname.  If it's a hostname, the server
-                    will listen on all IP addresses associated with the name.
-                    Address may be an empty string or None to listen on all
-                    available interfaces.
-    :param name: to identify the server, defaults to hostname
-    :param reuse_port: tells the kernel to reuse a local socket in
-                       ``TIME_WAIT`` state, defaults to ``True``
-    :param kwargs: passed to the :class:`tornado.web.Application` objects
-    """
-    CoreApiServerTool().serve_all(filter, port, address, name, reuse_port,
-                                  **kwargs)
-
-
-if __name__ == '__main__':
-    # from core4.service.introspect import CoreIntrospector
-    # intro = CoreIntrospector()
-    # for pro in intro.iter_project():
-    #     print(pro)
-    serve_all(filter=["project.api",  # "core4",
-                      "example"])  # , name=sys.argv[1], port=int(sys.argv[2]))

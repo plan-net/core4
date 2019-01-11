@@ -1,11 +1,12 @@
+import core4.const
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.pager import CorePager
-
 
 class RouteHandler(CoreRequestHandler):
     title = "core4 api/widget endpoint collection"
     author = "mra"
 
+    # todo: documentation update
     async def get(self):
         """
         Retrieve global API endpoint collection which have been successfully
@@ -127,25 +128,32 @@ class RouteHandler(CoreRequestHandler):
                 ]
             }
         """
-        collection = self.config.sys.handler.connect_async()
-        data = []
 
         per_page = int(self.get_argument("per_page", default=10))
         current_page = int(self.get_argument("page", default=0))
-        query_filter = self.get_argument("filter", as_type=dict, default=None)
+        filter_by = self.get_argument("filter", as_type=dict, default={})
         sort_by = self.get_argument("sort", as_type=list,
-                                    default=[("route_id", 1)])
+                                    default=[("qual_name", 1)])
 
-        if query_filter:
-            filter_by = {"$and": [
-                {"visited": {"$ne": None}},
-                query_filter
-            ]}
-        else:
-            filter_by = {"visited": {"$ne": None}}
+        coll = self.config.sys.handler.connect_async()
+        data = []
 
-        async for doc in collection.find(filter_by).sort(sort_by):
+        p = {
+            "project": 1,
+            "tag": 1,
+            "route_id": 1,
+            "routing": 1,
+            "qual_name": 1
+        }
+
+        async for doc in coll.find(filter_by, projection=p).sort(sort_by):
             if await self.user.has_api_access(doc["qual_name"]):
+                doc["help_url"] = doc["routing"] \
+                                  + core4.const.HELP_URL \
+                                  + "/" + doc["route_id"]
+                doc["enter_url"] = doc["routing"] \
+                                   + core4.const.ENTER_URL \
+                                   + "/" + doc["route_id"]
                 data.append(doc)
 
         async def _length(filter):
@@ -156,11 +164,8 @@ class RouteHandler(CoreRequestHandler):
 
         pager = CorePager(per_page=int(per_page),
                           current_page=int(current_page),
-                          length=_length, query=_query,
-                          )
-        wants_json = self.get_argument("json", as_type=bool, default=False)
-        if self.wants_json() or wants_json:
-            self.reply(await pager.page())
-        else:
-            page = await pager.page()
-            self.render("template/collection.html", **page._asdict())
+                          length=_length, query=_query)
+        page = await pager.page()
+        if self.wants_html():
+            return self.render("template/route.html", page=page)
+        self.reply(page)

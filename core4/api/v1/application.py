@@ -39,9 +39,9 @@ import core4.service.setup
 import core4.util.data
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
+from core4.api.v1.request.info import InfoHandler
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.request.standard.file import CoreFileHandler
-from core4.api.v1.request.info import InfoHandler
 from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
@@ -161,6 +161,7 @@ class CoreApiContainer(CoreBase):
                             and issubclass(cls, tornado.web.RequestHandler)):
                         if issubclass(cls, CoreStaticFileHandler):
                             routing += STATIC_PATTERN
+                        # md5 includes prefix and route
                         md5_route = hashlib.md5(
                             routing.encode("utf-8")).hexdigest()
                         if md5_route not in unique:
@@ -220,6 +221,7 @@ class CoreApplication(tornado.web.Application):
                 parts.pop()
             md5_route_id = parts.pop()
             return self.find_md5(md5_route_id)
+
         if request.path.startswith(core4.const.CARD_URL):
             (app, container, pattern, cls, *args) = _find()
             request.method = core4.const.CARD_METHOD
@@ -291,4 +293,3 @@ class RootContainer(CoreApiContainer):
             "path": "./request/_static", "protected": False})
     ]
     routes = {}
-

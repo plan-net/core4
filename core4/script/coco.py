@@ -46,6 +46,7 @@ from bson.objectid import ObjectId
 from docopt import docopt
 
 import core4
+import core4.api.v1.tool.functool
 import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
@@ -84,7 +85,7 @@ def app(name, port, filter):
     core4.logger.mixin.logon()
     if port:
         port = int(port)
-    core4.api.v1.tool.serve_all(name=name, port=port, filter=filter or None)
+    core4.api.v1.tool.functool.serve_all(name=name, port=port, filter=filter or None)
 
 
 def scheduler(name):

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ handler.__class__.__name__ }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{{ default_static('widget/minimal.css') }}">
+
+</head>
+<body>
+
+<div class="container">
+
+    <h1>{{ handler.qual_name() }}</h1>
+
+    <h4> page {{ page.page + 1 }} </h4>
+
+    <ul>
+
+        {% for endpoint in page.body %}
+
+            <li>
+                <a href="{{ endpoint['enter_url'] }}">
+                    {{ endpoint["qual_name"] }}
+                </a>
+
+                <a href="{{ endpoint['help_url'] }}">  <i class="material-icons">help</i> </a>
+
+                {{ endpoint["project"] }}
+
+                {% if endpoint["tag"] %}
+                    ({{ ", ".join(endpoint["tag"]) }})
+                {% end %}
+            </li>
+
+        {% end %}
+
+    </ul>
+    -
+    {% for p in range(0, page.page_count) %}
+
+        {% if p == page.page %}
+            <b>{{ p + 1 }}</b> -
+        {% else %}
+            <a href="?per_page={{ page.per_page }}&page={{ p }}">{{ p + 1 }}</a> -
+        {% end %}
+
+    {% end %}
+
+
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+    crossorigin="anonymous"></script>
+<script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U"
+    crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9"
+    crossorigin="anonymous"></script>
+</body>
+
+</html>

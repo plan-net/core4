@@ -29,7 +29,7 @@ from core4.api.v1.request.queue.job import JobStream
 from core4.api.v1.request.queue.state import QueueHandler
 from core4.api.v1.request.queue.state import QueueStatus
 from core4.api.v1.request.role.main import RoleHandler
-from core4.api.v1.tool import serve
+from core4.api.v1.tool.functool import serve
 
 # sys.stat query object
 publisher = QueueStatus()
