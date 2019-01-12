@@ -10,7 +10,7 @@ Usage:
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
   coco --info
-  coco --list [STATE]...
+  coco --listing [STATE]...
   coco --detail (ID | QUAL_NAME)...
   coco --remove (ID | QUAL_NAME)...
   coco --restart [ID | QUAL_NAME]...
@@ -28,7 +28,7 @@ Options:
   -s --scheduler  launch scheduler
   -a --alive      worker alive/dead state
   -i --info       job state summary
-  -l --list       job listing
+  -l --listing    job listing
   -d --detail     job details
   -x --halt       immediate system halt
   -h --help       show this screen.
@@ -158,25 +158,31 @@ def listing(*state):
         }
     rec = []
     mx = 0
+    mxworker = 6
     for job in QUEUE.get_job_listing(**kwargs):
         mx = max(mx, len(job["name"]))
+        if job["locked"]:
+            mxworker = max(mxworker, len(job["locked"]["worker"]))
         rec.append(job)
     if rec:
+        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} {:19s} {:11s} {:11s} {:%d} {:s}" % (mxworker)
         print(
-            "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} "
-            "{:19s} {:11s} {:11s} {:s}".format(
+            fmt.format(
                 "_id", "state", "flag", "pro", "prio", "attempt", "user",
-                "enqueued", "age", "runtime", "name"))
+                "enqueued", "age", "runtime", "worker", "name"))
         print(" ".join(["-" * i
-                        for i in [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mx]]))
+                        for i in [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mxworker, mx]]))
     else:
         print("no jobs.")
+    fmtworker = "{:%ds}" %(mxworker)
     for job in rec:
         locked = job["locked"]
         if locked:
             progress = job["locked"]["progress_value"] or 0
+            worker = job["locked"]["worker"]
         else:
             progress = 0.
+            worker = ""
         if job["state"] == core4.queue.job.STATE_RUNNING:
             job["attempts_left"] -= 1
         flag = "".join([k[0].upper() if job[k] else "." for k in
@@ -202,6 +208,7 @@ def listing(*state):
             "{:11s}".format(str(core4.util.node.mongo_now() - (
                     job["enqueued"]["at"] or core4.util.node.mongo_now()))),
             "{:11s}".format(str(runtime)),
+            fmtworker.format(worker),
             job["name"]
         )
 
@@ -394,7 +401,7 @@ def main():
         alive()
     elif args["--info"]:
         info()
-    elif args["--list"]:
+    elif args["--listing"]:
         listing(*args["STATE"])
     elif args["--remove"]:
         remove(*args["ID"])
