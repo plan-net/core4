@@ -708,6 +708,10 @@ class JobStream(JobPost):
     title = "job state stream"
     tag = ["job management"]
 
+    async def enter(self):
+        raise HTTPError(400, "You cannot directly enter this endpoint. "
+                             "You must provide a job ID")
+
     async def get(self, _id=None):
         """
         Only jobs with execute access permissions granted to the current user

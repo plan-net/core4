@@ -123,6 +123,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         finally:
             self.unregister()
 
+    # todo: requires documentation
     async def heartbeat(self):
         startup = core4.util.node.mongo_now()
         sys_worker = self.config.sys.worker.connect_async()
@@ -155,6 +156,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         await sys_worker.delete_one({"_id": self.routing})
         tornado.ioloop.IOLoop.current().stop()
 
+    # todo: requires documentation
     def register(self):
         """
         * routing
@@ -190,10 +192,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             )
             coll.insert_one(doc)
 
+    # todo: requires documentation
     def reset_handler(self):
         self.config.sys.handler.delete_many(
             {"hostname": self.hostname, "port": self.port})
 
+    # todo: requires documentation
     def unregister(self):
         self.logger.info("unregistering server [%s]", self.routing)
         self.reset_handler()

@@ -9,6 +9,11 @@ class InfoHandler(CoreRequestHandler):
     title = "server endpoint information"
     author = "mra"
 
+    async def enter(self):
+        raise HTTPError(400, "You cannot directly enter this endpoint. "
+                             "You must provide a route ID to retrieve API "
+                             "endpoint help")
+
     # todo: documentation requires update
     async def get(self, ids):
         """

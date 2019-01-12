@@ -20,6 +20,8 @@ class BaseHandler(CoreRequestHandler):
     protected = False
 
     async def prepare_protection(self):
+        if self.request.method == "XCARD":
+            return
         token = self.get_argument("token", as_type=str)
         if token != self.config.demo.auth_token:
             self.write_error(401)
@@ -361,7 +363,7 @@ class VotingApp(CoreApiContainer):
 
 
 if __name__ == '__main__':
-    serve(VotingApp, debug=True)
+    serve(VotingApp, port=5002, debug=True)
 
 # count all sessions
 # list(local_db.voting.event.aggregate([{"$group": {"_id": "$session_id", "n": {"$sum": 1}}}]))

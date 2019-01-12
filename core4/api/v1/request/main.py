@@ -361,12 +361,31 @@ class CoreBaseHandler(CoreBase):
         self.help_url = "/".join([core4.const.HELP_URL, md5_route_id])
         return self.card()
 
+    def xenter(self, *args, **kwargs):
+        """
+        Prepares the ``enter`` page and triggers :meth:`.enter` which is to be
+        overwritten for custom widget landing page implementations.
+
+        :return: result of :meth:`.enter`
+        """
+        self.request.method = "GET"
+        parts = self.request.path.split("/")
+        md5_route_id = parts[-1]
+        self.absolute_path = None
+        return self.enter()
+
     def card(self):
         """
         Renders the default card page. This method is to be overwritten for
         custom card page impelementation.
         """
         return self.render(self.card_html_page)
+
+    # todo: requires implementation
+    def enter(self):
+        """
+        """
+        return self.get()
 
     def get_template_path(self):
         """
@@ -597,7 +616,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
 
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT",
-                         "OPTIONS", "XCARD", "XHELP")
+                         "OPTIONS", "XCARD", "XHELP", "XENTER")
 
     supported_types = [
         "text/html",

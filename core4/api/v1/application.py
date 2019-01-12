@@ -205,6 +205,7 @@ class CoreApplication(tornado.web.Application):
         self.container = container
         self.identifier = container.identifier
 
+    # todo: documentation update
     def find_handler(self, request, **kwargs):
         """
         Implements special handling for card page requests and landing page
@@ -228,11 +229,13 @@ class CoreApplication(tornado.web.Application):
             return self.get_handler_delegate(request, cls, *args)
         elif request.path.startswith(core4.const.ENTER_URL):
             (app, container, pattern, cls, *args) = _find()
-            if issubclass(cls, CoreStaticFileHandler):
-                request.method = "POST"
-                return self.get_handler_delegate(
-                    request, CoreStaticFileHandler)
+            request.method = core4.const.ENTER_METHOD
             return self.get_handler_delegate(request, cls, *args)
+            # if issubclass(cls, CoreStaticFileHandler):
+            #     request.method = "POST"
+            #     return self.get_handler_delegate(
+            #         request, CoreStaticFileHandler)
+            # return self.get_handler_delegate(request, cls, *args)
         return super().find_handler(request, **kwargs)
 
     def find_md5(self, md5_qual_name):

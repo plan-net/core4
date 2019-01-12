@@ -1,7 +1,7 @@
 import os
 
 from bson.objectid import ObjectId
-from tornado.web import StaticFileHandler
+from tornado.web import StaticFileHandler, HTTPError
 
 import core4
 import core4.const
@@ -35,7 +35,6 @@ class CoreFileHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
     title = "static file handler for request handler rule ID"
     default_filename = "index.html"
     icon = "memory"
-    enter_url = "/"
 
     def __init__(self, *args, **kwargs):
         CoreRequestHandler.__init__(self, *args, **kwargs)
@@ -73,3 +72,6 @@ class CoreFileHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
                 "static file not found [%s]", full_path)
         self.identifier = ObjectId()
         await self.prepare_protection()
+
+    async def enter(self):
+        raise HTTPError(400, "You cannot directly enter this endpoint.")
