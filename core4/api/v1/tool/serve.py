@@ -75,6 +75,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                            ``TIME_WAIT`` state, defaults to ``True``
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
+        self.startup = core4.util.node.mongo_now()
         self.setup_logging()
         setup = core4.service.setup.CoreSetup()
         setup.make_all()
@@ -125,7 +126,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
     # todo: requires documentation
     async def heartbeat(self):
-        startup = core4.util.node.mongo_now()
         sys_worker = self.config.sys.worker.connect_async()
         sleep = self.config.daemon.heartbeat
         await sys_worker.update_one(
@@ -137,7 +137,13 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "address": self.address,
                 "port": self.port,
                 "kind": "app",
-                "pid": core4.util.node.get_pid()
+                "pid": core4.util.node.get_pid(),
+                "phase": {
+                    "startup": self.startup,
+                    "loop": core4.util.node.mongo_now(),
+                    "shutdown": None,
+                    "exit": None
+                }
             }},
             upsert=True
         )
@@ -145,7 +151,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             self.logger.debug("heartbeating")
             nxt = gen.sleep(sleep)
             doc = await sys_worker.find_one(
-                {"_id": "__halt__", "timestamp": {"$gte": startup}})
+                {"_id": "__halt__", "timestamp": {"$gte": self.startup}})
             if doc is not None:
                 self.logger.debug("stop IOLoop now")
                 break
@@ -153,7 +159,17 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 {"_id": self.routing},
                 {"$set": {"heartbeat": core4.util.node.mongo_now()}})
             await nxt
-        await sys_worker.delete_one({"_id": self.routing})
+        await sys_worker.update_one(
+            {"_id": self.routing},
+            update={"$set": {
+                "pid": core4.util.node.get_pid(),
+                "phase": {
+                    "shutdown": core4.util.node.mongo_now(),
+                    "exit": core4.util.node.mongo_now()
+                }
+            }}
+        )
+        #await sys_worker.delete_one({"_id": self.routing})
         tornado.ioloop.IOLoop.current().stop()
 
     # todo: requires documentation
