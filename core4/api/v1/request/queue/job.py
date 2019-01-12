@@ -217,7 +217,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         try:
             return ObjectId(_id)
         except:
-            raise HTTPError(400, "failed to parse job _id [%s]", _id)
+            raise HTTPError(400, "failed to parse job _id: [{}]".format(_id))
 
     async def get_listing(self):
         """
@@ -746,8 +746,8 @@ class JobStream(JobPost):
             0.5028721 running
             0.75340995 running
         """
-        if _id == "":
-            raise HTTPError(400, "failed to parse job _id")
+        if _id == "" or _id is None:
+            raise HTTPError(400, "failed to parse job _id: [{}]".format(_id))
         self.set_header('content-type', 'text/event-stream')
         self.set_header('cache-control', 'no-cache')
         oid = self.parse_id(_id)
