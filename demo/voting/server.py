@@ -19,8 +19,11 @@ from core4.api.v1.request.static import CoreStaticFileHandler
 class BaseHandler(CoreRequestHandler):
     protected = False
 
+    async def enter(self):
+        raise HTTPError(400, "You cannot directly enter this endpoint.")
+
     async def prepare_protection(self):
-        if self.request.method == "XCARD":
+        if self.request.method in ("XCARD", "XENTER"):
             return
         token = self.get_argument("token", as_type=str)
         if token != self.config.demo.auth_token:
