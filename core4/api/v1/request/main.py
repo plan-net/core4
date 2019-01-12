@@ -354,11 +354,15 @@ class CoreBaseHandler(CoreBase):
         """
         self.request.method = "GET"
         parts = self.request.path.split("/")
-        md5_route_id = parts[-1]
+        md5_route = parts[-1]
+
+        #rule = self.application.container.routes[md5_route]
+        #(app, container, pattern, cls, *args) = rule
+        #self.pattern = pattern
         self.absolute_path = None
         if self.enter_url is None:
-            self.enter_url = "/".join([core4.const.ENTER_URL, md5_route_id])
-        self.help_url = "/".join([core4.const.HELP_URL, md5_route_id])
+            self.enter_url = "/".join([core4.const.ENTER_URL, md5_route])
+        self.help_url = "/".join([core4.const.HELP_URL, md5_route])
         return self.card()
 
     def xenter(self, *args, **kwargs):
