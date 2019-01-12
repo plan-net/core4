@@ -1,7 +1,6 @@
 from core4.api.v1.tool.serve import CoreApiServerTool
 
 
-# todo: document routing
 def serve(*args, port=None, address=None, name=None, reuse_port=True,
           routing=None, **kwargs):
     """
@@ -45,7 +44,9 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
     .. note:: This method creates the required core4 environment including
               the standard core4 folders (see config setting ``folder``,
               the default users and roles (see config setting
-              ``admin_username``, ``admin_realname`` and ``admin_password``.
+              ``admin_username``, ``admin_realname``, ``admin_password``,
+              ``user_rolename``, ``user_realname`` and ``user_permission``.
+
 
     :param args: class dervived from :class:`.CoreApiContainer`
     :param port: to serve, defaults to core4 config ``api.port``
@@ -56,6 +57,9 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
     :param name: to identify the server, defaults to hostname
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
+    :param routing: URL including the protocol and hostname of the server,
+                    defaults to the protocol depending on SSL settings, the
+                    node hostname or address and port
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve(*args, port=port, address=address, name=name,
@@ -64,7 +68,7 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
 
 
 def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
-              **kwargs):
+              routing=None, **kwargs):
     """
     Serve all enabled core :class:`.CoreApiContainer` classes.
 
@@ -86,7 +90,10 @@ def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
     :param name: to identify the server, defaults to hostname
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
+    :param routing: URL including the protocol and hostname of the server,
+                    defaults to the protocol depending on SSL settings, the
+                    node hostname or address and port
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve_all(filter, port, address, name, reuse_port,
-                                  **kwargs)
+                                  routing, **kwargs)

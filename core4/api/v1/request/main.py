@@ -385,9 +385,11 @@ class CoreBaseHandler(CoreBase):
         """
         return self.render(self.card_html_page)
 
-    # todo: requires implementation
     def enter(self):
         """
+        Renders the default endpoint entry. This method is to be overwritten
+        for custom entry impelementation. The default implementation redirects
+        to the endpoint's GET method.
         """
         return self.get()
 
