@@ -154,6 +154,9 @@ class RouteHandler(CoreRequestHandler):
                 doc["enter_url"] = doc["routing"] \
                                    + core4.const.ENTER_URL \
                                    + "/" + doc["route_id"]
+                doc["card_url"] = doc["routing"] \
+                                  + core4.const.CARD_URL \
+                                  + "/" + doc["route_id"]
                 data.append(doc)
 
         async def _length(filter):

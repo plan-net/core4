@@ -213,7 +213,7 @@ class CoreIntrospector(core4.base.CoreBase):
         self._project = []
         for pkg in pkgutil.iter_modules():
             if pkg[2]:
-                self.logger.debug("work [%s]", pkg[0])
+                self.logger.debug("work [%s]", pkg[1])
                 try:
                     filename = os.path.abspath(
                         os.path.join(pkg[0].path, pkg[1], "__init__.py"))

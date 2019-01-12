@@ -227,8 +227,7 @@ class CoreApplication(tornado.web.Application):
             request.method = core4.const.CARD_METHOD
             return self.get_handler_delegate(request, cls, *args)
         elif request.path.startswith(core4.const.ENTER_URL):
-            ret = _find()
-            (app, container, pattern, cls, *args) = ret
+            (app, container, pattern, cls, *args) = _find()
             if issubclass(cls, CoreStaticFileHandler):
                 request.method = "POST"
                 return self.get_handler_delegate(

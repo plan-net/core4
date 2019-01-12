@@ -5,12 +5,12 @@ import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.data import rst2html
 
-
 class InfoHandler(CoreRequestHandler):
     title = "server endpoint information"
     author = "mra"
 
-    async def get(self, ids=None):
+    # todo: documentation requires update
+    async def get(self, ids):
         """
         Retrieve API endpoint listing and details for the current tornado
         server.
@@ -178,88 +178,36 @@ class InfoHandler(CoreRequestHandler):
             }
         """
 
-        def rule_part(container, md5_route, pattern, cls, args):
-            rule_attr = {}
-            if args:
-                kwargs = args[0]
-            else:
-                kwargs = {}
-            for attr, value in self.propagate_property(cls, kwargs):
-                rule_attr[attr] = value
-            return {
-                "route_id": md5_route,
-                "pattern": pattern or "/",
-                "args": "%s" %(args),
-                "title": rule_attr.get("title"),
-                "icon": rule_attr.get("icon"),
-                "container": container.qual_name(),
-                "card_url": "%s/%s" % (
-                    core4.const.CARD_URL,
-                    md5_route),
-                "help_url": "%s/%s" % (
-                    core4.const.INFO_URL,
-                    md5_route
-                ),
-                "enter_url": rule_attr.get("enter_url") or "%s/%s" % (
-                    core4.const.ENTER_URL,
-                    md5_route
-                )
-            }
+        parts = ids.split("/")
+        md5_route = parts[0]
+        rule = self.application.container.routes[md5_route]
+        (app, container, pattern, cls, *args) = rule
+        html = rst2html(str(cls.__doc__))
+        doc = dict(
+            #routing=self.routing,
+            route_id=md5_route,
+            pattern=pattern,
+            args=str(args),
+            author=cls.author,
+            container=container.qual_name(),
+            description=html["body"],
+            error=html["error"],
+            #hostname=self.request.hostname,
+            #port=self.port,
+            icon=cls.icon,
+            project=cls.get_project(),
+            protected=cls.protected,
+            #protocol=self.protocol,
+            qual_name=cls.qual_name(),
+            tag=cls.tag,
+            title=cls.title,
+            version=cls.version(),
+        )
+        doc["help_url"] = core4.const.HELP_URL + "/" + doc["route_id"]
+        doc["enter_url"] = core4.const.ENTER_URL + "/" + doc["route_id"]
+        doc["card_url"] = core4.const.CARD_URL + "/" + doc["route_id"]
+        doc["method"] = self.application.handler_help(cls)
 
-        def handler_part(cls):
-            html = rst2html(str(cls.__doc__))
-            return {
-                "qual_name": cls.qual_name(),
-                "author": cls.author,
-                "description": html["body"],
-                "error": html["error"],
-                "version": cls.version(),
-                "host": self.request.host,
-                "protocol": self.request.protocol,
-                "project": cls.get_project(),
-                "protected": cls.protected,
-                "tag": cls.tag
-            }
-
-        if self.user is not None and not await self.user.is_admin():
-            raise HTTPError(403, "allowed to cops, only")
-        if ids:
-            parts = ids.split("/")
-            md5_route = parts[0]
-            (app, container, pattern, cls, *args) = self.application.find_md5(
-                md5_route)
-            ret = handler_part(cls)
-            ret.update(rule_part(container, md5_route, pattern, cls, args))
-            ret["method"] = self.application.handler_help(cls)
-            template = "standard/template/help.html"
-        else:
-            collection = {}
-            # container is RootContainer
-            for md5_route, rule in self.application.container.routes.items():
-                (app, container, pattern, cls, *args) = rule
-                collection.setdefault(
-                    cls.qual_name(), {"cls": cls, "route": []})
-                collection[cls.qual_name()]["route"].append(
-                    (md5_route, app, container, pattern, *args))
-            listing = []
-            for qual_name in sorted(collection.keys()):
-                cls = collection[qual_name]["cls"]
-                doc = handler_part(cls)
-                doc["route"] = []
-                for (md5_route,
-                     app,
-                     container,
-                     pattern,
-                     *args) in collection[qual_name]["route"]:
-                    rule = rule_part(container, md5_route, pattern, cls, args)
-                    doc["route"].append(rule)
-                doc["route"].sort(key=lambda r: r["route_id"])
-                listing.append(doc)
-            ret = {"collection": listing}
-            template = "standard/template/widget.html"
-        ret["timestamp"] = core4.util.node.mongo_now()
-        wants_json = self.get_argument("json", as_type=bool, default=False)
-        if self.wants_json() or wants_json:
-            self.reply(ret)
-        else:
-            self.render(template, **ret)
+        if self.wants_html():
+            return self.render("standard/template/help.html", **doc)
+        return self.reply(doc)
