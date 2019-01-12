@@ -134,7 +134,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         sys_worker = self.config.sys.worker.connect_async()
         sleep = self.config.daemon.heartbeat
         await sys_worker.update_one(
-            {"_id": self.routing},
+            {"_id": self.identifier},
             update={"$set": {
                 "heartbeat": None,
                 "hostname": self.hostname,
@@ -161,11 +161,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 self.logger.debug("stop IOLoop now")
                 break
             await sys_worker.update_one(
-                {"_id": self.routing},
+                {"_id": self.identifier},
                 {"$set": {"heartbeat": core4.util.node.mongo_now()}})
             await nxt
         await sys_worker.update_one(
-            {"_id": self.routing},
+            {"_id": self.identifier},
             update={"$set": {
                 "phase.shutdown": core4.util.node.mongo_now(),
                 "phase.exit": core4.util.node.mongo_now()
@@ -178,7 +178,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         Registers all endpoints of the tornado server in ``sys.handler``.
         """
-        self.logger.info("registering server [%s]", self.routing)
+        self.logger.info("registering server [%s] at [%s]", self.identifier,
+                         self.routing)
         self.reset_handler()
         coll = self.config.sys.handler
         for md5_route, rule in RootContainer.routes.items():
@@ -233,7 +234,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
     # todo: requires documentation
     def unregister(self):
-        self.logger.info("unregistering server [%s]", self.routing)
+        self.logger.info("unregistering server [%s]", self.identifier)
         self.reset_handler()
 
     def serve_all(self, filter=None, port=None, address=None, name=None,

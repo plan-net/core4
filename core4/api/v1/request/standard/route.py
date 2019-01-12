@@ -2,6 +2,7 @@ import core4.const
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.pager import CorePager
 
+
 class RouteHandler(CoreRequestHandler):
     title = "core4 api/widget endpoint collection"
     author = "mra"
@@ -52,9 +53,8 @@ class RouteHandler(CoreRequestHandler):
         per_page = int(self.get_argument("per_page", default=10))
         current_page = int(self.get_argument("page", default=0))
         query = self.get_argument("filter", as_type=dict, default=None)
-        sort_by = self.get_argument("sort", as_type=list,
-                                    default=[("qual_name", 1),
-                                             ("route_id", 1)])
+        sort_by = self.get_argument("sort", as_type=dict,
+                                    default={"qual_name": 1, "route_id": 1})
 
         filter_by = [{"started_at": {"$ne": None}}]
         if query is not None:
@@ -62,17 +62,48 @@ class RouteHandler(CoreRequestHandler):
         coll = self.config.sys.handler.connect_async()
         data = []
 
-        p = {
-            "project": 1,
-            "tag": 1,
-            "route_id": 1,
-            "routing": 1,
-            "qual_name": 1,
-            "title": 1
-        }
+        pipeline = [
+            {
+                "$match": {"$and": filter_by}
+            },
+            {
+                "$sort": sort_by
+            },
+            {
+                "$project": {
+                    "project": 1,
+                    "tag": 1,
+                    "route_id": 1,
+                    "routing": 1,
+                    "qual_name": 1,
+                    "title": 1
+                }
+            },
+            {
+                "$group": {
+                    "_id": "$route_id",
+                    "project": {"$first": "$project"},
+                    "tag": {"$first": "$tag"},
+                    "routing": {"$first": "$routing"},
+                    "qual_name": {"$first": "$qual_name"},
+                    "title": {"$first": "title"},
+                }
+            },
+            {
+                "$project": {
+                    "route_id": "$_id",
+                    "project": "$project",
+                    "tag": "$tag",
+                    "routing": "$routing",
+                    "qual_name": "$qual_name",
+                    "title": "$title",
 
-        async for doc in coll.find({"$and": filter_by},
-                                   projection=p).sort(sort_by):
+                }
+            }
+
+        ]
+
+        async for doc in coll.aggregate(pipeline):
             if await self.user.has_api_access(doc["qual_name"]):
                 doc["help_url"] = doc["routing"] \
                                   + core4.const.HELP_URL \
