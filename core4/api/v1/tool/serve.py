@@ -200,7 +200,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 tag=cls.tag,
                 title=cls.title,
                 version=cls.version(),
-                updated_at=self.startup
+                started_at=self.startup
             )
             if args:
                 for attr in cls.propagate:
@@ -228,7 +228,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         self.config.sys.handler.update_many(
             {"hostname": self.hostname, "port": self.port},
-            {"$set": {"updated_at": None}}
+            {"$set": {"started_at": None}}
         )
 
     # todo: requires documentation

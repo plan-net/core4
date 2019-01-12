@@ -51,11 +51,14 @@ class RouteHandler(CoreRequestHandler):
 
         per_page = int(self.get_argument("per_page", default=10))
         current_page = int(self.get_argument("page", default=0))
-        filter_by = self.get_argument("filter", as_type=dict, default={})
+        query = self.get_argument("filter", as_type=dict, default=None)
         sort_by = self.get_argument("sort", as_type=list,
                                     default=[("qual_name", 1),
                                              ("route_id", 1)])
 
+        filter_by = [{"started_at": {"$ne": None}}]
+        if query is not None:
+            filter_by.append(query)
         coll = self.config.sys.handler.connect_async()
         data = []
 
@@ -68,7 +71,8 @@ class RouteHandler(CoreRequestHandler):
             "title": 1
         }
 
-        async for doc in coll.find(filter_by, projection=p).sort(sort_by):
+        async for doc in coll.find({"$and": filter_by},
+                                   projection=p).sort(sort_by):
             if await self.user.has_api_access(doc["qual_name"]):
                 doc["help_url"] = doc["routing"] \
                                   + core4.const.HELP_URL \
