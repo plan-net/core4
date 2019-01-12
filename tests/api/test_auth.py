@@ -13,7 +13,7 @@ from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
-from core4.api.v1.tool import serve
+from core4.api.v1.tool.functool import serve
 from core4.queue.helper.functool import execute
 from core4.queue.helper.job import ApiJob
 from tests.api.test_response import setup
@@ -173,7 +173,8 @@ def test_collection_job(http):
     token = add_user(http, "user1")
     rv = http.get("/core4/api/v1/info/collection", token=token)
     for elem in rv.json()["data"]:
-        rv = http.get(elem["full_url"], token=token, base=False)
+        print(elem["qual_name"])
+        rv = http.get(elem["card_url"], token=token, base=False)
         assert rv.status_code in (401, 200)
 
     rv = http.get("/core4/api/v1/info/collection")
@@ -191,7 +192,7 @@ def test_collection_job(http):
     for elem in rv.json()["data"]:
         qual_name = elem["qual_name"]
         if qual_name in check:
-            rv = http.get(elem["full_url"], token=token, base=False)
+            rv = http.get(elem["card_url"], token=token, base=False)
             assert check[qual_name] == rv.status_code
 
 

@@ -208,6 +208,10 @@ class InfoHandler(CoreRequestHandler):
             title=cls.title,
             version=cls.version(),
         )
+        if args:
+            for attr in cls.propagate:
+                if attr in doc:
+                    doc[attr] = args[0].get(attr, doc[attr])
         doc["help_url"] = core4.const.HELP_URL + "/" + doc["route_id"]
         doc["enter_url"] = core4.const.ENTER_URL + "/" + doc["route_id"]
         doc["card_url"] = core4.const.CARD_URL + "/" + doc["route_id"]

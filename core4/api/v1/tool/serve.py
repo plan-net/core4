@@ -206,6 +206,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 title=cls.title,
                 version=cls.version(),
             )
+            if args:
+                for attr in cls.propagate:
+                    if attr in doc:
+                        doc[attr] = args[0].get(attr, doc[attr])
             coll.insert_one(doc)
 
     # todo: requires documentation

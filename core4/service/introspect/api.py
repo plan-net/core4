@@ -78,7 +78,8 @@ class CoreApiInspector(CoreBase):
         :return: dict with attributes described above
         """
         listing = []
-        for method in ("get", "post", "put", "delete", "patch", "options", "head"):
+        for method in ("get", "post", "put", "delete", "patch", "options",
+                       "head"):
             func = handler.__dict__.get(method, None)
             if func is not None:
                 docstring = func.__doc__

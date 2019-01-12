@@ -292,6 +292,9 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r'/info/collection', RouteHandler),
         (core4.const.CORE4_API + r'/info/?(.*)', InfoHandler),
         (r'', CoreStaticFileHandler, {
-            "path": "./request/_static", "protected": False})
+            "path": "./request/_static",
+            "protected": False,
+            "title": "core4 landing page",
+        })
     ]
     routes = {}

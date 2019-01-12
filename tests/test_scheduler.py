@@ -245,12 +245,12 @@ class ValidSchedule4(InvalidSchedule):
 @pytest.mark.timeout(30)
 def test_loop(queue, scheduler):
     scheduler.start()
-    while sum([1 for w in queue.get_worker()
+    while sum([1 for w in queue.get_daemon()
                if w["loop_time"] is not None]) < 1:
         time.sleep(0.5)
     while scheduler.scheduler.cycle["total"] < 3:
         time.sleep(0.5)
     scheduler.stop()
-    while sum([1 for w in queue.get_worker()
+    while sum([1 for w in queue.get_daemon()
                if w["phase"]["shutdown"] is not None]) > 0:
         time.sleep(0.5)
