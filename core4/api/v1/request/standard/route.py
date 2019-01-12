@@ -133,7 +133,8 @@ class RouteHandler(CoreRequestHandler):
         current_page = int(self.get_argument("page", default=0))
         filter_by = self.get_argument("filter", as_type=dict, default={})
         sort_by = self.get_argument("sort", as_type=list,
-                                    default=[("qual_name", 1)])
+                                    default=[("qual_name", 1),
+                                             ("route_id", 1)])
 
         coll = self.config.sys.handler.connect_async()
         data = []
@@ -143,7 +144,8 @@ class RouteHandler(CoreRequestHandler):
             "tag": 1,
             "route_id": 1,
             "routing": 1,
-            "qual_name": 1
+            "qual_name": 1,
+            "title": 1
         }
 
         async for doc in coll.find(filter_by, projection=p).sort(sort_by):
