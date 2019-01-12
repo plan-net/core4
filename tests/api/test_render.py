@@ -210,7 +210,7 @@ def test_server_test(http):
     assert rv.status_code == 200
     rv = http.get("/test1/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info/collection")
+    rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     pprint(rv.json())
     lh = 'core4.api.v1.request.standard.login.LoginHandler'
@@ -232,7 +232,7 @@ def test_title_args(http):
     rv = http.post("/test1/internal1")
     assert rv.status_code == 200
     assert "custom title 1" == rv.json()["data"]
-    rv = http.get("/core4/api/v1/info/collection")
+    rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
     internal_handler = [h for h in rv.json()["data"]
@@ -247,7 +247,7 @@ def test_title_args(http):
 def test_help(http):
     rv = http.post("/tests/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info/collection")
+    rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
     pprint(rv.json())
@@ -288,7 +288,7 @@ def test_server_wrong_args():
 
 
 def test_card(http):
-    rv = http.get("/core4/api/v1/info/collection")
+    rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
     internal_handler = [h for h in rv.json()["data"]

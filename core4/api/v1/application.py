@@ -267,7 +267,7 @@ class CoreApplication(tornado.web.Application):
         inspect = core4.service.introspect.api.CoreApiInspector()
         return inspect.handler_info(cls)
 
-
+# todo: documentation update required
 class RootContainer(CoreApiContainer):
     """
     This class is automatically attached to each server with :meth:`serve``
@@ -278,7 +278,7 @@ class RootContainer(CoreApiContainer):
     * ``/logout`` with :class:`.LogoutHandler`
     * ``/profile`` with :class:`.ProfileHandler`
     * ``/file`` for static file access with :class:`FileHandler`
-    * ``/info/collection`` with :class:`.RouteHandler` (global widget
+    * ``/info`` with :class:`.RouteHandler` (global widget
       collection)
     * ``/info`` with :class:`.InfoHandler` (local widget collection)
     * ``/`` for ``favicon.ico`` delivery with :class:`.CoreStaticFileHandler`
@@ -289,8 +289,8 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r"/logout", LogoutHandler),
         (core4.const.CORE4_API + r"/profile", ProfileHandler),
         (core4.const.CORE4_API + r"/file/(.*)", CoreFileHandler),
-        (core4.const.CORE4_API + r'/info/collection', RouteHandler),
-        (core4.const.CORE4_API + r'/info/?(.*)', InfoHandler),
+        (core4.const.CORE4_API + r'/info', RouteHandler),
+        (core4.const.CORE4_API + r'/info/(.+)', InfoHandler),
         (r'', CoreStaticFileHandler, {
             "path": "./request/_static",
             "protected": False,

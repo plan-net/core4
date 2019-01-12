@@ -146,7 +146,7 @@ def test_filehandler_card(http):
 
 
 def test_all_info(http):
-    rv = http.get("/core4/api/v1/info/collection")
+    rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
     for handler in rv.json()["data"]:
         rv1 = http.get(handler["card_url"], absolute=True)

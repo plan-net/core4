@@ -163,7 +163,7 @@ def test_server_test(http):
     assert rv.status_code == 403
     rv = http.get("/core4/api/v1/logout", token=token)
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info/collection", token=token)
+    rv = http.get("/core4/api/v1/info", token=token)
     assert rv.status_code == 200
     pprint(rv.json())
 
@@ -171,13 +171,13 @@ def test_server_test(http):
 def test_collection_job(http):
     execute(ApiJob)
     token = add_user(http, "user1")
-    rv = http.get("/core4/api/v1/info/collection", token=token)
+    rv = http.get("/core4/api/v1/info", token=token)
     for elem in rv.json()["data"]:
         print(elem["qual_name"])
         rv = http.get(elem["card_url"], token=token, base=False)
         assert rv.status_code in (401, 200)
 
-    rv = http.get("/core4/api/v1/info/collection")
+    rv = http.get("/core4/api/v1/info")
     check = {
         'core4.api.v1.request.queue.job.JobPost': 403,
         'core4.api.v1.request.role.main.RoleHandler': 403,

@@ -6,14 +6,12 @@ class RouteHandler(CoreRequestHandler):
     title = "core4 api/widget endpoint collection"
     author = "mra"
 
-    # todo: documentation update
     async def get(self):
         """
-        Retrieve global API endpoint collection which have been successfully
-        visited *recently* by :class:`core.queue.helper.job.ApiJob`.
+        Retrieve API endpoint collection across all http servers.
 
         Methods:
-            GET /info/collection - API endpoint global listing
+            GET /info - API endpoint listing
 
         Parameters:
             json (bool): retrieve JSON format, defaults to ``False`` (HTML)
