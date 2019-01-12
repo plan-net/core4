@@ -56,7 +56,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             roots.add(root)
         return tornado.routing.RuleRouter(routes)
 
-    # todo: routing requires documentation
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
               routing=None, **kwargs):
         """
@@ -73,6 +72,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param name: to identify the server
         :param reuse_port: tells the kernel to reuse a local socket in
                            ``TIME_WAIT`` state, defaults to ``True``
+        :param routing: URL including the protocol and hostname of the server,
+                        defaults to the protocol depending on SSL settings, the
+                        node hostname or address and port
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         self.startup = core4.util.node.mongo_now()
@@ -124,8 +126,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         finally:
             self.unregister()
 
-    # todo: requires documentation
     async def heartbeat(self):
+        """
+        Sets the heartbeat of the tornado server/container in ``sys.worker`` as
+        defined by core4 configuration key ``daemon.heartbeat``.
+        """
         sys_worker = self.config.sys.worker.connect_async()
         sleep = self.config.daemon.heartbeat
         await sys_worker.update_one(
@@ -162,23 +167,16 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         await sys_worker.update_one(
             {"_id": self.routing},
             update={"$set": {
-                "pid": core4.util.node.get_pid(),
-                "phase": {
-                    "shutdown": core4.util.node.mongo_now(),
-                    "exit": core4.util.node.mongo_now()
-                }
+                "phase.shutdown": core4.util.node.mongo_now(),
+                "phase.exit": core4.util.node.mongo_now()
             }}
         )
-        #await sys_worker.delete_one({"_id": self.routing})
+        # await sys_worker.delete_one({"_id": self.routing})
         tornado.ioloop.IOLoop.current().stop()
 
-    # todo: requires documentation
     def register(self):
         """
-        * routing
-        * pattern == route_id
-
-        :return:
+        Registers all endpoints of the tornado server in ``sys.handler``.
         """
         self.logger.info("registering server [%s]", self.routing)
         self.reset_handler()
@@ -188,15 +186,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             html = rst2html(str(cls.__doc__))
             doc = dict(
                 routing=self.routing,
-                route_id=md5_route,
                 pattern=pattern,
                 args=str(args),
                 author=cls.author,
                 container=container.qual_name(),
                 description=html["body"],
                 error=html["error"],
-                hostname=self.hostname,
-                port=self.port,
                 icon=cls.icon,
                 project=cls.get_project(),
                 protected=cls.protected,
@@ -205,17 +200,36 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 tag=cls.tag,
                 title=cls.title,
                 version=cls.version(),
+                updated_at=self.startup
             )
             if args:
                 for attr in cls.propagate:
                     if attr in doc:
                         doc[attr] = args[0].get(attr, doc[attr])
-            coll.insert_one(doc)
+            coll.update_one(
+                {
+                    "hostname": self.hostname,
+                    "port": self.port,
+                    "route_id": md5_route
+                },
+                {
+                    "$set": doc,
+                    "$setOnInsert": {
+                        "created_at": self.startup
+                    }
+                },
+                upsert=True
+            )
 
-    # todo: requires documentation
     def reset_handler(self):
-        self.config.sys.handler.delete_many(
-            {"hostname": self.hostname, "port": self.port})
+        """
+        Removes all registered handlers
+        :return:
+        """
+        self.config.sys.handler.update_many(
+            {"hostname": self.hostname, "port": self.port},
+            {"$set": {"updated_at": None}}
+        )
 
     # todo: requires documentation
     def unregister(self):
@@ -223,7 +237,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.reset_handler()
 
     def serve_all(self, filter=None, port=None, address=None, name=None,
-                  reuse_port=True, **kwargs):
+                  reuse_port=True, routing=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -269,4 +283,4 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             self.logger.debug("added [%s]", api["name"])
             clist.append(cls)
         self.serve(*clist, port=port, name=name, address=address,
-                   reuse_port=reuse_port, **kwargs)
+                   reuse_port=reuse_port, routing=routing, **kwargs)

@@ -205,7 +205,6 @@ class CoreApplication(tornado.web.Application):
         self.container = container
         self.identifier = container.identifier
 
-    # todo: documentation update
     def find_handler(self, request, **kwargs):
         """
         Implements special handling for card page requests and landing page
@@ -213,7 +212,8 @@ class CoreApplication(tornado.web.Application):
 
         Card page requests are forwarded to the handler's
         :meth:`.CoreRequestHandler.xcard` method (``XCARD``). Enter landing
-        page requests are forwarded to the handler's ``GET`` method.
+        page requests are forwarded to the handler's
+        :meth:`.CoreRequestHandler.xenter` method (``XENTER``).
         """
 
         def _find():
@@ -231,11 +231,6 @@ class CoreApplication(tornado.web.Application):
             (app, container, pattern, cls, *args) = _find()
             request.method = core4.const.ENTER_METHOD
             return self.get_handler_delegate(request, cls, *args)
-            # if issubclass(cls, CoreStaticFileHandler):
-            #     request.method = "POST"
-            #     return self.get_handler_delegate(
-            #         request, CoreStaticFileHandler)
-            # return self.get_handler_delegate(request, cls, *args)
         return super().find_handler(request, **kwargs)
 
     def find_md5(self, md5_qual_name):
@@ -267,7 +262,7 @@ class CoreApplication(tornado.web.Application):
         inspect = core4.service.introspect.api.CoreApiInspector()
         return inspect.handler_info(cls)
 
-# todo: documentation update required
+
 class RootContainer(CoreApiContainer):
     """
     This class is automatically attached to each server with :meth:`serve``
@@ -278,9 +273,7 @@ class RootContainer(CoreApiContainer):
     * ``/logout`` with :class:`.LogoutHandler`
     * ``/profile`` with :class:`.ProfileHandler`
     * ``/file`` for static file access with :class:`FileHandler`
-    * ``/info`` with :class:`.RouteHandler` (global widget
-      collection)
-    * ``/info`` with :class:`.InfoHandler` (local widget collection)
+    * ``/info`` with :class:`.RouteHandler` and :class:`.InfoHandler`
     * ``/`` for ``favicon.ico`` delivery with :class:`.CoreStaticFileHandler`
     """
     root = ""
