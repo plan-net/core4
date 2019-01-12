@@ -47,36 +47,6 @@ class RouteHandler(CoreRequestHandler):
             >>> h = {"Authorization": "Bearer " + token}
             >>> rv = get("http://localhost:5001/core4/api/v1/info?per_page=2", headers=h)
             >>> rv.json()
-            {'_id': '5c3a56fede8b695519da267b',
-             'code': 200,
-             'count': 2,
-             'data': [{
-               '_id': '5c3a56fbde8b695519da266b',
-               'card_url': 'http://mra.devops:5001/core4/api/v1/info/card/9f5123d239393f9aabd5f0968bb70e05',
-               'enter_url': 'http://mra.devops:5001/core4/api/v1/enter/9f5123d239393f9aabd5f0968bb70e05',
-               'help_url': 'http://mra.devops:5001/core4/api/v1/info/9f5123d239393f9aabd5f0968bb70e05',
-               'project': 'core4',
-               'qual_name': 'core4.api.v1.request.info.InfoHandler',
-               'route_id': '9f5123d239393f9aabd5f0968bb70e05',
-               'routing': 'http://mra.devops:5001',
-               'tag': [],
-               'title': 'server endpoint information'},
-              {'_id': '5c3a56fbde8b695519da266e',
-               'card_url': 'http://mra.devops:5001/core4/api/v1/info/card/3437b1b348dcce91f4949f4d6ad416aa',
-               'enter_url': 'http://mra.devops:5001/core4/api/v1/enter/3437b1b348dcce91f4949f4d6ad416aa',
-               'help_url': 'http://mra.devops:5001/core4/api/v1/info/3437b1b348dcce91f4949f4d6ad416aa',
-               'project': 'core4',
-               'qual_name': 'core4.api.v1.request.queue.job.JobHandler',
-               'route_id': '3437b1b348dcce91f4949f4d6ad416aa',
-               'routing': 'http://mra.devops:5001',
-               'tag': ['job management'],
-               'title': 'job manager'}],
-             'message': 'OK',
-             'page': 0,
-             'page_count': 6,
-             'per_page': 2,
-             'timestamp': '2019-01-12T21:07:10.464690',
-             'total_count': 12.0}
         """
 
         per_page = int(self.get_argument("per_page", default=10))
