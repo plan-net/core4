@@ -359,7 +359,6 @@ class VotingApp(CoreApiContainer):
         ("/csv", CSVHandler),
         ("/result", ResultHandler),
         ("/reset/(.+)", ResetHandler),
-        #("/voting", VotingAppHandler),
         ("/manager", CoreStaticFileHandler, {"path": "./webapps/manager/dist", "protected": False, "title": "voting manager"}),
         ("/voting", CoreStaticFileHandler, {"path": "./webapps/voting/dist", "protected": False, "title": "voting client"}),
     ]
