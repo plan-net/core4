@@ -78,7 +78,10 @@ class CoreProjectInspector(CoreBase, QueryMixin):
 
     def iter_daemon(self):
         hostname = core4.util.node.get_hostname()
-        return self.get_daemon(hostname)
+        try:
+            return self.get_daemon(hostname)
+        except:
+            return []
 
     def summary(self):
         uptime = core4.util.node.uptime()
