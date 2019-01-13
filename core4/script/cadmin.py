@@ -8,28 +8,71 @@ deploy project in prod
     cadmin --upgrade
 
     export CORE4_HOME=/tmp/core4.home
-    export CORE4_PROJECT=core4
-    export CORE4_PROJECT_BRANCH=mra.ops
     export CORE4_REPOSITORY=ssh://git.bi.plan-net.com/srv/git/core4.git
+    export CORE4_PROJECT=core4
+    export CORE4_PROJECT_REPOSITORY=file:///home/mra/core4.dev/mypro/.repos
 
-    SETUP
+    # core4
+    # -------------------------------------------------------------------------
+    cd $CORE4_HOME
+    mkdir $CORE4_PROJECT
+    cd $CORE4_PROJECT
+    python3 -m venv .venv
+    . .venv/bin/activate
+    pip install -U git+$CORE4_REPOSITORY
 
-        cd $CORE4_HOME
-        mkdir $CORE4_PROJECT
-        cd $CORE4_PROJECT
-        python3 -m venv .venv
-        . .venv/bin/activate
-        git clone git+$CORE4_REPOSITORY .repos
-        cd .repos
-        git checkout $BRANCH
-        pip install .
-        cd ..
-        rm -Rf .repos
+    # here: install local.yaml
+    mkdir ~/.core4
+    nano ~/.core4/local.yaml
 
-    UPGRADE
+        DEFAULT:
+          mongo_url: mongodb://core:654321@localhost:27017
+          mongo_database: core4dev
 
-        cd $CORE4_HOME
-        pip install
+        folder:
+          home: /tmp/core4.home
+
+        logging:
+          mongodb: INFO
+
+        worker:
+          min_free_ram: 16
+
+        api:
+          setting:
+            cookie_secret: hello world
+          token:
+            secret: hello world again
+
+        core4_origin: git+ssh://git.bi.plan-net.com/srv/git/core4.git
+
+    # test job success
+    deactivate
+
+    # mypro
+    # -------------------------------------------------------------------------
+
+    export CORE4_PROJECT=mypro
+    export CORE4_PROJECT_REPOSITORY=file:///home/mra/core4.dev/mypro/.repos
+
+    cd $CORE4_HOME
+    mkdir $CORE4_PROJECT
+    cd $CORE4_PROJECT
+    python3 -m venv .venv
+    . .venv/bin/activate
+    pip install -U git+$CORE4_REPOSITORY
+    pip install -U git+$CORE4_PROJECT_REPOSITORY
+
+    deactivate
+
+    # upgrade mypro
+    # -------------------------------------------------------------------------
+
+    . .venv/bin/activate
+
+    pip install -U git+$CORE4_REPOSITORY
+    pip install -U git+$CORE4_PROJECT_REPOSITORY
+
 
     cd demo/voting/webapps/manager
     yarn
