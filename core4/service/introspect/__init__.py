@@ -137,7 +137,7 @@ class CoreIntrospector(core4.base.CoreBase):
                 validate = True
                 exception = None
                 executable = obj.find_executable()
-            except Exception as esc:
+            except Exception:
                 validate = False
                 exc_info = sys.exc_info()
                 exception = {

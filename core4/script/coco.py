@@ -20,6 +20,7 @@ Usage:
   coco --build
   coco --release
   coco --who
+  coco --jobs
   coco --version
 
 Options:
@@ -34,6 +35,7 @@ Options:
   -h --help       show this screen.
   -v --version    show version.
   -o --who        show system information
+  -j --jobs       enumerate available jobs
   -y --yes        Assume yes on all requests.
 """
 
@@ -167,16 +169,18 @@ def listing(*state):
             mxworker = max(mxworker, len(job["locked"]["worker"]))
         rec.append(job)
     if rec:
-        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} {:19s} {:11s} {:11s} {:%d} {:s}" % (mxworker)
+        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} {:19s} {:11s} {:11s} {:%d} {:s}" % (
+            mxworker)
         print(
             fmt.format(
                 "_id", "state", "flag", "pro", "prio", "attempt", "user",
                 "enqueued", "age", "runtime", "worker", "name"))
         print(" ".join(["-" * i
-                        for i in [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mxworker, mx]]))
+                        for i in
+                        [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mxworker, mx]]))
     else:
         print("no jobs.")
-    fmtworker = "{:%ds}" %(mxworker)
+    fmtworker = "{:%ds}" % (mxworker)
     for job in rec:
         locked = job["locked"]
         if locked:
@@ -338,6 +342,19 @@ def init(name, description, yes=False):
     core4.service.project.make_project(name, description, yes)
 
 
+def jobs():
+    intro = core4.service.introspect.project.CoreProjectInspector()
+    summary = intro.summary()
+    for project in sorted(summary["project"]):
+        print("{}".format(project))
+        jobs = []
+        for job in summary["project"][project]["job"]:
+            job_project = job["name"].split(".")[0]
+            if job_project == project:
+                jobs.append(job["name"])
+        for job in sorted(jobs):
+            print("  {}".format(job))
+
 def who():
     intro = core4.service.introspect.project.CoreProjectInspector()
     summary = intro.summary()
@@ -376,8 +393,12 @@ def who():
                     modules[mod]["name"], modules[mod]["version"]
                 ))
     print("DAEMONS:")
+    have = False
     for daemon in summary["daemon"]:
         print("  {kind:s}: {_id:s} (pid: {pid:d})".format(**daemon))
+        have = True
+    if not have:
+        print("  none.")
 
 
 def main():
@@ -421,6 +442,8 @@ def main():
         release()
     elif args["--who"]:
         who()
+    elif args["--jobs"]:
+        jobs()
     else:
         raise SystemExit("nothing to do.")
 

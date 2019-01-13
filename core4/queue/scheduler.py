@@ -7,6 +7,7 @@ import core4.service.introspect.project
 import core4.util
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
+import core4.const
 
 
 # todo: should be more central, see coco.py
@@ -86,7 +87,8 @@ class CoreScheduler(CoreDaemon):
             self.logger.info("collecting classes from [%s]", project)
             for job in data["job"]:
                 job_project = job["name"].split(".")[0]
-                if job_project != "core4" or (job_project == project):
+                if ((job_project != core4.const.CORE4)
+                        or (job_project == project)):
                     self.logger.debug("registering job [%s]", job["name"])
                     update = job.copy()
                     del update["name"]

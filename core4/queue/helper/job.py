@@ -54,105 +54,105 @@ class MailerJob(CoreJob):
         self.logger.debug("send mail:\n%s", "\n".join(msg))
 
 
-class ApiJob(CoreJob):
-    """
-    This job visits all API servers which have registered in ``sys.api`` and
-    extracts its request handlers into ``sys.handler``.
-    """
-    author = 'mra'
-
-    def execute(self, *args, **kwargs):
-        now = core4.util.node.mongo_now()
-        username = self.config.api.admin_username
-        password = self.config.api.admin_password
-        verify = self.config.api.verify_ssl
-        timeout = 1
-        self.reset_visit()
-        for url in self.visit():
-            data = self.extract_widget(url, now,
-                                       username, password, verify, timeout)
-            for widget in data:
-                base = widget.copy()
-                del base["route"]
-                for route in widget["route"]:
-                    route.update(base)
-                    route["full_url"] = "{protocol:s}://" \
-                                        "{host:s}{enter_url:s}".format(**route)
-                    self.logger.debug("collected [%s] with [%s]",
-                                      route["full_url"], route["qual_name"])
-                    self.update_widget(route, now)
-
-    def update_widget(self, route, now):
-        route["visited"] = now
-        self.config.sys.handler.update_one(
-            filter={
-                "full_url": route["full_url"],
-            },
-            update={
-                "$set": route
-            },
-            upsert=True
-        )
-
-    def reset_visit(self):
-        app = self.config.sys.app.update_many(
-            filter={},
-            update={
-                "$set": {
-                    "visited": None,
-                }
-            })
-        handler = self.config.sys.handler.update_many(
-            filter={},
-            update={
-                "$set": {
-                    "visited": None,
-                }
-            })
-        self.logger.info("reset [%d] app server, [%d] routes",
-                         app.modified_count, handler.modified_count)
-
-    def visit(self):
-        for doc in self.config.sys.app.find():
-            base_url = doc["_id"]
-            yield base_url
-
-    def extract_widget(self, url, now, username, password, verify=True,
-                       timeout=1):
-        info_url = url
-        if info_url.endswith("/"):
-            info_url = info_url[:-1]
-        info_url += core4.const.INFO_URL
-        try:
-            rv = requests.get(info_url, auth=(username, password),
-                              verify=verify, timeout=timeout)
-        except Exception as exc:
-            self.logger.error("local api collection [%s] failed: %s",
-                              info_url, exc)
-        else:
-            if rv.status_code != 200:
-                self.logger.error("local api collection [%s] failed",
-                                  info_url)
-            else:
-                data = rv.json()["data"]["collection"]
-                self.logger.info(
-                    "local api collection [%s] succeeded with [%d] routes",
-                    info_url, len(data))
-                self.mark_visit(url, now)
-                return data
-        return []
-
-    def mark_visit(self, url, now):
-        self.config.sys.app.update_one(
-            filter={
-                "_id": url
-            },
-            update={
-                "$set": {
-                    "visited": now
-                }
-            }
-        )
+# class ApiJob(CoreJob):
+#     """
+#     This job visits all API servers which have registered in ``sys.api`` and
+#     extracts its request handlers into ``sys.handler``.
+#     """
+#     author = 'mra'
+#
+#     def execute(self, *args, **kwargs):
+#         now = core4.util.node.mongo_now()
+#         username = self.config.api.admin_username
+#         password = self.config.api.admin_password
+#         verify = self.config.api.verify_ssl
+#         timeout = 1
+#         self.reset_visit()
+#         for url in self.visit():
+#             data = self.extract_widget(url, now,
+#                                        username, password, verify, timeout)
+#             for widget in data:
+#                 base = widget.copy()
+#                 del base["route"]
+#                 for route in widget["route"]:
+#                     route.update(base)
+#                     route["full_url"] = "{protocol:s}://" \
+#                                         "{host:s}{enter_url:s}".format(**route)
+#                     self.logger.debug("collected [%s] with [%s]",
+#                                       route["full_url"], route["qual_name"])
+#                     self.update_widget(route, now)
+#
+#     def update_widget(self, route, now):
+#         route["visited"] = now
+#         self.config.sys.handler.update_one(
+#             filter={
+#                 "full_url": route["full_url"],
+#             },
+#             update={
+#                 "$set": route
+#             },
+#             upsert=True
+#         )
+#
+#     def reset_visit(self):
+#         app = self.config.sys.app.update_many(
+#             filter={},
+#             update={
+#                 "$set": {
+#                     "visited": None,
+#                 }
+#             })
+#         handler = self.config.sys.handler.update_many(
+#             filter={},
+#             update={
+#                 "$set": {
+#                     "visited": None,
+#                 }
+#             })
+#         self.logger.info("reset [%d] app server, [%d] routes",
+#                          app.modified_count, handler.modified_count)
+#
+#     def visit(self):
+#         for doc in self.config.sys.app.find():
+#             base_url = doc["_id"]
+#             yield base_url
+#
+#     def extract_widget(self, url, now, username, password, verify=True,
+#                        timeout=1):
+#         info_url = url
+#         if info_url.endswith("/"):
+#             info_url = info_url[:-1]
+#         info_url += core4.const.INFO_URL
+#         try:
+#             rv = requests.get(info_url, auth=(username, password),
+#                               verify=verify, timeout=timeout)
+#         except Exception as exc:
+#             self.logger.error("local api collection [%s] failed: %s",
+#                               info_url, exc)
+#         else:
+#             if rv.status_code != 200:
+#                 self.logger.error("local api collection [%s] failed",
+#                                   info_url)
+#             else:
+#                 data = rv.json()["data"]["collection"]
+#                 self.logger.info(
+#                     "local api collection [%s] succeeded with [%d] routes",
+#                     info_url, len(data))
+#                 self.mark_visit(url, now)
+#                 return data
+#         return []
+#
+#     def mark_visit(self, url, now):
+#         self.config.sys.app.update_one(
+#             filter={
+#                 "_id": url
+#             },
+#             update={
+#                 "$set": {
+#                     "visited": now
+#                 }
+#             }
+#         )
 
 
 if __name__ == '__main__':

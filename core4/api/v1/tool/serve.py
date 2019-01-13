@@ -153,7 +153,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             upsert=True
         )
         while True:
-            self.logger.debug("heartbeating")
             nxt = gen.sleep(sleep)
             doc = await sys_worker.find_one(
                 {"_id": "__halt__", "timestamp": {"$gte": self.startup}})
