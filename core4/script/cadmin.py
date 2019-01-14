@@ -1,15 +1,16 @@
 """
-cadmin - core4 administration utililty.
+cadmin - core4 deployment utililty.
 
 Usage:
-  cadmin --install [-r REPOS] [-c CORE4_REPOS] PROJECT
-  cadmin [--test] --upgrade [PROJECT]
+  cadmin --install [-r REPOS] [-c CORE4_REPOS] [--reset] PROJECT
+  cadmin --upgrade [PROJECT] [--test]
 
 Arguments:
   PROJECT  project name
 Options:
   -r REPOS --repository=REPOS  project git repository
   -c REPOS --core4=REPOS       core4 git repository
+  -x --reset                   reset existing project root
   -t --test                    dry-run
   -h --help                    show this screen
   -v --version                 show version
@@ -36,106 +37,134 @@ if version < 18.1:
                     "Upgrade with pip install --upgrade pip" % (version))
 
 import os
+from os.path import join, exists
 from docopt import docopt
 from core4.base.main import CoreBase
 import venv
 import core4.const
 import subprocess
 import sh
+import shutil
 
 
-class CoreAdmin(CoreBase):
+PIP_VERSION = "pip>=18.1"
+PROJECT_REQUIRES = "project_requires.txt"
+CORE4_REQUIRES = "core4_requires.txt"
 
-    def install(self, project, repository, core4_repository):
-        core4_home = self.config.folder.home
-        project_root = os.path.join(core4_home, project)
-        venv_root = os.path.join(project_root, core4.const.VENV)
-        upgrade_requires = os.path.join(venv_root, "upgrade_requires.txt")
 
-        if core4_home is None or not os.path.exists(core4_home):
+class CoreAdminInstaller(CoreBase):
+
+    def __init__(self, project, repository=None, core4_repository=None):
+        super().__init__()
+        self.project = project
+        self.home = self.config.folder.home
+        self.project_root = join(self.home, project)
+        self.venv_root = join(self.project_root, core4.const.VENV)
+        self.venv_pip = join(self.project_root, core4.const.VENV_PIP)
+        if project == core4.const.CORE4:
+            self.repository = repository or self.config.core4_origin
+        else:
+            self.repository = repository
+        self.project_requirement = join(self.venv_root, PROJECT_REQUIRES)
+        self.core4_requirement = join(self.venv_root, CORE4_REQUIRES)
+        self.core4_repository = core4_repository or self.config.core4_origin
+
+    def check_for_install(self):
+        if self.home is None or not exists(self.home):
             raise SystemExit("core4 config [folder.home] not set or None")
-        if os.path.exists(project_root):
-            raise SystemExit("project root [{}] exists".format(project_root))
-        if os.path.exists(venv_root):
+        if exists(self.project_root):
+            raise SystemExit("project root [{}] exists".format(
+                self.project_root))
+        if exists(self.venv_root):
             raise SystemExit("virtual environment [{}] exists".format(
-                venv_root))
+                self.venv_root))
 
-        print("creating project root [{}]".format(project_root))
-        os.makedirs(project_root)
-        os.chdir(project_root)
+    def reset(self):
+        if exists(self.project_root):
+            print("removing [{}]".format(self.project_root))
+            shutil.rmtree(self.project_root)
 
+    def check_for_upgrade(self):
+        if self.home is None or not exists(self.home):
+            raise SystemExit("core4 config [folder.home] not set or None")
+        if not exists(self.project_root):
+            raise SystemExit("project root [{}] not found".format(
+                self.project_root))
+        if not exists(self.venv_root):
+            raise SystemExit("virtual environment [{}] not found".format(
+                self.venv_root))
+
+    def install(self):
+        print("creating project root [{}]".format(self.project_root))
+        os.makedirs(self.project_root)
+        os.chdir(self.project_root)
         print("installing Python virtual environment in [{}]".format(
-            venv_root))
+            self.venv_root))
         builder = venv.EnvBuilder(system_site_packages=False, clear=False,
                                   symlinks=False, upgrade=False, with_pip=True)
-        builder.create(venv_root)
-
-        with open(upgrade_requires, "w", encoding="utf-8") as fh:
-            fh.write("git+" + repository + "\n")
-
-        self._upgrade_requires(venv_root)
+        builder.create(self.venv_root)
+        print("upgrading pip")
+        subprocess.Popen([join(self.venv_root, "bin/pip3"),
+                          "install", "--upgrade", PIP_VERSION]).communicate()
+        if self.project != core4.const.CORE4:
+            print("write [{}]".format(self.core4_requirement))
+            with open(self.core4_requirement, "w", encoding="utf-8") as fh:
+                fh.write("git+" + self.core4_repository + "\n")
+            print("install core4")
+            subprocess.Popen(
+                [self.venv_pip, "install", "--upgrade", "--requirement",
+                 self.core4_requirement]).communicate()
+        print("write [{}]".format(self.project_requirement))
+        with open(self.project_requirement, "w", encoding="utf-8") as fh:
+            fh.write("git+" + self.repository + "\n")
+        print("install project")
+        subprocess.Popen(
+            [self.venv_pip, "install", "--upgrade", "--requirement",
+             self.project_requirement]).communicate()
         print("done.")
 
-    def _upgrade_requires(self, venv_root):
-        venv_pip = os.path.join(venv_root, "bin/pip3")
-        print("upgrading pip")
-        upgrade_requires = os.path.join(venv_root, "upgrade_requires.txt")
-        # upgrade pip
-        proc = subprocess.Popen([venv_pip, "install", "--upgrade", "pip>=18.1"])
-        proc.communicate()
-        # install project package
-        print("install package and dependencies")
-        proc = subprocess.Popen(
-            [venv_pip, "install", "--upgrade", "--requirement",
-             upgrade_requires])
-        proc.communicate()
-
-    def upgrade(self, project, test=False):
-        remote = list(self._remote(project))
-        print("upgrade [{}]".format(project))
-        test = []
-        if project != core4.const.CORE4:
-            test.append((core4.const.CORE4, remote.pop(0)))
-        test.append((project, remote.pop(0)))
-        for mod in test:
-            version = self._installed_version(project, mod[0])
-            latest = self._remote_latest(mod[1])
-            print("  found [{}] version [{}], ".format(
-                mod[0], version, latest), end="")
-            if version != latest:
-                print("latest [{}] <= requires update".format(latest))
-            else:
-                print("up-to-date")
+    def upgrade(self, test=False):
+        print("upgrading [{}]".format(self.project))
+        upgrades = []
+        for pkg, requirement in (
+                (core4.const.CORE4, self.core4_requirement),
+                (self.project, self.project_requirement)):
+            if exists(requirement):
+                print("  work [{}]".format(pkg))
+                with open(requirement, "r", encoding="utf-8") as fh:
+                    repository = fh.read().strip()
+                print("    connect [{}]".format(repository))
+                current = self.get_current_version(pkg)
+                print("      current [{}]".format(current), end="")
+                if '@' in repository:
+                    (repository, *frozen) = repository.split("@")
+                    print(" == fixed [{}]".format(frozen[0]), end="")
+                    frozen = frozen[0]
+                else:
+                    frozen = None
+                latest = self.get_latest_version(repository)
+                if frozen is None:
+                    if latest == current:
+                        print(" == ", end="")
+                    else:
+                        print(" != ", end="")
+                    print("latest [{}]".format(latest), end="")
+                    if latest != current:
+                        print(" <=== UPDATE REQUIRED", end="")
+                        upgrades.append((pkg, repository))
+                print()
         if not test:
-            print("run")
+            for pkg, repository in upgrades:
+                self._run_upgrade(pkg, repository)
 
-        # if self.requires_upgrade(project):
-        #     print("upgrading [{}]".format(project))
-        #     core4_home = self.config.folder.home
-        #     project_root = os.path.join(core4_home, project)
-        #     venv_root = os.path.join(project_root, core4.const.VENV)
-        #     self._upgrade_requires(venv_root)
+    def _run_upgrade(self, package, repository):
+        print("  upgrading [{}] from [{}]".format(package, repository))
+        subprocess.Popen([self.venv_pip, "install", "--upgrade",
+                          repository]).communicate()
 
-    def upgrade_all(self, test=False):
-        core4_home = self.config.folder.home
-        for project in os.listdir(core4_home):
-            self.upgrade(project, test)
-
-    def _remote(self, project):
-        core4_home = self.config.folder.home
-        project_root = os.path.join(core4_home, project)
-        venv_root = os.path.join(project_root, core4.const.VENV)
-        upgrade_requires = os.path.join(venv_root, "upgrade_requires.txt")
-        fh = open(upgrade_requires, "r", encoding="utf-8")
-        repos = fh.readlines()
-        fh.close()
-        for line in repos:
-            line = line.strip()
-            if line.startswith("git+"):
-                line = line[4:]
-            yield line
-
-    def _remote_latest(self, repository):
+    def get_latest_version(self, repository):
+        if repository.startswith("git+"):
+            repository = repository[4:]
         stdout = sh.git(["ls-remote", "--tags", repository])
         vlist = []
         for line in stdout.split("\n"):
@@ -149,44 +178,42 @@ class CoreAdmin(CoreBase):
             return ".".join([str(i) for i in latest])
         return None
 
-    def _installed_version(self, project, module):
-        core4_home = self.config.folder.home
-        project_root = os.path.join(core4_home, project)
-        venv_root = os.path.join(project_root, core4.const.VENV)
-        venv_python = os.path.join(venv_root, "bin/python")
-        proc = subprocess.Popen(
-            [venv_python, "-c",
-             "import {mod}; print({mod}.__version__)".format(mod=module)],
-            stdout=subprocess.PIPE)
+    def get_current_version(self, package):
+        proc = subprocess.Popen([self.venv_pip, "freeze"],
+                                stdout=subprocess.PIPE)
         (stdout, _) = proc.communicate()
-        version = stdout.decode("utf-8").strip()
-        return version
+        for line in stdout.decode("utf-8").split("\n"):
+            if line.startswith(package + "=="):
+                return line[len(package + "=="):].strip()
+        return None
 
-    def requires_upgrade(self, project):
-        version = self._installed_version(project)
-        print("found [{}] in version [{}]".format(project, version), end="")
-        if project != core4.const.CORE4:
-            core4_version = self._installed_version(core4.const.CORE4)
-            print(", [{}] in version [{}]".format(core4.const.CORE4,
-                                                  core4_version))
-        else:
-            print()
+
+class CoreAutoUpgrade(CoreBase):
+
+    def upgrade(self, test=False):
+        for project in os.listdir(self.config.folder.home):
+            admin = CoreAdminInstaller(project)
+            admin.upgrade(test)
 
 
 def main():
-    admin = CoreAdmin()
     args = docopt(__doc__, help=True)
     if args["--install"]:
-        admin.install(
-            project=args["PROJECT"],
-            repository=args["--repository"],
-            core4_repository=args["--core4"]
-        )
+        installer = CoreAdminInstaller(
+            args["PROJECT"], args["--repository"], args["--core4"])
+        if args["--reset"]:
+            installer.reset()
+        installer.check_for_install()
+        installer.install()
     elif args["--upgrade"]:
         if args["PROJECT"]:
-            admin.upgrade(args["PROJECT"], args["--test"])
+            installer = CoreAdminInstaller(args["PROJECT"])
+            installer.check_for_upgrade()
+            installer.upgrade(args["--test"])
         else:
-            admin.upgrade_all(args["--test"])
+            installer = CoreAutoUpgrade()
+            installer.upgrade(args["--test"])
+
     else:
         raise SystemExit("nothing to do.")
 

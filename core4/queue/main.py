@@ -714,5 +714,3 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         if wait:
             (stdout, stderr) = proc.communicate()
             return stdout.decode("utf-8").strip()
-
-#test
