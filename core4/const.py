@@ -19,3 +19,5 @@ ENTER_METHOD = "XENTER"
 VENV = ".venv"
 REPOSITORY = ".repos"
 VENV_PYTHON = VENV + "/bin/python"
+VENV_PIP = VENV + "/bin/pip3"
+

@@ -66,7 +66,7 @@ def make_project(package_name=None, package_description=None, auto=False):
                 "project files will\n    be created."
 
     base = core4.base.main.CoreBase()
-    core4_repository = base.config.core4_origin
+    core4_repository = "git+" + base.config.core4_origin
 
     print("""
     A project directory ./{package_name:s} will be created at
@@ -103,7 +103,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     """.format(
         root=root_path, package_name=kwargs["package_name"], venv=VENV,
         repository=REPOSITORY, exist=exist, full_path=full_path,
-        core4_repository=base.config.core4_origin))
+        core4_repository=core4_repository))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
