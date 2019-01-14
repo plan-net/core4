@@ -706,8 +706,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             self.logger.debug("python found at [%s]", python_path)
             os.chdir(os.path.join(home, project))
         command = command.format(*args, **kwargs)
-        print(">>>", python_path)
-        print(">>>", command)
         proc = subprocess.Popen([python_path, "-c", command],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         os.chdir(currdir)
