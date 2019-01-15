@@ -56,6 +56,7 @@ setup(
         'console_scripts': [
             'coco=core4.script.coco:main',
             'chist=core4.script.chist:main',
+            'cadmin=core4.script.cadmin:main'
         ],
     },
     install_requires=[
