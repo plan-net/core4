@@ -164,6 +164,7 @@ class CoreBase:
         module = sys.modules.get(self.project)
         if self.project != CORE4:
             if module is None:
+                sys.path.append(".")
                 module = importlib.import_module(self.project)
             if hasattr(module, "__project__"):
                 if module.__project__ == CORE4:
