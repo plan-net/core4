@@ -31,7 +31,7 @@ development of a new core4 project and 2) cloning and further developing an
 existing core4 project.
 
 
-2. CORE4 PRODUCTION. 
+2. DEPLOY PRODUCTION. 
 
 In this scenario the core4 framework and one or more projects share one core4
 scheduler, multiple core4 workers, one or more core4 app containers hosting
@@ -51,11 +51,33 @@ project repository.
 develop and maintain new core4 projects
 ---------------------------------------
 
-In this scenario we will install core4 in ~/core4.home, create, setup, build
+In this scenario we will install core4 in ~/core4.dev, create, setup, build
 and release a core4 project called "mypro".
 
 Ensure all dependencies have been installed. This is Python 3.5, MongoDB, pip 
-and git. Open up a shell and execute the following commands to install core4:
+and git. 
+
+Open up a shell and execute the following commands to install core4:
+
+    mkdir ~/core4.dev
+    cd ~/core4.dev
+
+    # clone core4                                                       #[40]#
+    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+    
+    # enter clone                                                       #[41]#
+    cd core4
+    
+    # create Python virtual environment                                 #[42]#
+    python3 -m venv .venv
+    
+    # enter Python virtual environment                                  #[43]#
+    . enter_env 
+
+    # install core4 in development mode                                 #[44]#
+    pip install -e .[tests]
+
+
 
     # create core4 home                                                 #[1]# 
     mkdir ~/core4.dev
@@ -77,6 +99,7 @@ Within core4 environment you can create and develop your project. Chose project
 name "mypro" and create your test project with:
 
     # create new project
+    cd ~/core4.dev
     coco --init mypro "My first core4 project"                          #[5]#
 
 
@@ -121,9 +144,14 @@ modified if it already exists.
     folder:                                                             #[8]#
       home: /home/<username>/core4.dev
     
+    worker:
+      min_free_ram: 32
+
 
 Enter the project's Python virtual environment
-
+    
+    # exit core4 environment
+    exit_env
     # enter mypro environment                                           #[9]#
     source mypro/enter_env    
 
@@ -318,27 +346,14 @@ recommended to install the project itself in development mode (line #31):
     source enter_env
     
     # install core4                                                     #[30]#
-    pip install -U git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.ops
+    pip install -U git+ssh://git.bi.plan-net.com/srv/git/core4.git
     
     # install project mypro from current directory in development mode  #[31]#
     pip install -e .    
 
 
 Do not forget to have a global core4 configuration file exists, for example at 
-~/.core4/local.yaml.
-
-    DEFAULT:                                                            
-      mongo_url: mongodb://core:654321@localhost:27017
-      mongo_database: core4dev
-    
-    logging:                                                            
-      mongodb: INFO
-      stderr: DEBUG
-      stdout: ~
-    
-    folder:                                                             
-      home: /home/mra/core4.dev
-    
+~/.core4/local.yaml. See the example configuration yaml above.
 
 To test the job mypro.myjob.MyJob execute the following commands in two 
 seperate shells:
@@ -367,21 +382,18 @@ follows:
     # create core4 production home                                      #[35]# 
     mkdir ~/core4.prod
     cd ~/core4.prod
+
+    # create core4 project
+    mkdir core4
+    cd core4
+    python3 -m venv .venv
+
+    # activate environment
+    . .venv/bin/activate    
     
-    # download setup script                                             #[36]#
-    export CORE4_REMOTE=ssh://git.bi.plan-net.com/srv/git/core4.git
-    export CORE4_BRANCH=mra.ops
-    git archive --remote $CORE4_REMOTE $CORE4_BRANCH croll.py | tar -xO > croll.py
+    # install core4
+    pip install git+ssh://git.bi.plan-net.com/srv/git/core4.git
     
-    # install core4                                                     #[37]#
-    python3 croll.py core4 ssh://git.bi.plan-net.com/srv/git/core4.git@mra.ops
-
-    # install mypro                                                     #[38]#
-    python3 croll.py mypro file:///home/mra/core4.dev/mypro/.repos
-
-    # install another project                                           #[39]#
-    python3 croll.py pro2 file:///home/mra/core4.dev/pro2/.repos
-
 
 Be sure to update your local.yaml core4 project home residence:
 
@@ -389,12 +401,30 @@ Be sure to update your local.yaml core4 project home residence:
       home: /home/mra/core4.prod
 
 
+With a base installation of core4 you can now use core4's helper script
+``cadmin`` to deploy and upgrade core4 projects. The following example deploys
+the ``mypro`` project we've developed (see above).
+
+    python cadmin --install -r file:///home/mra/core4.dev/mypro/.repos mypro
+
+Check your setup with
+
+    coco --who
+    
+Upgrade your setup with
+
+    cadmin --upgrade 
+    
+
 core4 further development
 -------------------------
 
 To develop core4 further, you have to clone (line #40) the source code, create
 a Python virtual environment (line #42), enter the environment (line #43) and
 install core4 in development mode (line #44):
+
+    mkdir ~/core4.dev
+    cd ~/core4.dev
 
     # clone core4                                                       #[40]#
     git clone ssh://git.bi.plan-net.com/srv/git/core4.git
@@ -409,10 +439,22 @@ install core4 in development mode (line #44):
     . enter_env 
 
     # install core4 in development mode                                 #[44]#
-    pip install -e .
+    pip install -e .[tests]
 
 
 Be sure to have your ~/.core4/local.yaml.
+
+    DEFAULT:                                                            #[6]#
+      mongo_url: mongodb://core:654321@localhost:27017
+      mongo_database: core4dev
+    
+    logging:                                                            #[7]#
+      mongodb: INFO
+      stderr: DEBUG
+      stdout: ~
+    
+    folder:                                                             #[8]#
+      home: /home/<username>/core4.dev
 
 
 build documentation
