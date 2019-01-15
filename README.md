@@ -321,7 +321,16 @@ Check your setup with
 Upgrade your setup with
 
     cadmin --upgrade 
-    
+   
+   
+Please note that for repositories which have not been created with `cadmin` you
+have to manually upgrade. In our scenario this applies to the core4 project
+itself which has been created in ~/core4.prod/core4. Use pip to upgrade your
+installation:
+
+    deactivate
+    . ~/core4.prod/core4/.venv/bin/activate
+    pip install --upgrade git+ssh://git.bi.plan-net.com/srv/git/core4.git       
 
 develop and maintain existing core4 projects
 --------------------------------------------
