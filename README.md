@@ -1,6 +1,5 @@
 core4
 ===== 
-
     
 prerequisites 
 -------------
@@ -309,14 +308,16 @@ Be sure to update your local.yaml core4 project home residence:
 
 
 With a base installation of core4 you can now use core4's helper script
-``cadmin`` to deploy and upgrade core4 projects. The following example deploys
-the ``mypro`` project we've developed (see above).
+`cadmin` to deploy and upgrade core4 projects. The following example deploys
+the "mypro" project we've developed (see above).
 
     cadmin --install -r file:///home/mra/core4.dev/mypro/.repos mypro
+
 
 Check your setup with
 
     coco --who
+
     
 Upgrade your setup with
 
@@ -330,7 +331,8 @@ installation:
 
     deactivate
     . ~/core4.prod/core4/.venv/bin/activate
-    pip install --upgrade git+ssh://git.bi.plan-net.com/srv/git/core4.git       
+    pip install --upgrade git+ssh://git.bi.plan-net.com/srv/git/core4.git   
+        
 
 develop and maintain existing core4 projects
 --------------------------------------------
