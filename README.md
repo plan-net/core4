@@ -16,7 +16,7 @@ installation scenarios
 ----------------------
 
 The following step-by-step guide introduces three different scenarios to 
-run/deploy core4:
+develop and rollout core4:
 
 
 1. DEVELOP AND MAINTAIN CORE4 AND PROJECTS. 
