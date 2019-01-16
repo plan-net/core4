@@ -317,6 +317,7 @@ the "mypro" project we've developed (see above).
 Check your setup with
 
     coco --who
+    coco --project
 
     
 Upgrade your setup with
