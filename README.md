@@ -74,8 +74,8 @@ Open up a shell and execute the following commands to install core4:
     pip install -e .[tests]
 
 
-You can now create and develop your project. Chose project name "mypro" and 
-create your test project with:
+You have now a core4 environment and can create and develop your project. Chose 
+project name "mypro" and create your test project with:
 
     # create new project
     cd ~/core4.dev
@@ -127,22 +127,27 @@ the core4 home directory created above.
       min_free_ram: 32
 
 
-Enter the project's Python virtual environment:
-    
+Since every project comes with it's own Python virtual environment you must
+watch your context, e.g. with `coco --who`. Therefore, exit current environment
+"core4" with
+
     # exit core4 environment
     exit_env
 
+    
+Next, enter project "mypro" Python virtual environment:
+    
     # enter mypro environment                                           
     . mypro/enter_env    
 
 
-Start a worker in a shell:
+Start a worker with:
 
     coco --worker                                                       
 
 
 Test to enqueue a simple default job. Open up another shell, enter the 
-environment for this shell, to and enqueue the DummyJob:
+environment for this shell and enqueue the DummyJob:
 
     # enter mypro environment (2nd shell)
     . core4.dev/mypro/enter_env
@@ -177,7 +182,8 @@ and paste the following snippet into the body of myjob.py:
     
     class MyJob(core4.queue.job.CoreJob):
         author = "mra"
-    
+        schedule = "* * * * *"
+            
         def execute(self, **kwargs):
             self.logger.info("hello world")
             for i in range(0, 10):
@@ -311,7 +317,7 @@ With a base installation of core4 you can now use core4's helper script
 `cadmin` to deploy and upgrade core4 projects. The following example deploys
 the "mypro" project we've developed (see above).
 
-    cadmin --install -r file:///home/mra/core4.dev/mypro/.repos mypro
+    cadmin --install --repository file:///home/mra/core4.dev/mypro/.repos mypro
 
 
 Check your setup with
