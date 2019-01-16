@@ -21,6 +21,7 @@ Usage:
   coco --release
   coco --who
   coco --jobs
+  coco --project
   coco --version
 
 Options:
@@ -36,18 +37,20 @@ Options:
   -v --version    show version.
   -o --who        show system information
   -j --jobs       enumerate available jobs
+  -ü --project    enumerate available core4 projects
   -y --yes        Assume yes on all requests.
 """
 
-import datetime
 import json
 import re
 from pprint import pprint
 
+import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
 
 import core4
+import core4.api.v1.tool
 import core4.api.v1.tool.functool
 import core4.logger.mixin
 import core4.queue.job
@@ -58,7 +61,6 @@ import core4.service.introspect.project
 import core4.service.project
 import core4.util.data
 import core4.util.node
-import core4.api.v1.tool
 from core4.service.operation.build import build, release
 
 ENQUEUE_COMMAND = """
@@ -355,6 +357,7 @@ def jobs():
         for job in sorted(jobs):
             print("  {}".format(job))
 
+
 def who():
     intro = core4.service.introspect.project.CoreProjectInspector()
     summary = intro.summary()
@@ -364,6 +367,9 @@ def who():
     print("UPTIME:")
     print("  {} ({:1.0f} sec.)".format(summary["uptime"]["text"],
                                        summary["uptime"]["epoch"]))
+    print("PYTHON:")
+    print("  {} {}".format(summary["python"]["executable"],
+                           summary["python"]["version"]))
     print("CONFIGURATION:")
     print("  {}".format(
         "\n  ".join(
@@ -377,22 +383,6 @@ def who():
     print("DIRECTORIES:")
     for k in ("home", "transfer", "process", "archive", "temp"):
         print("  {:<9s} {}".format(k + ":", summary["folder"][k]))
-    print("PROJECTS:")
-    for project in sorted(summary["project"].keys()):
-        modules = {}
-        if summary["project"][project]:
-            for mod in summary["project"][project]["project"]:
-                modules[mod["name"]] = mod
-            print("  {} ({}) with Python {}, pip {}".format(
-                modules[project]["name"], modules[project]["version"],
-                summary["project"][project]["python_version"],
-                summary["project"][project]["pip"],
-            ))
-            for mod in sorted(modules.keys()):
-                if mod != project:
-                    print("    {} ({})".format(
-                        modules[mod]["name"], modules[mod]["version"]
-                    ))
     print("DAEMONS:")
     have = False
     for daemon in summary["daemon"]:
@@ -400,6 +390,27 @@ def who():
         have = True
     if not have:
         print("  none.")
+
+
+def project():
+    intro = core4.service.introspect.project.CoreProjectInspector()
+    summary = dict(intro.list_project())
+    print("PROJECTS:")
+    for project in sorted(summary.keys()):
+        modules = {}
+        if summary[project]:
+            for mod in summary[project]["project"]:
+                modules[mod["name"]] = mod
+            print("  {} ({}) with Python {}, pip {}".format(
+                modules[project]["name"], modules[project]["version"],
+                summary[project]["python_version"],
+                summary[project]["pip"],
+            ))
+            for mod in sorted(modules.keys()):
+                if mod != project:
+                    print("    {} ({})".format(
+                        modules[mod]["name"], modules[mod]["version"]
+                    ))
 
 
 def main():
@@ -445,10 +456,11 @@ def main():
         who()
     elif args["--jobs"]:
         jobs()
+    elif args["--project"]:
+        project()
     else:
         raise SystemExit("nothing to do.")
 
 
 if __name__ == '__main__':
-    #main()
-    who()
+    main()

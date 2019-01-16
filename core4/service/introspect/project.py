@@ -1,14 +1,14 @@
 import json
 import os
+import sys
 
 import core4.error
 import core4.queue.main
 import core4.util.node
 from core4.base.main import CoreBase
 from core4.const import VENV_PYTHON
-from core4.service.introspect import CoreIntrospector
 from core4.queue.query import QueryMixin
-
+from core4.service.introspect import CoreIntrospector
 
 ITER_COMMAND = """
 from core4.service.introspect import CoreIntrospector
@@ -86,10 +86,13 @@ class CoreProjectInspector(CoreBase, QueryMixin):
     def summary(self):
         uptime = core4.util.node.uptime()
         return {
+            "python": {
+                "executable": sys.executable,
+                "version": tuple(sys.version_info),
+            },
             "config": self.check_config_files(),
             "database": self.check_mongo_default(),
             "folder": self.list_folder(),
-            "project": dict(self.list_project()),
             "user": {
                 "name": core4.util.node.get_username(),
                 "group": core4.util.node.get_groups()
