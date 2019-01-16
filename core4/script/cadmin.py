@@ -26,7 +26,7 @@ if sys.version_info < (3, 5):
 import pip
 
 PIP_VERSION = (18, 1)
-if tuple([int(i) for i in pip.__version__.split(".")]) <= PIP_VERSION:
+if tuple([int(i) for i in pip.__version__.split(".")]) < PIP_VERSION:
     sys.exit("requires pip version 18.1 or higher, "
              "Upgrade with `pip install --upgrade pip`")
 
