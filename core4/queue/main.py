@@ -675,6 +675,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         state['event'] = {'name': event, 'data': args}
         self.sys_stat.insert_one(state)
 
+    # todo: document this
     def exec_project(self, name, command, wait=True, *args, **kwargs):
         """
         Execute command using the Python interpreter of the project's virtual

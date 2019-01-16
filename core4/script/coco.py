@@ -380,18 +380,19 @@ def who():
     print("PROJECTS:")
     for project in sorted(summary["project"].keys()):
         modules = {}
-        for mod in summary["project"][project]["project"]:
-            modules[mod["name"]] = mod
-        print("  {} ({}) with Python {}, pip {}".format(
-            modules[project]["name"], modules[project]["version"],
-            summary["project"][project]["python_version"],
-            summary["project"][project]["pip"],
-        ))
-        for mod in sorted(modules.keys()):
-            if mod != project:
-                print("    {} ({})".format(
-                    modules[mod]["name"], modules[mod]["version"]
-                ))
+        if summary["project"][project]:
+            for mod in summary["project"][project]["project"]:
+                modules[mod["name"]] = mod
+            print("  {} ({}) with Python {}, pip {}".format(
+                modules[project]["name"], modules[project]["version"],
+                summary["project"][project]["python_version"],
+                summary["project"][project]["pip"],
+            ))
+            for mod in sorted(modules.keys()):
+                if mod != project:
+                    print("    {} ({})".format(
+                        modules[mod]["name"], modules[mod]["version"]
+                    ))
     print("DAEMONS:")
     have = False
     for daemon in summary["daemon"]:
@@ -449,4 +450,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    #main()
+    who()

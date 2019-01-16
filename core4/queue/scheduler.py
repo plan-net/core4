@@ -84,38 +84,40 @@ class CoreScheduler(CoreDaemon):
         self.job = {}
         self.logger.info("start registration")
         for project, data in intro.list_project():
-            self.logger.info("collecting classes from [%s]", project)
-            for job in data["job"]:
-                job_project = job["name"].split(".")[0]
-                if ((job_project != core4.const.CORE4)
-                        or (job_project == project)):
-                    self.logger.debug("registering job [%s]", job["name"])
-                    update = job.copy()
-                    del update["name"]
-                    update["updated_at"] = now
-                    self.config.sys.job.update_one(
-                        filter={
-                            "_id": job["name"]
-                        },
-                        update={
-                            "$set": update,
-                            "$setOnInsert": {
-                                "created_at": now
+            if data:
+                self.logger.info("collecting classes from [%s]", project)
+                for job in data["job"]:
+                    job_project = job["name"].split(".")[0]
+                    if ((job_project != core4.const.CORE4)
+                            or (job_project == project)):
+                        self.logger.debug("registering job [%s]", job["name"])
+                        update = job.copy()
+                        del update["name"]
+                        update["updated_at"] = now
+                        self.config.sys.job.update_one(
+                            filter={
+                                "_id": job["name"]
                             },
-                        },
-                        upsert=True
-                    )
-                    if job["valid"] and job["schedule"]:
-                        doc = self.config.sys.job.find_one(
-                            {"_id": job["name"]}, projection=["created_at"])
+                            update={
+                                "$set": update,
+                                "$setOnInsert": {
+                                    "created_at": now
+                                },
+                            },
+                            upsert=True
+                        )
+                        if job["valid"] and job["schedule"]:
+                            doc = self.config.sys.job.find_one(
+                                {"_id": job["name"]},
+                                projection=["created_at"])
 
-                        self.job[job["name"]] = {
-                            "updated_at": now,
-                            "schedule": job["schedule"],
-                            "created_at": doc["created_at"]
-                        }
-                        self.logger.info("schedule [%s] at [%s]", job["name"],
-                                         job["schedule"])
+                            self.job[job["name"]] = {
+                                "updated_at": now,
+                                "schedule": job["schedule"],
+                                "created_at": doc["created_at"]
+                            }
+                            self.logger.info("schedule [%s] at [%s]",
+                                             job["name"], job["schedule"])
         self.logger.info("registered jobs")
 
     def loop(self):
