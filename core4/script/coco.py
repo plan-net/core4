@@ -37,7 +37,7 @@ Options:
   -v --version    show version.
   -o --who        show system information
   -j --jobs       enumerate available jobs
-  -ü --project    enumerate available core4 projects
+  -p --project    enumerate available core4 projects
   -y --yes        Assume yes on all requests.
 """
 
