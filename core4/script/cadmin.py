@@ -16,38 +16,30 @@ Options:
   -v --version                 show version
 """
 
-# todo: install specific version and upgrade against this version
-
 import sys
 
-# ensure this is python3
-version = float("%d.%d" % (sys.version_info.major, sys.version_info.minor))
-if version < 3.5:
-    raise Exception("Must be using Python 3.5 or higher.\n"
-                    "This is Python %s" % (version))
+# ensure python3
+if sys.version_info < (3, 5):
+    sys.exit('requires Python 3.5 or higher')
 
 # ensure pip >= 18.1
 import pip
 
-version = float("%d.%d" % (
-    tuple([int(i) for i in pip.__version__.split(".")[:2]])))
-if version < 18.1:
-    raise Exception("Must be using pip 18.1 or higher.\n"
-                    "This is pip %s. "
-                    "Upgrade with pip install --upgrade pip" % (version))
+PIP_VERSION = (18, 2)
+if tuple([int(i) for i in pip.__version__.split(".")]) <= PIP_VERSION:
+    sys.exit("requires pip version 18.1 or higher, "
+             "Upgrade with `pip install --upgrade pip`")
 
 import os
 from os.path import join, exists
 from docopt import docopt
 from core4.base.main import CoreBase
-import venv
 import core4.const
+import venv
 import subprocess
 import sh
 import shutil
 
-
-PIP_VERSION = "pip>=18.1"
 PROJECT_REQUIRES = "project_requires.txt"
 CORE4_REQUIRES = "core4_requires.txt"
 
@@ -104,8 +96,10 @@ class CoreAdminInstaller(CoreBase):
                                   symlinks=False, upgrade=False, with_pip=True)
         builder.create(self.venv_root)
         print("upgrading pip")
-        subprocess.Popen([join(self.venv_root, "bin/pip3"),
-                          "install", "--upgrade", PIP_VERSION]).communicate()
+        subprocess.Popen(
+            [join(self.venv_root, "bin/pip3"), "install", "--upgrade",
+             "pip>={:s}".format(".".join([str(i) for i in PIP_VERSION]))
+             ]).communicate()
         if self.project != core4.const.CORE4:
             print("write [{}]".format(self.core4_requirement))
             with open(self.core4_requirement, "w", encoding="utf-8") as fh:
@@ -146,10 +140,12 @@ class CoreAdminInstaller(CoreBase):
                 if frozen is None:
                     if latest == current:
                         print(" == ", end="")
-                    else:
+                    elif latest is not None:
                         print(" != ", end="")
+                    else:
+                        print(" !! ", end="")
                     print("latest [{}]".format(latest), end="")
-                    if latest != current:
+                    if latest is not None and latest != current:
                         print(" <=== UPDATE REQUIRED", end="")
                         upgrades.append((pkg, repository))
                 print()
@@ -191,6 +187,7 @@ class CoreAdminInstaller(CoreBase):
 class CoreAutoUpgrade(CoreBase):
 
     def upgrade(self, test=False):
+        print("folder.home = {}".format(self.config.folder.home))
         for project in os.listdir(self.config.folder.home):
             admin = CoreAdminInstaller(project)
             admin.upgrade(test)
@@ -220,73 +217,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-"""
-develop core4
-    upgrade core4 and packages
-
-    cadmin --develop core4
-
-    export CORE4_DEV=/tmp/core4.dev
-    export CORE4_REPOSITORY=ssh://git.bi.plan-net.com/srv/git/core4.git
-    export CORE4_PROJECT=core4
-
-    cd $CORE4_DEV  # might be the project home of your IDE, e.g. ~/PycharmProjects
-    git clone $CORE4_REPOSITORY
-    cd core4
-    python3 -m venv .venv
-    . .venv/bin/activate
-
-    pip install -e .[tests]
-
-    # here: install local.yaml
-    mkdir ~/.core4
-    nano ~/.core4/local.yaml
-
-        DEFAULT:
-          mongo_url: mongodb://core:654321@localhost:27017
-          mongo_database: core4dev
-
-        folder:
-          home: /tmp/core4.dev
-
-        logging:
-          mongodb: INFO
-
-        worker:
-          min_free_ram: 16
-
-        api:
-          setting:
-            cookie_secret: hello world
-          token:
-            secret: hello world again
-
-        core4_origin: git+ssh://git.bi.plan-net.com/srv/git/core4.git
-
-    # upgrade with git flow on master, develop and feature branches
-
-develop project and core4 together
-    upgrade packages
-
-    cadmin --develop mypro
-
-    export CORE4_DEV=/tmp/core4.dev
-    export CORE4_REPOSITORY=ssh://git.bi.plan-net.com/srv/git/core4.git
-    export CORE4_PROJECT=mypro
-    export CORE4_PROJECT_REPOSITORY=file:///home/mra/core4.dev/mypro/.repos
-
-    cd $CORE4_DEV  # might be the project home of your IDE, e.g. ~/PycharmProjects
-    git clone $CORE4_PROJECT_REPOSITORY $CORE4_PROJECT
-    cd $CORE4_PROJECT
-
-    python3 -m venv .venv
-    . enter_env
-
-    export PYTHONPATH=/tmp/core4.dev/core4:/tmp/core4.dev/core4/.venv/lib/python3.5/site-packages
-
-
-cadmin --upgrade --all
-
-
-"""
