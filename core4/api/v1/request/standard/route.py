@@ -86,7 +86,7 @@ class RouteHandler(CoreRequestHandler):
                     "tag": {"$first": "$tag"},
                     "routing": {"$first": "$routing"},
                     "qual_name": {"$first": "$qual_name"},
-                    "title": {"$first": "title"},
+                    "title": {"$first": "$title"},
                 }
             },
             {
