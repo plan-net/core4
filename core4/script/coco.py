@@ -346,11 +346,11 @@ def init(name, description, yes=False):
 
 def jobs():
     intro = core4.service.introspect.project.CoreProjectInspector()
-    summary = intro.summary()
-    for project in sorted(summary["project"]):
+    summary = dict(intro.list_project())
+    for project in sorted(summary.keys()):
         print("{}".format(project))
         jobs = []
-        for job in summary["project"][project]["job"]:
+        for job in summary[project]["job"]:
             job_project = job["name"].split(".")[0]
             if job_project == project:
                 jobs.append(job["name"])
