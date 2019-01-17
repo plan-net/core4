@@ -5,6 +5,7 @@ Usage:
   chist [--start=START] [--end=END] [--level=LEVEL] [--project=PROJECT]
       [--hostname=HOSTNAME] [--username=USERNAME] [--qual_name=QUAL_NAME]
       [--identifier=ID] [--message=PATTERN] [--follow] [SECONDS] [--tab]
+      [--case-sensitive]
 
 Options:
   -s --start=START          lower timestamp boundary
@@ -17,8 +18,9 @@ Options:
   -i --identifier=ID        object identifier filter
   -m --message=PATTERN      message regular expression filter
   -f --follow               follow log message interval
+  -c --case-sensitive       search [default: False]
   -t --tab                  tab seperated
-  -h --help                 Show this screen.
+  -h --help                 Show this screen
 """
 
 import logging
@@ -156,6 +158,9 @@ def parse_datetime_range(start, end, today=None):
 def build_query(args, clock=None, utc=True):
     query = []
     # --start and --end
+    reflags = re.IGNORECASE
+    if args["--case-sensitive"]:
+        reflags -= re.IGNORECASE
     start = args.get("--start", None)
     end = args.get("--end", None)
     if not (start or end):
@@ -185,20 +190,24 @@ def build_query(args, clock=None, utc=True):
                 break
         if not found:
             sys.exit("unknown --level")
-    # left match: --project and --qual_name
-    for search in ("project", "qual_name"):
-        value = args.get("--" + search, None)
-        if value is not None:
-            query.append({search: re.compile("^" + value + "\..+")})
+    # left match: --project
+    value = args.get("--project", None)
+    if value is not None:
+        query.append({"qual_name": re.compile("^" + value + "\..+",
+                                              flags=reflags)})
+    # match: --qual_name
+    value = args.get("--qual_name", None)
+    if value is not None:
+        query.append({"qual_name": re.compile(value, flags=reflags)})
     # right match: --identifier
     identifier = args.get("--identifier", None)
     if identifier:
-        query.append({"identifier": re.compile("^.*" + identifier + "$")})
+        query.append({"identifier": re.compile("^.*" + identifier + "$",
+                                               flags=reflags)})
     # message
     message = args.get("--message", None)
     if message:
-        query.append({"message": re.compile(message)})
-
+        query.append({"message": re.compile(message, flags=reflags)})
     return query
 
 
@@ -234,7 +243,7 @@ def main(args, clock=None):
             if "exception" in doc:
                 out = "".join(doc["exception"]["text"])
                 print("|", "\n| ".join(out.split("\n")))
-    print(query)
+    #print(query)
 
 
 if __name__ == '__main__':
