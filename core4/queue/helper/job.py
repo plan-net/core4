@@ -1,10 +1,10 @@
 import datetime as dt
-import requests
+import time
 import tornado.template
 
+import core4.const
 import core4.util
 from core4.queue.job import CoreJob
-import core4.const
 
 
 class DummyJob(CoreJob):
@@ -14,7 +14,6 @@ class DummyJob(CoreJob):
     author = 'mra'
 
     def execute(self, *args, **kwargs):
-        import time
         sleep = kwargs.get("sleep", None) or 3
         until = core4.util.node.now() + dt.timedelta(seconds=sleep)
         self.logger.info("just sleeping [%s] seconds", sleep)

@@ -83,8 +83,8 @@ class CoreWorkerProcess(core4.base.CoreBase,
             return False
         except:
             job.__dict__["attempts_left"] -= 1
+            job.logger.critical("failed", exc_info=True)
             self.queue.set_failed(job)
-            job.logger.critical("failed")
             return False
         else:
             job.__dict__["attempts_left"] -= 1
