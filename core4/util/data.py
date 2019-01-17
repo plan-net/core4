@@ -66,6 +66,12 @@ def utc2local(dt):
 
 
 def local2utc(dt):
+    """
+    Convert local :class:`datetime.datetime` to UTC.
+
+    :param col: class:`datetime.datetime` without timezone information
+    :return: class:`datetime.datetime` without timezone in UTC
+    """
     utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
     return datetime.datetime.fromtimestamp(
         time.mktime(utc_struct_time))
@@ -160,8 +166,14 @@ def json_decode(value, **kwargs):
     return None
 
 
-# todo: requires documentation
 def rst2html(doc):
+    """
+    Parses the doc string using sphinx with napoleon extension.
+
+    :param doc: docstring
+    :return: dict with keys ``body`` (html) and ``error`` (list of parsing
+             errors)
+    """
     dedent = textwrap.dedent(doc)
     google = sphinx.ext.napoleon.GoogleDocstring(
         docstring=dedent, config=NAPOLEON)
