@@ -216,8 +216,8 @@ def build_query(args, clock=None, utc=True):
 def main(args, clock=None):
     query = build_query(args, clock)
     base = CoreBase()
-    cur = base.config.sys.log.find(
-        filter={"$and": query}, sort=[("_id", 1)])
+    data = list(base.config.sys.log.find(
+        filter={"$and": query}, sort=[("_id", -1)], limit=250))
 
     def printout(*args, **kwargs):
         print(*args, **kwargs, end="")
@@ -248,7 +248,7 @@ def main(args, clock=None):
                 print("|", "\n| ".join(out.split("\n")))
 
     offset = None
-    for doc in cur:
+    for doc in reversed(data):
         handle(doc)
         offset = doc["_id"]
     if args["--follow"]:
