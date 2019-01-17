@@ -10,6 +10,8 @@ import core4.util
 import core4.util.node
 from core4.base.main import CoreBase
 from core4.queue.validate import *
+import core4.logger.mixin
+
 
 # Job-States
 STATE_PENDING = 'pending'
@@ -110,7 +112,7 @@ NOT_INHERITED = {
 }
 
 
-class CoreJob(CoreBase):
+class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
     """
     This is the base class of all core jobss. Core jobs implement the actual
     task processing. If you say that :class:`.Worker` is the working horse of
@@ -343,7 +345,6 @@ class CoreJob(CoreBase):
                 self.__dict__[prop] = default
 
         super().__init__()
-
         # runtime properties
         self.name = self.qual_name(short=True)
         self._id = None

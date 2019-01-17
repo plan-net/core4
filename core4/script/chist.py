@@ -206,7 +206,7 @@ def main(args, clock=None):
     query = build_query(args, clock)
     base = CoreBase()
     cur = base.config.sys.log.find(
-        filter={"$and": query}, sort=[("created", 1), ("_id", 1)])
+        filter={"$and": query}, sort=[("epoch", 1), ("_id", 1)])
 
     def printout(*args, **kwargs):
         print(*args, **kwargs, end="")

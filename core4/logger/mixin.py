@@ -114,12 +114,12 @@ class ExceptionLoggerMixin:
                 handler.setLevel(logging.DEBUG)
                 logger = logging.getLogger(self.qual_name(short=False))
                 logger.addHandler(handler)
-                self.logger.debug("exception logging added")
-            else:
-                self.logger.warning(
-                    "exception logging skipped "
-                    "with mongodb log_level [{}]".format(
-                        self.config.logging.mongodb))
+                self.logger.info("exception logging added")
+            # else:
+            #     self.logger.warning(
+            #         "exception logging skipped "
+            #         "with mongodb log_level [{}]".format(
+            #             self.config.logging.mongodb))
 
 
 def logon():
