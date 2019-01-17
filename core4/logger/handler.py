@@ -34,7 +34,8 @@ def make_record(record):
         "created": datetime.datetime(ts.tm_year, ts.tm_mon, ts.tm_mday,
                                      ts.tm_hour, ts.tm_min, ts.tm_sec),
         "message": record.getMessage(),
-        "level": record.levelname
+        "level": record.levelname,
+        "levelno": record.levelno
     }
     for k in ["username", "hostname", "identifier", "qual_name"]:
         doc[k] = getattr(record, k, None)
