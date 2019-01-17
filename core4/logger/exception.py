@@ -2,7 +2,6 @@ import collections
 import logging
 
 import core4.logger.handler
-
 FLUSH_LEVEL = logging.CRITICAL
 
 

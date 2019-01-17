@@ -37,13 +37,12 @@ def make_record(record):
         "level": record.levelname,
         "levelno": record.levelno
     }
-    for k in ["username", "hostname", "identifier", "qual_name"]:
+    for k in ["username", "hostname", "identifier", "qual_name", "epoch"]:
         doc[k] = getattr(record, k, None)
     if doc["identifier"] is not None:
         doc["identifier"] = str(doc["identifier"])
     if doc["qual_name"] is None:
         doc["qual_name"] = "basename:" + os.path.basename(record.pathname)
-    doc["epoch"] = core4.util.node.now().timestamp()
     doc["_id"] = getattr(record, "_id", ObjectId())
     if record.exc_info or record.exc_text:
         doc["exception"] = {

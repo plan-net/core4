@@ -28,4 +28,5 @@ class CoreLoggingFilter(logging.Filter):
             record.qual_name = record.obj.qual_name(short=True)
         except:
             record.qual_name = "basename:" + os.path.basename(record.pathname)
+        record.epoch = core4.util.node.now().timestamp()
         return 1
