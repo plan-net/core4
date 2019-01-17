@@ -39,6 +39,8 @@ def make_record(record):
     }
     for k in ["username", "hostname", "identifier", "qual_name"]:
         doc[k] = getattr(record, k, None)
+    if doc["identifier"] is not None:
+        doc["identifier"] = str(doc["identifier"])
     if doc["qual_name"] is None:
         doc["qual_name"] = "basename:" + os.path.basename(record.pathname)
     doc["_id"] = getattr(record, "_id", ObjectId())
