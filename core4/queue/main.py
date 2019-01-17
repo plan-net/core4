@@ -8,20 +8,20 @@ import os
 import subprocess
 import sys
 import traceback
-from datetime import timedelta
 
 import pymongo.collection
 import pymongo.errors
 import pymongo.write_concern
 from bson.objectid import ObjectId
+from datetime import timedelta
 
 import core4.error
 import core4.service.setup
 import core4.util
 import core4.util.node
 import core4.util.tool
-from core4.const import VENV_PYTHON
 from core4.base import CoreBase
+from core4.const import VENV_PYTHON
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
 
@@ -618,11 +618,11 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                          "last_error", "attempts_left", "query_at", "trial")
         self.make_stat('failed_job', job._id)
         self.unlock_job(job._id)
-        job.logger.error("done execution with [%s] "
-                         "after [%d] sec. and [%d] attempts to go: %s\n%s",
-                         state, runtime, job.attempts_left,
-                         job.last_error["exception"],
-                         "\n".join(job.last_error["traceback"]))
+        job.logger.critical("done execution with [%s] "
+                            "after [%d] sec. and [%d] attempts to go: %s\n%s",
+                            state, runtime, job.attempts_left,
+                            job.last_error["exception"],
+                            "\n".join(job.last_error["traceback"]))
 
     def _exec_kill(self, _id):
         # internal method used by virtual python interpreter to kill job
