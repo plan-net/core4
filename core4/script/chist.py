@@ -4,8 +4,8 @@ chist - core4 log history
 Usage:
   chist [--start=START] [--end=END] [--level=LEVEL] [--project=PROJECT]
       [--hostname=HOSTNAME] [--username=USERNAME] [--qual_name=QUAL_NAME]
-      [--identifier=ID] [--message=PATTERN] [--follow] [SECONDS] [--tab]
-      [--case-sensitive]
+      [--identifier=ID] [--message=PATTERN] [--tab] [--case-sensitive]
+      [--follow] [SECONDS]
 
 Options:
   -s --start=START          lower timestamp boundary
@@ -27,12 +27,14 @@ import logging
 import re
 import sys
 
+from time import sleep
 from datetime import datetime, time, timedelta
 from docopt import docopt
-
 import core4
 import core4.util.data
 from core4.base.main import CoreBase
+from bson.objectid import ObjectId
+
 
 LOG_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 
@@ -159,7 +161,7 @@ def build_query(args, clock=None, utc=True):
     query = []
     # --start and --end
     reflags = re.IGNORECASE
-    if args["--case-sensitive"]:
+    if args.get("--case-sensitive", False):
         reflags -= re.IGNORECASE
     start = args.get("--start", None)
     end = args.get("--end", None)
@@ -215,12 +217,12 @@ def main(args, clock=None):
     query = build_query(args, clock)
     base = CoreBase()
     cur = base.config.sys.log.find(
-        filter={"$and": query}, sort=[("epoch", 1), ("_id", 1)])
+        filter={"$and": query}, sort=[("_id", 1)])
 
     def printout(*args, **kwargs):
         print(*args, **kwargs, end="")
 
-    for doc in cur:
+    def handle(doc):
         if args["--tab"]:
             print("\t".join([
                 str(core4.util.data.utc2local(doc["created"])),
@@ -234,6 +236,7 @@ def main(args, clock=None):
             else:
                 print()
         else:
+            #printout("{:s} ".format(str(doc["_id"])))
             printout("{:>19s} ".format(str(core4.util.data.utc2local(
                 doc["created"]))))
             printout("{:<8s} ".format(doc["level"]))
@@ -243,6 +246,31 @@ def main(args, clock=None):
             if "exception" in doc:
                 out = "".join(doc["exception"]["text"])
                 print("|", "\n| ".join(out.split("\n")))
+
+    offset = None
+    for doc in cur:
+        handle(doc)
+        offset = doc["_id"]
+    if args["--follow"]:
+        try:
+            while True:
+                if offset is not None:
+                    iq = query + [{"_id": {"$gt": offset}}]
+                else:
+                    iq = query
+                cur = base.config.sys.log.find(
+                    filter={
+                        "$and": iq
+                    },
+                    sort=[("_id", 1)])
+                for doc in cur:
+                    handle(doc)
+                    offset = doc["_id"]
+                sleep(float(args["SECONDS"] or 1))
+        except KeyboardInterrupt:
+            print()
+        except:
+            raise
     #print(query)
 
 
