@@ -332,12 +332,14 @@ class TestLogging(unittest.TestCase):
         a.success()
         a.failure()
 
-        data = list(self.mongo.core4test.sys.log.find(sort=[("_id", 1)]))
+        data = list(self.mongo.core4test.sys.log.find(sort=[("epoch", 1)]))
+        for doc in data:
+            print(doc)
         expected = ['INFO', 'DEBUG', 'INFO', 'CRITICAL']
         test = [d["level"] for d in data if d["identifier"] == "A"]
         self.assertEqual(test, expected)
         a.success()
-        data = list(self.mongo.core4test.sys.log.find(sort=[("_id", 1)]))
+        data = list(self.mongo.core4test.sys.log.find(sort=[("epoch", 1)]))
         expected = ['INFO', 'DEBUG', 'INFO', 'CRITICAL', 'INFO', 'INFO']
         test = [d["level"] for d in data if d["identifier"] == "A"]
         self.assertEqual(test, expected)

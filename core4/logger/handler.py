@@ -43,7 +43,7 @@ def make_record(record):
         doc["identifier"] = str(doc["identifier"])
     if doc["qual_name"] is None:
         doc["qual_name"] = "basename:" + os.path.basename(record.pathname)
-    doc["_id"] = getattr(record, "_id", ObjectId())
+    #doc["_id"] = getattr(record, "_id", ObjectId())
     if record.exc_info or record.exc_text:
         doc["exception"] = {
             "info": repr(record.exc_info[1]),

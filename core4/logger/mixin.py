@@ -114,7 +114,7 @@ class ExceptionLoggerMixin:
                 handler.setLevel(logging.DEBUG)
                 logger = logging.getLogger(self.qual_name(short=False))
                 logger.addHandler(handler)
-                self.logger.info("exception logging added")
+                #self.logger.info("exception logging added")
             # else:
             #     self.logger.warning(
             #         "exception logging skipped "
