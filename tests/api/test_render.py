@@ -210,7 +210,7 @@ def test_server_test(http):
     assert rv.status_code == 200
     rv = http.get("/test1/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
     pprint(rv.json())
     lh = 'core4.api.v1.request.standard.login.LoginHandler'
@@ -232,8 +232,9 @@ def test_title_args(http):
     rv = http.post("/test1/internal1")
     assert rv.status_code == 200
     assert "custom title 1" == rv.json()["data"]
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
+    pprint(rv.json())
     qn = 'tests.api.test_render.InternalHandler1'
     internal_handler = [h for h in rv.json()["data"]
                         if h["qual_name"] == qn]
@@ -247,7 +248,7 @@ def test_title_args(http):
 def test_help(http):
     rv = http.post("/tests/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
     pprint(rv.json())
@@ -288,33 +289,35 @@ def test_server_wrong_args():
 
 
 def test_card(http):
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
     internal_handler = [h for h in rv.json()["data"]
                         if h["qual_name"] == qn]
     pprint(internal_handler)
-    internal_handler[0]["title"] == "custom title 1"
-    internal_handler[1]["title"] == "internal test 1"
+    assert internal_handler[0]["title"] == "internal test 1"
+    assert internal_handler[1]["title"] == "custom title 1"
 
-    c1 = internal_handler[0]["card_url"]
-    c2 = internal_handler[1]["card_url"]
-    r1 = internal_handler[0]["route_id"]
-    r2 = internal_handler[1]["route_id"]
+    c0 = internal_handler[0]["card_url"]
+    c1 = internal_handler[1]["card_url"]
+    r0 = internal_handler[0]["route_id"]
+    r1 = internal_handler[1]["route_id"]
 
-    rv = http.get(c1, absolute=True)
-    assert rv.status_code == 200
-    content = rv.content.decode('utf-8')
-    assert "custom title 1" in content
-    assert "tests.api.test_render.InternalHandler1" in content
-    assert 'href="/core4/api/v1/enter/' + r1 + '"' in content
-
-    rv = http.get(c2, absolute=True)
+    rv = http.get(c0, absolute=True)
     assert rv.status_code == 200
     content = rv.content.decode('utf-8')
     assert "internal test 1" in content
     assert "tests.api.test_render.InternalHandler1" in content
-    assert 'href="/core4/api/v1/enter/' + r2 + '"' in content
+    assert 'href="/core4/api/v1/enter/' + r0 + '"' in content
+
+    rv = http.get(c1, absolute=True)
+    assert rv.status_code == 200
+    content = rv.content.decode('utf-8')
+    pprint(content)
+    assert "custom title 1" in content
+    assert "tests.api.test_render.InternalHandler1" in content
+    assert 'href="/core4/api/v1/enter/' + r1 + '"' in content
+
 
 
 def test_render_relative(http):

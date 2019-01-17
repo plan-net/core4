@@ -12,7 +12,7 @@ from tornado.web import HTTPError
 
 import core4.logger.mixin
 import core4.service
-from core4.api.v1.application import CoreApiContainer
+from core4.api.v1.application import CoreApiContainer, RootContainer
 from core4.api.v1.tool.functool import serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
@@ -50,7 +50,7 @@ def setup(tmpdir):
             dels.append(k)
     for k in dels:
         del os.environ[k]
-
+    RootContainer.routes = {}
 
 class StopHandler(CoreRequestHandler):
     protected = False

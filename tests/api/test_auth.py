@@ -15,7 +15,6 @@ from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
 from core4.queue.helper.functool import execute
-from core4.queue.helper.job import ApiJob
 from tests.api.test_response import setup
 
 _ = setup
@@ -168,32 +167,32 @@ def test_server_test(http):
     pprint(rv.json())
 
 
-def test_collection_job(http):
-    execute(ApiJob)
-    token = add_user(http, "user1")
-    rv = http.get("/core4/api/v1/info", token=token)
-    for elem in rv.json()["data"]:
-        print(elem["qual_name"])
-        rv = http.get(elem["card_url"], token=token, base=False)
-        assert rv.status_code in (401, 200)
-
-    rv = http.get("/core4/api/v1/info")
-    check = {
-        'core4.api.v1.request.queue.job.JobPost': 403,
-        'core4.api.v1.request.role.main.RoleHandler': 403,
-        'core4.api.v1.request.queue.job.JobHandler': 403,
-        'core4.api.v1.request.standard.route.RouteHandler': 200,
-        'core4.api.v1.request.standard.profile.ProfileHandler': 200,
-        'core4.api.v1.request.standard.file.CoreFileHandler': 200,
-        'core4.api.v1.request.standard.login.LoginHandler': 200,
-        'core4.api.v1.request.standard.logout.LogoutHandler': 200,
-        'core4.api.v1.request.static.CoreStaticFileHandler': 200
-    }
-    for elem in rv.json()["data"]:
-        qual_name = elem["qual_name"]
-        if qual_name in check:
-            rv = http.get(elem["card_url"], token=token, base=False)
-            assert check[qual_name] == rv.status_code
+# def test_collection_job(http):
+#     execute(ApiJob)
+#     token = add_user(http, "user1")
+#     rv = http.get("/core4/api/v1/info", token=token)
+#     for elem in rv.json()["data"]:
+#         print(elem["qual_name"])
+#         rv = http.get(elem["card_url"], token=token, base=False)
+#         assert rv.status_code in (401, 200)
+#
+#     rv = http.get("/core4/api/v1/info")
+#     check = {
+#         'core4.api.v1.request.queue.job.JobPost': 403,
+#         'core4.api.v1.request.role.main.RoleHandler': 403,
+#         'core4.api.v1.request.queue.job.JobHandler': 403,
+#         'core4.api.v1.request.standard.route.RouteHandler': 200,
+#         'core4.api.v1.request.standard.profile.ProfileHandler': 200,
+#         'core4.api.v1.request.standard.file.CoreFileHandler': 200,
+#         'core4.api.v1.request.standard.login.LoginHandler': 200,
+#         'core4.api.v1.request.standard.logout.LogoutHandler': 200,
+#         'core4.api.v1.request.static.CoreStaticFileHandler': 200
+#     }
+#     for elem in rv.json()["data"]:
+#         qual_name = elem["qual_name"]
+#         if qual_name in check:
+#             rv = http.get(elem["card_url"], token=token, base=False)
+#             assert check[qual_name] == rv.status_code
 
 
 def test_enqeuue(http):
