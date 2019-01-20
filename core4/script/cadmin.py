@@ -96,12 +96,13 @@ class CoreAdminInstaller(CoreBase):
         os.chdir(self.project_root)
         print("installing Python virtual environment in [{}]".format(
             self.venv_root))
-        builder = venv.EnvBuilder(system_site_packages=False, clear=True,
-                                  symlinks=False, upgrade=True, with_pip=True)
+        builder = venv.EnvBuilder(system_site_packages=False, clear=False,
+                                  symlinks=False, upgrade=True, with_pip=True,
+                                  prompt=self.project)
         builder.create(self.venv_root)
         print("upgrading pip")
         subprocess.Popen(
-            [join(self.venv_root, "bin/pip3"), "-q", "install", "--upgrade",
+            [join(self.venv_root, "bin/pip3"), "install", "--upgrade",
              "pip>={:s}".format(".".join([str(i) for i in PIP_VERSION]))
              ]).communicate()
         if self.project != core4.const.CORE4:
@@ -120,7 +121,7 @@ class CoreAdminInstaller(CoreBase):
         print("installing [{}] version [{}] from [{}]".format(
             package, version, source))
         subprocess.Popen(
-            [self.venv_pip, "-q", "install", "git+" + source]).communicate()
+            [self.venv_pip, "install", "git+" + source]).communicate()
 
     def parse_file(self, filename):
         with open(filename, "r", encoding="utf-8") as fh:
