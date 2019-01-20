@@ -38,7 +38,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     kwargs = {
         "package_name": package_name,
         "package_description": package_description,
-        "package_version": "0.0.1",
+        "package_version": "0.0.0",
     }
     if kwargs["package_name"] and not kwargs["package_name"].isidentifier():
         print("this is not a valid package name")
@@ -178,7 +178,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         git_dir = ["--git-dir", os.path.join(full_path, ".git"),
                    "--work-tree", full_path]
 
-        printout("    intial commit ... ")
+        printout("    initial commit ... ")
         sh.git(git_dir + ["add", "*"])
         sh.git(git_dir + ["commit", ".", "-m", "initial commit"])
         sh.git(git_dir + ["push"])
