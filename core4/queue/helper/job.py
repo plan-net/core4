@@ -12,6 +12,7 @@ class DummyJob(CoreJob):
     This is just a job-dummy for testing purposes.
     """
     author = 'mra'
+    schedule = '* * * *'
 
     def execute(self, *args, **kwargs):
         sleep = kwargs.get("sleep", None) or 3
