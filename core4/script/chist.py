@@ -27,14 +27,13 @@ import logging
 import re
 import sys
 
-from time import sleep
 from datetime import datetime, time, timedelta
 from docopt import docopt
+from time import sleep
+
 import core4
 import core4.util.data
 from core4.base.main import CoreBase
-from bson.objectid import ObjectId
-
 
 LOG_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 
@@ -213,7 +212,7 @@ def build_query(args, clock=None, utc=True):
     return query
 
 
-def main(args, clock=None):
+def run(args, clock=None):
     query = build_query(args, clock)
     base = CoreBase()
     data = list(base.config.sys.log.find(
@@ -236,7 +235,7 @@ def main(args, clock=None):
             else:
                 print()
         else:
-            #printout("{:s} ".format(str(doc["_id"])))
+            # printout("{:s} ".format(str(doc["_id"])))
             printout("{:>19s} ".format(str(core4.util.data.utc2local(
                 doc["created"]))))
             printout("{:<8s} ".format(doc["level"]))
@@ -271,8 +270,11 @@ def main(args, clock=None):
             print()
         except:
             raise
-    #print(query)
+
+
+def main():
+    run(args=docopt(__doc__, help=True, version=core4.__version__))
 
 
 if __name__ == '__main__':
-    main(args=docopt(__doc__, help=True, version=core4.__version__))
+    main()
