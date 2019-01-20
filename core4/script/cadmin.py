@@ -5,8 +5,12 @@ Usage:
   cadmin --install [-r REPOS] [-c CORE4_REPOS] [--reset] PROJECT
   cadmin --upgrade [PROJECT] [--test]
 
+Fix any version with the --repository and --core4 option with format
+``protocol://auth@host/path==tag``.
+
 Arguments:
   PROJECT  project name
+
 Options:
   -r REPOS --repository=REPOS  project git repository
   -c REPOS --core4=REPOS       core4 git repository
@@ -92,30 +96,60 @@ class CoreAdminInstaller(CoreBase):
         os.chdir(self.project_root)
         print("installing Python virtual environment in [{}]".format(
             self.venv_root))
-        builder = venv.EnvBuilder(system_site_packages=False, clear=False,
-                                  symlinks=False, upgrade=False, with_pip=True)
+        builder = venv.EnvBuilder(system_site_packages=False, clear=True,
+                                  symlinks=False, upgrade=True, with_pip=True)
         builder.create(self.venv_root)
         print("upgrading pip")
         subprocess.Popen(
-            [join(self.venv_root, "bin/pip3"), "install", "--upgrade",
+            [join(self.venv_root, "bin/pip3"), "-q", "install", "--upgrade",
              "pip>={:s}".format(".".join([str(i) for i in PIP_VERSION]))
              ]).communicate()
         if self.project != core4.const.CORE4:
-            print("write [{}]".format(self.core4_requirement))
-            with open(self.core4_requirement, "w", encoding="utf-8") as fh:
-                fh.write("git+" + self.core4_repository + "\n")
-            print("install core4")
-            subprocess.Popen(
-                [self.venv_pip, "install", "--upgrade", "--requirement",
-                 self.core4_requirement]).communicate()
-        print("write [{}]".format(self.project_requirement))
-        with open(self.project_requirement, "w", encoding="utf-8") as fh:
-            fh.write("git+" + self.repository + "\n")
-        print("install project")
-        subprocess.Popen(
-            [self.venv_pip, "install", "--upgrade", "--requirement",
-             self.project_requirement]).communicate()
+            self.install_file("core4", self.core4_requirement,
+                              self.core4_repository)
+        self.install_file(self.project, self.project_requirement,
+                          self.repository)
         print("done.")
+
+    def install_file(self, package, filename, requirement):
+        print("working [{}]".format(package))
+        print("writing [{}]".format(filename))
+        with open(filename, "w", encoding="utf-8") as fh:
+            fh.write(requirement + "\n")
+        (version, source, _) = self.parse_file(filename)
+        print("installing [{}] version [{}] from [{}]".format(
+            package, version, source))
+        subprocess.Popen(
+            [self.venv_pip, "-q", "install", "git+" + source]).communicate()
+
+    def parse_file(self, filename):
+        with open(filename, "r", encoding="utf-8") as fh:
+            requirement = fh.read().strip()
+        (repository, *tag) = requirement.split("==")
+        if tag:
+            version = "==".join(tag)
+            source = "@".join([repository, version])
+        else:
+            version = "latest"
+            source = repository
+        return version, source, repository
+
+    def update_file(self, package, requirement):
+        (version, source, repository) = self.parse_file(requirement)
+        print("  working [{}], fixed [{}]".format(package, version))
+        print("    connect [{}]".format(repository))
+        current = self.get_current_version(package)
+        latest = self.get_latest_version(repository)
+        print("      current [{}], latest [{}]".format(current, latest),
+              end="")
+        do_update = False
+        if version == "latest":
+            if current != latest and latest is not None:
+                do_update = True
+        else:
+            if current != version:
+                do_update = True
+        return (do_update, version, source)
 
     def upgrade(self, test=False):
         print("upgrading [{}]".format(self.project))
@@ -124,39 +158,16 @@ class CoreAdminInstaller(CoreBase):
                 (core4.const.CORE4, self.core4_requirement),
                 (self.project, self.project_requirement)):
             if exists(requirement):
-                print("  work [{}]".format(pkg))
-                with open(requirement, "r", encoding="utf-8") as fh:
-                    repository = fh.read().strip()
-                print("    connect [{}]".format(repository))
-                current = self.get_current_version(pkg)
-                print("      current [{}]".format(current), end="")
-                if '@' in repository:
-                    (repository, *frozen) = repository.split("@")
-                    print(" == fixed [{}]".format(frozen[0]), end="")
-                    frozen = frozen[0]
-                else:
-                    frozen = None
-                latest = self.get_latest_version(repository)
-                if frozen is None:
-                    if latest == current:
-                        print(" == ", end="")
-                    elif latest is not None:
-                        print(" != ", end="")
-                    else:
-                        print(" !! ", end="")
-                    print("latest [{}]".format(latest), end="")
-                    if latest is not None and latest != current:
-                        print(" <=== UPDATE REQUIRED", end="")
-                        upgrades.append((pkg, repository))
+                (update, version, source) = self.update_file(pkg, requirement)
+                if update:
+                    print("\033[91m <= UPDATE REQUIRED\033[0m", end="")
+                    upgrades.append((pkg, source))
                 print()
         if not test:
-            for pkg, repository in upgrades:
-                self._run_upgrade(pkg, repository)
-
-    def _run_upgrade(self, package, repository):
-        print("  upgrading [{}] from [{}]".format(package, repository))
-        subprocess.Popen([self.venv_pip, "install", "--upgrade",
-                          repository]).communicate()
+            for pkg, source in upgrades:
+                print("  upgrading [{}] from [{}]".format(pkg, source))
+                subprocess.Popen([self.venv_pip, "install", "--upgrade",
+                                  "git+" + source]).communicate()
 
     def get_latest_version(self, repository):
         if repository.startswith("git+"):
@@ -193,13 +204,12 @@ class CoreAutoUpgrade(CoreBase):
             admin.upgrade(test)
 
 
-def main():
-    args = docopt(__doc__, help=True)
+def run(args):
     if args["--install"]:
         installer = CoreAdminInstaller(
             args["PROJECT"], args["--repository"], args["--core4"])
         if args["--reset"]:
-            installer.reset()
+           installer.reset()
         installer.check_for_install()
         installer.install()
     elif args["--upgrade"]:
@@ -213,6 +223,10 @@ def main():
 
     else:
         raise SystemExit("nothing to do.")
+
+
+def main():
+    run(args=docopt(__doc__, help=True))
 
 
 if __name__ == '__main__':
