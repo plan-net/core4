@@ -12,6 +12,67 @@ core4 requires on the following prerequisites.
 * pip and git
 
 
+Debian 9 ships with Python 3. Check installation with
+
+    python3 --version
+    
+
+Install pip for Python 3 with
+
+    sudo apt-get install python3-pip
+    
+    
+On Debian/Ubuntu systems, you need to install the python3-venv package using 
+the following command.
+
+    sudo apt-get install python3-venv
+
+
+Install git with
+
+    sudo apt-get install git
+    
+    
+install MongoDB
+
+    sudo apt-get install dirmngr
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+    echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.0 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+    sudo apt-get update
+    sudo apt-get install -y mongodb-org
+    sudo systemctl enable mongod
+
+
+protect mongo with
+
+    mongo
+    
+        use admin
+        db.createUser(
+          {
+            user: "core",
+            pwd: "654321",
+            roles: [ { role: "root", db: "admin" } ]
+          }
+        );
+
+
+enable authorization editing /etc/mongod.conf
+
+    security:
+      authorization: enabled
+    
+    
+restart mongod with
+    
+    service mongod restart
+
+
+test connection now with
+
+    mongo --username=core --password=654321 --authenticationDatabase admin
+
+
 installation scenarios
 ----------------------
 
