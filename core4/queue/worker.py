@@ -286,8 +286,9 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if not data["force"]:
                     self.logger.info(
                         'skipped job [%s] with _id [%s]: '
-                        'not enough resources available',
-                        data["name"], data["_id"])
+                        'not enough resources available: '
+                        'cpu [%1.1f], memory [%1.1f]',
+                        data["name"], data["_id"], *cur_stats[:2])
                     return None
 
             # acquire lock
