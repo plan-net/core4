@@ -24,10 +24,11 @@ To stop the worker start a new Python interpreter and go with::
 """
 
 import collections
-from datetime import timedelta
+import signal
 
 import psutil
 import pymongo
+from datetime import timedelta
 
 import core4.base
 import core4.error
@@ -79,6 +80,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
+        # ignore signal from children to avoid defunct zombies
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     def cleanup(self):
         """
