@@ -83,21 +83,3 @@ this has been done, you can remove the bare repository from the project sources
 and update your git connection accordingly in ``.git/config``.
 
 See also :doc:`deploy` and :doc:`tools`.
-
-
-.. _project_maintenance:
-
-project maintenance
--------------------
-
-.. todo: continue with project maintenance
-
-
-project iteration
------------------
-
-
-
-
-
-
