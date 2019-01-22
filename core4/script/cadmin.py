@@ -96,10 +96,8 @@ class CoreAdminInstaller(CoreBase):
         os.chdir(self.project_root)
         print("installing Python virtual environment in [{}]".format(
             self.venv_root))
-        # builder = venv.EnvBuilder(system_site_packages=False, clear=False,
-        #                           symlinks=False, upgrade=True, with_pip=True)
-        # builder.create(self.venv_root)
-        subprocess.Popen(["python3", "-m", "venv", self.venv_root]).communicate()
+        subprocess.Popen(["python3", "-m", "venv",
+                          self.venv_root]).communicate()
         print("upgrading pip")
         subprocess.Popen(
             [join(self.venv_root, "bin/pip3"), "install", "--upgrade",
