@@ -1,6 +1,8 @@
 """
 chist - core4 log history
 
+Use this command line tool to display logging output.
+
 Usage:
   chist [--start=START] [--end=END] [--level=LEVEL] [--project=PROJECT]
       [--hostname=HOSTNAME] [--username=USERNAME] [--qual_name=QUAL_NAME]

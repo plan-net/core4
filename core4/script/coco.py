@@ -1,6 +1,15 @@
 """
 coco - core4 control utililty.
 
+Use coco to interact with the core4 backend and frontend in the areas of
+
+* project management
+* setup control
+* maintenance
+* job management
+* daemon control (worker, scheduler, application server)
+* release management
+
 Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
