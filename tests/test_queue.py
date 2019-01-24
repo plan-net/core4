@@ -2,7 +2,7 @@
 
 import logging
 import os
-
+import signal
 import pymongo
 import pytest
 
@@ -14,6 +14,7 @@ import core4.error
 import core4.error
 import core4.queue.helper
 import core4.queue.helper.job
+import core4.queue.helper.job.example
 import core4.queue.job
 import core4.queue.main
 import core4.service.setup
@@ -75,11 +76,13 @@ def reset(tmpdir):
             dels.append(k)
     for k in dels:
         del os.environ[k]
+    # ignore signal from children to avoid defunct zombies
+    signal.signal(signal.SIGCHLD, signal.SIG_DFL)
 
 
 def test_job_found():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.helper.job.DummyJob)
+    q.enqueue(core4.queue.helper.job.example.DummyJob)
 
 
 def test_job_not_found():
@@ -139,18 +142,18 @@ def test_no_mro3():
 
 def test_enqueue():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.helper.job.DummyJob)
+    q.enqueue(core4.queue.helper.job.example.DummyJob)
 
 
 def test_enqueue_args():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.helper.job.DummyJob, a1=1, a2=2, a3=3)
+    q.enqueue(core4.queue.helper.job.example.DummyJob, a1=1, a2=2, a3=3)
     with pytest.raises(core4.error.CoreJobExists):
-        q.enqueue(core4.queue.helper.job.DummyJob,
+        q.enqueue(core4.queue.helper.job.example.DummyJob,
                   args={"a1": 1, "a2": 2, "a3": 3})
-    q.enqueue(core4.queue.helper.job.DummyJob)
+    q.enqueue(core4.queue.helper.job.example.DummyJob)
     with pytest.raises(core4.error.CoreJobExists):
-        q.enqueue(core4.queue.helper.job.DummyJob)
+        q.enqueue(core4.queue.helper.job.example.DummyJob)
 
 
 def test_invalid():

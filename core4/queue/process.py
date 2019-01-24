@@ -76,6 +76,7 @@ class CoreWorkerProcess(core4.base.CoreBase,
 
         self.queue.make_stat("start_job", str(job_id))
         job.add_exception_logger()
+        # job.args.pop("manual_execute", None)
         try:
             job.execute(**job.args)
         except core4.error.CoreJobDeferred:

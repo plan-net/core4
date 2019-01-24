@@ -201,12 +201,12 @@ def test_enqeuue(http):
             "api://core4.api.v1.request.queue.job.JobPost",
             "job://core4.queue.helper.*/x"
         ])
-    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
+    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.example.DummyJob",
                    token=token)
     assert rv.status_code == 200
     token = add_job_user(
         http, "user2", ["api://core4.api.v1.request.queue.job.JobHandler"])
-    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
+    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.example.DummyJob",
                    token=token)
     assert rv.status_code == 403
 
@@ -221,7 +221,7 @@ class MyJob(core4.queue.job.CoreJob):
 def test_job_listing(http):
     for i in range(0, 10):
         rv = http.post("/tests/enqueue", json={
-            "name": "core4.queue.helper.job.DummyJob",
+            "name": "core4.queue.helper.job.example.DummyJob",
             "id": i + 1
         })
         assert rv.status_code == 200

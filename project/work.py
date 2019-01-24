@@ -3,6 +3,7 @@ import time
 import core4.logger
 import core4.queue.helper
 import core4.queue.helper.job
+import core4.queue.helper.job.example
 import core4.queue.job
 import core4.queue.main
 
@@ -39,4 +40,4 @@ if __name__ == '__main__':
     core4.logger.logon()
     q = core4.queue.main.CoreQueue()
     # q._enqueue(ErrorJob)
-    q.enqueue(core4.queue.helper.job.DummyJob)
+    q.enqueue(core4.queue.helper.job.example.DummyJob)

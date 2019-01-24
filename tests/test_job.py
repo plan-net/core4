@@ -13,12 +13,13 @@ import core4.config
 import core4.config.tag
 import core4.config.test
 import core4.error
-import core4.error
 import core4.queue.helper
 import core4.queue.helper.job
+import core4.queue.helper.job.example
 import core4.queue.job
 import core4.queue.main
 import core4.service.setup
+import core4.queue.helper.functool
 
 ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
@@ -83,7 +84,7 @@ def test_init():
     job = core4.queue.job.CoreJob()
     with pytest.raises(AssertionError):
         job.validate()
-    job = core4.queue.helper.job.DummyJob()
+    job = core4.queue.helper.job.example.DummyJob()
     assert job._id is None
     assert job.args == {}
     assert job.attempts == 1
@@ -104,7 +105,7 @@ def test_init():
     assert job.max_parallel is None
     assert job.worker is None
     assert job.priority == 0
-    assert job.name == 'core4.queue.helper.job.DummyJob'
+    assert job.name == 'core4.queue.helper.job.example.DummyJob'
     assert job.query_at is None
     assert job.removed_at is None
     assert job.runtime is None
@@ -153,11 +154,11 @@ def test_validation2():
 
 
 def test_enqueue():
-    job = core4.queue.helper.job.DummyJob(attempts=10)
+    job = core4.queue.helper.job.example.DummyJob(attempts=10)
     assert job.attempts == 10
     assert job.chain == []
 
-    job = core4.queue.helper.job.DummyJob(
+    job = core4.queue.helper.job.example.DummyJob(
         defer_max=1, defer_time=2,  # inactive_time=4,
         max_parallel=5, worker=['A'], priority=6, arg1=100, arg2=200)
     assert job.attempts == 1
@@ -461,7 +462,7 @@ def test_frozen_method():
 
 def test_job_found():
     q = core4.queue.main.CoreQueue()
-    q.enqueue(core4.queue.helper.job.DummyJob)
+    q.enqueue(core4.queue.helper.job.example.DummyJob)
 
 
 def test_job_not_found():
@@ -506,3 +507,30 @@ def test_python():
     job3 = q.enqueue(EnvJob, python="test99env")
     assert job1.python == job2.python == "test2"
     assert job3.python == "test99env"
+
+
+class JobTemplate(core4.queue.job.CoreJob,
+                  core4.queue.helper.job.base.CoreAbstractJobMixin):
+    author = "mra"
+
+
+class RealJob(JobTemplate):
+    def execute(self):
+        pass
+
+
+class RealJobWithAuthor(JobTemplate):
+    author = "mra"
+
+    def execute(self):
+        pass
+
+
+def test_abstract_job():
+    with pytest.raises(TypeError):
+        core4.queue.helper.functool.execute(JobTemplate)
+
+    with pytest.raises(AssertionError):
+        core4.queue.helper.functool.execute(RealJob)
+
+    core4.queue.helper.functool.execute(RealJobWithAuthor)

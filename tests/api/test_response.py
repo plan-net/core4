@@ -13,10 +13,8 @@ from tornado.web import HTTPError
 import core4.logger.mixin
 import core4.service
 from core4.api.v1.application import CoreApiContainer, RootContainer
-from core4.api.v1.tool.functool import serve
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.request.standard.profile import ProfileHandler
-
+from core4.api.v1.tool.functool import serve
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
@@ -52,6 +50,7 @@ def setup(tmpdir):
         del os.environ[k]
     RootContainer.routes = {}
 
+
 class StopHandler(CoreRequestHandler):
     protected = False
 
@@ -74,11 +73,12 @@ class LocalTestServer:
                 rv = requests.get(url, timeout=1)
                 break
             except:
-               pass
+                pass
             time.sleep(1)
             tornado.gen.sleep(1)
         self.signin = requests.get(
-            self.url("/core4/api/v1/login?username=admin&password=hans", base=False))
+            self.url("/core4/api/v1/login?username=admin&password=hans",
+                     base=False))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 

@@ -3,11 +3,12 @@ import os
 import pymongo
 import pymongo.errors
 from bson.objectid import ObjectId
+
 import core4.const
-from core4.api.v1.request.role.model import CoreRole
+import core4.util.crypt
 from core4.base import CoreBase
 from core4.util.tool import Singleton
-import core4.util.crypt
+
 
 def once(f):
     """

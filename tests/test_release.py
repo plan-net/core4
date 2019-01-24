@@ -54,6 +54,7 @@ def reset(tmpdir):
 
 
 def test_create(tmpdir):
+
     os.chdir(tmpdir.strpath)
     core4.service.project.make_project("test_project", "test project",
                                        auto=True)
@@ -102,11 +103,11 @@ def test_build(tmpdir):
 
     # version mismatch
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.build(0, 0, 1)
+        core4.service.operation.build.build(0, 0, 0)
     assert code.type == SystemExit
     assert code.value.code == 6
     # success
-    core4.service.operation.build.build(0, 0, 2)
+    core4.service.operation.build.build(0, 0, 1)
     # check release
     out = sh.git(["branch", "-a"])
     "* release-0.0.2" in out

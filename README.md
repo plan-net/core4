@@ -214,7 +214,7 @@ environment for this shell and enqueue the DummyJob:
     . core4.dev/mypro/enter_env
     
     # test enqueue                                                      
-    coco --enqueue core4.queue.helper.job.DummyJob
+    coco --enqueue core4.queue.helper.job.example.DummyJob
 
 
 After successful execution show the job details from sys.queue and halt the

@@ -18,7 +18,7 @@ libc = ctypes.CDLL(None)
 
 import logging
 import os
-
+import signal
 import pymongo
 import pytest
 
@@ -67,6 +67,8 @@ def reset(tmpdir):
             dels.append(k)
     for k in dels:
         del os.environ[k]
+    # ignore signal from children to avoid defunct zombies
+    signal.signal(signal.SIGCHLD, signal.SIG_DFL)
 
 
 @pytest.fixture

@@ -12,7 +12,6 @@ from core4.base.main import CoreBase
 from core4.queue.validate import *
 import core4.logger.mixin
 
-
 # Job-States
 STATE_PENDING = 'pending'
 STATE_RUNNING = 'running'

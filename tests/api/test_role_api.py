@@ -827,5 +827,3 @@ def test_recursion(http):
     # assert test1.role == ['test_role2', 'test_role3']
     # assert loop.run_sync(test1.casc_perm) == ['app://1', 'app://2', 'app://3']
     #
-
-
