@@ -1,5 +1,6 @@
 import logging
 import os
+import sh
 import re
 import datetime
 import pymongo
@@ -154,4 +155,31 @@ def test_archive():
     with pytest.raises(RuntimeError):
         job.move_archive(data[0])
     job.__dict__["_id"] = bson.objectid.ObjectId()
+    job.move_archive(data[0], compress=False)
+    archive = transfer = job.config.get_folder("archive")
+    target = os.path.join(archive, "tests/2018/01/02/" + str(job._id)
+                          + "/test1.txt")
+    assert os.path.exists(target)
+    assert os.path.isfile(target)
+
+
+def test_archive_compress():
+    job = LoadJob()
+    transfer = job.config.get_folder("transfer")
+    fn = "tests/test1.txt"
+    touch(transfer, fn)
+    data = job.list_transfer(".+\.txt$")
+    job.move_proc(data[0])
+    data = job.list_proc(".+\.txt$")
+    with pytest.raises(RuntimeError):
+        job.move_archive(data[0])
+    job.__dict__["started_at"] = datetime.datetime(2018, 1, 2, 3, 4, 5)
+    with pytest.raises(RuntimeError):
+        job.move_archive(data[0])
+    job.__dict__["_id"] = bson.objectid.ObjectId()
     job.move_archive(data[0])
+    archive = transfer = job.config.get_folder("archive")
+    target = os.path.join(archive, "tests/2018/01/02/" + str(job._id)
+                          + "/test1.txt.gz")
+    assert os.path.exists(target)
+    assert os.path.isfile(target)

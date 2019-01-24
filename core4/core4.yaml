@@ -62,6 +62,7 @@ job:
   schedule: ~
   tag: ~
   progress_interval: 5
+  archive_stamp: "{year:04d}/{month:02d}/{day:02d}/{_id:s}"
 
 daemon:
   heartbeat: 15

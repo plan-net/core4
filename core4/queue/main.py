@@ -24,6 +24,7 @@ from core4.base import CoreBase
 from core4.const import VENV_PYTHON
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
+from core4.queue.helper.job.base import CoreAbstractJobMixin
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
                  core4.queue.job.STATE_FAILED)
@@ -131,6 +132,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         if not isinstance(cls, type):
             raise TypeError(
                 "{} not a class".format(repr(job)))
+        if CoreAbstractJobMixin in cls.__bases__:
+            raise TypeError(
+                "{} is an abstract job class".format(repr(job))
+            )
         obj = cls(**kwargs)
         if not isinstance(obj, core4.queue.job.CoreJob):
             raise TypeError(
