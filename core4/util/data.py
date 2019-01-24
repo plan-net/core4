@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import sphinx.ext.napoleon
 import time
+import gzip
+import os
 from docutils import core
 from docutils.parsers.rst.directives import register_directive
 
@@ -186,3 +188,20 @@ def rst2html(doc):
         'error': errors,
         'body': parts['fragment']
     }
+
+
+def compress(filename):
+    """
+    Compress a file.
+
+    :param filename: full filename
+    :return: compressed full filename
+    """
+    target = filename + '.gz'
+    fin = open(filename, 'rb')
+    fout = gzip.open(target, 'wb')
+    fout.writelines(fin)
+    fout.close()
+    fin.close()
+    os.remove(filename)
+    return target
