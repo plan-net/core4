@@ -24,7 +24,7 @@ sources of configuration
 
 There are multiple places where core4 is looking for configuration.
 
-#. The **core4 configuration** file ``config/core.yaml``, see
+#. The **core4 configuration** file ``core4.yaml``, see
    :ref:`core_config`. This file provides standard values.
 #. The **project configuration** file for project specific settings in
    ``[project]/[project].yaml``. This file is part of the project repository and
@@ -91,7 +91,7 @@ dates. Use YAML default tags to explicitely define the value type (see for
 example http://sweetohm.net/article/introduction-yaml.en.html).
 
 core4 implements a custom tag ``!connect`` to express database access. See for
-example an excerpt from ``core.yaml`` standard configuration file::
+example an excerpt from ``core4.yaml`` standard configuration file::
 
     sys:
       log: !connect mongodb://sys.log
@@ -165,7 +165,7 @@ local configuration
 
 The local configuration is used to overwrite core4 standard and project
 configuration keys/values for your concrete system setup. You can only specify
-keys which are either present in core4 standard  (``config/core.yaml``) or
+keys which are either present in core4 standard  (``core4.yaml``) or
 project configuration. All other keys/values are silently ignored.
 
 

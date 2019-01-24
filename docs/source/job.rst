@@ -29,7 +29,7 @@ Example
 
 .. code-block:: python
 
-    class FirstJob(core.queue.job.Job):                                       # [1]
+    class FirstJob(core4.queue.job.CoreJob):                                  # [1]
 
         """
         Each 30 minutes, this job counts the occurrences of terms LIEBE and
@@ -56,7 +56,7 @@ Example
             words = re.sub(
                 '\s+', ' ', re.sub('\<.*?\>', '', rv.content, flags=re.DOTALL)
             ).split()                                                          # [9]
-            result = {'create': core.util.now()}                               # [10]
+            result = {'create': core4.util.node.now()}                         # [10]
             terms = self.config.get_list('terms', [“liebe”, “hass”])           # [11]
 
             for term in terms:                                                 # [12]
@@ -70,7 +70,7 @@ Example
 
 Explanation:
 
-| [1] All jobs inherit from core.queue.job.Job.
+| [1] All jobs inherit from core4.queue.job.CoreJob.
 | [2] Using crontab syntax this job starts each five minutes.
 | [3] If the job fails, then retry another 4 times ...
 | [4] but wait for two minutes before each trial.
@@ -80,7 +80,7 @@ Explanation:
 | [8] Use requests to get the feed.
 | [9] Remove all XML tags and split words. I know you can do better with exact parsing of the RSS feed.
 | [10] Build result using CORE’s own timestamp, not thinking about timezones.
-| [11] Get list of interest terms from core.config and search LIEBE and HASS by default.
+| [11] Get list of interest terms from core4.config and search LIEBE and HASS by default.
 | [12] Loop all terms of interest,
 | [13] and count the number of term occurrences.
 | [14] Update result dict.
@@ -147,7 +147,7 @@ Within the code, a job can defer itself::
 
 Or enqueue other jobs by their qual_name::
 
-    self.queue.enqueue("core.queue.job.DummyJob", sleep=120)
+    self.queue.enqueue("core4.queue.helper.job.DummyJob", sleep=120)
 
 Jobs and their states can be monitored and controlled via the "coco" script.
 For further information about possible arguments please visit: :ref:`configuration management <config>`.
@@ -276,7 +276,7 @@ Cookies are included within the CoreJob itself, as core automatically keeps trac
 to execute the job. A datetime object is stored within the ``last_runtime`` key::
 
     {
-        "_id" : "core.account.core3.queue.job.DummyJob",
+        "_id" : "core4.queue.helper.job.DummyJob",
         "last_runtime" : ISODate("2018-11-05T09:26:31.156Z")
     }
 
