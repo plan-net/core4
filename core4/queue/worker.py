@@ -25,11 +25,12 @@ To stop the worker start a new Python interpreter and go with::
 
 import collections
 import signal
-
+import os
 import psutil
 import pymongo
 from datetime import timedelta
-
+import shutil
+from core4.queue.daemon import CoreDaemon
 import core4.base
 import core4.error
 import core4.queue.job
@@ -39,7 +40,6 @@ import core4.queue.query
 import core4.service.setup
 import core4.util
 import core4.util.node
-from core4.queue.daemon import CoreDaemon
 
 #: processing steps in the main loop of :class:`.CoreWorker`
 STEPS = (
@@ -80,8 +80,19 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
-        # ignore signal from children to avoid defunct zombies
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+
+    def create_env(self):
+        """
+        Ensures proper environment setup with required folders and roles.
+        This method utilises :class:`core4.service.setup.CoreSetup`. Finally
+        this method collects core4 meta information on jobs and pushes the data
+        into ``sys.worker``.
+        """
+        path = self.config.get_folder("temp")
+        if os.path.exists(path):
+            self.logger.info("cleanup folder [%s]", path)
+            shutil.rmtree(path)
+        super().create_env()
 
     def cleanup(self):
         """
@@ -103,6 +114,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         :return: dict with step ``name``, ``interval``, ``next`` timestamp
                  to execute and method reference ``call``
         """
+        # ignore signal from children to avoid defunct zombies
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         plan = []
         now = core4.util.node.now()
         for s in self.steps:
