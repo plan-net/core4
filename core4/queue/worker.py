@@ -441,12 +441,12 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
         :param doc: job MongoDB document
         """
-        (found, proc) = self.pid_exists(doc)
-        if not found and proc:
-            self.logger.error("pid [%s] not exists, killing",
-                              doc["locked"]["pid"])
-            job = self.queue.load_job(doc["_id"])
-            self.queue.set_killed(job, "JobKilled")
+        if "locked" in doc and doc["locked"]["pid"] is not None:
+            (found, _) = self.pid_exists(doc)
+            if not found:
+                self.logger.error("pid [%s] not exists, killing",
+                                  doc["locked"]["pid"])
+                self.queue._exec_kill(doc["_id"])
 
     def kill_pid(self, doc):
         """
@@ -477,7 +477,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         :return: tuple of ``True`` or ``False`` and the job process or None
         """
         proc = None
-        if doc["locked"] and doc["locked"]["pid"]:
+        if "locked" in doc and doc["locked"]["pid"] is not None:
             if psutil.pid_exists(doc["locked"]["pid"]):
                 proc = psutil.Process(doc["locked"]["pid"])
                 if proc.status() not in (psutil.STATUS_DEAD,
