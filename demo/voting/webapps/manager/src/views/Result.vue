@@ -1,38 +1,77 @@
 <template>
   <v-container :fluid="false">
-    <pnbi-page header-type="3" small v-if="timeout">
-      <v-layout row wrap class="mt-3" align-center justify-center >
+    <pnbi-page
+      header-type="3"
+      small
+      v-if="timeout"
+    >
+      <v-layout
+        row
+        wrap
+        class="mt-3"
+        align-center
+        justify-center
+      >
 
-        <v-carousel hide-delimiters height="1000" :cycle="false">
+        <v-carousel
+          hide-delimiters
+          :hide-controls="hideControls"
+          height="100%"
+          :cycle="false"
+        >
           <v-carousel-item
             v-for="(value, key) in iChartsOptions"
-            :key="key">
+            :key="key"
+          >
             <div>
               <h3 class="title white--text text-xs-center pt-5">{{value.question.question}}</h3>
-
-              <v-layout column class="chart-element">
+              <v-layout
+                column
+                class="chart-element"
+              >
                 <v-flex xs12>
-                  <v-layout column align-center justify-end fill-height>
+                  <v-layout
+                    column
+                    align-center
+                    justify-end
+                    fill-height
+                  >
                     <v-flex class="pt-5">
                       <chart :options="value"></chart>
                     </v-flex>
                   </v-layout>
                 </v-flex>
                 <v-flex xs12>
-                  <v-layout column align-center justify-end fill-height>
-                    <v-flex xs12 class="pt-5">
-                      <chart :options="iChartsOptionsCountrys[key]"></chart>
+                  <v-layout
+                    column
+                    align-center
+                    justify-end
+                    fill-height
+                  >
+                    <v-flex
+                      xs12
+                      class="pt-5"
+                    >
+                      <chart :options="iChartsOptionsAge[key]"></chart>
                     </v-flex>
                   </v-layout>
+                </v-flex>
+              </v-layout>
+              <v-layout class="pt-3 detail-container">
+                <v-flex xs12>
+                  <h4 class="subheading white--text">Wer hat abgestimmt?</h4>
+                  <div class="pa-2 white--text"
+                    v-for="(person, key2) in detail"
+                    :key="key2"
+                  >
+                    {{person.realname}}   <v-icon class="primary--text">sentiment_very_satisfied</v-icon>
+                  </div>
                 </v-flex>
               </v-layout>
             </div>
           </v-carousel-item>
         </v-carousel>
-
       </v-layout>
-      <!-- <pre class="white--text">{{clusteredResults[1].result}}</pre> -->
-    <!--   <pre>{{chartsOptions}}</pre> -->
     </pnbi-page>
   </v-container>
 
@@ -66,7 +105,7 @@ export default {
     // it took me 2 hours in the evening to show
     // the fucking chart with this bullshit
     // on reload chart was not there
-    // use vue-highcharts (maybe, beeter test)
+    // use vue-highcharts (maybe, better test)
     window.setTimeout(function () {
       this.fetchResult()
     }.bind(this), 100)
@@ -84,6 +123,12 @@ export default {
   },
   watch: {},
   computed: {
+    hideControls () {
+      if (this.clusteredResults) {
+        return this.clusteredResults.length <= 1
+      }
+      return true
+    },
     iChartsOptions () {
     // not working in dev reload page
     // beacuase fetch only on mounted
@@ -91,8 +136,8 @@ export default {
         const tmp = this.clusteredResults.map(val => {
           const tplPlusSeries = getChartTemplate()
           tplPlusSeries.series = { data: val.sex }
-          tplPlusSeries.xAxis.categories = ['Male', 'Female']
-          tplPlusSeries.title.text = 'By sex'
+          tplPlusSeries.xAxis.categories = ['Männer', 'Frauen']
+          tplPlusSeries.title.text = 'Nach Geschlecht'
           tplPlusSeries.question = val.question
           return tplPlusSeries
         })
@@ -100,16 +145,23 @@ export default {
       }
       return null
     },
-    iChartsOptionsCountrys () {
+    detail () {
+      if (this.clusteredResults != null) {
+        console.log(this.clusteredResults)
+        return this.clusteredResults[0].detail // first question resultset
+      }
+      return []
+    },
+    iChartsOptionsAge () {
     // not working in dev reload page
     // beacuase fetch only on mounted
       if (this.clusteredResults) {
         const tmp = this.clusteredResults.map(val => {
           const tplPlusSeries = getChartTemplate()
-          tplPlusSeries.series = { data: val.countries.series }
-          tplPlusSeries.xAxis.categories = val.countries.categories
+          tplPlusSeries.series = { data: val.age }
+          tplPlusSeries.xAxis.categories = ['Unter 30', 'Über 30']
+          tplPlusSeries.title.text = 'Nach Alter'
           tplPlusSeries.question = val.question
-          tplPlusSeries.title.text = 'By nationality'
           return tplPlusSeries
         })
         return tmp
@@ -144,14 +196,7 @@ export default {
   .pnbi-card {
     padding: 8px;
     position: relative;
-    // height: 60vh;
-    // padding-top: 20%;
-
     .next-btn {
-      // display: none;
-/*       top: $k-height2;
-      right: -35px;
-      position: absolute; */
     }
   }
 
@@ -163,18 +208,20 @@ export default {
   .chart-element {
     height: 100%;
     position: relative;
-
-/*     .legende {
-      text-align: center;
-      bottom: 0;
-      color: #fff;
-      text-align: center;
-      border: 1px solid white;
-      width: inherit;
-    } */
     >div {
-      // border: 1px solid rgba(255,255,255,.05);
     }
+  }
+  .detail-container{
+    padding-bottom: 16px;
+    .subheading{
+      width: 100%;
+      text-align: center;
+      margin-bottom: 12px;
+
+    }
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
   }
 
 </style>

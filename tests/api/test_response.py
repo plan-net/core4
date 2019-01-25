@@ -12,8 +12,8 @@ from tornado.web import HTTPError
 
 import core4.logger.mixin
 import core4.service
-from core4.api.v1.application import CoreApiContainer
-from core4.api.v1.tool import serve
+from core4.api.v1.application import CoreApiContainer, RootContainer
+from core4.api.v1.tool.functool import serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
 
@@ -50,7 +50,7 @@ def setup(tmpdir):
             dels.append(k)
     for k in dels:
         del os.environ[k]
-
+    RootContainer.routes = {}
 
 class StopHandler(CoreRequestHandler):
     protected = False
@@ -108,7 +108,6 @@ class LocalTestServer:
         return self.request("DELETE", url, base, **kwargs)
 
     def run(self):
-
         cls = self.start()
         cls.root = self.base_url
         self.serve(cls)

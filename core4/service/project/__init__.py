@@ -1,16 +1,14 @@
 import os
-import sys
-import sh
-import tempfile
-import core4.base.main
 import subprocess
+import sys
+import tempfile
 from venv import EnvBuilder
+
+import sh
 from jinja2 import Template
 
-# todo: the script should also parse "." directory option
-
-VENV = ".venv"
-REPOSITORY = ".repos"
+import core4.base.main
+from core4.const import VENV, REPOSITORY
 
 
 def input_loop(message, identifier=False):
@@ -40,7 +38,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     kwargs = {
         "package_name": package_name,
         "package_description": package_description,
-        "package_version": "0.0.1",
+        "package_version": "0.0.0",
     }
     if kwargs["package_name"] and not kwargs["package_name"].isidentifier():
         print("this is not a valid package name")
@@ -68,7 +66,7 @@ def make_project(package_name=None, package_description=None, auto=False):
                 "project files will\n    be created."
 
     base = core4.base.main.CoreBase()
-    core4_repository = base.config.core4_origin
+    core4_repository = "git+" + base.config.core4_origin
 
     print("""
     A project directory ./{package_name:s} will be created at
@@ -105,7 +103,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     """.format(
         root=root_path, package_name=kwargs["package_name"], venv=VENV,
         repository=REPOSITORY, exist=exist, full_path=full_path,
-        core4_repository=base.config.core4_origin))
+        core4_repository=core4_repository))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
@@ -180,7 +178,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         git_dir = ["--git-dir", os.path.join(full_path, ".git"),
                    "--work-tree", full_path]
 
-        printout("    intial commit ... ")
+        printout("    initial commit ... ")
         sh.git(git_dir + ["add", "*"])
         sh.git(git_dir + ["commit", ".", "-m", "initial commit"])
         sh.git(git_dir + ["push"])
@@ -227,7 +225,7 @@ def make_project(package_name=None, package_description=None, auto=False):
         ret = proc.wait()
         if ret != 0:
             raise ConnectionError("failed to retrieve and install core4 "
-                                  "from %s" %(core4_repository))
+                                  "from %s" % (core4_repository))
         print("done")
 
     # todo: check if there is a ~/.core4/local.yaml or an /etc/core4/local.yaml

@@ -56,6 +56,7 @@ setup(
         'console_scripts': [
             'coco=core4.script.coco:main',
             'chist=core4.script.chist:main',
+            'cadmin=core4.script.cadmin:main'
         ],
     },
     install_requires=[
@@ -74,7 +75,8 @@ setup(
         "python-magic>=0.4",
         "docutils>=0.14",
         "Sphinx==1.8.2",
-        "sh==1.12.14"
+        "sh==1.12.14",
+        "pip>=18.1"
     ],
     extras_require={
         "tests": [

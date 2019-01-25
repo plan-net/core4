@@ -1,16 +1,25 @@
 """
 coco - core4 control utililty.
 
+Use coco to interact with the core4 backend and frontend in the areas of
+
+* project management
+* setup control
+* maintenance
+* job management
+* daemon control (worker, scheduler, application server)
+* release management
+
 Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
-  coco --application [IDENTIFIER] [--port=PORT] [--filter=FILTER...]
+  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--filter=FILTER...]
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
   coco --info
-  coco --list [STATE]...
+  coco --listing [STATE]...
   coco --detail (ID | QUAL_NAME)...
   coco --remove (ID | QUAL_NAME)...
   coco --restart [ID | QUAL_NAME]...
@@ -19,6 +28,9 @@ Usage:
   coco --mode
   coco --build
   coco --release
+  coco --who
+  coco --jobs
+  coco --project
   coco --version
 
 Options:
@@ -27,27 +39,34 @@ Options:
   -s --scheduler  launch scheduler
   -a --alive      worker alive/dead state
   -i --info       job state summary
-  -l --list       job listing
+  -l --listing    job listing
   -d --detail     job details
   -x --halt       immediate system halt
-  -h --help       Show this screen.
-  -v --version    Show version.
+  -h --help       show this screen.
+  -v --version    show version.
+  -o --who        show system information
+  -j --jobs       enumerate available jobs
+  -p --project    enumerate available core4 projects
   -y --yes        Assume yes on all requests.
 """
 
-import datetime
 import json
 import re
 from pprint import pprint
 
+import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
 
 import core4
+import core4.api.v1.tool
+import core4.api.v1.tool.functool
 import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
+import core4.queue.scheduler
 import core4.queue.worker
+import core4.service.introspect.project
 import core4.service.project
 import core4.util.data
 import core4.util.node
@@ -75,11 +94,13 @@ def worker(name):
     w.start()
 
 
-def app(name, port, filter):
+def app(name, port, filter, routing=None):
     core4.logger.mixin.logon()
     if port:
         port = int(port)
-    core4.api.v1.tool.serve_all(name=name, port=port, filter=filter or None)
+    core4.api.v1.tool.functool.serve_all(name=name, port=port,
+                                         filter=filter or None,
+                                         routing=routing)
 
 
 def scheduler(name):
@@ -92,17 +113,17 @@ def scheduler(name):
 def alive():
     rec = []
     mx = 0
-    cols = ["loop", "loop_time", "heartbeat", "_id"]
-    for doc in QUEUE.get_worker():
+    cols = ["loop", "loop_time", "heartbeat", "kind", "_id"]
+    for doc in QUEUE.get_daemon():
         mx = max(0, len(doc["_id"]))
         rec.append([str(doc[k]) for k in cols])
     if rec:
-        print("{:19s} {:19s} {:19s} {:s}".format(*cols))
-        print(" ".join(["-" * i for i in [19, 19, 19, mx]]))
+        print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*cols))
+        print(" ".join(["-" * i for i in [19, 19, 19, 9, mx]]))
     else:
-        print("no worker.")
+        print("no daemon.")
     for doc in rec:
-        print("{:19s} {:19s} {:19s} {:s}".format(*doc))
+        print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*doc))
 
 
 def info():
@@ -152,25 +173,33 @@ def listing(*state):
         }
     rec = []
     mx = 0
+    mxworker = 6
     for job in QUEUE.get_job_listing(**kwargs):
         mx = max(mx, len(job["name"]))
+        if job["locked"]:
+            mxworker = max(mxworker, len(job["locked"]["worker"]))
         rec.append(job)
     if rec:
+        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} {:19s} {:11s} {:11s} {:%d} {:s}" % (
+            mxworker)
         print(
-            "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} "
-            "{:19s} {:11s} {:11s} {:s}".format(
+            fmt.format(
                 "_id", "state", "flag", "pro", "prio", "attempt", "user",
-                "enqueued", "age", "runtime", "name"))
+                "enqueued", "age", "runtime", "worker", "name"))
         print(" ".join(["-" * i
-                        for i in [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mx]]))
+                        for i in
+                        [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mxworker, mx]]))
     else:
         print("no jobs.")
+    fmtworker = "{:%ds}" % (mxworker)
     for job in rec:
         locked = job["locked"]
         if locked:
             progress = job["locked"]["progress_value"] or 0
+            worker = job["locked"]["worker"]
         else:
             progress = 0.
+            worker = ""
         if job["state"] == core4.queue.job.STATE_RUNNING:
             job["attempts_left"] -= 1
         flag = "".join([k[0].upper() if job[k] else "." for k in
@@ -196,6 +225,7 @@ def listing(*state):
             "{:11s}".format(str(core4.util.node.mongo_now() - (
                     job["enqueued"]["at"] or core4.util.node.mongo_now()))),
             "{:11s}".format(str(runtime)),
+            fmtworker.format(worker),
             job["name"]
         )
 
@@ -323,6 +353,75 @@ def init(name, description, yes=False):
     core4.service.project.make_project(name, description, yes)
 
 
+def jobs():
+    intro = core4.service.introspect.project.CoreProjectInspector()
+    summary = dict(intro.list_project())
+    for project in sorted(summary.keys()):
+        print("{}".format(project))
+        jobs = []
+        for job in summary[project]["job"]:
+            job_project = job["name"].split(".")[0]
+            if job_project == project:
+                jobs.append(job["name"])
+        for job in sorted(jobs):
+            print("  {}".format(job))
+
+
+def who():
+    intro = core4.service.introspect.project.CoreProjectInspector()
+    summary = intro.summary()
+    print("USER:")
+    print("  {:s} IN {}".format(summary["user"]["name"],
+                                ", ".join(summary["user"]["group"])))
+    print("UPTIME:")
+    print("  {} ({:1.0f} sec.)".format(summary["uptime"]["text"],
+                                       summary["uptime"]["epoch"]))
+    print("PYTHON:")
+    print("  {} {}".format(summary["python"]["executable"],
+                           summary["python"]["version"]))
+    print("CONFIGURATION:")
+    print("  {}".format(
+        "\n  ".join(
+            ("file://" + f for f in summary["config"]["files"])
+        )
+    ))
+    if summary["config"]["database"]:
+        print("  mongodb://{}".format(summary["config"]["database"]))
+    print("MONGODB:")
+    print("  {}".format(summary["database"]))
+    print("DIRECTORIES:")
+    for k in ("home", "transfer", "process", "archive", "temp"):
+        print("  {:<9s} {}".format(k + ":", summary["folder"][k]))
+    print("DAEMONS:")
+    have = False
+    for daemon in summary["daemon"]:
+        print("  {kind:s}: {_id:s} (pid: {pid:d})".format(**daemon))
+        have = True
+    if not have:
+        print("  none.")
+
+
+def project():
+    intro = core4.service.introspect.project.CoreProjectInspector()
+    summary = dict(intro.list_project())
+    print("PROJECTS:")
+    for project in sorted(summary.keys()):
+        modules = {}
+        if summary[project]:
+            for mod in summary[project]["project"]:
+                modules[mod["name"]] = mod
+            print("  {} ({}) with Python {}, pip {}".format(
+                modules[project]["name"], modules[project]["version"],
+                summary[project]["python_version"],
+                summary[project]["pip"],
+            ))
+            for mod in sorted(modules.keys()):
+                if mod != project:
+                    print("    {} ({})".format(
+                        modules[mod]["name"], modules[mod]["version"]
+                    ))
+
+
 def main():
     args = docopt(__doc__, help=True, version=core4.__version__)
     if args["--halt"]:
@@ -330,8 +429,8 @@ def main():
     elif args["--worker"]:
         worker(args["IDENTIFIER"])
     elif args["--application"]:
-        print(args)
-        app(args["IDENTIFIER"], args["--port"], args["--filter"])
+        app(args["IDENTIFIER"], args["--port"], args["--filter"],
+            args["--routing"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
@@ -346,7 +445,7 @@ def main():
         alive()
     elif args["--info"]:
         info()
-    elif args["--list"]:
+    elif args["--listing"]:
         listing(*args["STATE"])
     elif args["--remove"]:
         remove(*args["ID"])
@@ -362,6 +461,12 @@ def main():
         build()
     elif args["--release"]:
         release()
+    elif args["--who"]:
+        who()
+    elif args["--jobs"]:
+        jobs()
+    elif args["--project"]:
+        project()
     else:
         raise SystemExit("nothing to do.")
 

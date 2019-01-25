@@ -137,7 +137,7 @@ def test_login_expired(http):
         rv = http.get('/core4/api/v1/profile', base=False)
         if rv.status_code != 200:
             break
-    assert (datetime.datetime.now() - t0).total_seconds() > 8
+    assert round((datetime.datetime.now() - t0).total_seconds(), 0) >= 8
     assert rv.status_code == 401
 
 

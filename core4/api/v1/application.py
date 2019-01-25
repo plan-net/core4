@@ -39,9 +39,9 @@ import core4.service.setup
 import core4.util.data
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
+from core4.api.v1.request.info import InfoHandler
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.request.standard.file import CoreFileHandler
-from core4.api.v1.request.info import InfoHandler
 from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
@@ -161,6 +161,7 @@ class CoreApiContainer(CoreBase):
                             and issubclass(cls, tornado.web.RequestHandler)):
                         if issubclass(cls, CoreStaticFileHandler):
                             routing += STATIC_PATTERN
+                        # md5 includes prefix and route
                         md5_route = hashlib.md5(
                             routing.encode("utf-8")).hexdigest()
                         if md5_route not in unique:
@@ -211,7 +212,8 @@ class CoreApplication(tornado.web.Application):
 
         Card page requests are forwarded to the handler's
         :meth:`.CoreRequestHandler.xcard` method (``XCARD``). Enter landing
-        page requests are forwarded to the handler's ``GET`` method.
+        page requests are forwarded to the handler's
+        :meth:`.CoreRequestHandler.xenter` method (``XENTER``).
         """
 
         def _find():
@@ -220,17 +222,14 @@ class CoreApplication(tornado.web.Application):
                 parts.pop()
             md5_route_id = parts.pop()
             return self.find_md5(md5_route_id)
+
         if request.path.startswith(core4.const.CARD_URL):
             (app, container, pattern, cls, *args) = _find()
             request.method = core4.const.CARD_METHOD
             return self.get_handler_delegate(request, cls, *args)
         elif request.path.startswith(core4.const.ENTER_URL):
-            ret = _find()
-            (app, container, pattern, cls, *args) = ret
-            if issubclass(cls, CoreStaticFileHandler):
-                request.method = "POST"
-                return self.get_handler_delegate(
-                    request, CoreStaticFileHandler)
+            (app, container, pattern, cls, *args) = _find()
+            request.method = core4.const.ENTER_METHOD
             return self.get_handler_delegate(request, cls, *args)
         return super().find_handler(request, **kwargs)
 
@@ -274,9 +273,7 @@ class RootContainer(CoreApiContainer):
     * ``/logout`` with :class:`.LogoutHandler`
     * ``/profile`` with :class:`.ProfileHandler`
     * ``/file`` for static file access with :class:`FileHandler`
-    * ``/info/collection`` with :class:`.RouteHandler` (global widget
-      collection)
-    * ``/info`` with :class:`.InfoHandler` (local widget collection)
+    * ``/info`` with :class:`.RouteHandler` and :class:`.InfoHandler`
     * ``/`` for ``favicon.ico`` delivery with :class:`.CoreStaticFileHandler`
     """
     root = ""
@@ -285,10 +282,12 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r"/logout", LogoutHandler),
         (core4.const.CORE4_API + r"/profile", ProfileHandler),
         (core4.const.CORE4_API + r"/file/(.*)", CoreFileHandler),
-        (core4.const.CORE4_API + r'/info/collection', RouteHandler),
-        (core4.const.CORE4_API + r'/info/?(.*)', InfoHandler),
+        (core4.const.CORE4_API + r'/info', RouteHandler),
+        (core4.const.CORE4_API + r'/info/(.+)', InfoHandler),
         (r'', CoreStaticFileHandler, {
-            "path": "./request/_static", "protected": False})
+            "path": "./request/_static",
+            "protected": False,
+            "title": "core4 landing page",
+        })
     ]
     routes = {}
-

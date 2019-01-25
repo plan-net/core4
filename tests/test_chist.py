@@ -1,7 +1,7 @@
-import datetime
 import logging
 import os
 
+import datetime
 import pytest
 
 import core4.logger.mixin
@@ -30,6 +30,8 @@ def reset(tmpdir):
     # setup
     os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
+    os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
+    os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     core4.logger.mixin.logon()
     yield
     # run @once methods
@@ -48,43 +50,98 @@ def reset(tmpdir):
         del os.environ[k]
 
 
-def test_parse_datetime():
-    assert (core4.script.chist.parse_range("2018-01-31 12:34:56")
-            == datetime.datetime(2018, 1, 31, 11, 34, 56))
-    assert (core4.script.chist.parse_range("2018-01-31 12:34")
-            == datetime.datetime(2018, 1, 31, 11, 34, 0))
-    assert (core4.script.chist.parse_range("2018-01-31T12:34")
-            == datetime.datetime(2018, 1, 31, 11, 34, 0))
-    assert (core4.script.chist.parse_range("2018-01-31 12")
-            == datetime.datetime(2018, 1, 31, 11, 0, 0))
-    assert (core4.script.chist.parse_range("2018-01-31")
-            == datetime.datetime(2018, 1, 31))
-    assert (core4.script.chist.parse_range("2018 01 31")
-            == datetime.datetime(2018, 1, 31))
-    assert (core4.script.chist.parse_range("2018/01/31")
-            == datetime.datetime(2018, 1, 31))
+def test_parse():
+    from core4.script.chist import parse_datetime_range
+    clock = datetime.datetime(2018, 5, 1, 12, 00, 00)
+    assert parse_datetime_range("20:00", "21:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 20, 0),
+        datetime.datetime(2018, 4, 30, 21, 0))
+    assert parse_datetime_range("13:00", "14:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 13, 0),
+        datetime.datetime(2018, 4, 30, 14, 0))
+    assert parse_datetime_range("13:00", "8:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 13, 0),
+        datetime.datetime(2018, 5, 1, 8, 0))
+    assert parse_datetime_range("12:00", "8:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 12, 0),
+        datetime.datetime(2018, 5, 1, 8, 0))
+    assert parse_datetime_range("8:00", "9:00", today=clock) == (
+        datetime.datetime(2018, 5, 1, 8, 0),
+        datetime.datetime(2018, 5, 1, 9, 0))
+    assert parse_datetime_range("8:00", "18:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 8, 0),
+        datetime.datetime(2018, 4, 30, 18, 0))
+    assert parse_datetime_range("14:00", "13:00", today=clock) == (
+        datetime.datetime(2018, 4, 29, 14, 0),
+        datetime.datetime(2018, 4, 30, 13, 0))
+    assert parse_datetime_range("8:00", "7:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 8, 0),
+        datetime.datetime(2018, 5, 1, 7, 0))
+    assert parse_datetime_range("2018-4-30 8:00", "12:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 8, 0),
+        datetime.datetime(2018, 4, 30, 12, 0))
+    assert parse_datetime_range("2018-4-30 8:00", "13:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 8, 0),
+        datetime.datetime(2018, 4, 30, 13, 0))
+    assert parse_datetime_range("2018-4-30 16:00", "8:00", today=clock) == (
+        datetime.datetime(2018, 4, 30, 16, 0),
+        datetime.datetime(2018, 5, 1, 8, 0))
+    assert parse_datetime_range("2018-4-30 16:00", "2h", today=clock) == (
+        datetime.datetime(2018, 4, 30, 16, 0),
+        datetime.datetime(2018, 4, 30, 18, 0))
+    assert parse_datetime_range("2018-4-30 16:00", "2d", today=clock) == (
+        datetime.datetime(2018, 4, 30, 16, 0),
+        datetime.datetime(2018, 5, 2, 16, 0))
+    assert parse_datetime_range("2018-4-30 16:00", "2019-4-30 18:00",
+                                today=clock) == (
+               datetime.datetime(2018, 4, 30, 16, 0),
+               datetime.datetime(2019, 4, 30, 18, 0))
+    assert parse_datetime_range("6h", "11:00", today=clock) == (
+        datetime.datetime(2018, 5, 1, 6, 0),
+        datetime.datetime(2018, 5, 1, 11, 0))
+    assert parse_datetime_range("6h", "13:00", today=clock) == (
+        datetime.datetime(2018, 5, 1, 6, 0),
+        datetime.datetime(2018, 5, 1, 13, 0))
+    assert parse_datetime_range("6h", "5:00", today=clock) == (
+        datetime.datetime(2018, 5, 1, 6, 0),
+        datetime.datetime(2018, 5, 2, 5, 0))
+    assert parse_datetime_range("6h", "2018 5 1 11:00", today=clock) == (
+        datetime.datetime(2018, 5, 1, 6, 0),
+        datetime.datetime(2018, 5, 1, 11, 0))
+    assert parse_datetime_range("6h", "2018 5 1 18:00", today=clock) == (
+        datetime.datetime(2018, 5, 1, 6, 0),
+        datetime.datetime(2018, 5, 1, 18, 0))
+    with pytest.raises(ValueError):
+        parse_datetime_range("6h", "2018 5 1 3:00", today=clock)
+    assert parse_datetime_range("6h", "6h", today=clock) == (
+        datetime.datetime(2018, 5, 1, 6, 0),
+        datetime.datetime(2018, 5, 1, 12, 0))
+    assert parse_datetime_range("6h", None, today=clock) == (
+        datetime.datetime(2018, 5, 1, 6, 0), None)
+    assert parse_datetime_range("11:00", None, today=clock) == (
+        datetime.datetime(2018, 5, 1, 11, 0), None)
+    assert parse_datetime_range("16:00", None, today=clock) == (
+        datetime.datetime(2018, 4, 30, 16, 0), None)
+    assert parse_datetime_range("2018-1-12 16:00", None, today=clock) == (
+        datetime.datetime(2018, 1, 12, 16, 0), None)
+    with pytest.raises(ValueError):
+        parse_datetime_range(None, "2018-1-12 16:00", today=clock)
 
 
-def test_parse_time():
-    assert (core4.script.chist.parse_time(
-        "12:33:44", now=datetime.datetime(2018, 1, 31, 13, 00))
-            == datetime.datetime(2018, 1, 31, 11, 33, 44))
-    assert (core4.script.chist.parse_time(
-        "12:33:44", now=datetime.datetime(2018, 1, 31, 12, 00))
-            == datetime.datetime(2018, 1, 30, 11, 33, 44))
+def test_main():
+    from core4.script.chist import build_query
+    clock = datetime.datetime(2018, 5, 1, 12, 00, 00)
 
-def test_parse_delta():
-    assert (core4.script.chist.parse_delta(
-        "1h", now=datetime.datetime(2018, 12, 31, 0, 30))
-            == datetime.datetime(2018, 12, 30, 22, 30))
-    assert (core4.script.chist.parse_delta(
-        "1d", now=datetime.datetime(2018, 12, 31, 0, 30))
-            == datetime.datetime(2018, 12, 29, 23, 30))
-    assert (core4.script.chist.parse_delta(
-        "2w", now=datetime.datetime(2018, 12, 31, 0, 30))
-            == datetime.datetime(2018, 12, 16, 23, 30))
-    assert (core4.script.chist.parse_delta(
-        "1m", now=datetime.datetime(2018, 12, 31, 0, 30))
-            == datetime.datetime(2018, 11, 30, 23, 30))
+    q = build_query({}, clock=clock, utc=False)
+    assert q == [{'created': {'$gte': datetime.datetime(2018, 5, 1, 11, 0)}}]
 
+    q = build_query({"--start": "6h", "--end": "2h"}, clock=clock, utc=False)
+    assert q == [{'created': {'$gte': datetime.datetime(2018, 5, 1, 6, 0)}},
+                 {'created': {'$lt': datetime.datetime(2018, 5, 1, 8, 0)}}]
 
+    q = build_query({"--level": "i"}, clock=clock, utc=False)
+    assert q == [{'created': {'$gte': datetime.datetime(2018, 5, 1, 11, 0)}},
+                 {'levelno': {'$gte': 20}}]
+
+    with pytest.raises(SystemExit):
+        build_query({"--level": "x"}, clock=clock)

@@ -1,22 +1,37 @@
 """
 core4 package, module, project, job and API meta data collector.
 """
+
+# todo: requires documentation
+
 import importlib
 import inspect
 import io
+import json
 import os
 import pkgutil
 import sys
 import traceback
 
+from pip import __version__ as pip_version
+
 import core4.api.v1.application
 import core4.base
 import core4.queue.job
-from core4.util.tool import Singleton
+import core4.util.node
+
+try:
+    from pip import main as pipmain
+except ImportError:
+    from pip._internal import main as pipmain
+
+try:
+    from pip._internal.operations import freeze
+except ImportError:
+    from pip.operations import freeze
 
 
-
-class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
+class CoreIntrospector(core4.base.CoreBase):
     """
     The :class:`CoreIntro` class collects information about core4 projects,
     and jobs.
@@ -52,6 +67,28 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
         sys.stdout.truncate(0)
         sys.stderr.truncate(0)
         return stdout, stderr
+
+    def iter_all(self):
+        ret = json.dumps({
+            "project": list(self.iter_project()),
+            "job": list(self.iter_job()),
+            "python_version": self.get_python_version(),
+            "packages": dict(self.get_packages()),
+            "pip": pip_version
+        })
+        return ret
+
+    def get_packages(self):
+        for package in freeze.freeze():
+            (name, *version) = package.split("==")
+            if version:
+                version = version[0]
+            yield (name, version or None)
+
+    def get_python_version(self):
+        return "%d.%d.%d" % (
+            sys.version_info.major, sys.version_info.minor,
+            sys.version_info.micro)
 
     def iter_project(self):
         """
@@ -93,13 +130,14 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
         for qual_name, cls in self._job.items():
             try:
                 obj = cls()
+                filename = cls.module().__file__
                 if obj.hidden is None:
                     continue  # applies to core4.queue.job.CoreJob
                 obj.validate()
                 validate = True
                 exception = None
                 executable = obj.find_executable()
-            except Exception as esc:
+            except Exception:
                 validate = False
                 exc_info = sys.exc_info()
                 exception = {
@@ -111,6 +149,7 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
                                   qual_name, exc_info=exc_info)
             yield {
                 "name": qual_name,
+                "source": filename,
                 "author": obj.author,
                 "schedule": obj.schedule,
                 "hidden": obj.hidden,
@@ -174,16 +213,22 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
         self._project = []
         for pkg in pkgutil.iter_modules():
             if pkg[2]:
-                filename = os.path.abspath(
-                    os.path.join(pkg[0].path, pkg[1], "__init__.py"))
-                with open(filename, "r", encoding="utf-8") as fh:
-                    body = fh.read()
-                if core4.base.main.is_core4_project(body):
-                    module, record = self._load_project(pkg[1])
-                    self._project.append(record)
-                    if module:
-                        self._iter_classes(module)
-                        self._iter_module(module)
+                self.logger.debug("work [%s]", pkg[1])
+                try:
+                    filename = os.path.abspath(
+                        os.path.join(pkg[0].path, pkg[1], "__init__.py"))
+                except:
+                    self.logger.warning("silently ignored package [%s]",
+                                        pkg[1])
+                else:
+                    with open(filename, "r", encoding="utf-8") as fh:
+                        body = fh.read()
+                    if core4.base.main.is_core4_project(body):
+                        module, record = self._load_project(pkg[1])
+                        self._project.append(record)
+                        if module:
+                            self._iter_classes(module)
+                            self._iter_module(module)
         self._onout()
         self.logger.info(
             "collected [%d] projects, [%d] modules, [%d] jobs, "
@@ -199,6 +244,7 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
             "built": None,
             "title": None,
             "description": None,
+            "filename": None
         }
         module, *_ = self._import_module(pkg)
         if module:
@@ -206,7 +252,8 @@ class CoreIntrospector(core4.base.CoreBase, metaclass=Singleton):
                 "version": getattr(module, "__version__", None),
                 "built": getattr(module, "__built__", None),
                 "title": getattr(module, "title", None),
-                "description": getattr(module, "description", None)
+                "description": getattr(module, "description", None),
+                "filename": module.__file__
             })
         return module, record
 

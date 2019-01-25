@@ -75,6 +75,7 @@ class CoreWorkerProcess(core4.base.CoreBase,
             self._redirect_stdout(tfile.fileno())
 
         self.queue.make_stat("start_job", str(job_id))
+        job.add_exception_logger()
         try:
             job.execute(**job.args)
         except core4.error.CoreJobDeferred:
@@ -82,6 +83,7 @@ class CoreWorkerProcess(core4.base.CoreBase,
             return False
         except:
             job.__dict__["attempts_left"] -= 1
+            # job.logger.critical("failed", exc_info=True)
             self.queue.set_failed(job)
             return False
         else:

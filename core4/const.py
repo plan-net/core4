@@ -14,3 +14,10 @@ HELP_URL = INFO_URL
 FILE_URL = CORE4_API + "/file"
 CARD_METHOD = "XCARD"
 HELP_METHOD = "XHELP"
+ENTER_METHOD = "XENTER"
+
+VENV = ".venv"
+REPOSITORY = ".repos"
+VENV_PYTHON = VENV + "/bin/python"
+VENV_PIP = VENV + "/bin/pip3"
+

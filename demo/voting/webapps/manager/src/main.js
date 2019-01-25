@@ -12,7 +12,6 @@ Vue.use(HighchartsVue)
 Vue.use(PnbiBase, {
   router,
   config: {
-    FALLBACK: '5001/voting/v1',
     TITLE: 'VOTING',
     IGNORED_ERRORS: []
   },

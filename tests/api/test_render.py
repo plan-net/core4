@@ -10,7 +10,7 @@ from tornado.ioloop import IOLoop
 import core4.error
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.tool import serve
+from core4.api.v1.tool.functool import serve
 from tests.api.test_response import setup
 
 _ = setup
@@ -138,7 +138,7 @@ class CoreApiTestErrorServer3(CoreApiContainer):
 
 
 class HttpServer:
-
+    base_url = ""
     def __init__(self, *args):
         self.cls = args
         self.port = 5555
@@ -159,26 +159,33 @@ class HttpServer:
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 
-    def url(self, url):
-        return "http://localhost:{}".format(self.port) + url
+    def url(self, url, base=True, absolute=False):
+        if base:
+            b = self.base_url
+        else:
+            b = ""
+        if absolute:
+            return url
+        return "http://localhost:{}{}".format(self.port, b) + url
 
-    def request(self, method, url, **kwargs):
+    def request(self, method, url, base, absolute, **kwargs):
         if self.token:
             kwargs.setdefault("headers", {})[
                 "Authorization"] = "Bearer " + self.token
-        return requests.request(method, self.url(url), **kwargs)
+        return requests.request(method, self.url(url, base, absolute),
+                                **kwargs)
 
-    def get(self, url, **kwargs):
-        return self.request("GET", url, **kwargs)
+    def get(self, url, base=True, absolute=False, **kwargs):
+        return self.request("GET", url, base, absolute, **kwargs)
 
-    def post(self, url, **kwargs):
-        return self.request("POST", url, **kwargs)
+    def post(self, url, base=True, absolute=False, **kwargs):
+        return self.request("POST", url, base, absolute, **kwargs)
 
-    def put(self, url, **kwargs):
-        return self.request("PUT", url, **kwargs)
+    def put(self, url, base=True, absolute=False, **kwargs):
+        return self.request("PUT", url, base, absolute, **kwargs)
 
-    def delete(self, url, **kwargs):
-        return self.request("DELETE", url, **kwargs)
+    def delete(self, url, base=True, absolute=False, **kwargs):
+        return self.request("DELETE", url, base, absolute, **kwargs)
 
     def run(self):
         serve(*self.cls, port=self.port)
@@ -203,13 +210,14 @@ def test_server_test(http):
     assert rv.status_code == 200
     rv = http.get("/test1/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
     pprint(rv.json())
     lh = 'core4.api.v1.request.standard.login.LoginHandler'
-    login_handler = [h for h in rv.json()["data"]["collection"]
+    login_handler = [h for h in rv.json()["data"]
                      if h["qual_name"] == lh][0]
-    rv = http.get(login_handler["route"][0]["help_url"])
+    print(login_handler)
+    rv = http.get(login_handler["help_url"], absolute=True)
     assert rv.status_code == 200
     ret = rv.json()["data"]
     assert ret["author"] == "mra"
@@ -224,28 +232,42 @@ def test_title_args(http):
     rv = http.post("/test1/internal1")
     assert rv.status_code == 200
     assert "custom title 1" == rv.json()["data"]
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
+    pprint(rv.json())
     qn = 'tests.api.test_render.InternalHandler1'
-    internal_handler = [h for h in rv.json()["data"]["collection"]
+    internal_handler = [h for h in rv.json()["data"]
                         if h["qual_name"] == qn]
-    internal_handler[0]["route"][0]["title"] == "custom title 1"
-    internal_handler[0]["route"][1]["title"] == "internal test 1"
+    assert len(internal_handler) == 2
+    # print(internal_handler)
+    # internal_handler[0]["title"] == "custom title 1"
+    # internal_handler[1]["title"] == "internal test 1"
     # pprint(internal_handler)
 
 
 def test_help(http):
     rv = http.post("/tests/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
-    internal_handler = [h for h in rv.json()["data"]["collection"]
+    pprint(rv.json())
+    internal_handler = [h for h in rv.json()["data"]
                         if h["qual_name"] == qn]
-    url = internal_handler[0]["route"][0]["help_url"]
-    rv = http.get(url)
+
+    # for ih in internal_handler:
+    #     print("+++")
+    #     url = ih["help_url"]
+    #     rv = http.get(url, absolute=True)
+    #     assert rv.status_code == 200
+    #     pprint(rv.json())
+
+    ih = [h for h in rv.json()["data"]
+          if h["route_id"] == "568c841289db6aaaf7e21a6e7eba3c81"][0]
+    url = ih["help_url"]
+    rv = http.get(url, absolute=True)
     assert rv.status_code == 200
-    # pprint(rv.json())
+    pprint(rv.json())
     data = rv.json()["data"]
     assert data["title"] == "custom title 1"
     assert len([m for m in data["method"] if m["method"] == "get"]) == 1
@@ -267,31 +289,35 @@ def test_server_wrong_args():
 
 
 def test_card(http):
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/v1/info?per_page=100")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
-    internal_handler = [h for h in rv.json()["data"]["collection"]
+    internal_handler = [h for h in rv.json()["data"]
                         if h["qual_name"] == qn]
-    internal_handler[0]["route"][0]["title"] == "custom title 1"
-    internal_handler[0]["route"][1]["title"] == "internal test 1"
+    pprint(internal_handler)
+    assert internal_handler[0]["title"] == "internal test 1"
+    assert internal_handler[1]["title"] == "custom title 1"
 
-    c1 = internal_handler[0]["route"][0]["card_url"]
-    c2 = internal_handler[0]["route"][1]["card_url"]
-    r1 = internal_handler[0]["route"][0]["route_id"]
-    r2 = internal_handler[0]["route"][1]["route_id"]
-    rv = http.get(c1)
-    assert rv.status_code == 200
-    content = rv.content.decode('utf-8')
-    assert "custom title 1" in content
-    assert "tests.api.test_render.InternalHandler1" in content
-    assert 'href="/core4/api/v1/enter/' + r1 + '"' in content
+    c0 = internal_handler[0]["card_url"]
+    c1 = internal_handler[1]["card_url"]
+    r0 = internal_handler[0]["route_id"]
+    r1 = internal_handler[1]["route_id"]
 
-    rv = http.get(c2)
+    rv = http.get(c0, absolute=True)
     assert rv.status_code == 200
     content = rv.content.decode('utf-8')
     assert "internal test 1" in content
     assert "tests.api.test_render.InternalHandler1" in content
-    assert 'href="/core4/api/v1/enter/' + r2 + '"' in content
+    assert 'href="/core4/api/v1/enter/' + r0 + '"' in content
+
+    rv = http.get(c1, absolute=True)
+    assert rv.status_code == 200
+    content = rv.content.decode('utf-8')
+    pprint(content)
+    assert "custom title 1" in content
+    assert "tests.api.test_render.InternalHandler1" in content
+    assert 'href="/core4/api/v1/enter/' + r1 + '"' in content
+
 
 
 def test_render_relative(http):

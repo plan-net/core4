@@ -73,9 +73,13 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         * ``api.admin_realname``
         * ``api.admin_password``
         * ``api.contact``
+
+        and a user default role as defined in core4 configuration settings
+
+        * ``api.user_rolename``
+        * ``api.user_realname``
+        * ``api.user_permission``
         """
-        # todo: we might want to add a standard user role with the minimum
-        # set of perms required, like /profile
         try:
             self.config.sys.role.insert_one(dict(
                 name=self.config.api.admin_username,

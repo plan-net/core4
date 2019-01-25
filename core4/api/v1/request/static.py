@@ -12,13 +12,14 @@ from core4.api.v1.request.main import CoreBaseHandler, CoreEtagMixin
 
 DEFAULT_FILENAME = "index.html"
 
+# todo:documentation required
 
 class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
     """
     core4 static file handler extends argument parsing with
     :class:`.CoreApiContainer` and processes the
     """
-    SUPPORTED_METHODS = ("GET", "HEAD", "OPTIONS", "XCARD", "XHELP", "POST")
+    SUPPORTED_METHODS = ("GET", "HEAD", "OPTIONS", "XCARD", "XHELP", "XENTER")
     propagate = ("protected", "title", "author", "tag", "static_path",
                  "icon", "default_filename")
 
@@ -61,7 +62,7 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
             path = ""
         return super().get_absolute_path(root, path)
 
-    def post(self, *args, **kwargs):
+    def enter(self, *args, **kwargs):
         """
         On top of the regular ``GET`` method the :class:`CoreStaticFileHandler`
         implements ``POST`` to enter the landing page of the handler. See

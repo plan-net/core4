@@ -230,6 +230,7 @@ class TestLogging(unittest.TestCase):
             self.assertIn(e, body[i])
 
     def test_class_level(self):
+        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_base__log_level"] = "INFO"
         os.environ["CORE4_OPTION_tests__test_logger__C__log_level"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
@@ -331,12 +332,14 @@ class TestLogging(unittest.TestCase):
         a.success()
         a.failure()
 
-        data = list(self.mongo.core4test.sys.log.find(sort=[("_id", 1)]))
+        data = list(self.mongo.core4test.sys.log.find(sort=[("epoch", 1)]))
+        for doc in data:
+            print(doc)
         expected = ['INFO', 'DEBUG', 'INFO', 'CRITICAL']
         test = [d["level"] for d in data if d["identifier"] == "A"]
         self.assertEqual(test, expected)
         a.success()
-        data = list(self.mongo.core4test.sys.log.find(sort=[("_id", 1)]))
+        data = list(self.mongo.core4test.sys.log.find(sort=[("epoch", 1)]))
         expected = ['INFO', 'DEBUG', 'INFO', 'CRITICAL', 'INFO', 'INFO']
         test = [d["level"] for d in data if d["identifier"] == "A"]
         self.assertEqual(test, expected)

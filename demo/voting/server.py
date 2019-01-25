@@ -8,7 +8,7 @@ from tornado.web import HTTPError
 import core4.util.node
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.tool import serve
+from core4.api.v1.tool.functool import serve
 from core4.util.data import json_encode
 from core4.api.v1.request.static import CoreStaticFileHandler
 
@@ -19,7 +19,12 @@ from core4.api.v1.request.static import CoreStaticFileHandler
 class BaseHandler(CoreRequestHandler):
     protected = False
 
+    async def enter(self):
+        raise HTTPError(400, "You cannot directly enter this endpoint.")
+
     async def prepare_protection(self):
+        if self.request.method in ("XCARD", "XENTER"):
+            return
         token = self.get_argument("token", as_type=str)
         if token != self.config.demo.auth_token:
             self.write_error(401)
@@ -354,13 +359,13 @@ class VotingApp(CoreApiContainer):
         ("/csv", CSVHandler),
         ("/result", ResultHandler),
         ("/reset/(.+)", ResetHandler),
-        #("/voting", VotingAppHandler),
-        ("/html", CoreStaticFileHandler, {"path": "./webapps/manager/dist", "protected": False})
+        ("/manager", CoreStaticFileHandler, {"path": "./webapps/manager/dist", "protected": False, "title": "voting manager"}),
+        ("/voting", CoreStaticFileHandler, {"path": "./webapps/voting/dist", "protected": False, "title": "voting client"}),
     ]
 
 
 if __name__ == '__main__':
-    serve(VotingApp, debug=True)
+    serve(VotingApp, port=5002, debug=True)
 
 # count all sessions
 # list(local_db.voting.event.aggregate([{"$group": {"_id": "$session_id", "n": {"$sum": 1}}}]))

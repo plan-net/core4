@@ -136,7 +136,7 @@ class RoleHandler(CoreRequestHandler):
         else:
             self.reply(role.to_response())
 
-    async def get(self, _id):
+    async def get(self, _id=None):
         """
         Get users/roles listing and details.
 
@@ -244,7 +244,7 @@ class RoleHandler(CoreRequestHandler):
                 'timestamp': '2018-11-15T06:20:31.763471'
             }
         """
-        if _id.strip() == "":
+        if _id is None or _id.strip() == "":
             ret = await CoreRole().load(
                 per_page=self.get_argument(
                     "per_page", as_type=int, default=10),

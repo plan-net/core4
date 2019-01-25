@@ -1,0 +1,130 @@
+[{
+  "u30": false,
+  "sex": "m",
+  "realname": "Dr. Florian Abicht",
+  "id": "fab"
+},{
+  "u30": true,
+  "sex": "m",
+  "realname": "Nail Allayarov",
+  "id": "nal"
+},{
+  "u30": false,
+  "sex": "m",
+  "realname": "Marcus Ambrus",
+  "id": "mam"
+},{
+  "u30": false,
+  "sex": "f",
+  "realname": "Wing-Hang Cheung",
+  "id": "wch"
+},{
+  "u30": true,
+  "sex": "m",
+  "realname": "Alioun Diagne",
+  "id": "adi"
+},{
+  "u30": false,
+  "sex": "m",
+  "realname": "Björn Engström",
+  "id": "ben"
+},{
+  "u30": true,
+  "sex": "m",
+  "realname": "Alexander Gretschann",
+  "id": "agr"
+},{
+  "u30": false,
+  "sex": "f",
+  "realname": "Dr. Emma Haddi",
+  "id": "eha"
+},{
+  "u30": true,
+  "sex": "f",
+  "realname": "Susanne Heller",
+  "id": "she"
+},
+{
+  "u30": false,
+  "sex": "m",
+  "realname": "Kai-Uwe Jürgens",
+  "id": "kjü"
+},
+{
+  "u30": true,
+  "sex": "m",
+  "realname": "Markus Kral",
+  "id": "mkr"
+},
+{
+  "u30": false,
+  "sex": "f",
+  "realname": "Dr. Lucie Krennwallner",
+  "id": "lkr"
+},
+{
+  "u30": false,
+  "sex": "m",
+  "realname": "Hadi Lotfi",
+  "id": "hlo"
+},
+{
+  "u30": false,
+  "sex": "f",
+  "realname": "Veronika Mempel",
+  "id": "vme"
+},
+{
+  "u30": true,
+  "sex": "f",
+  "realname": "Maria Molnar",
+  "id": "mmo"
+},
+{
+  "u30": false,
+  "sex": "m",
+  "realname": "Markus Mrugalla",
+  "id": "mmr"
+},
+{
+  "u30": false,
+  "sex": "m",
+  "realname": "Michael Rau",
+  "id": "mra"
+},
+{
+  "u30": false,
+  "sex": "m",
+  "realname": "Oliver Schlösser",
+  "id": "osc"
+},
+{
+  "u30": false,
+  "sex": "m",
+  "realname": "Martin Seitz",
+  "id": "mse"
+},
+{
+  "u30": true,
+  "sex": "m",
+  "realname": "Luitpold Stotzem",
+  "id": "lst"
+},
+{
+  "u30": true,
+  "sex": "m",
+  "realname": "Mykola Turovs’ky",
+  "id": "mtu"
+},
+{
+  "u30": false,
+  "sex": "f",
+  "realname": "Edith Wimmer",
+  "id": "ewi"
+},
+{
+  "u30": false,
+  "sex": "m",
+  "realname": "Bastian Zimmermann",
+  "id": "bzi"
+}]

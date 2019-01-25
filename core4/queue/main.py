@@ -8,12 +8,12 @@ import os
 import subprocess
 import sys
 import traceback
-from datetime import timedelta
 
 import pymongo.collection
 import pymongo.errors
 import pymongo.write_concern
 from bson.objectid import ObjectId
+from datetime import timedelta
 
 import core4.error
 import core4.service.setup
@@ -21,6 +21,7 @@ import core4.util
 import core4.util.node
 import core4.util.tool
 from core4.base import CoreBase
+from core4.const import VENV_PYTHON
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
 
@@ -30,7 +31,6 @@ STATE_STOPPED = (core4.queue.job.STATE_KILLED,
                  core4.queue.job.STATE_INACTIVE,
                  core4.queue.job.STATE_ERROR)
 
-VENV_PYTHON = ".venv/bin/python"
 RESTART_COMMAND = """
 from core4.queue.main import CoreQueue
 CoreQueue()._exec_restart("{job_id:s}")
@@ -618,11 +618,11 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                          "last_error", "attempts_left", "query_at", "trial")
         self.make_stat('failed_job', job._id)
         self.unlock_job(job._id)
-        job.logger.error("done execution with [%s] "
-                         "after [%d] sec. and [%d] attempts to go: %s\n%s",
-                         state, runtime, job.attempts_left,
-                         job.last_error["exception"],
-                         "\n".join(job.last_error["traceback"]))
+        job.logger.critical("done execution with [%s] "
+                            "after [%d] sec. and [%d] attempts to go: %s\n%s",
+                            state, runtime, job.attempts_left,
+                            job.last_error["exception"],
+                            "\n".join(job.last_error["traceback"]))
 
     def _exec_kill(self, _id):
         # internal method used by virtual python interpreter to kill job
@@ -675,6 +675,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         state['event'] = {'name': event, 'data': args}
         self.sys_stat.insert_one(state)
 
+    # todo: document this
     def exec_project(self, name, command, wait=True, *args, **kwargs):
         """
         Execute command using the Python interpreter of the project's virtual
@@ -689,9 +690,11 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
 
         :return: STDOUT if ``wait is True``, else nothing is returned
         """
+        # todo: move to service.introspect
         project = name.split(".")[0]
         home = self.config.folder.home
         python_path = None
+        currdir = os.curdir
         if home is not None:
             python_path = os.path.join(home, project, VENV_PYTHON)
             if not os.path.exists(python_path):
@@ -700,11 +703,13 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             self.logger.warning("python not found at [%s], use fallback",
                                 python_path)
             python_path = sys.executable
+        else:
+            self.logger.debug("python found at [%s]", python_path)
+            os.chdir(os.path.join(home, project))
         command = command.format(*args, **kwargs)
         proc = subprocess.Popen([python_path, "-c", command],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        os.chdir(currdir)
         if wait:
             (stdout, stderr) = proc.communicate()
-            # if stderr:
-            #     raise ImportError(stderr.decode("utf-8").strip())
             return stdout.decode("utf-8").strip()

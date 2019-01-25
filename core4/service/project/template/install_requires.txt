@@ -1,0 +1,1 @@
+core4@git+ssh://git.bi.plan-net.com/srv/git/core4.git

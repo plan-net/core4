@@ -987,15 +987,5 @@ def test_project_process(queue):
         time.sleep(1)
 
 
-
-# OK: job with syntax error
-# OK: job with exception
-# OK: unknown job
-# OK: no home set
-# OK: remove
-# OK: restart
-# OK: kill
-# OK: detail
 # make stats
-# chist
 

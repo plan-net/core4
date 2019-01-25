@@ -24,10 +24,11 @@ To stop the worker start a new Python interpreter and go with::
 """
 
 import collections
-from datetime import timedelta
+import signal
 
 import psutil
 import pymongo
+from datetime import timedelta
 
 import core4.base
 import core4.error
@@ -63,6 +64,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
     identifier. This identifier defaults to the hostname of the worker and must
     be unique across the cluster.
     """
+    kind = "worker"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,6 +80,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
+        # ignore signal from children to avoid defunct zombies
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     def cleanup(self):
         """
@@ -282,8 +286,9 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 if not data["force"]:
                     self.logger.info(
                         'skipped job [%s] with _id [%s]: '
-                        'not enough resources available',
-                        data["name"], data["_id"])
+                        'not enough resources available: '
+                        'cpu [%1.1f], memory [%1.1f]',
+                        data["name"], data["_id"], *cur_stats[:2])
                     return None
 
             # acquire lock
@@ -473,16 +478,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         CPU is computed via CPU-Utilization/(idle-time+io-wait) free RAM is in
         MB.
         """
-        ret = self.config.sys.worker.update_one(
-            {"_id": self.identifier},
-            update={
-                "$set": {
-                    "heartbeat": self.at
-                }
-            }
-        )
-        if ret.raw_result["n"] != 1:
-            raise RuntimeError("failed to update heartbeat")
         # psutil already accounts for idle and io-wait (idle and waiting for IO), we are not interested in both.
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),

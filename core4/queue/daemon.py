@@ -5,6 +5,7 @@ import core4.service.introspect
 import core4.util
 import core4.util.node
 from core4.base.main import CoreBase
+import datetime
 
 
 class CoreDaemon(CoreBase):
@@ -26,9 +27,12 @@ class CoreDaemon(CoreBase):
     .. warning:: The daemon ``.identifier`` must be unique.
     """
 
+    kind = "daemon"
+
     def __init__(self, name=None):
         super().__init__()
-        self.identifier = name or core4.util.node.get_hostname()
+        name = name or self.kind
+        self.identifier = "@".join([name, core4.util.node.get_hostname()])
         self.hostname = core4.util.node.get_hostname()
         self.phase = {
             "startup": core4.util.node.now(),
@@ -68,7 +72,6 @@ class CoreDaemon(CoreBase):
         self.enter_phase("startup")
         self.create_env()
         self.cleanup()
-        self.collect_project()
 
     def cleanup(self):
         """
@@ -111,7 +114,9 @@ class CoreDaemon(CoreBase):
                 "$set": {
                     "phase": {},
                     "heartbeat": None,
-                    "project": None
+                    "hostname": self.hostname,
+                    "kind": self.kind,
+                    "pid": core4.util.node.get_pid()
                 }
             },
             upsert=True
@@ -135,26 +140,6 @@ class CoreDaemon(CoreBase):
         """
         setup = core4.service.setup.CoreSetup()
         setup.make_all()
-
-    def collect_project(self):
-        """
-        Inquires existing core4 projects on the node using
-        :class:`.CoreIntrospector`. This method stores the identified projects
-        alongside some meta information in ``sys.worker``.
-
-        :return:
-        """
-        intro = core4.service.introspect.CoreIntrospector()
-        project = dict([(p["name"], p) for p in intro.iter_project()])
-        self.config.sys.worker.update_one(
-            {"_id": self.identifier},
-            update={
-                "$set": {
-                    "project": project
-                }
-            }
-        )
-        self.logger.info("registered projects")
 
     def enter_phase(self, phase):
         """
@@ -191,6 +176,9 @@ class CoreDaemon(CoreBase):
         time.sleep(self.wait_time)  # start with cycle 1
         self.enter_phase("loop")
         in_maintenance = False
+        heartbeat = None
+        heartbeat_delta = datetime.timedelta(
+            seconds=self.config.daemon.heartbeat)
         while not self.exit:
             self.cycle["total"] += 1
             self.logger.debug("cycle [%d]", self.cycle["total"])
@@ -205,8 +193,26 @@ class CoreDaemon(CoreBase):
                     in_maintenance = False
                     self.logger.info("leaving maintenance")
                 self.at = core4.util.node.mongo_now()
+                if heartbeat is None or self.at > heartbeat:
+                    self.heartbeat()
+                    heartbeat = self.at + heartbeat_delta
                 self.run_step()
             time.sleep(self.wait_time)
+
+    def heartbeat(self):
+        """
+        Set the daemon heartbeat to current daemon time.
+        """
+        ret = self.config.sys.worker.update_one(
+            {"_id": self.identifier},
+            update={
+                "$set": {
+                    "heartbeat": self.at
+                }
+            }
+        )
+        if ret.raw_result["n"] != 1:
+            raise RuntimeError("failed to update heartbeat")
 
     def run_step(self):
         """

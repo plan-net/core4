@@ -1,6 +1,5 @@
 core4
 ===== 
-
     
 prerequisites 
 -------------
@@ -13,25 +12,82 @@ core4 requires on the following prerequisites.
 * pip and git
 
 
+Debian 9 ships with Python 3. Check installation with
+
+    python3 --version
+    
+
+Install pip for Python 3 with
+
+    sudo apt-get install python3-pip
+    
+    
+On Debian/Ubuntu systems, you need to install the python3-venv package using 
+the following command.
+
+    sudo apt-get install python3-venv
+
+
+Install git with
+
+    sudo apt-get install git
+    
+    
+install MongoDB
+
+    sudo apt-get install dirmngr
+    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+    echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.0 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+    sudo apt-get update
+    sudo apt-get install -y mongodb-org
+    sudo systemctl enable mongod
+
+
+protect mongo with
+
+    mongo
+    
+        use admin
+        db.createUser(
+          {
+            user: "core",
+            pwd: "654321",
+            roles: [ { role: "root", db: "admin" } ]
+          }
+        );
+
+
+enable authorization editing /etc/mongod.conf
+
+    security:
+      authorization: enabled
+    
+    
+restart mongod with
+    
+    service mongod restart
+
+
+test connection now with
+
+    mongo --username=core --password=654321 --authenticationDatabase admin
+
+
 installation scenarios
 ----------------------
 
 The following step-by-step guide introduces three different scenarios to 
-run/deploy core4:
+develop and rollout core4:
 
 
-1. DEVELOP AND MAINTAIN CORE4 PROJECTS. 
+1. DEVELOP AND MAINTAIN CORE4 AND PROJECTS. 
     
 This scenario runs a core4 environment and works with a local or remote git 
 project clone. In this scenario the core4 developer builds and distributes 
 core4 project releases.
 
-The scenario is further divided into two sub-scenarios: 1) the creation and
-development of a new core4 project and 2) cloing and further developing an 
-existing core4 project.
 
-
-2. CORE4 PRODUCTION. 
+2. DEPLOY PRODUCTION. 
 
 In this scenario the core4 framework and one or more projects share one core4
 scheduler, multiple core4 workers, one or more core4 app containers hosting
@@ -39,45 +95,52 @@ ReST APIs and core4 widgets based on the tornado web framework/asynchronous
 networking library.
 
 
-3. CORE4 FURTHER DEVELOPMENT.
+3. FURTHER DEVELOPMENT OF CORE4 PROJECTS.
 
-In this scenario you goal is to further develop core4. This is either
-standalone core4 implementation work or in combination with a shared or private
-project repository.
+In this scenario you goal is to further develop existing core4 project. This is 
+either standalone core4 implementation work or in combination with a shared or 
+private project repository.
 
 .. todo:: how to pull request
 
 
-develop and maintain new core4 projects
----------------------------------------
+develop and maintain core4 projects and projects
+------------------------------------------------
 
-In this scenario we will install core4 in ~/core4.home, create, setup, build
+In this scenario we will install core4 in ~/core4.dev, create, setup, build
 and release a core4 project called "mypro".
 
 Ensure all dependencies have been installed. This is Python 3.5, MongoDB, pip 
-and git. Open up a shell and execute the following commands to install core4:
+and git. 
 
-    # create core4 home                                                 #[1]# 
-    mkdir ~/core4.home
-    cd ~/core4.home
+Open up a shell and execute the following commands to install core4:
+
+    # create core4 home of your projects
+    mkdir ~/core4.dev
+    cd ~/core4.dev
+
+    # clone core4                                                       
+    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
     
-    # download setup script                                             #[2]#
-    export CORE4_REMOTE=ssh://git.bi.plan-net.com/srv/git/core4.git
-    export CORE4_BRANCH=mra.env
-    git archive --remote $CORE4_REMOTE $CORE4_BRANCH croll.py | tar -xO > croll.py
+    # enter clone                                                       
+    cd core4
     
-    # create core4 environment                                          #[3]#
-    python3 croll.py core4 $CORE4_REMOTE@$CORE4_BRANCH
+    # create Python virtual environment                                 
+    python3 -m venv .venv
+    
+    # enter Python virtual environment                                  
+    . enter_env 
 
-    # enter core4 environment                                           #[4]#
-    . core4/bin/activate
+    # install core4 in development mode                                 
+    pip install -e .[tests]
 
 
-Within core4 environment you can create and develop your project. Chose project 
-name "mypro" and create your test project with:
+You have now a core4 environment and can create and develop your project. Chose 
+project name "mypro" and create your test project with:
 
     # create new project
-    coco --init mypro "My first core4 project"                          #[5]#
+    cd ~/core4.dev
+    coco --init mypro "My first core4 project"                          
 
 
 This has created the followinhg project structure:
@@ -97,63 +160,78 @@ This has created the followinhg project structure:
 This represents the bare project directory structure. Hidden directories
 .git, .repos, and .venv are available, too.
 
-At mypro/.repos resides the git repository. Directory mypro/.git contains your
-git loacal worktree and the Python virtual environment is in mypro/.venv. 
+In mypro/.repos resides the git repository. Directory mypro/.git contains your
+git loacal working tree. The Python virtual environment is in mypro/.venv. 
     
 These directories are only created if they do not exist and unless your 
 worktree is connected to a remove git repository. In this case, .git carries
 the connection to the remote repository and .repos does not exist.
 
-Finally, `coco --init` has created an intial ~/.core4/local.yaml configuration
-file if it does not exist. The default values for your local MongoDB, logging
-defaults and the location of folder.home are injected. The file is not 
-modified if it already exists.
+Now is the time to create your local core4 configuration in 
+~/.core4/local.yaml. Open your favorite editor or IDE and paste the following
+content into this file. Ensure the configuration key "folder.home" addresses
+the core4 home directory created above.
 
-    DEFAULT:                                                            #[6]#
+    DEFAULT:                                                            
       mongo_url: mongodb://core:654321@localhost:27017
       mongo_database: core4dev
     
-    logging:                                                            #[7]#
+    logging:                                                            
       mongodb: INFO
       stderr: DEBUG
       stdout: ~
     
-    folder:                                                             #[8]#
-      home: /home/mra/PycharmProjects
+    folder:                                                             
+      home: /home/<username>/core4.dev
     
-
-Enter the project's Python virtual environment
-
-    # enter mypro environment                                           #[9]#
-    source mypro/enter_env    
+    worker:
+      min_free_ram: 32
 
 
-Start a worker in a shell:
+Since every project comes with it's own Python virtual environment you must
+watch your context, e.g. with `coco --who`. Therefore, exit current environment
+"core4" with
 
-    coco --worker                                                       #[10]#
+    # exit core4 environment
+    exit_env
+
+    
+Next, enter project "mypro" Python virtual environment:
+    
+    # enter mypro environment                                           
+    . mypro/enter_env    
 
 
-Test to enqueue a simple default job
+Start a worker with:
 
-    # test enqueue                                                      #[11]#
+    coco --worker                                                       
+
+
+Test to enqueue a simple default job. Open up another shell, enter the 
+environment for this shell and enqueue the DummyJob:
+
+    # enter mypro environment (2nd shell)
+    . core4.dev/mypro/enter_env
+    
+    # test enqueue                                                      
     coco --enqueue core4.queue.helper.job.DummyJob
 
 
 After successful execution show the job details from sys.queue and halt the
 worker.
     
-    # show details                                                      #[12]#
+    # show details                                                      
     coco --detail <job-id>
 
-    # stop the worker                                                   #[13]#
+    # stop the worker                                                   
     coco --halt
 
 
 Now developement. Let's create our own test job. Switch to the git develop 
 branch following the gitflow (see 
-https://nvie.com/posts/a-successful-git-branching-model/:
+https://nvie.com/posts/a-successful-git-branching-model/). 
 
-    git checkout develop                                                #[14]#
+    git checkout develop                                                
     touch mypro/myjob.py
 
 
@@ -165,7 +243,8 @@ and paste the following snippet into the body of myjob.py:
     
     class MyJob(core4.queue.job.CoreJob):
         author = "mra"
-    
+        schedule = "* * * * *"
+            
         def execute(self, **kwargs):
             self.logger.info("hello world")
             for i in range(0, 10):
@@ -176,7 +255,7 @@ and paste the following snippet into the body of myjob.py:
     
     if __name__ == '__main__':                                  
         from core4.queue.helper.functool import execute
-        execute(MyJob)                                                  #[15]#
+        execute(MyJob)                                                  
 
 
 Save and close the file. Your development project should now look like this:
@@ -196,46 +275,46 @@ Save and close the file. Your development project should now look like this:
 
 Directly execute the job with starting myjob.py as in:
 
-    python mypro/myjob.py                                               #[16]#
+    python mypro/myjob.py                                               
     
 
 Develop with your favorite IDE. Do not forget to address the correct Python
-from .venv/bin/python and correct settings in local.yaml.
+executable from .venv/bin/python and correct settings in local.yaml.
 
 Running a background worker allows direct use of the execution framework 
 addressing the job with its fully qualified name "mypro.myjob.MyJob".
 
-    coco --enqueue mypro.myjob.MyJob                                    #[17]#
+    coco --enqueue mypro.myjob.MyJob                                    
 
 
 Now that we are happy with the job, let's build a release. We simulate the
 typical deployment workflow for new features and bug fixing.
   
-    # use develop branch for further development                        #[18]#
+    # use develop branch for further development                        
     git checkout develop                                        
 
-    # add myjob.py                                                      #[19]#
+    # add myjob.py                                                      
     git add .
 
-    # commit all changes                                                #[20]#
-    git commit
+    # commit all changes                                                
+    git commit . -m "first job"
     
-    # build release 0.0.2                                               #[21]#
+    # build release 0.0.2                                               
     coco --build
 
 
 Finalize the release and merge branch release-0.0.2 into branches develop and
 master:
     
-    # merge release into develop                                        #[22]#
+    # merge release into develop                                        
     git checkout develop
     git merge release-0.0.2
 
-    # merge release into master                                         #[23]#
+    # merge release into master                                         
     git checkout master
     git merge release-0.0.2
     
-    # publish the release                                               #[24]#
+    # publish the release                                               
     coco --release
 
 
@@ -243,52 +322,104 @@ This rather long and at first sight complicated workflow is straight forward if
 you follow the gitflow concept. As a recap this summary outlines the most 
 relevant steps of this guideline so far.
 
-    1. create home for core4 source and projects (lines #1 and #2).
+    1. create home for core4 source and projects.
 
     2. manage multiple dedicated Python virtual environments.
  
-       * one for core4 (line #3)
-       * one for each project (line #5)
-       * use coco --init as the helper tool to initialise the environment (line
-         #5)
-       * enter and develop in project virtual environments (lines #4 and #9)
+       * one for core4
+       * one for each project
+       * use coco --init as the helper tool to initialise the environment
+       * enter and develop in project virtual environments
 
-    3. manage your local.yaml for MongoDB connection (line #6), logging (line
-       #7) and core4 project residence (line #8).
+    3. manage your local.yaml for MongoDB connection, logging and core4 project 
+       residence.
 
-    4. develop with your favorite IDE, execute, and enqueue start jobs (lines 
-       #10 through #13 and #15 through #16).
+    4. develop with your favorite IDE, execute, and enqueue start jobs.
     
-       * use git branching feature (lines #14 and #18)
-       * push your changes into develop branch (lines #15, #19 and #20)
+       * use git branching feature
+       * push your changes into develop branch
        
-    5. Align and build new release with `coco --build` (line #21).
+    5. Align and build new release with `coco --build`.
     
     6. After successful tests & QA merge your source changes from release-0.0.2
-       to branches develop (line #22) and master (line #23) and finally rollout 
-       the release with `coco --release` line  (line #24).
+       to branches develop and master and finally rollout the release with 
+       `coco --release`.
 
+
+core4 production
+----------------
+
+The basic principles to run core4 framework and projects in production is as
+follows: 
+
+    # create core4 production home                                       
+    mkdir ~/core4.prod
+    cd ~/core4.prod
+
+    # create core4 project
+    mkdir core4
+    cd core4
+    python3 -m venv .venv
+
+    # activate environment
+    . .venv/bin/activate    
+    
+    # install core4
+    pip install git+ssh://git.bi.plan-net.com/srv/git/core4.git
+    
+
+Be sure to update your local.yaml core4 project home residence:
+
+    folder:
+      home: /home/mra/core4.prod
+
+
+With a base installation of core4 you can now use core4's helper script
+`cadmin` to deploy and upgrade core4 projects. The following example deploys
+the "mypro" project we've developed (see above).
+
+    cadmin --install --repository file:///home/mra/core4.dev/mypro/.repos mypro
+
+
+Check your setup with
+
+    coco --who
+    coco --project
+
+    
+Upgrade your setup with
+
+    cadmin --upgrade 
+   
+   
+Please note that for repositories which have not been created with `cadmin` you
+have to manually upgrade. In our scenario this applies to the core4 project
+itself which has been created in ~/core4.prod/core4. Use pip to upgrade your
+installation:
+
+    deactivate
+    . ~/core4.prod/core4/.venv/bin/activate
+    pip install --upgrade git+ssh://git.bi.plan-net.com/srv/git/core4.git   
+        
 
 develop and maintain existing core4 projects
 --------------------------------------------
 
 In this scenario we will clone, setup, build and release the existing core4 
 project "mypro". This project has been created in the previous scenario under
-~/core4.home/mypro.
+~/core4.dev/mypro.
 
-Ensure all dependencies have been installed. This is Python 3.5, MongoDB, pip 
-and git. Open up a shell and execute the following commands to clone the 
-project:
+Open up a shell and execute the following commands to clone the project:
 
     # create a development folder
-    mkdir ~/core4.dev                                                   #[25]#                                           
+    mkdir ~/core4.dev2                                                                                              
 
     # clone core4 project
-    cd ~/core4.dev
-    git clone file:///home/mra/core4.home/mypro/.repos mypro            #[26]#
+    cd ~/core4.dev2
+    git clone file:///home/mra/core4.dev/mypro/.repos mypro             
 
-    # change to working tree                                            #[27]#
-    cd ~/core4.dev/mypro
+    # change to working tree                                            
+    cd mypro
 
 
 This has created the following file/folder structure:
@@ -306,113 +437,40 @@ This has created the following file/folder structure:
     └── tests
 
 
-Finally you must create a Python virtual environment (line #28), enter it
-(line #29) and install core4 (line #30) inside this environment. It is 
-recommended to install the project itself in development mode (line #31):
+Finally you must create a Python virtual environment, enter it and install 
+core4 inside this environment. It is recommended to install the project itself 
+in development mode:
 
-    
-    # create Python virtual environment                                 #[28]#
+    # create Python virtual environment                                 
     python3 -m venv .venv
     
-    # enter the environment                                             #[29]#
+    # enter the environment                                             
     source enter_env
     
-    # install core4                                                     #[30]#
-    pip install -U git+ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env
+    # install core4                                                     
+    pip install -U git+ssh://git.bi.plan-net.com/srv/git/core4.git
     
-    # install project mypro from current directory in development mode  #[31]#
+    # install project mypro from current directory in development mode  
     pip install -e .    
 
 
-Do not forget to have a global core4 configuration file exists, for example at 
-~/.core4/local.yaml.
-
-    DEFAULT:                                                            
-      mongo_url: mongodb://core:654321@localhost:27017
-      mongo_database: core4dev
-    
-    logging:                                                            
-      mongodb: INFO
-      stderr: DEBUG
-      stdout: ~
-    
-    folder:                                                             
-      home: /home/mra/core4.dev
-    
+Do not forget to have a global core4 configuration file at ~/.core4/local.yaml. 
+See the example configuration yaml above.
 
 To test the job mypro.myjob.MyJob execute the following commands in two 
 seperate shells:
 
     # Start worker in a shell
-    coco --worker                                                       #[31]#
+    coco --worker                                                       
 
     # Directly execute the job 
-    python mypro/myjob.py                                               #[32]#
+    python mypro/myjob.py                                               
     
     # enqueue job in another shell
-
-    # enqueue job with coco
-    coco --enqueue mypro.myjob.MyJob                                    #[33]#
+    coco --enqueue mypro.myjob.MyJob                                    
 
     # stop the worker                                                   
-    coco --halt                                                         #[34]#
-
-
-core4 production
-----------------
-
-The basic principles to run core4 framework and projects in production is as
-follows: 
-
-    # create core4 production home                                      #[35]# 
-    mkdir ~/core4.prod
-    cd ~/core4.prod
-    
-    # download setup script                                             #[36]#
-    export CORE4_REMOTE=ssh://git.bi.plan-net.com/srv/git/core4.git
-    export CORE4_BRANCH=mra.env
-    git archive --remote $CORE4_REMOTE $CORE4_BRANCH croll.py | tar -xO > croll.py
-    
-    # install core4                                                     #[37]#
-    python3 croll.py core4 ssh://git.bi.plan-net.com/srv/git/core4.git@mra.env
-
-    # install mypro                                                     #[38]#
-    python3 croll.py mypro file:///home/mra/core4.home/mypro/.repos
-
-    # install another project                                           #[39]#
-    python3 croll.py pro2 file:///home/mra/core4.home/pro2/.repos
-
-
-Be sure to update your local.yaml core4 project home residence:
-
-    folder:
-      home: /home/mra/core4.prod
-
-
-core4 further development
--------------------------
-
-To develop core4 further, you have to clone (line #40) the source code, create
-a Python virtual environment (line #42), enter the environment (line #43) and
-install core4 in development mode (line #44):
-
-    # clone core4                                                       #[40]#
-    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
-    
-    # enter clone                                                       #[41]#
-    cd core4
-    
-    # create Python virtual environment                                 #[42]#
-    python3 -m venv .venv
-    
-    # enter Python virtual environment                                  #[43]#
-    . enter_env 
-
-    # install core4 in development mode                                 #[44]#
-    pip install -e .
-
-
-Be sure to have your ~/.core4/local.yaml.
+    coco --halt                                                         
 
 
 build documentation

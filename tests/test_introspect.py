@@ -74,3 +74,9 @@ def test_discover():
 def test_api_container():
     intro = CoreIntrospector()
     intro.iter_api_container()
+
+
+def test_iter_all():
+    intro = CoreIntrospector()
+    from pprint import pprint
+    pprint(intro.iter_all())

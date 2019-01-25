@@ -17,6 +17,15 @@ import core4.util
 
 curr_dir = os.path.abspath(os.curdir)
 
+ASSET_FOLDER = 'asset'
+
+def asset(*filename, exists=True):
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, ASSET_FOLDER, *filename)
+    if not exists or os.path.exists(filename):
+        return filename
+    raise FileNotFoundError(filename)
+
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
     logging.shutdown()
@@ -24,6 +33,7 @@ def reset(tmpdir):
     core4.logger.mixin.CoreLoggerMixin.completed = False
     # setup
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
+    os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
     core4.logger.mixin.logon()
     yield
     os.chdir(curr_dir)

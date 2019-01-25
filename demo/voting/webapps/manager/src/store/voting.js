@@ -20,17 +20,31 @@ const actions = {
       .sort((a, b) => a[0] - b[0])
       .map(a => a[1])
 
-    const ids = ['user-1',
-      'user-6',
-      'user-2',
-      'user-3',
-      'user-4',
-      'user-5',
-      'user-7',
-      'user-8',
-      'user-9',
-      'user-10',
-      'user-11']
+    const ids = [
+      'fab',
+      'nal',
+      'mam',
+      'wch',
+      'adi',
+      'ben',
+      'agr',
+      'eha',
+      'she',
+      'kjü',
+      'mkr',
+      'lkr',
+      'hlo',
+      'vme',
+      'mmo',
+      'mmr',
+      'mra',
+      'osc',
+      'mse',
+      'lst',
+      'mtu',
+      'ewi',
+      'bzi'
+    ]
     const random = shuffleArray(ids)[0]
     Api.dummyVote({ id: random })
   },
@@ -53,14 +67,6 @@ const actions = {
   fetchResult ({ commit, dispatch, getters }, sid) {
     Api.fetchResult().then(val => {
       commit('set_result', val)
-      /* if (sid != null) {
-        dispatch('setCurrentResult', { session_id: sid })
-      } else {
-        try {
-          console.log(val[0].session_id)
-          dispatch('setCurrentResult', { session_id: val[0].session_id })
-        } catch (err) {}
-      } */
     })
   },
   setCurrentResult ({ commit, getters }, payload) {
@@ -75,11 +81,19 @@ const actions = {
       dispatch('fetchQuestions')
     })
   },
+  deleteQuestion ({ commit, dispatch }, sessionId) {
+    Api.deleteQuestion(sessionId).then(val => {
+      dispatch('showNotification', {
+        text: 'Die Frage wurde gelöscht.'
+      })
+      commit('delete_question', sessionId)
+    })
+  },
   startQuestion ({ commit, dispatch, getters }, payload) {
     const next = payload || getters.question
     Api.startQuestion(next.session_id).then(val => {
       commit('set_current_question', val)
-      const path = (`${axios.defaults.baseURL}/poll/${next.session_id}?token=secret_token`).replace('//poll', '/poll')
+      const path = (`${axios.defaults.baseURL}/poll/${next.session_id}?token=secret_token`).replace('//poll', '/poll') // ????
       Vue.SSE(path, { format: 'json' })
         .then(sse => {
           commit('set_server_side_events', sse)
@@ -155,6 +169,11 @@ const mutations = {
   set_questions (state, payload) {
     state.questions = payload
   },
+  delete_question (state, payload) {
+    state.questions = state.questions.filter(
+      val => val.session_id !== payload
+    )
+  },
   set_result (state, payload) {
     state.results = payload
   },
@@ -219,36 +238,49 @@ const getters = {
       'not specified': { all: 5, real: 0 }
     }
     // SEX
-    const MALES_ALL = 158
-    const FEMALES_ALL = 39
+    const MALES_ALL = 16
+    const FEMALES_ALL = 7
+    const U_30 = 8
+    const UE_30 = 15
     if (state.results != null) {
       const results = unique(state.results.map(val => val.session_id))
       const cluster = results.map(val => {
         const resultCompleteRaw = state.results.filter(val2 => val2.session_id === val)
-        console.log(resultCompleteRaw)
         const ret = {
           session_id: val,
           question: state.questions.find(val3 => val3.session_id === val),
-          result: resultCompleteRaw
+          result: resultCompleteRaw,
+          detail: []
         }
         const sex = {
           m: 0,
-          w: 0
+          w: 0,
+          unter30: 0,
+          ueber30: 0
         }
         resultCompleteRaw.forEach(val => {
+          if (val.user_data.id) {
+            ret.detail.push(val.user_data)
+          }
           try {
             if (val.user_data.sex === 'm') {
               sex.m++
             } else {
               sex.w++
             }
+            if (val.user_data.u30) {
+              sex.unter30++
+            } else {
+              sex.ueber30++
+            }
           } catch (err) {
           }
         })
 
         ret.sex = [sex.m / MALES_ALL, sex.w / FEMALES_ALL].map(val => val * 100) // Geschlecht in % von allen wählern
+        ret.age = [sex.unter30 / U_30, sex.ueber30 / UE_30].map(val => val * 100) // Geschlecht in % von allen wählern
         // SEX END
-        // Countries
+        // Age
 
         resultCompleteRaw.forEach(val => {
           // console.log(val.user_data.country)

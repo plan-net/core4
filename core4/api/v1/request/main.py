@@ -354,12 +354,26 @@ class CoreBaseHandler(CoreBase):
         """
         self.request.method = "GET"
         parts = self.request.path.split("/")
-        md5_route_id = parts[-1]
+        md5_route = parts[-1]
+
         self.absolute_path = None
         if self.enter_url is None:
-            self.enter_url = "/".join([core4.const.ENTER_URL, md5_route_id])
-        self.help_url = "/".join([core4.const.HELP_URL, md5_route_id])
+            self.enter_url = "/".join([core4.const.ENTER_URL, md5_route])
+        self.help_url = "/".join([core4.const.HELP_URL, md5_route])
         return self.card()
+
+    def xenter(self, *args, **kwargs):
+        """
+        Prepares the ``enter`` page and triggers :meth:`.enter` which is to be
+        overwritten for custom widget landing page implementations.
+
+        :return: result of :meth:`.enter`
+        """
+        self.request.method = "GET"
+        parts = self.request.path.split("/")
+        md5_route_id = parts[-1]
+        self.absolute_path = None
+        return self.enter()
 
     def card(self):
         """
@@ -367,6 +381,14 @@ class CoreBaseHandler(CoreBase):
         custom card page impelementation.
         """
         return self.render(self.card_html_page)
+
+    def enter(self):
+        """
+        Renders the default endpoint entry. This method is to be overwritten
+        for custom entry impelementation. The default implementation redirects
+        to the endpoint's GET method.
+        """
+        return self.get()
 
     def get_template_path(self):
         """
@@ -528,12 +550,15 @@ class CoreBaseHandler(CoreBase):
             ret["flash"] = self._flash
         return ret
 
-    def _wants(self, value, set_content=True):
+    def _wants(self, value, content_type=None, set_content=True):
         # internal method to very the client's accept header
         expect = self.guess_content_type() == value
-        if expect and set_content:
-            self.set_header("Content-Type", value + "; charset=UTF-8")
-        return expect
+        ct = self.get_argument("content_type", as_type=str, default=None)
+        if (expect and ct is None) or (ct == content_type):
+            if set_content:
+                self.set_header("Content-Type", value + "; charset=UTF-8")
+            return True
+        return False
 
     def wants_json(self):
         """
@@ -542,7 +567,7 @@ class CoreBaseHandler(CoreBase):
 
         :return: ``True`` if best guess is JSON
         """
-        return self._wants("application/json")
+        return self._wants("application/json", "json")
 
     def wants_html(self):
         """
@@ -551,7 +576,7 @@ class CoreBaseHandler(CoreBase):
 
         :return: ``True`` if best guess is HTML
         """
-        return self._wants("text/html")
+        return self._wants("text/html", "html")
 
     def wants_text(self):
         """
@@ -560,7 +585,7 @@ class CoreBaseHandler(CoreBase):
 
         :return: ``True`` if best guess is plain text
         """
-        return self._wants("text/plain")
+        return self._wants("text/plain", "text")
 
     def wants_csv(self):
         """
@@ -569,7 +594,7 @@ class CoreBaseHandler(CoreBase):
 
         :return: ``True`` if best guess is CSV
         """
-        return self._wants("text/csv")
+        return self._wants("text/csv", "csv")
 
     def guess_content_type(self):
         """
@@ -594,7 +619,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
 
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT",
-                         "OPTIONS", "XCARD", "XHELP")
+                         "OPTIONS", "XCARD", "XHELP", "XENTER")
 
     supported_types = [
         "text/html",

@@ -77,6 +77,14 @@ class CoreBase:
         self.project = self.get_project()
         self._open_config()
         self._open_logging()
+        self.initialise_object()
+
+    def initialise_object(self):
+        """
+        Called after object instantiation. This method can be overwritte by
+        any subclass of :class:`CoreBase` to initialise object variables.
+        """
+        pass
 
     @classmethod
     def get_project(cls):
@@ -90,7 +98,7 @@ class CoreBase:
         module = sys.modules[project]
         # the following is a hack
         if not hasattr(module, "__project__"):
-            source = module.__file__
+            source = os.path.abspath(module.__file__)
         elif project == '__main__':
             source = sys.argv[0]
         else:
@@ -156,6 +164,7 @@ class CoreBase:
         module = sys.modules.get(self.project)
         if self.project != CORE4:
             if module is None:
+                sys.path.append(".")
                 module = importlib.import_module(self.project)
             if hasattr(module, "__project__"):
                 if module.__project__ == CORE4:
