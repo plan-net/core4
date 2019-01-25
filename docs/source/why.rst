@@ -2,6 +2,10 @@
 why core4
 =========
 
+Core utilises Python, the main reason for that choice is that python is the de facto standard for Business Intelligence
+and Data Driven Applications.
+Below you'll find three usual applications for core and why core is a good choice in each of them.
+
 data engieering perspective
 ===========================
 
@@ -62,8 +66,18 @@ Core allows business of any size to build and deploy all kinds of applications f
 Because core with all of its features enables you to perfectly integrate your agile method of operating into the
 developing cycle with that it's possible to employ rapid prototyping for you to get tangible results faster.
 
-With the REST capabilities that core offers it's easy to make your data available for other applications.
+With the REST capabilities, tornado and Front End Tool integration that core offers it's easy to make your data available
+for other applications.
 Due to the nature of core it is unifying Data Science and Business Intelligence into one cohesive package.
 
 A big reason of why you should choose core is the ease of how it enables you to work more efficient and get results
 faster and can in turn help to improve your product faster.
+
+conclusion:
+=========================================
+
+Core is simple to use and enables collaboration between Teams of Data Scientists, Data Engineers and Business Users.
+
+It allows for surface level knowledge, but offers the ability to dive deep into the technical framework.
+
+And it is very extensible because of the use of python.
