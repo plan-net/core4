@@ -40,3 +40,8 @@ or months:
 * :ref:`simple deployment and rollout mechanic <deploy>` to support the
   *not so technical* data scientist and data engineer in productionising all
   deliverables, results and tools
+
+
+.. figure:: _static/architecture1.png
+   :scale: 65%
+   :alt: core4 component overview
