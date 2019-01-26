@@ -86,6 +86,10 @@ venv.bak/
 Pipfile*
 *.env
 
+# pylint
+.vscode
+.vscode/*
+
 # frontend
 
 .DS_Store
@@ -98,4 +102,3 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.vscode
