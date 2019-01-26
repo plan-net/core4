@@ -1,9 +1,12 @@
 """
-This module implements CoreCollection, featuring database access.
+This module implement :class:`.CoreCollection`, featuring database access and
+:class:`.CoreJobCollection` derived from :class:`.CoreCollection` with extended
+features for MongoDB collection access with :class:`.CoreJob`.
 """
 
-import core4.error
 import pymongo.collection
+
+import core4.error
 from core4.base.connector.mongo import make_connection as make_mongo_connection
 
 DEFAULT_SCHEME = 'mongodb'
@@ -100,6 +103,7 @@ class CoreJobCollection(CoreCollection):
     """
     Encapsulates data access for :class:`.CoreJob` objects.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._job = None
@@ -129,7 +133,6 @@ class CoreJobCollection(CoreCollection):
 
 
 class JobCollection(pymongo.collection.Collection):
-
     """
     This class encapsulates MongoDB data access for :class:`.CoreJob`.
     """

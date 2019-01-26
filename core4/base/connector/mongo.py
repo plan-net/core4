@@ -1,10 +1,16 @@
-import pymongo
+"""
+Delivers MongoDB cached database connectivity using :mod:`pymongo` and
+:mod:`motor`.
+"""
+
 import motor
+import pymongo
 
 CACHE = {
     'sync': {},
     "async": {}
 }
+
 
 def make_connection(connection):
     """

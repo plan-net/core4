@@ -1,4 +1,8 @@
-import core4.base.main
+"""
+This module provides core4 :class:`.Cookie`. Cookies allow state transitions
+of otherwise stateless entities, i.e. :class:`.CoreJob` and
+:class:`.CoreRequestHandler`.
+"""
 
 
 class Cookie:
