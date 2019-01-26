@@ -4,7 +4,7 @@ core4
 prerequisites 
 -------------
 
-core4 requires on the following prerequisites.
+core4 requires the following prerequisites.
 
 * Python 3.5
 * MongoDB database instance version 3.6.4 or higher up-and-running, 
