@@ -18,8 +18,9 @@ SCHEME = {
 
 class CoreCollection:
     """
-    This class encapsulates data access.
+    Encapsulates data access.
     """
+    _cache = {}
 
     def __init__(
             self, scheme, hostname, database, collection, username=None,
@@ -95,55 +96,107 @@ class CoreCollection:
         return getattr(self.connection[self.database][self.collection], item)
 
 
+class CoreJobCollection(CoreCollection):
+    """
+    Encapsulates data access for :class:`.CoreJob` objects.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._job = None
+        self._cache = {}
+
+    def __getattr__(self, item):
+        key = (self.database, self.collection)
+        if key in self._cache:
+            coll = self._cache[key]
+        else:
+            coll = JobCollection(self.connection[self.database],
+                                 self.collection)
+            coll.set_job(self._job._id, self._job.get_source())
+            self._cache[key] = coll
+        return getattr(coll, item)
+
+    def set_job(self, job):
+        """
+        Updates the collection's job link
+
+        :param job: :class:`.CoreJob` object
+        """
+        job.logger.debug("set job to connect with [%s]", self.info_url)
+        self._job = job
+        for k, v in self._cache.items():
+            v.set_job(job._id, job.get_source())
+
+
 class JobCollection(pymongo.collection.Collection):
+
+    """
+    This class encapsulates MongoDB data access for :class:`.CoreJob`.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._core4_verified = False
 
     def set_job(self, _id, _src):
-        if _id is None:
-            raise AttributeError("_id must not be None")
-        if _src is None:
-            raise AttributeError("_src must not be None")
+        """
+        Used by :class:`.CoreJob` and :class:`.JobConnectTag` to announce the
+        current source to future MongoDB collection methods.
+
+        :param _id: ``_id`` of the :class:`.CoreJob` instance
+        :param _src: latest source of the :class:`.CoreJob` instance
+        """
         self._job = {
             "_job_id": _id,
             "_src": _src
         }
+        if self._job["_job_id"] is None or self._job["_src"] is None:
+            self._core4_verified = False
+        else:
+            self._core4_verified = True
+
+    def _verify(self):
+        if not self._core4_verified:
+            raise AttributeError("_id and _src must not be None")
 
     def insert_one(self, document, *args, **kwargs):
+        """
+        Overwrites :class:`pymongo.collection.Collection` method to add extra
+        job attributes.
+        """
+        self._verify()
         document.update(self._job)
         return super().insert_one(document, *args, **kwargs)
 
     def insert_many(self, documents, *args, **kwargs):
+        """
+        Overwrites :class:`pymongo.collection.Collection` method to add extra
+        job attributes.
+        """
+        self._verify()
         for i in range(len(documents)):
             documents[i].update(self._job)
         return super().insert_many(documents, *args, **kwargs)
 
     def bulk_write(self, requests, *args, **kwargs):
+        """
+        Overwrites :class:`pymongo.collection.Collection` method to add extra
+        job attributes.
+        """
+        self._verify()
         for i in range(len(requests)):
             if hasattr(requests[i], "_doc"):
                 requests[i]._doc.update(self._job)
         return super().bulk_write(requests, *args, **kwargs)
 
     def _update(self, sock_info, criteria, document, *args, **kwargs):
+        """
+        Overwrites :class:`pymongo.collection.Collection` method to add extra
+        job attributes.
+        """
+        self._verify()
         if "$set" in document:
             document["$set"].update(self._job)
         else:
             document["$set"] = self._job
         super()._update(sock_info, criteria, document, *args, **kwargs)
-
-
-class CoreJobCollection(CoreCollection):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._job = None
-
-    def __getattr__(self, item):
-        coll = JobCollection(self.connection[self.database], self.collection)
-        coll.set_job(self._job._id, self._job.get_source())
-        return getattr(coll, item)
-
-    def set_job(self, job):
-        job.logger.debug("set job to connect with [%s]", self.info_url)
-        self._job = job
