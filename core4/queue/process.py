@@ -3,21 +3,20 @@ This module implements the core4 job process spawned by :class:`.CoreWorker`.
 """
 
 import ctypes
-import datetime
 import io
 import os
 import sys
 import tempfile
 import traceback
 
+import datetime
 from bson.objectid import ObjectId
 
-import core4.base
+import core4.base.main
 import core4.error
 import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
-import core4.util
 import core4.util.node
 
 libc = ctypes.CDLL(None)
@@ -25,7 +24,7 @@ c_stdout = ctypes.c_void_p.in_dll(libc, 'stdout')
 c_stderr = ctypes.c_void_p.in_dll(libc, 'stderr')
 
 
-class CoreWorkerProcess(core4.base.CoreBase,
+class CoreWorkerProcess(core4.base.main.CoreBase,
                         core4.logger.mixin.CoreLoggerMixin):
     """
     This class controls jobs execution. It loads the requested job from
@@ -152,4 +151,3 @@ class CoreWorkerProcess(core4.base.CoreBase,
                     "failed to update job [{}] state [starting]".format(_id))
             self.logger.info("failed to start [%s]", _id)
             return None
-

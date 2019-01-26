@@ -1,11 +1,14 @@
+"""
+This module implements :class:`.CoreDaemon` which is the base class for
+:class:`.CoreWorker` and :class:`.CoreScheduler`.
+"""
+
+import datetime
 import time
 
 import core4.queue.main
-import core4.service.introspect
-import core4.util
 import core4.util.node
 from core4.base.main import CoreBase
-import datetime
 
 
 class CoreDaemon(CoreBase):
@@ -85,28 +88,28 @@ class CoreDaemon(CoreBase):
         ``sys.worker``.
 
         .. warning:: please note that the ``.identifier`` of the daemon must
-                     not exist.
+            not exist.
 
         The meta data stored with each daemon is::
 
-        {
-            "_id" : "<identifier>",
-            "heartbeat" : <isoformat>,
-            "phase" : {
-                "startup" : <isoformat>,
-                "loop" : <isoformat>
-            },
-            "project" : {
-                "project" : {
-                    "built" : <isoformat>,
-                    "name" : "<str>",
-                    "description" : "<str>",
-                    "title" : "<str>",
-                    "version" : "<str>"
+            {
+                "_id" : "<identifier>",
+                "heartbeat" : <isoformat>,
+                "phase" : {
+                    "startup" : <isoformat>,
+                    "loop" : <isoformat>
                 },
-                ...
+                "project" : {
+                    "project" : {
+                        "built" : <isoformat>,
+                        "name" : "<str>",
+                        "description" : "<str>",
+                        "title" : "<str>",
+                        "version" : "<str>"
+                    },
+                    ...
+                }
             }
-        }
         """
         self.config.sys.worker.update_one(
             {"_id": self.identifier},
@@ -169,8 +172,8 @@ class CoreDaemon(CoreBase):
         :meth:`.start`. This method skips processing if core4 system is in the
         general *maintenance* state indicated in collection ``sys.worker``.
 
-        The loop is left if core4 system is in the general *__halt__* state as
-        indicated in collection ``sys.worker``, too.
+        The loop is left if core4 system is in the general ``__halt__`` state
+        as indicated in collection ``sys.worker``, too.
         """
         self.offset = None
         time.sleep(self.wait_time)  # start with cycle 1

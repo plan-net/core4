@@ -1,14 +1,14 @@
 """
 This module delivers various MongoDB support methods retrieving information
-about collection ``sys.queue``. The main class :class:`QueryMixin` is to be
-mixed into a class based on :class:`core4.base.main.CoreBase`.
+about collections ``sys.queue``, ``sys.journal``, ``sys.stdout`` and
+``sys.worker``. The main class :class:`.QueryMixin` is to be mixed into a class
+based on :class:`core4.base.main.CoreBase`.
 """
 
 from collections import OrderedDict
 
 import datetime
 
-import core4.util
 import core4.util.node
 
 
@@ -65,7 +65,7 @@ class QueryMixin:
                     "pid": 1
                 }
             },
-            {"$sort": {"kind":1, "_id": 1}}
+            {"$sort": {"kind": 1, "_id": 1}}
         ]
         cur = self.config.sys.worker.aggregate(pipeline)
         data = []

@@ -1,9 +1,29 @@
+"""
+This module implements :class:`.CoreScheduler`.
+
+To start a scheduler from Python goes like this::
+
+    from core4.queue.scheduler import CoreScheduler
+
+    scheduler = CoreScheduler()
+    scheduler.start
+
+To stop the worker start a new Python interpreter and go with::
+
+    from core4.queue.main import CoreQueue
+
+    queue = CoreQueue()
+    queue.halt(now=True)
+
+.. note:: use :ref:`coco` to achieve the same with::
+
+    $ coco --scheduler
+    $ coco --halt
+"""
+
 import datetime
 from croniter import croniter
 
-import core4.queue.main
-import core4.queue.query
-import core4.util
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
 import core4.const

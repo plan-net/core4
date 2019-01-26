@@ -60,7 +60,7 @@ class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
     def list_proc(self, pattern=None, base=None):
         """
         List all or matching files in the project's processing folder. If a
-        regular expression pattern is passed, then it  applied as a filter.< If
+        regular expression pattern is passed, then it  applied as a filter. If
         ``base`` is set, then the project prefix is ignored the the passed base
         string is used as the prefix.
 

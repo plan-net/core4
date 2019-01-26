@@ -1,15 +1,23 @@
+"""
+The :mod:`.functool` module implements the helper functions :func:`enqueue`
+and :func:`execute`.
+"""
+
 import core4.logger
 import core4.queue.main
 import core4.queue.worker
 import core4.service.setup
-import core4.util
+import core4.util.node
 
 
 def enqueue(job, **kwargs):
     """
-    Helper method to enqueue a job.
+    Eenqueue a job.
 
     :param job: qual_name or job class
+    :param kwargs: arguments to be passed to the job
+
+    :return: enqueued job object
     """
     if isinstance(job, str):
         kwargs["name"] = job
@@ -21,14 +29,15 @@ def enqueue(job, **kwargs):
 
 def execute(job, **kwargs):
     """
-    Helper method to enqueue and immediatly execute a job in foreground. This
+    Enqueue and immediately execute a job in foreground. This
     method is used in development::
 
         execute(DummyJob, sleep=15)
 
-
     :param job: qual_name or job class
     :param kwargs: job arguments
+
+    :return: final MongoDB job document from ``sys.queue``
     """
     setup = core4.service.setup.CoreSetup()
     setup.make_all()

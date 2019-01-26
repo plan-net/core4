@@ -1,3 +1,6 @@
+"""
+This module delivers the :class:`.CoreJob`.
+"""
 import hashlib
 import json
 
@@ -115,7 +118,7 @@ NOT_INHERITED = {
 
 class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
     """
-    This is the base class of all core jobss. Core jobs implement the actual
+    This is the base class of all core jobs. Core jobs implement the actual
     task processing. If you say that :class:`.Worker` is the working horse of
     core, then jobs tell these workers *what* to do.
 
@@ -196,7 +199,7 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
     order is applied:
 
     #. job properties can be defined by parameters passed to
-       :meth:`.enqueue <core4.queue.job.CoreJob.enqueue>`
+       :meth:`.enqueue <core4.queue.main.CoreQueue.enqueue>`
     #. job properties can be defined in configuration settings
     #. job properties can be defined as a class property
 
@@ -233,7 +236,6 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
             locked   False  False False      True      na
       max_parallel    True   True  True      True    None int > 0, None
           priority    True   True  True      True       0 int
-           python     True   True  True      True  note-1 os.path.exist
  progress_interval    True   True  True      True       5 int > 0
               name   False  False False      True      na
           query_at   False  False False      True      na
@@ -251,9 +253,6 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
        zombie_time    True   True  True      True    1800 int > 0
  ================= ======= ====== ===== ========= ======= ====================
 
-    .. note:: **note-1**: The default value for ``python`` is defined by the
-              {{DEFAULT.python}} variable.
-
 
     Best practice is to put the section definitions as class variables. Define
     all other property settings into the configuration section of the job. The
@@ -261,7 +260,7 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
     project package.
 
 
-    **job life-cycle**
+    **job life cycle**
 
     We distinguish the following job states:
 
@@ -559,7 +558,7 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
         and be queried again after ``defer_time``
 
         :param message: defer message
-        :raises: :class:`.CoreJobDefered`
+        :raises: :class:`.CoreJobDeferred`
         """
         message = self.format_args(*args)
         raise core4.error.CoreJobDeferred(message)
@@ -578,7 +577,7 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
     @classmethod
     def deserialise(cls, **kwargs):
         """
-        This class method converts the passed {{**kwargs**}} keys-/values into
+        This class method converts the passed ``kwargs`` keys-/values into
         a job object and :meth:`.validate` and return the object.
 
         :param kwargs: keys-/values

@@ -1,8 +1,14 @@
+"""
+This module delivers the :class:`.MailerJob` to send emails using the local
+MTA.
+"""
+
 import tornado.template
 
 from core4.queue.helper.job.example import DummyJob
 from core4.queue.job import CoreJob
 
+# todo: requires implementation
 
 class MailerJob(CoreJob):
     """
@@ -27,8 +33,3 @@ class MailerJob(CoreJob):
         msg.append(t.generate(**kwargs).decode("utf-8"))
         print("\n".join(msg))
         self.logger.debug("send mail:\n%s", "\n".join(msg))
-
-
-if __name__ == '__main__':
-    from core4.queue.helper.functool import execute
-    execute(DummyJob)

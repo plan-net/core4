@@ -1,7 +1,7 @@
 """
-This module implements the core4 worker. Together with :mod:`core4.queue.main`
-and :mod:`core4.queue.process` it delivers a simple producer/consumer pattern
-for job execution.
+This module implements :class:`.CoreWorker`. Together with
+:mod:`core4.queue.main` and :mod:`core4.queue.process` it delivers a simple
+producer/consumer pattern for job execution.
 
 To start a worker from Python goes like this::
 
@@ -24,26 +24,19 @@ To stop the worker start a new Python interpreter and go with::
 """
 
 import collections
-import os
 import signal
 
 import psutil
 import pymongo
-import shutil
 from datetime import timedelta
 
-import core4.base
-import core4.error
 import core4.queue.job
-import core4.queue.main
 import core4.queue.process
 import core4.queue.query
-import core4.service.setup
-import core4.util
+import core4.service.introspect
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
 from core4.service.introspect.command import EXECUTE, KILL
-import core4.service.introspect
 
 #: processing steps in the main loop of :class:`.CoreWorker`
 STEPS = (
@@ -76,19 +69,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
 
-    def create_env(self):
-        """
-        Ensures proper environment setup with required folders and roles.
-        This method utilises :class:`core4.service.setup.CoreSetup`. Finally
-        this method collects core4 meta information on jobs and pushes the data
-        into ``sys.worker``.
-        """
-        path = self.config.get_folder("temp")
-        if os.path.exists(path):
-            self.logger.info("cleanup folder [%s]", path)
-            shutil.rmtree(path)
-        super().create_env()
-
     def cleanup(self):
         """
         General housekeeping method of the worker.
@@ -101,13 +81,13 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         """
         Creates the worker's execution plan in the main processing loop:
 
-        # :meth:`.work_jobs` - get next job, inactivate or execute
-        # :meth:`.remove_jobs` - remove jobs
-        # :meth:`.flag_jobs` - flag jobs as non-stoppers, zombies, killed
-        # :meth:`.collect_stats` - collect and save general sever metrics
+        #. :meth:`.work_jobs` - get next job, inactivate or execute
+        #. :meth:`.remove_jobs` - remove jobs
+        #. :meth:`.flag_jobs` - flag jobs as non-stoppers, zombies, killed
+        #. :meth:`.collect_stats` - collect and save general sever metrics
 
         :return: dict with step ``name``, ``interval``, ``next`` timestamp
-                 to execute and method reference ``call``
+             to execute and method reference ``call``
         """
         # ignore signal from children to avoid defunct zombies
         signal.signal(signal.SIGCHLD, signal.SIG_IGN)
@@ -148,7 +128,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
     def work_jobs(self):
         """
-        This method is part of the main :meth:`.loop` phase of the worker
+        This method is part of the main
+        :meth:`loop <core4.queue.daemon.CoreDaemon.loop>` phase of the worker.
 
         The step queries and handles the best next job from ``sys.queue`` (see
         :meth:`.get_next_job` and :meth:`.start_job`). Furthermore this method
@@ -311,7 +292,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
     def remove_jobs(self):
         """
-        This method is part of the main :meth:`.loop` phase of the worker.
+        This method is part of the main
+        :meth:`loop <core4.queue.daemon.CoreDaemon.loop>` phase of the worker.
 
         The processing step queries all jobs with a specified ``removed_at``
         attribute. After successful job lock, the job is moved from
@@ -346,15 +328,16 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
     def flag_jobs(self):
         """
-        This method is part of the main :meth:`.loop` phase of the worker.
+        This method is part of the main
+        :meth:`loop <core4.queue.daemon.CoreDaemon.loop>` phase of the worker.
 
         The method queries all jobs in state ``running`` locked by the current
         worker and forward processing to
 
-        # identify and flag non-stopping jobs (see :meth:`.flag_nonstop`),
-        # identify and flag zombies (see :meth:`.flag_zombie`),
-        # identify and handle died jobs (see :meth:`.check_pid`), and to
-        # manage jobs requested to be kill (see :meth:`.kill_pid`)
+        #. identify and flag non-stopping jobs (see :meth:`.flag_nonstop`),
+        #. identify and flag zombies (see :meth:`.flag_zombie`),
+        #. identify and handle died jobs (see :meth:`.check_pid`), and to
+        #. manage jobs requested to be kill (see :meth:`.kill_pid`)
         """
         cur = self.config.sys.queue.find(
             {
@@ -464,8 +447,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
 
     def pid_exists(self, doc):
         """
-        Returns ``True`` if the job exists and its OS state is _DEAD_ or
-        _ZOMBIE_. The :class:`psutil.Process` object is also returned for
+        Returns ``True`` if the job exists and its OS state is *DEAD* or
+        *ZOMBIE*. The :class:`psutil.Process` object is also returned for
         further action.
 
         :param doc: job MongoDB document

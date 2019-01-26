@@ -4,8 +4,6 @@ example by :mod:`core4.queue.worker` and :mod:`core4.queue.process`.
 """
 
 import importlib
-import os
-import subprocess
 import sys
 import traceback
 
@@ -16,17 +14,15 @@ from bson.objectid import ObjectId
 from datetime import timedelta
 
 import core4.error
+import core4.service.introspect
 import core4.service.setup
-import core4.util
 import core4.util.node
 import core4.util.tool
 from core4.base import CoreBase
-from core4.const import VENV_PYTHON
 from core4.queue.helper.job.base import CoreAbstractJobMixin
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
 from core4.service.introspect.command import RESTART
-import core4.service.introspect
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
                  core4.queue.job.STATE_FAILED)
@@ -280,10 +276,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
 
     def restart_job(self, _id):
         """
-        Requests to restart the job with the passed ``_id``. After trying to
-        restart waiting jobs the method tries to start stopped jobs in the
-        same environment. In case of ``ImportError`` the method launches the
-        project environment and executes :meth:`._exec_restart`.
+        Requests to restart the job with the passed ``_id``.
 
         .. note:: Jobs in waiting state (``deferred`` and ``failed``) are
                   restarted by resetting their ``query_at`` attribute. Jobs in

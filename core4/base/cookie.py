@@ -40,7 +40,7 @@ class Cookie:
             cookie.set(a, 1)
             cookie.set(a=1)
 
-         :param *args: key and value to set
+         :param args: key and value to set
          :param kwargs: dictionary of key/values
          :return: ``True`` if the key has been updated, else ``False``
          """

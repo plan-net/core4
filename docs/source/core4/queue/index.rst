@@ -2,18 +2,19 @@
 queue
 #####
 
-Package :mod:`core4.queue` with class :class:`core4.queue.job.CoreJob`
-and :class:`core4.queue.worker.CoreWorker`` represent the basis to all core4
-jobs. All classes derived from :class:`.CoreJob` ship with access to
-configuration, data (see also :mod:`data access protocols <.connector>`), and
-logging (see also :doc:`logging mechanics<../logger/index>`).
-
+Package :mod:`core4.queue` with classes :class:`.CoreJob`,
+:class:`.CoreWorker` and :class:`.CoreScheduler` represent the basis to the
+core4 automation framework.
 
 .. toctree::
    :caption: Table of Contents
 
    job
    worker
+   scheduler
    process
+   daemon
    main
+   validate
    query
+   helper
