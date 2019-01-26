@@ -14,7 +14,7 @@ import core4.util
 from core4.base.collection import SCHEME
 
 
-def connect_database(conn_str, async=False, **kwargs):
+def connect_database(callback, conn_str, async=False, **kwargs):
     """
     This function parses ``conn_str`` parameter and ``kwargs`` default
     parameters and returns :class:`.CoreCollection`. The format of the
@@ -70,7 +70,7 @@ def connect_database(conn_str, async=False, **kwargs):
     opts["collection"] = "/".join(collection)
     opts["async"] = async
     if hostname:
-        return core4.base.collection.CoreCollection(**opts)
+        return callback(**opts)
     raise core4.error.Core4ConfigurationError("no mongo connected")
 
 
@@ -128,7 +128,11 @@ class ConnectTag(yaml.YAMLObject):
             params = {"mongo_url": self.config.get("mongo_url"),
                       "mongo_database": self.config.get("mongo_database"),
                       "async": async}
-            self._mongo = connect_database(self.conn_str, **params)
+
+            def callback(**kwargs):
+                return core4.base.collection.CoreCollection(**kwargs)
+
+            self._mongo = connect_database(callback, self.conn_str, **params)
         return self._mongo
 
     def connect_async(self):
@@ -152,3 +156,42 @@ class ConnectTag(yaml.YAMLObject):
         :return: :class:`.ConnectTag`
         """
         return ConnectTag(node.value)
+
+
+class JobConnectTag(ConnectTag):
+
+    def __init__(self, conn_str, job, *args, **kwargs):
+        super().__init__(conn_str, *args, **kwargs)
+        self.job = job
+
+    def connect(self, async=False):
+        """
+        Used to lazily establish the MongoDB connection when requested. Uses
+        :func:`connect_database` to connect.
+
+        :param async: if ``True`` connects with :mod:`motor`, else with
+                      :mod:`pymongo` (default).
+        :return: :class:`.CoreCollection`
+        """
+        if self._mongo is None:
+            params = {"mongo_url": self.config.get("mongo_url"),
+                      "mongo_database": self.config.get("mongo_database"),
+                      "async": async}
+
+            def callback(**kwargs):
+                coll = core4.base.collection.CoreJobCollection(**kwargs)
+                #coll.job = self.job
+                coll.set_job(self.job)
+                return coll
+
+            self._mongo = core4.config.tag.connect_database(
+                callback, self.conn_str, **params)
+
+        return self._mongo
+
+    def set_job(self, job):
+        job.logger.debug("set job to [%s] at [%s]", self.__class__.__name__,
+                         self.conn_str)
+        self.job = job
+        if self._mongo is not None:
+            self._mongo.set_job(job)

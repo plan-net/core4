@@ -1,12 +1,14 @@
 import logging
 import os
-import sh
 import re
+
+import bson.objectid
 import datetime
 import pymongo
 import pytest
-import bson.objectid
+
 import core4.base
+import core4.config.test
 import core4.logger.mixin
 import core4.queue.helper.functool
 import core4.queue.helper.job.base
@@ -131,6 +133,7 @@ def test_file_maker():
     fn = job._make_file("transfer")
     open(fn, "w", encoding="utf-8").write("")
 
+
 def test_move():
     job = LoadJob()
     transfer = job.config.get_folder("transfer")
@@ -140,6 +143,7 @@ def test_move():
     job.move_proc(data[0])
     data = job.list_proc(".+\.txt$")
     assert data[0].endswith("/proc/tests/test1.txt")
+
 
 def test_archive():
     job = LoadJob()
@@ -183,3 +187,102 @@ def test_archive_compress():
                           + "/test1.txt.gz")
     assert os.path.exists(target)
     assert os.path.isfile(target)
+
+
+class NoJobCollection(core4.queue.job.CoreJob):
+    author = "mra"
+
+    def execute(self):
+        config = self.db
+        coll = config.tests.test_collection
+        coll.insert_one({"hello": "world"})
+        # doc = coll.find_one()
+        # #print(doc)
+        # coll.insert_many([
+        #     {"doc": 1},
+        #     {"doc": 2},
+        # ])
+        # from pymongo import InsertOne, DeleteOne, ReplaceOne
+        # requests = [InsertOne({'y': 1}), DeleteOne({'x': 1}),
+        #             ReplaceOne({'w': 1}, {'z': 1}, upsert=True)]
+        # coll.bulk_write(requests)
+        #
+        # requests = [InsertOne({'y': 1}), DeleteOne({'x': 1}),
+        #             ReplaceOne({'y': 1}, {'zz': 1}, upsert=True)]
+        # coll.bulk_write(requests)
+        # coll.update_one({"a": 1}, {"$set": {"ua": 1}}, upsert=True)
+        # coll.update_many({"hello": "world"}, {"$set": {"ua": 1}}, upsert=True)
+        # for doc in coll.find():
+        #     print(doc)
+
+    def _make_config(self, *args, **kwargs):
+        kwargs["project_name"] = "tests"
+        kwargs["project_dict"] = {
+            "test_collection": core4.config.tag.ConnectTag(
+                "mongodb://test_collection")
+        }
+        kwargs["local_dict"] = {
+            "DEFAULT": {
+                "mongo_url": MONGO_URL,
+                "mongo_database": MONGO_DATABASE,
+            },
+            "logging": {
+                "mongodb": "DEBUG"
+            }
+        }
+        return core4.config.test.TestConfig(*args, **kwargs)
+
+
+def test_nojob_collection():
+    from core4.queue.helper.functool import execute
+    ret = execute(NoJobCollection)
+    assert ret["last_error"]["exception"].startswith(
+        """AttributeError('_src must not be None"""
+    )
+
+
+class JobCollectionJob(NoJobCollection):
+    author = "mra"
+
+    def execute(self):
+        config = self.db
+        coll = config.tests.test_collection
+        self.add_source("dirname/test.txt")
+        coll.insert_one({"hello": "world"})
+        data = []
+        for doc in coll.find():
+            data.append(doc)
+        assert len(data) == 1
+        assert data[0]["_job_id"] == self._id
+        assert data[0]["_src"] == "test.txt"
+
+        coll.insert_many([
+            {"hello": 1},
+            {"hello": 2},
+        ])
+        from pymongo import InsertOne, DeleteOne, ReplaceOne
+        requests = [InsertOne({'hello': 3}), DeleteOne({'x': 1}),
+                    ReplaceOne({'hello': 1}, {'hello': 1.234}, upsert=True)]
+        coll.bulk_write(requests)
+
+        requests = [InsertOne({'hello': 4}), DeleteOne({'x': 1}),
+                    ReplaceOne({'hello': 1.234}, {'zz': 1}, upsert=True)]
+        coll.bulk_write(requests)
+        coll.update_one({"hello": 5}, {"$set": {"ua": 1}}, upsert=True)
+        coll.update_many({"hello": "5"}, {"$set": {"ua": 2}}, upsert=True)
+        data = []
+        for doc in coll.find():
+            data.append(doc)
+        assert len(data) == 7
+        assert set([d["_job_id"] for d in data]) == {self._id}
+        assert set([d["_src"] for d in data]) == {"test.txt"}
+
+
+def test_job_collection():
+    from core4.queue.helper.functool import execute
+    ret = execute(JobCollectionJob)
+
+
+def test_multi_source():
+    from core4.queue.helper.functool import execute
+    ret = execute(JobCollectionJob)
