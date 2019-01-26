@@ -4,14 +4,15 @@ import json
 import datetime as dt
 
 import core4.base.cookie
+import core4.config.map
+import core4.config.tag
 import core4.error
 import core4.logger.mixin
 import core4.util
 import core4.util.node
+import core4.util.tool
 from core4.base.main import CoreBase
 from core4.queue.validate import *
-import core4.config.tag
-
 
 # Job-States
 STATE_PENDING = 'pending'
@@ -344,6 +345,7 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
             if prop not in self.__class__.__dict__:
                 self.__dict__[prop] = default
 
+        self._connect_tags = []
         super().__init__()
         # runtime properties
         self.name = self.qual_name(short=True)
@@ -379,9 +381,11 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
 
         self.identifier = self._id
         self._frozen_ = True
-        self._connect_tags = []
 
     def _open_config(self):
+        # internal method to open and attach core4 cascading configuration
+        # and to attach the special data access object CoreJobCollection
+        # via special tag handler JobConnectTag
         super()._open_config()
 
         def traverse(config, t):
@@ -391,17 +395,22 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
                         t[k] = {}
                         traverse(v, t[k])
                     elif isinstance(v, core4.config.tag.ConnectTag):
-                        print("create ConnectTag [%s = %s]" % (k, v.conn_str))
-                        tag = core4.config.tag.JobConnectTag(v.conn_str, self)
-                        #tag.set_job(self)
-                        tag.set_config(self.config)
-                        t[k] = tag
+                        t[k] = core4.config.tag.JobConnectTag(v.conn_str, self)
+                        t[k].set_config(self.config)
+                        self._connect_tags.append(t[k])
 
         target = {}
         traverse(self.config, target)
-        self.db = core4.config.map.ConfigMap(target)
+        config = core4.util.tool.dict_merge(self.config._config, target)
+        self.config._config_cache = core4.config.map.ConfigMap(config)
 
-    def add_source(self, filename):
+    def set_source(self, filename):
+        """
+        Set current job source to the passed filename. Note that only the
+        basename of the filename is used.
+
+        :param filename: of the sourced data
+        """
         basename = os.path.basename(filename)
         self.logger.info("adding source basename of [%s]", filename)
         if basename not in self.sources:
@@ -419,11 +428,10 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
                 raise RuntimeError('unexpected failure to update sources')
             self.sources.append(basename)
         for conn in self._connect_tags:
-            if conn._mongo is not None:
-                if conn._mongo.connected:
-                    conn.set_job(self._id, self.get_source())
+            conn.set_job(self)
 
     def get_source(self):
+        # todo: requires documentation
         if self.sources:
             return self.sources[-1]
         return None

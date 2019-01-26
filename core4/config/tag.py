@@ -4,6 +4,8 @@ configuration management:
 
 * :func:`connect_database` to create :class:`.CoreCollection` object
 * :class:`ConnectTag` to support the custom YAML tag `!!connect`
+* :class:`JobConnectTag` for special handling of custom YAML tag `!!connect`
+  with :class:`.CoreJob` classes
 """
 
 import yaml
@@ -14,7 +16,7 @@ import core4.util
 from core4.base.collection import SCHEME
 
 
-def connect_database(callback, conn_str, async=False, **kwargs):
+def connect_database(conn_str, callback, async=False, **kwargs):
     """
     This function parses ``conn_str`` parameter and ``kwargs`` default
     parameters and returns :class:`.CoreCollection`. The format of the
@@ -27,6 +29,7 @@ def connect_database(callback, conn_str, async=False, **kwargs):
     The collection parameter is mandatory.
 
     :param conn_str: connection string
+    :param callback: function to return the collection object
     :param mongo_url: default ``mongo_url``
     :param mongo_database: default ``mongo_database``
     :return: :class:`.CoreCollection` object
@@ -114,6 +117,15 @@ class ConnectTag(yaml.YAMLObject):
         """
         self.config = config
 
+    def init_collection(self, **kwargs):
+        """
+        Default initiator of the :class:`.CoreCollection` object.
+
+        :param kwargs: to be passed to :class:`.CoreCollection`
+        :return: :class:`.CoreCollection` instance
+        """
+        return core4.base.collection.CoreCollection(**kwargs)
+
     def connect(self, async=False):
         """
         Used to lazily establish the MongoDB connection when requested. Uses
@@ -128,11 +140,8 @@ class ConnectTag(yaml.YAMLObject):
             params = {"mongo_url": self.config.get("mongo_url"),
                       "mongo_database": self.config.get("mongo_database"),
                       "async": async}
-
-            def callback(**kwargs):
-                return core4.base.collection.CoreCollection(**kwargs)
-
-            self._mongo = connect_database(callback, self.conn_str, **params)
+            self._mongo = connect_database(self.conn_str, self.init_collection,
+                                           **params)
         return self._mongo
 
     def connect_async(self):
@@ -159,37 +168,39 @@ class ConnectTag(yaml.YAMLObject):
 
 
 class JobConnectTag(ConnectTag):
+    """
+    Derived from :class:`.ConnectTag` for :class:`.CoreJob` to connect to
+    MongoDB. This special tag class features the link between jobs and
+    MongoDB collection objects by document properties ``_job_id`` and ``_src``.
+    """
 
     def __init__(self, conn_str, job, *args, **kwargs):
+        """
+        Initialises the MongoDB connection and links the passed job object.
+
+        :param conn_str: connection string, see :func:`connect_database``
+        :param job: :class:`.CoreJob` object
+        """
         super().__init__(conn_str, *args, **kwargs)
         self.job = job
 
-    def connect(self, async=False):
+    def init_collection(self, **kwargs):
         """
-        Used to lazily establish the MongoDB connection when requested. Uses
-        :func:`connect_database` to connect.
+        Default initiator of the special :class:`.CoreJobCollection` object.
 
-        :param async: if ``True`` connects with :mod:`motor`, else with
-                      :mod:`pymongo` (default).
-        :return: :class:`.CoreCollection`
+        :param kwargs: to be passed to :class:`.CoreJobCollection`
+        :return: :class:`.CoreCollection` instance
         """
-        if self._mongo is None:
-            params = {"mongo_url": self.config.get("mongo_url"),
-                      "mongo_database": self.config.get("mongo_database"),
-                      "async": async}
-
-            def callback(**kwargs):
-                coll = core4.base.collection.CoreJobCollection(**kwargs)
-                #coll.job = self.job
-                coll.set_job(self.job)
-                return coll
-
-            self._mongo = core4.config.tag.connect_database(
-                callback, self.conn_str, **params)
-
-        return self._mongo
+        coll = core4.base.collection.CoreJobCollection(**kwargs)
+        coll.set_job(self.job)
+        return coll
 
     def set_job(self, job):
+        """
+        Assign the passed job to :class:`.CoreJobCollection` object.
+
+        :param job: :class:`.CoreJob` object
+        """
         job.logger.debug("set job to [%s] at [%s]", self.__class__.__name__,
                          self.conn_str)
         self.job = job
