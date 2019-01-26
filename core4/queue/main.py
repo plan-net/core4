@@ -62,8 +62,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
 
     .. note:: With :ref:`coco` exists a terminal application to manage the
               queue.
-
-    .. todo:: link to queue API once it is there
     """
 
     def enqueue(self, cls=None, name=None, by=None, **kwargs):
