@@ -110,7 +110,7 @@ def test_init():
     assert job.removed_at is None
     assert job.runtime is None
     assert job.schedule is None
-    assert job.sources is None
+    assert job.sources == []
     assert job.started_at is None
     assert job.state is None
     assert job.tag is None
