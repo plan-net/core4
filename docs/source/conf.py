@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'core4'
-copyright = '2018, Plan-Net Business Intelligence'
+copyright = '2019, Plan-Net Business Intelligence'
 author = 'Michael Rau'
 
 # The short X.Y version
