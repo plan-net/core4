@@ -431,7 +431,12 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
             conn.set_job(self)
 
     def get_source(self):
-        # todo: requires documentation
+        """
+        Retrieves the most recent set source or None if no source has been set,
+        yet.
+
+        :return: basename (str)
+        """
         if self.sources:
             return self.sources[-1]
         return None
