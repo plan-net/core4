@@ -1,3 +1,7 @@
+#############################################
+frequently asked questions and best practices
+#############################################
+
 how to work with multiple core4 configuration
 =============================================
 
@@ -10,16 +14,16 @@ with::
 
     $ CORE4_CONFIG=~/.core4/local.yaml coco listing
 
-or
+or::
 
     $ export CORE4_CONFIG=~/.core4/local.yaml
     $ coco listing
 
-and
+and::
 
     $ CORE4_CONFIG=~/.core4/prod.yaml coco listing
 
-or
+or::
 
     $ export CORE4_CONFIG=~/.core4/prod.yaml
     $ coco listing
