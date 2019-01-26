@@ -22,20 +22,17 @@ import core4.util.node
 import core4.util.tool
 from core4.base import CoreBase
 from core4.const import VENV_PYTHON
+from core4.queue.helper.job.base import CoreAbstractJobMixin
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
-from core4.queue.helper.job.base import CoreAbstractJobMixin
+from core4.service.introspect.command import RESTART
+import core4.service.introspect
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
                  core4.queue.job.STATE_FAILED)
 STATE_STOPPED = (core4.queue.job.STATE_KILLED,
                  core4.queue.job.STATE_INACTIVE,
                  core4.queue.job.STATE_ERROR)
-
-RESTART_COMMAND = """
-from core4.queue.main import CoreQueue
-CoreQueue()._exec_restart("{job_id:s}")
-"""
 
 
 class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
@@ -316,8 +313,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 if doc is None:
                     raise core4.error.CoreJobNotFound(
                         "job [{}] not found".format(_id))
-                new_id = self.exec_project(
-                    doc["name"], RESTART_COMMAND, job_id=str(doc["_id"]))
+                new_id = core4.service.introspect.exec_project(
+                    doc["name"], RESTART, job_id=str(doc["_id"]))
             except:
                 raise
             if new_id:
@@ -679,42 +676,3 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         state["timestamp"] = core4.util.node.now().timestamp()
         state['event'] = {'name': event, 'data': args}
         self.sys_stat.insert_one(state)
-
-    # todo: document this
-    def exec_project(self, name, command, wait=True, *args, **kwargs):
-        """
-        Execute command using the Python interpreter of the project's virtual
-        environment.
-
-        :param name: qual_name to extract project name
-        :param command: Python commands to be executed
-        :param wait: wait and return STDOUT (``True``) or return immediately
-                     (defaults to ``False``).
-        :param args: to be injected using Python method ``.format``
-        :param kwargs: to be injected using Python method ``.format``
-
-        :return: STDOUT if ``wait is True``, else nothing is returned
-        """
-        # todo: move to service.introspect
-        project = name.split(".")[0]
-        home = self.config.folder.home
-        python_path = None
-        currdir = os.curdir
-        if home is not None:
-            python_path = os.path.join(home, project, VENV_PYTHON)
-            if not os.path.exists(python_path):
-                python_path = None
-        if python_path is None:
-            self.logger.warning("python not found at [%s], use fallback",
-                                python_path)
-            python_path = sys.executable
-        else:
-            self.logger.debug("python found at [%s]", python_path)
-            os.chdir(os.path.join(home, project))
-        command = command.format(*args, **kwargs)
-        proc = subprocess.Popen([python_path, "-c", command],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        os.chdir(currdir)
-        if wait:
-            (stdout, stderr) = proc.communicate()
-            return stdout.decode("utf-8").strip()

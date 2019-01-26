@@ -71,13 +71,9 @@ import core4.service.project
 import core4.util.data
 import core4.util.node
 from core4.service.operation.build import build, release
+from core4.service.introspect.command import ENQUEUE_ARG
+import core4.service.introspect
 
-ENQUEUE_COMMAND = """
-from core4.queue.main import CoreQueue
-queue = CoreQueue()
-job = queue.enqueue("{qual_name:s}", {args:s})
-print(job._id)
-"""
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -340,9 +336,9 @@ def enqueue(qual_name, *args):
     try:
         job_id = QUEUE.enqueue(name=qual_name[0], **data)._id
     except ImportError:
-        stdout = QUEUE.exec_project(qual_name[0], ENQUEUE_COMMAND,
-                                    qual_name=qual_name[0],
-                                    args="**%s" % (str(data)))
+        stdout = core4.service.introspect.exec_project(
+            qual_name[0], ENQUEUE_ARG, qual_name=qual_name[0],
+            args="**%s" % (str(data)))
         job_id = stdout
     except:
         raise
@@ -354,7 +350,7 @@ def init(name, description, yes=False):
 
 
 def jobs():
-    intro = core4.service.introspect.project.CoreProjectInspector()
+    intro = core4.service.introspect.CoreIntrospector()
     summary = dict(intro.list_project())
     for project in sorted(summary.keys()):
         print("{}".format(project))
@@ -368,7 +364,7 @@ def jobs():
 
 
 def who():
-    intro = core4.service.introspect.project.CoreProjectInspector()
+    intro = core4.service.introspect.CoreIntrospector()
     summary = intro.summary()
     print("USER:")
     print("  {:s} IN {}".format(summary["user"]["name"],
@@ -402,7 +398,7 @@ def who():
 
 
 def project():
-    intro = core4.service.introspect.project.CoreProjectInspector()
+    intro = core4.service.introspect.CoreIntrospector()
     summary = dict(intro.list_project())
     print("PROJECTS:")
     for project in sorted(summary.keys()):

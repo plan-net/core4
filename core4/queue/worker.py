@@ -24,13 +24,14 @@ To stop the worker start a new Python interpreter and go with::
 """
 
 import collections
-import signal
 import os
+import signal
+
 import psutil
 import pymongo
-from datetime import timedelta
 import shutil
-from core4.queue.daemon import CoreDaemon
+from datetime import timedelta
+
 import core4.base
 import core4.error
 import core4.queue.job
@@ -40,6 +41,9 @@ import core4.queue.query
 import core4.service.setup
 import core4.util
 import core4.util.node
+from core4.queue.daemon import CoreDaemon
+from core4.service.introspect.command import EXECUTE, KILL
+import core4.service.introspect
 
 #: processing steps in the main loop of :class:`.CoreWorker`
 STEPS = (
@@ -47,15 +51,6 @@ STEPS = (
     "remove_jobs",
     "flag_jobs",
     "collect_stats")
-
-EXECUTE_COMMAND = """
-from core4.queue.process import CoreWorkerProcess
-CoreWorkerProcess().start("{job_id:s}")
-"""
-KILL_COMMAND = """
-from core4.queue.main import CoreQueue
-CoreQueue()._exec_kill("{job_id:s}")
-"""
 
 
 class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
@@ -192,8 +187,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.logger.info("launching [%s] with _id [%s]", doc["name"],
                          doc["_id"])
         if async:
-            self.queue.exec_project(doc["name"], EXECUTE_COMMAND,
-                                    wait=False, job_id=str(doc["_id"]))
+            core4.service.introspect.exec_project(
+                doc["name"], EXECUTE, wait=False, job_id=str(doc["_id"]))
         else:
             from core4.queue.process import CoreWorkerProcess
             CoreWorkerProcess().start(doc["_id"], redirect=False)
@@ -462,8 +457,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             try:
                 self.queue._exec_kill(doc["_id"])
             except ImportError:
-                self.queue.exec_project(doc["name"], KILL_COMMAND,
-                                        job_id=str(doc["_id"]))
+                core4.service.introspect.exec_project(
+                    doc["name"], KILL, job_id=str(doc["_id"]))
             except:
                 raise
 
