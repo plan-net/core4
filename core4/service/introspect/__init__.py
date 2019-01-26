@@ -2,14 +2,13 @@
 core4 package, module, project, job and API meta data collector.
 """
 
-# todo: requires documentation
-
 import importlib
 import inspect
 import io
 import json
 import os
 import pkgutil
+import subprocess
 import sys
 import traceback
 
@@ -18,7 +17,11 @@ from pip import __version__ as pip_version
 import core4.api.v1.application
 import core4.base
 import core4.queue.job
+import core4.queue.query
+import core4.service.introspect
 import core4.util.node
+from core4.const import VENV_PYTHON
+from core4.service.introspect.command import ITERATE
 
 try:
     from pip import main as pipmain
@@ -31,14 +34,13 @@ except ImportError:
     from pip.operations import freeze
 
 
-class CoreIntrospector(core4.base.CoreBase):
+class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
     """
     The :class:`CoreIntro` class collects information about core4 projects,
     and jobs.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def initialise_object(self):
         self.old_stderr = sys.stderr
         self.old_stdout = sys.stdout
         self._project = []
@@ -46,19 +48,21 @@ class CoreIntrospector(core4.base.CoreBase):
         self._api_container = {}
         self._module = {}
         self._loaded = False
+        self.mongo_url = None
+        self.mongo_database = None
 
     def _noout(self):
-        # internal method to suppress STDOUT and STDERR
+        # suppress STDOUT and STDERR
         sys.stdout = io.StringIO()
         sys.stderr = io.StringIO()
 
     def _onout(self):
-        # intenral method to re-open STDOUT and STDERR
+        # re-open STDOUT and STDERR
         sys.stdout = self.old_stdout
         sys.stderr = self.old_stderr
 
     def _flushout(self):
-        # internal method to flush STDOUT and STDERR
+        # flush STDOUT and STDERR
         sys.stdout.flush()
         sys.stdout.seek(0)
         sys.stderr.seek(0)
@@ -69,6 +73,12 @@ class CoreIntrospector(core4.base.CoreBase):
         return stdout, stderr
 
     def iter_all(self):
+        """
+        Collects meta information about project, jobs, Python executable,
+        pip and installed packages.
+
+        :return: json dump (str)
+        """
         ret = json.dumps({
             "project": list(self.iter_project()),
             "job": list(self.iter_job()),
@@ -79,6 +89,11 @@ class CoreIntrospector(core4.base.CoreBase):
         return ret
 
     def get_packages(self):
+        """
+        Yields name and version of all installed packages using ``pip freeze``
+
+        :return: generator of (name, version) tuple
+        """
         for package in freeze.freeze():
             (name, *version) = package.split("==")
             if version:
@@ -86,6 +101,11 @@ class CoreIntrospector(core4.base.CoreBase):
             yield (name, version or None)
 
     def get_python_version(self):
+        """
+        Returns major, minor and patch version of Python executable.
+
+        :return: str of version information
+        """
         return "%d.%d.%d" % (
             sys.version_info.major, sys.version_info.minor,
             sys.version_info.micro)
@@ -136,7 +156,7 @@ class CoreIntrospector(core4.base.CoreBase):
                 obj.validate()
                 validate = True
                 exception = None
-                executable = obj.find_executable()
+                # executable = obj.find_executable()
             except Exception:
                 validate = False
                 exc_info = sys.exc_info()
@@ -144,7 +164,7 @@ class CoreIntrospector(core4.base.CoreBase):
                     "exception": repr(exc_info[1]),
                     "traceback": traceback.format_exception(*exc_info)
                 }
-                executable = None
+                # executable = None
                 self.logger.error("cannot instantiate job [%s]",
                                   qual_name, exc_info=exc_info)
             yield {
@@ -157,7 +177,7 @@ class CoreIntrospector(core4.base.CoreBase):
                 "tag": obj.tag,
                 "valid": validate,
                 "exception": exception,
-                "python": executable
+                # "python": executable
             }
 
     def iter_api_container(self):
@@ -314,3 +334,189 @@ class CoreIntrospector(core4.base.CoreBase):
         }
         return mod, exception, stdout, stderr
 
+    def check_config_files(self):
+        """
+        Returns meta information about core4 configuration, i.e. the list of
+        processed configuration file and the URL of the core4 ``sys.conf``
+        collection if defined.
+
+        :return: dict with keys ``files`` and ``database``
+        """
+        self.mongo_url = self.config.mongo_url
+        self.mongo_database = self.config.mongo_database
+        return {
+            "files": list(self.config.__class__._file_cache.keys()),
+            "database": self.config.db_info
+        }
+
+    def check_mongo_default(self):
+        """
+        Returns MongoDB connection URL if servier state is defined and ``OK``.
+
+        :return: MongoDB connection url (str), ``None`` if not specified or
+            error
+        """
+        try:
+            conn = self.config.sys.log.connect()
+        except core4.error.Core4ConfigurationError:
+            return None
+        except:
+            raise
+        else:
+            info = conn.connection.server_info()
+            if info["ok"] == 1:
+                return "mongodb://" + "/".join(conn.info_url.split("/")[:-1])
+            return None
+
+    def list_folder(self):
+        """
+        Returns meta information about core4 system folders, i.e. ``transfer``,
+        ``process``, ``archive``, ``home`` and  ``temp``
+
+        :return: dict of folder (key) locations (value)
+        """
+        folders = {}
+        for f in ("transfer", "process", "archive", "temp", "home"):
+            folders[f] = self.config.get_folder(f)
+        return folders
+
+    def list_project(self):
+        """
+        Returns meta information abount installed and accessible core4
+        projects. This method uses :meth:`.iter_all` method spawned in core4
+        project context to provide details about each project.
+
+        :return: generator of tuple with project name and project meta data
+        """
+        home = self.config.folder.home
+        if home:
+            currpath = os.curdir
+            if os.path.exists(home) and os.path.isdir(home):
+                for project in os.listdir(home):
+                    fullpath = os.path.join(home, project)
+                    if os.path.isdir(fullpath):
+                        pypath = os.path.join(home, project, VENV_PYTHON)
+                        os.chdir(fullpath)
+                        self.logger.info("listing [%s]", pypath)
+                        if os.path.exists(pypath) and os.path.isfile(pypath):
+                            # this is Python virtual environment:
+                            out = core4.service.introspect.exec_project(
+                                project, ITERATE)
+                            yield (project, json.loads(out))
+                        else:
+                            # no Python virtual environment:
+                            yield (project, None)
+            os.chdir(currpath)
+        else:
+            ret = json.loads(CoreIntrospector().iter_all())
+            yield (self.project, ret)
+
+    def iter_daemon(self):
+        """
+        Retrieves meta information about active core4 daemons running on this
+        node. This method uses method :meth:`.QueryMixin.get_daemon` to query
+        daemon meta data.
+                * ``_id`` - the identifier of the daemon
+        * ``loop`` - the date/time when the daemon entered looping in UTC
+        * ``loop_time`` - the timedelta of the daemon looping
+        * ``heartbeat`` - the timedelta of the last heartbeat
+        * ``kind`` - worker or scheduler
+
+        :return: list of dicts with daemon ``_id``, ``loop`` startup date/time,
+            ``loop_time`` interval, last ``heartbeat`` and daemon ``kind``
+            (worker, scheduler, app).
+        """
+        hostname = core4.util.node.get_hostname()
+        try:
+            return self.get_daemon(hostname)
+        except:
+            return []
+
+    def summary(self):
+        """
+        Retrieves core4 setup and configuration summary including
+
+        * Python location and version
+        * core4 configuration (see :meth:`.check_config_files`)
+        * core4 system database (see :meth:`.check_mongo_default`)
+        * core4 system folders (see :meth:`.list_folder`)
+        * current user name and groups
+        * system uptime
+        * core4 alive daemons (see :meth:`.iter_daemon`)
+
+        :return: dict
+        """
+        uptime = core4.util.node.uptime()
+        return {
+            "python": {
+                "executable": sys.executable,
+                "version": tuple(sys.version_info),
+            },
+            "config": self.check_config_files(),
+            "database": self.check_mongo_default(),
+            "folder": self.list_folder(),
+            "user": {
+                "name": core4.util.node.get_username(),
+                "group": core4.util.node.get_groups()
+            },
+            "uptime": {
+                "epoch": uptime.total_seconds(),
+                "text": "%s" % (uptime)
+            },
+            "daemon": list(self.iter_daemon())
+        }
+
+    def exec_project(self, name, command, wait=True, *args, **kwargs):
+        """
+        Execute command using the Python interpreter of the project's virtual
+        environment.
+
+        :param name: qual_name to extract project name
+        :param command: Python commands to be executed
+        :param wait: wait and return STDOUT (``True``) or return immediately
+                     (defaults to ``False``).
+        :param args: to be injected using Python method ``.format``
+        :param kwargs: to be injected using Python method ``.format``
+
+        :return: STDOUT if ``wait is True``, else nothing is returned
+        """
+        project = name.split(".")[0]
+        home = self.config.folder.home
+        python_path = None
+        currdir = os.curdir
+        if home is not None:
+            python_path = os.path.join(home, project, VENV_PYTHON)
+            if not os.path.exists(python_path):
+                python_path = None
+        if python_path is None:
+            self.logger.warning("python not found at [%s], use fallback",
+                                python_path)
+            python_path = sys.executable
+        else:
+            self.logger.debug("python found at [%s]", python_path)
+            os.chdir(os.path.join(home, project))
+        cmd = command.format(*args, **kwargs)
+        proc = subprocess.Popen([python_path, "-c", cmd],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        os.chdir(currdir)
+        if wait:
+            (stdout, stderr) = proc.communicate()
+            return stdout.decode("utf-8").strip()
+
+
+def exec_project(name, command, wait=True, *args, **kwargs):
+    """
+    helper method to spawn commands in the context of core4 project
+    environment.
+
+    :param name: qual_name to extract project name
+    :param command: Python commands to be executed
+    :param wait: wait and return STDOUT (``True``) or return immediately
+                 (defaults to ``False``).
+    :param args: to be injected using Python method ``.format``
+    :param kwargs: to be injected using Python method ``.format``
+
+    :return: STDOUT if ``wait is True``, else nothing is returned
+    """
+    intro = CoreIntrospector()
+    return intro.exec_project(name, command, wait, *args, **kwargs)

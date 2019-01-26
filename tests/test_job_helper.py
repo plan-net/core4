@@ -1,17 +1,21 @@
 import logging
 import os
-import sh
 import re
+from pprint import pprint
+
+import bson.objectid
 import datetime
 import pymongo
 import pytest
-import bson.objectid
+
 import core4.base
+import core4.config.test
 import core4.logger.mixin
 import core4.queue.helper.functool
 import core4.queue.helper.job.base
 import core4.queue.job
 import core4.service.setup
+from core4.queue.helper.functool import execute
 
 ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
@@ -131,6 +135,7 @@ def test_file_maker():
     fn = job._make_file("transfer")
     open(fn, "w", encoding="utf-8").write("")
 
+
 def test_move():
     job = LoadJob()
     transfer = job.config.get_folder("transfer")
@@ -140,6 +145,7 @@ def test_move():
     job.move_proc(data[0])
     data = job.list_proc(".+\.txt$")
     assert data[0].endswith("/proc/tests/test1.txt")
+
 
 def test_archive():
     job = LoadJob()
@@ -183,3 +189,135 @@ def test_archive_compress():
                           + "/test1.txt.gz")
     assert os.path.exists(target)
     assert os.path.isfile(target)
+
+
+class Job1(core4.queue.job.CoreJob):
+    author = "mra"
+
+    def execute(self):
+        config = self.config
+        coll = config.tests.test_collection
+        coll.insert_one({"hello": "world"})
+
+    def _make_config(self, *args, **kwargs):
+        kwargs["project_name"] = "tests"
+        kwargs["project_dict"] = {
+            "test_collection": core4.config.tag.ConnectTag(
+                "mongodb://test_collection"),
+            "test_collection2": core4.config.tag.ConnectTag(
+                "mongodb://test_collection2")
+        }
+        kwargs["local_dict"] = {
+            "DEFAULT": {
+                "mongo_url": MONGO_URL,
+                "mongo_database": MONGO_DATABASE,
+            },
+            "logging": {
+                "mongodb": "DEBUG"
+            }
+        }
+        return core4.config.test.TestConfig(*args, **kwargs)
+
+
+def test_nojob_collection():
+    ret = execute(Job1)
+    assert ret["last_error"]["exception"].startswith(
+        """AttributeError('_id and _src must not be None"""
+    )
+    assert ret["state"] == "error"
+
+
+class Job2(Job1):
+    author = "mra"
+
+    def execute(self):
+        config = self.config
+        coll = config.tests.test_collection
+        self.set_source("dirname/test.txt")
+        coll.insert_one({"hello": "world"})
+        data = []
+        for doc in coll.find():
+            data.append(doc)
+        assert len(data) == 1
+        assert data[0]["_job_id"] == self._id
+        assert data[0]["_src"] == "test.txt"
+
+        coll.insert_many([
+            {"hello": 1},
+            {"hello": 2},
+        ])
+        from pymongo import InsertOne, DeleteOne, ReplaceOne
+        requests = [InsertOne({'hello': 3}), DeleteOne({'x': 1}),
+                    ReplaceOne({'hello': 1}, {'hello': 1.234}, upsert=True)]
+        coll.bulk_write(requests)
+
+        requests = [InsertOne({'hello': 4}), DeleteOne({'x': 1}),
+                    ReplaceOne({'hello': 1.234}, {'zz': 1}, upsert=True)]
+        coll.bulk_write(requests)
+        coll.update_one({"hello": 5}, {"$set": {"ua": 1}}, upsert=True)
+        coll.update_many({"hello": "5"}, {"$set": {"ua": 2}}, upsert=True)
+        data = []
+        for doc in coll.find():
+            data.append(doc)
+        assert len(data) == 7
+        assert set([d["_job_id"] for d in data]) == {self._id}
+        assert set([d["_src"] for d in data]) == {"test.txt"}
+
+
+def test_job_collection():
+    ret = execute(Job2)
+    assert ret["state"] == "complete"
+
+
+class Job3(Job1):
+    author = "mra"
+
+    def execute(self):
+        config = self.config
+        coll = config.tests.test_collection
+        self.set_source("dirname1/test1.txt")
+        coll.insert_one({"hello": "document 1", "source": "test1.txt"})
+        coll.insert_one({"hello": "document 2", "source": "test1.txt"})
+        self.set_source("dirname2/test2.txt")
+        self.set_source("dirname1/test1.txt")
+        self.set_source("dirname2/test2.txt")
+        coll.insert_one({"hello": "document 3", "source": "test2.txt"})
+        coll.insert_one({"hello": "document 4", "source": "test2.txt"})
+
+
+def test_multi_source():
+    ret = execute(Job3)
+    assert ret["state"] == "complete"
+    base = Job3()
+    coll = base.config.tests.test_collection
+    for doc in coll.find():
+        assert doc["source"] == doc["_src"]
+        assert doc["_job_id"] == ret["_id"]
+    assert sorted(ret["sources"]) == ['test1.txt', 'test2.txt']
+
+class Job4(Job1):
+    author = "mra"
+
+    def execute(self):
+        config = self.config
+        coll = config.tests.test_collection
+        self.set_source("dirname1/test1.txt")
+        for i in range(1000):
+            config.tests.test_collection.insert_one({"hello": "document 1", "source": "test1.txt"})
+
+        syscoll = self.config.sys.log
+        syscoll.insert_one({})
+        print(syscoll.count_documents({}))
+        self.set_source("dirname2/test2.txt")
+        coll2 = config.tests.test_collection2
+        coll2.insert_one({"hello": "document 3", "source": "test2.txt"})
+        coll2.insert_one({"hello": "document 4", "source": "test2.txt"})
+        coll.insert_one({"hello": "document 5", "source": "test2.txt"})
+
+def test_change_source():
+    ret = execute(Job4)
+    assert ret["state"] == "complete"
+    base = Job4()
+    coll = base.config.tests.test_collection
+    for doc in coll.find():
+        assert doc["source"] == doc["_src"]

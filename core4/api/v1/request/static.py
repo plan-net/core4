@@ -12,7 +12,6 @@ from core4.api.v1.request.main import CoreBaseHandler, CoreEtagMixin
 
 DEFAULT_FILENAME = "index.html"
 
-# todo:documentation required
 
 class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
     """

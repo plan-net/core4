@@ -1,16 +1,18 @@
 import hashlib
 import json
-import sys
 
 import datetime as dt
 
 import core4.base.cookie
+import core4.config.map
+import core4.config.tag
 import core4.error
+import core4.logger.mixin
 import core4.util
 import core4.util.node
+import core4.util.tool
 from core4.base.main import CoreBase
 from core4.queue.validate import *
-import core4.logger.mixin
 
 # Job-States
 STATE_PENDING = 'pending'
@@ -337,12 +339,13 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
 
     def __init__(self, *args, **kwargs):
         # attributes raised from self.class_config.* to self.*
-        #self.upwind = self.__class__.upwind + list(CONFIG_ARGS)
+        # self.upwind = self.__class__.upwind + list(CONFIG_ARGS)
         # reset properties not to be inherited
         for prop, default in NOT_INHERITED.items():
             if prop not in self.__class__.__dict__:
                 self.__dict__[prop] = default
 
+        self._connect_tags = []
         super().__init__()
         # runtime properties
         self.name = self.qual_name(short=True)
@@ -360,7 +363,7 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
         self.query_at = None
         self.removed_at = None
         self.runtime = None
-        self.sources = None
+        self.sources = []
         self.started_at = None
         self.state = None
         self.trial = 0
@@ -378,6 +381,65 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
 
         self.identifier = self._id
         self._frozen_ = True
+
+    def _open_config(self):
+        # internal method to open and attach core4 cascading configuration
+        # and to attach the special data access object CoreJobCollection
+        # via special tag handler JobConnectTag
+        super()._open_config()
+
+        def traverse(config, t):
+            for k, v in config.items():
+                if k != "sys":
+                    if isinstance(v, dict):
+                        t[k] = {}
+                        traverse(v, t[k])
+                    elif isinstance(v, core4.config.tag.ConnectTag):
+                        t[k] = core4.config.tag.JobConnectTag(v.conn_str, self)
+                        t[k].set_config(self.config)
+                        self._connect_tags.append(t[k])
+
+        target = {}
+        traverse(self.config, target)
+        config = core4.util.tool.dict_merge(self.config._config, target)
+        self.config._config_cache = core4.config.map.ConfigMap(config)
+
+    def set_source(self, filename):
+        """
+        Set current job source to the passed filename. Note that only the
+        basename of the filename is used.
+
+        :param filename: of the sourced data
+        """
+        basename = os.path.basename(filename)
+        self.logger.info("adding source basename of [%s]", filename)
+        if basename not in self.sources:
+            ret = self.config.sys.queue.update_one(
+                {
+                    "_id": self._id
+                },
+                update={
+                    '$addToSet': {
+                        'sources': basename
+                    }
+                }
+            )
+            if ret.matched_count != 1:
+                raise RuntimeError('unexpected failure to update sources')
+            self.sources.append(basename)
+        for conn in self._connect_tags:
+            conn.set_job(self)
+
+    def get_source(self):
+        """
+        Retrieves the most recent set source or None if no source has been set,
+        yet.
+
+        :return: basename (str)
+        """
+        if self.sources:
+            return self.sources[-1]
+        return None
 
     def __setattr__(self, key, value):
         """
@@ -539,37 +601,3 @@ class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
         :param kwargs: passed enqueueing job arguments
         """
         raise NotImplementedError
-
-    def find_executable(self):
-        """
-        This method is used to find the Python executable/virtual environment
-        for the passed job.
-
-        The Python executable is defined by a configuration key named
-        ``python`` . If the value is ``None``, then the executable running the
-        :class:`.CoreWorker` is used. If configuration variable
-        ``worker.virtual_environment_home`` is defined, then the actual
-        Python interpreter path is built from this path and the value of the
-        ``python`` key. If key ``worker.virtual_environment_home`` is ``None``,
-        then the ``python`` key must address the full path to the Python
-        interpreter.
-
-        :param job: :class:`.CoreJob` object
-        :return: full path (str) to Python executable
-        """
-        if self.python:
-            if self.config.worker.virtual_environment_home:
-                executable = os.path.join(
-                    self.config.worker.virtual_environment_home, self.python)
-            else:
-                executable = self.python
-        else:
-            executable = sys.executable
-        if not os.path.exists(executable):
-            raise FileNotFoundError(
-                "Python executable [{}] not found for [{}]".format(
-                    executable, self.qual_name()
-                ))
-        return executable
-
-

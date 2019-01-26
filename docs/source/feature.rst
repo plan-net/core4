@@ -40,5 +40,3 @@ or months:
 * :ref:`simple deployment and rollout mechanic <deploy>` to support the
   *not so technical* data scientist and data engineer in productionising all
   deliverables, results and tools
-
-.. todo:: add ad-hoc jobs once available

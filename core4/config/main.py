@@ -187,13 +187,13 @@ class CoreConfig(collections.MutableMapping):
         if extra:
             standard_config = core4.util.tool.dict_merge(
                 standard_config, extra)
-        #self._verify_dict(standard_config, "standard config")
+        # self._verify_dict(standard_config, "standard config")
         standard_default = standard_config.pop(DEFAULT, {})
         self._verify_dict(standard_default, "standard DEFAULT")
         if local is not None:
             # collect local config and local DEFAULT
             local_config = local.copy()
-            #self._verify_dict(local_config, "local config")
+            # self._verify_dict(local_config, "local config")
             local_default = local_config.pop(DEFAULT, {})
             self._verify_dict(local_default, "local DEFAULT")
         else:
@@ -201,12 +201,12 @@ class CoreConfig(collections.MutableMapping):
             local_default = {}
         # merge standard DEFAULT and local DEFAULT
         default = core4.util.tool.dict_merge(standard_default, local_default)
-        #self._verify_dict(default, "DEFAULT")
+        # self._verify_dict(default, "DEFAULT")
         if project is not None:
             # collect project name, project config and project DEFAULT
             project_name = project[0]
             project_config = project[1].copy()
-            #self._verify_dict(project_config, "project config")
+            # self._verify_dict(project_config, "project config")
             project_default = project_config.pop(DEFAULT, {})
             self._verify_dict(project_default, "project DEFAULT")
             # collect local project DEFAULT
@@ -263,6 +263,7 @@ class CoreConfig(collections.MutableMapping):
         :param schema: configuration schema
         :return: updated configuration dict
         """
+
         def traverse(data, tmpl, result):
             if tmpl is None:
                 return {}
@@ -347,6 +348,7 @@ class CoreConfig(collections.MutableMapping):
                     traverse(v)
                 elif isinstance(v, core4.config.tag.ConnectTag):
                     v.set_config(dct)
+
         traverse(config)
 
     def _read_yaml(self, filename):
@@ -413,8 +415,13 @@ class CoreConfig(collections.MutableMapping):
             else:
                 conn_str = connect.conn_str
             conf = {}
+
+            def init_collection(**kwargs):
+                # default callback for method connect_database
+                return core4.base.collection.CoreCollection(**kwargs)
+
             coll = core4.config.tag.connect_database(
-                conn_str, **opts)
+                conn_str, init_collection, **opts)
             for doc in coll.find(projection={"_id": 0}, sort=[("_id", 1)]):
                 conf = core4.util.tool.dict_merge(conf, doc)
             self._db_cache = self._resolve_tags(conf)

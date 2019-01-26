@@ -17,7 +17,7 @@ core4 has on the following prerequisites.
 * git
 
 The following step-by-step guide describes the installation of these
-requirements for operating systems Debian and Ubuntu.
+components for operating systems Debian and Ubuntu.
 
 
 Debian prerequisite installation guide
