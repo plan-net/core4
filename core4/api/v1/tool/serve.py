@@ -231,8 +231,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             {"$set": {"started_at": None}}
         )
 
-    # todo: requires documentation
     def unregister(self):
+        """
+        Unregisters all endpoints of the tornado server in ``sys.handler``.
+        """
         self.logger.info("unregistering server [%s]", self.identifier)
         self.reset_handler()
 
