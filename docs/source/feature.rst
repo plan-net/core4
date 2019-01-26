@@ -42,6 +42,6 @@ or months:
   deliverables, results and tools
 
 
-.. figure:: _static/architecture1.png
+.. figure:: _static/architecture.png
    :scale: 65%
    :alt: core4 component overview
