@@ -26,7 +26,6 @@
    why
    project
    job
-   helpers
    R
    parallel
    api
