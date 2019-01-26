@@ -136,7 +136,7 @@ class CoreIntrospector(core4.base.CoreBase):
                 obj.validate()
                 validate = True
                 exception = None
-                executable = obj.find_executable()
+                #executable = obj.find_executable()
             except Exception:
                 validate = False
                 exc_info = sys.exc_info()
@@ -144,7 +144,7 @@ class CoreIntrospector(core4.base.CoreBase):
                     "exception": repr(exc_info[1]),
                     "traceback": traceback.format_exception(*exc_info)
                 }
-                executable = None
+                #executable = None
                 self.logger.error("cannot instantiate job [%s]",
                                   qual_name, exc_info=exc_info)
             yield {
@@ -157,7 +157,7 @@ class CoreIntrospector(core4.base.CoreBase):
                 "tag": obj.tag,
                 "valid": validate,
                 "exception": exception,
-                "python": executable
+                #"python": executable
             }
 
     def iter_api_container(self):
