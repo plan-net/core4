@@ -2,15 +2,15 @@
 General purpose helper methods related to node information like hostname,
 username, clock and process identifier (PID).
 """
-import datetime
 import getpass
 import grp
 import os
 import pwd
+
+import datetime
+import psutil
 import socket
 import time
-
-import psutil
 
 
 def get_hostname():

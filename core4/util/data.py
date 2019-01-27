@@ -1,7 +1,9 @@
 """
 General purpose data management helpers.
 """
+import gzip
 import json
+import os
 import textwrap
 from io import StringIO
 
@@ -13,8 +15,6 @@ import numpy as np
 import pandas as pd
 import sphinx.ext.napoleon
 import time
-import gzip
-import os
 from docutils import core
 from docutils.parsers.rst.directives import register_directive
 
