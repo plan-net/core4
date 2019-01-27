@@ -1,8 +1,7 @@
+import datetime as dt
 import time
 
-import datetime as dt
-
-import core4.util
+import core4.util.node
 from core4.queue.job import CoreJob
 
 
@@ -11,7 +10,7 @@ class DummyJob(CoreJob):
     This is just a job-dummy for testing purposes.
     """
     author = 'mra'
-    #schedule = '* * * * *'
+    # schedule = '* * * * *'
 
     def execute(self, *args, **kwargs):
         sleep = kwargs.get("sleep", None) or 3
