@@ -1,3 +1,7 @@
+"""
+Implements :class:`.CoreSetup` to realise core4 prerequisites, i.e. folders,
+default users and roles, and MongoDB collection indices.
+"""
 import os
 
 import pymongo
@@ -49,7 +53,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
     @once
     def make_folder(self):
         """
-        Creates the core4 folders defined with configuration key ``folder``.
+        Creates the core4 folders defined under configuration key ``folder``.
         """
         root = self.config.folder.root
 

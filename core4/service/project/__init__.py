@@ -1,3 +1,8 @@
+"""
+Implements the function :func:`make_project` to create and setup a new core4
+project.
+"""
+
 import os
 import subprocess
 import sys

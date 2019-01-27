@@ -1,13 +1,26 @@
+"""
+Implements :class:`.CoreDiscovery` for node discovery.
+"""
 import psutil
 import socket
 
 import core4.base
-import core4.util
 import core4.util.node
 from core4.util.tool import lazyproperty
 
 
 class CoreDiscovery(core4.base.CoreBase):
+    """
+    Provides general purpose node information, i.e.
+
+    * ip address
+    * hostname
+    * number of cpu
+    * mountpoins
+    * current disk usage
+    * current cpu usage
+    * current memory usage
+    """
 
     @lazyproperty
     def ip_address(self):

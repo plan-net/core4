@@ -1,3 +1,7 @@
+"""
+core4 request handler (:class:`.CoreRequestHandler) meta information.
+"""
+
 import importlib
 import re
 
@@ -8,6 +12,10 @@ EXPECTED_PARTS = ("method", "parameter", "return", "raise", "example")
 
 
 class CoreApiInspector(CoreBase):
+    """
+    :class:`CoreApiInspector` collects information about core4 API
+    :class:`.CoreRequestHandler` method documentation (plain text and HTML).
+    """
 
     def handler_info(self, handler):
         """

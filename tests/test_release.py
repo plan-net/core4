@@ -10,7 +10,7 @@ import core4.config
 import core4.config.tag
 import core4.error
 import core4.logger.mixin
-import core4.service.operation.build
+import core4.service.operation
 import core4.service.project
 import core4.service.setup
 import core4.util
@@ -81,13 +81,13 @@ def test_build(tmpdir):
     os.chdir(os.path.join(tmpdir.strpath, "test_project"))
     # not develop
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.build()
+        core4.service.operation.build()
     assert code.type == SystemExit
     assert code.value.code == 3
     # no changes
     sh.git(["checkout", "develop"])
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.build()
+        core4.service.operation.build()
     assert code.type == SystemExit
     assert code.value.code == 5
     # not clean
@@ -95,7 +95,7 @@ def test_build(tmpdir):
     fh.write("some change")
     fh.close()
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.build()
+        core4.service.operation.build()
     assert code.type == SystemExit
     assert code.value.code == 4
 
@@ -103,11 +103,11 @@ def test_build(tmpdir):
 
     # version mismatch
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.build(0, 0, 0)
+        core4.service.operation.build(0, 0, 0)
     assert code.type == SystemExit
     assert code.value.code == 6
     # success
-    core4.service.operation.build.build(0, 0, 1)
+    core4.service.operation.build(0, 0, 1)
     # check release
     out = sh.git(["branch", "-a"])
     "* release-0.0.2" in out
@@ -125,25 +125,25 @@ def test_release(tmpdir):
     fh.close()
     sh.git(["commit", ".", "-m", "second commit"])
 
-    core4.service.operation.build.build(0, 0, 2)
+    core4.service.operation.build(0, 0, 2)
 
     # wrong branch (master)
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.release()
+        core4.service.operation.release()
     assert code.type == SystemExit
     assert code.value.code == 3
 
     sh.git(["checkout", "master"])
 
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.release()
+        core4.service.operation.release()
     assert code.type == SystemExit
     assert code.value.code == 7
 
     sh.git(["merge", "release-0.0.2"])
 
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.release()
+        core4.service.operation.release()
     assert code.type == SystemExit
     assert code.value.code == 7
 
@@ -152,12 +152,12 @@ def test_release(tmpdir):
 
     # wrong branch (master)
     with pytest.raises(SystemExit) as code:
-        core4.service.operation.build.release()
+        core4.service.operation.release()
     assert code.type == SystemExit
     assert code.value.code == 3
 
     sh.git(["checkout", "master"])
-    core4.service.operation.build.release()
+    core4.service.operation.release()
 
     assert sh.git(["tag"]).strip() == "0.0.2"
 

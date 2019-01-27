@@ -83,3 +83,16 @@ this has been done, you can remove the bare repository from the project sources
 and update your git connection accordingly in ``.git/config``.
 
 See also :doc:`deploy` and :doc:`tools`.
+
+
+Python project requirements
+---------------------------
+
+Project creation with command ``coco --init`` (see :ref:`coco`) and
+func:`core4.service.project.make_project` create empty files
+``requirements.txt`` and ``install_requires.txt``. Define your Python
+requirements in ``install_requires.txt``. This file is parsed during
+``pip install`` respectively ``python setup.py install`` as it defines the
+typical ``install_requires`` attribute in ``setup.py``. Use
+``requirements.txt`` to manually define the working versions before
+commit/push, for example with ``pip freeze > requirements.txt``.

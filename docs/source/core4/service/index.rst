@@ -9,10 +9,10 @@ to core4 roles and users. Module :mod:`core4.service.access.handler` delivers
 
 .. toctree::
 
-   access/manager
-   access/handler
+   setup
    discover
    introspect
-   setup
+   project
+   operation
 
 

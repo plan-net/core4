@@ -1,5 +1,6 @@
 """
-core4 package, module, project, job and API meta data collector.
+core4 package, module, project, job and API meta data collector as well as
+Python calls in Python environments of different core4 projects.
 """
 
 import importlib
@@ -36,8 +37,20 @@ except ImportError:
 
 class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
     """
-    The :class:`CoreIntro` class collects information about core4 projects,
-    and jobs.
+    The :class:`CoreIntro` class collects information about
+    * core4 projects,
+    * core4 jobs,
+    * core4 API container,
+    * core4 processed configuration files and configuration collection,
+    * core4 system folders,
+    * alive core4 daemons,
+    * Python executable,
+    * pip,
+    * installed Python packages
+
+    Further this class supports Python calls in project environments sending
+    commands from :mod:`core4.service.introspect.command` using
+    :func:`exec_project`.
     """
 
     def initialise_object(self):
@@ -156,7 +169,6 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                 obj.validate()
                 validate = True
                 exception = None
-                # executable = obj.find_executable()
             except Exception:
                 validate = False
                 exc_info = sys.exc_info()
@@ -164,7 +176,6 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                     "exception": repr(exc_info[1]),
                     "traceback": traceback.format_exception(*exc_info)
                 }
-                # executable = None
                 self.logger.error("cannot instantiate job [%s]",
                                   qual_name, exc_info=exc_info)
             yield {
@@ -177,7 +188,6 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                 "tag": obj.tag,
                 "valid": validate,
                 "exception": exception,
-                # "python": executable
             }
 
     def iter_api_container(self):
@@ -295,6 +305,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         # internal method to iterate all classes of a module and to extract
         #   the following "special" classes
         #   - core4.queue.job.CoreJob
+        #   - core4.api.v1.application.CoreApiContainer
         members = inspect.getmembers(module, inspect.isclass)
         for (clsname, cls) in members:
             if cls in self._job:

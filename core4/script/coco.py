@@ -70,7 +70,7 @@ import core4.service.introspect.project
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.operation.build import build, release
+from core4.service.operation import build, release
 from core4.service.introspect.command import ENQUEUE_ARG
 import core4.service.introspect
 
