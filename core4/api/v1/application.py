@@ -1,31 +1,37 @@
 """
-This module delivers the :class:`.CoreApplication` derived from
-:class:`tornado.web.Application`, :class:`.CoreApiContainer` encapsulating
-one or more applications and helper method :meth:`.serve` and
-:meth:`.serve_all` utilising :class:`.CoreApiServerTool` for server and
-endpoint management.
+This module implements :class:`.CoreApiContainer` bundling multiple request
+handlers under the same root endpoint. This class uses
+:class:`.CoreApplication` derived from :class:`tornado.web.Application` and a
+hierarchical routing mechanic to deliver these endpoints.
 
 A blueprint for server definition and startup is::
 
-    from core4.api.v1.application import CoreApiContainer, serve
+    from core4.api.v1.application import CoreApiContainer
     from core4.api.v1.request.queue.job import JobHandler
+    from core4.api.v1.tool.functool import serve
 
-    class CoreApiServer(CoreApiContainer):
-        root = "core4/api/v1"
+    class TestContainer(CoreApiContainer):
+        root = "/test/api"
         rules = [
             (r'/job/?(.*)', JobHandler)
         ]
 
 
     if __name__ == '__main__':
-        serve(CoreApiServer)
+        serve(TestContainer)
 
 
 Please note that :meth:`.serve` can handle one or multiple
 :class:`.CoreApiServer` objects with multiple endpoints and resources as in
 the following example::
 
-    serve(CoreApiServer, CoreAnotherpiAServer)
+    serve(TestContainer, AnotherContainer)
+
+Additionally this module features :class:`RootContainer`. This container is
+attached to *each* :class:`.CoreApiContainer` and delivers core4 default
+resource, i.e. ``/login``, ``/logout``, ``/profile``, ``/file``, ``/info``,
+and the root endpoint ``/``. All these default endpoints are routed under a
+dedicated core4 api endpoint (defaults to ``/core4/api/v1``).
 """
 
 import hashlib
@@ -35,8 +41,6 @@ import tornado.web
 
 import core4.const
 import core4.error
-import core4.service.setup
-import core4.util.data
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.info import InfoHandler
@@ -54,8 +58,8 @@ STATIC_PATTERN = "(?:/(.*))?$"
 
 class CoreApiContainer(CoreBase):
     """
-    The :class:`CoreApiContainer` class is a container for a single or multiple
-    :class:`.CoreRequestHandler` which is based on torando's class
+    :class:`CoreApiContainer` class is a container for a single or multiple
+    :class:`.CoreRequestHandler` and is based on torando's class
     :class:`tornado.web.RequestHandler`. A container encapsulates endpoint
     resources under the same :attr:`.root` URL defined by the :attr:`.root`
     attribute.
@@ -134,18 +138,19 @@ class CoreApiContainer(CoreBase):
 
     def iter_rule(self):
         """
-        Returns the rooted request handler as defined by the container's
-        :attr:`rules` attribute.
+        Returns the full path to the request handlers as defined by the
+        container's :attr:`rules` attribute.
 
         :return: list of tuples with route, request handler and handler
-                 parameters
+            parameters
         """
         return ((self.get_root(ret[0]), *ret[1:]) for ret in self.rules)
 
     def make_application(self):
         """
         Validates and pre-processes :class:`CoreApiContainer` rules and
-        transfers a handler lookup dictionary to :class:`RootContainer`.
+        transfers a handler lookup dictionary to :class:`RootContainer` for
+        reverse URL lookup.
 
         :return: :class:`.CoreApplication` instance
         """
@@ -188,7 +193,7 @@ class CoreApiContainer(CoreBase):
         # transfer routes lookup with handler/routing md5 and app to container
         for md5_route in routes:
             RootContainer.routes[md5_route] = (app, *routes[md5_route])
-        self.started = core4.util.node.mongo_now()
+        self.started = core4.util.node.now()
         return app
 
 
@@ -197,7 +202,7 @@ class CoreApplication(tornado.web.Application):
     Represents a wrapper class around :class:`tornado.web.Application`. This
     wrapper extends applications' properties with a ``.container`` property
     referencing the :class:`.CoreApiContainer` object and delivers special
-    processing for the *card* and *help* handler requests.
+    processing for the *CARD* and *ENTER* handler requests.
     """
 
     def __init__(self, handlers, container, *args, **kwargs):
@@ -208,12 +213,12 @@ class CoreApplication(tornado.web.Application):
     def find_handler(self, request, **kwargs):
         """
         Implements special handling for card page requests and landing page
-        requests (``enter_url``).
+        requests (*ENTER*).
 
         Card page requests are forwarded to the handler's
-        :meth:`.CoreRequestHandler.xcard` method (``XCARD``). Enter landing
+        :meth:`.CoreRequestHandler.card` method (``XCARD``). Enter landing
         page requests are forwarded to the handler's
-        :meth:`.CoreRequestHandler.xenter` method (``XENTER``).
+        :meth:`.CoreRequestHandler.enter` method (``XENTER``).
         """
 
         def _find():
@@ -240,11 +245,10 @@ class CoreApplication(tornado.web.Application):
         (:meth:`.make_application`).
 
         :param md5_qual_name: find the request handler based on
-                              :class:`.CoreRequestHandler` by the ``qual_name``
-                              MD5 digest.
+            :class:`.CoreRequestHandler` by the ``qual_name`` MD5 digest.
         :param md5_route: find the request handler route based on
-                          :class:`.CoreRequestHandler` by the ``qual_name``
-                          and routing pattern MD5 digests.
+            :class:`.CoreRequestHandler` by the ``qual_name`` and routing
+            pattern MD5 digests.
         :return: tuple of (:class:`.CoreApiContainer`, pattern, class,
                  arguments)
         """
