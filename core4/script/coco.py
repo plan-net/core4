@@ -176,7 +176,7 @@ def listing(*state):
         rec.append(job)
     if rec:
         fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} " \
-              "{:19s} {:11s} {:11s} {:%d} {:s}" % (
+              "{:19s} {:19s} {:11s} {:%d} {:s}" % (
             mxworker)
         print(
             fmt.format(
@@ -184,7 +184,7 @@ def listing(*state):
                 "enqueued", "age", "runtime", "worker", "name"))
         print(" ".join(["-" * i
                         for i in
-                        [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mxworker, mx]]))
+                        [24, 8, 4, 4, 4, 7, 6, 19, 19, 11, mxworker, mx]]))
     else:
         print("no jobs.")
     fmtworker = "{:%ds}" % (mxworker)
@@ -218,7 +218,7 @@ def listing(*state):
             "{:<6.6s}".format(job.get("enqueued", {}).get("username", None)),
             "{:19s}".format(str(
                 core4.util.data.utc2local(job["enqueued"]["at"]))),
-            "{:11s}".format(str(core4.util.node.mongo_now() - (
+            "{:19s}".format(str(core4.util.node.mongo_now() - (
                     job["enqueued"]["at"] or core4.util.node.mongo_now()))),
             "{:11s}".format(str(runtime)),
             fmtworker.format(worker),
@@ -355,12 +355,13 @@ def jobs():
     for project in sorted(summary.keys()):
         print("{}".format(project))
         jobs = []
-        for job in summary[project]["job"]:
-            job_project = job["name"].split(".")[0]
-            if job_project == project:
-                jobs.append(job["name"])
-        for job in sorted(jobs):
-            print("  {}".format(job))
+        if summary[project]:
+            for job in summary[project]["job"]:
+                job_project = job["name"].split(".")[0]
+                if job_project == project:
+                    jobs.append(job["name"])
+            for job in sorted(jobs):
+                print("  {}".format(job))
 
 
 def who():
