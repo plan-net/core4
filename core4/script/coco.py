@@ -54,6 +54,7 @@ import json
 import re
 from pprint import pprint
 
+import core4.service.introspect.project
 import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
@@ -66,14 +67,12 @@ import core4.queue.job
 import core4.queue.main
 import core4.queue.scheduler
 import core4.queue.worker
-import core4.service.introspect.project
+import core4.service.introspect
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.operation import build, release
 from core4.service.introspect.command import ENQUEUE_ARG
-import core4.service.introspect
-
+from core4.service.operation import build, release
 
 QUEUE = core4.queue.main.CoreQueue()
 

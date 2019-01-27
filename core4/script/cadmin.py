@@ -39,7 +39,6 @@ from os.path import join, exists
 from docopt import docopt
 from core4.base.main import CoreBase
 import core4.const
-import venv
 import subprocess
 import sh
 import shutil
@@ -208,7 +207,7 @@ def run(args):
         installer = CoreAdminInstaller(
             args["PROJECT"], args["--repository"], args["--core4"])
         if args["--reset"]:
-           installer.reset()
+            installer.reset()
         installer.check_for_install()
         installer.install()
     elif args["--upgrade"]:
