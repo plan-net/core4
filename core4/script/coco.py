@@ -54,7 +54,7 @@ import json
 import re
 from pprint import pprint
 
-import core4.service.introspect.project
+import core4.service.introspect
 import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
@@ -175,7 +175,8 @@ def listing(*state):
             mxworker = max(mxworker, len(job["locked"]["worker"]))
         rec.append(job)
     if rec:
-        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} {:19s} {:11s} {:11s} {:%d} {:s}" % (
+        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} " \
+              "{:19s} {:11s} {:11s} {:%d} {:s}" % (
             mxworker)
         print(
             fmt.format(
