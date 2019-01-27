@@ -6,8 +6,9 @@ endpoints and request handlers
    :caption: Table of Contents
 
    main
+   default
+   static
+   info
    standard
-   queue
    role
-
-
+   queue
