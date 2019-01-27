@@ -32,10 +32,9 @@ folder structure::
 
 Helper tools support project management:
 
-* ``coco --init`` to create a new project, see :ref:`project_creation`
-* ``coco --build`` to prepare a new project release, see :ref:`build_release`
-* ``coco --release`` to finalise an existing project release, see
-  :ref:`build_release`
+* ``coco --init`` to create a new project
+* ``coco --build`` to prepare a new project release
+* ``coco --release`` to finalise an existing project release
 * ``cadmin --install`` and ``cadmin --upgrade`` to deploy a project to a
   runtime environment, see :doc:`deploy`
 
@@ -55,7 +54,7 @@ Let's start with project creation.
 project creation
 ----------------
 
-Use :ref:`coco --init` to create a new project. The project will be
+Use ``coco --init`` to create a new project. The project will be
 created in the current working directory.
 
 This will inquire further information from the user and after some confirmation

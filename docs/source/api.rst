@@ -609,7 +609,7 @@ Each handler has three additional endpoints associated with the resource:
 #. an entry URL (``enter_url``)
 
 The help page delivers well formatted endpoint documentation in HTML following
-the guiding principles described at :ref:`api_docs`. The card page provides
+the guiding principles described at :ref:`api_doc`. The card page provides
 relevant endpoint information and can be customised with the
 :meth:`.CoreBaseHandler.card` method. The entry URL is the landing page of the
 API which defaults to the API ``GET`` method and can be customised with the

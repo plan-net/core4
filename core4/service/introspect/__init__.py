@@ -427,7 +427,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         Retrieves meta information about active core4 daemons running on this
         node. This method uses method :meth:`.QueryMixin.get_daemon` to query
         daemon meta data.
-                * ``_id`` - the identifier of the daemon
+
+        * ``_id`` - the identifier of the daemon
         * ``loop`` - the date/time when the daemon entered looping in UTC
         * ``loop_time`` - the timedelta of the daemon looping
         * ``heartbeat`` - the timedelta of the last heartbeat

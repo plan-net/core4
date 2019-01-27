@@ -1,5 +1,5 @@
 """
-core4 request handler (:class:`.CoreRequestHandler) meta information.
+core4 request handler (:class:`.CoreRequestHandler`) meta information.
 """
 
 import importlib
@@ -13,7 +13,7 @@ EXPECTED_PARTS = ("method", "parameter", "return", "raise", "example")
 
 class CoreApiInspector(CoreBase):
     """
-    :class:`CoreApiInspector` collects information about core4 API
+    :class:`.CoreApiInspector` collects information about core4 API
     :class:`.CoreRequestHandler` method documentation (plain text and HTML).
     """
 
