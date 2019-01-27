@@ -390,7 +390,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         if not await self.user.has_job_exec_access(doc["name"]):
            raise HTTPError(403)
 
-    async def update(self, oid, attr, message):
+    async def update(self, oid, attr, message, event):
         """
         Update the passed job attribute, used with ``removed_at`` and
         ``killed_at``. Only jobs with execute access permissions granted to the
@@ -417,6 +417,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to %s at [%s]", oid, message, at)
+            await self.make_stat(event, str(oid))
             return True
         raise HTTPError(404, "failed to flag job [%s] to %s", oid, message)
 
@@ -428,7 +429,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :param oid: :class:`bson.objectid.ObjectId` of the job
         :return: ``True`` for success, else ``False``
         """
-        return await self.update(oid, "removed_at", "remove")
+        return await self.update(oid, "removed_at", "remove",
+                                 "request_remove_job")
 
     async def kill_job(self, oid):
         """
@@ -438,7 +440,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :param oid: :class:`bson.objectid.ObjectId` of the job
         :return: ``True`` for success, else ``False``
         """
-        return await self.update(oid, "killed_at", "kill")
+        return await self.update(oid, "killed_at", "kill", "request_kill_job")
 
     async def restart_job(self, oid):
         """
@@ -481,6 +483,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                 }
             }
         )
+        await self.make_stat("restart_waiting", str(_id))
         return ret.modified_count == 1
 
     async def restart_stopped(self, _id):
@@ -516,7 +519,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
                         job["enqueued"]["child_id"] = new_doc["_id"]
                         await self.collection("journal").insert_one(job)
                         await self.collection("lock").delete_one({"_id": _id})
-                        await self.make_stat()
+                        await self.make_stat("restart_stopped", str(_id))
                         return new_doc["_id"]
             raise HTTPError(400, "cannot restart job [%s] in state [%s]", _id,
                             job["state"])
@@ -540,13 +543,14 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         except:
             raise
 
-    async def make_stat(self):
+    async def make_stat(self, event, *args):
         """
         Collects current job state counts from ``sys.queue`` and inserts a
         record into ``sys.stat``.
         """
         state = await self.get_queue_count()
         state["timestamp"] = core4.util.node.mongo_now().timestamp()
+        state['event'] = {'name': event, 'data': args}
         await self.collection("stat").insert_one(state)
 
     def who(self):
@@ -692,9 +696,7 @@ class JobPost(JobHandler):
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
-        state = await self.get_queue_count()
-        state["timestamp"] = core4.util.node.mongo_now().timestamp()
-        await self.collection("stat").insert_one(state)
+        await self.make_stat("enqueue_job", str(job._id))
         return job
 
 

@@ -150,4 +150,5 @@ class CoreWorkerProcess(core4.base.main.CoreBase,
                 raise RuntimeError(
                     "failed to update job [{}] state [starting]".format(_id))
             self.logger.info("failed to start [%s]", _id)
+            self.queue.make_stat("failed_start", str(_id))
             return None
