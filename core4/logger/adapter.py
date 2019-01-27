@@ -1,3 +1,7 @@
+"""
+Implements the logging adapter :class:`CoreLoggingAdapter`.
+"""
+
 import logging.config
 
 

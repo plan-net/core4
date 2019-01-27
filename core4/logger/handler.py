@@ -1,12 +1,16 @@
+"""
+Implements :class:`.MongoLoggingHandler` to log into MongoDB collection
+``sys.log`` and :func:`make_record` to customise MongoDB documents representing
+the logging record.
+"""
 import logging.config
-import traceback
 import os
+import traceback
+
 import datetime
 import time
-from bson.objectid import ObjectId
 
 from core4.util.tool import Singleton
-import core4.util.node
 
 
 def make_record(record):
@@ -43,7 +47,6 @@ def make_record(record):
         doc["identifier"] = str(doc["identifier"])
     if doc["qual_name"] is None:
         doc["qual_name"] = "basename:" + os.path.basename(record.pathname)
-    #doc["_id"] = getattr(record, "_id", ObjectId())
     if record.exc_info or record.exc_text:
         doc["exception"] = {
             "info": repr(record.exc_info[1]),

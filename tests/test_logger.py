@@ -305,7 +305,7 @@ class TestLogging(unittest.TestCase):
 
     def test_exception_usage(self):
 
-        class A(LogOn, core4.logger.mixin.ExceptionLoggerMixin):
+        class A(LogOn, core4.logger.mixin.CoreExceptionLoggerMixin):
 
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)

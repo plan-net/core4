@@ -116,7 +116,7 @@ NOT_INHERITED = {
 }
 
 
-class CoreJob(CoreBase, core4.logger.mixin.ExceptionLoggerMixin):
+class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
     """
     This is the base class of all core jobs. Core jobs implement the actual
     task processing. If you say that :class:`.Worker` is the working horse of

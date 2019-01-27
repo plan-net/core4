@@ -1,7 +1,10 @@
+"""
+:class:`CoreLoggingFilter` adds several properties to
+:class:`logging.LogRecord`.
+"""
 import logging
 import os
 
-import core4.util
 import core4.util.node
 
 
@@ -14,6 +17,7 @@ class CoreLoggingFilter(logging.Filter):
     * hostname
     * identifier
     * qual_name
+    * epoch
     """
 
     def filter(self, record):
