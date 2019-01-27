@@ -1,3 +1,8 @@
+"""
+Implements :class:`.CoreApiServerTool to serve one or multiple
+:class:`.CoreApiContainer` with their :class:`.CoreApplication`.
+"""
+
 import importlib
 
 import tornado.httpserver

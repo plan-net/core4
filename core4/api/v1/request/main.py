@@ -12,16 +12,15 @@ import mimeparse
 import pandas as pd
 import time
 import tornado.escape
+import tornado.gen
 import tornado.httputil
+import tornado.iostream
 import tornado.template
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
-import tornado.iostream
-import tornado.gen
 
 import core4.const
 import core4.error
-import core4.util
 import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
@@ -92,7 +91,7 @@ class CoreBaseHandler(CoreBase):
         self.error_text_page = rel(self.config.api.error_text_page)
         self.card_html_page = rel(self.config.api.card_html_page)
         self.help_html_page = rel(self.config.api.help_html_page)
-        self.started = core4.util.node.mongo_now()
+        self.started = core4.util.node.now()
         self._flash = []
         self.user = None
 

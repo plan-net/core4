@@ -1,10 +1,13 @@
-import core4.queue.helper
-import core4.queue.helper.job
-import core4.queue.helper.functool
-import core4.util
-from core4.api.v1.request.main import CoreRequestHandler
+"""
+Implements core4 standard :class:`LoginHandler`.
+"""
 from tornado.web import HTTPError
+
+import core4.queue.helper.functool
+import core4.queue.helper.job
+from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
+
 
 class LoginHandler(CoreRequestHandler):
     title = "login and password reset"

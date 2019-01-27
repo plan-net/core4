@@ -8,31 +8,31 @@ import core4.const
 from core4.api.v1.request.main import CoreRequestHandler, CoreEtagMixin
 
 
-class CoreFileHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
+class CoreAssetHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
     """
-    The static file handler delivers files based on
+    The static asset handler delivers assets based on
     :class:`.CoreRequestHandler` static folder settings and the specified
     core4 default static folder.
 
-    To serve static files, the templates must use :meth:`.static_url` and
-    :meth:`.default_static` method.
-    If :meth:`.static_url` addresses an URL with a leading slash (``/``), then
-    the method translates the static file request into
-    ``/core4/api/v1/file/abc/<md5_route>/<path>``. If the path does *not* start
-    with a leading slash, then :meth:`.static_url` translates the static file
-    request into ``/core4/api/v1/file/rel/<md5_route>/<path>``. Watch the
-    ``abs`` versus ``rel`` modifier in both URLs. Absolute paths address files
-    from project root directory. Relative paths address files from the
-    specified static folder of the handler.
+    To serve assets, the templates must use :meth:`.static_url` and
+    :meth:`.default_static` method. If :meth:`.static_url` addresses an URL
+    with a leading slash (``/``), then the method translates the static asset
+    request into ``/core4/api/v1/file/abc/<md5_route>/<path>``. If the path
+    does *not* start with a leading slash, then :meth:`.static_url` translates
+    the static asset request into
+    ``/core4/api/v1/file/rel/<md5_route>/<path>``. Watch the ``abs`` versus
+    ``rel`` modifier in both URLs. Absolute paths address assets from project
+    root directory. Relative paths address asset from the specified static
+    folder of the handler.
 
-    Default file requests are delivered according to the global core4 static
+    Default asset requests are delivered according to the global core4 static
     file settings as defined by config attribute ``api.default_static``
 
     .. note:: This handler is used internally by core4. Normally you do not
               use or inherit from this handler.
     """
     author = "mra"
-    title = "static file handler for request handler rule ID"
+    title = "asset handler for request handler rule ID"
     default_filename = "index.html"
     icon = "memory"
 
@@ -42,7 +42,7 @@ class CoreFileHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
 
     async def prepare(self):
         """
-        Parses the URL and sets the static file ``.root`` and ``.path_args``
+        Parses the URL and sets the static asset ``.root`` and ``.path_args``
         accordingly. Furthermore this method verifies authorization and access
         permissions.
         """

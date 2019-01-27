@@ -1,3 +1,6 @@
+"""
+Implements :class:`.InfoHandler` to retrieve API endpoint details.
+"""
 from tornado.web import HTTPError
 
 import core4.const

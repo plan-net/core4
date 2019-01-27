@@ -1,3 +1,7 @@
+"""
+Implements core4 standard :class:`LogoutHandler`.
+"""
+
 from core4.api.v1.request.main import CoreRequestHandler
 
 

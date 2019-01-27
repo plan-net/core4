@@ -1,3 +1,7 @@
+"""
+Implements core4 standard :class:`RouteHandler` delivering core4 API/endpoint
+collection.
+"""
 import core4.const
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.pager import CorePager

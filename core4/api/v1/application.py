@@ -45,7 +45,7 @@ import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.info import InfoHandler
 from core4.api.v1.request.main import CoreBaseHandler
-from core4.api.v1.request.standard.file import CoreFileHandler
+from core4.api.v1.request.standard.asset import CoreAssetHandler
 from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
@@ -285,7 +285,7 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r"/login", LoginHandler),
         (core4.const.CORE4_API + r"/logout", LogoutHandler),
         (core4.const.CORE4_API + r"/profile", ProfileHandler),
-        (core4.const.CORE4_API + r"/file/(.*)", CoreFileHandler),
+        (core4.const.CORE4_API + r"/file/(.*)", CoreAssetHandler),
         (core4.const.CORE4_API + r'/info', RouteHandler),
         (core4.const.CORE4_API + r'/info/(.+)', InfoHandler),
         (r'', CoreStaticFileHandler, {
