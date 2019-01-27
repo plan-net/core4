@@ -1,3 +1,7 @@
+"""
+Implements core4 configuration management with :class:`.CoreConfig`.
+"""
+
 import collections
 import collections.abc
 import os
@@ -11,7 +15,6 @@ from datetime import datetime, date
 import core4.base.collection
 import core4.config.map
 import core4.config.tag
-import core4.util
 import core4.util.tool
 from core4.error import Core4ConfigurationError
 from core4.util.data import parse_boolean
@@ -57,7 +60,7 @@ class CoreConfig(collections.MutableMapping):
     See :ref:`config` about core4 configuration principles.
 
     This class implements the delegation pattern and forwards all property
-    access to configuration data stored in the ``._data`` attribute,
+    access to configuration data stored in the ``._config_cache`` attribute,
     accessible through :meth:`._config`. This attribute implements the
     :class:`.ConfigMap`.
     """

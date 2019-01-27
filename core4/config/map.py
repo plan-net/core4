@@ -1,3 +1,7 @@
+"""
+Implements :class:`.ConfigMap`.
+"""
+
 import collections
 
 import core4.error
