@@ -3,6 +3,7 @@ This module delivers the :class:`.CoreJob`.
 """
 import hashlib
 import json
+import os
 
 import datetime as dt
 
