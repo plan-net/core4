@@ -1,8 +1,8 @@
 """
 This module delivers various MongoDB support methods retrieving information
 about collections ``sys.queue``, ``sys.journal``, ``sys.stdout`` and
-``sys.worker``. The main class :class:`.QueryMixin` is to be mixed into a class
-based on :class:`core4.base.main.CoreBase`.
+``sys.worker``. The main class :class:`QueryMixin` is to be mixed into a class
+based on :class:`.CoreBase`.
 """
 
 from collections import OrderedDict
@@ -13,6 +13,10 @@ import core4.util.node
 
 
 class QueryMixin:
+    """
+    Retrieves core4 runtime information by querying collections ``sys.queue``,
+    ``sys.journal``, ``sys.stdout`` and ``sys.worker``.
+    """
 
     def get_daemon(self, hostname=None):
         """
