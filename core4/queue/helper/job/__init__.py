@@ -9,6 +9,7 @@ from core4.queue.helper.job.example import DummyJob
 from core4.queue.job import CoreJob
 
 # todo: requires implementation
+# todo: consider user language CORE4-115
 
 class MailerJob(CoreJob):
     """
