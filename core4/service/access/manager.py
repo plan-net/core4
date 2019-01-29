@@ -1,7 +1,8 @@
-import core4.api.v1.role
+from core4.api.v1.request.role.model import CoreRole
 import core4.base
 import core4.error
 import core4.service.access.handler.mongo
+from tornado.ioloop import IOLoop
 
 #: key/value pairs of permission protocols and access handlers
 HANDLER = {
@@ -18,7 +19,7 @@ class CoreAccessManager(core4.base.CoreBase):
 
     #. delete role if it exists (handler method ``.del_role()``)
     #. create the role (handler method ``.add_role()``)
-    #. create access token (password to be used together with the role`s  name)
+    #. create access token (password to be used together with the role`s name)
     #. grant read permissions for each permission with the appropriate protocol
        (handler method ``.grant(db)``)
     #. call the handler's ``.finish()`` method
@@ -37,7 +38,8 @@ class CoreAccessManager(core4.base.CoreBase):
         """
         super().__init__(*args, **kwargs)
         if isinstance(role, str):
-            role = core4.api.v1.role.Role().load_one(name=role)
+            role = IOLoop.current().run_sync(
+                lambda: CoreRole().find_one(name=role))
         if not role.is_user:
             raise core4.error.Core4UsageError(
                 "cannot synchronise core4 roles, only users")
@@ -57,7 +59,8 @@ class CoreAccessManager(core4.base.CoreBase):
             handler.del_role()
             access[proto] = handler.add_role()
         service = {}
-        for perm in self.role._casc_perm:
+        perms = IOLoop.current().run_sync(self.role.casc_perm)
+        for perm in perms:
             (proto, *database) = perm.split("://")
             if proto in HANDLER:
                 if proto not in service:

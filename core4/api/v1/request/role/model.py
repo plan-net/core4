@@ -144,6 +144,14 @@ class CoreRole(CoreBase):
                 raise
         return False
 
+    @property
+    def is_user(self):
+        """
+        :return: ``True`` if the role is a user with email and password.
+        """
+        has_password = self.password is not None
+        has_email = self.email is not None
+        return has_email and has_password
 
     def _check_user(self):
         """
