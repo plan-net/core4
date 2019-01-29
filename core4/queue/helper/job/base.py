@@ -86,12 +86,10 @@ class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
     def make_proc(self, filename, base=None):
         """
         Returns the full filename of a file in the project`s processing folder.
-        If ``filename is None``, then a temporary file is retrieved. If a
-        ``base`` is passed, then the project name is ignored as the path prefix
+        If a ``base`` is passed, then the project name is ignored as the path  prefix
         and this ``base`` prefix is applied.
 
-        :param filename: file to address, if ``None`` then a temporary file
-            name is created and returned
+        :param filename: file to address
         :param base: path prefix to use instead of project name
         :return: full filename
         """
@@ -100,16 +98,26 @@ class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
     def make_transfer(self, filename, base=None):
         """
         Returns the full filename of a file in the project`s transfer folder.
-        If ``filename is None``, then a temporary file is retrieved. If a
-        ``base`` is passed, then the project name is ignored as the path prefix
-        and this ``base`` prefix is applied.
+        If a ``base`` is passed, then the project name is ignored as the path
+        prefix and this ``base`` prefix is applied.
 
-        :param filename: file to address, if ``None`` then a temporary file
-            name is created and returned
+        :param filename: file to address
         :param base: path prefix to use instead of project name
         :return: full filename
         """
         return self._make_file("transfer", filename, base)
+
+    def make_temp(self, filename=None):
+        """
+        Returns the full filename of a file in the temp folder. If not
+        ``filename`` is passed or is ``None``, then a temporary file is
+        retrieved.
+
+        :param filename: optional file to address, if ``None`` then a temporary
+            file name is created and returned
+        :return: full filename
+        """
+        return self._make_file("transfer", filename)
 
     def _move(self, source, key, base):
         filename = os.path.basename(source)
