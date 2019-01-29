@@ -109,7 +109,7 @@ api:
     secret: secret
   admin_username: admin
   admin_realname: admin user
-  admin_password: hans  # must be set
+  admin_password: ~  # must be set
   user_rolename: standard_user
   user_realname: standard user group
   user_permission:
