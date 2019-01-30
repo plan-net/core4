@@ -18,12 +18,22 @@ from core4.api.v1.tool.functool import serve
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
+ASSET_FOLDER = '../asset'
+
+
+def asset(*filename, exists=True):
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, ASSET_FOLDER, *filename)
+    if not exists or os.path.exists(filename):
+        return filename
+    raise FileNotFoundError(filename)
 
 
 @pytest.fixture(autouse=True)
 def setup(tmpdir):
     logging.shutdown()
     core4.logger.mixin.CoreLoggerMixin.completed = False
+    os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
