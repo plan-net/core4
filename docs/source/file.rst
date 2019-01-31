@@ -64,6 +64,8 @@ The directory structure of a core4 project repository is::
     └── tests
 
 
+.. _system_folder:
+
 core4 system folders
 ====================
 
