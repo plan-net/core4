@@ -1,3 +1,5 @@
+.. _access_manager:
+
 ##########################
 database access management
 ##########################
