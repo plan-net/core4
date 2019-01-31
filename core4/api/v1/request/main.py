@@ -605,6 +605,70 @@ class CoreBaseHandler(CoreBase):
         return mimeparse.best_match(
             self.supported_types, self.request.headers.get("accept", ""))
 
+    def get_argument(self, name, as_type=None, *args, **kwargs):
+        """
+        Returns the value of the argument with the given name.
+
+        If default is not provided, the argument is considered to be
+        required, and we raise a `MissingArgumentError` if it is missing.
+
+        If the argument appears in the url more than once, we return the
+        last value.
+
+        If ``as_type`` is provided, then the variable type is converted. The
+        method supports the following variable types:
+
+        * int
+        * float
+        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
+        * str
+        * dict - using :mod:`json.loads`
+        * list - using :mod:`json.loads`
+        * datetime - using :meth:`dateutil.parser.parse`
+
+        :param name: variable name
+        :param default: value
+        :param as_type: Python variable type
+        :return: value
+        """
+        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
+        ret = self._get_argument(name, source=self.request.arguments,
+                                 *args, strip=False, **kwargs)
+        if as_type and ret is not None:
+            try:
+                if as_type == bool:
+                    if isinstance(ret, bool):
+                        return ret
+                    return parse_boolean(ret, error=True)
+                if as_type == dict:
+                    if isinstance(ret, dict):
+                        return ret
+                    return json_decode(ret)
+                if as_type == list:
+                    if isinstance(ret, list):
+                        return ret
+                    return json_decode(ret)
+                if as_type == datetime.datetime:
+                    if isinstance(ret, datetime.datetime):
+                        dt = ret
+                    else:
+                        dt = dateutil.parser.parse(ret)
+                    if dt.tzinfo is None:
+                        return dt
+                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
+                    return datetime.datetime.fromtimestamp(
+                        time.mktime(utc_struct_time))
+                if as_type == ObjectId:
+                    if isinstance(ret, ObjectId):
+                        return ret
+                    return ObjectId(ret)
+                return as_type(ret)
+            except:
+                raise core4.error.ArgumentParsingError(
+                    "parameter [%s] expected as_type [%s]", name,
+                    as_type.__name__) from None
+        return ret
+
 
 class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
@@ -793,70 +857,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         if isinstance(value, (bytes, str)):
             return super().decode_argument(value, name)
         return value
-
-    def get_argument(self, name, as_type=None, *args, **kwargs):
-        """
-        Returns the value of the argument with the given name.
-
-        If default is not provided, the argument is considered to be
-        required, and we raise a `MissingArgumentError` if it is missing.
-
-        If the argument appears in the url more than once, we return the
-        last value.
-
-        If ``as_type`` is provided, then the variable type is converted. The
-        method supports the following variable types:
-
-        * int
-        * float
-        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
-        * str
-        * dict - using :mod:`json.loads`
-        * list - using :mod:`json.loads`
-        * datetime - using :meth:`dateutil.parser.parse`
-
-        :param name: variable name
-        :param default: value
-        :param as_type: Python variable type
-        :return: value
-        """
-        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
-        ret = self._get_argument(name, source=self.request.arguments,
-                                 *args, strip=False, **kwargs)
-        if as_type and ret is not None:
-            try:
-                if as_type == bool:
-                    if isinstance(ret, bool):
-                        return ret
-                    return parse_boolean(ret, error=True)
-                if as_type == dict:
-                    if isinstance(ret, dict):
-                        return ret
-                    return json_decode(ret)
-                if as_type == list:
-                    if isinstance(ret, list):
-                        return ret
-                    return json_decode(ret)
-                if as_type == datetime.datetime:
-                    if isinstance(ret, datetime.datetime):
-                        dt = ret
-                    else:
-                        dt = dateutil.parser.parse(ret)
-                    if dt.tzinfo is None:
-                        return dt
-                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
-                    return datetime.datetime.fromtimestamp(
-                        time.mktime(utc_struct_time))
-                if as_type == ObjectId:
-                    if isinstance(ret, ObjectId):
-                        return ret
-                    return ObjectId(ret)
-                return as_type(ret)
-            except:
-                raise core4.error.ArgumentParsingError(
-                    "parameter [%s] expected as_type [%s]", name,
-                    as_type.__name__) from None
-        return ret
 
     async def verify_access(self):
         """

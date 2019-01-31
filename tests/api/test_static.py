@@ -25,7 +25,6 @@ class StopHandler(CoreRequestHandler):
 
 
 class DownloadHandler(CoreRequestHandler):
-
     protected = False
 
     async def get(self):
@@ -153,7 +152,8 @@ def test_image(http):
     assert rv.status_code == 200
     rv = http.get("/tests/static1/sub/../asset/head.png")
     assert rv.status_code == 200
-    assert rv.content[:20] == b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x00'
+    assert rv.content[
+           :20] == b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x00'
     rv = http.get("/favicon.ico")
     assert rv.status_code == 200
 
@@ -201,16 +201,11 @@ def test_public_class(http):
     assert rv.status_code == 200
 
 
-# def test_download(http):
-#     url = http.url("/tests/download1")
-#     rv = requests.get(url)
-#     assert rv.status_code == 200
+def test_public_class(http):
+    url = http.url("/notfound")
+    rv = requests.get(url)
+    print(rv.status_code)
 
 
 if __name__ == '__main__':
-    # from core4.api.v1.tool import serve, serve_all
-    # serve_all(filter=[
-    #     "project.api",
-    #     "core4.api.v1.server",
-    #     "example"])
     serve(CoreApiTestServer1)
