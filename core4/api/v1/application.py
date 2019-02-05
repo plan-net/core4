@@ -46,6 +46,7 @@ from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.api.v1.request.standard.route import RouteHandler
+from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
 
@@ -284,6 +285,7 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r"/file/(.*)", CoreFileHandler),
         (core4.const.CORE4_API + r'/info', RouteHandler),
         (core4.const.CORE4_API + r'/info/(.+)', InfoHandler),
+        (core4.const.CORE4_API + r'/setting/?(.*)', SettingHandler),
         (r'', CoreStaticFileHandler, {
             "path": "./request/_static",
             "protected": False,

@@ -66,3 +66,22 @@ def dict_merge(dct, merge_dct, add_keys=True):
             dct[k] = merge_dct[k]
 
     return dct
+
+
+def lookahead(iterable_data):
+    """
+    Pass through all values from the given iterable, augmented by the information
+    if there are more values to come after the current one (True),
+    or if it is the last value (False).
+
+    :param iterable_data:  iterable type data
+    :return: boolean
+    """
+    iterable = iter(iterable_data)
+    last = next(iterable)
+
+    for value in iterable:
+        yield last, True
+        last = value
+
+    yield last, False

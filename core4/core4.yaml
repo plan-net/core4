@@ -21,6 +21,7 @@ sys:
   stdout: !connect mongodb://sys.stdout
   userdb: user!
   worker: !connect mongodb://sys.worker
+  setting: !connect mongodb://sys.setting
 
 # system folders
 folder:
