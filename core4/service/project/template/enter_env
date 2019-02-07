@@ -1,18 +1,50 @@
-if [[ $0 != $BASH_SOURCE ]]; then
-  SCRIPT=`realpath $BASH_SOURCE`
-  cd `dirname $SCRIPT`
-  VIRTUAL_ENV_DISABLE_PROMPT=1
-  _OLD_CORE4_PS1="$PS1"
-  source ./.venv/bin/activate
-  export CORE4_PROJECT=$(basename $(pwd))
-  PS1="($CORE4_PROJECT) $PS1"
-  exit_env () {
-    PS1="$_OLD_CORE4_PS1"
-    unset _OLD_CORE4_PS1
-    unset -f exit_env
-    unset CORE4_PROJECT
-    deactivate
-  }
-else
-  echo "script must be sourced with . enter_env"
-fi
+#!/bin/bash
+
+# extract script directory
+script_dir=$(exec 2>/dev/null;cd -- $(dirname "$0"); unset PWD; /usr/bin/pwd || /bin/pwd || pwd)
+
+main()
+{
+    echo "this script must be sourced, use:"
+    echo ". $script_dir/enter_env"
+    exit
+}
+
+unset BASH_SOURCE 2>/dev/null
+test ".$0" != ".$BASH_SOURCE" || main "$@"
+
+# enter script directory
+cd $script_dir
+# extract basename for the name of the virtual environment
+vname=`basename $script_dir`
+# set zsh prompt function
+ve() {
+    echo $vname
+}
+# rename_fn oldname newname
+rename_fn()
+{
+  local a
+  a="$(declare -f "$1")" &&
+  eval "function $2 ${a#*"()"}" &&
+  unset -f "$1";
+}
+# activate virtual environment
+export VIRTUAL_ENV_DISABLE_PROMPT=0
+source .venv/bin/activate
+# wrap deactivate
+rename_fn deactivate orig_deactivate
+
+deactivate () {
+  export PS1="$_OLD_VIRTUAL_PS1"
+  orig_deactivate
+  unset -f orig_deactivate;
+  eval "ve() { echo; }"
+  echo "bye.";
+}
+# change to original prompt
+export _OLD_VIRTUAL_PS1="$PS1"
+export PS1="[ $vname ] $PS1"
+
+echo "PROJECT: $vname"
+echo "PYTHON: `which python` (`python --version`)"
