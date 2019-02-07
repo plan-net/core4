@@ -18,7 +18,7 @@ cd $script_dir
 # extract basename for the name of the virtual environment
 vname=`basename $script_dir`
 # set zsh prompt function
-ve() {
+ZSH_C4() {
     echo $vname
 }
 # rename_fn oldname newname
@@ -39,7 +39,7 @@ deactivate () {
   export PS1="$_OLD_VIRTUAL_PS1"
   orig_deactivate
   unset -f orig_deactivate;
-  eval "ve() { echo; }"
+  eval "ZSH_C4() { echo; }"
   echo "bye.";
 }
 # change to original prompt
