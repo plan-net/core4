@@ -60,6 +60,7 @@ setup(
         ],
     },
     install_requires=[
+        "wheel",
         "pymongo>=3.7",
         "python-dateutil>=2.7",
         "PyYaml>=3.12",
