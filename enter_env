@@ -3,18 +3,28 @@
 # extract script directory
 script_dir=$(exec 2>/dev/null;cd -- $(dirname "$0"); unset PWD; /usr/bin/pwd || /bin/pwd || pwd)
 
-main()
-{
-    echo "this script must be sourced, use:"
-    echo ". $script_dir/enter_env"
-    exit
-}
+NO_SOURCE="this script must be sourced, use \`source $script_dir/enter_env\`"
 
-unset BASH_SOURCE 2>/dev/null
-test ".$0" != ".$BASH_SOURCE" || main "$@"
+NO_VENV="Python virtualenv required at .venv, make \`python3 -m venv .venv\`"
+
+# test sourcing
+([[ -n $ZSH_EVAL_CONTEXT && $ZSH_EVAL_CONTEXT =~ :file$ ]] || 
+ [[ -n $KSH_VERSION && $(cd "$(dirname -- "$0")" &&
+    printf '%s' "${PWD%/}/")$(basename -- "$0") != "${.sh.file}" ]] || 
+ [[ -n $BASH_VERSION ]] && (return 2>/dev/null)) && sourced=1 || sourced=0
+if [ $sourced -eq 0 ]; then
+    echo -e $NO_SOURCE
+    exit
+fi
 
 # enter script directory
 cd $script_dir
+# test .venv exists
+if [ ! -f .venv/bin/activate ]; then
+    echo -e $NO_VENV
+    return
+fi
+
 # extract basename for the name of the virtual environment
 vname=`basename $script_dir`
 # set zsh prompt function
