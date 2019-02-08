@@ -10,6 +10,7 @@ import core4.logger.mixin
 import core4.service
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.role.main import RoleHandler
+from core4.api.v1.tool.functool import serve
 from core4.queue.main import CoreQueue
 from tests.api.test_response import LocalTestServer, StopHandler
 
@@ -24,8 +25,6 @@ def asset(*filename, exists=True):
     if not exists or os.path.exists(filename):
         return filename
     raise FileNotFoundError(filename)
-
-
 
 
 @pytest.fixture(autouse=True)
@@ -331,3 +330,33 @@ def test_login_inactive(http):
     rv = http.get("/core4/api/v1/login?username=user&password=password",
                   base=False)
     assert rv.status_code == 401
+
+
+class CoreApiTestServer(CoreApiContainer):
+    rules = [
+        (r'/kill', StopHandler)
+    ]
+
+
+def test_admin_settings1():
+    os.environ["CORE4_OPTION_api__admin_username"] = "hello"
+    os.environ["CORE4_OPTION_api__admin_password"] = "~"
+    os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
+    with pytest.raises(TypeError):
+        serve(CoreApiTestServer)
+
+
+def test_admin_settings2():
+    os.environ["CORE4_OPTION_api__admin_username"] = "~"
+    os.environ["CORE4_OPTION_api__admin_password"] = "123456"
+    os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
+    with pytest.raises(TypeError):
+        serve(CoreApiTestServer)
+
+
+def test_admin_settings3():
+    os.environ["CORE4_OPTION_api__admin_username"] = "hello"
+    os.environ["CORE4_OPTION_api__admin_password"] = "123456"
+    os.environ["CORE4_OPTION_api__contact"] = "~"
+    with pytest.raises(TypeError):
+        serve(CoreApiTestServer)

@@ -85,16 +85,22 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         * ``api.user_realname``
         * ``api.user_permission``
         """
+        if ((self.config.api.admin_username is None)
+                or (self.config.api.admin_password is None)
+                or (self.config.api.contact is None)):
+            raise TypeError("admin _username, _realname, _password or contact "
+                            "not set")
+        data = dict(
+            name=self.config.api.admin_username,
+            realname=self.config.api.admin_realname,
+            password=core4.util.crypt.pwd_context.hash(
+                self.config.api.admin_password),
+            email=self.config.api.contact,
+            etag=ObjectId(),
+            perm=[core4.const.COP]
+        )
         try:
-            self.config.sys.role.insert_one(dict(
-                name=self.config.api.admin_username,
-                realname=self.config.api.admin_realname,
-                password=core4.util.crypt.pwd_context.hash(
-                    self.config.api.admin_password),
-                email=self.config.api.contact,
-                etag=ObjectId(),
-                perm=[core4.const.COP]
-            ))
+            self.config.sys.role.insert_one(data)
             self.logger.info("created user [%s]",
                              self.config.api.admin_username)
         except pymongo.errors.DuplicateKeyError:
