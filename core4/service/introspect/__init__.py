@@ -92,9 +92,14 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
 
         :return: json dump (str)
         """
+        container = []
+        for c in self.iter_api_container():
+            c["rules"] = [i[1].qual_name() for i in c["rules"]]
+            container.append(c)
         ret = json.dumps({
             "project": list(self.iter_project()),
             "job": list(self.iter_job()),
+            "container": container,
             "python_version": self.get_python_version(),
             "packages": dict(self.get_packages()),
             "pip": pip_version
@@ -215,7 +220,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                 if not obj.enabled:
                     self.logger.debug("not enabled [%s]", qual_name)
                     continue
-                rules = obj.rules
+                rules = [(r[0], r[1].qual_name()) for r in obj.rules]
                 exception = None
             except:
                 exc_info = sys.exc_info()
@@ -223,7 +228,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                     "exception": repr(exc_info[1]),
                     "traceback": traceback.format_exception(*exc_info)
                 }
-                rules = None
+                rules = []
                 self.logger.error("cannot instantiate api container [%s]",
                                   qual_name, exc_info=exc_info)
             yield {
@@ -513,7 +518,10 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         os.chdir(currdir)
         if wait:
             (stdout, stderr) = proc.communicate()
-            return stdout.decode("utf-8").strip()
+            out = stdout.decode("utf-8").strip()
+            if out == "":
+                return "null"
+            return out
 
 
 def exec_project(name, command, wait=True, *args, **kwargs):

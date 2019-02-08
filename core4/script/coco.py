@@ -31,6 +31,7 @@ Usage:
   coco --who
   coco --jobs
   coco --project
+  coco --container
   coco --version
 
 Options:
@@ -46,6 +47,7 @@ Options:
   -v --version    show version.
   -o --who        show system information
   -j --jobs       enumerate available jobs
+  -c --container  enumerate available API container
   -p --project    enumerate available core4 projects
   -y --yes        Assume yes on all requests.
 """
@@ -356,12 +358,30 @@ def jobs():
         print("{}".format(project))
         jobs = []
         if summary[project]:
-            for job in summary[project]["job"]:
-                job_project = job["name"].split(".")[0]
-                if job_project == project:
-                    jobs.append(job["name"])
-            for job in sorted(jobs):
-                print("  {}".format(job))
+            if "job" in summary[project]:
+                for job in summary[project]["job"]:
+                    job_project = job["name"].split(".")[0]
+                    if job_project == project:
+                        jobs.append(job["name"])
+                for job in sorted(jobs):
+                    print("  {}".format(job))
+
+
+def container():
+    intro = core4.service.introspect.CoreIntrospector()
+    summary = dict(intro.list_project())
+    print(summary)
+    for project in sorted(summary.keys()):
+        print("{}".format(project))
+        containers = []
+        if summary[project]:
+            if "container" in summary[project]:
+                for container in summary[project]["container"]:
+                    container_project = container["name"].split(".")[0]
+                    if container_project == project:
+                        containers.append(container["name"])
+                for container in sorted(containers):
+                    print("  {}".format(container))
 
 
 def who():
@@ -464,6 +484,8 @@ def main():
         jobs()
     elif args["--project"]:
         project()
+    elif args["--container"]:
+        container()
     else:
         raise SystemExit("nothing to do.")
 
