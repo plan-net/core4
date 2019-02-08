@@ -47,6 +47,8 @@ setup(
         '':
             ["core4.yaml"]
             + package_files("core4/service/project/template/", "^.+$")
+            + package_files("core4/api/v1/request/_static/", "^.+$")
+            + package_files("core4/api/v1/request/standard/template/", "^.+$")
     },
     setup_requires=[
     ],
