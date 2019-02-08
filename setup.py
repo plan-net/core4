@@ -30,8 +30,6 @@ def package_files(directory, pattern):
     return paths
 
 
-
-
 setup(
     name='core4',
     version=core4.__version__,
