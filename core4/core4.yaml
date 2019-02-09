@@ -56,7 +56,7 @@ job:
   force: False
   hidden: False
   wall_time: ~
-  max_parallel: ~
+  max_parallel: 15
   worker: ~
   priority: 0
   schedule: ~

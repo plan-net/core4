@@ -280,6 +280,12 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                         data["name"], data["_id"], *cur_stats[:2])
                     return None
 
+            # check max_parallel
+            count = self.config.sys.queue.count_documents(
+                filter={'name': data["name"],
+                        "locked.worker": self.identifier})
+            if count >= data["max_parallel"]:
+                continue
             # acquire lock
             if not self.queue.lock_job(self.identifier, data["_id"]):
                 self.logger.debug('skipped job [%s] due to lock failure',
