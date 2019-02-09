@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# extract script directory
-script_dir=$(exec 2>/dev/null;cd -- $(dirname "$0"); unset PWD; /usr/bin/pwd || /bin/pwd || pwd)
-
 NO_SOURCE="this script must be sourced, use \`source $script_dir/enter_env\`"
 
 NO_VENV="Python virtualenv required at .venv, make \`python3 -m venv .venv\`"
@@ -18,7 +15,9 @@ if [ $sourced -eq 0 ]; then
 fi
 
 # enter script directory
+script_dir="$( cd "$(dirname "$BASH_SOURCE")" ; pwd -P )"
 cd $script_dir
+
 # test .venv exists
 if [ ! -f .venv/bin/activate ]; then
     echo -e $NO_VENV
