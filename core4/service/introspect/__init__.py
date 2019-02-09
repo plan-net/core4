@@ -513,8 +513,12 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             self.logger.debug("python found at [%s]", python_path)
             os.chdir(os.path.join(home, project))
         cmd = command.format(*args, **kwargs)
-        proc = subprocess.Popen([python_path, "-c", cmd],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if wait:
+            pipe = subprocess.PIPE
+        else:
+            pipe = subprocess.DEVNULL
+        proc = subprocess.Popen([python_path, "-c", cmd], stdout=pipe,
+                                stderr=pipe)
         os.chdir(currdir)
         if wait:
             (stdout, stderr) = proc.communicate()
