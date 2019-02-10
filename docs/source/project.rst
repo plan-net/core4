@@ -11,8 +11,6 @@ package with its own Python virtual environment. It uses core4 functionalities
 and is marked as a core4 project with version, build, title information and an
 optional project description.
 
-.. _project_folder:
-
 A core4 project package named ``project1`` for example has the following
 folder structure::
 
@@ -61,7 +59,7 @@ This will inquire further information from the user and after some confirmation
 the helper script creates the project in the current working directory.
 
 The helper script creates all essential project files as describe above
-(see :ref:`project_folder`).
+(see :ref:`project`).
 
 
 project repository location

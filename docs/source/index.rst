@@ -22,7 +22,7 @@
    intro
    feature
    install
-   example
+   example/index
    why
    project
    job

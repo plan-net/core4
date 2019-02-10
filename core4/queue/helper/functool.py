@@ -1,6 +1,6 @@
 """
-The :mod:`.functool` module implements the helper functions :func:`enqueue`
-and :func:`execute`.
+The :mod:`functool <core4.queue.helper.functool` module implements the helper
+functions :func:`enqueue` and :func:`execute`.
 """
 
 import core4.logger

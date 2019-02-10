@@ -10,9 +10,18 @@ provide relevant insights to business users.
 core4 aims to support this community with the technical bits and pieces and to
 let them focus on their main objectives: data integration and insight creation.
 
-With the bundling of the following features the core4 framwork reduces time to
+The following chart outlines the main components of the core4 framework. It
+consists of three main areas: (1) the core4 backend (blue), (2) the core4
+frontend (green), and (3) general purpose components (grey).
+
+.. figure:: _static/architecture.png
+   :scale: 65%
+   :alt: core4 component overview
+
+
+With the bundling of the following features these components reduce time to
 market for data management, insight extraction and its business application and
-as a consequence  to deliver results to end users in hours or days. Not weeks
+as a consequence deliver results to end users in hours or days. Not weeks
 or months:
 
 * :ref:`automated job execution <job>` - simple schema to automate, monitor
@@ -41,7 +50,3 @@ or months:
   *not so technical* data scientist and data engineer in productionising all
   deliverables, results and tools
 
-
-.. figure:: _static/architecture.png
-   :scale: 65%
-   :alt: core4 component overview
