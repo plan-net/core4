@@ -36,7 +36,7 @@ The structure of the permission scheme for API requests is::
     api://[qual_name]
 
 The ``qual_name`` variable again is parsed as a regular expression matching
-the *qualified name` of the API.
+the *qualified name* of the API.
 
 All users which are to be allowed to manage the ``DummyJob`` at *qual_name*
 ``core4.queue.helper.job.example.DummyJob`` require the following permissions
@@ -100,11 +100,12 @@ core4 configuration keys:
 * ``api.admin_password``
 
 The password is not defined by default and you will have to specifiy it in your
-local settings to be able to launch any application container.
+local settings to be able to launch any application container::
 
-  user_rolename: standard_user
-  user_realname: standard user group
-  user_permission:
+    user_rolename: standard_user
+    user_realname: standard user group
+    user_permission:
+
 
 default role
 ============

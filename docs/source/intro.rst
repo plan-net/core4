@@ -31,7 +31,7 @@ Continue reading with
 
 * a high-level :doc:`feature` of core4
 
-* concrete :doc:`example` when and how to use core
+* concrete :doc:`example/index` when and how to use core
 
 * further details on :doc:`why` from
 
