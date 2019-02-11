@@ -11,7 +11,6 @@ The purpose of this section is to to provide hands-on examples and uses cases.
    :name: examples
 
    prime
-   aws/mongodb
-   aws/core4
+   aws/index
 
 
