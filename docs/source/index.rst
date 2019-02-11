@@ -21,7 +21,7 @@
 
    intro
    feature
-   install
+   install/index
    example/index
    why
    project

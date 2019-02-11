@@ -1,13 +1,8 @@
-.. _install:
+###############################
+prerequisite installation guide
+###############################
 
-############
-installation
-############
-
-prerequisites
-#############
-
-core4 has on the following prerequisites.
+core4 has on the following prerequisites:
 
 * Linux flavour operating system
 * Python 3.5
@@ -16,12 +11,7 @@ core4 has on the following prerequisites.
 * pip
 * git
 
-The following step-by-step guide describes the installation of these
-components for operating systems Debian and Ubuntu.
-
-
-Debian prerequisite installation guide
-======================================
+This step-by-step guide shows how to install and setup all required systems.
 
 Debian 9 ships with Python 3. Check installation with::
 
@@ -81,3 +71,4 @@ Test settings and MongoDB connection now with::
 
     core --who
     mongo --username=core --password=654321 --authenticationDatabase admin
+
