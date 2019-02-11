@@ -92,7 +92,7 @@ watch your context, e.g. with `coco --who`. Therefore, exit current environment
 
 Next, enter project "mypro" Python virtual environment::
 
-    . mypro/enter_env
+    source mypro/enter_env
 
 
 Start a worker with::

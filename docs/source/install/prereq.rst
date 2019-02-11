@@ -69,6 +69,5 @@ Finally restart mongod with::
 
 Test settings and MongoDB connection now with::
 
-    core --who
     mongo --username=core --password=654321 --authenticationDatabase admin
 
