@@ -16,7 +16,9 @@ fi
 
 # enter script directory
 script_dir="$( cd "$(dirname "$BASH_SOURCE")" ; pwd -P )"
-cd $script_dir
+script_base="$( dirname $0 )"
+echo "CWD: $script_dir/$script_base"
+cd $script_dir/$script_base
 
 # test .venv exists
 if [ ! -f .venv/bin/activate ]; then
