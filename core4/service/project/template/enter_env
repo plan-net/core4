@@ -15,9 +15,13 @@ if [ $sourced -eq 0 ]; then
 fi
 
 # enter script directory
-script_dir="$( cd "$(dirname "$BASH_SOURCE")" ; pwd -P )"
+if [ -z $BASH_SOURCE ]; then
+    base=$0
+else
+    base=$BASH_SOURCE
+fi
+script_dir="$( cd "$(dirname "$base")" ; pwd -P )"
 cd $script_dir
-
 # test .venv exists
 if [ ! -f .venv/bin/activate ]; then
     echo -e $NO_VENV
@@ -56,4 +60,5 @@ export _OLD_VIRTUAL_PS1="$PS1"
 export PS1="[ $vname ] $PS1"
 
 echo "PROJECT: $vname"
+echo "CWD: $script_dir"
 echo "PYTHON: `which python` (`python --version`)"
