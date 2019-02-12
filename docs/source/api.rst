@@ -70,7 +70,7 @@ All request handlers inherited from :class:`.CoreRequestHandler` have a
 property ``protected = True`` by default. This requires an authenticated and
 authorised user login to access the resource handler.
 
-All users with permission ``COP`` (core operators) have access to all resource
+All users with permission ``COP`` (core4 operators) have access to all resource
 handlers. All other users must have a permission pattern matching the
 :meth:`.qual_name <core4.base.main.CoreBase.qual_name>` of the resource.
 
@@ -722,7 +722,7 @@ provides additional handler properties available as properties and methods:
 example vue rendering
 #####################
 
-core static file with global variable injection
+core4 static file with global variable injection
 static file with single endpoint to js rendered page
 
 
@@ -735,7 +735,7 @@ tbd.
 example vue rendering
 #####################
 
-core static file with global variable injection
+core4 static file with global variable injection
 static file with single endpoint to js rendered page
 
 

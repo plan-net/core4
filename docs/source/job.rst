@@ -25,8 +25,8 @@ from central logging and configuration to deployment, all this while scaling to 
 CoreJobs
 --------
 
-CoreJobs implement the logic layer of the core architecture and enables the user to fully automate their business logic
-within a fault-tolerant distributed system. Core    Jobs are the starting point for any Data-engineer or -scientist and
+CoreJobs implement the logic layer of the core4s architecture and enables the user to fully automate their business logic
+within a fault-tolerant distributed system. CoreJobs are the starting point for any Data-engineer or -scientist and
 provides a lot of possibilities to easily control the runtime-behavior within the framework.
 
 Example
@@ -81,7 +81,7 @@ Explanation:
 | [4] but wait for two minutes before each trial.
 | [5] The job’s .execute() method is called when compute resources are available.
 | [6] The bild.de RSS feed can be configured and defaults to the given url.
-| [7] This is an INFO message to core central logging system. This is the Python Standard logging logger knowing: DEBUG, INFO, WARNING, ERROR and CRITICAL level messages.
+| [7] This is an INFO message to core4s central logging system. This is the Python Standard logging logger knowing: DEBUG, INFO, WARNING, ERROR and CRITICAL level messages.
 | [8] Use requests to get the feed.
 | [9] Remove all XML tags and split words. I know you can do better with exact parsing of the RSS feed.
 | [10] Build result using CORE’s own timestamp, not thinking about timezones.
@@ -90,7 +90,7 @@ Explanation:
 | [13] and count the number of term occurrences.
 | [14] Update result dict.
 | [15] Be verbose in DEBUG mode (depends on CORE plugin default configuration, here).
-| [16] Get MongoDB connection to collection term.count. Authorisation and access permission management is taken from CORE plugin configuration and the security profile of the caller (man or machine).
+| [16] Get MongoDB connection to collection term.count. Authorisation and access permission management is taken from core4 plugin configuration and the security profile of the caller (man or machine).
 | [17] Insert result into the MongoDB. Note that the job adds some extra information for tracking purposes.
 
 
@@ -100,7 +100,7 @@ Down below you can find a more detailed instruction about various aspects of wri
 Principles
 ----------
 
-CoreJobs implement the logic layer of the core architecture. CoreJobs can broadly be categorised into
+CoreJobs implement the logic layer of the core4s architecture. CoreJobs can broadly be categorised into
 
 -   extraction jobs, scanners and feed readers representing inbound
     interfaces
