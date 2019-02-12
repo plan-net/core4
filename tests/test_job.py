@@ -102,7 +102,7 @@ def test_init():
     assert job.killed_at is None
     assert job.last_error is None
     assert job.locked is None
-    assert job.max_parallel is None
+    assert job.max_parallel == 15
     assert job.worker is None
     assert job.priority == 0
     assert job.name == 'core4.queue.helper.job.example.DummyJob'
