@@ -289,5 +289,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             cls = getattr(module, clsname)
             self.logger.debug("added [%s]", api["name"])
             clist.append(cls)
-        self.serve(*clist, port=port, name=name, address=address,
-                   reuse_port=reuse_port, routing=routing, **kwargs)
+        if scope:
+            self.serve(*clist, port=port, name=name, address=address,
+                       reuse_port=reuse_port, routing=routing, **kwargs)
