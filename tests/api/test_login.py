@@ -332,7 +332,7 @@ def test_login_inactive(http):
     assert rv.status_code == 401
 
 
-class CoreApiTestServer(CoreApiContainer):
+class CoreApiTestServer1(CoreApiContainer):
     rules = [
         (r'/kill', StopHandler)
     ]
@@ -343,7 +343,7 @@ def test_admin_settings1():
     os.environ["CORE4_OPTION_api__admin_password"] = "~"
     os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
     with pytest.raises(TypeError):
-        serve(CoreApiTestServer)
+        serve(CoreApiTestServer1)
 
 
 def test_admin_settings2():
@@ -351,7 +351,7 @@ def test_admin_settings2():
     os.environ["CORE4_OPTION_api__admin_password"] = "123456"
     os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
     with pytest.raises(TypeError):
-        serve(CoreApiTestServer)
+        serve(CoreApiTestServer1)
 
 
 def test_admin_settings3():
@@ -359,4 +359,4 @@ def test_admin_settings3():
     os.environ["CORE4_OPTION_api__admin_password"] = "123456"
     os.environ["CORE4_OPTION_api__contact"] = "~"
     with pytest.raises(TypeError):
-        serve(CoreApiTestServer)
+        serve(CoreApiTestServer1)

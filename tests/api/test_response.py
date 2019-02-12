@@ -97,7 +97,8 @@ class LocalTestServer:
             b = self.base_url
         else:
             b = ""
-        return "http://localhost:{}{}".format(self.port, b) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}{}".format(hostname, self.port, b) + url
 
     def request(self, method, url, base, **kwargs):
         if self.token:
@@ -208,8 +209,9 @@ def test_error_short():
     assert data["code"] == 404
     assert data["message"] == "Not Found"
     msg = data["error"].strip()
+    hostname = core4.util.node.get_hostname()
     assert msg == "tornado.web.HTTPError: HTTP 404: Not Found " \
-                  "(http://localhost:5555/core4/api/v2/xxx)"
+                  "(http://{}:5555/core4/api/v2/xxx)".format(hostname)
     server.stop()
 
 

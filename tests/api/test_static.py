@@ -12,6 +12,7 @@ from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
 from tests.api.test_response import setup
+import core4.util.node
 
 _ = setup
 
@@ -69,7 +70,8 @@ class HttpServer:
         assert self.signin.status_code == 200
 
     def url(self, url):
-        return "http://localhost:{}".format(self.port) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}".format(hostname, self.port) + url
 
     def request(self, method, url, **kwargs):
         if self.token:

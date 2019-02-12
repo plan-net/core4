@@ -166,7 +166,8 @@ class HttpServer:
             b = ""
         if absolute:
             return url
-        return "http://localhost:{}{}".format(self.port, b) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}{}".format(hostname, self.port, b) + url
 
     def request(self, method, url, base, absolute, **kwargs):
         if self.token:

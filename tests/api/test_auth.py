@@ -62,7 +62,8 @@ class HttpServer:
         assert self.signin.status_code == 200
 
     def url(self, url):
-        return "http://localhost:{}".format(self.port) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}".format(hostname, self.port) + url
 
     def request(self, method, url, base=True, **kwargs):
         if base:
