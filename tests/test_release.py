@@ -63,7 +63,7 @@ def test_create(tmpdir):
 
     assert "On branch master" in out
     assert "Your branch is up-to-date with 'origin/master'" in out
-    assert "nothing to commit, working directory clean" in out
+    assert "nothing to commit" in out
 
     os.chdir(tmpdir.strpath)
     core4.service.project.make_project("test_project", "test project",
