@@ -1,7 +1,7 @@
 import logging
 import os
 import pytest
-
+from pprint import pprint
 import core4.logger.mixin
 from core4.queue.job import CoreJob
 from core4.service.introspect import CoreIntrospector
@@ -77,8 +77,12 @@ def test_api_container():
     #print(ret)
 
 
+def test_list_project():
+    intro = CoreIntrospector()
+    data = list(intro.list_project())
+    pprint(data)
+
 
 def test_iter_all():
     intro = CoreIntrospector()
-    from pprint import pprint
     pprint(intro.iter_all())

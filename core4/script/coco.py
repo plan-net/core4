@@ -355,33 +355,37 @@ def jobs():
     intro = core4.service.introspect.CoreIntrospector()
     summary = dict(intro.list_project())
     for project in sorted(summary.keys()):
-        print("{}".format(project))
-        jobs = []
         if summary[project]:
             if "job" in summary[project]:
+                jobs = []
                 for job in summary[project]["job"]:
                     job_project = job["name"].split(".")[0]
                     if job_project == project:
                         jobs.append(job["name"])
-                for job in sorted(jobs):
-                    print("  {}".format(job))
+                if jobs:
+                    print("{}".format(project))
+                    for job in sorted(jobs):
+                        print("  {}".format(job))
 
 
 def container():
     intro = core4.service.introspect.CoreIntrospector()
     summary = dict(intro.list_project())
-    print(summary)
     for project in sorted(summary.keys()):
-        print("{}".format(project))
-        containers = []
         if summary[project]:
             if "container" in summary[project]:
+                containers = []
                 for container in summary[project]["container"]:
                     container_project = container["name"].split(".")[0]
                     if container_project == project:
-                        containers.append(container["name"])
-                for container in sorted(containers):
-                    print("  {}".format(container))
+                        containers.append((container["name"],
+                                           container["rules"]))
+                if containers:
+                    print(project)
+                    for container in sorted(containers):
+                        print("  {}".format(container[0]))
+                        for rule in container[1]:
+                            print("    {}: {}".format(rule[1], rule[0]))
 
 
 def who():
@@ -421,20 +425,19 @@ def who():
 def project():
     intro = core4.service.introspect.CoreIntrospector()
     summary = dict(intro.list_project())
-    print("PROJECTS:")
     for project in sorted(summary.keys()):
         modules = {}
         if summary[project]:
             for mod in summary[project]["project"]:
                 modules[mod["name"]] = mod
-            print("  {} ({}) with Python {}, pip {}".format(
+            print("{} ({}) with Python {}, pip {}".format(
                 modules[project]["name"], modules[project]["version"],
                 summary[project]["python_version"],
                 summary[project]["pip"],
             ))
             for mod in sorted(modules.keys()):
                 if mod != project:
-                    print("    {} ({})".format(
+                    print("  {} ({})".format(
                         modules[mod]["name"], modules[mod]["version"]
                     ))
 
