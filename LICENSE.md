@@ -46,3 +46,51 @@
    * - Flask-Login
      - MIT
      - https://github.com/maxcountryman/flask-login/blob/master/LICENSE
+
+
+|Package |License|
+|--------|-------|
+|Babel|BSD |
+|Jinja2|BSD |
+|MarkupSafe|BSD |
+|PyJWT|MIT |
+|PyYAML|MIT |
+|Pygments|BSD License |
+|Sphinx|BSD |
+|alabaster|Custom |
+|atomicwrites|MIT |
+|attrs|MIT |
+|certifi|MPLv2 |
+|chardet|LGPL |
+|core4|MPLv2 |
+|coverage|Apache 2.0 |
+|croniter|MIT License |
+|docopt|MIT |
+|docutils|public domain, Python, 2-Clause BSD, GPL 3 (see COPYING.txt) |
+|idna|BSD-like |
+|imagesize|MIT |
+|more-itertools|MIT |
+|motor|http://www.apache.org/licenses/LICENSE-2.0 |
+|numpy|BSD |
+|packaging|BSD or Apache License, Version 2.0 |
+|pandas|BSD |
+|passlib|BSD |
+|pathlib2|MIT |
+|pluggy|MIT license |
+|psutil|BSD |
+|py|MIT license |
+|pymongo|Apache 2.0 |
+|pyparsing|MIT License |
+|pytest|MIT license |
+|python-dateutil|Dual License |
+|python-magic|MIT |
+|python-mimeparse|MIT |
+|pytz|MIT |
+|requests|Apache 2.0 |
+|sh|MIT |
+|six|MIT |
+|snowballstemmer|BSD |
+|sphinx-rtd-theme|MIT |
+|sphinxcontrib-websupport|BSD |
+|tornado|Apache 2.0 |
+|urllib3|MIT |
