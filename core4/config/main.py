@@ -6,6 +6,7 @@ import collections
 import collections.abc
 import os
 import pprint
+import copy
 
 import dateutil.parser
 import pkg_resources
@@ -70,6 +71,7 @@ class CoreConfig(collections.MutableMapping):
     system_config = SYSTEM_CONFIG
 
     _config_cache = None
+    _raw_config_cache = None
     _file_cache = {}
     _db_cache = None
     db_info = None
@@ -162,6 +164,16 @@ class CoreConfig(collections.MutableMapping):
             self._config_cache = self._load()
         return self._config_cache
 
+    def raw_config(self, key):
+        """
+        Loads raw configuration data lazily and returns the value of the top level key
+
+        :return: :class:`.ConfigMap`
+        """
+        if self._raw_config_cache is None:
+            self._raw_config_cache = self._load(False)
+        return self._raw_config_cache.get(key)
+
     def _verify_dict(self, variable, message):
         """
         Verifies the passed variable is a Python dict. Raises
@@ -174,7 +186,7 @@ class CoreConfig(collections.MutableMapping):
             raise Core4ConfigurationError(
                 "expected dict with " + message)
 
-    def _parse(self, config, project=None, local=None, extra=None):
+    def _parse(self, config, project=None, local=None, extra=None, apply_default_section=True):
         """
         Parses and merges the passed standard configuration, project
         configuration and local configuration sources.
@@ -183,6 +195,7 @@ class CoreConfig(collections.MutableMapping):
         :param project: tuple with project name and project configuration dict
         :param local: dict with local configuration
         :param extra: dict with extra schema and default values
+        :param apply_default_section: boolean:  add default section to every configuration key
         :return: dict
         """
         # collect standard config and standard DEFAULT
@@ -203,8 +216,11 @@ class CoreConfig(collections.MutableMapping):
             local_config = {}
             local_default = {}
         # merge standard DEFAULT and local DEFAULT
-        default = core4.util.tool.dict_merge(standard_default, local_default)
-        # self._verify_dict(default, "DEFAULT")
+        if apply_default_section:
+            default = core4.util.tool.dict_merge(standard_default, local_default)
+        else:
+            default = {}
+        #self._verify_dict(default, "DEFAULT")
         if project is not None:
             # collect project name, project config and project DEFAULT
             project_name = project[0]
@@ -512,7 +528,7 @@ class CoreConfig(collections.MutableMapping):
                 return conv(upd)
         return value
 
-    def _load(self):
+    def _load(self, apply_default_section=True):
         """
         Loads the configuration from
 
@@ -524,6 +540,7 @@ class CoreConfig(collections.MutableMapping):
         #. MongoDB collection ``sys.conf``
         #. environment variables
 
+        :param apply_default_section :boolean: load raw config parameters or parameters with defaults recursively applied
         :return: :class:`.ConfigMap`
         """
         # extra config
@@ -567,7 +584,7 @@ class CoreConfig(collections.MutableMapping):
 
         # merge OS environ
         data = core4.config.map.ConfigMap(
-            self._parse(standard_data, extra, local_data, self.extra_dict)
+            self._parse(standard_data, extra, local_data, self.extra_dict, apply_default_section)
         )
         return data
 

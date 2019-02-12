@@ -53,3 +53,4 @@ class CoreApiServer(CoreApiContainer):
 
 if __name__ == '__main__':
     serve(CoreApiServer)
+    # serve(CoreApiServer, cookie_secret='super_secret')

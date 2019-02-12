@@ -21,6 +21,7 @@ sys:
   stdout: !connect mongodb://sys.stdout
   userdb: user!
   worker: !connect mongodb://sys.worker
+  setting: !connect mongodb://sys.setting
 
 # system folders
 folder:
@@ -115,5 +116,9 @@ api:
   user_permission:
     - api://core4.api.v1.request.standard.*
   verify_ssl: True
+
+user_setting:
+   _general:
+     language: DE
 
 core4_origin: ssh://git.bi.plan-net.com/srv/git/core4.git
