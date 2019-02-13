@@ -396,7 +396,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
                         traverse(v, t[k])
                     elif isinstance(v, core4.config.tag.ConnectTag):
                         t[k] = core4.config.tag.JobConnectTag(v.conn_str, self)
-                        t[k].set_config(self.config)
+                        t[k].set_config(self.config[self.project])
                         self._connect_tags.append(t[k])
 
         target = {}
