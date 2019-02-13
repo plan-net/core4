@@ -7,6 +7,7 @@ import importlib
 
 import tornado.httpserver
 import tornado.routing
+import tornado.ioloop
 from tornado import gen
 
 import core4.const
