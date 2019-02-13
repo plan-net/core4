@@ -28,10 +28,10 @@ Options:
 import logging
 import re
 import sys
-
 from datetime import datetime, time, timedelta
-from docopt import docopt
 from time import sleep
+
+from docopt import docopt
 
 import core4
 import core4.util.data
