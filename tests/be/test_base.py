@@ -13,7 +13,7 @@ import core4.config.tag
 import core4.error
 import core4.service.setup
 
-ASSET_FOLDER = 'asset'
+ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
 
@@ -227,11 +227,13 @@ def test_unwind_config(mongodb):
         def _make_config(self, *args, **kwargs):
             kwargs["local_dict"] = {
                 "tests": {
-                    "test_base": {
-                        "A": {
-                            "log_level": "WARNING"
+                    "be": {
+                        "test_base": {
+                            "A": {
+                                "log_level": "WARNING"
+                            }
                         }
-                    }
+                    },
                 },
                 "sys": {
                     "log": core4.config.tag.ConnectTag(
@@ -246,7 +248,7 @@ def test_unwind_config(mongodb):
             return XConfig(*args, **kwargs)
 
     a = A()
-    assert "WARNING" == a.config.tests.test_base.A.log_level
+    assert "WARNING" == a.config.tests.be.test_base.A.log_level
     assert "WARNING" == a.log_level
     b = core4.base.CoreBase()
     print("HE?", b.log_level)

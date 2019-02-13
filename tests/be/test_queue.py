@@ -19,7 +19,7 @@ import core4.queue.job
 import core4.queue.main
 import core4.service.setup
 
-ASSET_FOLDER = 'asset'
+ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
 

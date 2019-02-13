@@ -13,7 +13,7 @@ import core4.service.access.manager
 
 curr_dir = os.path.abspath(os.curdir)
 
-ASSET_FOLDER = 'asset'
+ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
 

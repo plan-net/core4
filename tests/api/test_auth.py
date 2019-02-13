@@ -16,6 +16,7 @@ from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
 from core4.queue.helper.functool import execute
 from tests.api.test_response import setup
+import core4.util.node
 
 _ = setup
 

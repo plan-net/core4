@@ -17,7 +17,7 @@ import core4.util
 
 curr_dir = os.path.abspath(os.curdir)
 
-ASSET_FOLDER = 'asset'
+ASSET_FOLDER = '../asset'
 
 def asset(*filename, exists=True):
     dirname = os.path.dirname(__file__)

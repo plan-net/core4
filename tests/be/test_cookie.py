@@ -4,7 +4,7 @@ import pymongo
 
 import core4.base.cookie
 import core4.config
-import tests.util
+import tests.be.util
 
 
 class TestCookie(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestCookie(unittest.TestCase):
         return conn["core4test"]["sys.cookie"]
 
     def tearDown(self):
-        tests.util.drop_env()
+        tests.be.util.drop_env()
 
     def test_set(self):
         cookie = core4.base.cookie.Cookie("test.test2", self.mongo)

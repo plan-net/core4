@@ -17,7 +17,6 @@ import core4.queue.job
 import core4.queue.main
 import core4.queue.worker
 import core4.util.node
-#from tests.pytest_util import *
 
 LOOP_INTERVAL = 0.25
 libc = ctypes.CDLL(None)
@@ -34,7 +33,7 @@ import core4.service.setup
 import core4.util
 import core4.util.tool
 
-ASSET_FOLDER = 'asset'
+ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
 
@@ -862,8 +861,9 @@ def test_stdout(queue, worker, mongodb):
     worker.wait_queue()
     assert mongodb.core4test.sys.stdout.count_documents({}) == 1
     doc = mongodb.core4test.sys.stdout.find_one()
+    print(doc)
     assert doc["_id"] == job._id
-    assert ("this output comes from tests.test_worker.OutputTestJob"
+    assert ("this output comes from tests.be.test_worker.OutputTestJob"
             in doc["stdout"])
     assert ("this comes from echo" in doc["stdout"])
     assert ("this comes from C" in doc["stdout"])

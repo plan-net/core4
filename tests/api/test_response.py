@@ -15,6 +15,7 @@ import core4.service
 from core4.api.v1.application import CoreApiContainer, RootContainer
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.tool.functool import serve
+import core4.util.node
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
@@ -78,14 +79,16 @@ class LocalTestServer:
         self.process = multiprocessing.Process(target=self.run)
         self.process.start()
         while True:
+            print("WAIT")
+            time.sleep(1)
+            tornado.gen.sleep(1)
             try:
                 url = self.url("/core4/api/v1/profile", base=False)
                 rv = requests.get(url, timeout=1)
                 break
             except:
                 pass
-            time.sleep(1)
-            tornado.gen.sleep(1)
+        print("OK")
         self.signin = requests.get(
             self.url("/core4/api/v1/login?username=admin&password=hans",
                      base=False))
@@ -121,6 +124,9 @@ class LocalTestServer:
     def run(self):
         cls = self.start()
         cls.root = self.base_url
+        loop = tornado.ioloop.IOLoop()
+        loop.make_current()
+        print("thread", loop)
         self.serve(cls)
 
     def serve(self, cls, **kwargs):

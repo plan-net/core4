@@ -5,7 +5,7 @@ from pprint import pprint
 import core4.logger.mixin
 from core4.queue.job import CoreJob
 from core4.service.introspect import CoreIntrospector
-from tests.util import asset
+from tests.be.util import asset
 
 
 @pytest.fixture(autouse=True)

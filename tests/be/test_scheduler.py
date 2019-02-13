@@ -14,7 +14,7 @@ import core4.util
 import core4.util.tool
 from core4.queue.main import CoreQueue
 from core4.queue.scheduler import CoreScheduler
-from tests.test_worker import worker, mongodb, queue
+from tests.be.test_worker import worker, mongodb, queue
 
 # from tests.util import asset
 
@@ -22,7 +22,7 @@ w = worker
 m = mongodb
 q = queue
 
-ASSET_FOLDER = 'asset'
+ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
 
@@ -110,11 +110,11 @@ def test_init():
     s.startup()
     time.sleep(1)
     s.startup()
-    assert 'tests.test_scheduler.ValidSchedule1' in s.job.keys()
-    assert 'tests.test_scheduler.ValidSchedule2' in s.job.keys()
-    assert 'tests.test_scheduler.ValidSchedule3' in s.job.keys()
-    assert (s.job['tests.test_scheduler.ValidSchedule1']["created_at"]
-            < s.job['tests.test_scheduler.ValidSchedule1']["updated_at"])
+    assert 'tests.be.test_scheduler.ValidSchedule1' in s.job.keys()
+    assert 'tests.be.test_scheduler.ValidSchedule2' in s.job.keys()
+    assert 'tests.be.test_scheduler.ValidSchedule3' in s.job.keys()
+    assert (s.job['tests.be.test_scheduler.ValidSchedule1']["created_at"]
+            < s.job['tests.be.test_scheduler.ValidSchedule1']["updated_at"])
 
 
 def test_timer(queue, mongodb):
@@ -131,18 +131,18 @@ def test_timer(queue, mongodb):
             enqueued.setdefault(job["name"], []).append(s.at)
         mongodb.core4test.sys.queue.delete_many({})
         s.at += datetime.timedelta(seconds=1)
-    assert (sorted(enqueued['tests.test_scheduler.ValidSchedule1']) == [
+    assert (sorted(enqueued['tests.be.test_scheduler.ValidSchedule1']) == [
         datetime.datetime(2018, 1, 2, 0, 5)])
-    assert (sorted(enqueued['tests.test_scheduler.ValidSchedule2'])
+    assert (sorted(enqueued['tests.be.test_scheduler.ValidSchedule2'])
             == [datetime.datetime(2018, 1, 2, 0, 10)])
-    assert (sorted(enqueued['tests.test_scheduler.ValidSchedule3'])
+    assert (sorted(enqueued['tests.be.test_scheduler.ValidSchedule3'])
             == [datetime.datetime(2018, 1, 2, 0, 28)])
     expected = []
     t = datetime.datetime(2018, 1, 1, 23, 51)
     for i in range(59):
         expected.append(t)
         t += datetime.timedelta(minutes=1)
-    assert (sorted(enqueued['tests.test_scheduler.ValidSchedule4'])
+    assert (sorted(enqueued['tests.be.test_scheduler.ValidSchedule4'])
             == expected)
 
 
@@ -159,10 +159,10 @@ def test_min_timer(queue, mongodb):
             enqueued.setdefault(job["name"], []).append(s.at)
         mongodb.core4test.sys.queue.delete_many({})
         s.at += datetime.timedelta(minutes=1)
-    assert len(enqueued['tests.test_scheduler.ValidSchedule1']) == 6
-    assert len(enqueued['tests.test_scheduler.ValidSchedule2']) == 3
-    assert len(enqueued['tests.test_scheduler.ValidSchedule3']) == 6
-    assert len(enqueued['tests.test_scheduler.ValidSchedule4']) == 359
+    assert len(enqueued['tests.be.test_scheduler.ValidSchedule1']) == 6
+    assert len(enqueued['tests.be.test_scheduler.ValidSchedule2']) == 3
+    assert len(enqueued['tests.be.test_scheduler.ValidSchedule3']) == 6
+    assert len(enqueued['tests.be.test_scheduler.ValidSchedule4']) == 359
 
 
 class GapJob1(core4.queue.job.CoreJob):

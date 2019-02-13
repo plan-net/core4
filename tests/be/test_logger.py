@@ -1,24 +1,23 @@
 import glob
+import importlib
 import logging
 import os
 import unittest
-import importlib
 
 import pymongo
 
 import core4.base
 import core4.config
+import core4.config.test
 import core4.error
 import core4.logger
-import core4.config.test
+import core4.util
 import core4.util.tool
 import project.ident
-import tests.util
-import core4.util
+import tests.be.util
 
 
 class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
-
     cache = False
 
     def __init__(self, *args, **kwargs):
@@ -29,7 +28,7 @@ class LogOn(core4.base.CoreBase, core4.logger.CoreLoggerMixin):
 class TestLogging(unittest.TestCase):
 
     def setUp(self):
-        tests.util.drop_env()
+        tests.be.util.drop_env()
 
         logging.shutdown()
         importlib.reload(logging)
@@ -41,16 +40,16 @@ class TestLogging(unittest.TestCase):
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
                                                  "localhost:27017"
         os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
-        os.environ["CORE4_CONFIG"] = tests.util.asset("config/empty.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("config/empty.yaml")
 
     def drop_logs(self):
         for fn in glob.glob("*.log*"):
-            #print("removed", fn)
+            # print("removed", fn)
             os.unlink(fn)
 
     def tearDown(self):
         self.drop_logs()
-        tests.util.drop_env()
+        tests.be.util.drop_env()
         logging.shutdown()
         importlib.reload(logging)
         core4.util.tool.Singleton._instances = {}
@@ -62,7 +61,7 @@ class TestLogging(unittest.TestCase):
         return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
 
     def test_log(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         b = LogOn()
         b.logger.debug("this is DEBUG")
         b.logger.info("this is INFO")
@@ -77,7 +76,7 @@ class TestLogging(unittest.TestCase):
         self.assertEqual(1, sum([1 for i in data if i["level"] == "CRITICAL"]))
 
     def test_exception(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         b = LogOn()
         try:
             x = 1 / 0
@@ -90,7 +89,7 @@ class TestLogging(unittest.TestCase):
         self.assertIn("division by zero", out)
 
     def test_exception2(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         b = LogOn()
         try:
             raise RuntimeError("this is a manual runtime error")
@@ -105,11 +104,11 @@ class TestLogging(unittest.TestCase):
         self.assertIn("RuntimeError: this is a manual runtime error", out)
 
     def test_inconsistent_setup(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/error.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/error.yaml")
         self.assertRaises(core4.error.Core4SetupError, lambda: LogOn())
 
     def test_extra_logging(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/extra.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/extra.yaml")
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
         b.logger.info("this is an INFO message")
@@ -130,7 +129,7 @@ class TestLogging(unittest.TestCase):
         self.assertEqual(5, len(data["info"]))
 
     def test_exception_disabled(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = ""
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
@@ -138,7 +137,7 @@ class TestLogging(unittest.TestCase):
         self.assertEqual(data, [])
 
     def test_exception_in_debug(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__stdout"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__stderr"] = ""
@@ -155,7 +154,7 @@ class TestLogging(unittest.TestCase):
         self.assertEqual(1, sum([1 for d in data if d["level"] == "WARNING"]))
 
     def test_identifier(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         b = LogOn()
         b.logger.debug("*** START ***")
@@ -164,7 +163,7 @@ class TestLogging(unittest.TestCase):
         b.logger.debug("*** END ***")
 
     def test_massive(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__stderr"] = ""
         os.environ["CORE4_OPTION_logging__stdout"] = ""
@@ -176,7 +175,7 @@ class TestLogging(unittest.TestCase):
         self.assertEqual(70, idented)
 
     def test_format(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
         b = LogOn()
         b.logger.info("hello %s", "world")
@@ -184,7 +183,7 @@ class TestLogging(unittest.TestCase):
         self.assertEqual("hello world", data[-1]["message"])
 
     def test_module_logging(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/module.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/module.yaml")
         b = LogOn()
         b.logger.debug("this is a DEBUG message")
         b.logger.info("this is an INFO message")
@@ -192,11 +191,12 @@ class TestLogging(unittest.TestCase):
         b.logger.error("this is an ERROR message")
         b.logger.critical("this is a CRITICAL error message")
         import other.test
+        print(other.test.x)
         # r = requests.get('http://localhost:27017')
         # self.assertEqual(200, r.status_code)
         data = list(b.config.sys.log.find())
-        # for doc in data:
-        #     print(doc)
+        for doc in data:
+            print(doc)
         expected = ["extra logging setup",
                     "logging setup",
                     "DEBUG message",
@@ -206,6 +206,7 @@ class TestLogging(unittest.TestCase):
                     "CRITICAL error message",
                     "Watch out!",
                     "I told you so"]
+        print("\n".join([d["message"] for d in data]))
         for i, e in enumerate(expected):
             self.assertIn(e, data[i]["message"])
 
@@ -215,7 +216,7 @@ class TestLogging(unittest.TestCase):
             log.removeHandler(i)
             i.flush()
             i.close()
-        expected = ['tests.test_logger.LogOn'] * 7
+        expected = ['tests.be.test_logger.LogOn'] * 7
         for i, e in enumerate(expected):
             self.assertEqual(e, data[i]["qual_name"])
         self.assertIn("test.py", data[-1]["qual_name"])
@@ -230,9 +231,10 @@ class TestLogging(unittest.TestCase):
             self.assertIn(e, body[i])
 
     def test_class_level(self):
-        os.environ["CORE4_CONFIG"] = tests.util.asset("logger/simple.yaml")
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
         os.environ["CORE4_OPTION_base__log_level"] = "INFO"
-        os.environ["CORE4_OPTION_tests__test_logger__C__log_level"] = "DEBUG"
+        os.environ[
+            "CORE4_OPTION_tests__be__test_logger__C__log_level"] = "DEBUG"
         os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
 
         class C(core4.base.CoreBase):
@@ -245,13 +247,13 @@ class TestLogging(unittest.TestCase):
         b.logger.debug("world1")
         b.logger.info("world2")
         c = C()
-        self.assertEqual("DEBUG", c.config.tests.test_logger.C.log_level)
+        self.assertEqual("DEBUG", c.config.tests.be.test_logger.C.log_level)
         c.logger.debug("world3")
         c.logger.info("hello world4")
         d = D()
         d.logger.debug("world5")
         d.logger.info("hello world6")
-        self.assertIsNone(d.config.tests.test_logger.D.log_level)
+        self.assertIsNone(d.config.tests.be.test_logger.D.log_level)
         data = list(b.config.sys.log.find())
         expected = ['world2', 'world3', 'hello world4', 'hello world6']
         self.assertEqual(expected, [d["message"] for d in data])
@@ -259,15 +261,17 @@ class TestLogging(unittest.TestCase):
     def test_class_level2(self):
 
         class A(LogOn):
-
             log_level = "INFO"
             identifier = "A"
+
             def _make_config(self, *args, **kwargs):
                 kwargs["local_dict"] = {
                     "tests": {
-                        "test_logger": {
-                            "A": {
-                                "log_level": self.log_level
+                        "be": {
+                            "test_logger": {
+                                "A": {
+                                    "log_level": self.log_level
+                                }
                             }
                         }
                     },
@@ -355,7 +359,6 @@ class TestLogging(unittest.TestCase):
     def test_log_null(self):
 
         class A(LogOn):
-
             log_level = None
 
             def _make_config(self, *args, **kwargs):
