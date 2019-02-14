@@ -14,7 +14,7 @@ Options:
   -e --end=END              upper timestamp boundary
   -l --level=LEVEL          log level filter
   -p --project=PROJECT      project filter
-  -h --hostname=HOSTNAME    hostname filter
+  -o --hostname=HOSTNAME    hostname filter
   -u --username=USERNAME    username filter
   -q --qual_name=QUAL_NAME  qual_name filter
   -i --identifier=ID        object identifier filter
