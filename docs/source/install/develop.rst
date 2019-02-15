@@ -87,7 +87,7 @@ Since every project comes with it's own Python virtual environment you must
 watch your context, e.g. with `coco --who`. Therefore, exit current environment
 "core4" with::
 
-    exit_env
+    deactivate
 
 
 Next, enter project "mypro" Python virtual environment::
