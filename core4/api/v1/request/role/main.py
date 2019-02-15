@@ -5,6 +5,7 @@ from tornado.web import HTTPError
 import core4.error
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
+from core4.api.v1.request.role.access.manager import CoreAccessManager
 
 
 class RoleHandler(CoreRequestHandler):
@@ -390,6 +391,10 @@ class RoleHandler(CoreRequestHandler):
                 self.reply(ret.to_response())
             else:
                 self.reply("no changes")
+        if "perm" in kwargs:
+            self.logger.debug("revoke access grants")
+            manager = CoreAccessManager(ret)
+            await manager.reset_all()
 
     async def delete(self, _id):
         """

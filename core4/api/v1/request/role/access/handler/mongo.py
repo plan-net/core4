@@ -1,7 +1,7 @@
 import random
 import string
 
-from core4.service.access.handler import BaseHandler
+from core4.api.v1.request.role.access.handler import BaseHandler
 
 #: password length used to create MongoDB access
 PASSWORD_LENGTH = 32
@@ -24,8 +24,8 @@ class MongoHandler(BaseHandler):
     def __init__(self, role, *args, **kwargs):
         super().__init__(role, *args, **kwargs)
         self.token = None
-        self.admin_db = self.config.sys.admin.connection[
-            self.config.sys.admin.database]
+        coll = self.config.sys.admin.connect_async()
+        self.admin_db = coll.connection[self.config.sys.admin.database]
 
     def create_token(self):
         """
@@ -42,19 +42,19 @@ class MongoHandler(BaseHandler):
             self.token = token
         return self.token
 
-    def del_role(self):
+    async def del_role(self):
         """
         This method deletes the MongoDB user and role if exist.
         """
         username = self.role.name
-        user_info = self.admin_db.command("usersInfo", username)
+        user_info = await self.admin_db.command("usersInfo", username)
         if user_info["users"]:
-            self.admin_db.command('dropUser', username)
+            await self.admin_db.command('dropUser', username)
             self.logger.info('removed mongo user [%s]', username)
         else:
             self.logger.debug("mongo user [%s] not found", username)
 
-    def add_role(self):
+    async def add_role(self):
         """
         This method creates the role and returns the token/password created by
         :meth:`.create_token`.
@@ -71,22 +71,23 @@ class MongoHandler(BaseHandler):
         username = self.role.name
         password = self.create_token()
         userdb = "".join([self.config.sys.userdb, username])
-        self.admin_db.command('createUser', username, pwd=password, roles=[])
-        self.admin_db.command(
+        await self.admin_db.command('createUser', username, pwd=password,
+                                    roles=[])
+        await self.admin_db.command(
             'grantRolesToUser', username,
             roles=[{'role': 'dbOwner', 'db': userdb}])
         self.logger.info(
             'created mongo user [%s] with private [%s]', username, userdb)
         return password
 
-    def grant(self, database):
+    async def grant(self, database):
         """
         cascade database permissions and read-only access.
 
         :param database: to grant
         """
         username = self.role.name
-        self.admin_db.command(
+        await self.admin_db.command(
             'grantRolesToUser', username,
             roles=[{'role': 'read', 'db': database}])
         self.logger.info('grant role [%s] access to [%s]', username, database)

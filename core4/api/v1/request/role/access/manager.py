@@ -1,12 +1,12 @@
 from core4.api.v1.request.role.model import CoreRole
 import core4.base
 import core4.error
-import core4.service.access.handler.mongo
+import core4.api.v1.request.role.access.handler.mongo
 from tornado.ioloop import IOLoop
 
 #: key/value pairs of permission protocols and access handlers
 HANDLER = {
-    "mongodb": core4.service.access.handler.mongo.MongoHandler
+    "mongodb": core4.api.v1.request.role.access.handler.mongo.MongoHandler
 }
 
 
@@ -34,40 +34,44 @@ class CoreAccessManager(core4.base.CoreBase):
         """
         Initialises access management for the passed core4 role/user.
 
-        :param role: :class:`.core4.api.v1.role.Role` or role name (str)
+        :param role: :class:`.core4.api.v1.role.Role`
         """
         super().__init__(*args, **kwargs)
-        if isinstance(role, str):
-            role = IOLoop.current().run_sync(
-                lambda: CoreRole().find_one(name=role))
         if not role.is_user:
             raise core4.error.Core4UsageError(
                 "cannot synchronise core4 roles, only users")
         self.role = role
 
-    def synchronise(self):
+    async def synchronise(self, protocol):
         """
-        Executes the access management workflow for each handler as defined
-        by the role's access permission (see :class:`.PermField` and
+        Executes the access management workflow for the passed handler as
+        defined by the role's access permission (see :class:`.PermField` and
         :class:`.Role`.
 
-        :return: dict of protocol and access token (password)
+        :return: access token (password)
         """
-        access = {}
-        for proto in HANDLER:
-            handler = HANDLER[proto](self.role)
-            handler.del_role()
-            access[proto] = handler.add_role()
-        service = {}
-        perms = IOLoop.current().run_sync(self.role.casc_perm)
+        handler = HANDLER[protocol](self.role)
+        await handler.del_role()
+        token = await handler.add_role()
+        perms = await self.role.casc_perm()
         for perm in perms:
             (proto, *database) = perm.split("://")
-            if proto in HANDLER:
-                if proto not in service:
-                    service[proto] = []
-                service[proto].append("://".join(database))
-        for proto, db_list in service.items():
-            for db in db_list:
-                handler.grant(db)
-            handler.finish()
+            if proto == protocol:
+                dbname = "://".join(database)
+                await handler.grant(dbname)
+        await handler.finish()
+        return token
+
+    async def synchronise_all(self):
+        access = {}
+        for proto in HANDLER:
+            access[proto] = await self.synchronise(proto)
         return access
+
+    async def reset(self, protocol):
+        handler = HANDLER[protocol](self.role)
+        await handler.del_role()
+
+    async def reset_all(self):
+        for proto in HANDLER:
+            await self.reset(proto)

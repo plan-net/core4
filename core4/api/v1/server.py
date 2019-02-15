@@ -29,6 +29,7 @@ from core4.api.v1.request.queue.job import JobStream
 from core4.api.v1.request.queue.state import QueueHandler
 from core4.api.v1.request.queue.state import QueueStatus
 from core4.api.v1.request.role.main import RoleHandler
+from core4.api.v1.request.standard.access import AccessHandler
 from core4.api.v1.tool.functool import serve
 
 # sys.stat query object
@@ -48,6 +49,7 @@ class CoreApiServer(CoreApiContainer):
         (r'/jobs/?(.*)', JobHandler),
         (r'/enqueue', JobPost),
         (r'/roles/?(.*)', RoleHandler),
+        (r'/access/?(.*)', AccessHandler),
     ]
 
 

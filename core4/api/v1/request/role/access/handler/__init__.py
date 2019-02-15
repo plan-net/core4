@@ -25,13 +25,13 @@ class BaseHandler(core4.base.CoreBase):
         """
         raise NotImplementedError()  # pragma: no cover
 
-    def del_role(self):
+    async def del_role(self):
         """
         This method deletes the role if exists.
         """
         raise NotImplementedError()  # pragma: no cover
 
-    def add_role(self):
+    async def add_role(self):
         """
         This method creates the role and returns the token/password created by
         :meth:`.create_token`.
@@ -40,7 +40,7 @@ class BaseHandler(core4.base.CoreBase):
         """
         raise NotImplementedError()  # pragma: no cover
 
-    def grant(self, database):
+    async def grant(self, database):
         """
         This method grants read-only access to the passed database.
 
@@ -48,7 +48,7 @@ class BaseHandler(core4.base.CoreBase):
         """
         raise NotImplementedError()  # pragma: no cover
 
-    def finish(self):
+    async def finish(self):
         """
         This optional method finishes the workflow of the handler.
         """

@@ -79,7 +79,6 @@ class LocalTestServer:
         self.process = multiprocessing.Process(target=self.run)
         self.process.start()
         while True:
-            print("WAIT")
             time.sleep(1)
             tornado.gen.sleep(1)
             try:
