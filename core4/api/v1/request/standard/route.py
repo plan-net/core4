@@ -5,9 +5,10 @@ collection.
 import core4.const
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.pager import CorePager
+from core4.queue.query import QueryMixin
 
 
-class RouteHandler(CoreRequestHandler):
+class RouteHandler(CoreRequestHandler, QueryMixin):
     title = "core4 api/widget endpoint collection"
     author = "mra"
 
@@ -64,7 +65,6 @@ class RouteHandler(CoreRequestHandler):
         if query is not None:
             filter_by.append(query)
         coll = self.config.sys.handler.connect_async()
-        data = []
 
         pipeline = [
             {
@@ -83,47 +83,30 @@ class RouteHandler(CoreRequestHandler):
                     "title": 1
                 }
             },
-            {
-                "$group": {
-                    "_id": "$route_id",
-                    "project": {"$first": "$project"},
-                    "tag": {"$first": "$tag"},
-                    "routing": {"$first": "$routing"},
-                    "qual_name": {"$first": "$qual_name"},
-                    "title": {"$first": "$title"},
-                }
-            },
-            {
-                "$project": {
-                    "route_id": "$_id",
-                    "project": "$project",
-                    "tag": "$tag",
-                    "routing": "$routing",
-                    "qual_name": "$qual_name",
-                    "title": "$title",
-
-                }
-            }
 
         ]
-
+        nodes = ["{}://{}:{}".format(n["protocol"], n["hostname"], n["port"])
+                 for n in self.get_daemon(kind="app")]
+        data = {}
         async for doc in coll.aggregate(pipeline):
             if await self.user.has_api_access(doc["qual_name"]):
-                doc["help_url"] = doc["routing"] \
-                                  + core4.const.HELP_URL \
-                                  + "/" + doc["route_id"]
-                doc["enter_url"] = doc["routing"] \
-                                   + core4.const.ENTER_URL \
-                                   + "/" + doc["route_id"]
-                doc["card_url"] = doc["routing"] \
-                                  + core4.const.CARD_URL \
-                                  + "/" + doc["route_id"]
-                data.append(doc)
+                if doc["routing"] in nodes:
+                    doc["help_url"] = doc["routing"] \
+                                      + core4.const.HELP_URL \
+                                      + "/" + doc["route_id"]
+                    doc["enter_url"] = doc["routing"] \
+                                       + core4.const.ENTER_URL \
+                                       + "/" + doc["route_id"]
+                    doc["card_url"] = doc["routing"] \
+                                      + core4.const.CARD_URL \
+                                      + "/" + doc["route_id"]
+                    data[doc["route_id"]] = doc
+        data = list(data.values())
 
-        async def _length(filter):
+        async def _length(**_):
             return len(data)
 
-        async def _query(skip, limit, filter, sort_by):
+        async def _query(skip, limit, *_, **__):
             return data[skip:skip + limit]
 
         pager = CorePager(per_page=int(per_page),

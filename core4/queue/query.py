@@ -18,7 +18,7 @@ class QueryMixin:
     ``sys.journal``, ``sys.stdout`` and ``sys.worker``.
     """
 
-    def get_daemon(self, hostname=None):
+    def get_daemon(self, **kwargs):
         """
         Retrieves information about all daemons alive. This includes
 
@@ -33,16 +33,15 @@ class QueryMixin:
                   The alive timeout can be configured by config section
                   ``alive.timeout``.
 
+        :param kwargs: query filter
         :return: dict
         """
         timeout = self.config.daemon.alive_timeout
         pipeline = []
-        if hostname is not None:
+        if kwargs:
             pipeline += [
                 {
-                    "$match": {
-                        "hostname": hostname
-                    }
+                    "$match": kwargs
                 }
             ]
         pipeline += [
@@ -66,7 +65,10 @@ class QueryMixin:
                     "heartbeat": 1,
                     "loop": "$phase.loop",
                     "kind": 1,
-                    "pid": 1
+                    "pid": 1,
+                    "hostname": 1,
+                    "port": 1,
+                    "protocol": 1
                 }
             },
             {"$sort": {"kind": 1, "_id": 1}}
