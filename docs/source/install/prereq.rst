@@ -20,7 +20,8 @@ Debian 9 ships with Python 3. Check installation with::
 
 Install pip for Python 3, python-venv and git with::
 
-    sudo apt-get install python3-pip python3-venv git
+    sudo apt-get install python3-pip python3-venv git python3-dev
+
 
 
 Install MongoDB and enable the service to start at boot time with::
