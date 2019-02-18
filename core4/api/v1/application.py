@@ -37,6 +37,7 @@ dedicated core4 api endpoint (defaults to ``/core4/api/v1``).
 """
 
 import hashlib
+from pprint import pformat
 
 import tornado.routing
 import tornado.web
@@ -55,13 +56,17 @@ from core4.api.v1.request.standard.route import RouteHandler
 from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
-from pprint import pformat
 
 STATIC_PATTERN = "(?:/(.*))?$"
 
 
-# todo: requires documentation
 class CoreRoutingRule(tornado.routing.Rule):
+    """
+    Routing rule inherited from :class:`tornado.routing.Rule. Adds the
+    rule attribute ``.route_id``  which is used by core4 to identify rules
+    without a route_name.
+    """
+
     def __init__(self, route_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.route_id = route_id
@@ -147,14 +152,15 @@ class CoreApiContainer(CoreBase):
             return root + path
         return root
 
-    # todo: requires documentation
     def iter_rule(self):
         """
-        Returns the full path to the request handlers as defined by the
-        container's :attr:`rules` attribute.
+        Returns a :class:`tornado.web.URLSpec` as specified by the container's
+        :attr:`rules` attribute. This rule attribute can either be an
+        ``URLSpec`` by itself or a tuple of ``pattern``, ``handler`` class,
+        an optional ``kwargs`` to be passed to the handler and an optional
+        rule ``name``.
 
-        :return: list of tuples with route, request handler and handler
-            parameters
+        :return: yields :class:`tornado.web.URLSpec` objects
         """
         for ret in self.rules:
             if isinstance(ret, tornado.web.URLSpec):
@@ -203,7 +209,6 @@ class CoreApiContainer(CoreBase):
         for rule in self.iter_rule():
             routing = rule.regex.pattern
             cls = rule.target
-            routing = self.parse_routing(routing)
             kwargs = rule.kwargs
             # md5 includes prefix and route
             sorted_kwargs = pformat(kwargs)
@@ -233,11 +238,6 @@ class CoreApiContainer(CoreBase):
             RootContainer.routes[md5_route] = (app, *routes[md5_route])
         self.started = core4.util.node.now()
         return app
-
-    # todo: obsolete
-    def parse_routing(self, route):
-
-        return route
 
 
 class CoreApplication(tornado.web.Application):

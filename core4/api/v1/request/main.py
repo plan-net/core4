@@ -17,10 +17,10 @@ import tornado.escape
 import tornado.gen
 import tornado.httputil
 import tornado.iostream
+import tornado.routing
 import tornado.template
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
-import tornado.routing
 
 import core4.const
 import core4.error
@@ -993,17 +993,24 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                     await tornado.gen.sleep(0.000000001)  # 1 nanosecond
         self.finish()
 
-    # todo: requires finish
-    async def reverse_url(self, name, *args, **kwargs):
+    async def reverse_url(self, name, *args):
+        """
+        Returns a URL path for handler named ``name``
+
+        Args will be substituted for capturing groups in the `URLSpec` regex.
+        They will be converted to strings if necessary, encoded as utf8,
+        and url-escaped.
+
+        :param name: handler name as defined in :class:`.CoreApiContainer`
+        :param args: arguments for capturing groups
+        :return: url path (str)
+        """
         handler = self.config.sys.handler.connect_async()
         worker = self.config.sys.worker.connect_async()
         timeout = self.config.daemon.alive_timeout
-        query = {
-            "started_at": {"$ne": None},
-            "name": name
-        }
         found = []
-        async for doc in handler.find(query):
+        async for doc in handler.find({"started_at": {"$ne": None},
+                                       "name": name}):
             # checkalive
             alive = await worker.count_documents({
                 "kind": "app",
@@ -1014,12 +1021,10 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                 "phase.shutdown": None,
                 "$or": [
                     {"heartbeat": None},
-                    {
-                        "heartbeat": {
-                            "$gte": core4.util.node.mongo_now() -
-                                    datetime.timedelta(seconds=timeout)
-                        }
-                    }
+                    dict(heartbeat={
+                        "$gte": (core4.util.node.mongo_now() -
+                                 datetime.timedelta(seconds=timeout))
+                    })
                 ]
             })
             if alive > 0:
@@ -1029,4 +1034,4 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             matcher = tornado.routing.PathMatches(route["pattern"])
             url = matcher.reverse(*args)
             return url
-        raise KeyError("%s not found in named urls" % name)
+        raise KeyError("%s not found or not unique in named urls" % name)
