@@ -221,8 +221,11 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                 if not obj.enabled:
                     self.logger.debug("not enabled [%s]", qual_name)
                     continue
-                rules = [(r[0], r[1].qual_name()) for r in obj.rules]
+                rules = []
+                for r in obj.iter_rule():
+                    rules.append((r.regex.pattern, r.target.qual_name()))
                 exception = None
+                self.logger.info("done [%s]", qual_name)
             except:
                 exc_info = sys.exc_info()
                 exception = {

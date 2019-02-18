@@ -176,7 +176,8 @@ def test_grant(http):
     http.token = token
     rv = http.post("/access/mongodb")
     assert rv.status_code == 200
-    access = rv.json()["data"]["mongodb"]
+    print(rv.json())
+    access = rv.json()["data"]
     print(access)
 
     mongo = pymongo.MongoClient("mongodb://test_role1:" + access + "@localhost:27017")

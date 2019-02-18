@@ -54,16 +54,12 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
                                           default_static)
         path = self.request.path[len(core4.const.INFO_URL) + 1:]
         (mode, md5_route, *path) = path.split("/")
-        (app, container, pattern, cls, *args) = self.application.find_md5(
-            md5_route)
+        (app, container, specs) = self.application.find_md5(md5_route)
         if mode == "def":
             root = default_static
         elif mode == "pro":
-            if args:
-                kwargs = args[0]
-            else:
-                kwargs = {}
-            root = cls.set_path("static_path", container, **kwargs)
+            root = specs.target.set_path("static_path", container,
+                                         **specs.target_kwargs)
         else:
             root = default_static
         self.root = root

@@ -4,15 +4,15 @@
 core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
 """
 import base64
+import datetime
 import os
+import time
 import traceback
 
-import datetime
 import dateutil.parser
 import jwt
 import mimeparse
 import pandas as pd
-import time
 import tornado.escape
 import tornado.gen
 import tornado.httputil
@@ -20,6 +20,7 @@ import tornado.iostream
 import tornado.template
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
+import tornado.routing
 
 import core4.const
 import core4.error
@@ -356,11 +357,12 @@ class CoreBaseHandler(CoreBase):
         self.request.method = "GET"
         parts = self.request.path.split("/")
         md5_route = parts[-1]
-
+        (app, container, specs) = self.application.find_md5(md5_route)
         self.absolute_path = None
         if self.enter_url is None:
             self.enter_url = "/".join([core4.const.ENTER_URL, md5_route])
         self.help_url = "/".join([core4.const.HELP_URL, md5_route])
+        self.url_name = specs.name or md5_route
         return self.card()
 
     def xenter(self, *args, **kwargs):
@@ -504,7 +506,7 @@ class CoreBaseHandler(CoreBase):
         for rule in self.application.wildcard_router.rules:
             route = rule.matcher.match(self.request)
             if route is not None:
-                return rule.name
+                return rule.route_id
         return None
 
     def write_error(self, status_code, **kwargs):
@@ -986,8 +988,45 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                         break
                     self.write(data)
                 except tornado.iostream.StreamClosedError:
-                    print("NO")
                     break
                 finally:
                     await tornado.gen.sleep(0.000000001)  # 1 nanosecond
         self.finish()
+
+    # todo: requires finish
+    async def reverse_url(self, name, *args, **kwargs):
+        handler = self.config.sys.handler.connect_async()
+        worker = self.config.sys.worker.connect_async()
+        timeout = self.config.daemon.alive_timeout
+        query = {
+            "started_at": {"$ne": None},
+            "name": name
+        }
+        found = []
+        async for doc in handler.find(query):
+            # checkalive
+            alive = await worker.count_documents({
+                "kind": "app",
+                "hostname": doc["hostname"],
+                "port": doc["port"],
+                "protocol": doc["protocol"],
+                "heartbeat": {"$exists": True},
+                "phase.shutdown": None,
+                "$or": [
+                    {"heartbeat": None},
+                    {
+                        "heartbeat": {
+                            "$gte": core4.util.node.mongo_now() -
+                                    datetime.timedelta(seconds=timeout)
+                        }
+                    }
+                ]
+            })
+            if alive > 0:
+                found.append(doc)
+        if len(found) == 1:
+            route = found[0]
+            matcher = tornado.routing.PathMatches(route["pattern"])
+            url = matcher.reverse(*args)
+            return url
+        raise KeyError("%s not found in named urls" % name)

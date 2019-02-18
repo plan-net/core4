@@ -76,34 +76,34 @@ class InfoHandler(CoreRequestHandler):
 
         parts = ids.split("/")
         md5_route = parts[0]
-        rule = self.application.container.routes[md5_route]
-        (app, container, pattern, cls, *args) = rule
-        html = rst2html(str(cls.__doc__))
+        (app, container, specs) = self.application.container.routes[md5_route]
+        html = rst2html(str(specs.target.__doc__))
         doc = dict(
             route_id=md5_route,
-            pattern=pattern,
-            args=str(args),
-            author=cls.author,
+            pattern=specs.regex.pattern,
+            args=str(specs.target_kwargs),
+            author=specs.target.author,
             container=container.qual_name(),
             description=html["body"],
             error=html["error"],
-            icon=cls.icon,
-            project=cls.get_project(),
-            protected=cls.protected,
-            qual_name=cls.qual_name(),
-            tag=cls.tag,
-            title=cls.title,
-            version=cls.version(),
+            icon=specs.target.icon,
+            project=specs.target.get_project(),
+            protected=specs.target.protected,
+            qual_name=specs.target.qual_name(),
+            url_name=specs.name or md5_route,
+            tag=specs.target.tag,
+            title=specs.target.title,
+            version=specs.target.version(),
         )
-        if args:
-            for attr in cls.propagate:
+        if specs.target_kwargs:
+            for attr in specs.target.propagate:
                 if attr in doc:
-                    doc[attr] = args[0].get(attr, doc[attr])
+                    doc[attr] = specs.target_kwargs.get(attr, doc[attr])
 
         doc["help_url"] = core4.const.HELP_URL + "/" + doc["route_id"]
         doc["enter_url"] = core4.const.ENTER_URL + "/" + doc["route_id"]
         doc["card_url"] = core4.const.CARD_URL + "/" + doc["route_id"]
-        doc["method"] = self.application.handler_help(cls)
+        doc["method"] = self.application.handler_help(specs.target)
 
         if self.wants_html():
             return self.render("standard/template/help.html", **doc)

@@ -39,6 +39,8 @@ publisher = QueueStatus()
 IOLoop.current().spawn_callback(publisher.update)
 
 
+from tornado.web import URLSpec
+
 class CoreApiServer(CoreApiContainer):
     """
     Default :class:`.CoreApiContainer` serving the standard core4 endpoints
@@ -47,11 +49,15 @@ class CoreApiServer(CoreApiContainer):
     root = "/coco/v1/"
     rules = [
         (r'/queue', QueueHandler, dict(source=publisher)),
-        (r'/jobs/poll/?(.*)', JobStream),
-        (r'/jobs/?(.*)', JobHandler),
+        (r'/jobs/poll', JobStream),
+        (r'/jobs/poll/(.*)', JobStream, None, "polling"),
+        (r'/jobs', JobHandler),
+        (r'/jobs/(.*)', JobHandler),
         (r'/enqueue', JobPost),
-        (r'/roles/?(.*)', RoleHandler),
-        (r'/access/?(.*)', AccessHandler),
+        (r'/roles', RoleHandler),
+        (r'/roles/(.*)', RoleHandler),
+        (r'/access', AccessHandler),
+        (r'/access/(.*)', AccessHandler),
     ]
 
 

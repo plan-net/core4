@@ -132,7 +132,7 @@ def test_server_test(http):
 def test_card(http):
     rv = http.get("/tests/static1")
     assert rv.status_code == 200
-    card = "/core4/api/v1/info/card/ef13b4dee776ae71bf285aacd0705361"
+    card = "/core4/api/v1/info/card/be596b2d241cbecdc0e59978e678fa6f"
     rv = http.get(card)
     assert rv.status_code == 200
 
@@ -140,7 +140,7 @@ def test_card(http):
 def test_filehandler_card(http):
     rv = http.get("/tests/static1")
     assert rv.status_code == 200
-    card = "/core4/api/v1/info/card/6ce61cf401532ca8a6cf593e4cf38baa"
+    card = "/core4/api/v1/info/card/be596b2d241cbecdc0e59978e678fa6f"
     rv = http.get(card)
     assert rv.status_code == 200
 
@@ -165,7 +165,7 @@ def test_custom_card(http):
     rv = http.get("/tests/card1")
     assert rv.status_code == 200
     pprint(rv.content)
-    card = "/core4/api/v1/info/card/f8366bcd98fc563b7a7f4d05880d72b2"
+    card = "/core4/api/v1/info/card/80c2d82f0ca22d1e9fdc3ec6be27276d"
     rv = http.get(card)
     assert rv.status_code == 200
 
@@ -178,7 +178,7 @@ def test_error(http):
 
 
 def test_link(http):
-    rv = http.get("/core4/api/v1/info/card/bde8d5ee19cf01b1d5d74defc6bf6df3")
+    rv = http.get("/core4/api/v1/info/card/815bf65619eb07fddd36b335dd72649d")
     assert rv.status_code == 200
     assert '<b>ENTER:</b> <a href="http://www.google.de"' in rv.content.decode(
         "utf-8")

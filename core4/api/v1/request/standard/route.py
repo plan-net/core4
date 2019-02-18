@@ -89,21 +89,23 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
         ]
         nodes = ["{}://{}:{}".format(n["protocol"], n["hostname"], n["port"])
                  for n in self.get_daemon(kind="app")]
-        data = {}
+        data = []
+        seen = set()
         async for doc in coll.aggregate(pipeline):
             if await self.user.has_api_access(doc["qual_name"]):
                 if doc["routing"] in nodes:
-                    doc["help_url"] = doc["routing"] \
-                                      + core4.const.HELP_URL \
-                                      + "/" + doc["route_id"]
-                    doc["enter_url"] = doc["routing"] \
-                                       + core4.const.ENTER_URL \
-                                       + "/" + doc["route_id"]
-                    doc["card_url"] = doc["routing"] \
-                                      + core4.const.CARD_URL \
-                                      + "/" + doc["route_id"]
-                    data[doc["route_id"]] = doc
-        data = list(data.values())
+                    if doc["route_id"] not in seen:
+                        doc["help_url"] = doc["routing"] \
+                                          + core4.const.HELP_URL \
+                                          + "/" + doc["route_id"]
+                        doc["enter_url"] = doc["routing"] \
+                                           + core4.const.ENTER_URL \
+                                           + "/" + doc["route_id"]
+                        doc["card_url"] = doc["routing"] \
+                                          + core4.const.CARD_URL \
+                                          + "/" + doc["route_id"]
+                        data.append(doc)
+                        seen.add(doc["route_id"])
 
         async def _length(**_):
             return len(data)

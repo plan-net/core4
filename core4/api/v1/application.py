@@ -55,8 +55,16 @@ from core4.api.v1.request.standard.route import RouteHandler
 from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
+from pprint import pformat
 
 STATIC_PATTERN = "(?:/(.*))?$"
+
+
+# todo: requires documentation
+class CoreRoutingRule(tornado.routing.Rule):
+    def __init__(self, route_id, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.route_id = route_id
 
 
 class CoreApiContainer(CoreBase):
@@ -139,6 +147,7 @@ class CoreApiContainer(CoreBase):
             return root + path
         return root
 
+    # todo: requires documentation
     def iter_rule(self):
         """
         Returns the full path to the request handlers as defined by the
@@ -147,7 +156,38 @@ class CoreApiContainer(CoreBase):
         :return: list of tuples with route, request handler and handler
             parameters
         """
-        return ((self.get_root(ret[0]), *ret[1:]) for ret in self.rules)
+        for ret in self.rules:
+            if isinstance(ret, tornado.web.URLSpec):
+                pattern = self.get_root(ret.regex.pattern)
+                handler = ret.target
+                kwargs = ret.kwargs
+                name = ret.name
+            else:
+                ret = list(ret)
+                pattern = self.get_root(ret.pop(0))
+                handler = ret.pop(0)
+                if not issubclass(handler, tornado.web.RequestHandler):
+                    raise core4.error.Core4SetupError(
+                        "expected subclass of RequestHandler, not [{}]".format(
+                            type(handler)
+                        )
+                    )
+                try:
+                    kwargs = ret.pop(0)
+                except IndexError:
+                    kwargs = None
+                try:
+                    name = ret.pop(0)
+                except IndexError:
+                    name = None
+            if issubclass(handler, CoreStaticFileHandler):
+                pattern += STATIC_PATTERN
+            yield tornado.web.URLSpec(
+                pattern=pattern,
+                handler=handler,
+                kwargs=kwargs,
+                name=name
+            )
 
     def make_application(self):
         """
@@ -161,43 +201,43 @@ class CoreApiContainer(CoreBase):
         rules = []
         routes = {}
         for rule in self.iter_rule():
-            if isinstance(rule, (tuple, list)):
-                if len(rule) >= 2:
-                    routing = rule[0]
-                    cls = rule[1]
-                    if (isinstance(routing, str)
-                            and issubclass(cls, tornado.web.RequestHandler)):
-                        if issubclass(cls, CoreStaticFileHandler):
-                            routing += STATIC_PATTERN
-                        # md5 includes prefix and route
-                        md5_route = hashlib.md5(
-                            routing.encode("utf-8")).hexdigest()
-                        if md5_route not in unique:
-                            unique.add(md5_route)
-                            rules.append(
-                                tornado.routing.Rule(
-                                    tornado.routing.PathMatches(routing),
-                                    *rule[1:], name=md5_route))
-                            # lookup applies to core request handlers only
-                            if issubclass(cls, CoreBaseHandler):
-                                routes[md5_route] = (self, *rule)
-                                self.logger.info(
-                                    "started [%s] on [%s] as [%s]",
-                                    routes[md5_route][2].__name__,
-                                    routes[md5_route][1],
-                                    md5_route)
-                        else:
-                            raise core4.error.Core4SetupError(
-                                "route [%s] already exists" % routing)
-                        continue
-            raise core4.error.Core4SetupError(
-                "routing requires list of tuples (str, handler, *args)")
+            routing = rule.regex.pattern
+            cls = rule.target
+            routing = self.parse_routing(routing)
+            kwargs = rule.kwargs
+            # md5 includes prefix and route
+            sorted_kwargs = pformat(kwargs)
+            hash_base = "{}:{}".format(cls.qual_name(), sorted_kwargs)
+            md5_route = hashlib.md5(hash_base.encode("utf-8")).hexdigest()
+            if routing not in unique:
+                unique.add(routing)
+                rules.append(
+                    CoreRoutingRule(
+                        md5_route,
+                        tornado.routing.PathMatches(routing),
+                        target=cls, target_kwargs=kwargs, name=rule.name))
+                # lookup applies to core request handlers only
+                if issubclass(cls, CoreBaseHandler):
+                    routes[md5_route] = (self, rule)
+                    self.logger.info(
+                        "started [%s] on [%s] as [%s] with [%s]",
+                        rule.target.qual_name(),
+                        rule.regex.pattern,
+                        rule.name or md5_route, kwargs)
+            else:
+                raise core4.error.Core4SetupError(
+                    "route [%s] already exists" % routing)
         app = CoreApplication(rules, self, **self._settings)
         # transfer routes lookup with handler/routing md5 and app to container
         for md5_route in routes:
             RootContainer.routes[md5_route] = (app, *routes[md5_route])
         self.started = core4.util.node.now()
         return app
+
+    # todo: obsolete
+    def parse_routing(self, route):
+
+        return route
 
 
 class CoreApplication(tornado.web.Application):
@@ -232,13 +272,15 @@ class CoreApplication(tornado.web.Application):
             return self.find_md5(md5_route_id)
 
         if request.path.startswith(core4.const.CARD_URL):
-            (app, container, pattern, cls, *args) = _find()
+            (app, container, specs) = _find()
             request.method = core4.const.CARD_METHOD
-            return self.get_handler_delegate(request, cls, *args)
+            return self.get_handler_delegate(request, specs.target,
+                                             specs.target_kwargs)
         elif request.path.startswith(core4.const.ENTER_URL):
-            (app, container, pattern, cls, *args) = _find()
+            (app, container, specs) = _find()
             request.method = core4.const.ENTER_METHOD
-            return self.get_handler_delegate(request, cls, *args)
+            return self.get_handler_delegate(request, specs.target,
+                                             specs.target_kwargs)
         return super().find_handler(request, **kwargs)
 
     def find_md5(self, md5_qual_name):
@@ -291,7 +333,8 @@ class RootContainer(CoreApiContainer):
         (core4.const.CORE4_API + r"/file/(.*)", CoreAssetHandler),
         (core4.const.CORE4_API + r'/info', RouteHandler),
         (core4.const.CORE4_API + r'/info/(.+)', InfoHandler),
-        (core4.const.CORE4_API + r'/setting/?(.*)', SettingHandler),
+        (core4.const.CORE4_API + r'/setting', SettingHandler),
+        (core4.const.CORE4_API + r'/setting/(.*)', SettingHandler),
         (r'', CoreStaticFileHandler, {
             "path": "./request/_static",
             "protected": False,

@@ -75,6 +75,6 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
         ret = self.application.find_md5(md5_route_id)
         if ret is None:
             return self.redirect("/")
-        (app, container, pattern, cls, *args) = ret
-        self.logger.info("redirecting to [%s]", pattern)
-        return self.redirect(pattern or "/")
+        (app, container, specs) = ret
+        self.logger.info("redirecting to [%s]", specs.regex.pattern)
+        return self.redirect(specs.regex.pattern or "/")

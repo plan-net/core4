@@ -190,10 +190,15 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.reset_handler()
         coll = self.config.sys.handler
         for md5_route, rule in RootContainer.routes.items():
-            (app, container, pattern, cls, *args) = rule
+            (app, container, specs) = rule
+            pattern = specs.regex.pattern
+            cls = specs.target
+            args = specs.target_kwargs
             html = rst2html(str(cls.__doc__))
             doc = dict(
                 routing=self.routing,
+                # todo: rename to url_name
+                name=specs.name or md5_route,
                 pattern=pattern,
                 args=str(args),
                 author=cls.author,
@@ -213,7 +218,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             if args:
                 for attr in cls.propagate:
                     if attr in doc:
-                        doc[attr] = args[0].get(attr, doc[attr])
+                        doc[attr] = args.get(attr, doc[attr])
             coll.update_one(
                 {
                     "hostname": self.hostname,

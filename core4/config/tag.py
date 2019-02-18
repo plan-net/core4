@@ -136,7 +136,6 @@ class ConnectTag(yaml.YAMLObject):
                       :mod:`pymongo` (default).
         :return: :class:`.CoreCollection`
         """
-
         if self._mongo is None:
             params = {"mongo_url": self.config.get("mongo_url"),
                       "mongo_database": self.config.get("mongo_database"),
