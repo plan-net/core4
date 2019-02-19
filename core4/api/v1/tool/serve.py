@@ -8,8 +8,8 @@ Implements :class:`.CoreApiServerTool to serve one or multiple
 import importlib
 
 import tornado.httpserver
-import tornado.routing
 import tornado.ioloop
+import tornado.routing
 from tornado import gen
 
 import core4.const
@@ -187,52 +187,56 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         self.logger.info("registering server [%s] at [%s]", self.identifier,
                          self.routing)
-        self.reset_handler()
-        coll = self.config.sys.handler
-        for md5_route, rule in RootContainer.routes.items():
-            (app, container, specs) = rule
-            pattern = specs.regex.pattern
-            cls = specs.target
-            args = specs.target_kwargs
-            html = rst2html(str(cls.__doc__))
-            doc = dict(
-                routing=self.routing,
-                # todo: rename to url_name
-                name=specs.name or md5_route,
-                pattern=pattern,
-                args=str(args),
-                author=cls.author,
-                container=container.qual_name(),
-                description=html["body"],
-                error=html["error"],
-                icon=cls.icon,
-                project=cls.get_project(),
-                protected=cls.protected,
-                protocol=self.protocol,
-                qual_name=cls.qual_name(),
-                tag=cls.tag,
-                title=cls.title,
-                version=cls.version(),
-                started_at=self.startup
-            )
-            if args:
-                for attr in cls.propagate:
-                    if attr in doc:
-                        doc[attr] = args.get(attr, doc[attr])
-            coll.update_one(
-                {
-                    "hostname": self.hostname,
-                    "port": self.port,
-                    "route_id": md5_route
-                },
-                {
-                    "$set": doc,
-                    "$setOnInsert": {
-                        "created_at": self.startup
-                    }
-                },
-                upsert=True
-            )
+        update = {}
+        for md5_route, routes in RootContainer.routes.items():
+            for (app, container, specs) in routes:
+                pattern = specs.matcher.regex.pattern
+                cls = specs.target
+                args = specs.target_kwargs
+                html = rst2html(str(cls.__doc__))
+                doc = dict(
+                    routing=self.routing,
+                    args=str(args),
+                    author=cls.author,
+                    container=container.qual_name(),
+                    description=html["body"],
+                    error=html["error"],
+                    icon=cls.icon,
+                    project=cls.get_project(),
+                    protected=cls.protected,
+                    protocol=self.protocol,
+                    qual_name=cls.qual_name(),
+                    tag=cls.tag,
+                    title=cls.title,
+                    version=cls.version(),
+                    started_at=self.startup
+                )
+                if args:
+                    for attr in cls.propagate:
+                        if attr in doc:
+                            doc[attr] = args.get(attr, doc[attr])
+                lookup = (self.hostname, self.port, md5_route)
+                if lookup not in update:
+                    doc["pattern"] = []
+                    update[lookup] = doc
+                update[lookup]["pattern"].append((specs.name, pattern))
+            self.reset_handler()
+            coll = self.config.sys.handler
+            for lookup, doc in update.items():
+                coll.update_one(
+                    {
+                        "hostname": lookup[0],
+                        "port": lookup[1],
+                        "route_id": lookup[2]
+                    },
+                    {
+                        "$set": doc,
+                        "$setOnInsert": {
+                            "created_at": self.startup
+                        }
+                    },
+                    upsert=True
+                )
 
     def reset_handler(self):
         """

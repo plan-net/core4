@@ -33,12 +33,14 @@ class InfoHandler(CoreRequestHandler):
             data element with dict of
 
             - **project** (*str*): title
+            - **args** (*dict*): passed from the :class:`.CoreApiContainer` to
+              the handler
             - **qual_name** (*str*): of the endpoint
             - **author** (*str*): of the request handler
             - **description** (*str*): method doc string in HTML format
             - **icon** (*str*): material icon
             - **title** (*list*): of the endpoint
-            - **pattern** (*str*): URL pattern
+            - **pattern** (*list*): of *str* with URL matching pattern
             - **route_id** (*str*): MD5 of the route/pattern
             - **tag** (*list*): of tag strings
             - **container** (*class*): name serving the endpoint
@@ -49,12 +51,15 @@ class InfoHandler(CoreRequestHandler):
             - **card_url** (*str*): URL to card page
             - **enter_url** (*str*): URL to enter
             - **help_url** (*str*): URL to help page
+            - **url_name** (*str*): name of the URL to be used in method
+              :meth:`.reverse_url`
             - **method** (*list*): with method details
 
-              - **method** (str): short title
+              - **method** (str): ``GET``, ``POST``, ``DELETE``, etc.
               - **doc** (str): plain RST method doc string
               - **html** (str): method doc string in HTML format
-              - **parts** (dict): of bool if the sections **method**,
+              - **parts** (dict): of bool if the sections *method*, *example*,
+                *parameter*, *raise*, are defined
               - **extra_parts** (list): of additional sections
               - **parser_error** (list): of parsing erreors
 
@@ -76,11 +81,11 @@ class InfoHandler(CoreRequestHandler):
 
         parts = ids.split("/")
         md5_route = parts[0]
-        (app, container, specs) = self.application.container.routes[md5_route]
+        route = self.application.find_md5(md5_route, all=True)
+        (app, container, specs) = route[0]
         html = rst2html(str(specs.target.__doc__))
         doc = dict(
             route_id=md5_route,
-            pattern=specs.regex.pattern,
             args=str(specs.target_kwargs),
             author=specs.target.author,
             container=container.qual_name(),
@@ -99,7 +104,7 @@ class InfoHandler(CoreRequestHandler):
             for attr in specs.target.propagate:
                 if attr in doc:
                     doc[attr] = specs.target_kwargs.get(attr, doc[attr])
-
+        doc["pattern"] = [specs.matcher.regex.pattern for app, container, specs in route]
         doc["help_url"] = core4.const.HELP_URL + "/" + doc["route_id"]
         doc["enter_url"] = core4.const.ENTER_URL + "/" + doc["route_id"]
         doc["card_url"] = core4.const.CARD_URL + "/" + doc["route_id"]

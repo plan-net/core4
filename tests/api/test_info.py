@@ -148,11 +148,14 @@ def test_filehandler_card(http):
 def test_all_info(http):
     rv = http.get("/core4/api/v1/info")
     assert rv.status_code == 200
-    for handler in rv.json()["data"]:
-        rv1 = http.get(handler["card_url"], absolute=True)
-        assert rv1.status_code == 200
-        rv1 = http.get(handler["help_url"], absolute=True)
-        assert rv1.status_code == 200
+    pprint(rv.json())
+    data = rv.json()
+    for handler in data["data"]:
+        for endpoint in handler["endpoint"]:
+            rv1 = http.get(endpoint["card_url"], absolute=True)
+            assert rv1.status_code == 200
+            rv1 = http.get(endpoint["help_url"], absolute=True)
+            assert rv1.status_code == 200
         # ign = sum([1 for i in
         #            ("StopHandler", "ErrorHandler1", "LinkHandler1")
         #            if i in handler["qual_name"]])

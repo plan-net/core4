@@ -4,10 +4,10 @@
 Implements core4 standard :class:`RouteHandler` delivering core4 API/endpoint
 collection.
 """
-import core4.const
+from core4.const import ENTER_URL, HELP_URL, CARD_URL
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.util.pager import CorePager
 from core4.queue.query import QueryMixin
+from core4.util.pager import CorePager
 
 
 class RouteHandler(CoreRequestHandler, QueryMixin):
@@ -32,14 +32,19 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
         Returns:
             collection (list) of dict with
 
-            - **_id** (*:class:`bson.objectid.ObjectId`*): MonboDB identifier
-            - **card_url** (*str*): full url to the card page view
-            - **help_url** (*str*): full url to the help page
+            - **_id** (:class:`bson.objectid.ObjectId`): MonboDB identifier
+            - **endpoint** (*list* of *dict*)
+
+              - **pattern** (*regular expression*): endpoint matching criteria
+              - **card_url** (*str*): full url to the card page view
+              - **enter_url** (*str*): full url to the handler entry
+              - **help_url** (*str*): full url to the help page
+              - **routing** (*str*): url prefix with protocol and domain
+                adressing the serving container
+
             - **project** (*str*): name
             - **qual_name** (*str*): of the :class:`.CoreRequestHandler`
             - **route_id** (*str*): MD5 digest of the route
-            - **routine** (*str*): url prefix with protocol and domain
-              adressing the serving container
             - **tag** (*list*): of tag lables assigned to the
               :class:`.CoreRequestHandler`
             - **title** (*str*): of the :class:`.CoreRequestHandler`
@@ -61,7 +66,7 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
         current_page = int(self.get_argument("page", default=0))
         query = self.get_argument("filter", as_type=dict, default=None)
         sort_by = self.get_argument("sort", as_type=dict,
-                                    default={"qual_name": 1, "route_id": 1})
+                                    default={"qual_name": 1})
 
         filter_by = [{"started_at": {"$ne": None}}]
         if query is not None:
@@ -82,7 +87,8 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
                     "route_id": 1,
                     "routing": 1,
                     "qual_name": 1,
-                    "title": 1
+                    "title": 1,
+                    "pattern": 1
                 }
             },
 
@@ -90,22 +96,28 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
         nodes = ["{}://{}:{}".format(n["protocol"], n["hostname"], n["port"])
                  for n in self.get_daemon(kind="app")]
         data = []
-        seen = set()
+        seen = {}
+
+        def _endpoint(edoc):
+            pattern = edoc.pop("pattern")
+            routing = edoc.pop("routing")
+            return {
+                "help_url": routing + HELP_URL + "/" + edoc["route_id"],
+                "enter_url": routing + ENTER_URL + "/" + edoc["route_id"],
+                "card_url": routing + CARD_URL + "/" + edoc["route_id"],
+                "pattern": pattern,
+                "routing": routing
+            }
+
         async for doc in coll.aggregate(pipeline):
             if await self.user.has_api_access(doc["qual_name"]):
                 if doc["routing"] in nodes:
                     if doc["route_id"] not in seen:
-                        doc["help_url"] = doc["routing"] \
-                                          + core4.const.HELP_URL \
-                                          + "/" + doc["route_id"]
-                        doc["enter_url"] = doc["routing"] \
-                                           + core4.const.ENTER_URL \
-                                           + "/" + doc["route_id"]
-                        doc["card_url"] = doc["routing"] \
-                                          + core4.const.CARD_URL \
-                                          + "/" + doc["route_id"]
+                        doc["endpoint"] = [_endpoint(doc)]
                         data.append(doc)
-                        seen.add(doc["route_id"])
+                        seen[doc["route_id"]] = data[-1]["endpoint"]
+                    else:
+                        seen[doc["route_id"]].append(_endpoint(doc))
 
         async def _length(**_):
             return len(data)

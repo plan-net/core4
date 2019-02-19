@@ -205,7 +205,6 @@ class CoreApiContainer(CoreBase):
         """
         unique = set()
         rules = []
-        routes = {}
         for rule in self.iter_rule():
             routing = rule.regex.pattern
             cls = rule.target
@@ -223,7 +222,6 @@ class CoreApiContainer(CoreBase):
                         target=cls, target_kwargs=kwargs, name=rule.name))
                 # lookup applies to core request handlers only
                 if issubclass(cls, CoreBaseHandler):
-                    routes[md5_route] = (self, rule)
                     self.logger.info(
                         "started [%s] on [%s] as [%s] with [%s]",
                         rule.target.qual_name(),
@@ -234,8 +232,10 @@ class CoreApiContainer(CoreBase):
                     "route [%s] already exists" % routing)
         app = CoreApplication(rules, self, **self._settings)
         # transfer routes lookup with handler/routing md5 and app to container
-        for md5_route in routes:
-            RootContainer.routes[md5_route] = (app, *routes[md5_route])
+        for rule in rules:
+            if rule.route_id not in RootContainer.routes:
+                RootContainer.routes[rule.route_id] = []
+            RootContainer.routes[rule.route_id].append((app, self, rule))
         self.started = core4.util.node.now()
         return app
 
@@ -283,21 +283,29 @@ class CoreApplication(tornado.web.Application):
                                              specs.target_kwargs)
         return super().find_handler(request, **kwargs)
 
-    def find_md5(self, md5_qual_name):
+    def find_md5(self, route_id, all=False):
         """
-        Find the passed ``qual_name`` and optional ``routing`` MD5 digest in
-        the bundled lookup built during the creation of applications
-        (:meth:`.make_application`).
+        Find the passed ``route_id`` lookup built during the creation of
+        application (:meth:`.make_application`). The ``route_id`` represents
+        a MD5 checksum based on the ``qual_name`` of the handler and the
+        parameters of the handler used during construction in
+        :class:`.CoreApiContainer`. The combination of a ``qual_name`` and the
+        custom parameters are considered *unique*.
 
-        :param md5_qual_name: find the request handler based on
-            :class:`.CoreRequestHandler` by the ``qual_name`` MD5 digest.
-        :param md5_route: find the request handler route based on
-            :class:`.CoreRequestHandler` by the ``qual_name`` and routing
-            pattern MD5 digests.
-        :return: tuple of (:class:`.CoreApiContainer`, pattern, class,
-                 arguments)
+        :param route_id: find the request handler based on
+            :class:`.CoreRequestHandler` by the ``route_id`` MD5 digest.
+        :param all: retrieve the first (``all is False``) or *all* handlers,
+            defaults to ``False``
+            :class:`.CoreRequestHandler` by the ``route_id`` MD5 digest.
+        :return: tuple of (:class:`.Application`, :class:`.CoreApiContainer`,
+            :class:`.CoreRoutingRule`)
         """
-        return RootContainer.routes.get(md5_qual_name, None)
+        route = RootContainer.routes.get(route_id, None)
+        if route is None:
+            return None
+        if not all:
+            return route[0]
+        return route
 
     def handler_help(self, cls):
         """

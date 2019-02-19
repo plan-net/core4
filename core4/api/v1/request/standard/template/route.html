@@ -18,21 +18,39 @@
 
     <ul>
 
-        {% for endpoint in page.body %}
+        {% for target in page.body %}
 
             <li>
-                <a href="{{ endpoint['card_url'] }}">
-                    {{ endpoint["qual_name"] }}
+                <a href="{{ target["endpoint"][0]['card_url'] }}">
+                    {{ target["title"] }}
                 </a>
+                <br>
+                {{ target["qual_name"] }}
 
-                <a href="{{ endpoint['help_url'] }}">  <i class="material-icons">help</i> </a>
-                <a href="{{ endpoint['enter_url'] }}">  <i class="material-icons">launch</i> </a>
-
-                {{ endpoint["project"] }}
-
-                {% if endpoint["tag"] %}
-                    ({{ ", ".join(endpoint["tag"]) }})
+                {% if target["tag"] %}
+                - {{ ", ".join(target["tag"]) }}
                 {% end %}
+
+                <ul>
+                    {% for endpoint in target["endpoint"] %}
+                    <li>
+                        on {{ endpoint["routing"] }} -
+                        <a href="{{ endpoint["card_url"] }}">card</a>
+                        - <a href="{{ endpoint["enter_url"] }}">enter</a>
+                        - <a href="{{ endpoint["help_url"] }}">help</a>
+                        <ul>
+                            {% for pattern in endpoint["pattern"] %}
+                            <li>
+                                {% if pattern[0] %}
+                                    {{ pattern[0] }}
+                                {% end %}
+                                {{ pattern[1] }}
+                            </li>
+                            {% end %}
+                        </ul>
+                    </li>
+                    {% end %}
+                </ul>
             </li>
 
         {% end %}

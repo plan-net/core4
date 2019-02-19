@@ -218,7 +218,7 @@ def test_server_test(http):
     login_handler = [h for h in rv.json()["data"]
                      if h["qual_name"] == lh][0]
     print(login_handler)
-    rv = http.get(login_handler["help_url"], absolute=True)
+    rv = http.get(login_handler["endpoint"][0]["help_url"], absolute=True)
     assert rv.status_code == 200
     ret = rv.json()["data"]
     assert ret["author"] == "mra"
@@ -265,7 +265,7 @@ def test_help(http):
 
     ih = [h for h in rv.json()["data"]
           if h["route_id"] == "2a3897ef4e61542912a0cf3f3ab5a32f"][0]
-    url = ih["help_url"]
+    url = ih["endpoint"][0]["help_url"]
     rv = http.get(url, absolute=True)
     assert rv.status_code == 200
     pprint(rv.json())
@@ -299,8 +299,8 @@ def test_card(http):
     assert internal_handler[0]["title"] == "custom title 1"
     assert internal_handler[1]["title"] == "internal test 1"
 
-    c1 = internal_handler[0]["card_url"]
-    c0 = internal_handler[1]["card_url"]
+    c1 = internal_handler[0]["endpoint"][0]["card_url"]
+    c0 = internal_handler[1]["endpoint"][0]["card_url"]
     r1 = internal_handler[0]["route_id"]
     r0 = internal_handler[1]["route_id"]
 

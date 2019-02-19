@@ -1003,15 +1003,27 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
 
         :param name: handler name as defined in :class:`.CoreApiContainer`
         :param args: arguments for capturing groups
-        :return: url path (str)
+        :return: fully qualified url path (str) including protocl, hostname,
+            port and path
         """
         handler = self.config.sys.handler.connect_async()
         worker = self.config.sys.worker.connect_async()
         timeout = self.config.daemon.alive_timeout
         found = []
-        async for doc in handler.find({"started_at": {"$ne": None},
-                                       "name": name}):
-            # checkalive
+        pipeline = [
+            {
+                "$unwind": "$pattern"
+            },
+            {
+                "$match": {
+                    "pattern.0": name,
+                    "started_at": {
+                        "$ne": None
+                    }
+                }
+            }
+        ]
+        async for doc in handler.aggregate(pipeline):
             alive = await worker.count_documents({
                 "kind": "app",
                 "hostname": doc["hostname"],
@@ -1031,7 +1043,8 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                 found.append(doc)
         if len(found) == 1:
             route = found[0]
-            matcher = tornado.routing.PathMatches(route["pattern"])
+            matcher = tornado.routing.PathMatches(route["pattern"][1])
             url = matcher.reverse(*args)
-            return url
+            return "{}://{}:{}{}".format(route["protocol"], route["hostname"],
+                                      route["port"], url)
         raise KeyError("%s not found or not unique in named urls" % name)

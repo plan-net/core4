@@ -82,6 +82,7 @@ command and remove the bare repository in ``.repos`` from the project sources::
     git remote set-url origin git://new.url.here
     rm -Rf .repos
 
+
 See also :doc:`deploy` and :doc:`tools`.
 
 

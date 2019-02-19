@@ -1,4 +1,4 @@
-#This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
 Delivers the default core4 API server. This server roots to ``/coco/v1``
@@ -22,8 +22,6 @@ Start the server with::
     $ python core4/api/v1/server.py
 """
 
-from tornado.ioloop import IOLoop
-
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
@@ -33,13 +31,12 @@ from core4.api.v1.request.queue.state import QueueStatus
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.standard.access import AccessHandler
 from core4.api.v1.tool.functool import serve
+from tornado.ioloop import IOLoop
 
 # sys.stat query object
 publisher = QueueStatus()
 IOLoop.current().spawn_callback(publisher.update)
 
-
-from tornado.web import URLSpec
 
 class CoreApiServer(CoreApiContainer):
     """
@@ -63,4 +60,3 @@ class CoreApiServer(CoreApiContainer):
 
 if __name__ == '__main__':
     serve(CoreApiServer)
-    # serve(CoreApiServer, cookie_secret='super_secret')
