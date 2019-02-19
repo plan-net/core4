@@ -76,8 +76,11 @@ This repository carries an initial commit, a branch ``master`` and a branch
 To share this git repository with other users you have to manually synchronise
 this bare repository with a git repository accessible by your team.
 Alternatively move the bare repository to a public or private git server. Once
-this has been done, you can remove the bare repository from the project sources
-and update your git connection accordingly in ``.git/config``.
+this has been done, you can update your remote origin with the following git
+command and remove the bare repository in ``.repos`` from the project sources::
+
+    git remote set-url origin git://new.url.here
+    rm -Rf .repos
 
 See also :doc:`deploy` and :doc:`tools`.
 
