@@ -2,7 +2,7 @@ import datetime as dt
 import time
 import core4.util.node
 from core4.queue.job import CoreJob
-from core4.util.core_email import MailMixin
+from core4.util.email import MailMixin
 
 
 class DummyJob(CoreJob):
