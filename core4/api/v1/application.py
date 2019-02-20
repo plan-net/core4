@@ -1,4 +1,4 @@
-#This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
 This module implements :class:`.CoreApiContainer` bundling multiple request
@@ -39,12 +39,11 @@ dedicated core4 api endpoint (defaults to ``/core4/api/v1``).
 import hashlib
 from pprint import pformat
 
-import tornado.routing
-import tornado.web
-
 import core4.const
 import core4.error
 import core4.util.node
+import tornado.routing
+import tornado.web
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.info import InfoHandler
 from core4.api.v1.request.main import CoreBaseHandler
@@ -57,7 +56,7 @@ from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
 
-STATIC_PATTERN = "(?:/(.*))?$"
+STATIC_PATTERN = "/(.*)$"
 
 
 class CoreRoutingRule(tornado.routing.Rule):
@@ -208,11 +207,12 @@ class CoreApiContainer(CoreBase):
         for rule in self.iter_rule():
             routing = rule.regex.pattern
             cls = rule.target
-            kwargs = rule.kwargs
+            kwargs = rule.kwargs or {}
             # md5 includes prefix and route
             sorted_kwargs = pformat(kwargs)
             hash_base = "{}:{}".format(cls.qual_name(), sorted_kwargs)
             md5_route = hashlib.md5(hash_base.encode("utf-8")).hexdigest()
+            kwargs["_route_id"] = md5_route
             if routing not in unique:
                 unique.add(routing)
                 rules.append(

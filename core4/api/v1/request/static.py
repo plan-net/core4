@@ -1,4 +1,4 @@
-#This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
 core4 :class:`.CoreStaticFileHandler`, based on :mod:`tornado`
@@ -8,9 +8,9 @@ core4 :class:`.CoreStaticFileHandler`, based on :mod:`tornado`
 """
 import os
 
-from tornado.web import StaticFileHandler
-
+import tornado.routing
 from core4.api.v1.request.main import CoreBaseHandler, CoreEtagMixin
+from tornado.web import StaticFileHandler
 
 DEFAULT_FILENAME = "index.html"
 
@@ -30,6 +30,10 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
     default_filename = DEFAULT_FILENAME
 
     def __init__(self, *args, **kwargs):
+        try:
+            self.route_id = kwargs.pop("_route_id")
+        except KeyError:
+            self.route_id = None
         CoreBaseHandler.__init__(self, *args, **kwargs)
         if "path" not in kwargs:
             kwargs["path"] = self.path
@@ -76,5 +80,7 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
         if ret is None:
             return self.redirect("/")
         (app, container, specs) = ret
-        self.logger.info("redirecting to [%s]", specs.regex.pattern)
-        return self.redirect(specs.regex.pattern or "/")
+        self.logger.info("redirecting to [%s]", specs.matcher.regex.pattern)
+        matcher = tornado.routing.PathMatches(specs.matcher.regex.pattern)
+        url = matcher.reverse("")
+        return self.redirect(url)

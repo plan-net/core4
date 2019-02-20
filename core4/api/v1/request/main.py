@@ -1,4 +1,4 @@
-#This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
 core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
@@ -9,6 +9,9 @@ import os
 import time
 import traceback
 
+import core4.const
+import core4.error
+import core4.util.node
 import dateutil.parser
 import jwt
 import mimeparse
@@ -20,15 +23,11 @@ import tornado.iostream
 import tornado.routing
 import tornado.template
 from bson.objectid import ObjectId
-from tornado.web import RequestHandler, HTTPError
-
-import core4.const
-import core4.error
-import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode
 from core4.util.pager import PageResult
+from tornado.web import RequestHandler, HTTPError
 
 tornado.escape.json_encode = json_encode
 
@@ -84,6 +83,7 @@ class CoreBaseHandler(CoreBase):
         """
         Instantiates the handler and sets error, card and help sources.
         """
+
         super().__init__()
 
         def rel(path):
@@ -454,7 +454,7 @@ class CoreBaseHandler(CoreBase):
         if not path.startswith("/"):
             path = "/" + path
         return "".join([prefix, core4.const.FILE_URL, "/" + mode + "/",
-                        self.route_id(), path])
+                        self.route_id, path])
 
     def default_static(self, path, include_host=None):
         """
@@ -497,17 +497,17 @@ class CoreBaseHandler(CoreBase):
         namespace["default_static"] = self.default_static
         return namespace
 
-    def route_id(self):
-        """
-        Identifies the ``route_id`` by the route pattern of the resource.
-
-        :return: ``route_id``
-        """
-        for rule in self.application.wildcard_router.rules:
-            route = rule.matcher.match(self.request)
-            if route is not None:
-                return rule.route_id
-        return None
+    # def route_id(self):
+    #     """
+    #     Identifies the ``route_id`` by the route pattern of the resource.
+    #
+    #     :return: ``route_id``
+    #     """
+    #     for rule in self.application.wildcard_router.rules:
+    #         route = rule.matcher.match(self.request)
+    #         if route is not None:
+    #             return rule.route_id
+    #     return None
 
     def write_error(self, status_code, **kwargs):
         """
@@ -701,6 +701,10 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         to :class:`.CoreBaseHandler` and :mod:`tornado` handler instantiation
         method.
         """
+        try:
+            self.route_id = kwargs.pop("_route_id")
+        except KeyError:
+            self.route_id = None
         CoreBaseHandler.__init__(self, *args, **kwargs)
         RequestHandler.__init__(self, *args, **kwargs)
 
@@ -1046,5 +1050,5 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             matcher = tornado.routing.PathMatches(route["pattern"][1])
             url = matcher.reverse(*args)
             return "{}://{}:{}{}".format(route["protocol"], route["hostname"],
-                                      route["port"], url)
+                                         route["port"], url)
         raise KeyError("%s not found or not unique in named urls" % name)
