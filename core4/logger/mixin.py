@@ -1,5 +1,3 @@
-#This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 """
 Implements :class:`CoreLoggerMixin` and :func:`logon` to switch on core4
 logging, and :class:`CoreExceptionLoggerMixin` to enable a log dump if CRITICAL
