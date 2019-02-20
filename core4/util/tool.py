@@ -68,7 +68,7 @@ def dict_merge(dct, merge_dct, add_keys=True):
     return dct
 
 
-def lookahead(iterable_data):
+def has_next(iterable_data):
     """
     Pass through all values from the given iterable, augmented by the information
     if there are more values to come after the current one (True),
