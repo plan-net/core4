@@ -1,4 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
 core4 :class:`.CoreStaticFileHandler`, based on :mod:`tornado`
@@ -65,8 +70,6 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
         """
         if path is None:
             path = ""
-        if path.startswith("/"):
-            path = path[1:]
         return super().get_absolute_path(root, path)
 
     def enter(self, *args, **kwargs):

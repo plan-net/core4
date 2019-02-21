@@ -1,4 +1,9 @@
-# This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
 Delivers the default core4 API server. This server roots to ``/core4/api``
@@ -41,13 +46,13 @@ IOLoop.current().spawn_callback(publisher.update)
 class CoreApiServer(CoreApiContainer):
     """
     Default :class:`.CoreApiContainer` serving the standard core4 endpoints
-    at ``/core4/api``.
+    at ``/core4/api/v1``.
     """
     root = "/core4/api/v1"
     rules = [
         (r'/queue', QueueHandler, dict(source=publisher)),
         (r'/jobs/poll', JobStream),
-        (r'/jobs/poll/(.*)', JobStream, None, "polling"),
+        (r'/jobs/poll/(.*)', JobStream),
         (r'/jobs', JobHandler),
         (r'/jobs/(.*)', JobHandler),
         (r'/enqueue', JobPost),
