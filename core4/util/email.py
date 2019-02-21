@@ -6,7 +6,8 @@ from email.mime.text import MIMEText
 class MailMixin(object):
     """
     This mixin sends Emails via a preconfigured email-service.
-    Tested and supported are a local MTA and googlemail, although other services should work fine too.
+    Tested and supported are a local MTA and googlemail, although other services
+    should work fine too.
     For googlemail please allow unsecure application access for your account.
 
     Configure this mixin via:
@@ -19,7 +20,8 @@ class MailMixin(object):
       port: ~
       ssl: ~
 
-    If neither a username, nor a password is set, logging in into the mailserver is skipped.
+    If neither a username, nor a password is set, logging in into the mailserver
+    is skipped.
     This may occur when talking to a local MTA.
 
     core4s configuration delegation pattern can be used.
@@ -42,8 +44,10 @@ class MailMixin(object):
             sent_from = self.config.email.sent_from
             port = self.config.email.port
         except KeyError as e:
-            self.logger.critical("e-mail is not completely configured, aborting")
-            self.logger.critical("e-mail should have been sent to: " + str(to) + " with subject: " + str(subject) +
+            self.logger.critical("e-mail is not completely configured, "
+                                 "aborting")
+            self.logger.critical("e-mail should have been sent to: " + str(to) +
+                                 " with subject: " + str(subject) +
                                  " and message: " + str(message))
             raise e
 
@@ -75,7 +79,8 @@ class MailMixin(object):
                 for i in to:
                         msg['To'] = i
                         server.sendmail(sent_from, i, msg.as_string())
-                        self.logger.info("Successfully send e-Mail to: " + str(i))
+                        self.logger.info("Successfully send e-Mail to: " +
+                                         str(i))
             else:
                 msg['To'] = to
                 server.sendmail(sent_from, to, msg.as_string())
