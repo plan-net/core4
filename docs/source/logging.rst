@@ -141,6 +141,13 @@ example.
            self.setup_logging()
 
 
+.. note:: There is a helper method :meth:`core4.logger.mixin.logon`` which
+          enables logging. You need to enable logging to actually activate the
+          logging handlers and to "see" the logging message in ``STDOUT``,
+          ``STDERR`` or in your ``sys.log`` accoring to your logging setup
+          in core4 configuration ``logging``.
+
+
 logging guideline
 =================
 
