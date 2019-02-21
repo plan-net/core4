@@ -39,6 +39,7 @@
    tools
    faq
    about
+   license
    core4/index
 
 
