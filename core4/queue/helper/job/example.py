@@ -7,9 +7,9 @@
 
 import datetime as dt
 import time
-
 import core4.util.node
 from core4.queue.job import CoreJob
+from core4.util.email import MailMixin
 
 
 class DummyJob(CoreJob):
@@ -32,3 +32,13 @@ class DummyJob(CoreJob):
                          - core4.util.node.now()).total_seconds()) / sleep
             self.progress(p, "running")
             time.sleep(0.5)
+
+
+class EmailJob(MailMixin, CoreJob):
+    """
+    This job sends an email by receiving all needed parameters as job-arguments.
+    """
+    author = "mkr"
+
+    def execute(self, *args, **kwargs):
+        self.send_mail(*args, **kwargs)
