@@ -58,7 +58,7 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
-            >>> rv = get("http://localhost:5001/core4/api/v1/info?per_page=2", headers=h)
+            >>> rv = get("http://localhost:5001/core4/api/info?per_page=2", headers=h)
             >>> rv.json()
         """
 
@@ -66,7 +66,7 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
         current_page = int(self.get_argument("page", default=0))
         query = self.get_argument("filter", as_type=dict, default=None)
         sort_by = self.get_argument("sort", as_type=dict,
-                                    default={"qual_name": 1})
+                                    default={"qual_name": 1, "route_id": 1})
 
         filter_by = [{"started_at": {"$ne": None}}]
         if query is not None:

@@ -40,12 +40,12 @@ class LogoutHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get, post
-            >>> url = "http://localhost:5001/core4/api/v1/login"
+            >>> url = "http://localhost:5001/core4/api/login"
             >>> signin = get(url + "?username=admin&password=hans")
             >>> h = {"Authorization": "Bearer " + signin.json()["data"]["token"]}
             >>> signin.status_code
             200
-            >>> rv = get("http://localhost:5001/core4/api/v1/logout", headers=h)
+            >>> rv = get("http://localhost:5001/core4/api/logout", headers=h)
             >>> rv
             {
                 '_id': '5bd9b796de8b692fd5f5f768',

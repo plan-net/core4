@@ -44,7 +44,7 @@ class LoginHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get, post
-            >>> url = "http://localhost:5001/core4/api/v1/login"
+            >>> url = "http://localhost:5001/core4/api/login"
             >>> rv = get(url + "?username=admin&password=hans")
             >>> rv.json()
             {
@@ -76,7 +76,7 @@ class LoginHandler(CoreRequestHandler):
             >>> h = {"Authorization": "Bearer " + signin.json()["data"]["token"]}
             >>> post(url, headers=h)
             <Response [200]>
-            >>> get("http://localhost:5001/core4/api/v1/profile", headers=h)
+            >>> get("http://localhost:5001/core4/api/profile", headers=h)
             <Response [200]>
         """
         user = await self.verify_user()
@@ -120,7 +120,7 @@ class LoginHandler(CoreRequestHandler):
             400 Bad Request: if no email or token/password is sent
 
         Examples:
-            >>> url = "http://localhost:5001/core4/api/v1/login"
+            >>> url = "http://localhost:5001/core4/api/login"
             >>> put(url + "?email=mail@mailer.com").json()
             {
                 '_id': '5bd9a525de8b691c2c0754d8',

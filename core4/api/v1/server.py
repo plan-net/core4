@@ -1,17 +1,17 @@
 # This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
-Delivers the default core4 API server. This server roots to ``/coco/v1``
+Delivers the default core4 API server. This server roots to ``/core4/api``
 and provides the following endpoints:
 
-* ``/coco/v1/login`` - :class:`.LoginHandler` (default handler)
-* ``/coco/v1/logout`` - :class:`.LogoutHandler` (default handler)
-* ``/coco/v1/profile`` - :class:`.ProfileHandler` (default handler)
-* ``/coco/v1/queue`` - :class:`.QueueHandler`
-* ``/coco/v1/jobs`` - :class:`.JobHandler`
-* ``/coco/v1/jobs/poll`` - :class:`.JobStream`
-* ``/coco/v1/enqueue`` - :class:`.JobPost`
-* ``/coco/v1/info`` - :class:`.CoreInfo`
+* ``/core4/api/login`` - :class:`.LoginHandler` (default handler)
+* ``/core4/api/logout`` - :class:`.LogoutHandler` (default handler)
+* ``/core4/api/profile`` - :class:`.ProfileHandler` (default handler)
+* ``/core4/api/queue`` - :class:`.QueueHandler`
+* ``/core4/api/jobs`` - :class:`.JobHandler`
+* ``/core4/api/jobs/poll`` - :class:`.JobStream`
+* ``/core4/api/enqueue`` - :class:`.JobPost`
+* ``/core4/api/info`` - :class:`.CoreInfo`
 
 Additionally the server creates an endless loop to query collection
 ``sys.stat`` continuously with :class:`.QueueStatus` to support the
@@ -41,9 +41,9 @@ IOLoop.current().spawn_callback(publisher.update)
 class CoreApiServer(CoreApiContainer):
     """
     Default :class:`.CoreApiContainer` serving the standard core4 endpoints
-    at ``/coco/v1``.
+    at ``/core4/api``.
     """
-    root = "/coco/v1/"
+    root = "/core4/api/v1"
     rules = [
         (r'/queue', QueueHandler, dict(source=publisher)),
         (r'/jobs/poll', JobStream),

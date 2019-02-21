@@ -231,7 +231,7 @@ def test_comparison():
 
 
 def test_server_test(http):
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
 
 
@@ -496,12 +496,12 @@ def test_access(http):
     assert rv.status_code == 200
     admin_token = http.token
     http.token = None
-    rv = http.get("/core4/api/v1/login?username=user&password=123456",
+    rv = http.get("/core4/api/login?username=user&password=123456",
                   base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
     etag1 = rv.json()["data"]["etag"]
     rv = http.get("/roles")
@@ -509,15 +509,15 @@ def test_access(http):
     data = {
         "realname": "preferred name"
     }
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 400
     assert "MissingArgumentError" in rv.json()["error"]
 
     data["etag"] = etag1
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 200
 
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
     etag2 = rv.json()["data"]["etag"]
     assert rv.json()["data"]["realname"] == "preferred name"
@@ -527,20 +527,20 @@ def test_access(http):
         "password": "hello",
         "etag": etag2
     }
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 200
     etag3 = rv.json()["data"]["etag"]
 
     http.token = None
-    rv = http.get("/core4/api/v1/login?username=user&password=123456",
+    rv = http.get("/core4/api/login?username=user&password=123456",
                   base=False)
     assert rv.status_code == 401
-    rv = http.get("/core4/api/v1/login?username=user&password=hello",
+    rv = http.get("/core4/api/login?username=user&password=hello",
                   base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
 
     data = {
@@ -568,12 +568,12 @@ def test_access(http):
         "etag": etag3
     }
     http.token = token
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 400
     assert "mail exists" in rv.json()["error"]
 
     data["email"] = "user3@mail.com"
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 200
 
 
@@ -644,7 +644,7 @@ def test_update2(http):
     admin_token = http.token
     http.token = None
 
-    rv = http.get("/core4/api/v1/profile?username=mra&password=654321",
+    rv = http.get("/core4/api/profile?username=mra&password=654321",
                   base=False)
     assert rv.status_code == 200
     etag2 = rv.json()["data"]["etag"]
@@ -656,7 +656,7 @@ def test_update2(http):
     assert rv.status_code == 200
 
     http.token = None
-    rv = http.get("/core4/api/v1/login?username=mra&password=666999666",
+    rv = http.get("/core4/api/login?username=mra&password=666999666",
                   base=False)
     assert rv.status_code == 200
 

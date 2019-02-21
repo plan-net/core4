@@ -186,13 +186,24 @@ class CoreApiContainer(CoreBase):
                 except IndexError:
                     name = None
             if issubclass(handler, CoreStaticFileHandler):
-                pattern += STATIC_PATTERN
-            yield tornado.web.URLSpec(
-                pattern=pattern,
-                handler=handler,
-                kwargs=kwargs,
-                name=name
-            )
+                yield tornado.web.URLSpec(
+                    pattern=pattern + "/(.*)$",
+                    handler=handler,
+                    kwargs=kwargs,
+                    name=name
+                )
+                yield tornado.web.URLSpec(
+                    pattern=pattern + "(?:/(.*))?$",
+                    handler=handler,
+                    kwargs=kwargs,
+                )
+            else:
+                yield tornado.web.URLSpec(
+                    pattern=pattern,
+                    handler=handler,
+                    kwargs=kwargs,
+                    name=name
+                )
 
     def make_application(self):
         """

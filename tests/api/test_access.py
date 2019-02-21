@@ -96,13 +96,13 @@ def test_grant(http):
 
     admin_token = http.token
     http.token = None
-    rv = http.get("/core4/api/v1/login?username=test_role1&password=123456",
+    rv = http.get("/core4/api/login?username=test_role1&password=123456",
                   base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
 
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
 
     rv = http.post("/access")

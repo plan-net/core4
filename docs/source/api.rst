@@ -241,14 +241,14 @@ The following example session authenticates and retrieves a page from
     from requests import get
 
     # authenticate
-    signin = get("http://localhost:5001/core4/api/v1/login"
+    signin = get("http://localhost:5001/core4/api/login"
                  "?username=admin&password=hans")
     token = signin.json()["data"]["token"]
     header = {"Authorization": "Bearer " + token}
 
     # get results
     rv = get(
-        "http://localhost:5001/coco/v1/jobs?per_page=10&sort=args.id&order=-1",
+        "http://localhost:5001/core4/api/jobs?per_page=10&sort=args.id&order=-1",
         headers=header)
     rv.json()
     {
@@ -322,9 +322,9 @@ to a protected resource using the token::
                   json={"username": "admin", "password": "hans"})
     token = signin.json()["data"]["token"]
     headers = {"Authorization": "Bearer " + token}
-    get("http://localhost:5001/core4/api/v1/profile", headers=headers)
+    get("http://localhost:5001/core4/api/profile", headers=headers)
     <Response [200]>
-    get("http://localhost:5001/core4/api/v1/profile", cookies=signin.cookies)
+    get("http://localhost:5001/core4/api/profile", cookies=signin.cookies)
     <Response [200]>
 
 

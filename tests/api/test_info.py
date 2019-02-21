@@ -74,7 +74,7 @@ class CoreApiTestServer1(CoreApiContainer):
 #         self.process.start()
 #         while True:
 #             try:
-#                 url = self.url("/core4/api/v1/profile")
+#                 url = self.url("/core4/api/profile")
 #                 requests.get(url, timeout=1)
 #                 break
 #             except:
@@ -82,7 +82,7 @@ class CoreApiTestServer1(CoreApiContainer):
 #             time.sleep(1)
 #             tornado.gen.sleep(1)
 #         self.signin = requests.get(
-#             self.url("/core4/api/v1/login?username=admin&password=hans"))
+#             self.url("/core4/api/login?username=admin&password=hans"))
 #         self.token = self.signin.json()["data"]["token"]
 #         assert self.signin.status_code == 200
 #
@@ -125,14 +125,14 @@ def http():
 
 
 def test_server_test(http):
-    rv = http.get("/core4/api/v1/profile")
+    rv = http.get("/core4/api/profile")
     assert rv.status_code == 200
 
 
 def test_card(http):
     rv = http.get("/tests/static1")
     assert rv.status_code == 200
-    card = "/core4/api/v1/info/card/be596b2d241cbecdc0e59978e678fa6f"
+    card = "/core4/api/info/card/be596b2d241cbecdc0e59978e678fa6f"
     rv = http.get(card)
     assert rv.status_code == 200
 
@@ -140,13 +140,13 @@ def test_card(http):
 def test_filehandler_card(http):
     rv = http.get("/tests/static1")
     assert rv.status_code == 200
-    card = "/core4/api/v1/info/card/be596b2d241cbecdc0e59978e678fa6f"
+    card = "/core4/api/info/card/be596b2d241cbecdc0e59978e678fa6f"
     rv = http.get(card)
     assert rv.status_code == 200
 
 
 def test_all_info(http):
-    rv = http.get("/core4/api/v1/info")
+    rv = http.get("/core4/api/info")
     assert rv.status_code == 200
     pprint(rv.json())
     data = rv.json()
@@ -168,7 +168,7 @@ def test_custom_card(http):
     rv = http.get("/tests/card1")
     assert rv.status_code == 200
     pprint(rv.content)
-    card = "/core4/api/v1/info/card/80c2d82f0ca22d1e9fdc3ec6be27276d"
+    card = "/core4/api/info/card/5812647cb9e8ea25678175a04388e30c"
     rv = http.get(card)
     assert rv.status_code == 200
 
@@ -181,7 +181,7 @@ def test_error(http):
 
 
 def test_link(http):
-    rv = http.get("/core4/api/v1/info/card/815bf65619eb07fddd36b335dd72649d")
+    rv = http.get("/core4/api/info/card/905e7aaab803d189d0cf661475d5367f")
     assert rv.status_code == 200
     assert '<b>ENTER:</b> <a href="http://www.google.de"' in rv.content.decode(
         "utf-8")

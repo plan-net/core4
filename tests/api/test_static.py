@@ -57,7 +57,7 @@ class HttpServer:
         self.process.start()
         while True:
             try:
-                url = self.url("/core4/api/v1/profile")
+                url = self.url("/core4/api/profile")
                 requests.get(url, timeout=1)
                 break
             except:
@@ -65,7 +65,7 @@ class HttpServer:
             time.sleep(1)
             tornado.gen.sleep(1)
         self.signin = requests.get(
-            self.url("/core4/api/v1/login?username=admin&password=hans"))
+            self.url("/core4/api/login?username=admin&password=hans"))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 
@@ -109,7 +109,7 @@ def http():
 
 
 def test_server_test(http):
-    rv = http.get("/core4/api/v1/profile")
+    rv = http.get("/core4/api/profile")
     assert rv.status_code == 200
 
 

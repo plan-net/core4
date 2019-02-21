@@ -65,6 +65,8 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
         """
         if path is None:
             path = ""
+        if path.startswith("/"):
+            path = path[1:]
         return super().get_absolute_path(root, path)
 
     def enter(self, *args, **kwargs):

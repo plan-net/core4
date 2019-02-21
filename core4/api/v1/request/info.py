@@ -74,7 +74,7 @@ class InfoHandler(CoreRequestHandler):
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
-            >>> rv = get("http://localhost:5001/core4/api/v1/info/8ff1580edf27b12d4231567be936a0d6",
+            >>> rv = get("http://localhost:5001/core4/api/info/8ff1580edf27b12d4231567be936a0d6",
             cookies=signin.cookies)
             >>> rv.json()
         """

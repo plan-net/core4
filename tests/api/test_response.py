@@ -82,14 +82,14 @@ class LocalTestServer:
             time.sleep(1)
             tornado.gen.sleep(1)
             try:
-                url = self.url("/core4/api/v1/profile", base=False)
+                url = self.url("/core4/api/profile", base=False)
                 rv = requests.get(url, timeout=1)
                 break
             except:
                 pass
         print("OK")
         self.signin = requests.get(
-            self.url("/core4/api/v1/login?username=admin&password=hans",
+            self.url("/core4/api/login?username=admin&password=hans",
                      base=False))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200

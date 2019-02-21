@@ -21,3 +21,6 @@ Regression tests require the "tests" variant to setup::
 
     # execute the tests
     pytest -x tests
+
+
+.. note:: regression test execution requires an internet connection
