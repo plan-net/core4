@@ -1,0 +1,70 @@
+#########################
+sending emails with core4
+#########################
+
+This example illustrates how to use different Mixins that provide additional
+functionality within a CoreJob. Here, the MailMixin located in
+``core4/util/email`` is used.
+
+The mixin provides the method ``send_mail()``.
+It requires a string or list of receipients, a message (str)
+(if the message is in html, one has to set the html=True argument) and a
+subject (also str).
+
+The email is configured to use a local MTA without authentication::
+
+    email:
+      username: ""
+      password: ""
+      host: "localhost"
+      ssl: False
+      sent_from: "core4 e-mail service"
+      port: 25
+
+The following Python code creates a CoreJob that checks the availability of a
+configured domain every 5 minutes. If the domain is available, it sends an
+email to the configured recipient(s)::
+
+    import requests
+    import re
+    from  core4.error import Core4Error
+
+    class CheckDomain(MailMixin, CoreJob):
+        """
+        This CoreJob queries the DNS sergice whoisxmlapi and retreives the
+        availability of a configured domain every 5 minutes.
+        If the domain is available, it sends an email to the configured address.
+        """
+        author = "mkr"
+        schedule = "*/5 * * * *"
+
+        def execute(self, *args, **kwargs):
+
+            try:
+                req = requests.get(self.config.base_url +
+                                   "apiKey=" + self.config.api_key +
+                                   "domainName=" + self.config.domain_name)
+            except Exception as e:
+                self.logger.critical("Can't contact the configured API.")
+                raise e
+
+            if req.status_code == 200:
+                try:
+                    if req.json()['DomainInfo']['domainAvailability'] == \
+                            "AVAILABLE":
+                        self.logger.info("The domain {0} is now AVAILABLE!"
+                                         .format(self.config.domain_name))
+                        self.send_mail(to=self.config.recipient,
+                                       message="The domain {0} is now "
+                                               "AVAILABLE!"
+                                       .format(self.config.domain_name),
+                                       subject="core4 domain alert")
+                    else:
+                        self.logger.info("example.com ist still UNAVAILABLE")
+                except Exception as e:
+                    raise Core4Error("The API returned an invalid response.")
+
+            else:
+                raise Core4Error(("The domain API returned an Error:
+                                    HTTP Status Code: {0}"
+                                    .format(req.status_code)))
