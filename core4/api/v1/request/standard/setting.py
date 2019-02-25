@@ -1,5 +1,6 @@
 import re
 from tornado.web import HTTPError
+from functools import wraps
 
 import core4
 import core4.const
@@ -17,14 +18,22 @@ sys_name_restrictions = re.compile('(^[_])')
 
 # error handler interceptor
 def handle_errors(func):
+
+    # core4 specific http error handler
+    def write_error(self, status_code, error_reason):
+        if isinstance(self, CoreRequestHandler):
+            self.write_error(status_code, error=error_reason)
+
+    @wraps(func)
     async def call(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
         except HTTPError as error:
-            self = args[0]
-            if isinstance(self, CoreRequestHandler):
-                self.write_error(error.status_code, error=error.reason)
-                raise error
+            write_error(args[0], error.status_code, error.reason)
+            raise error
+        except MongoDBError as error:
+            write_error(args[0], error.status_code, error.reason)
+            raise HTTPError(status_code=error.status_code, reason=error.reason)
     return call
 
 
@@ -337,14 +346,14 @@ class CoreSettingDataAccess(CoreBase):
             result = await self.collection.insert_one(data)
 
             if result.inserted_id is None:
-                raise HTTPError(status_code=400,  reason="Failed to insert setting")
+                raise MongoDBError(status_code=400,  reason="Failed to insert setting")
         else:
             result = await self.collection.update_one(
                 filter={"_id": user_id},
                 update={"$set": data})
 
             if result.matched_count == 0:
-                raise HTTPError(status_code=400, reason="Failed to update setting")
+                raise MongoDBError(status_code=400, reason="Failed to update setting")
 
     async def delete(self, user_id, data=None):
         """
@@ -372,9 +381,17 @@ class CoreSettingDataAccess(CoreBase):
                     update={"$unset": data})
 
                 if result.modified_count == 0:
-                    raise HTTPError(status_code=404, reason="Resource not found")
+                    raise MongoDBError(status_code=404, reason="Resource not found")
             else:
                 result = await self.collection.delete_one({"_id": user_id})
 
                 if result.deleted_count == 0:
-                    raise HTTPError(status_code=400, reason="Failed to delete setting")
+                    raise MongoDBError(status_code=400, reason="Failed to delete setting")
+
+
+class MongoDBError(Exception):
+    def __init__(self, **kwargs):
+        self.status_code = kwargs.get('status_code', 400)
+        self.reason = kwargs.get('reason', 'Bad request')
+
+        Exception.__init__(self)
