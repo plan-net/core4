@@ -61,10 +61,14 @@ This section guides you through submitting a bug report for core4. Following the
 the community understand your report, reproduce the behavior, and find related reports.
 
 Before creating bug reports, please check this list (link) as you might find out that you don't need to create one. 
-When you are creating a bug report, please include as many details as possible. 
+When you are create a bug report, please include as many details as possible. 
 
 >If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and 
 include a link to the original issue in the body of your new one.
+
+.. change to only open an issue if no other issue is adressing the same problem.
+.. If bug still perists after issue has been marked as "fixed", open a new one
+.. with link to the original?
 
 How Do I Submit A Bug Report?
 
@@ -75,6 +79,14 @@ Explain the problem and include additional details to help maintainers reproduce
 which you use in those examples.
 - Explain which behavior you expected to see.
 - Describe the behavior you observed after following the steps and point out what exactly is the problem with that behavior.
+
+
+.. only bugs that do not contain changed core4-code
+.. try reproducing the bug on a freshly configured maschine 
+.. to e.g. not report bugs in a customized python environment
+.. include configuration/environment information neccessary to reproduce
+
+
 
 Use the form below to reporting a bug:
 ```sh
@@ -88,6 +100,8 @@ What happens instead?
 
 ```
 
+.. neccessary information needed to reproduce.
+
 ### Suggesting Enhancements
 This section guides you through submitting an enhancement suggestion for core4, including completely new features and 
 minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand 
@@ -96,8 +110,11 @@ your suggestion and find related suggestions.
 Before creating enhancement suggestions, please check this list (link) as you might find out that you don't need to 
 create one. When you are creating an enhancement suggestion, please include as many details as possible.
 
+.. dont need to create one? because already present/similiar?
+
 How Do I Submit A Enhancement Suggestion?
-- Use a clear and descriptive title for the issue to identify the suggestion.
+- Use a clear and descriptive title for the enhancement to identify the 
+suggestion.
 - Provide a step-by-step description of the suggested enhancement in as many details as possible.
 - Provide specific examples to demonstrate the steps.
 - Explain why this enhancement would be useful to most core4 users
@@ -124,13 +141,16 @@ The process described here has several goals:
 Please follow these steps to have your contribution considered by the maintainers:
  1. Follow all instructions in the [template](#appendix).
  2. Follow the [styleguides](#styleguides).
- 3. Before to submit a pull:
-    - documentation should be created/updated .
-    - run [pylint](https://www.pylint.org/) over your code.
-    - run tests and ensure that all tests passed. Further information how to run test you can find in [README](README.md) file.
+ 3. Before submiting a pull request:
+    - create or extend suitable tests.
+    - ensure that all tests run sucecssfully. Further information how to run the tests can be found here: [README](README.md) file.
+    - create or update the documentation.
+    - run [pylint](https://www.pylint.org/) on your code.
  
  While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) may ask 
  you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.
+
+.. What aboud needed "commit messages" for the pull request?
 
 ## Styleguides
 ### Git Commit Styleguides
@@ -138,7 +158,7 @@ Git Commit Messages
 - Use the present tense ("Add feature" not "Added feature").
 - Use the imperative mood ("Move cursor to..." not "Moves cursor to...").
 - The commit message should reference the issue number, e.g.  ("[#18882]:bug: Fix scroll").
-- Consider starting the commit message with an applicable title:
+- Start a commit message with an applicable title:
     - :**bug**: when fixing a bug.
     - :**new**: when add a enhancements (new features and minor improvements).
     - :**remove**: when removing code or files.
@@ -172,18 +192,21 @@ worth reading. The main guidelines each core4 contributor should follow are summ
 * Write documentation for every class and introduce behavior, important 
   attributes, subclass behavior.
 * Write documentation for every non-private functions, list and explain every 
-  argument, return value.
+  argument and return value.
   
 These guidelines are based on PEP8 and heavily influenced by Brett Slatkin's
 Effective Python - 50 Specific Ways to Write Better Python.
-  
+ 
 Parameters, arguments and interface definitions:
 - Optional arguments should be placed in square brackets, i.e. ``[PARAMETER]``
 - Mandatory arguments should be placed in angle brackets, i.e. ``<PARAMETER>``
+.. when are we using these?
+
 
 Encoding declarations:
-- All core4 files use UTF-8 encoding and must not provide a encoding declaration in the first or second line of the 
-Python file.
+- All core4 files use UTF-8 encoding and must not provide an encoding declaration in the first or second line of the 
+Python file. 
+.. only not in the first 2 lines or not at all?
 
 Shebang line:
 - All core4 modules must not provide a shebang line. For actual scripts located in ./scripts the correct shebang line is:
@@ -192,7 +215,7 @@ Shebang line:
 ```
 
 ### Documentation Styleguide
-- Use [Sphinx](http://www.sphinx-doc.org) for build doc. Further information you can find in [README](README.md) file.
+- Use [Sphinx](http://www.sphinx-doc.org) for building the documentation. Further information can be found here: [README](README.md).
 - Headline hierarchy should be:
  ```sh   
     #######
@@ -213,6 +236,7 @@ Shebang line:
  manner may be closed at the maintainers' discretion.
  * The pull request must only fix an existing bug. To contribute other changes, you must use a different template.
  * The pull request must update the test suite to demonstrate the changed functionality.
+.. include the link to the bug and a short bug description
  
  ```sh   
 Identify the Bug
@@ -235,7 +259,8 @@ Possible Drawbacks
  * The pull request must provide only one suggesting enhancement. To contribute other changes, you must use a 
  different template.
  * The pull request must have a test suite to demonstrate the new functionality.
- 
+ .. include ticket and description
+ .. no bug-pull request or enhancement pull-request without a ticket?
   ```sh   
 Identify the suggested enhancement
 !!! Use a clear and descriptive title for the issue to identify the suggestion.
@@ -249,3 +274,6 @@ Steps to Demonstrate
 Impacted area
 !!! Please mention all of the areas that code deals with.
  ```
+
+ 
+.. please use pep8 (80 chars per line)
