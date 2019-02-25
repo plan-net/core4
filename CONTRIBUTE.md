@@ -82,7 +82,7 @@ which you use in those examples.
 
 
 .. only bugs that do not contain changed core4-code
-.. try reproducing the bug on a freshly configured maschine 
+.. try reproducing the bug on a freshly configured machine 
 .. to e.g. not report bugs in a customized python environment
 .. include configuration/environment information neccessary to reproduce
 
