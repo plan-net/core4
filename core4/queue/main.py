@@ -616,7 +616,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "attempts_left", "query_at", "trial")
-        self.make_stat('failed_job', str(job._id))
+        self.make_stat('{}_job'.format(state), str(job._id))
         self.unlock_job(job._id)
         job.logger.critical("done execution with [%s] "
                             "after [%d] sec. and [%d] attempts to go: %s\n%s",
