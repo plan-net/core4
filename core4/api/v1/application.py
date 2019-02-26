@@ -342,11 +342,12 @@ class RootContainer(CoreApiContainer):
     or :meth:`serve_all` to deliver the following standard request handlers
     with core4:
 
-    * ``/login`` with :class:`.LoginHandler`
-    * ``/logout`` with :class:`.LogoutHandler`
-    * ``/profile`` with :class:`.ProfileHandler`
-    * ``/file`` for static file access with :class:`FileHandler`
-    * ``/info`` with :class:`.RouteHandler` and :class:`.InfoHandler`
+    * ``/core4/api/login`` with :class:`.LoginHandler`
+    * ``/core4/api/logout`` with :class:`.LogoutHandler`
+    * ``/core4/api/profile`` with :class:`.ProfileHandler`
+    * ``/core4/api/file`` for static file access with :class:`FileHandler`
+    * ``/core4/api/info`` with :class:`.RouteHandler` and :class:`.InfoHandler`
+    * ``/core4/api/setting`` with :class:`.SettingHandler`
     * ``/`` for ``favicon.ico`` delivery with :class:`.CoreStaticFileHandler`
     """
     root = ""

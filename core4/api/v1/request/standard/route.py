@@ -9,6 +9,7 @@
 Implements core4 standard :class:`RouteHandler` delivering core4 API/endpoint
 collection.
 """
+from bson.son import SON
 from core4.const import ENTER_URL, HELP_URL, CARD_URL
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.queue.query import QueryMixin
@@ -70,9 +71,9 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
         per_page = int(self.get_argument("per_page", default=10))
         current_page = int(self.get_argument("page", default=0))
         query = self.get_argument("filter", as_type=dict, default=None)
-        sort_by = self.get_argument("sort", as_type=dict,
-                                    default={"qual_name": 1, "route_id": 1})
-
+        sort_by = self.get_argument("sort", as_type=list,
+                                    default=[
+                                        ("qual_name", 1), ("route_id", 1)])
         filter_by = [{"started_at": {"$ne": None}}]
         if query is not None:
             filter_by.append(query)
@@ -83,7 +84,7 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
                 "$match": {"$and": filter_by}
             },
             {
-                "$sort": sort_by
+                "$sort": SON(sort_by)
             },
             {
                 "$project": {

@@ -9,14 +9,12 @@
 Delivers the default core4 API server. This server roots to ``/core4/api``
 and provides the following endpoints:
 
-* ``/core4/api/login`` - :class:`.LoginHandler` (default handler)
-* ``/core4/api/logout`` - :class:`.LogoutHandler` (default handler)
-* ``/core4/api/profile`` - :class:`.ProfileHandler` (default handler)
-* ``/core4/api/queue`` - :class:`.QueueHandler`
-* ``/core4/api/jobs`` - :class:`.JobHandler`
-* ``/core4/api/jobs/poll`` - :class:`.JobStream`
-* ``/core4/api/enqueue`` - :class:`.JobPost`
-* ``/core4/api/info`` - :class:`.CoreInfo`
+* ``/core4/api/v1/queue`` - :class:`.QueueHandler`
+* ``/core4/api/v1/jobs`` - :class:`.JobHandler`
+* ``/core4/api/v1/jobs/poll`` - :class:`.JobStream`
+* ``/core4/api/v1/enqueue`` - :class:`.JobPost`
+* ``/core4/api/v1/roles`` - :class:`.RoleHandler`
+* ``/core4/api/v1/access`` - :class:`.AcceHandlerr`
 
 Additionally the server creates an endless loop to query collection
 ``sys.stat`` continuously with :class:`.QueueStatus` to support the
@@ -52,14 +50,14 @@ class CoreApiServer(CoreApiContainer):
     rules = [
         (r'/queue', QueueHandler, dict(source=publisher)),
         (r'/jobs/poll', JobStream),
-        (r'/jobs/poll/(.*)', JobStream),
+        (r'/jobs/poll/(.*)', JobStream, None, "JobStream"),
         (r'/jobs', JobHandler),
-        (r'/jobs/(.*)', JobHandler),
+        (r'/jobs/(.*)', JobHandler, None, "JobHandler"),
         (r'/enqueue', JobPost),
         (r'/roles', RoleHandler),
-        (r'/roles/(.*)', RoleHandler),
+        (r'/roles/(.*)', RoleHandler, None, "RoleHandler"),
         (r'/access', AccessHandler),
-        (r'/access/(.*)', AccessHandler),
+        (r'/access/(.*)', AccessHandler, None, "AccessHandler"),
     ]
 
 
