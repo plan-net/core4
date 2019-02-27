@@ -246,16 +246,44 @@ class Job2(Job1):
             {"hello": 1},
             {"hello": 2},
         ])
-        from pymongo import InsertOne, DeleteOne, ReplaceOne
-        requests = [InsertOne({'hello': 3}), DeleteOne({'x': 1}),
-                    ReplaceOne({'hello': 1}, {'hello': 1.234}, upsert=True)]
+        from pymongo import InsertOne, DeleteOne, ReplaceOne, UpdateOne, \
+            UpdateMany, DeleteMany
+
+        requests = [InsertOne({'hello': 3}),
+                    DeleteOne({'x': 1}),
+                    ReplaceOne({'hello': 1},
+                               {'hello': 1.234},
+                               upsert=True),
+                    UpdateOne({'hello': 2},
+                              {'$set': {'hello': 2.234}},
+                              upsert=True),
+                    UpdateMany({'hello': 3}, {'$set': {'hello': 3.234}},
+                               upsert=True),
+                    DeleteMany({'x': 1})
+                    ]
         coll.bulk_write(requests)
 
-        requests = [InsertOne({'hello': 4}), DeleteOne({'x': 1}),
-                    ReplaceOne({'hello': 1.234}, {'zz': 1}, upsert=True)]
+        requests = [InsertOne({'hello': 4}),
+                    DeleteOne({'x': 1}),
+                    ReplaceOne({'hello': 1.234},
+                               {'zz': 1},
+                               upsert=True),
+                    UpdateOne({'hello': 2.234},
+                              {'$set': {'zz': 2}},
+                              upsert=True),
+                    UpdateMany({'hello': 3.234},
+                               {'$set': {'zz': 3}},
+                               upsert=True),
+                    DeleteMany({'x': 1})]
+
         coll.bulk_write(requests)
-        coll.update_one({"hello": 5}, {"$set": {"ua": 1}}, upsert=True)
-        coll.update_many({"hello": "5"}, {"$set": {"ua": 2}}, upsert=True)
+        coll.update_one({"hello": 5},
+                        {"$set": {"ua": 1}},
+                        upsert=True)
+
+        coll.update_many({"hello": "5"},
+                         {"$set": {"ua": 2}},
+                         upsert=True)
         data = []
         for doc in coll.find():
             data.append(doc)
@@ -295,6 +323,7 @@ def test_multi_source():
         assert doc["_job_id"] == ret["_id"]
     assert sorted(ret["sources"]) == ['test1.txt', 'test2.txt']
 
+
 class Job4(Job1):
     author = "mra"
 
@@ -303,7 +332,8 @@ class Job4(Job1):
         coll = config.tests.test_collection
         self.set_source("dirname1/test1.txt")
         for i in range(1000):
-            config.tests.test_collection.insert_one({"hello": "document 1", "source": "test1.txt"})
+            config.tests.test_collection.insert_one(
+                {"hello": "document 1", "source": "test1.txt"})
 
         syscoll = self.config.sys.log
         syscoll.insert_one({})
@@ -313,6 +343,7 @@ class Job4(Job1):
         coll2.insert_one({"hello": "document 3", "source": "test2.txt"})
         coll2.insert_one({"hello": "document 4", "source": "test2.txt"})
         coll.insert_one({"hello": "document 5", "source": "test2.txt"})
+
 
 def test_change_source():
     ret = execute(Job4)
