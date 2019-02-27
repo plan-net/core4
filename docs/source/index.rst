@@ -35,6 +35,7 @@
    logging
    data
    file
+   http_api
    access
    deploy
    tools

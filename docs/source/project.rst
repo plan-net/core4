@@ -62,7 +62,7 @@ This will inquire further informaiton from the user and after some confirmation
 the helper script creates the project in the current working directory.
 
 The helper script creates all essential project files as describe above
-(see :ref:`project_folder`).
+(see :ref:`project_folder <project_folder>`).
 
 
 project repository location

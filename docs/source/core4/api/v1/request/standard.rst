@@ -26,3 +26,10 @@ profile endpoint
     :members:
     :show-inheritance:
 
+
+setting endpoint
+################
+
+.. automodule:: core4.api.v1.request.standard.setting
+    :members:
+    :show-inheritance:
