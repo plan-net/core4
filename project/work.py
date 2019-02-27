@@ -31,9 +31,10 @@ class DeferJob(core4.queue.job.CoreJob):
     defer_max = 10
 
     def execute(self, *args, **kwargs):
+        self.progress(float(self.trial) / 3.)
         if not kwargs.get("success", False) or self.trial < 3:
             self.defer("expected defer with trial [%d]", self.trial)
-        time.sleep(10)
+        time.sleep(kwargs.get("sleep", 10))
 
 
 if __name__ == '__main__':

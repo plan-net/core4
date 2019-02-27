@@ -159,10 +159,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 "heartbeat": now,
                 "hostname": core4.util.node.get_hostname(),
                 "pid": None,
-                "progress_value": None,
-                "progress": None,
                 "worker": self.identifier
-                # "username": None  # todo: this one is not set, yet
             }
         }
         ret = self.config.sys.queue.update_one(

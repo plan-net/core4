@@ -182,6 +182,7 @@ class QueryMixin:
         * ``name`` (str)
         * ``state`` (str)
         * ``locked`` (dict)
+        * ``prog`` (dict)
 
         :param kwargs: query filter
         :return: dict generator
@@ -230,7 +231,8 @@ class QueryMixin:
             'wall_at': 1,
             'name': 1,
             'state': 1,
-            'locked': 1
+            'locked': 1,
+            'prog': 1
         }
 
     def get_job_stdout(self, _id):

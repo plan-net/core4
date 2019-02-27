@@ -993,8 +993,3 @@ def test_project_process(queue):
     while queue.config.sys.queue.count_documents({}) > 0:
         print("waiting")
         time.sleep(1)
-
-
-# make stats
-
-

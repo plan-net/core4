@@ -528,3 +528,10 @@ def test_project_overwrite():
                 core4.queue.helper.functool.execute(RealJob)
 
             core4.queue.helper.functool.execute(RealJobWithAuthor)
+
+
+def test_progress_enqueue():
+    job = core4.queue.helper.job.example.DummyJob(attempts=10)
+    assert job.attempts == 10
+    assert job.chain == []
+    assert job.prog == {"value": None, "message": None}

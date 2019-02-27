@@ -66,7 +66,7 @@ JOB_ARGS = {
     "name": (SERIALISE,),
     "priority": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "progress_interval": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
-    "python": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
+    "prog": (SERIALISE,),
     "query_at": (SERIALISE,),
     "removed_at": (SERIALISE,),
     "runtime": (SERIALISE,),
@@ -173,14 +173,13 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
     * ``locked.heartbeat`` - datetime of the last advertising of job progress
     * ``locked.hostname`` - of the worker
     * ``locked.pid`` - of the process executing the job
-    * ``locked.progress`` - last progress message
     * ``locked.worker`` - which locked the job
     * ``locked.username`` - running the worker which locked the job
     * ``max_parallel`` - max. number jobs to run in parallel on the same node
     * ``name`` - short fully qualified name of the job
     * ``priority`` - to execute the job with >0 higher and <0 lower priority
-    * ``python`` - Python executable to be used for dedicated Python virtual
-      environment
+    * ``prog.message`` - last progress message
+    * ``prog.value`` - last progress value
     * ``query_at`` - datetime to query the job, derived from ``error_time`` or
       ``defer_time``
     * ``removed_at`` - datetime when the job has been requested to remove
@@ -376,7 +375,10 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
         self.trial = 0
         self.wall_at = None
         self.zombie_at = None
-
+        self.prog = {
+            "value": None,
+            "message": None
+        }
         self.load_default()
         self.overload_property()
         self.overload_config()
@@ -528,10 +530,10 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
 
     def progress(self, p, *args, force=False):
         """
-        monitors the progress of a job. This method is called on the set
+        indicates the progress of a job. This method is called on the set
         intervall.
 
-        This method pdates the job's heartbeat and logs the progress with
+        This method updates the job's heartbeat and logs the progress with
         a debug messages. If a job does not report progress within a specified
         timeframe, it turns into a zombie.
 
@@ -547,15 +549,15 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
             self.__dict__['_progress'] = now + dt.timedelta(
                 seconds=self.progress_interval)
             self.logger.debug("progress [%1.0f%%] - " + message, p * 100.)
-            self.config.sys.queue.update_one(
+            ret = self.config.sys.queue.update_one(
                 {
                     "_id": self._id
                 },
                 update={
                     '$set': {
                         'locked.heartbeat': now,
-                        'locked.progress': message,
-                        'locked.progress_value': p
+                        'prog.message': message,
+                        'prog.value': p
                     }
                 }
             )
