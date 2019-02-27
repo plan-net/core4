@@ -501,18 +501,6 @@ class CoreBaseHandler(CoreBase):
         namespace["default_static"] = self.default_static
         return namespace
 
-    # def route_id(self):
-    #     """
-    #     Identifies the ``route_id`` by the route pattern of the resource.
-    #
-    #     :return: ``route_id``
-    #     """
-    #     for rule in self.application.wildcard_router.rules:
-    #         route = rule.matcher.match(self.request)
-    #         if route is not None:
-    #             return rule.route_id
-    #     return None
-
     def write_error(self, status_code, **kwargs):
         """
         Write and finish the request/response cycle with error.
@@ -893,12 +881,19 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         if isinstance(chunk, pd.DataFrame):
             if self.wants_csv():
                 chunk = chunk.to_csv(encoding="utf-8")
+                content_type = "text/csv"
             elif self.wants_html():
                 chunk = chunk.to_html()
+                content_type = "text/html"
             elif self.wants_text():
                 chunk = chunk.to_string()
+                content_type = "text/plain"
             else:
                 chunk = chunk.to_dict('rec')
+                content_type = None
+            if content_type is not None:
+                self.set_header("Content-Type", content_type)
+                return self.finish(chunk)
         elif isinstance(chunk, PageResult):
             page = self._build_json(
                 code=self.get_status(),
@@ -912,8 +907,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             page["count"] = chunk.count
             self.finish(page)
             return
-        elif isinstance(chunk, (dict, list)) or self.wants_json():
-            pass
         chunk = self._build_json(
             code=self.get_status(),
             message=self._reason,
