@@ -50,3 +50,11 @@ asset handler endpoint
     :members:
     :show-inheritance:
 
+
+user settings endpoint
+######################
+
+.. automodule:: core4.api.v1.request.standard.setting
+    :members:
+    :show-inheritance:
+
