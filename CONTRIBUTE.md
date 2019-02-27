@@ -1,12 +1,15 @@
-First off, thank you for considering contributing to core4. 
+First off, thank you for considering to contribute to core4. 
 
-There are many ways to contribute, including submitting bug reports, improving 
+There are many ways to contribute, e.g. submitting bug reports, improving 
 documentation, submitting feature requests, reviewing new submissions, or 
 contributing code that can be incorporated into the project.
 
-> When contributing to this repository, please first discuss the change you 
-wish to make via issue, email, or any other method with the owners of this 
+> When contributing to this repository, please first discuss the changes you 
+wish to make via issue, email, or any other method with the maintainers of this 
 repository before making a change.
+
+.. all changes only via issue, no direct emails please
+
 
 Please note we have a code of conduct, please follow it in all your 
 interactions with the project.
@@ -31,7 +34,8 @@ interactions with the project.
 
 ## Code of Conduct
 ### Our Standards
-Examples of behavior that contributes to creating a positive environment include:
+Examples of behavior that contributes to creating a positive environment 
+include:
 - Using welcoming and inclusive language.
 - Being respectful of differing viewpoints and experiences.
 - Gracefully accepting constructive criticism.
@@ -72,36 +76,35 @@ these guidelines helps maintainers and the community understand your report,
 reproduce the behavior, and find related reports.
 
 Before creating bug reports:
-- Please check this list (link) as you might find out that you don't need to 
-create one.
+- Please check this list of current open issues(link) as you might find out that 
+you don't need to create one.
 - Only open an issue if no other issue is addressing the same problem. 
 If the bug still persists after the issue has been marked as "fixed", 
-please open a new one with a link to the original.
-- Try reproducing the bug on a freshly configured machine (not report bugs in 
-a customized python environment)
+please open a new one containing a link to the original.
+- Try reproducing the bug on a freshly configured machine with upstream code.
+(Please do not report bugs that may be caused by customized code or a customized
+operating system.)
 
-When you are create a bug report, please include as many details as possible. 
+When you are creating a bug report, please include as many details as possible. 
 
 How Do I Submit A Bug Report?
 
 Explain the problem and include additional details to help maintainers 
 reproduce the problem:
 - Use a clear and descriptive title for the issue to identify the problem.
-- Describe the exact steps which reproduce the problem in as many details 
-as possible.
-- Provide specific examples to demonstrate the steps. Include links to files, 
-attaching logs or copy/pasteable snippets, which you use in those examples.
+- Describe the exact steps to reproduce the problem as detailed as possible.
 - Include configuration/environment information necessary to reproduce.
+- Include any files or other resources uses in your example.
 - Explain which behavior you expected to see.
-- Describe the behavior you observed after following the steps and point out 
-what exactly is the problem with that behavior.
+- Describe the behavior you observed after triggering the bug and describe 
+in detail how this differs from your expectation.
 
 
 Use the form below to reporting a bug:
 ```sh
 Title of the issue:
 
-What necessary information needed to reproduce(configuration/environment)?
+What necessary information is needed to reproduce (configuration/environment)?
 
 What steps will reproduce the issue?
 
@@ -128,14 +131,15 @@ suggestion.
 - Provide a step-by-step description of the suggested enhancement in as many 
 details as possible.
 - Provide specific examples to demonstrate the steps.
+..todo: steps not a good word here
 
 Use the form below to submit enhancement suggestion:
 ```sh
-Title of the suggesting enhancement:
+Title of the suggested enhancement:
 
 Description of the suggested enhancement:
 
-What is the expected result?
+What is the expected result/behavior?
 
 ```
 
@@ -143,24 +147,25 @@ What is the expected result?
 The process described here has several goals:
 - Maintain core4 quality.
 - Fix issues that are important to users.
-- Engage the community in working toward the best possible core4.
+- Engage the community in working towards the best possible core4.
 - Enable a sustainable system for core4's maintainers to review contributions.
 
-Please follow these steps to have your contribution considered by the maintainers:
+Please follow these steps to have your contribution considered by the 
+maintainers:
  1. Follow all instructions in the [template](#appendix).
  2. Follow the [styleguides](#styleguides).
- 3. Before submiting a pull request:
+ 3. Before submitting a pull request:
     - create or extend suitable tests.
-    - ensure that all tests run sucecssfully. Further information how to run 
-    the tests can be found here: [README](README.md) file.
+    - ensure that all tests run successfully. Further information how to run 
+    the tests can be found here: [README](README.md).
     - create or update the documentation.
     
 >Proof your changes with upstream  code
+..todo: this is out of context here
  
 While the prerequisites above must be satisfied prior to having your pull 
 request reviewed, the reviewer(s) may ask you to complete additional design 
-work, tests, or other changes before your pull request can be 
-ultimately accepted.
+work, tests, or other changes before your pull request can be accepted.
 
 ## Styleguides
 ### Git Commit Styleguides
@@ -176,22 +181,25 @@ Git Commit Messages
     - :**test**: when adding/editing tests.
     - :**style**: when improving the format/structure of the code.
     - :**doc**: when adding/fixing documentation.
+..todo: short introduction to the problem. what has been changed, why and how
+..todo: use short description on possible sideeffects if applicable.
 
 ### Python Styleguide
-Use [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide. PEP8 is big, 
-constantly evolving and certainly worth reading. The main guidelines each core4 
-contributor should follow are summarised below:
+Use the style guidelines defined within [PEP8](https://www.python.org/dev/peps/pep-0008/). 
+PEP8 is big, constantly evolving and certainly worth reading. The main 
+guidelines each core4 contributor should follow are summarised below:
 
 * Use four whitespaces, no tabulators, with a maximum line length of 79 chars.
-* Functions and classes are seperated by two blank lines.
-* Methods in a class are seperated by one blank line.
+* Functions and classes are separated by two blank lines.
+..todo: functions really seperated by two blanks? classes yes, but func 1?
+* Methods in a class are separated by one blank line.
 * Put one space around variable assignments (e.g. ``x = 1``) but do not put
   spaces around list indexes, function calls or keyword assignments (e.g.
-  ``func(a=1, b=2)``).
-* Functions, variables, attributes in lower case using underscore to seperate
-  terms.
-* Protected attributes with a leading underscore.
-* Private attributes with double leading underscore.
+  ``func(a=1, b=2)``). 
+* Specify functions, variables and attributes in lower case using underscores to
+ separate terms.
+* Preceed protected attributes with a leading underscore.
+* Preceed Private attributes with double leading underscore.
 * Classes and exceptions use CamelCase.
 * Constants use upper case.
 * Instance methods use ``self``, class methods use ``cls``.
@@ -206,8 +214,12 @@ contributor should follow are summarised below:
 * Write documentation for every non-private functions, list and explain every 
   argument and return value.
   
+..todo: mixture of directly addressing the user (Use four whitespaces) and 
+.. imperative (Constants use upper case)
+
 These guidelines are based on PEP8 and heavily influenced by Brett Slatkin's
 Effective Python - 50 Specific Ways to Write Better Python.
+..todo: can we provide a link here?
 
 Shebang line:
 - All core4 modules must not provide a shebang line. For actual scripts located 
@@ -215,6 +227,8 @@ in ./scripts the correct shebang line is:
 ```sh
 #!/usr/bin/env python3
 ```
+..todo: clarify which python3 version we use, maybe:
+.. /usr/bin/env python3.5 
 
 ### Documentation Styleguide
 - Use [Sphinx](http://www.sphinx-doc.org) for building the documentation. 
@@ -240,34 +254,41 @@ level 3
  maintainers' discretion.
  * The pull request must only fix an existing bug. To contribute other changes, 
  you must use a different template.
+ ..todo: other than fixing a non exiting bug?
  * The pull request must update the test suite to demonstrate the changed 
  functionality.
+ ..todo: how does the pull request update the test suite? the user should do that.
  
 ```sh   
 Identify the Bug
 !!! Link to the issue describing the bug that you're fixing. If there is not yet an issue for your bug, please open a new issue and then link to that issue in your pull request.
 
 Bug description:
-!!! Provide short bug description
+!!! Provide a short bug description
 
 Description of the Change
-!!! We must be able to understand the design of your change from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion. Keep in mind that the maintainer reviewing this PR may not be familiar with or have worked with the code here recently, so please walk us through the concepts.
+!!! We must be able to understand the design of your change from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion. Keep in mind that the maintainer reviewing this PR may not be familiar with or have worked with the code recently, Please walk us through the concepts.
 
 Impacted area
-!!! Please mention all of the areas that code deals with.
+!!! Please mention all of the areas the code deals with.
 
 Possible Drawbacks
-!!! What are the possible side-effects or negative impacts of the code change?
+!!! What are the possible side-effects or negative impacts of your code change?
  ```
+..todo: Description of the change: do we really say we have not worked with the code in  a long while?
+..todo: should the user not only describe the concepts of his change and how it impacts the overall system? 
+..todo: to me this reads like a walk-through through core4 concepts. discussable.
+
 
 ### Suggesting Enhancements Pull Request Template
 
  * Fill out the template below. Any pull request that does not include enough 
  information to be reviewed in a timely manner may be closed at the 
  maintainers' discretion.
- * The pull request must provide only one suggesting enhancement. To contribute 
+ * The pull request must provide only one suggested enhancement. To contribute 
  other changes, you must use a different template.
- * The pull request must have a test suite to demonstrate the new functionality.
+ * The pull request must contain test suites to demonstrate the new 
+ functionality.
 
 ```sh   
 Identify the suggested enhancement
@@ -277,8 +298,12 @@ Description of the Idea
 !!! We must be able to understand the design of your feature from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion.
 
 Steps to Demonstrate
-!!! Provide specific examples to demonstrate the enhancements.
+!!! Provide specific examples to demonstrate the enhancement.
 
 Impacted area
-!!! Please mention all of the areas that code deals with.
+!!! Please mention all of the areas the code deals with.
+
+
+Possible Drawbacks
+!!! What are the possible side-effects or negative impacts of your code change?
  ```
