@@ -6,9 +6,10 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
-This module implement :class:`.CoreCollection`, featuring database access and
-:class:`.CoreJobCollection` derived from :class:`.CoreCollection` with extended
-features for MongoDB collection access with :class:`.CoreJob`.
+This module implement :class:`.CoreCollection`, featuring database
+access and :class:`.CoreJobCollection` derived from
+:class:`.CoreCollection` with extended features for MongoDB collection
+access with :class:`.CoreJob`.
 """
 
 import pymongo.collection
@@ -150,8 +151,9 @@ class JobCollection(pymongo.collection.Collection):
 
     def set_job(self, _id, _src):
         """
-        Used by :class:`.CoreJob` and :class:`.JobConnectTag` to announce the
-        current source to future MongoDB collection methods.
+        Used by :class:`.CoreJob` and :class:`.JobConnectTag` to
+        announce the current source to future MongoDB collection
+        methods.
 
         :param _id: ``_id`` of the :class:`.CoreJob` instance
         :param _src: latest source of the :class:`.CoreJob` instance
@@ -171,8 +173,8 @@ class JobCollection(pymongo.collection.Collection):
 
     def insert_one(self, document, *args, **kwargs):
         """
-        Overwrites :class:`pymongo.collection.Collection` method to add extra
-        job attributes.
+        Overwrites :class:`pymongo.collection.Collection` method to add
+        extra job attributes.
         """
         self._verify()
         document.update(self._job)
@@ -180,8 +182,8 @@ class JobCollection(pymongo.collection.Collection):
 
     def insert_many(self, documents, *args, **kwargs):
         """
-        Overwrites :class:`pymongo.collection.Collection` method to add extra
-        job attributes.
+        Overwrites :class:`pymongo.collection.Collection` method to add
+        extra job attributes.
         """
         self._verify()
         for i in range(len(documents)):
@@ -190,19 +192,24 @@ class JobCollection(pymongo.collection.Collection):
 
     def bulk_write(self, requests, *args, **kwargs):
         """
-        Overwrites :class:`pymongo.collection.Collection` method to add extra
-        job attributes.
+        Overwrites :class:`pymongo.collection.Collection` method to add
+        extra job attributes.
         """
         self._verify()
         for i in range(len(requests)):
             if hasattr(requests[i], "_doc"):
-                requests[i]._doc.update(self._job)
+                if requests[i]._doc.get('$set'):
+                    requests[i]._doc['$set'].update(self._job)
+                elif requests[i]._doc.get("$setOnInsert"):
+                    requests[i]._doc['$setOnInsert'].update(self._job)
+                else:
+                    requests[i]._doc.update(self._job)
         return super().bulk_write(requests, *args, **kwargs)
 
     def _update(self, sock_info, criteria, document, *args, **kwargs):
         """
-        Overwrites :class:`pymongo.collection.Collection` method to add extra
-        job attributes.
+        Overwrites :class:`pymongo.collection.Collection` method to add
+        extra job attributes.
         """
         self._verify()
         if "$set" in document:
