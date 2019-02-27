@@ -1,13 +1,33 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+Implements :class:`.CoreDiscovery` for node discovery.
+"""
 import psutil
 import socket
 
 import core4.base
-import core4.util
 import core4.util.node
 from core4.util.tool import lazyproperty
 
 
 class CoreDiscovery(core4.base.CoreBase):
+    """
+    Provides general purpose node information, i.e.
+
+    * ip address
+    * hostname
+    * number of cpu
+    * mountpoins
+    * current disk usage
+    * current cpu usage
+    * current memory usage
+    """
 
     @lazyproperty
     def ip_address(self):

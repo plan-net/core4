@@ -16,6 +16,7 @@ from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
 from core4.queue.helper.functool import execute
 from tests.api.test_response import setup
+import core4.util.node
 
 _ = setup
 
@@ -49,7 +50,7 @@ class HttpServer:
         self.process.start()
         while True:
             try:
-                url = self.url("/core4/api/v1/profile")
+                url = self.url("/core4/api/profile")
                 requests.get(url, timeout=1)
                 break
             except:
@@ -57,12 +58,13 @@ class HttpServer:
             time.sleep(1)
             tornado.gen.sleep(1)
         self.signin = requests.get(
-            self.url("/core4/api/v1/login?username=admin&password=hans"))
+            self.url("/core4/api/login?username=admin&password=hans"))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 
     def url(self, url):
-        return "http://localhost:{}".format(self.port) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}".format(hostname, self.port) + url
 
     def request(self, method, url, base=True, **kwargs):
         if base:
@@ -123,7 +125,7 @@ def add_user(http, username):
                    })
     assert rv.status_code == 200
     conn = http.get(
-        "/core4/api/v1/login?username=" + username + "&password=" + username,
+        "/core4/api/login?username=" + username + "&password=" + username,
         token=None)
     assert conn.status_code == 200
     return conn.json()["data"]["token"]
@@ -144,25 +146,25 @@ def add_job_user(http, username, perm):
                    })
     assert rv.status_code == 200
     conn = http.get(
-        "/core4/api/v1/login?username=" + username + "&password=" + username,
+        "/core4/api/login?username=" + username + "&password=" + username,
         token=None)
     assert conn.status_code == 200
     return conn.json()["data"]["token"]
 
 
 def test_server_test(http):
-    rv = http.get("/core4/api/v1/profile")
+    rv = http.get("/core4/api/profile")
     assert rv.status_code == 200
     token = add_user(http, "user1")
-    rv = http.get("/core4/api/v1/profile", token=token)
+    rv = http.get("/core4/api/profile", token=token)
     assert rv.status_code == 200
     rv = http.get("/tests/roles", token=token)
     assert rv.status_code == 403
     rv = http.get("/tests/enqueue", token=token)
     assert rv.status_code == 403
-    rv = http.get("/core4/api/v1/logout", token=token)
+    rv = http.get("/core4/api/logout", token=token)
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info", token=token)
+    rv = http.get("/core4/api/info", token=token)
     assert rv.status_code == 200
     pprint(rv.json())
 
@@ -170,13 +172,13 @@ def test_server_test(http):
 # def test_collection_job(http):
 #     execute(ApiJob)
 #     token = add_user(http, "user1")
-#     rv = http.get("/core4/api/v1/info", token=token)
+#     rv = http.get("/core4/api/info", token=token)
 #     for elem in rv.json()["data"]:
 #         print(elem["qual_name"])
 #         rv = http.get(elem["card_url"], token=token, base=False)
 #         assert rv.status_code in (401, 200)
 #
-#     rv = http.get("/core4/api/v1/info")
+#     rv = http.get("/core4/api/info")
 #     check = {
 #         'core4.api.v1.request.queue.job.JobPost': 403,
 #         'core4.api.v1.request.role.main.RoleHandler': 403,
@@ -201,12 +203,12 @@ def test_enqeuue(http):
             "api://core4.api.v1.request.queue.job.JobPost",
             "job://core4.queue.helper.*/x"
         ])
-    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
+    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.example.DummyJob",
                    token=token)
     assert rv.status_code == 200
     token = add_job_user(
         http, "user2", ["api://core4.api.v1.request.queue.job.JobHandler"])
-    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.DummyJob",
+    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.example.DummyJob",
                    token=token)
     assert rv.status_code == 403
 
@@ -221,7 +223,7 @@ class MyJob(core4.queue.job.CoreJob):
 def test_job_listing(http):
     for i in range(0, 10):
         rv = http.post("/tests/enqueue", json={
-            "name": "core4.queue.helper.job.DummyJob",
+            "name": "core4.queue.helper.job.example.DummyJob",
             "id": i + 1
         })
         assert rv.status_code == 200

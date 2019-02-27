@@ -1,5 +1,10 @@
 .. _job:
 
+.. todo:: please 80 characters per line max.
+
+.. todo:: please link to classes where appropriate
+
+
 CoreJob
 =======
 
@@ -20,8 +25,8 @@ from central logging and configuration to deployment, all this while scaling to 
 CoreJobs
 --------
 
-CoreJobs implement the logic layer of the core architecture and enables the user to fully automate their business logic
-within a fault-tolerant distributed system. Core    Jobs are the starting point for any Data-engineer or -scientist and
+CoreJobs implement the logic layer of the core4s architecture and enables the user to fully automate their business logic
+within a fault-tolerant distributed system. CoreJobs are the starting point for any Data-engineer or -scientist and
 provides a lot of possibilities to easily control the runtime-behavior within the framework.
 
 Example
@@ -29,7 +34,7 @@ Example
 
 .. code-block:: python
 
-    class FirstJob(core.queue.job.Job):                                       # [1]
+    class FirstJob(core4.queue.job.CoreJob):                                  # [1]
 
         """
         Each 30 minutes, this job counts the occurrences of terms LIEBE and
@@ -56,7 +61,7 @@ Example
             words = re.sub(
                 '\s+', ' ', re.sub('\<.*?\>', '', rv.content, flags=re.DOTALL)
             ).split()                                                          # [9]
-            result = {'create': core.util.now()}                               # [10]
+            result = {'create': core4.util.node.now()}                         # [10]
             terms = self.config.get_list('terms', [“liebe”, “hass”])           # [11]
 
             for term in terms:                                                 # [12]
@@ -70,22 +75,22 @@ Example
 
 Explanation:
 
-| [1] All jobs inherit from core.queue.job.Job.
+| [1] All jobs inherit from core4.queue.job.CoreJob.
 | [2] Using crontab syntax this job starts each five minutes.
 | [3] If the job fails, then retry another 4 times ...
 | [4] but wait for two minutes before each trial.
 | [5] The job’s .execute() method is called when compute resources are available.
 | [6] The bild.de RSS feed can be configured and defaults to the given url.
-| [7] This is an INFO message to core central logging system. This is the Python Standard logging logger knowing: DEBUG, INFO, WARNING, ERROR and CRITICAL level messages.
+| [7] This is an INFO message to core4s central logging system. This is the Python Standard logging logger knowing: DEBUG, INFO, WARNING, ERROR and CRITICAL level messages.
 | [8] Use requests to get the feed.
 | [9] Remove all XML tags and split words. I know you can do better with exact parsing of the RSS feed.
 | [10] Build result using CORE’s own timestamp, not thinking about timezones.
-| [11] Get list of interest terms from core.config and search LIEBE and HASS by default.
+| [11] Get list of interest terms from core4.config and search LIEBE and HASS by default.
 | [12] Loop all terms of interest,
 | [13] and count the number of term occurrences.
 | [14] Update result dict.
 | [15] Be verbose in DEBUG mode (depends on CORE plugin default configuration, here).
-| [16] Get MongoDB connection to collection term.count. Authorisation and access permission management is taken from CORE plugin configuration and the security profile of the caller (man or machine).
+| [16] Get MongoDB connection to collection term.count. Authorisation and access permission management is taken from core4 plugin configuration and the security profile of the caller (man or machine).
 | [17] Insert result into the MongoDB. Note that the job adds some extra information for tracking purposes.
 
 
@@ -95,7 +100,7 @@ Down below you can find a more detailed instruction about various aspects of wri
 Principles
 ----------
 
-CoreJobs implement the logic layer of the core architecture. CoreJobs can broadly be categorised into
+CoreJobs implement the logic layer of the core4s architecture. CoreJobs can broadly be categorised into
 
 -   extraction jobs, scanners and feed readers representing inbound
     interfaces
@@ -122,6 +127,9 @@ A job can have multiple states, depending on its configured runtime-behavior:
 Switching between these states is either done via configuration-settings or within the code.
 A basic subset of configuration-settings is as follows:
 
+.. Switching between these states is either done via configuration-settings or within the code
+   this is wrong.
+
  ================= ====================================================================
           property description
  ================= ====================================================================
@@ -141,16 +149,29 @@ A basic subset of configuration-settings is as follows:
          wall_time seconds before a job with no feedback turns to zombie.
  ================= ====================================================================
 
+.. please refer at least to the full list of attributes in the API documentation
+
+.. priority defaults to 0; <0 is lower, >0 is higher. 0 is not the lowest!!
+
+.. the following attributes have to be described since these are important
+    * ``attempts``
+    * ``hidden``
+    * ``tag``
+    * ``worker``
+    * ``zombie_time``
+
 Within the code, a job can defer itself::
 
     self.defer("This job has been defered due to various reasons.")
 
 Or enqueue other jobs by their qual_name::
 
-    self.queue.enqueue("core.queue.job.DummyJob", sleep=120)
+    self.queue.enqueue("core4.queue.helper.job.DummyJob", sleep=120)
 
 Jobs and their states can be monitored and controlled via the "coco" script.
 For further information about possible arguments please visit: :ref:`configuration management <config>`.
+
+.. please link coco
 
 
 collection handling
@@ -161,7 +182,7 @@ your local database, everythings possible.
 
 The example below takes advantage of core4s configuration-inheritance to achieve exactly that.
 All keys have to first be set within the plugin-configuration itself so that they can be overwritten by the
-user-specific configuration file located in ``~/core4/local.yaml``::
+user-specific configuration file located in ``~/.core4/local.yaml``::
 
     mongo_url: mongodb://usr:pwd@localhost:27017
     mongo_database: bakery
@@ -221,6 +242,8 @@ user-specific configuration file located in ``~/core4/local.yaml``::
             mid_coll.bulk_write(mid_data, ordered=False)
             high_coll.bulk_write(high_data, ordered=False)
 
+.. please describe the special mongodb attributes _src and _job_id which are
+   automatically inserted with each record
 
 
 logging
@@ -239,6 +262,10 @@ For a job to be able to start logging, it hast to inherit from the Configuration
     class Log(CoreLoggerMixin, CoreJob):
         def __init__(self):
             self.setup_logging()
+
+.. this is wrong. A job as any other class instance derived from CoreBase
+   can log. It is the application which has to start logging. The following
+   applications start logging: worker, scheduler, app, coco.
 
 
 Logging is as simple as calling the required method within self.logger::
@@ -259,6 +286,12 @@ You can either use the .format-method of a string or format it the oldschool way
 The DEBUG level will not be logged by default. It will only be written when an error has occured. This way, one can
 write multiple DEBUG messages that may help him indentify an error but would otherwise clutter the output.
 
+.. this is wrong. It depends on the log level. There is a special handling for
+   mongo logging, only. If mongo log level is > DEBUG, then and only then all
+   DEBUG level log messages will be dumped from memory to mongodb if and only
+   if a CRITICAL log message occured. In the context of job operations CRITICAL
+   is reserved for died jobs.
+
 A job will log all raised expections that are piped to either std::out or std::error by default.
 
 
@@ -270,13 +303,17 @@ For passing arguments from one job to another, or to keep track of job-specific 
 inbetween multiple runs, CoreCookies can be used.
 cookies are identified by the qual_name of the job using them.
 
+.. passing arguments from one job to another ... if you mean the same job, i.e.
+   the same qual_name, then this is true. If you mean different job classes,
+   then this is not true and does not make sense.
+
 Think of it as enhanced browser-cookies, a store for multiple key-value pairs.
 
 Cookies are included within the CoreJob itself, as core automatically keeps track of the last time a worker has tried
 to execute the job. A datetime object is stored within the ``last_runtime`` key::
 
     {
-        "_id" : "core.account.core3.queue.job.DummyJob",
+        "_id" : "core4.queue.helper.job.DummyJob",
         "last_runtime" : ISODate("2018-11-05T09:26:31.156Z")
     }
 
@@ -319,6 +356,10 @@ structuring of jobs
 -------------------
 CoreJobs can inherit from any other Classes.
 If the inherit from other CoreJobs, all class-properties get inherited too.
+
+.. not really. There are some, which will not be inherited. see NOT_INHERITED
+   attribute in job.py
+
 Baseclasses themselfs have no schedule and should not be called directly, therefore they can set the ``hidden`` flag,
 so that this job will not be listed within a ``coco -j`` and is not visible to the user.
 
@@ -344,6 +385,14 @@ so that this job will not be listed within a ``coco -j`` and is not visible to t
         def execute(self, x, y):
             result = self.static_mult(x, y)
             self.logger.info("Got result within the multiplication: [%d]", result)
+
+
+.. this has slightly changed for good reasons. Hidden really applies for jobs
+   which are not supposed to be listed. Now there is a new mixin job class
+   to clearly define abstract job classes:
+      core4.queue.helper.job.base.CoreAbstractJobMixin
+   jobs mixing in this class cannot be executed and will not be listed with
+   coco -j
 
 
 Best practices
@@ -429,5 +478,10 @@ principles also:
         choosing simple, yet descriptive names will greatly help you maintain or extend your code.
 
 
-
+.. the following aspects should be described
+   - how to pass arguments to jobs and the special transformation from shell
+     arguments to json
+   - access permission read/execute with jobs, i.e. job://.../x|r
+   - overwrite job attributes in configuration by using the qual name
+   - please cross reference important sections, for example logging, config
 

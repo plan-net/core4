@@ -1,22 +1,42 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+This module implements :class:`.CoreScheduler`.
+
+To start a scheduler from Python goes like this::
+
+    from core4.queue.scheduler import CoreScheduler
+
+    scheduler = CoreScheduler()
+    scheduler.start
+
+To stop the worker start a new Python interpreter and go with::
+
+    from core4.queue.main import CoreQueue
+
+    queue = CoreQueue()
+    queue.halt(now=True)
+
+.. note:: use :ref:`coco` to achieve the same with::
+
+    $ coco --scheduler
+    $ coco --halt
+"""
+
 import datetime
 from croniter import croniter
 
-import core4.queue.main
-import core4.queue.query
-import core4.service.introspect.project
-import core4.util
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
 import core4.const
+from core4.service.introspect.command import ENQUEUE
+import core4.service.introspect
 
-
-# todo: should be more central, see coco.py
-ENQUEUE_COMMAND = """
-from core4.queue.main import CoreQueue
-queue = CoreQueue()
-job = queue.enqueue("{qual_name:s}")
-print(job._id)
-"""
 
 
 class CoreScheduler(CoreDaemon):
@@ -70,8 +90,7 @@ class CoreScheduler(CoreDaemon):
           The attribute is ``None`` if the job has not been found during last
           update.
         """
-        #intro = core4.service.introspect.CoreIntrospector()
-        intro = core4.service.introspect.project.CoreProjectInspector()
+        intro = core4.service.introspect.CoreIntrospector()
         self.config.sys.job.update_many(
             filter={},
             update={
@@ -145,7 +164,8 @@ class CoreScheduler(CoreDaemon):
             try:
                 self.queue.enqueue(name=job)._id
             except ImportError:
-                self.queue.exec_project(job, ENQUEUE_COMMAND, qual_name=job)
+                core4.service.introspect.exec_project(
+                    job, ENQUEUE, qual_name=job)
             except core4.error.CoreJobExists:
                 self.logger.error("job [%s] exists", job)
             except Exception:

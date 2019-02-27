@@ -1,4 +1,15 @@
-import core4.base.main
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+This module provides core4 :class:`.Cookie`. Cookies allow state transitions
+of otherwise stateless entities, i.e. :class:`.CoreJob` and
+:class:`.CoreRequestHandler`.
+"""
 
 
 class Cookie:
@@ -36,7 +47,7 @@ class Cookie:
             cookie.set(a, 1)
             cookie.set(a=1)
 
-         :param *args: key and value to set
+         :param args: key and value to set
          :param kwargs: dictionary of key/values
          :return: ``True`` if the key has been updated, else ``False``
          """

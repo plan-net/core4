@@ -1,13 +1,25 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+Implements :class:`.CoreSetup` to realise core4 prerequisites, i.e. folders,
+default users and roles, and MongoDB collection indices.
+"""
 import os
 
 import pymongo
 import pymongo.errors
 from bson.objectid import ObjectId
+
 import core4.const
-from core4.api.v1.request.role.model import CoreRole
+import core4.util.crypt
 from core4.base import CoreBase
 from core4.util.tool import Singleton
-import core4.util.crypt
+
 
 def once(f):
     """
@@ -48,7 +60,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
     @once
     def make_folder(self):
         """
-        Creates the core4 folders defined with configuration key ``folder``.
+        Creates the core4 folders defined under configuration key ``folder``.
         """
         root = self.config.folder.root
 
@@ -80,16 +92,22 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         * ``api.user_realname``
         * ``api.user_permission``
         """
+        if ((self.config.api.admin_username is None)
+                or (self.config.api.admin_password is None)
+                or (self.config.api.contact is None)):
+            raise TypeError("admin _username, _realname, _password or contact "
+                            "not set")
+        data = dict(
+            name=self.config.api.admin_username,
+            realname=self.config.api.admin_realname,
+            password=core4.util.crypt.pwd_context.hash(
+                self.config.api.admin_password),
+            email=self.config.api.contact,
+            etag=ObjectId(),
+            perm=[core4.const.COP]
+        )
         try:
-            self.config.sys.role.insert_one(dict(
-                name=self.config.api.admin_username,
-                realname=self.config.api.admin_realname,
-                password=core4.util.crypt.pwd_context.hash(
-                    self.config.api.admin_password),
-                email=self.config.api.contact,
-                etag=ObjectId(),
-                perm=[core4.const.COP]
-            ))
+            self.config.sys.role.insert_one(data)
             self.logger.info("created user [%s]",
                              self.config.api.admin_username)
         except pymongo.errors.DuplicateKeyError:

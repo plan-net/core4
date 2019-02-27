@@ -1,3 +1,5 @@
+.. _api_doc:
+
 ######
 api.v1
 ######
@@ -7,4 +9,6 @@ api.v1
 
    application
    server
+   tool
    request/index
+

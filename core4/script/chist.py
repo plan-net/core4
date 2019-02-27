@@ -1,5 +1,14 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 chist - core4 log history
+
+Use this command line tool to display logging output.
 
 Usage:
   chist [--start=START] [--end=END] [--level=LEVEL] [--project=PROJECT]
@@ -12,7 +21,7 @@ Options:
   -e --end=END              upper timestamp boundary
   -l --level=LEVEL          log level filter
   -p --project=PROJECT      project filter
-  -h --hostname=HOSTNAME    hostname filter
+  -o --hostname=HOSTNAME    hostname filter
   -u --username=USERNAME    username filter
   -q --qual_name=QUAL_NAME  qual_name filter
   -i --identifier=ID        object identifier filter
@@ -26,10 +35,10 @@ Options:
 import logging
 import re
 import sys
-
 from datetime import datetime, time, timedelta
-from docopt import docopt
 from time import sleep
+
+from docopt import docopt
 
 import core4
 import core4.util.data

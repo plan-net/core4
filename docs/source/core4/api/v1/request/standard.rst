@@ -27,9 +27,34 @@ profile endpoint
     :show-inheritance:
 
 
-setting endpoint
-################
+API collection endpoint
+#######################
+
+.. automodule:: core4.api.v1.request.standard.route
+    :members:
+    :show-inheritance:
+
+
+access management endpoint
+##########################
+
+.. automodule:: core4.api.v1.request.standard.access
+    :members:
+    :show-inheritance:
+
+
+asset handler endpoint
+######################
+
+.. automodule:: core4.api.v1.request.standard.asset
+    :members:
+    :show-inheritance:
+
+
+user settings endpoint
+######################
 
 .. automodule:: core4.api.v1.request.standard.setting
     :members:
     :show-inheritance:
+

@@ -21,12 +21,11 @@
 
    intro
    feature
-   install
-   example
+   install/index
+   example/index
    why
    project
    job
-   helpers
    R
    parallel
    api

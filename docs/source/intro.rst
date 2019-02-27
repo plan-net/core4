@@ -22,8 +22,8 @@ processing chain of creating such insights into a fault-tolerant distributed
 system and thereby automating the whole process without having to think about
 underlying software or hardware.
 
-The core4 framework takes care of everything that is essential to using and operating
-such a distributed system, from central logging and configuration to
+The core4 framework takes care of everything that is essential to using and
+operating such a distributed system, from central logging and configuration to
 deployment, all this while scaling to the 100ths of servers.
 
 
@@ -31,7 +31,7 @@ Continue reading with
 
 * a high-level :doc:`feature` of core4
 
-* concrete :doc:`example` when and how to use core
+* concrete :doc:`example/index` when and how to use core
 
 * further details on :doc:`why` from
 

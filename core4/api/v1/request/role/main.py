@@ -1,3 +1,10 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import pymongo.errors
 from bson.objectid import ObjectId
 from tornado.web import HTTPError
@@ -5,6 +12,7 @@ from tornado.web import HTTPError
 import core4.error
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
+from core4.api.v1.request.role.access.manager import CoreAccessManager
 
 
 class RoleHandler(CoreRequestHandler):
@@ -390,6 +398,10 @@ class RoleHandler(CoreRequestHandler):
                 self.reply(ret.to_response())
             else:
                 self.reply("no changes")
+        if "perm" in kwargs:
+            self.logger.debug("revoke access grants")
+            manager = CoreAccessManager(ret)
+            await manager.reset_all()
 
     async def delete(self, _id):
         """

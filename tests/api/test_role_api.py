@@ -20,9 +20,18 @@ from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.role.model import CoreRole
 from tests.api.test_response import LocalTestServer, StopHandler
 
-ASSET_FOLDER = 'asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
+ASSET_FOLDER = '../asset'
+
+
+def asset(*filename, exists=True):
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, ASSET_FOLDER, *filename)
+    if not exists or os.path.exists(filename):
+        return filename
+    raise FileNotFoundError(filename)
+
 
 
 @pytest.fixture(autouse=True)
@@ -30,6 +39,7 @@ def setup(tmpdir):
     logging.shutdown()
     # logging mixin (setup complete)
     core4.logger.mixin.CoreLoggerMixin.completed = False
+    os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
@@ -221,7 +231,7 @@ def test_comparison():
 
 
 def test_server_test(http):
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
 
 
@@ -486,12 +496,12 @@ def test_access(http):
     assert rv.status_code == 200
     admin_token = http.token
     http.token = None
-    rv = http.get("/core4/api/v1/login?username=user&password=123456",
+    rv = http.get("/core4/api/login?username=user&password=123456",
                   base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
     etag1 = rv.json()["data"]["etag"]
     rv = http.get("/roles")
@@ -499,15 +509,15 @@ def test_access(http):
     data = {
         "realname": "preferred name"
     }
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 400
     assert "MissingArgumentError" in rv.json()["error"]
 
     data["etag"] = etag1
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 200
 
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
     etag2 = rv.json()["data"]["etag"]
     assert rv.json()["data"]["realname"] == "preferred name"
@@ -517,20 +527,20 @@ def test_access(http):
         "password": "hello",
         "etag": etag2
     }
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 200
     etag3 = rv.json()["data"]["etag"]
 
     http.token = None
-    rv = http.get("/core4/api/v1/login?username=user&password=123456",
+    rv = http.get("/core4/api/login?username=user&password=123456",
                   base=False)
     assert rv.status_code == 401
-    rv = http.get("/core4/api/v1/login?username=user&password=hello",
+    rv = http.get("/core4/api/login?username=user&password=hello",
                   base=False)
     assert rv.status_code == 200
     token = rv.json()["data"]["token"]
     http.token = token
-    rv = http.get("/core4/api/v1/profile", base=False)
+    rv = http.get("/core4/api/profile", base=False)
     assert rv.status_code == 200
 
     data = {
@@ -558,12 +568,12 @@ def test_access(http):
         "etag": etag3
     }
     http.token = token
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 400
     assert "mail exists" in rv.json()["error"]
 
     data["email"] = "user3@mail.com"
-    rv = http.put("/core4/api/v1/profile", json=data, base=False)
+    rv = http.put("/core4/api/profile", json=data, base=False)
     assert rv.status_code == 200
 
 
@@ -634,7 +644,7 @@ def test_update2(http):
     admin_token = http.token
     http.token = None
 
-    rv = http.get("/core4/api/v1/profile?username=mra&password=654321",
+    rv = http.get("/core4/api/profile?username=mra&password=654321",
                   base=False)
     assert rv.status_code == 200
     etag2 = rv.json()["data"]["etag"]
@@ -646,7 +656,7 @@ def test_update2(http):
     assert rv.status_code == 200
 
     http.token = None
-    rv = http.get("/core4/api/v1/login?username=mra&password=666999666",
+    rv = http.get("/core4/api/login?username=mra&password=666999666",
                   base=False)
     assert rv.status_code == 200
 
@@ -827,5 +837,3 @@ def test_recursion(http):
     # assert test1.role == ['test_role2', 'test_role3']
     # assert loop.run_sync(test1.casc_perm) == ['app://1', 'app://2', 'app://3']
     #
-
-

@@ -1,3 +1,15 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+Implements the function :func:`make_project` to create and setup a new core4
+project.
+"""
+
 import os
 import subprocess
 import sys
@@ -91,15 +103,14 @@ def make_project(package_name=None, package_description=None, auto=False):
     To share this git repository with other users you have to manually 
     synchronise this bare repository with a git repository accessible by your
     team. Once this has been done, you can remove the bare repository on this
-    computer and update your git connection accordingly in 
-        > .git/config
+    computer.
 
     To start working on your project, enter the Python virtual environment with
         $ cd ./{package_name:s}
-        $ . enter_env
+        $ source enter_env
 
     To exit the Python virtual environment type
-        $ exit_env        
+        $ deactivate        
     """.format(
         root=root_path, package_name=kwargs["package_name"], venv=VENV,
         repository=REPOSITORY, exist=exist, full_path=full_path,

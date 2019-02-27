@@ -1,3 +1,10 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 This module delivers the :class:`.CoreRole` to manage users and roles.
 """
@@ -144,6 +151,14 @@ class CoreRole(CoreBase):
                 raise
         return False
 
+    @property
+    def is_user(self):
+        """
+        :return: ``True`` if the role is a user with email and password.
+        """
+        has_password = self.password is not None
+        has_email = self.email is not None
+        return has_email and has_password
 
     def _check_user(self):
         """

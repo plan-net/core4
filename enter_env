@@ -1,18 +1,64 @@
-if [[ $0 != $BASH_SOURCE ]]; then
-  SCRIPT=`realpath $BASH_SOURCE`
-  cd `dirname $SCRIPT`
-  VIRTUAL_ENV_DISABLE_PROMPT=1
-  _OLD_CORE4_PS1="$PS1"
-  source ./.venv/bin/activate
-  export CORE4_PROJECT=$(basename $(pwd))
-  PS1="($CORE4_PROJECT) $PS1"
-  exit_env () {
-    PS1="$_OLD_CORE4_PS1"
-    unset _OLD_CORE4_PS1
-    unset -f exit_env
-    unset CORE4_PROJECT
-    deactivate
-  }
-else
-  echo "script must be sourced with . enter_env"
+#!/bin/bash
+
+NO_SOURCE="this script must be sourced, use \`source $script_dir/enter_env\`"
+
+NO_VENV="Python virtualenv required at .venv, make \`python3 -m venv .venv\`"
+
+# test sourcing
+([[ -n $ZSH_EVAL_CONTEXT && $ZSH_EVAL_CONTEXT =~ :file$ ]] ||
+ [[ -n $KSH_VERSION && $(cd "$(dirname -- "$0")" &&
+    printf '%s' "${PWD%/}/")$(basename -- "$0") != "${.sh.file}" ]] ||
+ [[ -n $BASH_VERSION ]] && (return 2>/dev/null)) && sourced=1 || sourced=0
+if [ $sourced -eq 0 ]; then
+    echo -e $NO_SOURCE
+    exit
 fi
+
+# enter script directory
+if [ -z $BASH_SOURCE ]; then
+    base=$0
+else
+    base=$BASH_SOURCE
+fi
+script_dir="$( cd "$(dirname "$base")" ; pwd -P )"
+cd $script_dir
+# test .venv exists
+if [ ! -f .venv/bin/activate ]; then
+    echo -e $NO_VENV
+    return
+fi
+
+# extract basename for the name of the virtual environment
+vname=`basename $script_dir`
+# set zsh prompt function
+ZSH_C4() {
+    echo $vname
+}
+# rename_fn oldname newname
+rename_fn()
+{
+  local a
+  a="$(declare -f "$1")" &&
+  eval "function $2 ${a#*"()"}" &&
+  unset -f "$1";
+}
+# activate virtual environment
+export VIRTUAL_ENV_DISABLE_PROMPT=0
+source .venv/bin/activate
+# wrap deactivate
+rename_fn deactivate orig_deactivate
+
+deactivate () {
+  export PS1="$_OLD_VIRTUAL_PS1"
+  orig_deactivate
+  unset -f orig_deactivate;
+  eval "ZSH_C4() { echo; }"
+  echo "bye.";
+}
+# change to original prompt
+export _OLD_VIRTUAL_PS1="$PS1"
+export PS1="[ $vname ] $PS1"
+
+echo "PROJECT: $vname"
+echo "CWD: $script_dir"
+echo "PYTHON: `which python` (`python --version`)"

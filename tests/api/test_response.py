@@ -13,19 +13,28 @@ from tornado.web import HTTPError
 import core4.logger.mixin
 import core4.service
 from core4.api.v1.application import CoreApiContainer, RootContainer
-from core4.api.v1.tool.functool import serve
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.request.standard.profile import ProfileHandler
-
+from core4.api.v1.tool.functool import serve
+import core4.util.node
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
+ASSET_FOLDER = '../asset'
+
+
+def asset(*filename, exists=True):
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, ASSET_FOLDER, *filename)
+    if not exists or os.path.exists(filename):
+        return filename
+    raise FileNotFoundError(filename)
 
 
 @pytest.fixture(autouse=True)
 def setup(tmpdir):
     logging.shutdown()
     core4.logger.mixin.CoreLoggerMixin.completed = False
+    os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
     os.environ["CORE4_OPTION_folder__root"] = str(tmpdir)
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
@@ -52,6 +61,7 @@ def setup(tmpdir):
         del os.environ[k]
     RootContainer.routes = {}
 
+
 class StopHandler(CoreRequestHandler):
     protected = False
 
@@ -69,16 +79,18 @@ class LocalTestServer:
         self.process = multiprocessing.Process(target=self.run)
         self.process.start()
         while True:
+            time.sleep(1)
+            tornado.gen.sleep(1)
             try:
-                url = self.url("/core4/api/v1/profile", base=False)
+                url = self.url("/core4/api/profile", base=False)
                 rv = requests.get(url, timeout=1)
                 break
             except:
-               pass
-            time.sleep(1)
-            tornado.gen.sleep(1)
+                pass
+        print("OK")
         self.signin = requests.get(
-            self.url("/core4/api/v1/login?username=admin&password=hans", base=False))
+            self.url("/core4/api/login?username=admin&password=hans",
+                     base=False))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 
@@ -87,7 +99,8 @@ class LocalTestServer:
             b = self.base_url
         else:
             b = ""
-        return "http://localhost:{}{}".format(self.port, b) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}{}".format(hostname, self.port, b) + url
 
     def request(self, method, url, base, **kwargs):
         if self.token:
@@ -110,6 +123,9 @@ class LocalTestServer:
     def run(self):
         cls = self.start()
         cls.root = self.base_url
+        loop = tornado.ioloop.IOLoop()
+        loop.make_current()
+        print("thread", loop)
         self.serve(cls)
 
     def serve(self, cls, **kwargs):
@@ -198,8 +214,9 @@ def test_error_short():
     assert data["code"] == 404
     assert data["message"] == "Not Found"
     msg = data["error"].strip()
+    hostname = core4.util.node.get_hostname()
     assert msg == "tornado.web.HTTPError: HTTP 404: Not Found " \
-                  "(http://localhost:5555/core4/api/v2/xxx)"
+                  "(http://{}:5555/core4/api/v2/xxx)".format(hostname)
     server.stop()
 
 

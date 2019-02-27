@@ -1,9 +1,21 @@
-import core4.const
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+Implements core4 standard :class:`RouteHandler` delivering core4 API/endpoint
+collection.
+"""
+from core4.const import ENTER_URL, HELP_URL, CARD_URL
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.queue.query import QueryMixin
 from core4.util.pager import CorePager
 
 
-class RouteHandler(CoreRequestHandler):
+class RouteHandler(CoreRequestHandler, QueryMixin):
     title = "core4 api/widget endpoint collection"
     author = "mra"
 
@@ -25,14 +37,19 @@ class RouteHandler(CoreRequestHandler):
         Returns:
             collection (list) of dict with
 
-            - **_id** (*:class:`bson.objectid.ObjectId`*): MonboDB identifier
-            - **card_url** (*str*): full url to the card page view
-            - **help_url** (*str*): full url to the help page
+            - **_id** (:class:`bson.objectid.ObjectId`): MonboDB identifier
+            - **endpoint** (*list* of *dict*)
+
+              - **pattern** (*regular expression*): endpoint matching criteria
+              - **card_url** (*str*): full url to the card page view
+              - **enter_url** (*str*): full url to the handler entry
+              - **help_url** (*str*): full url to the help page
+              - **routing** (*str*): url prefix with protocol and domain
+                adressing the serving container
+
             - **project** (*str*): name
             - **qual_name** (*str*): of the :class:`.CoreRequestHandler`
             - **route_id** (*str*): MD5 digest of the route
-            - **routine** (*str*): url prefix with protocol and domain
-              adressing the serving container
             - **tag** (*list*): of tag lables assigned to the
               :class:`.CoreRequestHandler`
             - **title** (*str*): of the :class:`.CoreRequestHandler`
@@ -46,7 +63,7 @@ class RouteHandler(CoreRequestHandler):
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
-            >>> rv = get("http://localhost:5001/core4/api/v1/info?per_page=2", headers=h)
+            >>> rv = get("http://localhost:5001/core4/api/info?per_page=2", headers=h)
             >>> rv.json()
         """
 
@@ -60,7 +77,6 @@ class RouteHandler(CoreRequestHandler):
         if query is not None:
             filter_by.append(query)
         coll = self.config.sys.handler.connect_async()
-        data = []
 
         pipeline = [
             {
@@ -76,50 +92,42 @@ class RouteHandler(CoreRequestHandler):
                     "route_id": 1,
                     "routing": 1,
                     "qual_name": 1,
-                    "title": 1
+                    "title": 1,
+                    "pattern": 1
                 }
             },
-            {
-                "$group": {
-                    "_id": "$route_id",
-                    "project": {"$first": "$project"},
-                    "tag": {"$first": "$tag"},
-                    "routing": {"$first": "$routing"},
-                    "qual_name": {"$first": "$qual_name"},
-                    "title": {"$first": "$title"},
-                }
-            },
-            {
-                "$project": {
-                    "route_id": "$_id",
-                    "project": "$project",
-                    "tag": "$tag",
-                    "routing": "$routing",
-                    "qual_name": "$qual_name",
-                    "title": "$title",
-
-                }
-            }
 
         ]
+        nodes = ["{}://{}:{}".format(n["protocol"], n["hostname"], n["port"])
+                 for n in self.get_daemon(kind="app")]
+        data = []
+        seen = {}
+
+        def _endpoint(edoc):
+            pattern = edoc.pop("pattern")
+            routing = edoc.pop("routing")
+            return {
+                "help_url": routing + HELP_URL + "/" + edoc["route_id"],
+                "enter_url": routing + ENTER_URL + "/" + edoc["route_id"],
+                "card_url": routing + CARD_URL + "/" + edoc["route_id"],
+                "pattern": pattern,
+                "routing": routing
+            }
 
         async for doc in coll.aggregate(pipeline):
             if await self.user.has_api_access(doc["qual_name"]):
-                doc["help_url"] = doc["routing"] \
-                                  + core4.const.HELP_URL \
-                                  + "/" + doc["route_id"]
-                doc["enter_url"] = doc["routing"] \
-                                   + core4.const.ENTER_URL \
-                                   + "/" + doc["route_id"]
-                doc["card_url"] = doc["routing"] \
-                                  + core4.const.CARD_URL \
-                                  + "/" + doc["route_id"]
-                data.append(doc)
+                if doc["routing"] in nodes:
+                    if doc["route_id"] not in seen:
+                        doc["endpoint"] = [_endpoint(doc)]
+                        data.append(doc)
+                        seen[doc["route_id"]] = data[-1]["endpoint"]
+                    else:
+                        seen[doc["route_id"]].append(_endpoint(doc))
 
-        async def _length(filter):
+        async def _length(**_):
             return len(data)
 
-        async def _query(skip, limit, filter, sort_by):
+        async def _query(skip, limit, *_, **__):
             return data[skip:skip + limit]
 
         pager = CorePager(per_page=int(per_page),

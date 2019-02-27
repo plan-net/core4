@@ -1,20 +1,31 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 This module delivers various MongoDB support methods retrieving information
-about collection ``sys.queue``. The main class :class:`QueryMixin` is to be
-mixed into a class based on :class:`core4.base.main.CoreBase`.
+about collections ``sys.queue``, ``sys.journal``, ``sys.stdout`` and
+``sys.worker``. The main class :class:`QueryMixin` is to be mixed into a class
+based on :class:`.CoreBase`.
 """
 
 from collections import OrderedDict
 
 import datetime
 
-import core4.util
 import core4.util.node
 
 
 class QueryMixin:
+    """
+    Retrieves core4 runtime information by querying collections ``sys.queue``,
+    ``sys.journal``, ``sys.stdout`` and ``sys.worker``.
+    """
 
-    def get_daemon(self, hostname=None):
+    def get_daemon(self, **kwargs):
         """
         Retrieves information about all daemons alive. This includes
 
@@ -29,16 +40,15 @@ class QueryMixin:
                   The alive timeout can be configured by config section
                   ``alive.timeout``.
 
+        :param kwargs: query filter
         :return: dict
         """
         timeout = self.config.daemon.alive_timeout
         pipeline = []
-        if hostname is not None:
+        if kwargs:
             pipeline += [
                 {
-                    "$match": {
-                        "hostname": hostname
-                    }
+                    "$match": kwargs
                 }
             ]
         pipeline += [
@@ -62,10 +72,13 @@ class QueryMixin:
                     "heartbeat": 1,
                     "loop": "$phase.loop",
                     "kind": 1,
-                    "pid": 1
+                    "pid": 1,
+                    "hostname": 1,
+                    "port": 1,
+                    "protocol": 1
                 }
             },
-            {"$sort": {"kind":1, "_id": 1}}
+            {"$sort": {"kind": 1, "_id": 1}}
         ]
         cur = self.config.sys.worker.aggregate(pipeline)
         data = []

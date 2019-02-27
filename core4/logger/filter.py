@@ -1,7 +1,17 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+:class:`CoreLoggingFilter` adds several properties to
+:class:`logging.LogRecord`.
+"""
 import logging
 import os
 
-import core4.util
 import core4.util.node
 
 
@@ -14,6 +24,7 @@ class CoreLoggingFilter(logging.Filter):
     * hostname
     * identifier
     * qual_name
+    * epoch
     """
 
     def filter(self, record):

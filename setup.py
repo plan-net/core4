@@ -30,8 +30,6 @@ def package_files(directory, pattern):
     return paths
 
 
-
-
 setup(
     name='core4',
     version=core4.__version__,
@@ -49,6 +47,8 @@ setup(
         '':
             ["core4.yaml"]
             + package_files("core4/service/project/template/", "^.+$")
+            + package_files("core4/api/v1/request/_static/", "^.+$")
+            + package_files("core4/api/v1/request/standard/template/", "^.+$")
     },
     setup_requires=[
     ],
@@ -60,6 +60,7 @@ setup(
         ],
     },
     install_requires=[
+        "wheel>=0.32.3",
         "pymongo>=3.7",
         "python-dateutil>=2.7",
         "PyYaml>=3.12",

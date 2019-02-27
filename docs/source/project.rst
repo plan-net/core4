@@ -7,11 +7,9 @@ project structure
 core4 is a framework. core4 projects use the framework. From a business
 perspective each project encapsulates related activities, products, business
 domains or tenants. From a technical perspective a core4 project is a Python
-package with its Python virtual environment. It uses core4 functionalities and
-is marked as a core4 project with version, build, title information and an
+package with its own Python virtual environment. It uses core4 functionalities
+and is marked as a core4 project with version, build, title information and an
 optional project description.
-
-.. _project_folder:
 
 A core4 project package named ``project1`` for example has the following
 folder structure::
@@ -32,12 +30,11 @@ folder structure::
 
 Helper tools support project management:
 
-* ``coco --init`` to create a new project, see :ref:`project_creation`
-* ``coco --build`` to prepare a new project release, see :ref:`project_build`
-* ``coco --release`` to finalise an existing project release, see
-  :ref:`project_build`
-* ``cadmin --deploy`` to deploy a project to a runtime environment, see
-  :doc:`deploy`
+* ``coco --init`` to create a new project
+* ``coco --build`` to prepare a new project release
+* ``coco --release`` to finalise an existing project release
+* ``cadmin --install`` and ``cadmin --upgrade`` to deploy a project to a
+  runtime environment, see :doc:`deploy`
 
 
 technical details
@@ -55,14 +52,14 @@ Let's start with project creation.
 project creation
 ----------------
 
-Use :ref:`coco --init` to create a new project. The project will be
+Use ``coco --init`` to create a new project. The project will be
 created in the current working directory.
 
-This will inquire further informaiton from the user and after some confirmation
+This will inquire further information from the user and after some confirmation
 the helper script creates the project in the current working directory.
 
 The helper script creates all essential project files as describe above
-(see :ref:`project_folder <project_folder>`).
+(see :ref:`project`).
 
 
 project repository location
@@ -79,36 +76,24 @@ This repository carries an initial commit, a branch ``master`` and a branch
 To share this git repository with other users you have to manually synchronise
 this bare repository with a git repository accessible by your team.
 Alternatively move the bare repository to a public or private git server. Once
-this has been done, you can remove the bare repository from the project sources
-and update your git connection accordingly in ``.git/config``.
+this has been done, you can update your remote origin with the following git
+command and remove the bare repository in ``.repos`` from the project sources::
+
+    git remote set-url origin git://new.url.here
+    rm -Rf .repos
 
 
-project repository location
+See also :doc:`deploy` and :doc:`tools`.
+
+
+Python project requirements
 ---------------------------
 
-.. _project_build:
-
-build release
--------------
-
-core4 project release management follows the *gitflow* as described by
-
-.. todo: continue with coco --build
-
-
-.. _project_maintenance:
-
-project maintenance
--------------------
-
-.. todo: continue with project maintenance
-
-
-project iteration
------------------
-
-
-
-
-
-
+Project creation with command ``coco --init`` (see :ref:`coco`) and
+func:`core4.service.project.make_project` create empty files
+``requirements.txt`` and ``install_requires.txt``. Define your Python
+requirements in ``install_requires.txt``. This file is parsed during
+``pip install`` respectively ``python setup.py install`` as it defines the
+typical ``install_requires`` attribute in ``setup.py``. Use
+``requirements.txt`` to manually define the working versions before
+commit/push, for example with ``pip freeze > requirements.txt``.

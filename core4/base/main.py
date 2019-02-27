@@ -1,3 +1,10 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 This module features :class:`.CoreBase`, the base class to all core4 classes.
 All classes inheriting from :class:`.CoreBase` provide the standard features of
@@ -13,14 +20,12 @@ import re
 import sys
 
 import core4.config.main
-import core4.config.map
-import core4.error
 import core4.logger
 import core4.logger.filter
-import core4.util
 from core4.const import CORE4, PREFIX
 
 _except_hook = None
+
 
 def is_core4_project(body):
     return re.match(r'.*\_\_project\_\_\s*\=\s*[\"\']{1,3}'
@@ -44,7 +49,7 @@ class CoreBase:
               derived from  :class:`.CoreBase` has an :attr:`.identifer` not
               ``None`` and creates another object _B_ which inherits from
               :class:`.CoreBase`, too, then the :attr:`.identifier` is passed
-              from object _A_ to object _B_.
+              from object *A* to object *B*.
     """
     # used to hack
     _short_qual_name = None
@@ -124,6 +129,10 @@ class CoreBase:
 
     @classmethod
     def project_path(cls):
+        """
+        Identifies the project path
+        :return: str representing  the absolute path name of the project
+        """
         project = cls.get_project()
         if project not in sys.modules:
             return importlib.import_module(project)
@@ -303,6 +312,11 @@ class CoreBase:
 
     @classmethod
     def module(cls):
+        """
+        returns the object's module
+
+        :return: Python module
+        """
         project = ".".join(cls.qual_name().split(".")[:-1])
         if project not in sys.modules:
             return importlib.import_module(project)
@@ -310,6 +324,11 @@ class CoreBase:
 
     @classmethod
     def version(cls):
+        """
+        Returns the project's version.
+
+        :return: str identifying the version
+        """
         project = cls.get_project()
         if project not in sys.modules:
             mod = importlib.import_module(project)
@@ -319,4 +338,9 @@ class CoreBase:
 
     @classmethod
     def pathname(cls):
+        """
+        Returns the pathname of the object's module.
+
+        :return: path name (str)
+        """
         return os.path.dirname(cls.module().__file__)

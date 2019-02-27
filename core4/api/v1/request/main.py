@@ -1,32 +1,38 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
 """
 import base64
+import datetime
 import os
+import time
 import traceback
 
-import datetime
+import core4.const
+import core4.error
+import core4.util.node
 import dateutil.parser
 import jwt
 import mimeparse
 import pandas as pd
-import time
 import tornado.escape
+import tornado.gen
 import tornado.httputil
+import tornado.iostream
+import tornado.routing
 import tornado.template
 from bson.objectid import ObjectId
-from tornado.web import RequestHandler, HTTPError
-import tornado.iostream
-import tornado.gen
-
-import core4.const
-import core4.error
-import core4.util
-import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode
 from core4.util.pager import PageResult
+from tornado.web import RequestHandler, HTTPError
 
 tornado.escape.json_encode = json_encode
 
@@ -92,7 +98,7 @@ class CoreBaseHandler(CoreBase):
         self.error_text_page = rel(self.config.api.error_text_page)
         self.card_html_page = rel(self.config.api.card_html_page)
         self.help_html_page = rel(self.config.api.help_html_page)
-        self.started = core4.util.node.mongo_now()
+        self.started = core4.util.node.now()
         self._flash = []
         self.user = None
 
@@ -355,11 +361,12 @@ class CoreBaseHandler(CoreBase):
         self.request.method = "GET"
         parts = self.request.path.split("/")
         md5_route = parts[-1]
-
+        (app, container, specs) = self.application.find_md5(md5_route)
         self.absolute_path = None
         if self.enter_url is None:
             self.enter_url = "/".join([core4.const.ENTER_URL, md5_route])
         self.help_url = "/".join([core4.const.HELP_URL, md5_route])
+        self.url_name = specs.name or md5_route
         return self.card()
 
     def xenter(self, *args, **kwargs):
@@ -451,7 +458,7 @@ class CoreBaseHandler(CoreBase):
         if not path.startswith("/"):
             path = "/" + path
         return "".join([prefix, core4.const.FILE_URL, "/" + mode + "/",
-                        self.route_id(), path])
+                        self.route_id, path])
 
     def default_static(self, path, include_host=None):
         """
@@ -494,17 +501,17 @@ class CoreBaseHandler(CoreBase):
         namespace["default_static"] = self.default_static
         return namespace
 
-    def route_id(self):
-        """
-        Identifies the ``route_id`` by the route pattern of the resource.
-
-        :return: ``route_id``
-        """
-        for rule in self.application.wildcard_router.rules:
-            route = rule.matcher.match(self.request)
-            if route is not None:
-                return rule.name
-        return None
+    # def route_id(self):
+    #     """
+    #     Identifies the ``route_id`` by the route pattern of the resource.
+    #
+    #     :return: ``route_id``
+    #     """
+    #     for rule in self.application.wildcard_router.rules:
+    #         route = rule.matcher.match(self.request)
+    #         if route is not None:
+    #             return rule.route_id
+    #     return None
 
     def write_error(self, status_code, **kwargs):
         """
@@ -606,6 +613,70 @@ class CoreBaseHandler(CoreBase):
         return mimeparse.best_match(
             self.supported_types, self.request.headers.get("accept", ""))
 
+    def get_argument(self, name, as_type=None, *args, **kwargs):
+        """
+        Returns the value of the argument with the given name.
+
+        If default is not provided, the argument is considered to be
+        required, and we raise a `MissingArgumentError` if it is missing.
+
+        If the argument appears in the url more than once, we return the
+        last value.
+
+        If ``as_type`` is provided, then the variable type is converted. The
+        method supports the following variable types:
+
+        * int
+        * float
+        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
+        * str
+        * dict - using :mod:`json.loads`
+        * list - using :mod:`json.loads`
+        * datetime - using :meth:`dateutil.parser.parse`
+
+        :param name: variable name
+        :param default: value
+        :param as_type: Python variable type
+        :return: value
+        """
+        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
+        ret = self._get_argument(name, source=self.request.arguments,
+                                 *args, strip=False, **kwargs)
+        if as_type and ret is not None:
+            try:
+                if as_type == bool:
+                    if isinstance(ret, bool):
+                        return ret
+                    return parse_boolean(ret, error=True)
+                if as_type == dict:
+                    if isinstance(ret, dict):
+                        return ret
+                    return json_decode(ret)
+                if as_type == list:
+                    if isinstance(ret, list):
+                        return ret
+                    return json_decode(ret)
+                if as_type == datetime.datetime:
+                    if isinstance(ret, datetime.datetime):
+                        dt = ret
+                    else:
+                        dt = dateutil.parser.parse(ret)
+                    if dt.tzinfo is None:
+                        return dt
+                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
+                    return datetime.datetime.fromtimestamp(
+                        time.mktime(utc_struct_time))
+                if as_type == ObjectId:
+                    if isinstance(ret, ObjectId):
+                        return ret
+                    return ObjectId(ret)
+                return as_type(ret)
+            except:
+                raise core4.error.ArgumentParsingError(
+                    "parameter [%s] expected as_type [%s]", name,
+                    as_type.__name__) from None
+        return ret
+
 
 class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
@@ -634,6 +705,10 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         to :class:`.CoreBaseHandler` and :mod:`tornado` handler instantiation
         method.
         """
+        try:
+            self.route_id = kwargs.pop("_route_id")
+        except KeyError:
+            self.route_id = None
         CoreBaseHandler.__init__(self, *args, **kwargs)
         RequestHandler.__init__(self, *args, **kwargs)
 
@@ -795,70 +870,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             return super().decode_argument(value, name)
         return value
 
-    def get_argument(self, name, as_type=None, *args, **kwargs):
-        """
-        Returns the value of the argument with the given name.
-
-        If default is not provided, the argument is considered to be
-        required, and we raise a `MissingArgumentError` if it is missing.
-
-        If the argument appears in the url more than once, we return the
-        last value.
-
-        If ``as_type`` is provided, then the variable type is converted. The
-        method supports the following variable types:
-
-        * int
-        * float
-        * bool - using :meth:`parse_boolean <core4.util.data.parse_boolean>`
-        * str
-        * dict - using :mod:`json.loads`
-        * list - using :mod:`json.loads`
-        * datetime - using :meth:`dateutil.parser.parse`
-
-        :param name: variable name
-        :param default: value
-        :param as_type: Python variable type
-        :return: value
-        """
-        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
-        ret = self._get_argument(name, source=self.request.arguments,
-                                 *args, strip=False, **kwargs)
-        if as_type and ret is not None:
-            try:
-                if as_type == bool:
-                    if isinstance(ret, bool):
-                        return ret
-                    return parse_boolean(ret, error=True)
-                if as_type == dict:
-                    if isinstance(ret, dict):
-                        return ret
-                    return json_decode(ret)
-                if as_type == list:
-                    if isinstance(ret, list):
-                        return ret
-                    return json_decode(ret)
-                if as_type == datetime.datetime:
-                    if isinstance(ret, datetime.datetime):
-                        dt = ret
-                    else:
-                        dt = dateutil.parser.parse(ret)
-                    if dt.tzinfo is None:
-                        return dt
-                    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
-                    return datetime.datetime.fromtimestamp(
-                        time.mktime(utc_struct_time))
-                if as_type == ObjectId:
-                    if isinstance(ret, ObjectId):
-                        return ret
-                    return ObjectId(ret)
-                return as_type(ret)
-            except:
-                raise core4.error.ArgumentParsingError(
-                    "parameter [%s] expected as_type [%s]", name,
-                    as_type.__name__) from None
-        return ret
-
     async def verify_access(self):
         """
         Verifies the user has access to the handler using
@@ -985,8 +996,63 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                         break
                     self.write(data)
                 except tornado.iostream.StreamClosedError:
-                    print("NO")
                     break
                 finally:
                     await tornado.gen.sleep(0.000000001)  # 1 nanosecond
         self.finish()
+
+    async def reverse_url(self, name, *args):
+        """
+        Returns a URL path for handler named ``name``
+
+        Args will be substituted for capturing groups in the `URLSpec` regex.
+        They will be converted to strings if necessary, encoded as utf8,
+        and url-escaped.
+
+        :param name: handler name as defined in :class:`.CoreApiContainer`
+        :param args: arguments for capturing groups
+        :return: fully qualified url path (str) including protocl, hostname,
+            port and path
+        """
+        handler = self.config.sys.handler.connect_async()
+        worker = self.config.sys.worker.connect_async()
+        timeout = self.config.daemon.alive_timeout
+        found = []
+        pipeline = [
+            {
+                "$unwind": "$pattern"
+            },
+            {
+                "$match": {
+                    "pattern.0": name,
+                    "started_at": {
+                        "$ne": None
+                    }
+                }
+            }
+        ]
+        async for doc in handler.aggregate(pipeline):
+            alive = await worker.count_documents({
+                "kind": "app",
+                "hostname": doc["hostname"],
+                "port": doc["port"],
+                "protocol": doc["protocol"],
+                "heartbeat": {"$exists": True},
+                "phase.shutdown": None,
+                "$or": [
+                    {"heartbeat": None},
+                    dict(heartbeat={
+                        "$gte": (core4.util.node.mongo_now() -
+                                 datetime.timedelta(seconds=timeout))
+                    })
+                ]
+            })
+            if alive > 0:
+                found.append(doc)
+        if len(found) == 1:
+            route = found[0]
+            matcher = tornado.routing.PathMatches(route["pattern"][1])
+            url = matcher.reverse(*args)
+            return "{}://{}:{}{}".format(route["protocol"], route["hostname"],
+                                         route["port"], url)
+        raise KeyError("%s not found or not unique in named urls" % name)

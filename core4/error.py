@@ -1,3 +1,14 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+Implements all core4 specific exceptions
+"""
+
 from tornado.web import HTTPError
 
 
@@ -59,9 +70,10 @@ class CoreJobExists(Core4Error):
     name/qual_name and job arguments.
     """
 
-class CoreHTTPError(HTTPError):
+class ArgumentParsingError(HTTPError):
+    """
+    This exception is raised if an error occured while parsing query or body
+    parameters in the context of core API.
+    """
     def __init__(self, log_message=None, *args, status_code=400, **kwargs):
         super().__init__(status_code, log_message, *args, **kwargs)
-
-class ArgumentParsingError(CoreHTTPError):
-    pass

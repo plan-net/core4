@@ -12,6 +12,7 @@ from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
 from tests.api.test_response import setup
+import core4.util.node
 
 _ = setup
 
@@ -25,7 +26,6 @@ class StopHandler(CoreRequestHandler):
 
 
 class DownloadHandler(CoreRequestHandler):
-
     protected = False
 
     async def get(self):
@@ -57,7 +57,7 @@ class HttpServer:
         self.process.start()
         while True:
             try:
-                url = self.url("/core4/api/v1/profile")
+                url = self.url("/core4/api/profile")
                 requests.get(url, timeout=1)
                 break
             except:
@@ -65,12 +65,13 @@ class HttpServer:
             time.sleep(1)
             tornado.gen.sleep(1)
         self.signin = requests.get(
-            self.url("/core4/api/v1/login?username=admin&password=hans"))
+            self.url("/core4/api/login?username=admin&password=hans"))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 
     def url(self, url):
-        return "http://localhost:{}".format(self.port) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}".format(hostname, self.port) + url
 
     def request(self, method, url, **kwargs):
         if self.token:
@@ -108,7 +109,7 @@ def http():
 
 
 def test_server_test(http):
-    rv = http.get("/core4/api/v1/profile")
+    rv = http.get("/core4/api/profile")
     assert rv.status_code == 200
 
 
@@ -153,7 +154,8 @@ def test_image(http):
     assert rv.status_code == 200
     rv = http.get("/tests/static1/sub/../asset/head.png")
     assert rv.status_code == 200
-    assert rv.content[:20] == b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x00'
+    assert rv.content[
+           :20] == b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x01\x00'
     rv = http.get("/favicon.ico")
     assert rv.status_code == 200
 
@@ -201,16 +203,11 @@ def test_public_class(http):
     assert rv.status_code == 200
 
 
-# def test_download(http):
-#     url = http.url("/tests/download1")
-#     rv = requests.get(url)
-#     assert rv.status_code == 200
+def test_public_class(http):
+    url = http.url("/notfound")
+    rv = requests.get(url)
+    print(rv.status_code)
 
 
 if __name__ == '__main__':
-    # from core4.api.v1.tool import serve, serve_all
-    # serve_all(filter=[
-    #     "project.api",
-    #     "core4.api.v1.server",
-    #     "example"])
     serve(CoreApiTestServer1)

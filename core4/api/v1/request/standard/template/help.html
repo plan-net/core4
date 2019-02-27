@@ -20,7 +20,14 @@
     <li><b>CONTAINER:</b> {{ container }}</li>
     <li><b>PROJECT:</b> {{ project }}</li>
     <li><b>VERSION:</b> {{ version }}</li>
-    <li><b>PATTERN:</b> {{ pattern }}</li>
+    <li><b>PATTERN:</b>
+        <ul>
+        {% for p in pattern %}
+            <li>{{ p }}</li>
+        {% end %}
+        </ul>
+    </li>
+    <li><b>NAME:</b> {{ url_name }}</li>
     <li><b>CARD:</b> <a href="{{ card_url }}">{{ card_url }}</a></li>
     <li><b>MISSING</b>
         <ul>
@@ -48,6 +55,12 @@
     </li>
 
 </ul>
+
+<hr/>
+
+<h2>Introduction</h2>
+
+{% raw description %}
 
 <hr/>
 

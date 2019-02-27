@@ -1,16 +1,23 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 General purpose helper methods related to node information like hostname,
 username, clock and process identifier (PID).
 """
-import datetime
 import getpass
 import grp
 import os
 import pwd
+
+import datetime
+import psutil
 import socket
 import time
-
-import psutil
 
 
 def get_hostname():

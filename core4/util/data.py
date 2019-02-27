@@ -1,7 +1,16 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 General purpose data management helpers.
 """
+import gzip
 import json
+import os
 import textwrap
 from io import StringIO
 
@@ -186,3 +195,20 @@ def rst2html(doc):
         'error': errors,
         'body': parts['fragment']
     }
+
+
+def compress(filename):
+    """
+    Compress a file.
+
+    :param filename: full filename
+    :return: compressed full filename
+    """
+    target = filename + '.gz'
+    fin = open(filename, 'rb')
+    fout = gzip.open(target, 'wb')
+    fout.writelines(fin)
+    fout.close()
+    fin.close()
+    os.remove(filename)
+    return target

@@ -24,7 +24,7 @@ class InternalHandler1(CoreRequestHandler):
         assert self.application.container.get_root() == "/tests"
         list1 = list(self.application.container.iter_rule())
         list2 = list(self.application.container.iter_rule())
-        assert list1 == list2
+        assert str(list1) == str(list2)
 
     def post(self):
         self.reply(self.title)
@@ -147,7 +147,7 @@ class HttpServer:
         self.process.start()
         while True:
             try:
-                url = self.url("/core4/api/v1/profile")
+                url = self.url("/core4/api/profile")
                 requests.get(url, timeout=1)
                 break
             except:
@@ -155,7 +155,7 @@ class HttpServer:
             time.sleep(1)
             tornado.gen.sleep(1)
         self.signin = requests.get(
-            self.url("/core4/api/v1/login?username=admin&password=hans"))
+            self.url("/core4/api/login?username=admin&password=hans"))
         self.token = self.signin.json()["data"]["token"]
         assert self.signin.status_code == 200
 
@@ -166,7 +166,8 @@ class HttpServer:
             b = ""
         if absolute:
             return url
-        return "http://localhost:{}{}".format(self.port, b) + url
+        hostname = core4.util.node.get_hostname()
+        return "http://{}:{}{}".format(hostname, self.port, b) + url
 
     def request(self, method, url, base, absolute, **kwargs):
         if self.token:
@@ -204,20 +205,20 @@ def http():
 
 
 def test_server_test(http):
-    rv = http.get("/core4/api/v1/profile")
+    rv = http.get("/core4/api/profile")
     assert rv.status_code == 200
     rv = http.get("/tests/internal")
     assert rv.status_code == 200
     rv = http.get("/test1/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info?per_page=100")
+    rv = http.get("/core4/api/info?per_page=100")
     assert rv.status_code == 200
     pprint(rv.json())
     lh = 'core4.api.v1.request.standard.login.LoginHandler'
     login_handler = [h for h in rv.json()["data"]
                      if h["qual_name"] == lh][0]
     print(login_handler)
-    rv = http.get(login_handler["help_url"], absolute=True)
+    rv = http.get(login_handler["endpoint"][0]["help_url"], absolute=True)
     assert rv.status_code == 200
     ret = rv.json()["data"]
     assert ret["author"] == "mra"
@@ -232,7 +233,7 @@ def test_title_args(http):
     rv = http.post("/test1/internal1")
     assert rv.status_code == 200
     assert "custom title 1" == rv.json()["data"]
-    rv = http.get("/core4/api/v1/info?per_page=100")
+    rv = http.get("/core4/api/info?per_page=100")
     assert rv.status_code == 200
     pprint(rv.json())
     qn = 'tests.api.test_render.InternalHandler1'
@@ -248,7 +249,7 @@ def test_title_args(http):
 def test_help(http):
     rv = http.post("/tests/internal")
     assert rv.status_code == 200
-    rv = http.get("/core4/api/v1/info?per_page=100")
+    rv = http.get("/core4/api/info?per_page=100")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
     pprint(rv.json())
@@ -263,8 +264,8 @@ def test_help(http):
     #     pprint(rv.json())
 
     ih = [h for h in rv.json()["data"]
-          if h["route_id"] == "568c841289db6aaaf7e21a6e7eba3c81"][0]
-    url = ih["help_url"]
+          if h["route_id"] == "2a3897ef4e61542912a0cf3f3ab5a32f"][0]
+    url = ih["endpoint"][0]["help_url"]
     rv = http.get(url, absolute=True)
     assert rv.status_code == 200
     pprint(rv.json())
@@ -289,26 +290,26 @@ def test_server_wrong_args():
 
 
 def test_card(http):
-    rv = http.get("/core4/api/v1/info?per_page=100")
+    rv = http.get("/core4/api/info?per_page=100")
     assert rv.status_code == 200
     qn = 'tests.api.test_render.InternalHandler1'
     internal_handler = [h for h in rv.json()["data"]
                         if h["qual_name"] == qn]
     pprint(internal_handler)
-    assert internal_handler[0]["title"] == "internal test 1"
-    assert internal_handler[1]["title"] == "custom title 1"
+    assert internal_handler[0]["title"] == "custom title 1"
+    assert internal_handler[1]["title"] == "internal test 1"
 
-    c0 = internal_handler[0]["card_url"]
-    c1 = internal_handler[1]["card_url"]
-    r0 = internal_handler[0]["route_id"]
-    r1 = internal_handler[1]["route_id"]
+    c1 = internal_handler[0]["endpoint"][0]["card_url"]
+    c0 = internal_handler[1]["endpoint"][0]["card_url"]
+    r1 = internal_handler[0]["route_id"]
+    r0 = internal_handler[1]["route_id"]
 
     rv = http.get(c0, absolute=True)
     assert rv.status_code == 200
     content = rv.content.decode('utf-8')
     assert "internal test 1" in content
     assert "tests.api.test_render.InternalHandler1" in content
-    assert 'href="/core4/api/v1/enter/' + r0 + '"' in content
+    assert 'href="/core4/api/enter/' + r0 + '"' in content
 
     rv = http.get(c1, absolute=True)
     assert rv.status_code == 200
@@ -316,7 +317,7 @@ def test_card(http):
     pprint(content)
     assert "custom title 1" in content
     assert "tests.api.test_render.InternalHandler1" in content
-    assert 'href="/core4/api/v1/enter/' + r1 + '"' in content
+    assert 'href="/core4/api/enter/' + r1 + '"' in content
 
 
 
@@ -329,9 +330,9 @@ def test_render_relative(http):
     assert ("title: rendering handler 1" in rv.content.decode("utf-8"))
     pprint(rv.content)
 
-    css = "/core4/api/v1/file/pro/bfc3ed6ab6651dacc58751e1ad1e9965/web/test.css"
+    css = "/core4/api/file/pro/52b4f9970764d064bb526768b4d8b07c/web/test.css"
     assert css in rv.content.decode("utf-8")
-    default = "/core4/api/v1/file/def/bfc3ed6ab6651dacc58751e1ad1e9965/default.css"
+    default = "/core4/api/file/def/52b4f9970764d064bb526768b4d8b07c/default.css"
     assert default in rv.content.decode("utf-8")
 
     rv = http.get(css)
@@ -347,10 +348,10 @@ def test_render_absolute(http):
     rv = http.get("/test1/render/absolute")
     assert rv.status_code == 200
     assert ("title: rendering handler 1" in rv.content.decode("utf-8"))
-
-    css = "/core4/api/v1/file/pro/bfc3ed6ab6651dacc58751e1ad1e9965/web/test.css"
+    pprint(rv.content)
+    css = "/core4/api/file/pro/52b4f9970764d064bb526768b4d8b07c/web/test.css"
     assert css in rv.content.decode("utf-8")
-    default = "/core4/api/v1/file/def/bfc3ed6ab6651dacc58751e1ad1e9965/default.css"
+    default = "/core4/api/file/def/52b4f9970764d064bb526768b4d8b07c/default.css"
     assert default in rv.content.decode("utf-8")
 
     rv = http.get(css)
@@ -371,10 +372,10 @@ def test_render_path_relative(http):
     assert "title: rendering handler 2" in rv.content.decode("utf-8")
     assert "web/test1.html" in rv.content.decode("utf-8")
     pprint(rv.content)
-    css1 = "/core4/api/v1/file/pro/9dc156328181304de58965d8d9d74793/test.css"
+    css1 = "/core4/api/file/pro/a0be99aa78cbb87edcba474ddb66718e/test.css"
     assert css1 in rv.content.decode("utf-8")
 
-    css2 = "/core4/api/v1/file/pro/9dc156328181304de58965d8d9d74793/web/test.css"
+    css2 = "/core4/api/file/pro/a0be99aa78cbb87edcba474ddb66718e/web/test.css"
     assert css2 in rv.content.decode("utf-8")
 
     rv = http.get(css1)
@@ -397,7 +398,7 @@ def test_render_argument_relative(http):
     assert rv.status_code == 200
     assert ("custom title render2.2" in rv.content.decode("utf-8"))
     pprint(rv.content)
-    css = "/core4/api/v1/file/def/9f6abd2fd96a238e260a65a7c780912c/default.css"
+    css = "/core4/api/file/def/d1b13fd5127fa9caa823df81921fbbb0/default.css"
     assert css in rv.content.decode("utf-8")
     rv = http.get(css)
     assert rv.status_code == 200
@@ -413,7 +414,7 @@ def test_static_argument_relative(http):
     assert rv.status_code == 200
     assert ("custom title render2.1" in rv.content.decode("utf-8"))
     pprint(rv.content)
-    css = "/core4/api/v1/file/pro/b6b12c78002f942f4c4009c65b8fd6f3/test1.css"
+    css = "/core4/api/file/pro/d68f438f401c76e2039304d3323cd6b2/test1.css"
     assert css in rv.content.decode("utf-8")
 
     rv = http.get(css)
@@ -430,7 +431,7 @@ def test_static_argument_relative(http):
     assert rv.status_code == 200
     assert ("custom title render2.1" in rv.content.decode("utf-8"))
     pprint(rv.content)
-    css = "/core4/api/v1/file/pro/b6b12c78002f942f4c4009c65b8fd6f3/test1.css"
+    css = "/core4/api/file/pro/d68f438f401c76e2039304d3323cd6b2/test1.css"
     assert css in rv.content.decode("utf-8")
 
     rv = http.get(css)
@@ -442,8 +443,8 @@ def test_image(http):
     rv = http.get("/test1/render/relative")
     assert rv.status_code == 200
     pprint(rv.content)
-    img1 = "/core4/api/v1/file/pro/bfc3ed6ab6651dacc58751e1ad1e9965/web/head.png"
-    img2 = "/core4/api/v1/file/def/bfc3ed6ab6651dacc58751e1ad1e9965/favicon.ico"
+    img1 = "/core4/api/file/pro/52b4f9970764d064bb526768b4d8b07c/web/head.png"
+    img2 = "/core4/api/file/def/52b4f9970764d064bb526768b4d8b07c/favicon.ico"
     assert img1 in rv.content.decode('utf-8')
     assert img2 in rv.content.decode('utf-8')
     rv = http.get(img1)
@@ -461,18 +462,18 @@ def test_cage(http):
     rv = http.get("/test1/render3")
     assert rv.status_code == 200
     pprint(rv.content)
-    l1 = "/core4/api/v1/file/pro/f4420fcdae246d40d846a24037772ebc/test.css"
-    l2 = "/core4/api/v1/file/def/f4420fcdae246d40d846a24037772ebc/favicon.ico"
+    l1 = "/core4/api/file/pro/fa57fc58fe6b34fc5fedf437d832b2ce/test.css"
+    l2 = "/core4/api/file/def/fa57fc58fe6b34fc5fedf437d832b2ce/favicon.ico"
     assert l1 in rv.content.decode("utf-8")
     assert l2 in rv.content.decode("utf-8")
     rv = http.get(l1)
     assert rv.status_code == 200
     rv = http.get(l2)
     assert rv.status_code == 200
-    l3 = "/core4/api/v1/file/pro/f4420fcdae246d40d846a24037772ebc/test1.html"
+    l3 = "/core4/api/file/pro/fa57fc58fe6b34fc5fedf437d832b2ce/test1.html"
     rv = http.get(l3)
     assert rv.status_code == 200
-    l4 = "/core4/api/v1/file/pro/f4420fcdae246d40d846a24037772ebc/../test_render.py"
+    l4 = "/core4/api/file/pro/fa57fc58fe6b34fc5fedf437d832b2ce/../test_render.py"
     rv = http.get(l4)
     assert rv.status_code == 403
 

@@ -1,11 +1,16 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 This module implements general methods of the core4 worker queue used for
 example by :mod:`core4.queue.worker` and :mod:`core4.queue.process`.
 """
 
 import importlib
-import os
-import subprocess
 import sys
 import traceback
 
@@ -16,25 +21,21 @@ from bson.objectid import ObjectId
 from datetime import timedelta
 
 import core4.error
+import core4.service.introspect
 import core4.service.setup
-import core4.util
 import core4.util.node
 import core4.util.tool
 from core4.base import CoreBase
-from core4.const import VENV_PYTHON
+from core4.queue.helper.job.base import CoreAbstractJobMixin
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
+from core4.service.introspect.command import RESTART
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
                  core4.queue.job.STATE_FAILED)
 STATE_STOPPED = (core4.queue.job.STATE_KILLED,
                  core4.queue.job.STATE_INACTIVE,
                  core4.queue.job.STATE_ERROR)
-
-RESTART_COMMAND = """
-from core4.queue.main import CoreQueue
-CoreQueue()._exec_restart("{job_id:s}")
-"""
 
 
 class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
@@ -64,8 +65,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
 
     .. note:: With :ref:`coco` exists a terminal application to manage the
               queue.
-
-    .. todo:: link to queue API once it is there
     """
 
     def enqueue(self, cls=None, name=None, by=None, **kwargs):
@@ -106,7 +105,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.__dict__["identifier"] = ret.inserted_id
         self.logger.info(
             'successfully enqueued [%s] with [%s]', job.qual_name(), job._id)
-        self.make_stat('enqueue_job', job._id)
+        self.make_stat('enqueue_job', str(job._id))
         return job
 
     def job_factory(self, job, **kwargs):
@@ -131,6 +130,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         if not isinstance(cls, type):
             raise TypeError(
                 "{} not a class".format(repr(job)))
+        if CoreAbstractJobMixin in cls.__bases__:
+            raise TypeError(
+                "{} is an abstract job class".format(repr(job))
+            )
         obj = cls(**kwargs)
         if not isinstance(obj, core4.queue.job.CoreJob):
             raise TypeError(
@@ -273,17 +276,14 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be remove at [%s]", _id, at)
-            self.make_stat('request_remove_job', _id)
+            self.make_stat('request_remove_job', str(_id))
             return True
         self.logger.error("failed to flag job [%s] to be remove", _id)
         return False
 
     def restart_job(self, _id):
         """
-        Requests to restart the job with the passed ``_id``. After trying to
-        restart waiting jobs the method tries to start stopped jobs in the
-        same environment. In case of ``ImportError`` the method launches the
-        project environment and executes :meth:`._exec_restart`.
+        Requests to restart the job with the passed ``_id``.
 
         .. note:: Jobs in waiting state (``deferred`` and ``failed``) are
                   restarted by resetting their ``query_at`` attribute. Jobs in
@@ -300,7 +300,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         """
         if self._restart_waiting(_id):
             self.logger.warning('successfully restarted [%s]', _id)
-            self.make_stat('restart_waiting', _id)
+            self.make_stat('restart_waiting', str(_id))
             return _id
         else:
             try:
@@ -311,8 +311,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 if doc is None:
                     raise core4.error.CoreJobNotFound(
                         "job [{}] not found".format(_id))
-                new_id = self.exec_project(
-                    doc["name"], RESTART_COMMAND, job_id=str(doc["_id"]))
+                new_id = core4.service.introspect.exec_project(
+                    doc["name"], RESTART, job_id=str(doc["_id"]))
             except:
                 raise
             if new_id:
@@ -361,7 +361,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                                            **doc)
                     job.enqueued["child_id"] = new_job._id
                     self.journal(job.serialise())
-                    self.make_stat('restart_stopped', _id)
+                    self.make_stat('restart_stopped', str(_id))
                     self.unlock_job(_id)
                     return new_job._id
         return None
@@ -388,7 +388,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 }
             }
         )
-        self.make_stat('request_kill_job', _id)
+        self.make_stat('request_kill_job', str(_id))
         if ret.raw_result["n"] == 1:
             self.logger.warning(
                 "flagged job [%s] to be killed at [%s]", _id, at)
@@ -533,7 +533,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         if ret.deleted_count != 1:
             raise RuntimeError(
                 "failed to remove job [{}] from queue".format(job._id))
-        self.make_stat('complete_job', job._id)
+        self.make_stat('complete_job', str(job._id))
         self.unlock_job(job._id)
         job.logger.info("done execution with [complete] "
                         "after [%d] sec.", runtime)
@@ -562,7 +562,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "query_at", "trial")
-        self.make_stat('defer_job', job._id)
+        self.make_stat('defer_job', str(job._id))
         self.unlock_job(job._id)
         job.logger.info("done execution with [deferred] "
                         "after [%d] sec. and [%s] to go: %s", runtime,
@@ -584,7 +584,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         runtime = self._finish(job, core4.queue.job.STATE_INACTIVE)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "trial")
-        self.make_stat('inactivate_job', job._id)
+        self.make_stat('inactivate_job', str(job._id))
         self.unlock_job(job._id)
         job.logger.error("done execution with [inactive] "
                          "after [%d] sec. and [%d] trials in [%s]", runtime,
@@ -616,7 +616,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self._add_exception(job)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
                          "last_error", "attempts_left", "query_at", "trial")
-        self.make_stat('failed_job', job._id)
+        self.make_stat('failed_job', str(job._id))
         self.unlock_job(job._id)
         job.logger.critical("done execution with [%s] "
                             "after [%d] sec. and [%d] attempts to go: %s\n%s",
@@ -655,7 +655,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.__dict__["removed_at"] = None
         self._update_job(job, "state", "runtime", "locked",
                          "trial", "last_error", "removed_at")
-        self.make_stat('kill_job', job._id)
+        self.make_stat('kill_job', str(job._id))
         self.unlock_job(job._id)
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
@@ -664,6 +664,25 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         """
         Collects current job state counts from ``sys.queue`` and inserts a
         record into ``sys.stat``.
+
+        The following events are tracked in ``sys.stat``:
+
+        * ``enqueue_job``
+        * ``request_start_job``
+        * ``start_job``
+        * ``failed_start``
+        * ``defer_job``
+        * ``flag_nonstop``
+        * ``flag_zombie``
+        * ``failed_job``
+        * ``inactivate_job``
+        * ``complete_job``
+        * ``request_remove_job``
+        * ``restart_waiting``
+        * ``restart_stopped``
+        * ``request_kill_job``
+        * ``kill_job``
+        * ``remove_job``
         """
         if not "sys_stat" in self.__dict__:
             coll = self.config.sys.stat
@@ -674,42 +693,3 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         state["timestamp"] = core4.util.node.now().timestamp()
         state['event'] = {'name': event, 'data': args}
         self.sys_stat.insert_one(state)
-
-    # todo: document this
-    def exec_project(self, name, command, wait=True, *args, **kwargs):
-        """
-        Execute command using the Python interpreter of the project's virtual
-        environment.
-
-        :param name: qual_name to extract project name
-        :param command: Python commands to be executed
-        :param wait: wait and return STDOUT (``True``) or return immediately
-                     (defaults to ``False``).
-        :param args: to be injected using Python method ``.format``
-        :param kwargs: to be injected using Python method ``.format``
-
-        :return: STDOUT if ``wait is True``, else nothing is returned
-        """
-        # todo: move to service.introspect
-        project = name.split(".")[0]
-        home = self.config.folder.home
-        python_path = None
-        currdir = os.curdir
-        if home is not None:
-            python_path = os.path.join(home, project, VENV_PYTHON)
-            if not os.path.exists(python_path):
-                python_path = None
-        if python_path is None:
-            self.logger.warning("python not found at [%s], use fallback",
-                                python_path)
-            python_path = sys.executable
-        else:
-            self.logger.debug("python found at [%s]", python_path)
-            os.chdir(os.path.join(home, project))
-        command = command.format(*args, **kwargs)
-        proc = subprocess.Popen([python_path, "-c", command],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        os.chdir(currdir)
-        if wait:
-            (stdout, stderr) = proc.communicate()
-            return stdout.decode("utf-8").strip()

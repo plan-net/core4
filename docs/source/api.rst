@@ -70,7 +70,7 @@ All request handlers inherited from :class:`.CoreRequestHandler` have a
 property ``protected = True`` by default. This requires an authenticated and
 authorised user login to access the resource handler.
 
-All users with permission ``COP`` (core operators) have access to all resource
+All users with permission ``COP`` (core4 operators) have access to all resource
 handlers. All other users must have a permission pattern matching the
 :meth:`.qual_name <core4.base.main.CoreBase.qual_name>` of the resource.
 
@@ -241,14 +241,14 @@ The following example session authenticates and retrieves a page from
     from requests import get
 
     # authenticate
-    signin = get("http://localhost:5001/core4/api/v1/login"
+    signin = get("http://localhost:5001/core4/api/login"
                  "?username=admin&password=hans")
     token = signin.json()["data"]["token"]
     header = {"Authorization": "Bearer " + token}
 
     # get results
     rv = get(
-        "http://localhost:5001/coco/v1/jobs?per_page=10&sort=args.id&order=-1",
+        "http://localhost:5001/core4/api/jobs?per_page=10&sort=args.id&order=-1",
         headers=header)
     rv.json()
     {
@@ -322,9 +322,9 @@ to a protected resource using the token::
                   json={"username": "admin", "password": "hans"})
     token = signin.json()["data"]["token"]
     headers = {"Authorization": "Bearer " + token}
-    get("http://localhost:5001/core4/api/v1/profile", headers=headers)
+    get("http://localhost:5001/core4/api/profile", headers=headers)
     <Response [200]>
-    get("http://localhost:5001/core4/api/v1/profile", cookies=signin.cookies)
+    get("http://localhost:5001/core4/api/profile", cookies=signin.cookies)
     <Response [200]>
 
 
@@ -609,7 +609,7 @@ Each handler has three additional endpoints associated with the resource:
 #. an entry URL (``enter_url``)
 
 The help page delivers well formatted endpoint documentation in HTML following
-the guiding principles described at :ref:`api_docs <api_docs>`. The card page provides
+the guiding principles described at :ref:`api_doc`. The card page provides
 relevant endpoint information and can be customised with the
 :meth:`.CoreBaseHandler.card` method. The entry URL is the landing page of the
 API which defaults to the API ``GET`` method and can be customised with the
@@ -722,7 +722,7 @@ provides additional handler properties available as properties and methods:
 example vue rendering
 #####################
 
-core static file with global variable injection
+core4 static file with global variable injection
 static file with single endpoint to js rendered page
 
 
@@ -735,7 +735,7 @@ tbd.
 example vue rendering
 #####################
 
-core static file with global variable injection
+core4 static file with global variable injection
 static file with single endpoint to js rendered page
 
 

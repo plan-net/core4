@@ -1,19 +1,16 @@
+import random
+
+import pandas as pd
+import pymongo
 import pytest
+
 from core4.api.v1.application import CoreApiContainer
-from core4.api.v1.tool.functool import serve
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.queue.job import JobHandler, JobPost
-import random
-import pymongo
 from core4.util.pager import CorePager
-import pandas as pd
-
-
 from tests.api.test_response import LocalTestServer, StopHandler, setup
 
 print(setup)
-
-
 
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
@@ -51,12 +48,12 @@ class PagingHandler(CoreRequestHandler):
         async def _query(skip, limit, filter, sort_by):
             if filter:
                 self.logger.warning("filter not supported")
-            t = df[skip:skip+limit]
+            t = df[skip:skip + limit]
             if sort_by:
                 t.sort_values(
                     [sort_by[0]],
                     ascending=True if sort_by[1] == 1 else False,
-                inplace=True)
+                    inplace=True)
             return t.to_dict("rec")
 
         per_page = int(self.get_argument("per_page", default=10))
@@ -83,7 +80,6 @@ class MyTestServer(LocalTestServer):
         return CoreApiTestServer
 
 
-
 @pytest.fixture
 def mongodb():
     return pymongo.MongoClient(MONGO_URL)
@@ -97,10 +93,11 @@ def testdb(mongodb):
 @pytest.fixture
 def data1(testdb):
     coll = testdb.data1
-    segment = ["segment A", "segment B", "segement C", "segment D", "segment E"]
+    segment = ["segment A", "segment B", "segement C", "segment D",
+               "segment E"]
     for i in range(60):
         coll.insert_one({
-            "idx": i+1,
+            "idx": i + 1,
             "real": random.random() * 100.,
             "value": random.randint(1, 20),
             "segment": segment[random.randint(0, 4)]
@@ -118,6 +115,7 @@ def http():
 def test_simple(http):
     rv = http.get("/simple")
     assert rv.status_code == 200
+
 
 def test_page(http):
     rv = http.get("/page")
@@ -160,11 +158,13 @@ def test_empty(http):
     assert data["per_page"] == 20
     assert data["total_count"] == 0
 
+
 def test_job_listing(http):
     for i in range(20, 1, -1):
         rv = http.post(
-            "/enqueue", json=dict(name="core4.queue.helper.job.DummyJob",
-                                  sleep=1, id=i+1))
+            "/enqueue",
+            json=dict(name="core4.queue.helper.job.example.DummyJob",
+                      sleep=1, id=i + 1))
         assert rv.status_code == 200
     rv = http.get("/jobs?per_page=6")
     assert rv.status_code == 200
@@ -202,4 +202,3 @@ def test_job_listing(http):
     assert orig == sorted(orig, reverse=True)
     orig = [d["_id"] for d in data["data"]]
     assert orig == sorted(orig, reverse=False)
-

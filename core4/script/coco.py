@@ -1,5 +1,21 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 """
 coco - core4 control utililty.
+
+Use coco to interact with the core4 backend and frontend in the areas of
+
+* project management
+* setup control
+* maintenance
+* job management
+* daemon control (worker, scheduler, application server)
+* release management
 
 Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
@@ -22,6 +38,7 @@ Usage:
   coco --who
   coco --jobs
   coco --project
+  coco --container
   coco --version
 
 Options:
@@ -37,6 +54,7 @@ Options:
   -v --version    show version.
   -o --who        show system information
   -j --jobs       enumerate available jobs
+  -c --container  enumerate available API container
   -p --project    enumerate available core4 projects
   -y --yes        Assume yes on all requests.
 """
@@ -45,6 +63,7 @@ import json
 import re
 from pprint import pprint
 
+import core4.service.introspect
 import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
@@ -57,18 +76,12 @@ import core4.queue.job
 import core4.queue.main
 import core4.queue.scheduler
 import core4.queue.worker
-import core4.service.introspect.project
+import core4.service.introspect
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.operation.build import build, release
-
-ENQUEUE_COMMAND = """
-from core4.queue.main import CoreQueue
-queue = CoreQueue()
-job = queue.enqueue("{qual_name:s}", {args:s})
-print(job._id)
-"""
+from core4.service.introspect.command import ENQUEUE_ARG
+from core4.service.operation import build, release
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -171,7 +184,8 @@ def listing(*state):
             mxworker = max(mxworker, len(job["locked"]["worker"]))
         rec.append(job)
     if rec:
-        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} {:19s} {:11s} {:11s} {:%d} {:s}" % (
+        fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} " \
+              "{:19s} {:19s} {:11s} {:%d} {:s}" % (
             mxworker)
         print(
             fmt.format(
@@ -179,7 +193,7 @@ def listing(*state):
                 "enqueued", "age", "runtime", "worker", "name"))
         print(" ".join(["-" * i
                         for i in
-                        [24, 8, 4, 4, 4, 7, 6, 19, 11, 11, mxworker, mx]]))
+                        [24, 8, 4, 4, 4, 7, 6, 19, 19, 11, mxworker, mx]]))
     else:
         print("no jobs.")
     fmtworker = "{:%ds}" % (mxworker)
@@ -213,7 +227,7 @@ def listing(*state):
             "{:<6.6s}".format(job.get("enqueued", {}).get("username", None)),
             "{:19s}".format(str(
                 core4.util.data.utc2local(job["enqueued"]["at"]))),
-            "{:11s}".format(str(core4.util.node.mongo_now() - (
+            "{:19s}".format(str(core4.util.node.mongo_now() - (
                     job["enqueued"]["at"] or core4.util.node.mongo_now()))),
             "{:11s}".format(str(runtime)),
             fmtworker.format(worker),
@@ -331,9 +345,9 @@ def enqueue(qual_name, *args):
     try:
         job_id = QUEUE.enqueue(name=qual_name[0], **data)._id
     except ImportError:
-        stdout = QUEUE.exec_project(qual_name[0], ENQUEUE_COMMAND,
-                                    qual_name=qual_name[0],
-                                    args="**%s" % (str(data)))
+        stdout = core4.service.introspect.exec_project(
+            qual_name[0], ENQUEUE_ARG, qual_name=qual_name[0],
+            args="**%s" % (str(data)))
         job_id = stdout
     except:
         raise
@@ -345,21 +359,44 @@ def init(name, description, yes=False):
 
 
 def jobs():
-    intro = core4.service.introspect.project.CoreProjectInspector()
+    intro = core4.service.introspect.CoreIntrospector()
     summary = dict(intro.list_project())
     for project in sorted(summary.keys()):
-        print("{}".format(project))
-        jobs = []
-        for job in summary[project]["job"]:
-            job_project = job["name"].split(".")[0]
-            if job_project == project:
-                jobs.append(job["name"])
-        for job in sorted(jobs):
-            print("  {}".format(job))
+        if summary[project]:
+            if "job" in summary[project]:
+                jobs = []
+                for job in summary[project]["job"]:
+                    job_project = job["name"].split(".")[0]
+                    if job_project == project:
+                        jobs.append(job["name"])
+                if jobs:
+                    print("{}".format(project))
+                    for job in sorted(jobs):
+                        print("  {}".format(job))
+
+
+def container():
+    intro = core4.service.introspect.CoreIntrospector()
+    summary = dict(intro.list_project())
+    for project in sorted(summary.keys()):
+        if summary[project]:
+            if "container" in summary[project]:
+                containers = []
+                for container in summary[project]["container"]:
+                    container_project = container["name"].split(".")[0]
+                    if container_project == project:
+                        containers.append((container["name"],
+                                           container["rules"]))
+                if containers:
+                    print(project)
+                    for container in sorted(containers):
+                        print("  {}".format(container[0]))
+                        for rule in container[1]:
+                            print("    {}: {}".format(rule[1], rule[0]))
 
 
 def who():
-    intro = core4.service.introspect.project.CoreProjectInspector()
+    intro = core4.service.introspect.CoreIntrospector()
     summary = intro.summary()
     print("USER:")
     print("  {:s} IN {}".format(summary["user"]["name"],
@@ -393,22 +430,21 @@ def who():
 
 
 def project():
-    intro = core4.service.introspect.project.CoreProjectInspector()
+    intro = core4.service.introspect.CoreIntrospector()
     summary = dict(intro.list_project())
-    print("PROJECTS:")
     for project in sorted(summary.keys()):
         modules = {}
         if summary[project]:
             for mod in summary[project]["project"]:
                 modules[mod["name"]] = mod
-            print("  {} ({}) with Python {}, pip {}".format(
+            print("{} ({}) with Python {}, pip {}".format(
                 modules[project]["name"], modules[project]["version"],
                 summary[project]["python_version"],
                 summary[project]["pip"],
             ))
             for mod in sorted(modules.keys()):
                 if mod != project:
-                    print("    {} ({})".format(
+                    print("  {} ({})".format(
                         modules[mod]["name"], modules[mod]["version"]
                     ))
 
@@ -458,6 +494,8 @@ def main():
         jobs()
     elif args["--project"]:
         project()
+    elif args["--container"]:
+        container()
     else:
         raise SystemExit("nothing to do.")
 
