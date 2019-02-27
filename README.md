@@ -120,10 +120,12 @@ further reads
 =============
 
 Find latest core4 documentation at http://bi.plan-net.com/core4 or build the
-sphinx documentation with
+sphinx documentation yourself with
 
-    $ cd core4/docs
-    $ make html
+    cd core4
+    pip install -e ".[tests]" 
+    cd core4/docs
+    make html
 
 
 3rd party systems and licenses
