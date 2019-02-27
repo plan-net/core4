@@ -38,14 +38,18 @@ def printout(*args):
     sys.stdout.flush()
 
 
-def make_project(package_name=None, package_description=None, auto=False):
+def make_project(package_name=None, package_description=None, auto=False,
+                 origin=None):
     """
     Interactive method used by :mod:`.coco` to create a new project.
     The project templates are located in directory ``/template``. A combination
     of :mod:`Jinja2` and file-/folder name substitution is used to create a
-    new project from this blueprint.
+    new project from this blueprint. A Python virtual environment is created
+    installing core4 package using core4 configuration ``core4_origin``.
 
     :param package_name: str
+    :param package_description: str
+    :param auto: bool (default ``False``) to skip confirmation
     """
     kwargs = {
         "package_name": package_name,
@@ -78,7 +82,7 @@ def make_project(package_name=None, package_description=None, auto=False):
                 "project files will\n    be created."
 
     base = core4.base.main.CoreBase()
-    core4_repository = "git+" + base.config.core4_origin
+    core4_repository = origin or base.config.core4_origin
 
     print("""
     A project directory ./{package_name:s} will be created at
@@ -223,21 +227,19 @@ def make_project(package_name=None, package_description=None, auto=False):
         builder.create(venv)
         print("done")
 
+        pip_cmd = sh.Command(os.path.join(venv, "bin", "pip"))
+
+        printout("    upgrade pip ... ")
+        pip_cmd(["install", "-U", "pip"])
+        print("done")
+
         printout("    install project ... ")
-        pip_cmd = os.path.join(venv, "bin", "pip")
-        proc = subprocess.Popen([pip_cmd, "install", "-e", full_path],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.wait()
+        pip_cmd(["install", "-e", full_path])
         print("done")
 
         printout("    install core4 ... ")
-        proc = subprocess.Popen([pip_cmd, "install", core4_repository],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        ret = proc.wait()
-        if ret != 0:
-            raise ConnectionError("failed to retrieve and install core4 "
-                                  "from %s" % (core4_repository))
+        pip_cmd(["install", core4_repository])
+        # if ret != 0:
+        #     raise ConnectionError("failed to retrieve and install core4 "
+        #                           "from %s" % (core4_repository))
         print("done")
-
-    # todo: check if there is a ~/.core4/local.yaml or an /etc/core4/local.yaml
-    # todo: create if not exists

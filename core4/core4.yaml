@@ -129,6 +129,4 @@ user_setting:
    _general:
      language: DE
 
-core4_origin: ssh://git.bi.plan-net.com/srv/git/core4.git
-
-
+core4_origin: git+ssh://git.bi.plan-net.com/srv/git/core4.git

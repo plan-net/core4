@@ -18,7 +18,7 @@ Use coco to interact with the core4 backend and frontend in the areas of
 * release management
 
 Usage:
-  coco --init [PROJECT] [DESCRIPTION] [--yes]
+  coco --init [PROJECT] [DESCRIPTION] [--origin=ORIGIN] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
   coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--filter=FILTER...]
@@ -199,11 +199,10 @@ def listing(*state):
     fmtworker = "{:%ds}" % (mxworker)
     for job in rec:
         locked = job["locked"]
+        progress = job["prog"]["value"] or 0
         if locked:
-            progress = job["locked"]["progress_value"] or 0
             worker = job["locked"]["worker"]
         else:
-            progress = 0.
             worker = ""
         if job["state"] == core4.queue.job.STATE_RUNNING:
             job["attempts_left"] -= 1
@@ -354,8 +353,8 @@ def enqueue(qual_name, *args):
     print(job_id)
 
 
-def init(name, description, yes=False):
-    core4.service.project.make_project(name, description, yes)
+def init(name, description, yes, origin):
+    core4.service.project.make_project(name, description, yes, origin)
 
 
 def jobs():
@@ -467,7 +466,8 @@ def main():
     elif args["--enqueue"]:
         enqueue(args["QUAL_NAME"], *args["ARGS"])
     elif args["--init"]:
-        init(args["PROJECT"], args["DESCRIPTION"], args["--yes"])
+        init(args["PROJECT"], args["DESCRIPTION"], args["--yes"],
+             args["--origin"])
     elif args["--alive"]:
         alive()
     elif args["--info"]:
