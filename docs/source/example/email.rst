@@ -41,9 +41,10 @@ email to the configured recipient(s)::
         def execute(self, *args, **kwargs):
 
             try:
-                req = requests.get(self.config.base_url +
-                                   "apiKey=" + self.config.api_key +
-                                   "domainName=" + self.config.domain_name)
+                req = requests.get(self.class_config.base_url +
+                                   "?apiKey=" + self.class_config.api_key +
+                                   "&domainName=" +
+                                   self.class_config.domain_name)
             except Exception as e:
                 self.logger.critical("Can't contact the configured API.")
                 raise e
@@ -53,18 +54,31 @@ email to the configured recipient(s)::
                     if req.json()['DomainInfo']['domainAvailability'] == \
                             "AVAILABLE":
                         self.logger.info("The domain {0} is now AVAILABLE!"
-                                         .format(self.config.domain_name))
-                        self.send_mail(to=self.config.recipient,
+                                         .format(self.class_config.domain_name))
+                        self.send_mail(to=self.class_config.recipient,
                                        message="The domain {0} is now "
                                                "AVAILABLE!"
-                                       .format(self.config.domain_name),
+                                       .format(self.class_config.domain_name),
                                        subject="core4 domain alert")
                     else:
-                        self.logger.info("example.com ist still UNAVAILABLE")
+                        self.logger.info("The domain {0} ist still UNAVAILABLE"
+                                         .format(self.class_config.domain_name))
                 except Exception as e:
                     raise Core4Error("The API returned an invalid response.")
 
             else:
-                raise Core4Error(("The domain API returned an Error:
-                                    HTTP Status Code: {0}"
-                                    .format(req.status_code)))
+                raise Core4Error(("The domain API returned an Error:"
+                                  "HTTP Status Code: {0}"
+                                  .format(req.status_code)))
+
+The example CoreJob uses the following plugin configuration (given that the
+qual_name() of the CoreJob is: "core4.example.CheckDomain")::
+
+    core4:
+      example:
+        CheckDomain:
+          base_url: https://domain-availability-api.whoisxmlapi.com/api/v1
+          api_key: very_secret_key
+          domain_name: example.com
+          recipient: core4-admin@plan-net.com
+
