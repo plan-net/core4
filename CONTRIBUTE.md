@@ -240,19 +240,19 @@ level 3
  functionality.
  
 ```sh   
-Identify the Bug
+Identify the bug
 !!! Link to the issue describing the bug that you're fixing. If there is not yet an issue for your bug, please open a new issue and then link to that issue in your pull request.
 
 Bug description:
 !!! Provide a short bug description
 
-Description of the Change
+Description of the change
 !!! We must be able to understand the design of your change from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion. Keep in mind that the maintainer reviewing this PR may not be familiar with or have worked with the code recently, Please walk us through the concepts.
 
 Impacted area
 !!! Please mention all of the areas the code deals with.
 
-Possible Side-effects
+Possible side-effects
 !!! What are the possible side-effects or negative impacts of your code change?
  ```
 
@@ -270,15 +270,15 @@ Possible Side-effects
 Identify the suggested enhancement
 !!! Link to the ticket describing the suggested enhancement. If there is not yet a ticket for your suggested enhancement, please create a new ticket and then link to that ticket in your pull request.
 
-Description of the Idea
+Description of the idea
 !!! We must be able to understand the design of your feature from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion.
 
-Steps to Demonstrate
+Steps to demonstrate
 !!! Provide specific examples to demonstrate the enhancement.
 
 Impacted area
 !!! Please mention all of the areas the code deals with.
 
-Possible Drawbacks
+Possible side-effects
 !!! What are the possible side-effects or negative impacts of your code change?
  ```
