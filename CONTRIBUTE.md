@@ -1,12 +1,14 @@
-First off, thank you for considering contributing to core4. 
+First off, thank you for considering to contribute to core4. 
 
-There are many ways to contribute, including submitting bug reports, improving documentation, submitting feature requests, 
-reviewing new submissions, or contributing code that can be incorporated into the project.
+There are many ways to contribute, e.g. submitting bug reports, improving 
+documentation, submitting feature requests, reviewing new submissions, or 
+contributing code that can be incorporated into the project.
 
-> When contributing to this repository, please first discuss the change you wish to make via issue, email, 
-or any other method with the owners of this repository before making a change.
+> When contributing to this repository, please first discuss the changes you 
+wish to make via issue.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+Please note we have a code of conduct, please follow it in all your 
+interactions with the project.
 
 **Table of Contents:**
 1. [Code of Conduct](#code-of-conduct)
@@ -28,7 +30,8 @@ Please note we have a code of conduct, please follow it in all your interactions
 
 ## Code of Conduct
 ### Our Standards
-Examples of behavior that contributes to creating a positive environment include:
+Examples of behavior that contributes to creating a positive environment 
+include:
 - Using welcoming and inclusive language.
 - Being respectful of differing viewpoints and experiences.
 - Gracefully accepting constructive criticism.
@@ -38,59 +41,65 @@ Examples of behavior that contributes to creating a positive environment include
 Examples of unacceptable behavior by participants include:
 - Trolling, insulting/derogatory comments, and personal or political attacks.
 - Public or private harassment.
-- Publishing others' private information, such as a physical or electronic address, without explicit permission.
-- Other conduct which could reasonably be considered inappropriate in a professional setting.
+- Publishing others' private information, such as a physical or electronic 
+address, without explicit permission.
+- Other conduct which could reasonably be considered inappropriate in a 
+professional setting.
 
 ### Our Responsibilities
-Project maintainers are responsible for clarifying the standards of acceptable behavior and are expected to take 
-appropriate and fair corrective action in response to any instances of unacceptable behavior.
+Project maintainers are responsible for clarifying the standards of acceptable 
+behavior and are expected to take appropriate and fair corrective action in 
+response to any instances of unacceptable behavior.
 
-Project maintainers have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, 
-issues, and other contributions that are not aligned to this Code of Conduct, or to ban temporarily or permanently any 
-contributor for other behaviors that they deem inappropriate, threatening, offensive, or harmful.
+Project maintainers have the right and responsibility to remove, edit, or 
+reject comments, commits, code, wiki edits, issues, and other contributions 
+that are not aligned to this Code of Conduct, or to ban temporarily or 
+permanently any contributor for other behaviors that they deem inappropriate, 
+threatening, offensive, or harmful.
 
 ### Scope
-This Code of Conduct applies both within project spaces and in public spaces when an individual is representing the project 
-or its community. Examples of representing a project or community include using an official project e-mail address, 
-posting via an official social media account, or acting as an appointed representative at an online or offline event. 
-Representation of a project may be further defined and clarified by project maintainers.
+This Code of Conduct applies both within project spaces and in public spaces 
+when an individual is representing the project or its community. Examples of 
+representing a project or community include using an official project e-mail 
+address, posting via an official social media account, or acting as an 
+appointed representative at an online or offline event. Representation of a 
+project may be further defined and clarified by project maintainers.
 
 ## Contributing Code
 ### Reporting Bug
-This section guides you through submitting a bug report for core4. Following these guidelines helps maintainers and 
-the community understand your report, reproduce the behavior, and find related reports.
+This section guides you through submitting a bug report for core4. Following 
+these guidelines helps maintainers and the community understand your report, 
+reproduce the behavior, and find related reports.
 
-Before creating bug reports, please check this list (link) as you might find out that you don't need to create one. 
-When you are create a bug report, please include as many details as possible. 
+Before creating bug reports:
+- Please check this list of current open issues(link) as you might find out that 
+you don't need to create one.
+- Only open an issue if no other issue is addressing the same problem. 
+If the bug still persists after the issue has been marked as "fixed", 
+please open a new one containing a link to the original.
+- Try reproducing the bug on a freshly configured machine with upstream code.
+(Please do not report bugs that may be caused by customized code or a customized
+operating system.)
 
->If you find a **Closed** issue that seems like it is the same thing that you're experiencing, open a new issue and 
-include a link to the original issue in the body of your new one.
-
-.. change to only open an issue if no other issue is adressing the same problem.
-.. If bug still perists after issue has been marked as "fixed", open a new one
-.. with link to the original?
+When you are creating a bug report, please include as many details as possible. 
 
 How Do I Submit A Bug Report?
 
-Explain the problem and include additional details to help maintainers reproduce the problem:
+Explain the problem and include additional details to help maintainers 
+reproduce the problem:
 - Use a clear and descriptive title for the issue to identify the problem.
-- Describe the exact steps which reproduce the problem in as many details as possible.
-- Provide specific examples to demonstrate the steps. Include links to files, attaching logs or copy/pasteable snippets, 
-which you use in those examples.
+- Describe the exact steps to reproduce the problem as detailed as possible.
+- Include configuration/environment information necessary to reproduce.
+- Include any files or other resources uses in your example.
 - Explain which behavior you expected to see.
-- Describe the behavior you observed after following the steps and point out what exactly is the problem with that behavior.
-
-
-.. only bugs that do not contain changed core4-code
-.. try reproducing the bug on a freshly configured machine 
-.. to e.g. not report bugs in a customized python environment
-.. include configuration/environment information neccessary to reproduce
-
-
+- Describe the behavior you observed after triggering the bug and describe 
+in detail how this differs from your expectation.
 
 Use the form below to reporting a bug:
 ```sh
 Title of the issue:
+
+What necessary information is needed to reproduce (configuration/environment)?
 
 What steps will reproduce the issue?
 
@@ -100,34 +109,31 @@ What happens instead?
 
 ```
 
-.. neccessary information needed to reproduce.
-
 ### Suggesting Enhancements
-This section guides you through submitting an enhancement suggestion for core4, including completely new features and 
-minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand 
-your suggestion and find related suggestions.
+This section guides you through submitting an enhancement suggestion for core4, 
+including completely new features and minor improvements to existing 
+functionality. Following these guidelines helps maintainers and the community 
+understand your suggestion and find related suggestions.
 
-Before creating enhancement suggestions, please check this list (link) as you might find out that you don't need to 
-create one. When you are creating an enhancement suggestion, please include as many details as possible.
+Before creating enhancement suggestions, please check this list (link) as you 
+might find out that you don't need to create one. When you are creating an 
+enhancement suggestion, please include as many details as possible.
 
-.. dont need to create one? because already present/similiar?
 
 How Do I Submit A Enhancement Suggestion?
 - Use a clear and descriptive title for the enhancement to identify the 
 suggestion.
-- Provide a step-by-step description of the suggested enhancement in as many details as possible.
-- Provide specific examples to demonstrate the steps.
-- Explain why this enhancement would be useful to most core4 users
+- Provide a step-by-step description of the suggested enhancement in as many 
+details as possible.
+- Provide specific examples to demonstrate the enhancement.
 
 Use the form below to submit enhancement suggestion:
 ```sh
-Title of the suggesting enhancement:
+Title of the suggested enhancement:
 
 Description of the suggested enhancement:
 
-What is the expected result?
-
-What is the benefit of the suggested enhancement?
+What is the expected result/behavior?
 
 ```
 
@@ -135,29 +141,30 @@ What is the benefit of the suggested enhancement?
 The process described here has several goals:
 - Maintain core4 quality.
 - Fix issues that are important to users.
-- Engage the community in working toward the best possible core4.
+- Engage the community in working towards the best possible core4.
 - Enable a sustainable system for core4's maintainers to review contributions.
 
-Please follow these steps to have your contribution considered by the maintainers:
+Please follow these steps to have your contribution considered by the 
+maintainers:
  1. Follow all instructions in the [template](#appendix).
  2. Follow the [styleguides](#styleguides).
- 3. Before submiting a pull request:
+ 3. Before submitting a pull request:
     - create or extend suitable tests.
-    - ensure that all tests run sucecssfully. Further information how to run the tests can be found here: [README](README.md) file.
+    - ensure that all tests run successfully. Further information how to run 
+    the tests can be found here: [README](README.md).
     - create or update the documentation.
-    - run [pylint](https://www.pylint.org/) on your code.
  
- While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) may ask 
- you to complete additional design work, tests, or other changes before your pull request can be ultimately accepted.
-
-.. What aboud needed "commit messages" for the pull request?
+While the prerequisites above must be satisfied prior to having your pull 
+request reviewed, the reviewer(s) may ask you to complete additional design 
+work, tests, or other changes before your pull request can be accepted.
 
 ## Styleguides
 ### Git Commit Styleguides
 Git Commit Messages
 - Use the present tense ("Add feature" not "Added feature").
 - Use the imperative mood ("Move cursor to..." not "Moves cursor to...").
-- The commit message should reference the issue number, e.g.  ("[#18882]:bug: Fix scroll").
+- The commit message should reference the issue number, e.g. 
+("[#18882]:bug: Fix scroll").
 - Start a commit message with an applicable title:
     - :**bug**: when fixing a bug.
     - :**new**: when add a enhancements (new features and minor improvements).
@@ -167,113 +174,111 @@ Git Commit Messages
     - :**doc**: when adding/fixing documentation.
 
 ### Python Styleguide
-Use [PEP8](https://www.python.org/dev/peps/pep-0008/) style guide. PEP8 is big, constantly evolving and certainly 
-worth reading. The main guidelines each core4 contributor should follow are summarised below:
+Use the style guidelines defined within [PEP8](https://www.python.org/dev/peps/pep-0008/). 
+PEP8 is big, constantly evolving and certainly worth reading. The main 
+guidelines each core4 contributor should follow are summarised below:
 
 * Use four whitespaces, no tabulators, with a maximum line length of 79 chars.
-* Functions and classes are seperated by two blank lines.
-* Methods in a class are seperated by one blank line.
+* Separate classes by two blank lines, functions and methods by one blank line
 * Put one space around variable assignments (e.g. ``x = 1``) but do not put
   spaces around list indexes, function calls or keyword assignments (e.g.
-  ``func(a=1, b=2)``).
-* Functions, variables, attributes in lower case using underscore to seperate
-  terms.
-* Protected attributes with a leading underscore.
-* Private attributes with double leading underscore.
-* Classes and exceptions use CamelCase.
-* Constants use upper case.
-* Instance methods use ``self``, class methods use ``cls``.
+  ``func(a=1, b=2)``). 
+* Specify functions, variables and attributes in lower case using underscores to
+ separate terms.
+* Preceed protected attributes with a leading underscore.
+* Preceed Private attributes with double leading underscore.
+* Use CamelCase for classes and exceptions.
+* Write Constants using upper case.
+* Use ``self`` for instance methods, ``cls`` for class methods.
 * Always put import statements at the top of the file.
 * Always use absolute imports, avoid using relative imports.
-* Imports should be in the following order: standard library modules, third
+* Use following import order: standard library modules, third
   party modules, core4 modules.
-* Write documentation for every module and introduce the contents of the module 
+* Write documentation for every module: explain the contents of the module 
   and any important classes or functions.
-* Write documentation for every class and introduce behavior, important 
+* Write documentation for every class: explain behavior, important 
   attributes, subclass behavior.
-* Write documentation for every non-private functions, list and explain every 
+* Write documentation for every non-private function, list and explain every 
   argument and return value.
-  
-These guidelines are based on PEP8 and heavily influenced by Brett Slatkin's
-Effective Python - 50 Specific Ways to Write Better Python.
- 
-Parameters, arguments and interface definitions:
-- Optional arguments should be placed in square brackets, i.e. ``[PARAMETER]``
-- Mandatory arguments should be placed in angle brackets, i.e. ``<PARAMETER>``
-.. when are we using these?
 
-
-Encoding declarations:
-- All core4 files use UTF-8 encoding and must not provide an encoding declaration in the first or second line of the 
-Python file. 
-.. only not in the first 2 lines or not at all?
+These guidelines are based on [PEP8](https://www.python.org/dev/peps/pep-0008/) 
+and heavily influenced by Brett Slatkin's [Effective Python - 59 Specific Ways 
+to Write Better Python](https://www.oreilly.com/library/view/effective-python-59/9780134034416/).
 
 Shebang line:
-- All core4 modules must not provide a shebang line. For actual scripts located in ./scripts the correct shebang line is:
- ```sh
-#!/usr/bin/env python3
-```
+- All core4 modules must not provide a shebang line. For actual scripts located 
+in ./scripts the correct shebang line is:
+```sh
+#!/usr/bin/env python3.5
+``` 
 
 ### Documentation Styleguide
-- Use [Sphinx](http://www.sphinx-doc.org) for building the documentation. Further information can be found here: [README](README.md).
+- Use [Sphinx](http://www.sphinx-doc.org) for building the documentation. 
+Further information can be found here: [README](README.md).
 - Headline hierarchy should be:
- ```sh   
-    #######
-    level 1
-    #######
+```sh   
+#######
+level 1
+#######
     
-    level 2
-    =======
+level 2
+=======
     
-    level 3
-    -------
- ```
+level 3
+-------
+```
 
 ## APPENDIX
 ### Bug Fix Pull Request Template
 
- * Fill out the template below. Any pull request that does not include enough information to be reviewed in a timely 
- manner may be closed at the maintainers' discretion.
- * The pull request must only fix an existing bug. To contribute other changes, you must use a different template.
- * The pull request must update the test suite to demonstrate the changed functionality.
-.. include the link to the bug and a short bug description
+ * Fill out the template below. Any pull request that does not include enough 
+ information to be reviewed in a timely manner may be closed at the 
+ maintainers' discretion.
+ * The pull request must only fix an existing issue. To contribute other changes, 
+ you must use a different template.
+ * The pull request must update the test suite to demonstrate the changed 
+ functionality.
  
- ```sh   
-Identify the Bug
+```sh   
+Identify the bug
 !!! Link to the issue describing the bug that you're fixing. If there is not yet an issue for your bug, please open a new issue and then link to that issue in your pull request.
 
-Description of the Change
-!!! We must be able to understand the design of your change from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion. Keep in mind that the maintainer reviewing this PR may not be familiar with or have worked with the code here recently, so please walk us through the concepts.
+Bug description:
+!!! Provide a short bug description
+
+Description of the change
+!!! We must be able to understand the design of your change from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion. Keep in mind that the maintainer reviewing this PR may not be familiar with or have worked with the code recently, Please walk us through the concepts.
 
 Impacted area
-!!! Please mention all of the areas that code deals with.
+!!! Please mention all of the areas the code deals with.
 
-Possible Drawbacks
-!!! What are the possible side-effects or negative impacts of the code change?
+Possible side-effects
+!!! What are the possible side-effects or negative impacts of your code change?
  ```
 
 ### Suggesting Enhancements Pull Request Template
 
- * Fill out the template below. Any pull request that does not include enough information to be reviewed in a timely 
- manner may be closed at the maintainers' discretion.
- * The pull request must provide only one suggesting enhancement. To contribute other changes, you must use a 
- different template.
- * The pull request must have a test suite to demonstrate the new functionality.
- .. include ticket and description
- .. no bug-pull request or enhancement pull-request without a ticket?
-  ```sh   
-Identify the suggested enhancement
-!!! Use a clear and descriptive title for the issue to identify the suggestion.
+ * Fill out the template below. Any pull request that does not include enough 
+ information to be reviewed in a timely manner may be closed at the 
+ maintainers' discretion.
+ * The pull request must provide only one suggested enhancement. To contribute 
+ other changes, you must use a different template.
+ * The pull request must contain test suites to demonstrate the new 
+ functionality.
 
-Description of the Idea
+```sh   
+Identify the suggested enhancement
+!!! Link to the ticket describing the suggested enhancement. If there is not yet a ticket for your suggested enhancement, please create a new ticket and then link to that ticket in your pull request.
+
+Description of the idea
 !!! We must be able to understand the design of your feature from this description. If we can't get a good idea of what the code will be doing from the description here, the pull request may be closed at the maintainers' discretion.
 
-Steps to Demonstrate
-!!! Provide specific examples to demonstrate the enhancements.
+Steps to demonstrate
+!!! Provide specific examples to demonstrate the enhancement.
 
 Impacted area
-!!! Please mention all of the areas that code deals with.
- ```
+!!! Please mention all of the areas the code deals with.
 
- 
-.. please use pep8 (80 chars per line)
+Possible side-effects
+!!! What are the possible side-effects or negative impacts of your code change?
+ ```
