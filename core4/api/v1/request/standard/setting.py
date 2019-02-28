@@ -7,6 +7,7 @@
 
 import re
 from tornado.web import HTTPError
+from functools import wraps
 
 import core4
 import core4.const
@@ -24,14 +25,30 @@ sys_name_restrictions = re.compile('(^[_])')
 
 # error handler interceptor
 def handle_errors(func):
+
+    # core4 specific http error handler
+    def write_error(self, status_code, error_reason):
+        if isinstance(self, CoreRequestHandler):
+            self.write_error(status_code,
+                             error=error_reason)
+
+    @wraps(func)
     async def call(*args, **kwargs):
         try:
             return await func(*args, **kwargs)
         except HTTPError as error:
-            self = args[0]
-            if isinstance(self, CoreRequestHandler):
-                self.write_error(error.status_code, error=error.reason)
-                raise error
+            write_error(args[0],
+                        error.status_code,
+                        error.reason)
+
+            raise error
+        except MongoDBError as error:
+            write_error(args[0],
+                        error.status_code,
+                        error.reason)
+
+            raise HTTPError(status_code=error.status_code,
+                            reason=error.reason)
     return call
 
 
@@ -42,21 +59,23 @@ class SettingHandler(CoreRequestHandler):
 
     .. note:: The data should have the next structure:
 
-        level 1 - this resource level holds the system in general related data (favorite widgets, dashboards,
-        the widgets in a dashboard) and project related data. System data is stored in a reserved key named “_general”,
-        project data can be stored using any other key name. Data for “_general” and projects is stored as “key: value” pairs
+        ``level 1`` - this resource level holds the system in general related data (*favorite widgets, dashboards,
+        the widgets in a dashboard*) and project related data. System data is stored in a reserved key named “_general”,
+        project data can be stored using any other key name. Data for “_general” and projects is stored as **“key: value”** pairs.
 
-        level 2 - this resource level holds directly the data specific to a key described in “level 1”.
-        Data is stored by “key: value” pairs structure, where the key is the name of settings property and
-        the value is JSON data (string, number, boolean, array, dictionary (JS Object), Base64 encoded binary data)
+        ``level 2`` - this resource level holds directly the data specific to a key described in **“level 1”**.
+        Data is stored by **“key: value”** pairs structure, where the key is the name of settings property and
+        the value is JSON data (*string, number, boolean, array, dictionary (JS Object), Base64 encoded binary data*).
 
-        Beyond level 2 no restriction in resource structure
+        **Beyond level 2 no restriction in resource structure.**
 
-    Endpoint structure example:
-        core4/api/v1/setting/_general/language?username=jdo
-                    \_______\________\________\
-                        |    	|        |
-           service endpoint  level 1  level 2
+
+    Endpoint structure example
+        *core4/api/v1/setting/_general/language?username=jdo*
+
+        * **setting** - service endpoint
+        * **_general** - level 1
+        * **language** - level 2
     """
     title = "user setting"
     author = "oto"
@@ -64,9 +83,9 @@ class SettingHandler(CoreRequestHandler):
 
     default_setting = None
 
-    # ############################################################################################################### #
+    # ###################################################################### #
     # Private methods
-    # ############################################################################################################### #
+    # ###################################################################### #
 
     def _is_resource_name_valid(self, resource):
         if sys_name_restrictions.match(resource):
@@ -105,12 +124,15 @@ class SettingHandler(CoreRequestHandler):
     def _validate_service_restrictions(self, resources, body):
         length = len(resources)
 
-        if length > 1:                                                              # setting/level1/level2/.../level(n)
+        # setting/level1/level2/.../level(n)
+        if length > 1:
             return self._is_resource_name_valid(resources[0])
-        elif length == 1:                                                           # setting/level1
+        # setting/level1
+        elif length == 1:
             return self._is_resource_name_valid(resources[0]) and type(body) is dict \
                                                               and not self._has_empty_keys(body)
-        else:                                                                       # setting/
+        # setting/
+        else:
             return self._is_body_structure_valid(body)
 
     def _create_nested_dict(self, key_list=None, value=None):
@@ -140,9 +162,10 @@ class SettingHandler(CoreRequestHandler):
         """
         Grep user unique ID.
 
-        username - query parameter which specifies the user for which the settings should be retrieved.
-        Requires COP (core operators) permissions to be used.
-        If not provided, settings for the current user are returned.
+        username - query parameter which specifies the user for which the
+        settings should be retrieved. Requires COP (core operators)
+        permissions to be used. If not provided, settings for the current user
+        are returned.
 
         :return: string: unique user ID
         """
@@ -164,7 +187,8 @@ class SettingHandler(CoreRequestHandler):
         # resource can't be empty. E.g: setting//general
         for name in resources:
             if name == "":
-                raise HTTPError(status_code=400, reason="Invalid resource name")
+                raise HTTPError(status_code=400,
+                                reason="Invalid resource name")
 
         return [path, resources, user_id]
 
@@ -180,7 +204,8 @@ class SettingHandler(CoreRequestHandler):
         body = self.get_argument('data', default=None)
 
         if not body:
-            raise HTTPError(status_code=400, reason="Body in request is empty")
+            raise HTTPError(status_code=400,
+                            reason="Body in request is empty")
 
         return body
 
@@ -189,13 +214,14 @@ class SettingHandler(CoreRequestHandler):
             for key in resources:
                 document = document[key]
         except:
-            raise HTTPError(status_code=400, reason="Invalid resource name")
+            raise HTTPError(status_code=400,
+                            reason="Invalid resource name")
 
         return document
 
-    # ############################################################################################################### #
+    # ###################################################################### #
     # Request handlers
-    # ############################################################################################################### #
+    # ###################################################################### #
 
     @handle_errors
     async def get(self, *args, **kwargs):
@@ -206,8 +232,7 @@ class SettingHandler(CoreRequestHandler):
             GET /
 
         Parameters:
-            username (str): parameter which specifies the user for which the settings should be retrieved.
-            Requires COP (core operators) permissions to be used. If not provided, settings for the current user are returned.
+            username (str): parameter which specifies the user for which the settings should be retrieved. Requires **COP** (*core operators*) permissions to be used. If not provided, settings for the current user are returned.
 
         Returns:
             data element with user-related system data and project specific settings
@@ -229,8 +254,7 @@ class SettingHandler(CoreRequestHandler):
             DELETE /
 
         Parameters:
-            username (str): parameter which specifies the user for which the settings should be retrieved.
-            Requires COP (core operators) permissions to be used. If not provided, settings for the current user are returned.
+            username (str): parameter which specifies the user for which the settings should be retrieved. Requires **COP** (*core operators*) permissions to be used. If not provided, settings for the current user are returned.
 
         Returns:
             None
@@ -256,8 +280,7 @@ class SettingHandler(CoreRequestHandler):
             POST /
 
         Parameters:
-            username (str): parameter which specifies the user for which the settings should be retrieved.
-            Requires COP (core operators) permissions to be used. If not provided, settings for the current user are returned.
+            username (str): parameter which specifies the user for which the settings should be retrieved. Requires **COP** (*core operators*) permissions to be used. If not provided, settings for the current user are returned.
 
         Returns:
             data element with set data from request body
@@ -273,7 +296,8 @@ class SettingHandler(CoreRequestHandler):
 
         if self._validate_service_restrictions(resources, body):
             if len(resources):
-                insert_data = self._create_nested_dict(key_list=resources, value=body)
+                insert_data = self._create_nested_dict(key_list=resources,
+                                                       value=body)
             else:
                 insert_data = body
         else:
@@ -317,7 +341,8 @@ class CoreSettingDataAccess(CoreBase):
         Returns:
             user-relevant database document
         """
-        cursor = self.collection.find(filter=kwargs, projection={'_id': False})
+        cursor = self.collection.find(filter=kwargs,
+                                      projection={'_id': False})
         db_documents = await cursor.to_list(length=1)
 
         return db_documents[0] if db_documents else None
@@ -344,14 +369,16 @@ class CoreSettingDataAccess(CoreBase):
             result = await self.collection.insert_one(data)
 
             if result.inserted_id is None:
-                raise HTTPError(status_code=400,  reason="Failed to insert setting")
+                raise MongoDBError(status_code=400,
+                                   reason="Failed to insert setting")
         else:
             result = await self.collection.update_one(
                 filter={"_id": user_id},
                 update={"$set": data})
 
             if result.matched_count == 0:
-                raise HTTPError(status_code=400, reason="Failed to update setting")
+                raise MongoDBError(status_code=400,
+                                   reason="Failed to update setting")
 
     async def delete(self, user_id, data=None):
         """
@@ -371,7 +398,8 @@ class CoreSettingDataAccess(CoreBase):
         db_document = await self.find_one(_id=user_id)
 
         if db_document is None:
-            raise HTTPError(status_code=404, reason="Resource not found")
+            raise HTTPError(status_code=404,
+                            reason="Resource not found")
         else:
             if data:
                 result = await self.collection.update_one(
@@ -379,9 +407,19 @@ class CoreSettingDataAccess(CoreBase):
                     update={"$unset": data})
 
                 if result.modified_count == 0:
-                    raise HTTPError(status_code=404, reason="Resource not found")
+                    raise MongoDBError(status_code=404,
+                                       reason="Resource not found")
             else:
                 result = await self.collection.delete_one({"_id": user_id})
 
                 if result.deleted_count == 0:
-                    raise HTTPError(status_code=400, reason="Failed to delete setting")
+                    raise MongoDBError(status_code=400,
+                                       reason="Failed to delete setting")
+
+
+class MongoDBError(Exception):
+    def __init__(self, **kwargs):
+        self.status_code = kwargs.get('status_code', 400)
+        self.reason = kwargs.get('reason', 'Bad request')
+
+        Exception.__init__(self)
