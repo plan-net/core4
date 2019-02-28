@@ -18,7 +18,7 @@ Use coco to interact with the core4 backend and frontend in the areas of
 * release management
 
 Usage:
-  coco --init [PROJECT] [DESCRIPTION] [--origin=ORIGIN] [--yes]
+  coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
   coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--filter=FILTER...]
@@ -353,8 +353,8 @@ def enqueue(qual_name, *args):
     print(job_id)
 
 
-def init(name, description, yes, origin):
-    core4.service.project.make_project(name, description, yes, origin)
+def init(name, description, yes):
+    core4.service.project.make_project(name, description, yes)
 
 
 def jobs():
@@ -466,8 +466,7 @@ def main():
     elif args["--enqueue"]:
         enqueue(args["QUAL_NAME"], *args["ARGS"])
     elif args["--init"]:
-        init(args["PROJECT"], args["DESCRIPTION"], args["--yes"],
-             args["--origin"])
+        init(args["PROJECT"], args["DESCRIPTION"], args["--yes"])
     elif args["--alive"]:
         alive()
     elif args["--info"]:

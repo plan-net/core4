@@ -52,21 +52,17 @@ def reset(tmpdir):
     for k in dels:
         del os.environ[k]
 
-def origin():
-    origin = os.path.abspath(
-        os.path.join(core4.base.main.CoreBase.project_path(), ".."))
-    return origin
 
 def test_quick(tmpdir):
     os.chdir(tmpdir.strpath)
     core4.service.project.make_project("test_project", "test project",
-                                       auto=True, origin=origin())
+                                       auto=True)
 
 
 def test_create(tmpdir):
     os.chdir(tmpdir.strpath)
     core4.service.project.make_project("test_project", "test project",
-                                       auto=True, origin=origin())
+                                       auto=True)
     os.chdir(os.path.join(tmpdir.strpath, "test_project"))
     out = sh.git(["status"])
 

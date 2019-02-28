@@ -11,12 +11,12 @@ import {{ package_name }}
 if sys.version_info < (3, 5):
     sys.exit('requires Python 3.5 or higher')
 
-# ensure pip >= 18.1
-import pip
-
-if tuple([int(i) for i in pip.__version__.split(".")]) < (18, 1):
-    sys.exit("requires pip version 18.1 or higher, "
-             "Upgrade with `pip install --upgrade pip`")
+## ensure pip >= 18.1
+#import pip
+#
+#if tuple([int(i) for i in pip.__version__.split(".")]) < (18, 1):
+#    sys.exit("requires pip version 18.1 or higher, "
+#             "Upgrade with `pip install --upgrade pip`")
 
 
 def read_install_requires():

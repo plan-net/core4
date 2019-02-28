@@ -38,8 +38,7 @@ def printout(*args):
     sys.stdout.flush()
 
 
-def make_project(package_name=None, package_description=None, auto=False,
-                 origin=None):
+def make_project(package_name=None, package_description=None, auto=False):
     """
     Interactive method used by :mod:`.coco` to create a new project.
     The project templates are located in directory ``/template``. A combination
@@ -81,9 +80,6 @@ def make_project(package_name=None, package_description=None, auto=False,
         exist = "The directory does not exists and will be created. All " \
                 "project files will\n    be created."
 
-    base = core4.base.main.CoreBase()
-    core4_repository = origin or base.config.core4_origin
-
     print("""
     A project directory ./{package_name:s} will be created at
         > {full_path:s}
@@ -93,8 +89,6 @@ def make_project(package_name=None, package_description=None, auto=False,
     Inside this project directory, a Python virtual environment will be created 
     if it does not exist, yet at
         > {venv:s}
-
-    This Python virtual environment hosts core4 from {core4_repository:s}.
 
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
@@ -117,8 +111,7 @@ def make_project(package_name=None, package_description=None, auto=False,
         $ deactivate        
     """.format(
         root=root_path, package_name=kwargs["package_name"], venv=VENV,
-        repository=REPOSITORY, exist=exist, full_path=full_path,
-        core4_repository=core4_repository))
+        repository=REPOSITORY, exist=exist, full_path=full_path))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
@@ -216,30 +209,29 @@ def make_project(package_name=None, package_description=None, auto=False,
                           "file://" + repos_path])
         print("done")
 
+    print("\nPython virtual environment")
+    print("--------------------------\n")
+
     venv = os.path.join(full_path, VENV)
     if not os.path.exists(venv):
-        print("\nPython virtual environment")
-        print("--------------------------\n")
-
         printout("    create at %s ... " % (venv))
         builder = EnvBuilder(system_site_packages=False, clear=False,
                              symlinks=False, upgrade=False, with_pip=True)
         builder.create(venv)
         print("done")
 
-        pip_cmd = sh.Command(os.path.join(venv, "bin", "pip"))
+    env = os.environ.copy()
+    if "PYTHONPATH" in env:
+        del env["PYTHONPATH"]
 
-        printout("    upgrade pip ... ")
-        pip_cmd(["install", "-U", "pip"])
-        print("done")
+    print("\nupgrade pip")
+    print("-----------\n")
 
-        printout("    install project ... ")
-        pip_cmd(["install", "-e", full_path])
-        print("done")
+    pip = os.path.join(venv, "bin", "pip")
+    subprocess.check_call([pip, "install", "--upgrade", "pip"], env=env)
 
-        printout("    install core4 ... ")
-        pip_cmd(["install", core4_repository])
-        # if ret != 0:
-        #     raise ConnectionError("failed to retrieve and install core4 "
-        #                           "from %s" % (core4_repository))
-        print("done")
+    print("\ninstall project")
+    print("---------------\n")
+
+    subprocess.check_call([pip, "install", "--upgrade", "-e", full_path],
+                          env=env)
