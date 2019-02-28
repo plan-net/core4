@@ -5,11 +5,7 @@ documentation, submitting feature requests, reviewing new submissions, or
 contributing code that can be incorporated into the project.
 
 > When contributing to this repository, please first discuss the changes you 
-wish to make via issue, email, or any other method with the maintainers of this 
-repository before making a change.
-
-.. all changes only via issue, no direct emails please
-
+wish to make via issue.
 
 Please note we have a code of conduct, please follow it in all your 
 interactions with the project.
@@ -99,7 +95,6 @@ reproduce the problem:
 - Describe the behavior you observed after triggering the bug and describe 
 in detail how this differs from your expectation.
 
-
 Use the form below to reporting a bug:
 ```sh
 Title of the issue:
@@ -130,8 +125,7 @@ How Do I Submit A Enhancement Suggestion?
 suggestion.
 - Provide a step-by-step description of the suggested enhancement in as many 
 details as possible.
-- Provide specific examples to demonstrate the steps.
-..todo: steps not a good word here
+- Provide specific examples to demonstrate the enhancement.
 
 Use the form below to submit enhancement suggestion:
 ```sh
@@ -159,9 +153,6 @@ maintainers:
     - ensure that all tests run successfully. Further information how to run 
     the tests can be found here: [README](README.md).
     - create or update the documentation.
-    
->Proof your changes with upstream  code
-..todo: this is out of context here
  
 While the prerequisites above must be satisfied prior to having your pull 
 request reviewed, the reviewer(s) may ask you to complete additional design 
@@ -181,8 +172,6 @@ Git Commit Messages
     - :**test**: when adding/editing tests.
     - :**style**: when improving the format/structure of the code.
     - :**doc**: when adding/fixing documentation.
-..todo: short introduction to the problem. what has been changed, why and how
-..todo: use short description on possible sideeffects if applicable.
 
 ### Python Styleguide
 Use the style guidelines defined within [PEP8](https://www.python.org/dev/peps/pep-0008/). 
@@ -190,9 +179,7 @@ PEP8 is big, constantly evolving and certainly worth reading. The main
 guidelines each core4 contributor should follow are summarised below:
 
 * Use four whitespaces, no tabulators, with a maximum line length of 79 chars.
-* Functions and classes are separated by two blank lines.
-..todo: functions really seperated by two blanks? classes yes, but func 1?
-* Methods in a class are separated by one blank line.
+* Separate classes by two blank lines, functions and methods by one blank line
 * Put one space around variable assignments (e.g. ``x = 1``) but do not put
   spaces around list indexes, function calls or keyword assignments (e.g.
   ``func(a=1, b=2)``). 
@@ -200,35 +187,30 @@ guidelines each core4 contributor should follow are summarised below:
  separate terms.
 * Preceed protected attributes with a leading underscore.
 * Preceed Private attributes with double leading underscore.
-* Classes and exceptions use CamelCase.
-* Constants use upper case.
-* Instance methods use ``self``, class methods use ``cls``.
+* Use CamelCase for classes and exceptions.
+* Write Constants using upper case.
+* Use ``self`` for instance methods, ``cls`` for class methods.
 * Always put import statements at the top of the file.
 * Always use absolute imports, avoid using relative imports.
-* Imports should be in the following order: standard library modules, third
+* Use following import order: standard library modules, third
   party modules, core4 modules.
-* Write documentation for every module and introduce the contents of the module 
+* Write documentation for every module: explain the contents of the module 
   and any important classes or functions.
-* Write documentation for every class and introduce behavior, important 
+* Write documentation for every class: explain behavior, important 
   attributes, subclass behavior.
-* Write documentation for every non-private functions, list and explain every 
+* Write documentation for every non-private function, list and explain every 
   argument and return value.
-  
-..todo: mixture of directly addressing the user (Use four whitespaces) and 
-.. imperative (Constants use upper case)
 
-These guidelines are based on PEP8 and heavily influenced by Brett Slatkin's
-Effective Python - 50 Specific Ways to Write Better Python.
-..todo: can we provide a link here?
+These guidelines are based on [PEP8](https://www.python.org/dev/peps/pep-0008/) 
+and heavily influenced by Brett Slatkin's [Effective Python - 59 Specific Ways 
+to Write Better Python](https://www.oreilly.com/library/view/effective-python-59/9780134034416/).
 
 Shebang line:
 - All core4 modules must not provide a shebang line. For actual scripts located 
 in ./scripts the correct shebang line is:
 ```sh
-#!/usr/bin/env python3
-```
-..todo: clarify which python3 version we use, maybe:
-.. /usr/bin/env python3.5 
+#!/usr/bin/env python3.5
+``` 
 
 ### Documentation Styleguide
 - Use [Sphinx](http://www.sphinx-doc.org) for building the documentation. 
@@ -252,12 +234,10 @@ level 3
  * Fill out the template below. Any pull request that does not include enough 
  information to be reviewed in a timely manner may be closed at the 
  maintainers' discretion.
- * The pull request must only fix an existing bug. To contribute other changes, 
+ * The pull request must only fix an existing issue. To contribute other changes, 
  you must use a different template.
- ..todo: other than fixing a non exiting bug?
  * The pull request must update the test suite to demonstrate the changed 
  functionality.
- ..todo: how does the pull request update the test suite? the user should do that.
  
 ```sh   
 Identify the Bug
@@ -272,13 +252,9 @@ Description of the Change
 Impacted area
 !!! Please mention all of the areas the code deals with.
 
-Possible Drawbacks
+Possible Side-effects
 !!! What are the possible side-effects or negative impacts of your code change?
  ```
-..todo: Description of the change: do we really say we have not worked with the code in  a long while?
-..todo: should the user not only describe the concepts of his change and how it impacts the overall system? 
-..todo: to me this reads like a walk-through through core4 concepts. discussable.
-
 
 ### Suggesting Enhancements Pull Request Template
 
@@ -302,7 +278,6 @@ Steps to Demonstrate
 
 Impacted area
 !!! Please mention all of the areas the code deals with.
-
 
 Possible Drawbacks
 !!! What are the possible side-effects or negative impacts of your code change?
