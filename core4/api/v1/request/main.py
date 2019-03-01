@@ -11,16 +11,13 @@ core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
 import base64
 import datetime
 import os
-import time
 import traceback
 
-import core4.const
-import core4.error
-import core4.util.node
 import dateutil.parser
 import jwt
 import mimeparse
 import pandas as pd
+import time
 import tornado.escape
 import tornado.gen
 import tornado.httputil
@@ -28,31 +25,24 @@ import tornado.iostream
 import tornado.routing
 import tornado.template
 from bson.objectid import ObjectId
+from tornado.web import RequestHandler, HTTPError
+
+import core4.const
+import core4.error
+import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode
 from core4.util.pager import PageResult
-from tornado.web import RequestHandler, HTTPError
 
 tornado.escape.json_encode = json_encode
+try:
+    ARG_DEFAULT = tornado.web.RequestHandler._ARG_DEFAULT
+except:
+    ARG_DEFAULT = tornado.web._ARG_DEFAULT
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
 MB = 1024 * 1024
-
-
-class CoreEtagMixin:
-
-    def compute_etag(self):
-        """
-        Sets the ``Etag`` header based on static url version.
-
-        See inherited method from :class:`tornado.web.StaticFileHandler`. This
-        method skips Etag computation for special endpoints, i.e. ``card`` and
-        ``help``.
-        """
-        if self.absolute_path is None:
-            return None
-        return super().compute_etag()
 
 
 class CoreBaseHandler(CoreBase):
@@ -362,7 +352,7 @@ class CoreBaseHandler(CoreBase):
         parts = self.request.path.split("/")
         md5_route = parts[-1]
         (app, container, specs) = self.application.find_md5(md5_route)
-        self.absolute_path = None
+        self.absolute_path = "xcard"
         if self.enter_url is None:
             self.enter_url = "/".join([core4.const.ENTER_URL, md5_route])
         self.help_url = "/".join([core4.const.HELP_URL, md5_route])
@@ -378,8 +368,8 @@ class CoreBaseHandler(CoreBase):
         """
         self.request.method = "GET"
         parts = self.request.path.split("/")
-        md5_route_id = parts[-1]
-        self.absolute_path = None
+        # md5_route_id = parts[-1]
+        self.absolute_path = "xenter"
         return self.enter()
 
     def card(self):
@@ -627,7 +617,7 @@ class CoreBaseHandler(CoreBase):
         :param as_type: Python variable type
         :return: value
         """
-        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
+        kwargs["default"] = kwargs.get("default", ARG_DEFAULT)
         ret = self._get_argument(name, source=self.request.arguments,
                                  *args, strip=False, **kwargs)
         if as_type and ret is not None:

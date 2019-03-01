@@ -223,7 +223,10 @@ class CoreApiContainer(CoreBase):
         for rule in self.iter_rule():
             routing = rule.regex.pattern
             cls = rule.target
-            kwargs = rule.kwargs or {}
+            if rule.kwargs is None:
+                kwargs = {}
+            else:
+                kwargs = rule.kwargs.copy()
             # md5 includes prefix and route
             sorted_kwargs = pformat(kwargs)
             hash_base = "{}:{}".format(cls.qual_name(), sorted_kwargs)
