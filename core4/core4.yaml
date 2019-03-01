@@ -119,6 +119,6 @@ api:
 
 user_setting:
    _general:
-     language: DE
+     language: EN
 
 core4_origin: ssh://git.bi.plan-net.com/srv/git/core4.git

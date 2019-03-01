@@ -54,18 +54,28 @@ def handle_errors(func):
 
 class SettingHandler(CoreRequestHandler):
     """
-    Service for storing user setting data which enables the front-end to store user setting data in the database.
-    This service cares about user-related system data and project specific settings.
+    Service for storing user setting data which enables the front-end to store
+    user setting data in the database. This service cares about user-related
+    system data and project specific settings.
 
     .. note:: The data should have the next structure:
 
-        ``level 1`` - this resource level holds the system in general related data (*favorite widgets, dashboards,
-        the widgets in a dashboard*) and project related data. System data is stored in a reserved key named “_general”,
-        project data can be stored using any other key name. Data for “_general” and projects is stored as **“key: value”** pairs.
+         ============== =======================================================
+          **level 1** - this resource level holds the system in general related
+                        data (*favorite widgets, dashboards, the widgets in a
+                        dashboard*) and project related data. System data is
+                        stored in a reserved key named “_general”, project data
+                        can be stored using any other key name. Data for
+                        “_general” and projects is stored as **“key: value”**
+                        pairs
 
-        ``level 2`` - this resource level holds directly the data specific to a key described in **“level 1”**.
-        Data is stored by **“key: value”** pairs structure, where the key is the name of settings property and
-        the value is JSON data (*string, number, boolean, array, dictionary (JS Object), Base64 encoded binary data*).
+          **level 2** - this resource level holds directly the data specific to
+                        a key described in **“level 1”**. Data is stored by
+                        **“key: value”** pairs structure, where the key is the
+                        name of settings property and the value is JSON data
+                        (*string, number, boolean, array, dictionary
+                        (JS Object), Base64 encoded binary data*)
+         ============== =======================================================
 
         **Beyond level 2 no restriction in resource structure.**
 
@@ -129,8 +139,9 @@ class SettingHandler(CoreRequestHandler):
             return self._is_resource_name_valid(resources[0])
         # setting/level1
         elif length == 1:
-            return self._is_resource_name_valid(resources[0]) and type(body) is dict \
-                                                              and not self._has_empty_keys(body)
+            return self._is_resource_name_valid(resources[0]) \
+                   and type(body) is dict \
+                   and not self._has_empty_keys(body)
         # setting/
         else:
             return self._is_body_structure_valid(body)
@@ -226,19 +237,62 @@ class SettingHandler(CoreRequestHandler):
     @handle_errors
     async def get(self, *args, **kwargs):
         """
-        Get user setting data from database, extend with default system related data from core4.yaml file
+        Get user setting data from database, extend with default system related
+        data from core4.yaml file
 
         Methods:
             GET /
 
         Parameters:
-            username (str): parameter which specifies the user for which the settings should be retrieved. Requires **COP** (*core operators*) permissions to be used. If not provided, settings for the current user are returned.
+            username (str): parameter which specifies the user for which the
+                            settings should be retrieved. Requires **COP**
+                            (*core operators*) permissions to be used.
+                            If not provided, settings for the current user
+                            are returned.
 
         Returns:
-            data element with user-related system data and project specific settings
+            data with user-related system data and project specific settings
 
         Raises:
             400 Bad request: Invalid resource name
+
+        Examples:
+            >>> from requests import get
+            >>> url = "http://localhost:5001/core4/api"
+            >>> setting = get(url + "/setting")
+            >>> setting.status_code
+            200
+            >>> rv = get("http://localhost:5001/core4/api/setting")
+            >>> rv
+            {
+                “_id”: “5bd94d9bde8b6939aa31ad88”,
+                “code”: 200,
+                "data": {
+                    "_general": {
+                        "language": "EN"
+                    },
+                    "media_reporting": {
+                        "campaign_1981118594": {
+                            "headers": [
+                                {
+                                    "text": "Kunde",
+                                    "value": "client",
+                                    "format": "",
+                                    "selected": true
+                                },
+                                {
+                                    "text": "Kampagne",
+                                    "value": "campaign_name",
+                                    "format": "",
+                                    "selected": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                “message”: “OK”,
+                “timestamp”: “2019-01-28T06:37:15.734609”
+            }
         """
         (path, resources, user_id) = await self._get_request_info()
         document = await self._get_db_document(user_id, True)
@@ -254,15 +308,37 @@ class SettingHandler(CoreRequestHandler):
             DELETE /
 
         Parameters:
-            username (str): parameter which specifies the user for which the settings should be retrieved. Requires **COP** (*core operators*) permissions to be used. If not provided, settings for the current user are returned.
+            username (str): parameter which specifies the user for which the
+                            settings should be retrieved. Requires **COP**
+                            (*core operators*) permissions to be used.
+                            If not provided, settings for the current user
+                            are returned.
 
         Returns:
             None
 
         Raises:
             400 Bad request: Invalid resource name
-            400 Bad request: Failed to delete setting - database not able to delete record(s)
-            404 Not found: Resource not found - database not able to find user related document
+            400 Bad request: Failed to delete setting - database not able to
+                                                        delete record(s)
+            404 Not found: Resource not found - database not able to find user
+                                                related document
+        Examples:
+            >>> from requests import get, delete
+            >>> url = "http://localhost:5001/core4/api"
+            >>> delete(url + "/setting")
+            >>> get(url + "/setting").json()
+            {
+                “_id”: “5bd94d9bde8b6939aa31ad88”,
+                “code”: 200,
+                "data": {
+                    "_general": {
+                        "language": "EN"
+                    },
+                },
+                “message”: “OK”,
+                “timestamp”: “2019-01-28T06:37:15.734609”
+            }
         """
         (path, resources, user_id) = await self._get_request_info()
         delete_db_path = {'.'.join(resources): 1} if resources else None
@@ -280,16 +356,60 @@ class SettingHandler(CoreRequestHandler):
             POST /
 
         Parameters:
-            username (str): parameter which specifies the user for which the settings should be retrieved. Requires **COP** (*core operators*) permissions to be used. If not provided, settings for the current user are returned.
+            username (str): parameter which specifies the user for which the
+                            settings should be retrieved. Requires **COP**
+                            (*core operators*) permissions to be used.
+                            If not provided, settings for the current user
+                            are returned.
 
         Returns:
             data element with set data from request body
 
         Raises:
             400 Bad request: Invalid resource name
-            400 Bad request: Body in request is empty - invalid request structure, empty body section
-            400 Bad request: Failed to insert setting - database not able to create new user-related document (initial post)
-            400 Bad request: Failed to update setting - database not able to update records
+
+            400 Bad request: Body in request is empty - invalid request
+                                       structure, empty body section
+
+            400 Bad request: Failed to insert setting - database not able to
+                               create new user-related document (initial post)
+
+            400 Bad request: Failed to update setting - database not able to
+                                                        update records
+        Examples:
+            >>> from requests import get, post
+            >>> url = "http://localhost:5001/core4/api/setting"
+            >>> post(url + "/_general", json={"language": "UA"} )
+            >>> get(url + "/setting").json()
+            {
+                “_id”: “5bd94d9bde8b6939aa31ad88”,
+                “code”: 200,
+                "data": {
+                    "_general": {
+                        "language": "UA"
+                    },
+                    "media_reporting": {
+                        "campaign_1981118594": {
+                            "headers": [
+                                {
+                                    "text": "Kunde",
+                                    "value": "client",
+                                    "format": "",
+                                    "selected": true
+                                },
+                                {
+                                    "text": "Kampagne",
+                                    "value": "campaign_name",
+                                    "format": "",
+                                    "selected": true
+                                }
+                            ]
+                        }
+                    }
+                },
+                “message”: “OK”,
+                “timestamp”: “2019-01-28T06:37:15.734609”
+            }
         """
         body = self._get_body()
         (path, resources, user_id) = await self._get_request_info()
@@ -305,7 +425,9 @@ class SettingHandler(CoreRequestHandler):
 
         document = await self._get_db_document(user_id)
 
-        await CoreSettingDataAccess().save(user_id, self._dict_merge(document, insert_data))
+        await CoreSettingDataAccess().save(user_id,
+                                           self._dict_merge(document,
+                                                            insert_data))
 
         self.reply(body)
 
@@ -386,7 +508,7 @@ class CoreSettingDataAccess(CoreBase):
 
         Parameters:
             user_id (dict id): user unique id
-            data: data that will be used for delete records/document in database
+            data:data that will be used for delete records/document in database
 
         Returns:
             None
