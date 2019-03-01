@@ -54,3 +54,11 @@ calculation or aggregation job needs to rerun or needs to be restarted, then
 just purge all existing database records with the scope of this jobb. This is
 then the *calender week and year* or the *month and the year* represented by
 the job ``_src``.
+
+
+how to parallelise a core4 job
+==============================
+
+See :doc:`parallel` and :doc:`example/prime` for a very concrete example
+utilizing the *divide and conquer* design pattern.
+
