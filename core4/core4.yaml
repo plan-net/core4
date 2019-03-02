@@ -34,7 +34,7 @@ folder:
 
 # logging setup
 logging:
-  stderr: DEBUG
+  stderr: INFO
   stdout: ~
   mongodb: ~
   format: "%(asctime)s - %(levelname)-8s [%(qual_name)s/%(identifier)s] %(message)s"
@@ -73,7 +73,7 @@ daemon:
 worker:
   virtual_environment_home: ~
   avg_stats_secs: 60.0
-  min_free_ram: 256
+  min_free_ram: 32
   max_cpu: 99
   moving_avg_seconds: 30
   execution_plan:
