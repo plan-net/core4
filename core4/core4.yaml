@@ -1,5 +1,5 @@
 DEFAULT:
-  mongo_url: ~  # must be set
+  mongo_url: mongodb://localhost:27017
   mongo_database: test
   python: ~
 
@@ -90,7 +90,7 @@ api:
   setting:
     debug: True
     compress_response: False
-    cookie_secret: ~  # must be set
+    cookie_secret: a not so secret cookie secret  # must be set
   crt_file: ~
   key_file: ~
   allow_origin: "*"
@@ -110,7 +110,7 @@ api:
     secret: secret
   admin_username: admin
   admin_realname: admin user
-  admin_password: ~  # must be set
+  admin_password: admin  # must be set
   user_rolename: standard_user
   user_realname: standard user group
   user_permission:
