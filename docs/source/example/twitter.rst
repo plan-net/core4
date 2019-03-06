@@ -2,6 +2,9 @@
 retrieval and pos tagging of tweets
 ###########################################################
 
+This Project can be found on GitHub aswell:
+https://github.com/Alioun/twitter/
+
 The following example shows a simple and easy way of how you can use core to
 realize a wide variety of tasks, in this case retrieving tweets from a
 particular place and then running a Part of Speech (POS) tagger over the
