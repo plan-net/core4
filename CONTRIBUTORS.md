@@ -1,15 +1,19 @@
 # core4 contributors
+
+All entries are in the form:
+    Firstname Surname <GitHub account>
+
 ## Project Lead:
-    Michael Rau <m.rau@plan-net.com>
+    Michael Rau <m-rau>
 
 ## Maintainers:
-    Michael Rau <m.rau@plan-net.com>
+    Michael Rau <m-rau>
     
 ## Contributors:
-    Alioun Diagne <a.diagne@plan-net.com>
-    Markus Kral <markus.kral@googlemail.com>
-    Michael Rau <m.rau@plan-net.com>
-    Olha Todorashko <o.todorashko@plan-net.com>
+    Alioun Diagne <>
+    Markus Kral <MarkusKral>
+    Michael Rau <m-rau>
+    Olha Todorashko <>
     
 ## Sponsors:
     Mediaplus <https://www.mediaplus.com>
