@@ -8,6 +8,7 @@ installation
    :caption: Contents:
    :maxdepth: 1
 
+   quick
    prereq
    develop
    maintain
