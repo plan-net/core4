@@ -23,6 +23,7 @@ import core4.service
 import core4.util.node
 from core4.api.v1.application import RootContainer
 from core4.base import CoreBase
+from core4.api.v1.request.main import CoreBaseHandler
 from core4.logger import CoreLoggerMixin
 from core4.util.data import rst2html
 
@@ -197,34 +198,35 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             for (app, container, specs) in routes:
                 pattern = specs.matcher.regex.pattern
                 cls = specs.target
-                args = specs.target_kwargs
-                html = rst2html(str(cls.__doc__))
-                doc = dict(
-                    routing=self.routing,
-                    args=str(args),
-                    author=cls.author,
-                    container=container.qual_name(),
-                    description=html["body"],
-                    error=html["error"],
-                    icon=cls.icon,
-                    project=cls.get_project(),
-                    protected=cls.protected,
-                    protocol=self.protocol,
-                    qual_name=cls.qual_name(),
-                    tag=cls.tag,
-                    title=cls.title,
-                    version=cls.version(),
-                    started_at=self.startup
-                )
-                if args:
-                    for attr in cls.propagate:
-                        if attr in doc:
-                            doc[attr] = args.get(attr, doc[attr])
-                lookup = (self.hostname, self.port, md5_route)
-                if lookup not in update:
-                    doc["pattern"] = []
-                    update[lookup] = doc
-                update[lookup]["pattern"].append((specs.name, pattern))
+                if issubclass(cls, CoreBaseHandler):
+                    args = specs.target_kwargs
+                    html = rst2html(str(cls.__doc__))
+                    doc = dict(
+                        routing=self.routing,
+                        args=str(args),
+                        author=cls.author,
+                        container=container.qual_name(),
+                        description=html["body"],
+                        error=html["error"],
+                        icon=cls.icon,
+                        project=cls.get_project(),
+                        protected=cls.protected,
+                        protocol=self.protocol,
+                        qual_name=cls.qual_name(),
+                        tag=cls.tag,
+                        title=cls.title,
+                        version=cls.version(),
+                        started_at=self.startup
+                    )
+                    if args:
+                        for attr in cls.propagate:
+                            if attr in doc:
+                                doc[attr] = args.get(attr, doc[attr])
+                    lookup = (self.hostname, self.port, md5_route)
+                    if lookup not in update:
+                        doc["pattern"] = []
+                        update[lookup] = doc
+                    update[lookup]["pattern"].append((specs.name, pattern))
             self.reset_handler()
             coll = self.config.sys.handler
             for lookup, doc in update.items():
