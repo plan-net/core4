@@ -107,11 +107,21 @@ class QueryMixin:
 
         :return: dict
         """
+        cur = self.config.sys.queue.aggregate(self.pipeline_queue_state())
+        data = []
+        for doc in cur:
+            doc["flags"] = "".join(
+                [k[0].upper() if doc[k] else "."
+                 for k in ["zombie", "wall", "removed", "killed"]])
+            data.append(doc)
+        return data
+
+    def pipeline_queue_state(self):
         sort_dict = OrderedDict()
         sort_dict['state'] = 1
         sort_dict['name'] = 1
         sort_dict['_id'] = -1
-        cur = self.config.sys.queue.aggregate([
+        return [
             {
                 '$match': {
                     'state': {'$ne': 'complete'}
@@ -155,14 +165,7 @@ class QueryMixin:
             {
                 "$sort": sort_dict
             }
-        ])
-        data = []
-        for doc in cur:
-            doc["flags"] = "".join(
-                [k[0].upper() if doc[k] else "."
-                 for k in ["zombie", "wall", "removed", "killed"]])
-            data.append(doc)
-        return data
+        ]
 
     def get_job_listing(self, **kwargs):
         """

@@ -30,7 +30,7 @@ sys.queue   job queue of active jobs
 sys.lock    job processing lock
 sys.journal job journal of processed jobs
 sys.stdout  job stdout
-sys.stat    worker and metrics
+sys.event   events
 =========== ========================================
 
 .. note:: Collection ``sys.stdout`` has a time-to-live (TTL) which can be

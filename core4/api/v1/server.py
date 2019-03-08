@@ -17,28 +17,31 @@ and provides the following endpoints:
 * ``/core4/api/v1/access`` - :class:`.AcceHandlerr`
 
 Additionally the server creates an endless loop to query collection
-``sys.stat`` continuously with :class:`.QueueStatus` to support the
-:class:`.QueueHandler`.
+``sys.event`` continuously with :class:`.EventWatch` to support the
+:class:`.EventHandler`.
 
 Start the server with::
 
     $ python core4/api/v1/server.py
 """
 
+from tornado.ioloop import IOLoop
+
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.queue.job import JobStream
-from core4.api.v1.request.queue.state import QueueHandler
-from core4.api.v1.request.queue.state import QueueStatus
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.standard.access import AccessHandler
+from core4.api.v1.request.standard.event import EventHandler
+from core4.api.v1.request.standard.event import EventWatch
+from core4.api.v1.request.standard.event import QueueWatch
 from core4.api.v1.tool.functool import serve
-from tornado.ioloop import IOLoop
 
-# sys.stat query object
-publisher = QueueStatus()
-IOLoop.current().spawn_callback(publisher.update)
+event = EventWatch()
+IOLoop.current().add_callback(event.watch)
+queue = QueueWatch()
+IOLoop.current().add_callback(queue.watch)
 
 
 class CoreApiServer(CoreApiContainer):
@@ -48,7 +51,6 @@ class CoreApiServer(CoreApiContainer):
     """
     root = "/core4/api/v1"
     rules = [
-        (r'/queue', QueueHandler, dict(source=publisher)),
         (r'/jobs/poll', JobStream),
         (r'/jobs/poll/(.*)', JobStream, None, "JobStream"),
         (r'/jobs', JobHandler),
@@ -58,6 +60,7 @@ class CoreApiServer(CoreApiContainer):
         (r'/roles/(.*)', RoleHandler, None, "RoleHandler"),
         (r'/access', AccessHandler),
         (r'/access/(.*)', AccessHandler, None, "AccessHandler"),
+        (r'/event', EventHandler, None, "EventHandler"),
     ]
 
 

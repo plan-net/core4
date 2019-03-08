@@ -29,3 +29,5 @@ REPOSITORY = ".repos"
 VENV_PYTHON = VENV + "/bin/python"
 VENV_PIP = VENV + "/bin/pip3"
 
+QUEUE_CHANNEL = "queue"
+DEFAULT_CHANNEL = "system"

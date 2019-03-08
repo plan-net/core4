@@ -21,7 +21,7 @@ import core4.base.collection
 import core4.error
 from core4.base.collection import SCHEME
 
-
+# todo: rename async into sync
 def connect_database(conn_str, callback, async=False, **kwargs):
     """
     This function parses ``conn_str`` parameter and ``kwargs`` default

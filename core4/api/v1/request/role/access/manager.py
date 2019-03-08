@@ -5,11 +5,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from core4.api.v1.request.role.model import CoreRole
+import core4.api.v1.request.role.access.handler.mongo
 import core4.base
 import core4.error
-import core4.api.v1.request.role.access.handler.mongo
-from tornado.ioloop import IOLoop
 
 #: key/value pairs of permission protocols and access handlers
 HANDLER = {

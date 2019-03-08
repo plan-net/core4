@@ -397,5 +397,28 @@ class TestLogging(unittest.TestCase):
         self.assertEqual(test, expected)
 
 
+    def test_capped(self):
+        os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
+        b = LogOn()
+        b.logger.debug("this is DEBUG")
+        b.logger.info("this is INFO")
+        b.logger.warning("this is WARNING")
+        b.logger.error("this is ERROR")
+        b.logger.critical("this is CRITICAL")
+        mongo = pymongo.MongoClient("mongodb://core:654321@localhost:27017")
+        info = mongo["core4test"].command('collstats', 'sys.log')
+        assert info["capped"]
+        assert mongo["core4test"]["sys.log"].count_documents({}) > 0
+
+
+    def test_event(self):
+        base = core4.base.CoreBase()
+        base.trigger("test")
+        mongo = pymongo.MongoClient("mongodb://core:654321@localhost:27017")
+        info = mongo["core4test"].command('collstats', 'sys.event')
+        assert info["capped"]
+        assert mongo["core4test"]["sys.event"].count_documents({}) == 1
+
+
 if __name__ == '__main__':
     unittest.main()

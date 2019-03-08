@@ -19,9 +19,13 @@ import os
 import re
 import sys
 
+import pymongo
+
 import core4.config.main
+import core4.const
 import core4.logger
 import core4.logger.filter
+import core4.util.node
 from core4.const import CORE4, PREFIX
 
 _except_hook = None
@@ -82,11 +86,12 @@ class CoreBase:
         self.project = self.get_project()
         self._open_config()
         self._open_logging()
+        self._event = None
         self.initialise_object()
 
     def initialise_object(self):
         """
-        Called after object instantiation. This method can be overwritte by
+        Called after object instantiation. This method can be overwritten by
         any subclass of :class:`CoreBase` to initialise object variables.
         """
         pass
@@ -344,3 +349,33 @@ class CoreBase:
         :return: path name (str)
         """
         return os.path.dirname(cls.module().__file__)
+
+    def trigger(self, name, channel=None, data=None, author=None):
+        # todo: requires documentation
+        if self._event is None:
+            conn = self.config.sys.event
+            if conn:
+                wc = self.config.event.write_concern
+                conn.with_options(write_concern=pymongo.WriteConcern(w=wc))
+                self.logger.debug(
+                    "mongodb event setup complete, write concern [%d]", wc)
+            else:
+                raise core4.error.Core4SetupError("config.event not set")
+            existing = conn.connection[
+                conn.database].list_collection_names()
+            if conn.collection not in existing:
+                conn.connection[conn.database].create_collection(
+                    name=conn.name,
+                    capped=True,
+                    size=self.config.event.size
+                )
+            self._event = conn
+        doc = {
+            "created": core4.util.node.mongo_now(),
+            "name": name,
+            "author": author or core4.util.node.get_username(),
+            "channel": channel or core4.const.DEFAULT_CHANNEL
+        }
+        if data:
+            doc["data"] = data
+        self._event.insert_one(doc)
