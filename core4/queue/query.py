@@ -43,6 +43,22 @@ class QueryMixin:
         :param kwargs: query filter
         :return: dict
         """
+        cur = self.config.sys.worker.aggregate(self.pipeline_daemon(**kwargs))
+        data = []
+        for doc in cur:
+            if doc["heartbeat"]:
+                doc["heartbeat"] = (core4.util.node.mongo_now() -
+                                    doc["heartbeat"].replace(microsecond=0))
+            if doc.get("loop", None):
+                doc["loop_time"] = (core4.util.node.mongo_now() -
+                                    doc["loop"].replace(microsecond=0))
+            else:
+                doc["loop_time"] = None
+                doc["loop"] = None
+            data.append(doc)
+        return data
+
+    def pipeline_daemon(self, **kwargs):
         timeout = self.config.daemon.alive_timeout
         pipeline = []
         if kwargs:
@@ -51,6 +67,7 @@ class QueryMixin:
                     "$match": kwargs
                 }
             ]
+
         pipeline += [
             {
                 "$match": {
@@ -80,20 +97,7 @@ class QueryMixin:
             },
             {"$sort": {"kind": 1, "_id": 1}}
         ]
-        cur = self.config.sys.worker.aggregate(pipeline)
-        data = []
-        for doc in cur:
-            if doc["heartbeat"]:
-                doc["heartbeat"] = (core4.util.node.mongo_now() -
-                                    doc["heartbeat"].replace(microsecond=0))
-            if doc.get("loop", None):
-                doc["loop_time"] = (core4.util.node.mongo_now() -
-                                    doc["loop"].replace(microsecond=0))
-            else:
-                doc["loop_time"] = None
-                doc["loop"] = None
-            data.append(doc)
-        return data
+        return pipeline
 
     def get_queue_state(self):
         """
