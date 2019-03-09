@@ -378,4 +378,5 @@ class CoreBase:
         }
         if data:
             doc["data"] = data
-        self._event.insert_one(doc)
+        inserted = self._event.insert_one(doc)
+        return inserted.inserted_id
