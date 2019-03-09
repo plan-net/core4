@@ -10,7 +10,7 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
     Retrieves system state, i.e.
 
     * alive time of workers, scheduler and app nodes
-    * maintenance modes
+    * maintenance mode (global and project specific)
     """
     author = "mra"
     title = "system information"
