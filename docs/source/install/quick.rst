@@ -50,5 +50,5 @@ job in a third console with::
 * read the full installation guide and learn how to configure the details of
   core4
 * learn how to :doc:`develop`
-* continue with :doc:`../examples`
+* continue with :doc:`../example/index`
 
