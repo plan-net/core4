@@ -71,7 +71,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         return tornado.routing.RuleRouter(routes)
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
-              routing=None, **kwargs):
+              routing=None, on_exit=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -89,6 +89,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param routing: URL including the protocol and hostname of the server,
                         defaults to the protocol depending on SSL settings, the
                         node hostname or address and port
+        :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         self.startup = core4.util.node.mongo_now()
@@ -139,6 +140,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             raise
         finally:
             self.unregister()
+            if on_exit is not None:
+                on_exit()
 
     async def heartbeat(self):
         """
@@ -263,7 +266,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.reset_handler()
 
     def serve_all(self, filter=None, port=None, address=None, name=None,
-                  reuse_port=True, routing=None, **kwargs):
+                  reuse_port=True, routing=None, on_exit=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -276,9 +279,13 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         will listen on all IP addresses associated with the
                         name.  Address may be an empty string or None to listen
                         on all  available interfaces.
+        :param name: to identify the server
         :param reuse_port: tells the kernel to reuse a local socket in
                            ``TIME_WAIT`` state, defaults to ``True``
-        :param name: to identify the server
+        :param routing: URL including the protocol and hostname of the server,
+                        defaults to the protocol depending on SSL settings, the
+                        node hostname or address and port
+        :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         self.setup_logging()
@@ -310,4 +317,5 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             clist.append(cls)
         if scope:
             self.serve(*clist, port=port, name=name, address=address,
-                       reuse_port=reuse_port, routing=routing, **kwargs)
+                       reuse_port=reuse_port, routing=routing, on_exit=on_exit,
+                       **kwargs)

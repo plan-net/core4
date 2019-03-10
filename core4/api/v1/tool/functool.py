@@ -14,7 +14,7 @@ from core4.api.v1.tool.serve import CoreApiServerTool
 
 
 def serve(*args, port=None, address=None, name=None, reuse_port=True,
-          routing=None, **kwargs):
+          routing=None, on_exit=None, **kwargs):
     """
     Serve one or multiple :class:`.CoreApiContainer` classes.
 
@@ -79,15 +79,16 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
     :param routing: URL including the protocol and hostname of the server,
                     defaults to the protocol depending on SSL settings, the
                     node hostname or address and port
+    :param on_exit: callback function which will be called at server exit
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve(*args, port=port, address=address, name=name,
                               reuse_port=reuse_port, routing=routing,
-                              **kwargs)
+                              on_exit=on_exit, **kwargs)
 
 
 def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
-              routing=None, **kwargs):
+              routing=None, on_exit=None, **kwargs):
     """
     Serve all enabled core :class:`.CoreApiContainer` classes.
 
@@ -112,7 +113,8 @@ def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
     :param routing: URL including the protocol and hostname of the server,
                     defaults to the protocol depending on SSL settings, the
                     node hostname or address and port
+    :param on_exit: callback function which will be called at server exit
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve_all(filter, port, address, name, reuse_port,
-                                  routing, **kwargs)
+                                  routing, on_exit=on_exit, **kwargs)
