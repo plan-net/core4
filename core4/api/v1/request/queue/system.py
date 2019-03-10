@@ -1,10 +1,14 @@
-import core4.const
-import core4.util.node
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.queue.query import QueryMixin
 
 
-# todo: requires documentation
 class SystemHandler(CoreRequestHandler, QueryMixin):
     """
     Retrieves system state, i.e.
@@ -67,31 +71,12 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
         """
 
         return self.reply({
-            "alive": await self._get_daemon(),
+            "alive": await self.get_daemon_async(),
             "maintenance": {
                 "system": await self._maintenance(),
                 "project": await self._project_maintenance()
             }
         })
-
-    async def _get_daemon(self):
-        cur = self.config.sys.worker.aggregate(self.pipeline_daemon())
-        data = []
-
-        def delta2sec(t):
-            return (core4.util.node.mongo_now()
-                    - t.replace(microsecond=0)).total_seconds()
-
-        async for doc in cur:
-            if doc["heartbeat"]:
-                doc["heartbeat"] = delta2sec(doc["heartbeat"])
-            if doc.get("loop", None):
-                doc["loop_time"] = delta2sec(doc["loop"])
-            else:
-                doc["loop_time"] = None
-                doc["loop"] = None
-            data.append(doc)
-        return data
 
     async def _maintenance(self):
         return await self.config.sys.worker.count_documents(

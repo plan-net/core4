@@ -57,12 +57,12 @@ class QueryMixin:
             data.append(doc)
         return data
 
-    async def get_daemon_async(self):
+    async def get_daemon_async(self, **kwargs):
         """
         Asynchronous version of :meth:`get_daemon`. Returns ``hearbeat`` and
         ``loop_time`` in total seconds instead of :class:`datetime.timedelta`.
         """
-        cur = self.config.sys.worker.aggregate(self.pipeline_daemon())
+        cur = self.config.sys.worker.aggregate(self.pipeline_daemon(**kwargs))
         data = []
 
         def delta2sec(t):
