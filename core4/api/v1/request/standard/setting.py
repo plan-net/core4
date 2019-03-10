@@ -97,6 +97,9 @@ class SettingHandler(CoreRequestHandler):
     # Private methods
     # ###################################################################### #
 
+    def initialise_object(self):
+        self.dao = CoreSettingDataAccess()
+
     def _is_resource_name_valid(self, resource):
         if sys_name_restrictions.match(resource):
             # allow user extend existing default_setting with custom key/value
@@ -190,8 +193,8 @@ class SettingHandler(CoreRequestHandler):
         else:
             return user_details['_id']
 
-    async def _get_request_info(self):
-        path = self.request.path[len(core4.const.SETTING_URL) + 1:]
+    async def _get_request_info(self, path):
+        #path = self.request.path[len(core4.const.SETTING_URL) + 1:]
         resources = path.split("/") if path else []
         user_id = await self._get_user_id()
 
@@ -204,7 +207,7 @@ class SettingHandler(CoreRequestHandler):
         return [path, resources, user_id]
 
     async def _get_db_document(self, user_id, merge=False):
-        document = await CoreSettingDataAccess().find_one(_id=user_id) or {}
+        document = await self.dao.find_one(_id=user_id) or {}
 
         if merge:
             return self._dict_merge(self._get_default_setting(), document)
@@ -235,7 +238,7 @@ class SettingHandler(CoreRequestHandler):
     # ###################################################################### #
 
     @handle_errors
-    async def get(self, *args, **kwargs):
+    async def get(self, path=None):
         """
         Get user setting data from database, extend with default system related
         data from core4.yaml file
@@ -294,13 +297,13 @@ class SettingHandler(CoreRequestHandler):
                 “timestamp”: “2019-01-28T06:37:15.734609”
             }
         """
-        (path, resources, user_id) = await self._get_request_info()
+        (path, resources, user_id) = await self._get_request_info(path)
         document = await self._get_db_document(user_id, True)
 
         self.reply(self._data_extractor(resources, document))
 
     @handle_errors
-    async def delete(self, *args, **kwargs):
+    async def delete(self, path=None):
         """
         Delete user setting from database
 
@@ -340,15 +343,15 @@ class SettingHandler(CoreRequestHandler):
                 “timestamp”: “2019-01-28T06:37:15.734609”
             }
         """
-        (path, resources, user_id) = await self._get_request_info()
+        (path, resources, user_id) = await self._get_request_info(path)
         delete_db_path = {'.'.join(resources): 1} if resources else None
 
-        await CoreSettingDataAccess().delete(user_id, delete_db_path)
+        await self.dao.delete(user_id, delete_db_path)
 
         self.reply({})
 
     @handle_errors
-    async def post(self, *args, **kwargs):
+    async def post(self, path=None):
         """
         Create/update user settings in database
 
@@ -412,7 +415,7 @@ class SettingHandler(CoreRequestHandler):
             }
         """
         body = self._get_body()
-        (path, resources, user_id) = await self._get_request_info()
+        (path, resources, user_id) = await self._get_request_info(path)
 
         if self._validate_service_restrictions(resources, body):
             if len(resources):
@@ -425,17 +428,15 @@ class SettingHandler(CoreRequestHandler):
 
         document = await self._get_db_document(user_id)
 
-        await CoreSettingDataAccess().save(user_id,
-                                           self._dict_merge(document,
-                                                            insert_data))
+        await self.dao.save(user_id, self._dict_merge(document, insert_data))
 
         self.reply(body)
 
-    async def put(self, *args, **kwargs):
+    async def put(self, path=None):
         """
         Same as :meth:`.post`
         """
-        await self.post(*args, **kwargs)
+        await self.post(path)
 
 
 class CoreSettingDataAccess(CoreBase):
@@ -444,14 +445,9 @@ class CoreSettingDataAccess(CoreBase):
     This class should be used only inside SettingHandler class
     """
     # FIXME: avoid using HTTPError in the database layer
-    _collection = None
 
-    @property
-    def collection(self):
-        if self._collection is None:
-            self._collection = self.config.sys.setting.connect_async()
-
-        return self._collection
+    def initialise_object(self):
+        self.collection = self.config.sys.setting.connect_async()
 
     async def find_one(self, **kwargs):
         """
@@ -463,8 +459,7 @@ class CoreSettingDataAccess(CoreBase):
         Returns:
             user-relevant database document
         """
-        cursor = self.collection.find(filter=kwargs,
-                                      projection={'_id': False})
+        cursor = self.collection.find(filter=kwargs, projection={'_id': False})
         db_documents = await cursor.to_list(length=1)
 
         return db_documents[0] if db_documents else None
@@ -532,7 +527,8 @@ class CoreSettingDataAccess(CoreBase):
                     raise MongoDBError(status_code=404,
                                        reason="Resource not found")
             else:
-                result = await self.collection.delete_one({"_id": user_id})
+                result = await self.collection.delete_one(
+                    {"_id": user_id})
 
                 if result.deleted_count == 0:
                     raise MongoDBError(status_code=400,
