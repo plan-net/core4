@@ -617,7 +617,7 @@ class CoreBaseHandler(CoreBase):
         :param default: value
         :param as_type: Python variable type
         :param remove: remove parameter from request arguments, defaults to
-        ``False``
+            ``False``
         :return: value
         """
         kwargs["default"] = kwargs.get("default", ARG_DEFAULT)

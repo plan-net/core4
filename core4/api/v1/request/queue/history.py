@@ -100,6 +100,6 @@ class JobHistoryHandler(CoreRequestHandler):
 
     async def post(self):
         """
-        Same as :meth:`.get`.
+        Same as :meth:`get`.
         """
         return self.get()

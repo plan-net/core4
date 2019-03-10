@@ -19,7 +19,6 @@ ENTER_URL = CORE4_API + "/enter"
 CARD_URL = INFO_URL + "/card"
 HELP_URL = INFO_URL
 FILE_URL = CORE4_API + "/file"
-SETTING_URL = CORE4_API + "/setting"
 CARD_METHOD = "XCARD"
 HELP_METHOD = "XHELP"
 ENTER_METHOD = "XENTER"
@@ -31,3 +30,4 @@ VENV_PIP = VENV + "/bin/pip3"
 
 QUEUE_CHANNEL = "queue"
 DEFAULT_CHANNEL = "system"
+MESSAGE_CHANNEL = "message"
