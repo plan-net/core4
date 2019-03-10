@@ -59,7 +59,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :return: :class:`core4.base.collection.CoreCollection`
         """
         if name not in self._collection:
-            self._collection[name] = self.config.sys[name].connect_async()
+            self._collection[name] = self.config.sys[name]
         return self._collection[name]
 
     async def get(self, _id=None):
