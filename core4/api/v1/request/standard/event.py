@@ -1,21 +1,23 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 from tornado import gen
 
 import core4.const
 import core4.util.node
+from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.websocket import CoreWebSocketHandler
 from core4.base.main import CoreBase
 from core4.queue.query import QueryMixin
 from core4.util.data import json_encode, json_decode
+from core4.util.pager import CorePager
 
 
-# todo: permission design ... OK
 # todo: sticky messages
-# todo: personal messages ... denied
-# todo: queue history endpoint ... OK
-# todo: message history including sticky notes
-# todo: unstick sticky notes
-# todo: maintenance info ... OK
-
 
 class EventWatch(CoreBase):
     """
@@ -23,12 +25,14 @@ class EventWatch(CoreBase):
     feature. All changes are forwarded to :class:`.EventHandler` using
     :meth:`on_event <.EventHandler.on_event>` method.
     """
+    change_stream = None
 
     async def watch(self):
         coll = self.config.sys.event.connect_async()
-        async with coll.watch() as change_stream:
-            async for change in change_stream:
-                EventHandler.on_event(change)
+        async with coll.watch(max_await_time_ms=1) as self.change_stream:
+            async for change in self.change_stream:
+                if change:
+                    EventHandler.on_event(change)
 
 
 class QueueWatch(CoreBase, QueryMixin):
@@ -58,7 +62,12 @@ class EventHandler(CoreWebSocketHandler):
     # chat messages on channel _message_
     # job events from ``sys.event`` on channel _queue_
     # aggregated job states from ``sys.queue`` on channel _queue_
+
+    See :doc:`/example/index` for an example about _events_ and an example
+    about _messages_.
     """
+    author = "mra"
+    title = "event web socket"
     waiters = {}
     last = []
 
@@ -118,14 +127,14 @@ class EventHandler(CoreWebSocketHandler):
         the channel is added to the sending user's interest if not done, yet.
 
         :param request: dict representing the message with expected message
-        ``text`` and ``channel``
+            ``text`` and ``channel``
         :return: dict with ``type`` _message_ or _error_ and ``message`` text
         """
         channel = request.get("channel", None)
         text = request.get("text", None)
         if channel and text:
             _id = self.trigger(
-                name="message",
+                name=core4.const.MESSAGE_CHANNEL,
                 channel=channel,
                 data=text,
                 author=self.current_user
@@ -136,12 +145,12 @@ class EventHandler(CoreWebSocketHandler):
             if channel not in interest:
                 EventHandler.waiters[self].append(channel)
                 return {
-                    "type": "message",
+                    "type": "interest",
                     "message_id": _id,
                     "message": "OK, added interest in channel"
                 }
             return {
-                "type": "message",
+                "type": "send",
                 "message_id": _id,
                 "message": "OK"
             }
@@ -198,3 +207,152 @@ class EventHandler(CoreWebSocketHandler):
                     js = json_encode(data)
                     waiter.write_message(js)
                     waiter.last = data["data"]
+
+
+class EventHistoryHandler(CoreRequestHandler):
+    """
+    """
+    author = "mra"
+    title = "event history handler"
+
+    # todo: write documentation
+    async def get(self):
+        """
+        Methods:
+            GET /event/history
+
+        Parameters:
+            per_page (int): number of events per page
+            page (int): requested page (starts counting with ``0``)
+            filter (dict): optional mongodb filter
+
+        Returns:
+            data element with list of events with
+
+            - **channel** (str): channel, defaults to ``message``
+            - **author** (str): sender (role name)
+            - **created** (datetime): when the message was sent
+            - **data** (str): message text
+
+            For pagination the following top level attributes are returned:
+
+            - **total_count** (int): the total number of records
+            - **count** (int): the number of records in current page
+            - **page** (int): current page (starts counting with ``0``)
+            - **page_count** (int): the total number of pages
+            - **per_page** (int): the number of elements per page
+
+        Raises:
+            401: Unauthorized
+            403: Forbidden
+
+        Examples:
+            >>> from requests import post, get, put
+            >>>
+            >>> login = get("http://devops:5001/core4/api/login?username=admin&password=hans")
+            >>> token = login.json()["data"]["token"]
+            >>> rv = post("http://devops:5001/core4/api/v1/roles",
+            ...           headers={"Authorization": "Bearer " + token},
+            ...           json={
+            ...               "name": "test",
+            ...               "realname": "Test User",
+            ...               "email": "test@plan-net.com",
+            ...               "password": "very secret",
+            ...               "role": ["standard_user"],
+            ...               "perm": ["api://core4.api.v1.request.queue.history.*"]
+            ...           })
+            >>> rv
+            <Response [200]>
+            >>> user_login = get("http://devops:5001/core4/api/login?username=test&password=very secret")
+            >>> user_token = user_login.json()["data"]["token"]
+            >>>
+            >>> from websocket import create_connection
+            >>> import json
+            >>>
+            >>> ws = create_connection("ws://devops:5001/core4/api/v1/event?token=" + user_token)
+            >>> ws.send(json.dumps({"type": "interest", "data": ["message"]}))
+            >>> ws.recv()
+            '{"message": "processed interest in [\'message\']", "data": ["message"], "type": "interest"}'
+            >>> for i in range(0, 100):
+            ...     ws.send(json.dumps({"type": "message", "channel": "message", "text": "hello, this is message no. %d" %(i+1)}))
+            >>>
+            >>> rv = get("http://devops:5001/core4/api/v1/event/history?page=1&per_page=5&token=" + user_token)
+            >>> rv.json()
+            {'_id': '5c8560b4ad7071213033a3d7',
+             'code': 200,
+             'count': 5,
+             'data': [{'_id': '5c855f3cad70712130873f60',
+               'author': 'test',
+               'channel': 'message',
+               'created': '2019-03-10T19:02:20',
+               'data': 'hello, this is message no. 95'},
+              {'_id': '5c855f3cad70712130873f5f',
+               'author': 'test',
+               'channel': 'message',
+               'created': '2019-03-10T19:02:20',
+               'data': 'hello, this is message no. 94'},
+              {'_id': '5c855f3cad70712130873f5e',
+               'author': 'test',
+               'channel': 'message',
+               'created': '2019-03-10T19:02:20',
+               'data': 'hello, this is message no. 93'},
+              {'_id': '5c855f3cad70712130873f5d',
+               'author': 'test',
+               'channel': 'message',
+               'created': '2019-03-10T19:02:20',
+               'data': 'hello, this is message no. 92'},
+              {'_id': '5c855f3cad70712130873f5c',
+               'author': 'test',
+               'channel': 'message',
+               'created': '2019-03-10T19:02:20',
+               'data': 'hello, this is message no. 91'}],
+             'message': 'OK',
+             'page': 1,
+             'page_count': 21,
+             'per_page': 5,
+             'timestamp': '2019-03-10T19:08:36.187955',
+             'total_count': 101.0}
+        """
+
+        per_page = self.get_argument("per_page", as_type=int, default=10)
+        current_page = self.get_argument("page", as_type=int, default=0)
+        query_filter = self.get_argument("filter", as_type=dict, default={})
+        coll = self.config.sys.event
+        query = {
+            "channel": core4.const.MESSAGE_CHANNEL
+        }
+        if query_filter:
+            query.update(query_filter)
+
+        async def _length(filter):
+            return await coll.count_documents(filter)
+
+        async def _query(skip, limit, filter, sort_by):
+            cur = coll.find(
+                filter,
+                projection={"created": 1, "data": 1, "_id": 1, "author": 1,
+                            "channel": 1}
+            ).sort(
+                [("$natural", -1)]
+            ).skip(
+                skip
+            ).limit(
+                limit
+            )
+            ret = []
+            for doc in await cur.to_list(length=limit):
+                ret.append(doc)
+            return ret
+
+        pager = CorePager(per_page=per_page,
+                          current_page=current_page,
+                          length=_length, query=_query,
+                          filter=query)
+        page = await pager.page()
+        return self.reply(page)
+
+    async def post(self):
+        """
+        Same as :meth:`get`.
+        """
+        return self.get()
