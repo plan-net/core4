@@ -1,21 +1,61 @@
+import core4.const
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.pager import CorePager
-import core4.const
 
 
-# todo: requires documentation
 class JobHistoryHandler(CoreRequestHandler):
     """
-    Retrieves the paginated job state history from ``sys.event``.
+    Retrieves the paginated job state history from ``sys.event``. This provides
+    total and aggregated job counts with the following dimensions:
+
+    * job qual_name
+    * job state
+    * job flags non-stopper, zombie, killed and removed
     """
     author = "mra"
     title = "job queue history"
 
     async def get(self):
-        per_page=self.get_argument("per_page", as_type=int, default=10)
-        current_page=self.get_argument("page", as_type=int, default=0)
-        query_filter=self.get_argument("filter", as_type=dict, default={})
-        coll = self.config.sys.event.connect_async()
+        """
+        Methods:
+            GET /jobs/history
+
+        Parameters:
+            per_page (int): number of jobs per page
+            page (int): requested page (starts counting with ``0``)
+            filter (dict): optional mongodb filter
+
+        Returns:
+            data element with list of aggregated job counts For pagination the
+            following top level attributes are returned:
+
+            - **total_count** (int): the total number of records
+            - **count** (int): the number of records in current page
+            - **page** (int): current page (starts counting with ``0``)
+            - **page_count** (int): the total number of pages
+            - **per_page** (int): the number of elements per page
+
+        Raises:
+            401: Unauthorized
+            403: Forbidden
+
+        Examples:
+            >>> from requests import get
+            >>> signin = get("http://devops:5001/core4/api/login?username=admin&password=hans")
+            >>> signin
+            <Response [200]>
+            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?token=" + signin.json()["data"]["token"])
+            >>> rv
+            <Response [200]>
+            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?page=1&token=" + signin.json()["data"]["token"])
+            >>> rv
+            <Response [200]>
+        """
+
+        per_page = self.get_argument("per_page", as_type=int, default=10)
+        current_page = self.get_argument("page", as_type=int, default=0)
+        query_filter = self.get_argument("filter", as_type=dict, default={})
+        coll = self.config.sys.event
         query = {
             "channel": core4.const.QUEUE_CHANNEL
         }
