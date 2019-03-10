@@ -12,9 +12,8 @@ about collections ``sys.queue``, ``sys.journal``, ``sys.stdout`` and
 based on :class:`.CoreBase`.
 """
 
-from collections import OrderedDict
-
 import datetime
+from collections import OrderedDict
 
 import core4.util.node
 
@@ -58,7 +57,37 @@ class QueryMixin:
             data.append(doc)
         return data
 
+    async def get_daemon_async(self):
+        """
+        Asynchronous version of :meth:`get_daemon`. Returns ``hearbeat`` and
+        ``loop_time`` in total seconds instead of :class:`datetime.timedelta`.
+        """
+        cur = self.config.sys.worker.aggregate(self.pipeline_daemon())
+        data = []
+
+        def delta2sec(t):
+            return (core4.util.node.mongo_now()
+                    - t.replace(microsecond=0)).total_seconds()
+
+        async for doc in cur:
+            if doc["heartbeat"]:
+                doc["heartbeat"] = delta2sec(doc["heartbeat"])
+            if doc.get("loop", None):
+                doc["loop_time"] = delta2sec(doc["loop"])
+            else:
+                doc["loop_time"] = None
+                doc["loop"] = None
+            data.append(doc)
+        return data
+
     def pipeline_daemon(self, **kwargs):
+        """
+        Delivers aggregation pipeline of :meth:`get_daemon` and
+        :meth:`get_daemon_async`.
+
+        :param kwargs: optional aggregation match criteria
+        :return: list of MongoDB aggregation pipeline statements
+        """
         timeout = self.config.daemon.alive_timeout
         pipeline = []
         if kwargs:
@@ -121,6 +150,12 @@ class QueryMixin:
         return data
 
     def pipeline_queue_state(self):
+        """
+        Delivers aggregation pipeline of :meth:`get_queue_state`.
+
+        :return: list of MongoDB aggregation pipeline statements
+        """
+
         sort_dict = OrderedDict()
         sort_dict['state'] = 1
         sort_dict['name'] = 1
