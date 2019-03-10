@@ -35,7 +35,7 @@ connects to the event web socket.
 .. note:: The example requires installation of package :mod:`websocket`.
           Install the package with ``pip install websocket``.
 
-Login with an administrative user (role _cop_) to create a new user::
+Login with an administrative user (role _cop_) to create a new user.
 
 .. code-block:: python
 
@@ -58,8 +58,8 @@ Login with an administrative user (role _cop_) to create a new user::
     etag = rv.json()["data"]["etag"]
 
 
-The created user _test_ has access to all standard endpoints through role
-_standard user_. This includes :class:`.EventHandler` located at
+The created user *test* has access to all standard endpoints through role
+*standard user*. This includes :class:`.EventHandler` located at
 ``/core4/api/v1/event``. The additional access permissions granted to user
 _test_ include :class:`.JobHistory` located at ``/core4/api/v1/jobs/history``.
 

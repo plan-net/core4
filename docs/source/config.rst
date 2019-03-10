@@ -289,7 +289,7 @@ The following example demonstrates the default connection setting with
 .. note:: There are certain connections within the core4 ReST API/widget
           framework which use synchronous database connectivity. These are
           connections to collection ``sys.log`` and ``sys.event`` where core4
-          utilises special MongoDB features of _write concern_ for performance
+          utilises special MongoDB features of *write concern* for performance
           reasons. For this special database access we to build on top of the
           asycnhronous ioloop feature.
 

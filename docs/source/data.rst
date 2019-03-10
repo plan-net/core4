@@ -113,9 +113,8 @@ user database. These databases adhere to the naming convention
 ``user![username]`` which can be modified with core4 configuration setting
 ``sys.userdb``.
 
-To access the database an access token has to be created.
-See :ref:`access_manager`. Use this token similar to a password to connect to
-your personal user databbase::
+To access the database an access token has to be created. Use this token
+similar to a password to connect to your personal user databbase::
 
     mongo \
         --host [hostname] \
