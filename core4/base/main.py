@@ -65,6 +65,7 @@ class CoreBase:
 
     # these config attributes are raised to object level
     upwind = ["log_level"]
+    concurr = False
 
     def __init__(self):
         # query identifier from instantiating object
@@ -200,6 +201,7 @@ class CoreBase:
         if project_config and os.path.exists(project_config):
             kwargs["project_config"] = (self.project, project_config)
         kwargs["extra_dict"] = self._build_extra_config()
+        kwargs["concurr"] = self.concurr
         self.config = self._make_config(**kwargs)
         pos = self.config._config
         for p in self.qual_name(short=True).split("."):
@@ -353,7 +355,7 @@ class CoreBase:
     def trigger(self, name, channel=None, data=None, author=None):
         # todo: requires documentation
         if self._event is None:
-            conn = self.config.sys.event
+            conn = self.config.sys.event.connect(concurr=False)
             if conn:
                 wc = self.config.event.write_concern
                 conn.with_options(write_concern=pymongo.WriteConcern(w=wc))

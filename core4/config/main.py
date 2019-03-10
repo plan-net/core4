@@ -83,11 +83,13 @@ class CoreConfig(collections.MutableMapping):
     _db_cache = None
     db_info = None
 
-    def __init__(self, project_config=None, config_file=None, extra_dict={}):
+    def __init__(self, project_config=None, config_file=None, extra_dict={},
+                 concurr=False):
         self._config_file = config_file
         self.project_config = project_config
         self.env_config = os.getenv("CORE4_CONFIG", None)
         self.extra_dict = extra_dict
+        self.concurr = concurr
 
     def __getitem__(self, key):
         """
@@ -374,6 +376,7 @@ class CoreConfig(collections.MutableMapping):
                     traverse(v)
                 elif isinstance(v, core4.config.tag.ConnectTag):
                     v.set_config(dct)
+                    v.set_connect(self.concurr)
 
         traverse(config)
 
@@ -494,7 +497,6 @@ class CoreConfig(collections.MutableMapping):
                     if v.startswith("!connect "):
                         tag = core4.config.tag.ConnectTag(
                             v[len("!connect "):])
-                        # tag.set_config(dct)
                         v = tag
                 update[k] = v
 

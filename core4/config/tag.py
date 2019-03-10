@@ -21,8 +21,7 @@ import core4.base.collection
 import core4.error
 from core4.base.collection import SCHEME
 
-# todo: rename async into sync
-def connect_database(conn_str, callback, async=False, **kwargs):
+def connect_database(conn_str, callback, concurr=False, **kwargs):
     """
     This function parses ``conn_str`` parameter and ``kwargs`` default
     parameters and returns :class:`.CoreCollection`. The format of the
@@ -77,7 +76,7 @@ def connect_database(conn_str, callback, async=False, **kwargs):
     opts["hostname"] = hostname
     opts["database"] = database
     opts["collection"] = "/".join(collection)
-    opts["async"] = async
+    opts["async"] = concurr
     if hostname:
         return callback(**opts)
     raise core4.error.Core4ConfigurationError("no mongo connected")
@@ -106,6 +105,7 @@ class ConnectTag(yaml.YAMLObject):
             raise core4.error.Core4ConfigurationError(
                 "malformed connection string [{}]".format(conn_str))
         self.conn_str = conn_str
+        self.concurr = None
         self._mongo = None
 
     def __repr__(self):
@@ -123,6 +123,9 @@ class ConnectTag(yaml.YAMLObject):
         """
         self.config = config
 
+    def set_connect(self, concurr):
+        self.concurr = concurr
+
     def init_collection(self, **kwargs):
         """
         Default initiator of the :class:`.CoreCollection` object.
@@ -132,30 +135,33 @@ class ConnectTag(yaml.YAMLObject):
         """
         return core4.base.collection.CoreCollection(**kwargs)
 
-    def connect(self, async=False):
+    def connect(self, concurr=None):
         """
         Used to lazily establish the MongoDB connection when requested. Uses
         :func:`connect_database` to connect.
 
-        :param async: if ``True`` connects with :mod:`motor`, else with
+        :param concurr: if ``True`` connects with :mod:`motor`, else with
                       :mod:`pymongo` (default).
         :return: :class:`.CoreCollection`
         """
         if self._mongo is None:
             params = {"mongo_url": self.config.get("mongo_url"),
-                      "mongo_database": self.config.get("mongo_database"),
-                      "async": async}
+                      "mongo_database": self.config.get("mongo_database")}
+            if concurr is not None:
+                params["concurr"] = concurr
+            else:
+                params["concurr"] = self.concurr
             self._mongo = connect_database(self.conn_str, self.init_collection,
                                            **params)
         return self._mongo
 
     def connect_async(self):
         """
-        Same as :meth:`.connect` with ``async=True``.
+        Same as :meth:`.connect` with ``concurr=True``.
 
         :return: :class:`.CoreCollection`
         """
-        return self.connect(async=True)
+        return self.connect(concurr=True)
 
     def __getattr__(self, item):
         return getattr(self.connect(), item)

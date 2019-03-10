@@ -232,6 +232,68 @@ cascade to the same connection settings::
         result3: mongodb://result
 
 
+Asynchronous versus synchronous database access
+===============================================
+
+core4 uses both the :mod:`pymongo` and the :mod:`motor` MongoDB database access
+driver. The synchronous :mod:`pymongo` driver is used by the core4 job
+execution framework. The asynchronous :mod:`motor` driver is used in
+conjunction with :mod:`tornado` ioloop in the core4 ReSR API and widget
+framework.
+
+To simplify MongoDB database connection all core4 classes derived from
+:class:`.CoreBase` automatically request synchronous connection. All core4
+classes derived from :class:`.CoreRequestHandler` connect asynchronous with
+:mod:`motor`.
+
+The following snippet demonstrates the default synchronous database access
+with :class:`.CoreBase`::
+
+    >>> from core4.base.main import CoreBase
+    >>> b = CoreBase()
+    >>> b.config.sys.queue
+    !connect 'mongodb://sys.queue'
+    >>>
+    >>> b.config.sys.queue.concurr
+    False
+    >>> b.config.sys.queue.count_documents({})
+    7
+
+You can programmatically change from synchronous to asynchronous access::
+
+    >>> b = CoreBase()
+    >>> b.config.sys.queue.concurr = True
+    >>> await b.config.sys.queue.count_documents({})
+    7
+
+
+You can also use the explicit method ``.connect_async``::
+
+    >>> b = CoreBase()
+    >>> b.config.sys.queue.connect_async()
+    >>> await b.config.sys.queue.count_documents({})
+
+
+The following example demonstrates the default connection setting with
+:class:`.CoreBaseHandler`. This class is the parent class of
+:class:`.CoreRequestHandler`::
+
+    >>> from core4.api.v1.request.main import CoreBaseHandler
+    >>> base = CoreBaseHandler()
+    >>> base.config.sys.queue.concurr
+    True
+    >>> await base.config.sys.queue.count_documents({})
+    7
+
+
+.. note:: There are certain connections within the core4 ReST API/widget
+          framework which use synchronous database connectivity. These are
+          connections to collection ``sys.log`` and ``sys.event`` where core4
+          utilises special MongoDB features of _write concern_ for performance
+          reasons. For this special database access we to build on top of the
+          asycnhronous ioloop feature.
+
+
 MongoDB collection ``sys.conf``
 ===============================
 

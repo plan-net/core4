@@ -73,6 +73,7 @@ class CoreBaseHandler(CoreBase):
     supported_types = [
         "text/html",
     ]
+    concurr = True
 
     def __init__(self, *args, **kwargs):
         """
@@ -1003,8 +1004,8 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         :return: fully qualified url path (str) including protocl, hostname,
             port and path
         """
-        handler = self.config.sys.handler.connect_async()
-        worker = self.config.sys.worker.connect_async()
+        handler = self.config.sys.handler
+        worker = self.config.sys.worker
         timeout = self.config.daemon.alive_timeout
         found = []
         pipeline = [
