@@ -36,21 +36,6 @@ batch, distributed execution, intensive computations etc. is wide:
 * RQ and celery
 
   * https://de.slideshare.net/sylvinus/why-and-how-pricing-assistant-migrated-from-celery-to-rq-parispy-2
-* history reaches back to 2003 when first experience with distributed, scalable
-  reporting systems has been made for Deutsche Börse
-* have been variants with databases as the messaging layer as well as pure
-  messaging systems as well as client/server network messaging
-* with the evolution of no sql databases and esp. couchdb and mongodb a new
-  approach to provide a such a data engineering/data science system was taken
-* 2014 we started to build all lessons learned from the past 10 years into the
-  PN BI core system
-* was not a pure product development from the very beginning, but has been
-  developed together with clients and on actual client projects
-* core version 1 was prototype of data integration and automation system
-* core version 2 was the first production version with major improvements
-  on job distribution and the worker model
-* core version 3 was the extension with ReST API and widgets
-* core version 4 is the Python 3 ported version completely rebuilt
 * Queues in general
 
   * http://queues.io/
