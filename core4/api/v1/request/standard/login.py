@@ -125,6 +125,7 @@ class LoginHandler(CoreRequestHandler):
             400 Bad Request: if no email or token/password is sent
 
         Examples:
+            >>> from requests import get, put
             >>> url = "http://localhost:5001/core4/api/login"
             >>> put(url + "?email=mail@mailer.com").json()
             {
