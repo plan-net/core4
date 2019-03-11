@@ -452,7 +452,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             except ImportError:
                 core4.service.introspect.exec_project(
                     doc["name"], KILL, job_id=str(doc["_id"]))
-            except:
+            except Exception:
                 raise
 
     def pid_exists(self, doc):

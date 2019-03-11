@@ -95,6 +95,7 @@ class EventHandler(CoreWebSocketHandler):
         All other or undefined message types are ignored.
 
         :param message: str representing valid json
+        {"type": "message", "text": "hello world"}
         """
         try:
             request = json_decode(message)
@@ -102,11 +103,8 @@ class EventHandler(CoreWebSocketHandler):
             ret = "error parsing json data"
         else:
             cmd = request.get("type", "unknown")
-            if cmd:
-                meth = getattr(self, "proc_" + cmd, self.proc_unknown)
-                ret = meth(request)
-            else:
-                ret = "missing message type"
+            meth = getattr(self, "proc_" + cmd, self.proc_unknown)
+            ret = meth(request)
         self.write_message(ret)
 
     def proc_unknown(self, request):
