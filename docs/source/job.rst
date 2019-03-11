@@ -12,22 +12,27 @@ Introduction
 ------------
 
 
-As of today, modern Data-Scientists use a variety of python- and R-modules both Open- and Closed-Source to create
-relevant insights based on multiple sets of data from many different sources.
+As of today, modern Data-Scientists use a variety of python- and R-modules both
+Open- and Closed-Source to create relevant insights based on multiple sets of
+data from many different sources.
 
-Core4-Jobs are for those Data-Scientists and -Engineers to achieve fault-tolerant automation of all needed steps of
-creating those insights without having the user think about the underlying software or hardware.
+Core4-Jobs are for those Data-Scientists and -Engineers to achieve fault
+tolerant automation of all needed steps of creating those insights without
+having the user think about the underlying software or hardware.
 
 
-core4 takes care of everything that is essential to using and operating such a distributed system,
-from central logging and configuration to deployment, all this while scaling to the 100ths of servers.
+core4 takes care of everything that is essential to using and operating such a
+distributed system, from central logging and configuration to deployment, all
+this while scaling to the 100ths of servers.
 
 CoreJobs
 --------
 
-CoreJobs implement the logic layer of the core4s architecture and enables the user to fully automate their business logic
-within a fault-tolerant distributed system. CoreJobs are the starting point for any Data-engineer or -scientist and
-provides a lot of possibilities to easily control the runtime-behavior within the framework.
+CoreJobs implement the logic layer of the core4s architecture and enable the
+user to fully automate their business logic within a fault tolerant distributed
+system. CoreJobs are the starting point for any Data-engineer or -scientist and
+provide a lot of possibilities to easily control the runtime-behavior
+within the framework.
 
 Example
 --------
@@ -94,13 +99,15 @@ Explanation:
 | [17] Insert result into the MongoDB. Note that the job adds some extra information for tracking purposes.
 
 
-Down below you can find a more detailed instruction about various aspects of writing CoreJobs:
+Down below you can find a more detailed instruction about various aspects of
+writing CoreJobs:
 
 
 Principles
 ----------
 
-CoreJobs implement the logic layer of the core4s architecture. CoreJobs can broadly be categorised into
+CoreJobs implement the logic layer of the core4s architecture. CoreJobs can
+broadly be categorised into:
 
 -   extraction jobs, scanners and feed readers representing inbound
     interfaces
@@ -124,65 +131,47 @@ A job can have multiple states, depending on its configured runtime-behavior:
    :scale: 100 %
    :alt: job_states
 
-Switching between these states is either done via configuration-settings or within the code.
-A basic subset of configuration-settings is as follows:
+A most important configuration settings are as follows:
 
-.. Switching between these states is either done via configuration-settings or within the code
-   this is wrong.
+.. figure:: _static/corejobproperties.png
+   :scale: 20%
+   :alt: CoreJob properties
 
- ================= ====================================================================
-          property description
- ================= ====================================================================
-              args arguments passed to the job
-            author author of the job
-             chain jobs that are to launch after the current job finishes
-         defer_max overall Sum of seconds a job can be deferred
-        defer_time time between defers
-        dependency dependencies that have to be finished before the job can be launched
-        error_time seconds to wait before a job is restarted after a failure
-             force ignore available resources, force start a job
-      max_parallel max. number of parallel running jobs of current type
-             nodes nodes the job can run on
-          priority priority with 0 being the lowest
-          schedule job schedule in crontab-syntax
-             state current state of the job (see the graphic above)
-         wall_time seconds before a job with no feedback turns to zombie.
- ================= ====================================================================
 
-.. please refer at least to the full list of attributes in the API documentation
+For further information please visit the :doc:`core4/queue/job` section within
+the package documentation.
 
-.. priority defaults to 0; <0 is lower, >0 is higher. 0 is not the lowest!!
-
-.. the following attributes have to be described since these are important
-    * ``attempts``
-    * ``hidden``
-    * ``tag``
-    * ``worker``
-    * ``zombie_time``
 
 Within the code, a job can defer itself::
 
     self.defer("This job has been defered due to various reasons.")
 
-Or enqueue other jobs by their qual_name::
+Or enqueue other jobs by their qual_name.
+All arguments specified will be passed to the CoreJob::
 
     self.queue.enqueue("core4.queue.helper.job.DummyJob", sleep=120)
 
-Jobs and their states can be monitored and controlled via the "coco" script.
-For further information about possible arguments please visit: :ref:`configuration management <config>`.
+CoreJobs can also be enqueued using the `coco` script::
 
-.. please link coco
+   coco --enqueue core4.queue.helper.job.DummyJob sleep=120
 
+Arguments given via commandline will be parsed to json and passed to the
+CoreJob as **kwargs.
+
+For further information please visit the
+:ref:`commandline tools <tools>` section.
 
 collection handling
 -------------------
-core4 ships a great configuration management that can be used to handle multiple different database-connections.
-Whether to achieve different databases for different jobs, or to simply read from production data while writing to
-your local database, everythings possible.
+core4 ships a great :ref:`configuration management <config>` that can be used to
+handle multiple different database-connections. Whether to achieve different
+databases for different jobs, or to simply read from production data while
+writing to your local database, everything is possible.
 
-The example below takes advantage of core4s configuration-inheritance to achieve exactly that.
-All keys have to first be set within the plugin-configuration itself so that they can be overwritten by the
-user-specific configuration file located in ``~/.core4/local.yaml``::
+The example below takes advantage of core4s configuration inheritance to achieve
+exactly that. All keys have to first be set within the plugin-configuration
+itself so that they can be overwritten by the user-specific or the system-wide
+configuration file::
 
     mongo_url: mongodb://usr:pwd@localhost:27017
     mongo_database: bakery
@@ -197,7 +186,6 @@ user-specific configuration file located in ``~/.core4/local.yaml``::
 
     import core4.util
     from core4.queue.job import CoreJob
-
 
     class CalcSum(CoreJob):
         """
@@ -216,9 +204,11 @@ user-specific configuration file located in ``~/.core4/local.yaml``::
 
         and sorts all transactions by their value into the corresponding collection (low, mid, high).
         """
-        author = 'mkr'
+        author = "mkr"
+        schedule = "*/10 * * * *"
 
         def execute(self, *args, **kwargs):
+
             low = self.config.low_values
             mid = self.config.mid_values
             high = self.config.high_values
@@ -226,6 +216,8 @@ user-specific configuration file located in ``~/.core4/local.yaml``::
             # find todays bills within the input_collection
             today = core4.util.now()
             today = today.replace(hour=0, minute=0, second=0, microsecond=0)
+            # append the searched date to the sources list
+            self.sources.append(today)
             data = self.config.cash_register.find({"date": {"$gte": today}})
 
             # and delete their _id
@@ -242,49 +234,58 @@ user-specific configuration file located in ``~/.core4/local.yaml``::
             mid_coll.bulk_write(mid_data, ordered=False)
             high_coll.bulk_write(high_data, ordered=False)
 
-.. please describe the special mongodb attributes _src and _job_id which are
-   automatically inserted with each record
+All documents inserted into the database using a CoreCollection carry two
+additional key:value pairs::
+
+    _src: set of sources processed by the CoreJob
+    _job_id: CoreJob identifier in ``sys.queue``
+
+
+All class variables set by the developer or configuration options set within the
+plugin configuration can be overwritten by using the qual_name of the CoreJob
+within the personal ``~/.core4/local.yaml`` or the system-wide
+``/etc/core4/local.yaml``::
+
+    core4:
+      example:
+        CalcSum:
+          # this job should be scheduled each 5 min instead of each 10 min.
+          schedule: "*/5 * * * *"
+          # this job should have a high priority
+          priority: 10
 
 
 logging
 -------
 
 core4 ships with 4 log-levels: CRITICAL/ERROR/WARNING/INFO and DEBUG.
-For a job to be able to start logging, it hast to inherit from the ConfigurationMixin:
-
+A CoreJob, as any other class instance derived from CoreBase come with
+:ref:`logging <logging>` already integrated:
 
 .. code-block:: python
 
     from core4.queue.job import CoreJob
-    from core4.logger import CoreLoggerMixin
 
 
-    class Log(CoreLoggerMixin, CoreJob):
+    class CoreLoggingExample(CoreJob):
         def __init__(self):
-            self.setup_logging()
-
-.. this is wrong. A job as any other class instance derived from CoreBase
-   can log. It is the application which has to start logging. The following
-   applications start logging: worker, scheduler, app, coco.
-
-
-Logging is as simple as calling the required method within self.logger::
-
-    self.logger.critical("A critical, unexpected error appeared")
-    self.logger.error("An exception or other expected error has been raised")
-    self.logger.warning("This is a warning")
-    self.logger.info("This is just another info message")
-    self.logger.debug("This is a debug message, it is only shown in case of an error")
-
+            self.logger.critical("A critical, unexpected error appeared")
+            self.logger.error("An exception or other expected error has been raised")
+            self.logger.warning("This is a warning")
+            self.logger.info("This is just another info message")
+            self.logger.debug("This is a debug message, it is only shown in case of an error")
 
 
 You can either use the .format-method of a string or format it the oldschool way::
 
-    self.logger.warning("This value is a double: [%d] and here is its string-representation: [%s]",double(1), str(1))
+    self.logger.warning("This value is a double: [%d] and here is its string representation: [%s]",double(1), str(1))
 
 
-The DEBUG level will not be logged by default. It will only be written when an error has occured. This way, one can
-write multiple DEBUG messages that may help him indentify an error but would otherwise clutter the output.
+The DEBUG level will not be logged by default. It will only be written when an
+CRITICAL log message has occured. In the context of CoreJobs, CRITICAL messages
+are reserved for fatal exceptions. This way, one can write multiple DEBUG
+messages that may help him indentify an error but would otherwise clutter the
+output.
 
 .. this is wrong. It depends on the log level. There is a special handling for
    mongo logging, only. If mongo log level is > DEBUG, then and only then all
@@ -292,25 +293,25 @@ write multiple DEBUG messages that may help him indentify an error but would oth
    if a CRITICAL log message occured. In the context of job operations CRITICAL
    is reserved for died jobs.
 
-A job will log all raised expections that are piped to either std::out or std::error by default.
+.. but with default settings, the mongo log level is INFO and therefore > DEBUG?
+
+A job will log all raised expections that are piped to either std::out or
+std::error by default.
 
 
 
 cookie handling
 ---------------
 
-For passing arguments from one job to another, or to keep track of job-specific information that hast to be preserved
-inbetween multiple runs, CoreCookies can be used.
-cookies are identified by the qual_name of the job using them.
-
-.. passing arguments from one job to another ... if you mean the same job, i.e.
-   the same qual_name, then this is true. If you mean different job classes,
-   then this is not true and does not make sense.
+For saving information inbetween runs of the same CoreJob inbetween multiple
+runs, CoreCookies can be used. CoreCookies are identified by the qual_name of
+the CoreJob using them.
 
 Think of it as enhanced browser-cookies, a store for multiple key-value pairs.
 
-Cookies are included within the CoreJob itself, as core automatically keeps track of the last time a worker has tried
-to execute the job. A datetime object is stored within the ``last_runtime`` key::
+Cookies are included within the CoreJob itself, as core automatically keeps
+track of the last time a worker has tried to execute the job. A datetime object
+is stored within the ``last_runtime`` key::
 
     {
         "_id" : "core4.queue.helper.job.DummyJob",
@@ -318,7 +319,8 @@ to execute the job. A datetime object is stored within the ``last_runtime`` key:
     }
 
 
-There are multiple predefined methods for accessing and altering key:value pairs.
+There are multiple predefined methods for accessing and altering key:value
+pairs.
 
 For setting fields within the key::
 
@@ -330,7 +332,8 @@ For increasing/decreasing a value::
     self.cookie.inc(key, value=1)
     self.cookie.dec(key, value=1)
 
-Compare the given key with the already present value and take the maximum/minimum::
+Compare the given key with the already present value and take the
+maximum/minimum::
 
     self.cookie.max(key, value=10)
     self.cookie.min(key, value=5)
@@ -352,47 +355,43 @@ Cookies are often used to keep track of already loaded data e.g. by timestamp::
     self.cookie.set("last_completed": core4.util.now())
 
 
-structuring of jobs
--------------------
-CoreJobs can inherit from any other Classes.
-If the inherit from other CoreJobs, all class-properties get inherited too.
+structuring CoreJobs
+--------------------
 
-.. not really. There are some, which will not be inherited. see NOT_INHERITED
-   attribute in job.py
+CoreJobs can inherit from any other classes.
+If they inherit from other CoreJobs, all class-properties but ``schedule``,
+``dependency`` and ``chain`` will be inherited.
 
-Baseclasses themselfs have no schedule and should not be called directly, therefore they can set the ``hidden`` flag,
-so that this job will not be listed within a ``coco -j`` and is not visible to the user.
+To be able to still provide inheritance for eased structuring of CoreJobs, the
+class ``CoreAbstractJobMixin`` has been provided.
+Abstract CoreJob classes are not listed in the job listing, e.g. extracted with
+``coco --job`` and can not be launched directly. Abstract CoreJobs are only
+providing a blue print for other concrete CoreJob implementations
 
 .. code-block:: python
 
     from core4.queue.job import CoreJob
-    from core4.logger import CoreLoggerMixin
+    from core4.queue.helper.job.base import CoreAbstractJobMixin
 
 
-    class Parent(CoreJob):
+    class Parent(CoreJob, CoreAbstractJobMixin):
         author = "mkr"
-        hidden = True
 
         def static_mult(x, y):
+        """
+        example method to be used by concrete classes inheriting from Parent
+        """
             return x*y
         ...
 
 
-    class Child(CoreLoggerMixin, Parent):
+    class Child(Parent):
         author = "mkr"
         schedule = "* 3 * * *"
 
         def execute(self, x, y):
             result = self.static_mult(x, y)
             self.logger.info("Got result within the multiplication: [%d]", result)
-
-
-.. this has slightly changed for good reasons. Hidden really applies for jobs
-   which are not supposed to be listed. Now there is a new mixin job class
-   to clearly define abstract job classes:
-      core4.queue.helper.job.base.CoreAbstractJobMixin
-   jobs mixing in this class cannot be executed and will not be listed with
-   coco -j
 
 
 Best practices
@@ -403,18 +402,22 @@ to adhere to the following design paradigms:
 
 -   **divide and conquer**
 
-        divide a big task into multiple smaller parts. The smaller the Task, the easier to scope, to maintain and to
-        follow along for others. It also encourages you to follow the next point made here:
+        divide a big task into multiple smaller parts. The smaller the Task, the
+        easier to scope, to maintain and to follow along for others. It also
+        encourages you to follow the next point made here:
 
 -   **do one thing and do it well**
 
-        Do not try to: "I'll fix everything in one method". Separate logical building-blocks from your code, every
-        block should only do one single task. This makes it easier to implement changes in the future and helps your
-        code to be more readable.
+        Do not try to: "I'll fix everything in one method". Separate logical
+        building-blocks from your code, every block should only do one single
+        task. This makes it easier to implement changes in the future and helps
+        your code to be more readable.
 
 -   **KISS - keep it simple and stupid**
-        Robustness and maintainability are more precious than saving a few seconds of time. This however is not valid
-        for the correctness of an algorithm. Aim your complexity as high as it has to be but as low as it needs to be.
+        Robustness and maintainability are more precious than saving a few
+        seconds of time. This however is not valid for the correctness of an
+        algorithm. Aim your complexity as high as it has to be but as low as it
+        needs to be.
 
 Both guidelines are interrelated. The dotadiw (do one thing and do it
 well) philosophy is borrowed from the general Unix philosophies.
@@ -422,66 +425,79 @@ Actually, the design of automation jobs should follow the first four out
 of nine guidelines:
 
 -   **Small is beautiful**
-        The less code, the easier it is for someone else to understand it, even if that someone is your future self.
+        The less code, the easier it is for someone else to understand it, even
+        if that someone is your future self.
 
 -   **Make each program do one thing well**
         do not mix several steps of a processing chain into one document.
         Separate in e.g. load-Job, transform-Job and report-Job.
 
 -   **Build a prototype as soon as possible**
-        if you do start programming, try reaching the state of a working prototype as soon as possible. This way,
-        you'll notice errors in your concept way earlier, stumble open flaws in your design and you will speed up your
-        overall developing speed.
+        if you do start programming, try reaching the state of a working
+        prototype as soon as possible. This way, you'll notice errors in your
+        concept way earlier, stumble open flaws in your design and you will
+        speed up your overall developing speed.
 
 -   **Choose portability over efficiency**
-        The more independent your code is from environmental-specific changes, the more robust it will be.
-        If you set e.g. set low timeouts, the job may unnecessarily fail when running on high-load nodes.
+        The more independent your code is from environmental-specific changes,
+        the more robust it will be. If you set e.g. set low timeouts, the job
+        may unnecessarily fail when running on high-load nodes.
 
 
 Out of experience we would recommend to adhere to the following
 principles also:
 
 -   **design your applications with restartability in mind**
-        There are multiple reasons why a job might fail, including only temporary failures (imagine a website you crawl
-        being in maintenance). You can safe yourself a lot of hassle if the job itself knows about its state and can
-        simply be restarted without being worried about data-loss or crashing dependencies.
+        There are multiple reasons why a job might fail, including only
+        temporary failures (imagine a website you crawl being in maintenance).
+        You can safe yourself a lot of hassle if the job itself knows about its
+        state and can simply be restarted without being worried about data-loss
+        or crashing dependencies.
 
--   **create Data-Structures that are idempotent on multiple loads of the same data**
-        you may find yourself in the position where you do not know whether a certain job has processed a particular set
-        of data or not. It is elegant to just be able to _enqueue that particular job that either only updates the data
-        if changes are detected or simply updates already present documents. That way you do not have to worry about
-        overwriting critical output.
+-   **create Data-Structures that are idempotent on multiple loads**
+        you may find yourself in the position where you do not know whether a
+        certain job has processed a particular set of data or not. It is elegant
+        to just be able to enqueue that particular job that either only updates
+        the data if changes are detected or simply updates already present
+        documents. That way you do not have to worry about overwriting critical
+        output.
 
 -   **implement continuity-checks if data is continuous**
-        even if your jobs always run to perfection, some of your clients may not. If you have a continuous data stream
-        (e.g. a daily reporting via excel) always check that data for completeness. It is easier to let a job fail if
-        expected data is not present than to try to retrospectively fix a processing-chain.
+        even if your jobs always run to perfection, some of your clients may
+        not. If you have a continuous data stream (e.g. a daily reporting
+        via excel) always check that data for completeness. It is easier to let
+        a job fail if expected data is not present than to try
+        to retrospectively fix a processing-chain.
 
 -   **robustness before neatness**
-        python offers some really nice features for writing clean and easy-to-understand code. An experienced programmer
-        might feel tempted to implement the fastest, most efficient way for doing some kind of task. However, speed
-        alone should not always be the sole goal of software-design. Keep in mind that many more people might be reliant
-        on working on and understanding your code, this even includes your future self.
+        python offers some really nice features for writing clean and
+        easy-to-understand code. An experienced programmer might feel tempted to
+        implement the fastest, most efficient way for doing some kind of task.
+        However, speed alone should not always be the sole goal of
+        software-design. Keep in mind that many more people might be reliant on
+        working on and understanding your code, this even includes your future
+        self.
 
 -   **work silently, fail noisily**
-        if your job runs without error, there is no need to log. If however an error occurs, expect to need as much
-        information as possible to fix it. Core4 enables you to do this by only logging DEBUG-messages in case of an
-        error, but still, you are the one that has to implement these messages.
+        if your job runs without error, there is no need to log. If however an
+        error occurs, expect to need as much information as possible to fix it.
+        core4 enables you to do this by only logging DEBUG-messages in case of
+        an error, but still, you are the one that has to implement these
+        messages.
 
 -   **build modular and reusable classes and functions**
-        there always will be multiple parts of a program that can be reused somewhere else. Rather than duplicating
-        that code on every place it is needed, simply uncouple the part that is often reused. Not only will your code
-        look more clean, you also do save yourself a lot of time if you need to enhance or fix that particular part of
-        code.
+        there always will be multiple parts of a program that can be reused
+        somewhere else. Rather than duplicating that code on every place it is
+        needed, simply uncouple the part that is often reused. Not only will
+        your code look more clean, you also do save yourself a lot of time if
+        you need to enhance or fix that particular part of code.
 
 -   **choose meaningful function-/class-/variable-names**
-        choosing simple, yet descriptive names will greatly help you maintain or extend your code.
+        choosing simple, yet descriptive names will greatly help you maintain or
+        extend your code.
 
 
 .. the following aspects should be described
-   - how to pass arguments to jobs and the special transformation from shell
-     arguments to json
    - access permission read/execute with jobs, i.e. job://.../x|r
-   - overwrite job attributes in configuration by using the qual name
-   - please cross reference important sections, for example logging, config
-
+   * we will have to talk about the implications of this, i have no idea
+      on how this works.

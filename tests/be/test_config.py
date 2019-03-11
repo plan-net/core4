@@ -40,7 +40,7 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig()
         test = conf._read_yaml(conf.standard_config)
         self.assertEqual(test["DEFAULT"]["mongo_database"], "test")
-        self.assertEqual(test["logging"]["stderr"], "DEBUG")
+        self.assertEqual(test["logging"]["stderr"], "INFO")
 
     def test_parse1(self):
         standard_config = {
@@ -571,7 +571,7 @@ class TestConfig(unittest.TestCase):
         conf._load()
         self.assertEqual(conf.folder.transfer, "transfer")
         self.assertEqual(conf.logging.exception.capacity, 99)
-        self.assertEqual(conf.logging.stderr, "DEBUG")
+        self.assertEqual(conf.logging.stderr, "INFO")
         self.assertNotIn("irrelevant", conf.logging.exception)
         assert conf.db_info == "core@localhost:27017/core4test/sys.conf"
 
@@ -797,7 +797,7 @@ class TestConfig(unittest.TestCase):
         extra = tests.be.util.asset("config/extra2.yaml")
         local = tests.be.util.asset("config/local8.yaml")
         conf = MyConfig(project_config=("test", extra), config_file=local)
-        self.assertIsNone(conf.sys.mongo_url)
+        self.assertEqual(conf.sys.mongo_url, "mongodb://localhost:27017")
         self.assertEqual(conf.test.job.mongo_url, "mongodb://testhost")
         self.assertEqual(conf.test.job.schedule, "30 * * * *")
         self.assertEqual(conf.test.job.test.my_job.schedule, "10 * * * *")

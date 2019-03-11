@@ -43,7 +43,6 @@ class CoreSetup(CoreBase, metaclass=Singleton):
     * users and roles
     * collection index of ``sys.queue``
     * collection TTL of ``sys.stdout``
-    * collection index of ``sys.stat``
     """
 
     def make_all(self):
@@ -53,7 +52,6 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         self.make_folder()
         self.make_queue()
         self.make_stdout()
-        self.make_stat()
         self.make_role()
         self.make_user()
 
@@ -141,20 +139,6 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 name="job_args"
             )
             self.logger.info("created index [job_args] on [sys.queue]")
-
-    @once
-    def make_stat(self):
-        """
-        Creates collection ``sys.stat`` and its index on ``timestamp``.
-        """
-        if "timestamp" not in self.config.sys.stat.index_information():
-            self.config.sys.stat.create_index(
-                [
-                    ("timestamp", pymongo.ASCENDING)
-                ],
-                name="timestamp"
-            )
-            self.logger.info("created index [timestamp] on [sys.stat]")
 
     @once
     def make_stdout(self):

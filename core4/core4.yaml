@@ -9,19 +9,19 @@ sys:
   app: !connect mongodb://sys.app
   conf: ~
   cookie: !connect mongodb://sys.cookie
+  event: !connect mongodb://sys.event
   handler: !connect mongodb://sys.handler
   job: !connect mongodb://sys.job
   journal: !connect mongodb://sys.journal
   lock: !connect mongodb://sys.lock
   log: !connect mongodb://sys.log
   queue: !connect mongodb://sys.queue
-  quota: !connect mongodb://sys.quota
+  # quota: !connect mongodb://sys.quota
   role: !connect mongodb://sys.role
-  stat: !connect mongodb://sys.stat
+  setting: !connect mongodb://sys.setting
   stdout: !connect mongodb://sys.stdout
   userdb: user!
   worker: !connect mongodb://sys.worker
-  setting: !connect mongodb://sys.setting
 
 # system folders
 folder:
@@ -42,6 +42,12 @@ logging:
     capacity: 1000
   extra: ~
   write_concern: 0
+  size: 549755813888  # 0.5tB
+
+event:
+  write_concern: 0
+  size: 549755813888  # 0.5tB
+  queue_interval: 1
 
 # base class defaults
 base:

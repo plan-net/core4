@@ -58,3 +58,11 @@ user settings endpoint
     :members:
     :show-inheritance:
 
+
+event system endpoint
+#####################
+
+.. automodule:: core4.api.v1.request.standard.event
+    :members:
+    :show-inheritance:
+

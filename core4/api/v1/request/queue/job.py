@@ -5,6 +5,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import sys
+import traceback
 import pymongo
 import pymongo.errors
 from bson.objectid import ObjectId
@@ -12,10 +14,10 @@ from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
 
+import core4.const
 import core4.error
 import core4.queue.job
 import core4.queue.query
-import core4.util
 import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.queue.main import CoreQueue
@@ -57,7 +59,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :return: :class:`core4.base.collection.CoreCollection`
         """
         if name not in self._collection:
-            self._collection[name] = self.config.sys[name].connect_async()
+            self._collection[name] = self.config.sys[name]
         return self._collection[name]
 
     async def get(self, _id=None):
@@ -550,16 +552,6 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         except:
             raise
 
-    async def make_stat(self, event, *args):
-        """
-        Collects current job state counts from ``sys.queue`` and inserts a
-        record into ``sys.stat``.
-        """
-        state = await self.get_queue_count()
-        state["timestamp"] = core4.util.node.mongo_now().timestamp()
-        state['event'] = {'name': event, 'data': args}
-        await self.collection("stat").insert_one(state)
-
     def who(self):
         """
         Creates ``enqueued`` dict attribute with timestamp (``at``),
@@ -591,6 +583,17 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             ret[doc["state"]] = doc["n"]
         return ret
 
+    async def make_stat(self, event, _id):
+        """
+        Collects current job state counts from ``sys.queue`` and inserts a
+        record into ``sys.event``. See also :meth:`.CoreQueue.make_stat`.
+
+        :param event: to log
+        :param _id: job _id
+        """
+        self.trigger(name=event, channel=core4.const.QUEUE_CHANNEL,
+                     data={"_id": _id, "queue": await self.get_queue_count()})
+
 
 class JobPost(JobHandler):
     """
@@ -607,7 +610,7 @@ class JobPost(JobHandler):
         can be posted.
 
         Methods:
-            POST /jobs - enqueue job
+            POST /enqueue - enqueue job
 
         Parameters:
             args (dict): arguments to be passed to the job
@@ -653,8 +656,8 @@ class JobPost(JobHandler):
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
-            >>> name = "core4.queue.helper.DummyJob"
-            >>> rv = post(url + "/jobs?name=" + name, headers=h)
+            >>> name = "core4.queue.helper.job.example.DummyJob"
+            >>> rv = post(url + "/enqueue?name=" + name, headers=h)
             >>> rv.json()
             {
                 '_id': '5bdb554fde8b6925830b8b39',
@@ -687,7 +690,10 @@ class JobPost(JobHandler):
         try:
             job = self.queue.job_factory(name, **args)
         except Exception:
-            raise HTTPError(404, "cannot instantiate job [%s]", name)
+            exc_info = sys.exc_info()
+            raise HTTPError(404, "cannot instantiate job [%s]: %s:\n%s",
+                            name, repr(exc_info[1]),
+                            traceback.format_exception(*exc_info))
         if not await self.user.has_job_exec_access(name):
             raise HTTPError(403)
         job.__dict__["attempts_left"] = job.__dict__["attempts"]

@@ -229,7 +229,11 @@ class CoreApiContainer(CoreBase):
                 kwargs = rule.kwargs.copy()
             # md5 includes prefix and route
             sorted_kwargs = pformat(kwargs)
-            hash_base = "{}:{}".format(cls.qual_name(), sorted_kwargs)
+            if issubclass(cls, CoreBaseHandler):
+                qn = cls.qual_name()
+            else:
+                qn = ".".join([cls.__module__, cls.__name__])
+            hash_base = "{}:{}".format(qn, sorted_kwargs)
             md5_route = hashlib.md5(hash_base.encode("utf-8")).hexdigest()
             kwargs["_route_id"] = md5_route
             if routing not in unique:
