@@ -29,5 +29,6 @@ VENV_PYTHON = VENV + "/bin/python"
 VENV_PIP = VENV + "/bin/pip3"
 
 QUEUE_CHANNEL = "queue"
+EVENT_CHANNEL = "job"
 DEFAULT_CHANNEL = "system"
 MESSAGE_CHANNEL = "message"

@@ -182,7 +182,7 @@ class EventHandler(CoreWebSocketHandler):
         author = doc.get("author", None)
         data = json_encode(doc)
         for waiter, interest in cls.waiters.items():
-            if ((channel == core4.const.QUEUE_CHANNEL)
+            if ((channel == core4.const.EVENT_CHANNEL)
                     or (author != waiter.current_user)):
                 if channel in interest:
                     waiter.write_message(data)
