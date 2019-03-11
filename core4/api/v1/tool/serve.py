@@ -48,7 +48,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         routes = []
         roots = set()
         RootContainer.routes = {}
-        RootContainer.application = {}
+        RootContainer.containers = []
         for container_cls in list(args) + [RootContainer]:
             container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
@@ -68,10 +68,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     root + ".*"), application)
             )
             roots.add(root)
+            RootContainer.containers.append(container_obj)
         return tornado.routing.RuleRouter(routes)
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
-              routing=None, on_exit=None, **kwargs):
+              routing=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -99,9 +100,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
         name = name or "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
-        self.hostname = core4.util.node.get_hostname()
         self.port = port or self.config.api.port
-        self.address = address or self.hostname
+        self.address = address or core4.util.node.get_hostname()
+        self.hostname = core4.util.node.get_hostname()
 
         http_args = {}
         cert_file = self.config.api.crt_file
@@ -140,8 +141,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             raise
         finally:
             self.unregister()
-            if on_exit is not None:
-                on_exit()
+            for container in RootContainer.containers:
+                container.on_exit()
+
 
     async def heartbeat(self):
         """
@@ -266,7 +268,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.reset_handler()
 
     def serve_all(self, filter=None, port=None, address=None, name=None,
-                  reuse_port=True, routing=None, on_exit=None, **kwargs):
+                  reuse_port=True, routing=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -317,5 +319,4 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             clist.append(cls)
         if scope:
             self.serve(*clist, port=port, name=name, address=address,
-                       reuse_port=reuse_port, routing=routing, on_exit=on_exit,
-                       **kwargs)
+                       reuse_port=reuse_port, routing=routing, **kwargs)

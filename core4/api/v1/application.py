@@ -262,6 +262,9 @@ class CoreApiContainer(CoreBase):
         self.started = core4.util.node.now()
         return app
 
+    def on_exit(self):
+        pass
+
 
 class CoreApplication(tornado.web.Application):
     """
@@ -374,3 +377,4 @@ class RootContainer(CoreApiContainer):
         })
     ]
     routes = {}
+    containers = []

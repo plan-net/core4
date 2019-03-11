@@ -74,6 +74,9 @@ class CoreApiServer(CoreApiContainer):
         (r'/event/?', EventHandler, None),
     ]
 
+    def on_exit(self):
+        event.change_stream.close()
+
 
 if __name__ == '__main__':
-    serve(CoreApiServer, on_exit=close_watchers)
+    serve(CoreApiServer)
