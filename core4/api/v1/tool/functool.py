@@ -69,16 +69,18 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
 
     :param args: class dervived from :class:`.CoreApiContainer`
     :param port: to serve, defaults to core4 config ``api.port``
-    :param address: IP address or hostname.  If it's a hostname, the server
-                    will listen on all IP addresses associated with the name.
-                    Address may be an empty string or None to listen on all
-                    available interfaces.
+    :param address: IP address to listen to.  Address may be an empty string or
+                    None to listen on all available interfaces.
     :param name: to identify the server, defaults to hostname
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
     :param routing: URL including the protocol and hostname of the server,
-                    defaults to the protocol depending on SSL settings, the
-                    node hostname or address and port
+                    which will be used to link the APIs and widgets. The
+                    difference between ``address`` and ``routing`` are: address
+                    is the listening device. Routing represents the URL under
+                    which the server is to be contacted and might be used if a
+                    proxy routes the requests. To map the proxy behavior this
+                    parameter is supposed to reflect the proxy setting.
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve(*args, port=port, address=address, name=name,

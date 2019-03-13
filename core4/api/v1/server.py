@@ -79,4 +79,5 @@ class CoreApiServer(CoreApiContainer):
 
 
 if __name__ == '__main__':
-    serve(CoreApiServer)
+    serve(CoreApiServer, routing="localhost:5001")
+

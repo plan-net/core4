@@ -157,6 +157,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             update={"$set": {
                 "heartbeat": None,
                 "hostname": self.hostname,
+                "routing": self.routing,
                 "protocol": self.protocol,
                 "address": self.address,
                 "port": self.port,

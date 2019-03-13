@@ -121,7 +121,8 @@ class QueryMixin:
                     "pid": 1,
                     "hostname": 1,
                     "port": 1,
-                    "protocol": 1
+                    "protocol": 1,
+                    "routing": 1
                 }
             },
             {"$sort": {"kind": 1, "_id": 1}}

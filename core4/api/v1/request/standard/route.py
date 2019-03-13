@@ -100,8 +100,7 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
             },
 
         ]
-        nodes = ["{}://{}:{}".format(n["protocol"], n["hostname"], n["port"])
-                 for n in await self.get_daemon_async(kind="app")]
+        nodes = [n["routing"] for n in await self.get_daemon_async(kind="app")]
         data = []
         seen = {}
 
