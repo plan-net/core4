@@ -10,10 +10,10 @@ All entries are in the form:
     Michael Rau <m-rau>
     
 ## Contributors:
-    Alioun Diagne <>
+    Alioun Diagne <Alioun>
     Markus Kral <MarkusKral>
     Michael Rau <m-rau>
-    Olha Todorashko <>
+    Olha Todorashko <OlhaTodorashko>
     
 ## Sponsors:
     Mediaplus <https://www.mediaplus.com>
