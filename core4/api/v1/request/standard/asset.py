@@ -12,10 +12,10 @@ from tornado.web import StaticFileHandler, HTTPError
 
 import core4
 import core4.const
-from core4.api.v1.request.main import CoreRequestHandler, CoreEtagMixin
+from core4.api.v1.request.main import CoreRequestHandler
 
 
-class CoreAssetHandler(CoreRequestHandler, StaticFileHandler, CoreEtagMixin):
+class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
     """
     The static asset handler delivers assets based on
     :class:`.CoreRequestHandler` static folder settings and the specified

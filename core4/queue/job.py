@@ -11,7 +11,7 @@ This module delivers the :class:`.CoreJob`.
 import hashlib
 import json
 import os
-
+from pprint import pformat
 import datetime as dt
 
 import core4.base.cookie
@@ -385,9 +385,8 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
         self.overload_args(**kwargs)
 
         if self.args:
-            js = json.dumps(self.args, sort_keys=True)
+            js = pformat(self.args)
             self._hash = hashlib.md5(js.encode("utf-8")).hexdigest()
-
         self.identifier = self._id
         self._frozen_ = True
 

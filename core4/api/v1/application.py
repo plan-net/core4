@@ -223,10 +223,17 @@ class CoreApiContainer(CoreBase):
         for rule in self.iter_rule():
             routing = rule.regex.pattern
             cls = rule.target
-            kwargs = rule.kwargs or {}
+            if rule.kwargs is None:
+                kwargs = {}
+            else:
+                kwargs = rule.kwargs.copy()
             # md5 includes prefix and route
             sorted_kwargs = pformat(kwargs)
-            hash_base = "{}:{}".format(cls.qual_name(), sorted_kwargs)
+            if issubclass(cls, CoreBaseHandler):
+                qn = cls.qual_name()
+            else:
+                qn = ".".join([cls.__module__, cls.__name__])
+            hash_base = "{}:{}".format(qn, sorted_kwargs)
             md5_route = hashlib.md5(hash_base.encode("utf-8")).hexdigest()
             kwargs["_route_id"] = md5_route
             if routing not in unique:
@@ -254,6 +261,9 @@ class CoreApiContainer(CoreBase):
             RootContainer.routes[rule.route_id].append((app, self, rule))
         self.started = core4.util.node.now()
         return app
+
+    def on_exit(self):
+        pass
 
 
 class CoreApplication(tornado.web.Application):
@@ -367,3 +377,4 @@ class RootContainer(CoreApiContainer):
         })
     ]
     routes = {}
+    containers = []

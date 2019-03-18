@@ -14,13 +14,14 @@ core4 :class:`.CoreStaticFileHandler`, based on :mod:`tornado`
 import os
 
 import tornado.routing
-from core4.api.v1.request.main import CoreBaseHandler, CoreEtagMixin
 from tornado.web import StaticFileHandler
+
+from core4.api.v1.request.main import CoreBaseHandler
 
 DEFAULT_FILENAME = "index.html"
 
 
-class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler, CoreEtagMixin):
+class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
     """
     core4 static file handler extends argument parsing with
     :class:`.CoreApiContainer` and processes the

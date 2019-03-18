@@ -452,7 +452,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             except ImportError:
                 core4.service.introspect.exec_project(
                     doc["name"], KILL, job_id=str(doc["_id"]))
-            except:
+            except Exception:
                 raise
 
     def pid_exists(self, doc):
@@ -479,7 +479,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         CPU is computed via CPU-Utilization/(idle-time+io-wait) free RAM is in
         MB.
         """
-        # psutil already accounts for idle and io-wait (idle and waiting for IO), we are not interested in both.
+        # psutil already accounts for idle and io-wait (idle and waiting for
+        # IO), we are not interested in both.
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))

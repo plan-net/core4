@@ -25,6 +25,7 @@ import core4.service.introspect
 import core4.service.setup
 import core4.util.node
 import core4.util.tool
+import core4.const
 from core4.base import CoreBase
 from core4.queue.helper.job.base import CoreAbstractJobMixin
 from core4.queue.job import STATE_PENDING
@@ -660,12 +661,13 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.logger.error("done execution with [%s] after [%d] sec.",
                          job.state, runtime)
 
-    def make_stat(self, event, *args):
+    def make_stat(self, event, _id):
+        # todo: requires updated documentation
         """
         Collects current job state counts from ``sys.queue`` and inserts a
-        record into ``sys.stat``.
+        record into ``sys.event``.
 
-        The following events are tracked in ``sys.stat``:
+        The following events are tracked in ``sys.event``:
 
         * ``enqueue_job``
         * ``request_start_job``
@@ -684,12 +686,5 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         * ``kill_job``
         * ``remove_job``
         """
-        if not "sys_stat" in self.__dict__:
-            coll = self.config.sys.stat
-            self.sys_stat = pymongo.collection.Collection(
-                coll.connection[coll.database], coll.collection,
-                write_concern=pymongo.write_concern.WriteConcern(w=0))
-        state = self.get_queue_count()
-        state["timestamp"] = core4.util.node.now().timestamp()
-        state['event'] = {'name': event, 'data': args}
-        self.sys_stat.insert_one(state)
+        self.trigger(name=event, channel=core4.const.QUEUE_CHANNEL,
+                     data={"_id": _id, "queue": self.get_queue_count()})

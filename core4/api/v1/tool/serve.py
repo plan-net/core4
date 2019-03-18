@@ -23,6 +23,7 @@ import core4.service
 import core4.util.node
 from core4.api.v1.application import RootContainer
 from core4.base import CoreBase
+from core4.api.v1.request.main import CoreBaseHandler
 from core4.logger import CoreLoggerMixin
 from core4.util.data import rst2html
 
@@ -47,7 +48,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         routes = []
         roots = set()
         RootContainer.routes = {}
-        RootContainer.application = {}
+        RootContainer.containers = []
         for container_cls in list(args) + [RootContainer]:
             container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
@@ -67,6 +68,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     root + ".*"), application)
             )
             roots.add(root)
+            RootContainer.containers.append(container_obj)
         return tornado.routing.RuleRouter(routes)
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
@@ -88,6 +90,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param routing: URL including the protocol and hostname of the server,
                         defaults to the protocol depending on SSL settings, the
                         node hostname or address and port
+        :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         self.startup = core4.util.node.mongo_now()
@@ -97,9 +100,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
         name = name or "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
-        self.hostname = core4.util.node.get_hostname()
         self.port = port or self.config.api.port
-        self.address = address or self.hostname
+        self.address = address or core4.util.node.get_hostname()
+        self.hostname = core4.util.node.get_hostname()
 
         http_args = {}
         cert_file = self.config.api.crt_file
@@ -138,6 +141,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             raise
         finally:
             self.unregister()
+            for container in RootContainer.containers:
+                container.on_exit()
+
 
     async def heartbeat(self):
         """
@@ -151,6 +157,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             update={"$set": {
                 "heartbeat": None,
                 "hostname": self.hostname,
+                "routing": self.routing,
                 "protocol": self.protocol,
                 "address": self.address,
                 "port": self.port,
@@ -197,34 +204,35 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             for (app, container, specs) in routes:
                 pattern = specs.matcher.regex.pattern
                 cls = specs.target
-                args = specs.target_kwargs
-                html = rst2html(str(cls.__doc__))
-                doc = dict(
-                    routing=self.routing,
-                    args=str(args),
-                    author=cls.author,
-                    container=container.qual_name(),
-                    description=html["body"],
-                    error=html["error"],
-                    icon=cls.icon,
-                    project=cls.get_project(),
-                    protected=cls.protected,
-                    protocol=self.protocol,
-                    qual_name=cls.qual_name(),
-                    tag=cls.tag,
-                    title=cls.title,
-                    version=cls.version(),
-                    started_at=self.startup
-                )
-                if args:
-                    for attr in cls.propagate:
-                        if attr in doc:
-                            doc[attr] = args.get(attr, doc[attr])
-                lookup = (self.hostname, self.port, md5_route)
-                if lookup not in update:
-                    doc["pattern"] = []
-                    update[lookup] = doc
-                update[lookup]["pattern"].append((specs.name, pattern))
+                if issubclass(cls, CoreBaseHandler):
+                    args = specs.target_kwargs
+                    html = rst2html(str(cls.__doc__))
+                    doc = dict(
+                        routing=self.routing,
+                        args=str(args),
+                        author=cls.author,
+                        container=container.qual_name(),
+                        description=html["body"],
+                        error=html["error"],
+                        icon=cls.icon,
+                        project=cls.get_project(),
+                        protected=cls.protected,
+                        protocol=self.protocol,
+                        qual_name=cls.qual_name(),
+                        tag=cls.tag,
+                        title=cls.title,
+                        version=cls.version(),
+                        started_at=self.startup
+                    )
+                    if args:
+                        for attr in cls.propagate:
+                            if attr in doc:
+                                doc[attr] = args.get(attr, doc[attr])
+                    lookup = (self.hostname, self.port, md5_route)
+                    if lookup not in update:
+                        doc["pattern"] = []
+                        update[lookup] = doc
+                    update[lookup]["pattern"].append((specs.name, pattern))
             self.reset_handler()
             coll = self.config.sys.handler
             for lookup, doc in update.items():
@@ -274,9 +282,13 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         will listen on all IP addresses associated with the
                         name.  Address may be an empty string or None to listen
                         on all  available interfaces.
+        :param name: to identify the server
         :param reuse_port: tells the kernel to reuse a local socket in
                            ``TIME_WAIT`` state, defaults to ``True``
-        :param name: to identify the server
+        :param routing: URL including the protocol and hostname of the server,
+                        defaults to the protocol depending on SSL settings, the
+                        node hostname or address and port
+        :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         self.setup_logging()

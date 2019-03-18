@@ -10,8 +10,9 @@ Implements core4 standard :class:`RouteHandler` delivering core4 API/endpoint
 collection.
 """
 from bson.son import SON
-from core4.const import ENTER_URL, HELP_URL, CARD_URL
+
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.const import ENTER_URL, HELP_URL, CARD_URL
 from core4.queue.query import QueryMixin
 from core4.util.pager import CorePager
 
@@ -77,7 +78,7 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
         filter_by = [{"started_at": {"$ne": None}}]
         if query is not None:
             filter_by.append(query)
-        coll = self.config.sys.handler.connect_async()
+        coll = self.config.sys.handler
 
         pipeline = [
             {
@@ -99,8 +100,7 @@ class RouteHandler(CoreRequestHandler, QueryMixin):
             },
 
         ]
-        nodes = ["{}://{}:{}".format(n["protocol"], n["hostname"], n["port"])
-                 for n in self.get_daemon(kind="app")]
+        nodes = [n["routing"] for n in await self.get_daemon_async(kind="app")]
         data = []
         seen = {}
 

@@ -1,18 +1,14 @@
-import multiprocessing
 from pprint import pprint
 
 import pytest
-import requests
-import time
-import tornado.gen
 from tornado.ioloop import IOLoop
 
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
-from tests.api.test_response import setup
 from tests.api.test_render import HttpServer
+from tests.api.test_response import setup
 
 _ = setup
 
@@ -192,7 +188,6 @@ def test_404(http):
     assert rv.status_code == 404
     rv = http.get("/tests/abc")
     assert rv.status_code == 404
-
 
 
 if __name__ == '__main__':

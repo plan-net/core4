@@ -1,5 +1,5 @@
 DEFAULT:
-  mongo_url: ~  # must be set
+  mongo_url: mongodb://localhost:27017
   mongo_database: test
   python: ~
 
@@ -9,19 +9,19 @@ sys:
   app: !connect mongodb://sys.app
   conf: ~
   cookie: !connect mongodb://sys.cookie
+  event: !connect mongodb://sys.event
   handler: !connect mongodb://sys.handler
   job: !connect mongodb://sys.job
   journal: !connect mongodb://sys.journal
   lock: !connect mongodb://sys.lock
   log: !connect mongodb://sys.log
   queue: !connect mongodb://sys.queue
-  quota: !connect mongodb://sys.quota
+  # quota: !connect mongodb://sys.quota
   role: !connect mongodb://sys.role
-  stat: !connect mongodb://sys.stat
+  setting: !connect mongodb://sys.setting
   stdout: !connect mongodb://sys.stdout
   userdb: user!
   worker: !connect mongodb://sys.worker
-  setting: !connect mongodb://sys.setting
 
 # system folders
 folder:
@@ -34,7 +34,7 @@ folder:
 
 # logging setup
 logging:
-  stderr: DEBUG
+  stderr: INFO
   stdout: ~
   mongodb: ~
   format: "%(asctime)s - %(levelname)-8s [%(qual_name)s/%(identifier)s] %(message)s"
@@ -42,6 +42,12 @@ logging:
     capacity: 1000
   extra: ~
   write_concern: 0
+  size: 549755813888  # 0.5tB
+
+event:
+  write_concern: 0
+  size: 549755813888  # 0.5tB
+  queue_interval: 1
 
 # base class defaults
 base:
@@ -73,7 +79,7 @@ daemon:
 worker:
   virtual_environment_home: ~
   avg_stats_secs: 60.0
-  min_free_ram: 256
+  min_free_ram: 32
   max_cpu: 99
   moving_avg_seconds: 30
   execution_plan:
@@ -90,7 +96,7 @@ api:
   setting:
     debug: True
     compress_response: False
-    cookie_secret: ~  # must be set
+    cookie_secret: a not so secret cookie secret  # must be set
   crt_file: ~
   key_file: ~
   allow_origin: "*"
@@ -110,7 +116,7 @@ api:
     secret: secret
   admin_username: admin
   admin_realname: admin user
-  admin_password: ~  # must be set
+  admin_password: admin  # must be set
   user_rolename: standard_user
   user_realname: standard user group
   user_permission:
@@ -127,4 +133,4 @@ email:
 
 user_setting:
    _general:
-     language: DE
+     language: EN

@@ -152,7 +152,6 @@ class RoleHandler(CoreRequestHandler):
             GET /roles - user/role listing
 
         Arguments:
-            test: hello world
             per_page (int): number of jobs per page
             page (int): requested page (starts counting with ``0``)
             sort (str): sort field

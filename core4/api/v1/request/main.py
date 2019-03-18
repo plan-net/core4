@@ -11,16 +11,13 @@ core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
 import base64
 import datetime
 import os
-import time
 import traceback
 
-import core4.const
-import core4.error
-import core4.util.node
 import dateutil.parser
 import jwt
 import mimeparse
 import pandas as pd
+import time
 import tornado.escape
 import tornado.gen
 import tornado.httputil
@@ -28,31 +25,24 @@ import tornado.iostream
 import tornado.routing
 import tornado.template
 from bson.objectid import ObjectId
+from tornado.web import RequestHandler, HTTPError
+
+import core4.const
+import core4.error
+import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode
 from core4.util.pager import PageResult
-from tornado.web import RequestHandler, HTTPError
 
 tornado.escape.json_encode = json_encode
+try:
+    ARG_DEFAULT = tornado.web.RequestHandler._ARG_DEFAULT
+except:
+    ARG_DEFAULT = tornado.web._ARG_DEFAULT
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
 MB = 1024 * 1024
-
-
-class CoreEtagMixin:
-
-    def compute_etag(self):
-        """
-        Sets the ``Etag`` header based on static url version.
-
-        See inherited method from :class:`tornado.web.StaticFileHandler`. This
-        method skips Etag computation for special endpoints, i.e. ``card`` and
-        ``help``.
-        """
-        if self.absolute_path is None:
-            return None
-        return super().compute_etag()
 
 
 class CoreBaseHandler(CoreBase):
@@ -83,6 +73,7 @@ class CoreBaseHandler(CoreBase):
     supported_types = [
         "text/html",
     ]
+    concurr = True
 
     def __init__(self, *args, **kwargs):
         """
@@ -218,9 +209,9 @@ class CoreBaseHandler(CoreBase):
                 token = auth_header[7:]
                 source = ("token", "Auth Bearer")
         else:
-            token = self.get_argument("token", default=None)
-            username = self.get_argument("username", default=None)
-            password = self.get_argument("password", default=None)
+            token = self.get_argument("token", default=None, remove=True)
+            username = self.get_argument("username", default=None, remove=True)
+            password = self.get_argument("password", default=None, remove=True)
             if token is not None:
                 source = ("token", "args")
             elif username and password:
@@ -362,7 +353,7 @@ class CoreBaseHandler(CoreBase):
         parts = self.request.path.split("/")
         md5_route = parts[-1]
         (app, container, specs) = self.application.find_md5(md5_route)
-        self.absolute_path = None
+        self.absolute_path = "xcard"
         if self.enter_url is None:
             self.enter_url = "/".join([core4.const.ENTER_URL, md5_route])
         self.help_url = "/".join([core4.const.HELP_URL, md5_route])
@@ -378,8 +369,8 @@ class CoreBaseHandler(CoreBase):
         """
         self.request.method = "GET"
         parts = self.request.path.split("/")
-        md5_route_id = parts[-1]
-        self.absolute_path = None
+        # md5_route_id = parts[-1]
+        self.absolute_path = "xenter"
         return self.enter()
 
     def card(self):
@@ -601,7 +592,7 @@ class CoreBaseHandler(CoreBase):
         return mimeparse.best_match(
             self.supported_types, self.request.headers.get("accept", ""))
 
-    def get_argument(self, name, as_type=None, *args, **kwargs):
+    def get_argument(self, name, as_type=None, remove=False, *args, **kwargs):
         """
         Returns the value of the argument with the given name.
 
@@ -625,9 +616,11 @@ class CoreBaseHandler(CoreBase):
         :param name: variable name
         :param default: value
         :param as_type: Python variable type
+        :param remove: remove parameter from request arguments, defaults to
+            ``False``
         :return: value
         """
-        kwargs["default"] = kwargs.get("default", self._ARG_DEFAULT)
+        kwargs["default"] = kwargs.get("default", ARG_DEFAULT)
         ret = self._get_argument(name, source=self.request.arguments,
                                  *args, strip=False, **kwargs)
         if as_type and ret is not None:
@@ -663,6 +656,8 @@ class CoreBaseHandler(CoreBase):
                 raise core4.error.ArgumentParsingError(
                     "parameter [%s] expected as_type [%s]", name,
                     as_type.__name__) from None
+        if remove and name in self.request.arguments:
+            del self.request.arguments[name]
         return ret
 
 
@@ -841,6 +836,8 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             try:
                 body_arguments = json_decode(self.request.body.decode("UTF-8"))
             except:
+                self.logger.warning("failed to parse body arguments",
+                                    exc_info=True)
                 pass
             else:
                 for k, v in body_arguments.items():
@@ -1007,8 +1004,8 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         :return: fully qualified url path (str) including protocl, hostname,
             port and path
         """
-        handler = self.config.sys.handler.connect_async()
-        worker = self.config.sys.worker.connect_async()
+        handler = self.config.sys.handler
+        worker = self.config.sys.worker
         timeout = self.config.daemon.alive_timeout
         found = []
         pipeline = [
