@@ -61,7 +61,7 @@ class BuildCore4(build_py):
                         full_path = os.path.join(path, root, filename)
                         self.package_data[""].append(full_path)
                 os.chdir(package_dir)
-        os.chdir(start_dir)
+            os.chdir(start_dir)
         build_py.run(self)
 
 
