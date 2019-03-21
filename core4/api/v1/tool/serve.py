@@ -101,7 +101,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         name = name or "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
         self.port = port or self.config.api.port
-        self.address = address or core4.util.node.get_hostname()
+        self.address = address or "0.0.0.0"
         self.hostname = core4.util.node.get_hostname()
 
         http_args = {}
@@ -127,9 +127,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         server = tornado.httpserver.HTTPServer(self.router, **http_args)
         server.bind(self.port, address=self.address, reuse_port=reuse_port)
         server.start()
-        self.logger.info("open %ssecure socket on port [%d]",
+        self.logger.info("open %ssecure socket on port [%s:%d]",
                          "" if http_args.get("ssl_options") else "NOT ",
-                         self.port)
+                         self.address, self.port)
         self.register()
         tornado.ioloop.IOLoop.current().spawn_callback(self.heartbeat)
         try:
