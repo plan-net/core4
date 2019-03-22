@@ -95,7 +95,6 @@ class EventHandler(CoreWebSocketHandler):
         All other or undefined message types are ignored.
 
         :param message: str representing valid json
-        {"type": "message", "text": "hello world"}
         """
         try:
             request = json_decode(message)
