@@ -1,8 +1,8 @@
-###########
-about core4
-###########
+#############
+about core4os
+#############
 
-The history of core reaches back to 2003 when the first contact with a
+The history of core4os reaches back to 2003 when the first contact with a
 distributed and scalable reporting system has been made for the Deutsche Börse
 AG.
 
@@ -86,7 +86,7 @@ So what is core? Some say
 
 we say: it is a swiss knife. Not by itself but through the power of python and
 the expansive eco system python brings with it.
-And core4 delivers this swiss army knife with protectors to be used by the not
+And core4os delivers this swiss army knife with protectors to be used by the not
 inexperienced data engineer who focuses on data, by the data scientist who
 focuses on analysis, by the Front End developer who focuses on the usability.
 It is a platform with agility in mind to collaborate with the business user who
