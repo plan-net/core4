@@ -1,5 +1,5 @@
 core4 - THE PYTHON INSIGHT PLATFORM
-###############################################################################
+###################################
 
 Develop, Operate and Collaborate on Data and Analytics
 
