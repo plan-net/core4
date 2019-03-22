@@ -17,19 +17,24 @@ analysis aspect to answer single, specific business questions. If there is a
 need for broader business applications, it is usually left to other teams like
 backend developers, frontend developers and system administrators.
 
-core4 fills this gap and enables the community to easily integrate their
+core4os fills this gap and enables the community to easily integrate their
 processing chain of creating such insights into a fault-tolerant distributed
 system and thereby automating the whole process without having to think about
 underlying software or hardware.
 
-The core4 framework takes care of everything that is essential to using and
+The core4os framework takes care of everything that is essential to using and
 operating such a distributed system, from central logging and configuration to
 deployment, all this while scaling to the 100ths of servers.
 
 
+.. note:: For brevity and in line with the package name of *core4os* this
+          documentation uses both terms core4os and core4 interchangibly
+          refering to the same platform: *core4os*.
+
+
 Continue reading with
 
-* a high-level :doc:`feature` of core4
+* a high-level :doc:`feature` of core4os
 
 * concrete :doc:`example/index` when and how to use core
 
