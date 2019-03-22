@@ -3,6 +3,8 @@ DEFAULT:
   mongo_database: test
   python: ~
 
+core4_origin: ssh://git.bi.plan-net.com/srv/git/core4.git
+
 # system collections
 sys:
   admin: !connect mongodb://admin/dummy
