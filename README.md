@@ -1,5 +1,5 @@
-core4 - THE PYTHON INSIGHT PLATFORM
-###################################
+core4os - THE PYTHON INSIGHT PLATFORM
+=====================================
 
 Develop, Operate and Collaborate on Data and Analytics
 
@@ -10,12 +10,12 @@ As of today, modern Data-Scientists use a variety of python- and R-modules both
 Open- and Closed-Source to create relevant insights based on multiple sets of 
 data from many different sources.
 
-core4 enables these Data-Scientists and other users to easily integrate their 
+core4os enables these Data-Scientists and other users to easily integrate their 
 processing chain of creating such insights into a fault-tolerant distributed 
 system and thereby automating the whole process without having to think about 
 underlying software or hardware.
 
-core4 takes care of everything that is essential to using and operating such a 
+core4os takes care of everything that is essential to using and operating such a 
 distributed system, from central logging and configuration to deployment, all 
 this while scaling to the 100ths of servers. This allows for rapid progress 
 from development to production deployment and even enables the developer to 
@@ -24,9 +24,9 @@ therefore provides a shortcut for creating beautiful frontend applications.
 
 
 prerequisite installation guide
-===============================
+-------------------------------
 
-core4 has on the following prerequisites:
+core4os has on the following prerequisites:
 
 * Linux flavour operating system
 * Python 3.5
@@ -94,12 +94,12 @@ Test settings and MongoDB connection now with:
     mongo --username=core --password=654321 --authenticationDatabase admin
 
     
-core4 installation 
-==================
+core4os installation 
+--------------------
 
-Clone and install core4 framework in a Python virtual environment:
+Clone and install core4os framework in a Python virtual environment:
 
-    # clone core4
+    # clone core4os
     git clone ssh://git.bi.plan-net.com/srv/git/core4.git
 
     # enter clone
@@ -116,9 +116,9 @@ Clone and install core4 framework in a Python virtual environment:
 
 
 further reads
-=============
+-------------
 
-Find latest core4 documentation at http://bi.plan-net.com/core4 or build the
+Find latest core4os documentation at http://bi.plan-net.com/core4 or build the
 sphinx documentation yourself with
 
     cd core4
@@ -128,7 +128,7 @@ sphinx documentation yourself with
 
 
 3rd party systems and licenses
-==============================
+------------------------------
 
 All external packages used within core4 have their license placed within the ``LICENSES`` directory.
 
