@@ -219,4 +219,9 @@ processed::
       'name': 'summary'}]
 
 
-.. note::
+.. note:: The event ``summary`` is time based. The job summary is created every
+          second. In contrast to this all other events in channel ``queue`` are
+          based on jobs' state changes. For this reason the ``summary`` events
+          will not reflect all state changes in ``sys.queue`` and the same
+          process flow will not produce the same event flow if executed
+          multiple times.
