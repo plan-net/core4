@@ -29,7 +29,6 @@
    R
    parallel
    api
-   widget
    config
    logging
    data
