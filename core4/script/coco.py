@@ -21,7 +21,7 @@ Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
-  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--filter=FILTER...]
+  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [--filter=FILTER...]
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -98,11 +98,11 @@ def worker(name):
     w.start()
 
 
-def app(name, port, filter, routing=None):
+def app(name, port, filter, routing=None, address=None):
     core4.logger.mixin.logon()
     if port:
         port = int(port)
-    core4.api.v1.tool.functool.serve_all(name=name, port=port,
+    core4.api.v1.tool.functool.serve_all(name=name, port=port, address=address,
                                          filter=filter or None,
                                          routing=routing)
 
@@ -456,7 +456,7 @@ def main():
         worker(args["IDENTIFIER"])
     elif args["--application"]:
         app(args["IDENTIFIER"], args["--port"], args["--filter"],
-            args["--routing"])
+            args["--routing"], args["--address"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
