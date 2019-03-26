@@ -115,7 +115,7 @@ user database. These databases adhere to the naming convention
 
 To access the database an access token has to be created.
 See :ref:`access_manager`. Use this token similar to a password to connect to
-your personal user databbase::
+your personal user database::
 
     mongo \
         --host [hostname] \

@@ -74,7 +74,7 @@ Use ``chist`` command line tool to display logging output:
   polling period is 1 second. Set the polling period with an argument, i.e.
   ``chist -f 15`` to follow in 15 seconds periods.
 
-Default maching is case-insensitive. Change this behavior for options text
+Default matching is case-insensitive. Change this behavior for options text
 filters with ``--case-sensitive``.
 
 See more details with ``chist --help``
