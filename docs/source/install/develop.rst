@@ -55,7 +55,7 @@ This represents the bare project directory structure. Hidden directories
 ``.git``, ``.repos``, and ``.venv`` are available, too.
 
 In ``mypro/.repos`` resides the git repository. Directory ``mypro/.git``
-contains your git loacal working tree. The Python virtual environment is in
+contains your git local working tree. The Python virtual environment is in
 ``mypro/.venv``.
 
 These directories are only created if they do not exist and unless your

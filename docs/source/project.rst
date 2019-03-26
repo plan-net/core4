@@ -68,7 +68,7 @@ project repository location
 For seamless deployment in any runtime environment the project needs to be
 stored and synchronised with git versioning system. :ref:`project_creation`
 automatically creates a bare git repository. This repository is linked to your
-projedt sources.
+project sources.
 
 This repository carries an initial commit, a branch ``master`` and a branch
 ``develop``.

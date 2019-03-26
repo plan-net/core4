@@ -64,7 +64,7 @@ The structure of the permission scheme for MongoDB database access is::
 Please note that the database specification requires an exact match. No
 patterns or regular expressions are allowed, here. The permission scheme only
 supports read-only database access. Additional requirements cannot be defined
-with core4. These specicial access rights have to be managed outside of the
+with core4. These special access rights have to be managed outside of the
 core4 framework. To grant read-only access to the default core4 system database
 a user requires the following permission::
 
