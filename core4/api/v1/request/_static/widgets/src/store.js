@@ -2,7 +2,9 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
 import api from '@/api'
-import { clone } from 'pnbi-base/core4/helper'
+import {
+  clone
+} from 'pnbi-base/core4/helper'
 import router from '@/router'
 Vue.use(Vuex)
 
@@ -16,32 +18,50 @@ export default new Vuex.Store({
     boardsList: [],
 
     ready: false,
-    activeBoard: { name: null,
-      widgets: [] }
+    activeBoard: {
+      name: null,
+      widgets: []
+    }
   },
   actions: {
-    async getWidgets ({ commit, dispatch }) {
+    async getWidgets ({
+      commit,
+      dispatch
+    }) {
       dispatch('setLoading', true)
       const widgets = await api.getWidgets()
       commit('set_widgets', widgets)
       dispatch('setLoading', false)
     },
-    updateWidgets ({ commit, dispatch }, payload) {
+    updateWidgets ({
+      commit,
+      dispatch
+    }, payload) {
       commit('update_widgets', payload)
     },
 
-    async getBoards ({ commit, dispatch }) {
+    async getBoards ({
+      commit,
+      dispatch
+    }) {
       const boards = await api.getBoards()
       dispatch('setBoards', boards)
     },
-    async setBoards ({ commit, dispatch }, boards) {
+    async setBoards ({
+      commit,
+      dispatch
+    }, boards) {
       if (boards.length) {
         commit('set_boards', boards)
         commit('set_active_board', boards[0].name)
       }
       commit('set_ready', true)
     },
-    setActiveBoard ({ commit, dispatch, getters }, name) {
+    setActiveBoard ({
+      commit,
+      dispatch,
+      getters
+    }, name) {
       if (name) {
         commit('set_active_board', name)
       } else {
@@ -50,7 +70,11 @@ export default new Vuex.Store({
       }
       router.push('/')
     },
-    async createBoard ({ commit, dispatch, getters }, board) {
+    async createBoard ({
+      commit,
+      dispatch,
+      getters
+    }, board) {
       try {
         await api.createBoard({
           board,
@@ -64,50 +88,71 @@ export default new Vuex.Store({
         console.log(err)
       }
     },
-    async updateBoard ({ commit, dispatch, getters }, name) {
+    async updateBoard ({
+      commit,
+      dispatch,
+      getters
+    }, name) {
       commit('update_board_name', name)
-      api.updateBoard({ boards: getters.boardsSet })
+      api.updateBoard({
+        boards: getters.boardsSet
+      })
     },
-    updateBoardWidgets ({ commit, dispatch, getters }, widgets) {
+    updateBoardWidgets ({
+      commit,
+      dispatch,
+      getters
+    }, widgets) {
       commit('update_board_widgets', widgets)
-      api.updateBoard({ boards: getters.boardsSet })
+      api.updateBoard({
+        boards: getters.boardsSet
+      })
     },
-    async deleteBoard ({ commit, dispatch, getters, state }, board) {
-      try {
-        await api.deleteBoard({
-          board,
-          boards: getters.boardsSet
-        })
-        if (state.activeBoard === board.name) {
-          const index = state.boardsList.indexOf(board.name)
-          let active = 0
-          if (index < state.boardsList.length - 1) {
-            active = index + 1
-          }
-          if (state.boardsList.length > 1) {
-            commit('set_active_board', state.boardsList[active])
-          } else {
-            commit('set_active_board', null)
-          }
+    deleteBoard ({
+      commit,
+      dispatch,
+      getters,
+      state
+    }, board) {
+      commit('delete_board', board)
+      commit('set_active_board', state.boardsList[0])
+      /* if (state.activeBoard.name === board.name) {
+        const index = state.boardsList.indexOf(board.name)
+        let active = 0
+        if (index < state.boardsList.length - 1) {
+          active = index + 1
         }
-
-        commit('delete_board', board)
-      } catch (err) {
-        console.log(err)
+        if (state.boardsList.length > 1) {
+          commit('set_active_board', state.boardsList[active])
+        } else {
+          commit('set_active_board', null)
+        }
       }
+ */
+      api.updateBoard({
+        boards: getters.boardsSet
+      })
     },
-    addToBoard ({ commit, dispatch, getters }, widgetId) {
+    addToBoard ({
+      commit,
+      dispatch,
+      getters
+    }, widgetId) {
       const board = getters.activeBoard
       if (board.widgets.includes(widgetId)) {
         return
       }
       commit('add_to_board', widgetId)
       const boards = getters.boardsSet
-      api.boards({
+      api.updateBoard({
         boards
       })
     },
-    removeFromBoard ({ commit, dispatch, getters }, widgetId) {
+    removeFromBoard ({
+      commit,
+      dispatch,
+      getters
+    }, widgetId) {
       commit('remove_from_board', widgetId)
       const boards = getters.boardsSet
       api.updateBoard({
@@ -124,16 +169,19 @@ export default new Vuex.Store({
       state.boardsList = payload.map(val => val.name)
     },
     add_board (state, payload) {
-      state.boardsObj = Object.assign(state.boardsObj, { [payload.name]: payload })
-      console.log(state.boardsObj)
+      state.boardsObj = Object.assign(state.boardsObj, {
+        [payload.name]: payload
+      })
       state.boardsList.push(payload.name)
     },
     set_active_board (state, payload) {
       try {
         state.activeBoard = state.boardsObj[payload]
       } catch (err) {
-        state.activeBoard = { name: null,
-          widgets: [] }
+        state.activeBoard = {
+          name: null,
+          widgets: []
+        }
       }
     },
     update_board_widgets (state, widgets) {
@@ -195,8 +243,7 @@ export default new Vuex.Store({
       return state.boardsObj
     },
     activeBoard (state) {
-      if (state.activeBoard.name != null) {
-        // return clone(state.boardsObj[state.activeBoard])
+      if ((state.activeBoard || {}).name != null) {
         return clone(state.activeBoard)
       }
       return null

@@ -6,7 +6,6 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "test:e2e": "vue-cli-service test:e2e",
     "preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo core4/api/v1/request/_static/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git pull origin mmr.widgets && cd ../../ && cp -R node_modules/_pnbi-base/core4/api/v1/request/_static/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
   },
   "dependencies": {

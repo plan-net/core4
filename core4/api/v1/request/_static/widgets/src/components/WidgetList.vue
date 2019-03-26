@@ -89,7 +89,7 @@
 
             </v-list-tile-content>
             <v-list-tile-action>
-              <v-tooltip>
+              <v-tooltip left>
                 <v-btn
                   @click="$router.push({ name: 'widget', params: { widgetId: item._id } })"
                   slot="activator"
@@ -104,7 +104,7 @@
                 </v-btn>
                 <span>Open widget</span>
               </v-tooltip>
-              <v-tooltip>
+              <v-tooltip left>
                 <v-btn
                   @click="$router.push({ name: 'help', params: { widgetId: item._id } })"
                   icon
@@ -202,15 +202,8 @@ export default {
   height: 72px;
 }
 </style>
-<style scoped lang="scss">
-/* .drag {
-  cursor: grab;
-} */
-/* (Optional) Apply a "closed-hand" cursor during drag operation. */
-/* .drag:active {
-  cursor: grabbing;
-} */
 
+<style scoped lang="scss">
 .widget-list {
   padding-top: 65px;
 }
@@ -282,6 +275,16 @@ export default {
   .navigation-drawer--mini-variant {
     box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2),
       0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12) !important;
+  }
+}
+</style>
+<style lang="scss">
+.theme--dark {
+  /deep/ .dnd-grid-box.placeholder {
+    border: 1px dashed #fff !important;
+  }
+  /deep/ .dnd-grid-box.dragging {
+    opacity: 0.5 !important;
   }
 }
 </style>
