@@ -30,7 +30,7 @@ Open up a shell and execute the following commands to install core4::
     pip install -e ".[tests]"
 
 
-You have now a core4 environment and can create and develop your project. Chose
+You have now a core4 environment and can create and develop your project. Choose
 project name *"mypro"* and create your test project with::
 
     cd ~/core4.dev
@@ -58,8 +58,8 @@ In ``mypro/.repos`` resides the git repository. Directory ``mypro/.git``
 contains your git local working tree. The Python virtual environment is in
 ``mypro/.venv``.
 
-These directories are only created if they do not exist and unless your
-worktree is connected to a remove git repository. In this case, ``.git``
+These directories are only created if they do not exist and your
+worktree is not connected to a remove git repository. In this case, ``.git``
 carries the connection to the remote repository and .repos does not exist.
 
 Now is the time to create your local core4 configuration in
@@ -120,7 +120,7 @@ worker.
     coco --halt
 
 
-Now developement. Let's create our own test job. Switch to the git develop
+Now development. Let's create our own test job. Switch to the git develop
 branch following the `gitflow`_::
 
     git checkout develop
@@ -214,22 +214,22 @@ This rather long and at first sight complicated workflow is straight forward if
 you follow the `gitflow`_ concept. As a recap this summary outlines the most
 relevant steps of this guideline so far.
 
-#. create home for core4 source and projects.
+#. Create home for core4 source and projects.
 
-#. manage multiple dedicated Python virtual environments.
+#. Manage multiple dedicated Python virtual environments.
 
-   * one for core4
-   * one for each project
-   * use ``coco --init`` as the helper tool to initialise the environment
-   * enter and develop in project virtual environments
+   * One for core4,
+   * one for each project.
+   * Use ``coco --init`` as the helper tool to initialise the environment.
+   * Enter and develop in project virtual environments.
 
-#. manage your ``local.yaml`` for MongoDB connection, logging and core4 project
+#. Manage your ``local.yaml`` for MongoDB connection, logging and core4 project
    residence.
 
-#. develop with your favorite IDE, execute, and enqueue start jobs.
+#. Develop with your favorite IDE, execute, and enqueue start jobs.
 
-   * use git branching feature
-   * push your changes into develop branch
+   * Use the git branching feature.
+   * Push your changes into the develop branch.
 
 #. Align and build new release with ``coco --build``.
 

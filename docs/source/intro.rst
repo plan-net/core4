@@ -4,18 +4,18 @@ Introduction
 
 As of today, data scientists and modern data engineers use a variety of
 `Python`_- and `R-Project`_-modules both open- and closed-source to create
-relevant insights based on data from many different sources. This ecosystem is
+relevant insights based on data from various sources. This ecosystem is
 fueled by computational libraries like `Numpy`_, `Pandas`_, `Scikit-Learn`_ and
 a wealth of libraries for visualization, and interactive notebooks like
-`Bokeh`_ and `Jupyter`_ (make a side step on `The Incredible Growth of Python`_
-and `Why Python is Growing So Quickly`_ if you like).
+`Bokeh`_ and `Jupyter`_.
 
 However these packages do *not* support the data engineer or data scientist in
 workflow automation, insight distribution, collaboration, and packaging.
 Instead the Python data and analytics scene is more focused on the ad hoc
 analysis aspect to answer single, specific business questions. If there is a
-need for broader business applications, it is usually left to other teams like
-backend developers, frontend developers and system administrators.
+need for broader business applications, incorporating more than a single
+business question, it is usually left to other teams like backend developers,
+frontend developers and system administrators.
 
 core4 fills this gap and enables the community to easily integrate their
 processing chain of creating such insights into a fault-tolerant distributed
