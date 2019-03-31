@@ -1,0 +1,58 @@
+.application.theme--dark {
+  /* Change Autocomplete styles in Chrome*/
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--v-secondary-lighten5);
+    -webkit-box-shadow: none;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  &.v-toolbar {
+
+  }
+  &.core-navigation-container{
+    background-color: darken(#232323, 1)
+  }
+  .core-background {
+    background: linear-gradient(120deg, #232323 55%, darken(#232323, 1) 55%);
+  }
+// theme top navbar
+  .circle-container .v-icon{
+    color: var(--v-secondary-lighten5) !important;
+  }
+  .pnbi-user .logout-button img{
+    opacity: 0.5;
+  }
+  .pnbi-user .profile-button .v-avatar{
+    background-color: var(--v-secondary-lighten5);
+  }
+  .pnbi-user .profile-button .v-avatar span{
+    background-color: var(--v-secondary-lighten5);
+    color: var(--v-secondary-lighten1);
+  }
+  .pnbi-user .theme-btn{
+    color: var(--v-secondary-lighten5);
+  }
+  h2.app-title{
+    color: var(--v-secondary-lighten5);
+  }
+// theme top navbar end
+  &.application {
+    background-color: #232323 !important;
+  }
+  .spacer.core-dotted {
+    margin-left: 12px;
+    margin-right: 12px;
+    opacity: .2;
+    height: 10px;
+    background: radial-gradient(ellipse at center, var(--v-secondary-lighten5) 0%, var(--v-secondary-lighten5) 30%, transparent 30%);
+    background-size: 20px 20px;
+    background-repeat: repeat-x;
+    background-position: 5px center;
+  }
+}
