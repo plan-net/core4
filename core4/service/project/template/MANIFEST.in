@@ -1,0 +1,2 @@
+# specify any non Python files (not *.py) with the following instruction
+# recursive-include {{ package_name }}/ *
