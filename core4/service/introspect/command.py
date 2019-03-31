@@ -44,3 +44,11 @@ RESTART = """
 from core4.queue.main import CoreQueue
 CoreQueue()._exec_restart("{job_id:s}")
 """
+
+#: command used to launch app server in project
+SERVE_ALL = """
+from core4.api.v1.tool.functool import serve_all
+from core4.logger.mixin import logon
+logon()
+serve_all({param})
+"""

@@ -408,12 +408,13 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             folders[f] = self.config.get_folder(f)
         return folders
 
-    def list_project(self):
+    def list_project(self, filter=[]):
         """
-        Returns meta information abount installed and accessible core4
+        Returns meta information about installed and accessible core4
         projects. This method uses :meth:`.iter_all` method spawned in core4
         project context to provide details about each project.
 
+        :param filter: list of projects in scope
         :return: generator of tuple with project name and project meta data
         """
         home = self.config.folder.home
@@ -421,6 +422,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             currpath = os.curdir
             if os.path.exists(home) and os.path.isdir(home):
                 for project in os.listdir(home):
+                    if filter and project not in filter:
+                        continue
                     fullpath = os.path.join(home, project)
                     if os.path.isdir(fullpath):
                         pypath = os.path.join(home, project, VENV_PYTHON)
@@ -495,7 +498,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             "daemon": list(self.iter_daemon())
         }
 
-    def exec_project(self, name, command, wait=True, *args, **kwargs):
+    def exec_project(self, name, command, wait=True, comm=True, *args,
+                     **kwargs):
         """
         Execute command using the Python interpreter of the project's virtual
         environment.
@@ -503,7 +507,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         :param name: qual_name to extract project name
         :param command: Python commands to be executed
         :param wait: wait and return STDOUT (``True``) or return immediately
-                     (defaults to ``False``).
+                     (defaults to ``True``).
+        :param comm: wait and pass STDOUT (defaults to ``True``).
         :param args: to be injected using Python method ``.format``
         :param kwargs: to be injected using Python method ``.format``
 
@@ -526,21 +531,30 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             os.chdir(os.path.join(home, project))
         cmd = command.format(*args, **kwargs)
         if wait:
-            pipe = subprocess.PIPE
+            if comm:
+                stdout = subprocess.PIPE
+            else:
+                stdout = None
         else:
-            pipe = subprocess.DEVNULL
-        proc = subprocess.Popen([python_path, "-c", cmd], stdout=pipe,
-                                stderr=pipe)
+            stdout = subprocess.DEVNULL
+        env = os.environ
+        if "PYTHONPATH" in env:
+            del env["PYTHONPATH"]
+        self.logger.debug("execute with [%s]:\n%s", python_path, cmd)
+        proc = subprocess.Popen([python_path, "-c", cmd], stdout=stdout,
+                                stderr=subprocess.STDOUT, env=env)
         os.chdir(currdir)
-        if wait:
-            (stdout, stderr) = proc.communicate()
-            out = stdout.decode("utf-8").strip()
-            if out == "":
-                return "null"
-            return out
+        if wait or comm:
+            if comm:
+                (stdout, stderr) = proc.communicate()
+                out = stdout.decode("utf-8").strip()
+                if out == "":
+                    return "null"
+                return out
+            proc.wait()
 
 
-def exec_project(name, command, wait=True, *args, **kwargs):
+def exec_project(name, command, wait=True, comm=True, *args, **kwargs):
     """
     helper method to spawn commands in the context of core4 project
     environment.
@@ -555,4 +569,4 @@ def exec_project(name, command, wait=True, *args, **kwargs):
     :return: STDOUT if ``wait is True``, else nothing is returned
     """
     intro = CoreIntrospector()
-    return intro.exec_project(name, command, wait, *args, **kwargs)
+    return intro.exec_project(name, command, wait, comm, *args, **kwargs)
