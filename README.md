@@ -119,8 +119,8 @@ Clone and install core4 framework in a Python virtual environment:
 further reads
 =============
 
-Find latest core4 documentation at http://bi.plan-net.com/core4 or build the
-sphinx documentation yourself with
+Find latest core4 documentation at hhttps://core4os.readthedocs.io/en/latest/ 
+or build the sphinx documentation yourself with
 
     cd core4
     pip install -e ".[tests]" 
