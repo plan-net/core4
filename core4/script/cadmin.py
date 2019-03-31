@@ -9,8 +9,8 @@
 cadmin - core-4 deployment utililty.
 
 Usage:
-  cadmin install [--reset] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--reset] [--force] [PROJECT]
+  cadmin install [--reset] [--web] REPOSITORY PROJECT
+  cadmin upgrade [--test] [--reset] [--web] [--force] [PROJECT]
   cadmin uninstall PROJECT
 
 Arguments:
@@ -18,10 +18,11 @@ Arguments:
   PROJECT     project name
 
 Options:
-  -r --reset                   reset existing project root
-  -t --test                    dry-run
-  -h --help                    show this screen
-  -v --version                 show version
+  -r --reset    reset existing project root
+  -t --test     dry-run
+  -w --web      build and install web apps
+  -h --help     show this screen
+  -v --version  show version
 """
 
 import sys
@@ -33,6 +34,7 @@ if sys.version_info < (3, 5):
 # ensure pip >= 18.1
 import pip
 
+#: minimum required pip version
 PIP_VERSION = (18, 1)
 if tuple([int(i) for i in pip.__version__.split(".")]) < PIP_VERSION:
     sys.exit("requires pip version 18.1 or higher, "
@@ -43,38 +45,56 @@ from os.path import join, exists
 from docopt import docopt
 from core4.base.main import CoreBase
 import core4.const
-from subprocess import Popen, DEVNULL
-import pkg_resources
+from subprocess import Popen, DEVNULL, PIPE, STDOUT
+import datetime
 import sh
 import shutil
 import re
 
+#: file to save the project latest commit and repository source
 INSTALL_PROJECT = "project.txt"
-INSTALL_REQUIRES = "install_requires.txt"
+
+LOGFILE = os.path.join(os.path.abspath("."), "cadmin.log")
+if os.path.exists(LOGFILE):
+    os.unlink(LOGFILE)
 
 
-class CoreAdminInstaller(CoreBase):
+class InstallMixin():
+    def print(self, msg):
+        logfile = open(LOGFILE, "a", encoding="utf-8")
+        logfile.write(msg + "\n")
+        logfile.close()
+        print(msg)
 
-    def __init__(self, project, repository=None):
+
+class CoreAdminInstaller(CoreBase, InstallMixin):
+
+    def __init__(self, project, repository=None, web=False):
         super().__init__()
         self.project = project
         self.home = self.config.folder.home
         self.project_root = join(self.home, project)
+        self.remote = join(self.project_root, "remote")
         self.venv_root = join(self.project_root, core4.const.VENV)
         self.venv_pip = join(self.project_root, core4.const.VENV_PIP)
+        self.venv_python = join(self.project_root, core4.const.VENV_PYTHON)
         self.repository = repository
         self.project_requirement = join(self.venv_root, INSTALL_PROJECT)
         self.env = os.environ
-        if "PYTHONPATH" in self.env:
-            print("remove PYTHONPATH={}".format(self.env["PYTHONPATH"]))
-            del self.env["PYTHONPATH"]
+        self.env["PYTHONPATH"] = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "installer")
+        self.web = web
 
     def reset(self):
         if exists(self.project_root):
-            print("removing [{}]".format(self.project_root))
+            self.print("removing [{}]".format(self.project_root))
             shutil.rmtree(self.project_root)
 
     def check_for_install(self):
+        """
+        Verify ``folder.home`` is defined, project does not exist,
+        and no virtual environment exists, yet.
+        """
         if self.home is None or not exists(self.home):
             raise SystemExit("core4 config [folder.home] not set or None")
         if exists(self.project_root):
@@ -85,45 +105,113 @@ class CoreAdminInstaller(CoreBase):
                 self.venv_root))
 
     def install(self):
-        curdir = os.curdir
-        repository = self.project + " @ " + "git+" + self.repository
-        requirement = next(pkg_resources.parse_requirements(repository))
-        print("creating project root [{}]".format(self.project_root))
+        """
+        Create project folder, install environment, upgrade pip and install
+        from local or remote repository.
+        """
+        self.print("installing [{}]".format(self.project))
         os.makedirs(self.project_root)
-        os.chdir(self.project_root)
-        print("installing Python virtual environment in [{}]".format(
-            self.venv_root))
-        ret = Popen(["python3", "-m", "venv", self.venv_root], env=self.env,
-                    stdout=DEVNULL).wait()
-        assert ret == 0
-        os.chdir(self.project_root)
-        print("upgrading [pip]")
+        self.print("  created project root [{}]".format(self.project_root))
+        self.install_environment()
+        self.upgrade_pip()
+        if os.path.exists(self.repository):
+            commit_hash = self.pip_install_local(self.repository)
+        else:
+            commit_hash = self.pip_install_remote(self.repository)
+            self.pip_install_local(self.remote)
+        self.write_commit(commit_hash)
+
+    def write_commit(self, commit_hash):
+        """
+        Writes the commit hash and repository location into
+        ``.venv/project.txt``.
+        """
+        with open(self.project_requirement, "w", encoding="utf-8") as fh:
+            fh.write(commit_hash + " " + self.repository)
+
+    def upgrade_pip(self):
+        """
+        Upgrade pip to minimum required version.
+        """
+        self.print("  upgrading [pip]")
         ret = Popen(
             [join(self.venv_root, "bin/pip3"), "install", "--upgrade",
              "pip>={:s}".format(".".join([str(i) for i in PIP_VERSION]))
              ], stdout=DEVNULL, env=self.env).wait()
         assert ret == 0
-        self.pip_install(requirement.url)
-        os.chdir(curdir)
-        print("\ndone.\n")
 
-    def pip_install(self, url):
-        print("installing [{}]".format(self.project))
-        ret = Popen([self.venv_pip, "install", "--upgrade", url],
-                    env=self.env).wait()
+    def install_environment(self):
+        """
+        Installs the Python virtual environment.
+        """
+        self.print("  installing Python virtual environment in [{}]".format(
+            self.venv_root))
+        ret = Popen(["python3", "-m", "venv", self.venv_root], env=self.env,
+                    stdout=DEVNULL).wait()
         assert ret == 0
-        (url, marker) = self.parse_repository(url)
-        commit_hash = self.get_commit(url, marker)
-        print("commit hash [{}] at [{}] with [{}]".format(
-            commit_hash, url, marker))
-        with open(self.project_requirement, "w", encoding="utf-8") as fh:
-            fh.write(commit_hash + " " + url[4:] + "@" + marker)
 
-    def get_commit(self, url, marker):
-        stdout = sh.git(["ls-remote", url[4:], marker])
+    def pip_install_remote(self, repository):
+        """
+        Clone and checkout appropriate version from remote git repository.
+        """
+        self.print("  installing from remote [{}]".format(repository))
+        (url, marker) = self.parse_repository(repository)
+        sh.git(["clone", url, self.remote])
+        sh.git(["-C", self.remote, "checkout", marker])
+        commit_hash = self.get_remote_commit(url, marker)
+        self.print("  commit [{}] at [{}] with [{}]".format(
+            commit_hash, url, marker))
+        return commit_hash
+
+    def pip_upgrade_remote(self, repository):
+        """
+        Upgrade the local worktree in ``./remote``.
+        """
+        self.print("  upgrading from remote [{}]".format(repository))
+        (url, marker) = self.parse_repository(repository)
+        sh.git(["-C", self.remote, "reset", "--hard", "HEAD"])
+        sh.git(["-C", self.remote, "checkout", marker])
+        sh.git(["-C", self.remote, "fetch", "--all"])
+        sh.git(["-C", self.remote, "pull"])
+        commit_hash = self.get_remote_commit(url, marker)
+        self.print("  commit [{}] at [{}] with [{}]".format(
+            commit_hash, url, marker))
+        return commit_hash
+
+    def pip_install_local(self, source):
+        """
+        Build the webapps distributions if requested and upgrade the Python
+        package.
+        """
+        os.chdir(source)
+        if self.web:
+            self.popen(self.venv_python, "setup.py", "build_web")
+        os.chdir(source)
+        self.popen(self.venv_pip, "-v", "install", "--upgrade", ".")
+        commit_hash = self.get_local_commit()
+        self.print("  commit [{}] at [{}]".format(
+            commit_hash, source))
+        return commit_hash
+
+    def get_remote_commit(self, url, marker):
+        """
+        Retrieve latest commit from a remote repository.
+        """
+        stdout = sh.git(["ls-remote", url, marker])
         return stdout.split()[0].strip()
 
+    def get_local_commit(self):
+        """
+        Retrieve the latest commit from a local worktree.
+        """
+        stdout = sh.git(["--no-pager", "log", "-1", "--pretty=%H"])
+        return stdout.strip()
+
     def check_for_upgrade(self):
+        """
+        Verify ``folder.home`` is defined, project does exists,
+        and virtual environment exists.
+        """
         if self.home is None or not exists(self.home):
             raise SystemExit("core4 config [folder.home] not set or None")
         if not exists(self.project_root):
@@ -132,6 +220,47 @@ class CoreAdminInstaller(CoreBase):
         if not exists(self.venv_root):
             raise SystemExit("virtual environment [{}] not found".format(
                 self.venv_root))
+
+    def upgrade(self, test=False, reset=False, force=False):
+        self.print("upgrading [{}]".format(self.project))
+        with open(self.project_requirement, "r", encoding="utf-8") as fh:
+            body = fh.read().strip()
+        (local_commit, repos) = body.split()
+        if os.path.exists(repos):
+            os.chdir(repos)
+            self.print("  repository at [{}]".format(repos))
+            remote_commit = self.get_local_commit()
+        else:
+            (url, marker) = self.parse_repository(repos)
+            pass_url = re.sub("\://(.+)\:(.+)@", "://:\g<1>:****@", url)
+            self.print("  repository at [{}] with [{}]".format(
+                pass_url, marker))
+            remote_commit = self.get_remote_commit(url, marker)
+        self.print("  local commit [{}] {}".format(
+            local_commit, "changed to [{}]".format(remote_commit)
+            if local_commit != remote_commit else "no changes"))
+        if force or local_commit != remote_commit:
+            if not test:
+                webapps_file = os.path.join(
+                    os.path.dirname(self.venv_python), "..", "webapps.dist")
+                if os.path.exists(webapps_file):
+                    self.web = True
+                if force or reset:
+                    self.repository = repos
+                    self.reset()
+                    self.install()
+                else:
+                    if os.path.exists(repos):
+                        self.print("HERE" * 10)
+                        commit_hash = self.pip_install_local(repos)
+                    else:
+                        commit_hash = self.pip_upgrade_remote(repos)
+                        self.pip_install_local(self.remote)
+                    with open(self.project_requirement, "w",
+                              encoding="utf-8") as fh:
+                        fh.write(commit_hash + " " + repos)
+            return True
+        return False
 
     def parse_repository(self, repository):
         url_match = re.match("(.+?)(@[^\/]+)?$", repository)
@@ -143,64 +272,61 @@ class CoreAdminInstaller(CoreBase):
             requested_version = "master"
         return (url, requested_version)
 
-    def upgrade(self, test=False, reset=False, force=False):
-        with open(self.project_requirement, "r", encoding="utf-8") as fh:
-            body = fh.read().strip()
-        (local_commit, repos) = body.split()
-        (url, marker) = self.parse_repository("git+" + repos)
-        pass_url = re.sub("\://(.+)\:(.+)@", "://:\g<1>:****@", url)
-        print("repository at [{}] with [{}]".format(pass_url, marker))
-        remote_commit = self.get_commit(url, marker)
-        print("  local commit [{}] {}".format(
-            local_commit, "changed to [{}]".format(remote_commit)
-            if local_commit != remote_commit else "no changes"))
-        if force or local_commit != remote_commit:
-            if not test:
-                if force or reset:
-                    self.repository = repos
-                    self.reset()
-                    self.install()
-                else:
-                    self.pip_install("git+" + repos)
-            return True
-        return False
+    def popen(self, *args):
+        proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
+        logfile = open(LOGFILE, "a", encoding="utf-8")
+        for line in proc.stdout:
+            out = line.decode("utf-8")
+            logfile.write(out)
+            if (out.strip()
+                    and (not out.startswith(" ")
+                         or out.strip().startswith("core4.setup: "))):
+                print("  " + out.strip())
+        ret = proc.wait()
+        logfile.close()
+        assert ret == 0
 
 
-class CoreAutoUpgrade(CoreBase):
+class CoreAutoUpgrade(CoreBase, InstallMixin):
 
-    def upgrade(self, test=False, reset=False, force=False):
-        print("folder.home = {}".format(self.config.folder.home))
+    def upgrade(self, test=False, reset=False, force=False, web=False):
+        self.print("folder.home = {}".format(self.config.folder.home))
         upgrades = []
         for project in os.listdir(self.config.folder.home):
-            print("upgrading [{}]".format(project))
-            admin = CoreAdminInstaller(project)
+            admin = CoreAdminInstaller(project, web=web)
             if admin.upgrade(test, reset, force):
                 upgrades.append(project)
         if upgrades:
-            print("\nupgrades: {}".format(" ".join(upgrades)))
+            self.print("upgrades: {}".format(" ".join(upgrades)))
         else:
-            print("\nno upgrades required")
+            self.print("no upgrades required")
+
 
 def run(args):
+    t0 = datetime.datetime.now()
     if args["install"]:
-        installer = CoreAdminInstaller(args["PROJECT"], args["REPOSITORY"])
+        installer = CoreAdminInstaller(args["PROJECT"], args["REPOSITORY"],
+                                       args["--web"])
         if args["--reset"]:
             installer.reset()
         installer.check_for_install()
         installer.install()
     elif args["upgrade"]:
         if args["PROJECT"]:
-            installer = CoreAdminInstaller(args["PROJECT"])
+            installer = CoreAdminInstaller(args["PROJECT"], web=args["--web"])
             installer.check_for_upgrade()
             installer.upgrade(args["--test"], args["--reset"], args["--force"])
         else:
             installer = CoreAutoUpgrade()
-            installer.upgrade(args["--test"], args["--reset"], args["--force"])
+            installer.upgrade(args["--test"], args["--reset"], args["--force"],
+                              args["--web"])
     elif args["uninstall"]:
         installer = CoreAdminInstaller(args["PROJECT"])
         installer.reset()
     else:
         raise SystemExit("nothing to do.")
+    runtime = datetime.datetime.now() - t0
+    print("done in %s.\n" % (runtime))
 
 
 def main():

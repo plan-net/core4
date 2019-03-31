@@ -20,6 +20,7 @@ from tornado import gen
 import core4.const
 import core4.error
 import core4.service
+import core4.service.introspect
 import core4.util.node
 from core4.api.v1.application import RootContainer
 from core4.base import CoreBase

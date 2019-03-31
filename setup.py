@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import os
-import re
-from subprocess import check_call
+from setuptools import find_packages
 
-from setuptools import setup, find_packages
+try:
+    from core4.setup import setup
+except:
+    from core4.script.installer.core4.setup import setup
+
+from subprocess import check_call
 from setuptools.command.test import test as TestCommand
 
 import core4
@@ -21,37 +24,19 @@ class SphinxCommand(TestCommand):
         print("\nopen core4 documentation at docs/build/html/index.html")
 
 
-def package_files(directory, pattern):
-    paths = []
-    for (path, directories, filenames) in os.walk(directory):
-        for filename in filenames:
-            if re.search(pattern, filename):
-                paths.append(os.path.join('..', path, filename))
-    return paths
-
-
 setup(
     name='core4',
     version=core4.__version__,
     author="Michael Rau",
-    author_email="m.rau@plan-net.com",
-    description="CORE4 delivers a unified insights platform from data "
+    author_email="Plan.Net Business Intelligence",
+    description="core4os delivers a unified insights platform from data "
                 "integration, and information/workflow automation to "
                 "web-based business applications.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/m-rau/core4",
-    packages=find_packages(exclude=['docs', 'tests*', 'project', 'demo',
-                                    'example', 'other']),
-    package_data={
-        '':
-            ["core4.yaml"]
-            + package_files("core4/service/project/template/", "^.+$")
-            + package_files("core4/api/v1/request/_static/", "^.+$")
-            + package_files("core4/api/v1/request/standard/template/", "^.+$")
-    },
-    setup_requires=[
-    ],
+    packages=find_packages(exclude=['docs', 'tests*', 'project*', 'demo*',
+                                    'example*', 'other*']),
     entry_points={
         'console_scripts': [
             'coco=core4.script.coco:main',
@@ -90,9 +75,6 @@ setup(
         ]
     },
     zip_safe=False,
-    cmdclass={
-        'sphinx': SphinxCommand
-    },
     classifiers=(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -100,5 +82,5 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: POSIX :: Linux"
-    ),
+    )
 )

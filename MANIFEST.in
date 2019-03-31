@@ -1,0 +1,3 @@
+recursive-include core4/service/project/template/ *
+recursive-include core4/api/v1/request/_static/ *
+recursive-include core4/api/v1/request/standard/template/ *

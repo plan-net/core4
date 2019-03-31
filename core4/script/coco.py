@@ -21,7 +21,7 @@ Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
-  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--filter=FILTER...]
+  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [FILTER...]
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -59,28 +59,29 @@ Options:
   -y --yes        Assume yes on all requests.
 """
 
+import datetime
 import json
 import re
 from pprint import pprint
 
-import core4.service.introspect
-import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
 
 import core4
 import core4.api.v1.tool
 import core4.api.v1.tool.functool
+import core4.error
 import core4.logger.mixin
 import core4.queue.job
 import core4.queue.main
 import core4.queue.scheduler
 import core4.queue.worker
 import core4.service.introspect
+import core4.service.introspect
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.introspect.command import ENQUEUE_ARG
+from core4.service.introspect.command import ENQUEUE_ARG, SERVE_ALL
 from core4.service.operation import build, release
 
 QUEUE = core4.queue.main.CoreQueue()
@@ -98,13 +99,38 @@ def worker(name):
     w.start()
 
 
-def app(name, port, filter, routing=None):
+def app(**kwargs):
     core4.logger.mixin.logon()
-    if port:
-        port = int(port)
-    core4.api.v1.tool.functool.serve_all(name=name, port=port,
-                                         filter=filter or None,
-                                         routing=routing)
+    filter = kwargs.get("filter", [])
+    if "port" in kwargs:
+        kwargs["port"] = int(kwargs["port"])
+    if filter is not None:
+        if not isinstance(filter, list):
+            filter = [filter]
+        projects = set()
+        kw_filter = []
+        for i in range(len(filter)):
+            projects.add(filter[i].split(".")[0])
+            kw_filter.append(filter[i])
+            if not filter[i].endswith("."):
+                filter[i] += "."
+        if len(projects) > 1:
+            raise core4.error.Core4UsageError(
+                "you must not serve applications from different projects")
+        kwargs["filter"] = kw_filter
+        param = []
+        for p in ["name", "port", "address", "routing", "filter"]:
+            val = kwargs.get(p, None)
+            if isinstance(val, str):
+                val = '"{}"'.format(val)
+            else:
+                val = "{}".format(str(val))
+            param.append("{}={}".format(p, val))
+        core4.service.introspect.exec_project(projects.pop(), SERVE_ALL,
+                                              comm=False,
+                                              param=", ".join(param))
+    else:
+        core4.api.v1.tool.functool.serve_all(**kwargs)
 
 
 def scheduler(name):
@@ -186,7 +212,7 @@ def listing(*state):
     if rec:
         fmt = "{:24s} {:8s} {:4s} {:>4s} {:4s} {:7s} {:6s} " \
               "{:19s} {:19s} {:11s} {:%d} {:s}" % (
-            mxworker)
+                  mxworker)
         print(
             fmt.format(
                 "_id", "state", "flag", "pro", "prio", "attempt", "user",
@@ -455,8 +481,8 @@ def main():
     elif args["--worker"]:
         worker(args["IDENTIFIER"])
     elif args["--application"]:
-        app(args["IDENTIFIER"], args["--port"], args["--filter"],
-            args["--routing"])
+        app(args["IDENTIFIER"], args["--port"], args["FILTER"],
+            args["--routing"], args["--address"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
@@ -500,4 +526,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    #main()
+    app(filter=["home", "home.a"], port=5010)
