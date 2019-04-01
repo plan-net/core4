@@ -1,19 +1,24 @@
 {
   "name": "core-widgets",
   "version": "0.1.0",
+  "core4": {
+    "build_command" : [
+      "yarn install",
+      "yarn build"
+    ],
+    "dist": "./dist"
+  },
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo core4/api/v1/request/_static/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git pull origin mmr.widgets && cd ../../ && cp -R node_modules/_pnbi-base/core4/api/v1/request/_static/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
+    "preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo webapps/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git pull origin mmr.webapps && cd ../../ && cp -R node_modules/_pnbi-base/webapps/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
   },
   "dependencies": {
     "@dattn/dnd-grid": "^0.0.14",
     "pnbi-base": "file:node_modules/pnbi-base",
-    "vue-drag-drop": "^1.1.4",
-    "vue-grid-layout": "^2.3.4",
-    "vuedraggable": "^2.19.2"
+    "vue-drag-drop": "^1.1.4"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",
