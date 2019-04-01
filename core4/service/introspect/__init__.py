@@ -498,7 +498,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             "daemon": list(self.iter_daemon())
         }
 
-    def exec_project(self, name, command, wait=True, comm=True, *args,
+    def exec_project(self, name, command, wait=True, comm=False, *args,
                      **kwargs):
         """
         Execute command using the Python interpreter of the project's virtual
@@ -547,14 +547,16 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if wait or comm:
             if comm:
                 (stdout, stderr) = proc.communicate()
-                out = stdout.decode("utf-8").strip()
-                if out == "":
-                    return "null"
-                return out
+                if stdout:
+                    out = stdout.decode("utf-8").strip()
+                    if out == "":
+                        return "null"
+                    return out
+                return "null"
             proc.wait()
 
 
-def exec_project(name, command, wait=True, comm=True, *args, **kwargs):
+def exec_project(name, command, wait=True, comm=False, *args, **kwargs):
     """
     helper method to spawn commands in the context of core4 project
     environment.
