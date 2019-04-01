@@ -3,12 +3,18 @@ from setuptools import find_packages
 try:
     from core4.setup import setup
 except:
-    from core4.script.installer.core4.setup import setup
+    try:
+        from core4.script.installer.core4.setup import setup
+    except:
+        from setuptools import setup
 
 import {{ package_name }}
 
 setup(
     name="{{ package_name }}",
     version={{ package_name }}.__version__,
-    packages=find_packages(exclude=['docs*', 'tests*'])
+    packages=find_packages(exclude=['docs*', 'tests*']),
+    install_requires=[
+        "core4 @ git+https://github.com/plan-net/core4.git@develop"
+    ]
 )
