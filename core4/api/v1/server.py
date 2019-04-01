@@ -28,10 +28,10 @@ Start the server with::
 from tornado.ioloop import IOLoop
 
 from core4.api.v1.application import CoreApiContainer
+from core4.api.v1.request.queue.history import JobHistoryHandler
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.queue.job import JobStream
-from core4.api.v1.request.queue.history import JobHistoryHandler
 from core4.api.v1.request.queue.system import SystemHandler
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.standard.access import AccessHandler
@@ -39,6 +39,7 @@ from core4.api.v1.request.standard.event import EventHandler
 from core4.api.v1.request.standard.event import EventHistoryHandler
 from core4.api.v1.request.standard.event import EventWatch
 from core4.api.v1.request.standard.event import QueueWatch
+from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
 
 event = EventWatch()
@@ -72,6 +73,10 @@ class CoreApiServer(CoreApiContainer):
         (r'/access/(.*)', AccessHandler, None, "AccessHandler"),
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
+        (r'/widgets', CoreStaticFileHandler, {
+            "path": "/webapps/widgets/dist",
+            "title": "core widgets"
+        })
     ]
 
     def on_exit(self):
@@ -80,4 +85,3 @@ class CoreApiServer(CoreApiContainer):
 
 if __name__ == '__main__':
     serve(CoreApiServer, routing="localhost:5001", address="0.0.0.0")
-
