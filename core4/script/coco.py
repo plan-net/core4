@@ -126,9 +126,8 @@ def app(**kwargs):
             else:
                 val = "{}".format(str(val))
             param.append("{}={}".format(p, val))
-        core4.service.introspect.exec_project(projects.pop(), SERVE_ALL,
-                                              comm=False,
-                                              param=", ".join(param))
+        core4.service.introspect.exec_project(
+            projects.pop(), SERVE_ALL, comm=False, param=", ".join(param))
     else:
         core4.api.v1.tool.functool.serve_all(**kwargs)
 
@@ -225,7 +224,7 @@ def listing(*state):
     fmtworker = "{:%ds}" % (mxworker)
     for job in rec:
         locked = job["locked"]
-        progress = job["prog"]["value"] or 0
+        progress = job.get("prog", {}).get("value", 0)
         if locked:
             worker = job["locked"]["worker"]
         else:
@@ -372,7 +371,7 @@ def enqueue(qual_name, *args):
     except ImportError:
         stdout = core4.service.introspect.exec_project(
             qual_name[0], ENQUEUE_ARG, qual_name=qual_name[0],
-            args="**%s" % (str(data)))
+            args="**%s" % (str(data)), comm=True)
         job_id = stdout
     except:
         raise

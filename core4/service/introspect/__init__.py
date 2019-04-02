@@ -432,7 +432,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                         if os.path.exists(pypath) and os.path.isfile(pypath):
                             # this is Python virtual environment:
                             out = core4.service.introspect.exec_project(
-                                project, ITERATE)
+                                project, ITERATE, comm=True)
                             yield (project, json.loads(out))
                         else:
                             # no Python virtual environment:
