@@ -62,7 +62,9 @@ setup(
         "docutils>=0.14",
         "Sphinx==1.8.2",
         "sh==1.12.14",
-        "pip>=18.1"
+        "pip>=18.1",
+        "pytz>=2018.9",
+        "tzlocal>=1.5.1"
     ],
     extras_require={
         "tests": [

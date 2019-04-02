@@ -24,8 +24,11 @@ import sphinx.ext.napoleon
 import time
 from docutils import core
 from docutils.parsers.rst.directives import register_directive
+import pytz, tzlocal
 
-LOCAL_TZ = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+
+LOCAL_TZ = pytz.timezone(tzlocal.get_localzone().zone)
+#LOCAL_TZ = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
 NAPOLEON = sphinx.ext.napoleon.Config(
     napoleon_use_param=False,
     napoleon_use_rtype=True,
@@ -55,8 +58,6 @@ def dfutc2local(col):
     :param col: class:`pandas.core.series.Series` without timezone information
     :return: local class:`pandas.core.series.Series` without timezone
     """
-    # todo: is this really really really necessary:
-    #       add UTC info, convert to local timezone, and remove tz info?
     return col.dt.tz_localize("UTC").dt.tz_convert(
         LOCAL_TZ).dt.tz_localize(None)
 
@@ -68,8 +69,6 @@ def utc2local(dt):
     :param col: class:`datetime.datetime` without timezone information
     :return: local class:`datetime.datetime` without timezone
     """
-    # todo: is this really really really necessary:
-    #       add UTC info, convert to local timezone, and remove tz info?
     return dt.replace(tzinfo=datetime.timezone.utc).astimezone(
         LOCAL_TZ).replace(tzinfo=None)
 
@@ -81,9 +80,8 @@ def local2utc(dt):
     :param col: class:`datetime.datetime` without timezone information
     :return: class:`datetime.datetime` without timezone in UTC
     """
-    utc_struct_time = time.gmtime(time.mktime(dt.timetuple()))
-    return datetime.datetime.fromtimestamp(
-        time.mktime(utc_struct_time))
+    local_dt = LOCAL_TZ.localize(dt, is_dst=None)
+    return local_dt.astimezone(pytz.utc)
 
 
 def parse_boolean(value, error=False):
