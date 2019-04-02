@@ -9,7 +9,14 @@ import PnbiBase from 'pnbi-base/core4'
 import THEME from 'pnbi-base/core4/themes/pnbi/theme-vuetify'
 import { i18n } from 'pnbi-base/core4/translations'
 
-Vue.use(VueNativeSock, ' ', { store: store, format: 'json', connectManually: true })
+Vue.use(VueNativeSock, ' ', {
+  store: store,
+  format: 'json',
+  connectManually: true,
+  reconnection: true, // reconnect automatically
+  reconnectionAttempts: 5, // number of reconnection attempts before giving up (Infinity),
+  reconnectionDelay: 3000 // how long to initially wait before attempting a new (1000)
+})
 
 Vue.use(PnbiBase, {
   router,

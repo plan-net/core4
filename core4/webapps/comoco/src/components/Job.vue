@@ -8,10 +8,10 @@
         <!-- Job name and amount of jobs with the same name on queue-->
         <v-flex>
           <v-layout row xs12>
-            <v-flex xs10 class="text-truncate">
+            <v-flex xs9 class="text-truncate">
               <span class="font-weight-bold subheading">{{ job.name | shortName }}</span>
             </v-flex>
-            <v-flex class="text-right" xs2>
+            <v-flex class="text-right" xs3>
               <span class="font-weight-bold title">{{ job.n }}</span>
             </v-flex>
           </v-layout>

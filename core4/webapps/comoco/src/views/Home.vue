@@ -3,7 +3,7 @@
     <v-layout column>
       <v-flex>
         <v-layout row wrap xs12>
-          <v-flex v-for="(states, group) in groupsJobsByStates" :key="group" class="ma-2">
+          <v-flex v-for="(states, group) in groupsJobsByStates" :key="group" class="ma-2 flex-equal-size">
             <board xs12 md4 lg4 xl4 :name="group" :flags="flags" :states="states"></board>
           </v-flex>
         </v-layout>
@@ -35,4 +35,8 @@ export default {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.flex-equal-size {
+  flex: 1 1 0;
+}
+</style>

@@ -4,14 +4,22 @@
     <!-- Group info (counter all of jobs with the same states) -->
     <info :name="name" :states="states"></info>
 
-    <v-layout column class="jobs">
+    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs">
 
       <!-- list of all jobs which belongs to this group -->
-      <v-flex v-for="(job, index) in getJobsByGroupName(name)" :key="index">
+      <v-flex v-for="(job, index) in getJobsByGroupName(name)" :key="index" class="jobs-list-item">
         <job :flags="flags" :job="job"></job>
       </v-flex>
+    </transition-group>
 
-    </v-layout>
+<!--    <v-layout column class="jobs">-->
+
+<!--      &lt;!&ndash; list of all jobs which belongs to this group &ndash;&gt;-->
+<!--      <v-flex v-for="(job, index) in getJobsByGroupName(name)" :key="index">-->
+<!--        <job :flags="flags" :job="job"></job>-->
+<!--      </v-flex>-->
+
+<!--    </v-layout>-->
   </v-container>
 </template>
 
@@ -64,10 +72,32 @@ $scrollbar-track: #4A4A4A;
 $scrollbar-thumb: #5C5C5C;
 $scrollbar-thumb-hover: #737373;
 
-.board {
+.jobs-list-item {
+  /*transition: opacity .5s;*/
+  transition: all 1s;
+}
+
+.jobs-list-enter, .jobs-list-leave-to
+  /* .list-complete-leave-active below version 2.1.8 */ {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+/*.jobs-list-leave-active {*/
+/*  position: absolute;*/
+/*}*/
+
+/*.theme--dark .board {
   background-color: $jobs-board-bck-color;
+}*/
+
+/*.theme--light .board {*/
+/*  background-color: #FFF;*/
+/*}*/
+
+.board {
   min-width: 230px;
-  height: 100%;
+  background-color: $jobs-board-bck-color;
 }
 
 .jobs {
@@ -96,19 +126,27 @@ $scrollbar-thumb-hover: #737373;
   ## Device = 4k and ultra-wides
   ## Screen = > 1904px
 */
-@media (min-width: 1281px)and (max-width: 1904px) {
+@media (min-width: 1904px) {
   .jobs {
     max-height: calc(100vh - 220px); /* -620px size with chart */
+  }
+
+  .board {
+    height: calc(100vh - 100px); /* -620px size with chart */
   }
 }
 
 /*
   ## Device = Desktop
-  ## Screen = 1264 > < 1904px
+  ## Screen = 1281 > < 1904px
 */
 @media (min-width: 1281px)and (max-width: 1904px) {
   .jobs {
     max-height: calc(100vh - 220px); /* -620px size with chart */
+  }
+
+  .board {
+    height: calc(100vh - 100px); /* -620px size with chart */
   }
 }
 
@@ -120,6 +158,10 @@ $scrollbar-thumb-hover: #737373;
   .jobs {
     max-height: calc(100vh - 220px); /* -620px size with chart */
   }
+
+  .board {
+    height: calc(100vh - 100px); /* -620px size with chart */
+  }
 }
 
 /*
@@ -130,6 +172,10 @@ $scrollbar-thumb-hover: #737373;
   .jobs {
     max-height: calc(100vh - 220px);
   }
+
+  .board {
+    height: 100%;
+  }
 }
 
 /*
@@ -139,6 +185,10 @@ $scrollbar-thumb-hover: #737373;
 @media (max-width: 600px) {
   .jobs {
     max-height: calc(100vh - 220px);
+  }
+
+  .board {
+    height: auto;
   }
 }
 </style>

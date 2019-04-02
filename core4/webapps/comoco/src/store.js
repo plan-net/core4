@@ -30,7 +30,7 @@ export default new Vuex.Store({
       state.socket.isConnected = false
     },
     SOCKET_ONERROR (state, event) {
-      // ToDo: try reconnection 5 times then provide an error message
+      // ToDo: add error flow (message, pop-up etc)
       console.error(state, event)
     },
     // default handler called for all methods
@@ -47,6 +47,7 @@ export default new Vuex.Store({
       console.info(state, count)
     },
     SOCKET_RECONNECT_ERROR (state) {
+      // ToDo: add error flow (message, pop-up etc)
       state.socket.reconnectError = true
     }
   },

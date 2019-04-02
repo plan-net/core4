@@ -20,7 +20,8 @@
     "highcharts": "^7.0.3",
     "highcharts-vue": "^1.2.0",
     "pnbi-base": "file:node_modules/pnbi-base",
-    "vue-grid-layout": "^2.3.4"
+    "vue-grid-layout": "^2.3.4",
+    "vue-native-websocket": "2.0.12"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",
@@ -33,7 +34,6 @@
     "eslint-plugin-vue": "^5.0.0",
     "node-sass": "^4.9.0",
     "sass-loader": "^7.0.1",
-    "vue-native-websocket": "2.0.12",
     "vue-template-compiler": "^2.5.21",
     "vuetify": "^1.5.7"
   },

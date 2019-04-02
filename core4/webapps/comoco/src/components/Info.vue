@@ -6,10 +6,10 @@
         <!-- Iterate for all states which belongs to the group and display amount of all jobs with this state  -->
         <v-flex v-for="(state, index) in states" :key="index" :class="`state-${state}`" class="board-groups">
           <v-layout row xs12 class="text-truncate pa-1">
-            <v-flex xs10>
-              <span class="font-weight-bold grey--text">{{ state }}</span>
+            <v-flex xs8>
+              <span class="font-weight-bold grey--text">{{ state }}:</span>
             </v-flex>
-            <v-flex class="text-right" xs2>
+            <v-flex class="text-right" xs4>
               <span class="font-weight-bold grey--text">{{ getStateCounter([state]) }}</span>
             </v-flex>
           </v-layout>
@@ -20,11 +20,11 @@
     <!-- Display the group name and amount of all jobs which belongs to this group  -->
     <v-flex xs12>
       <v-layout row xs12 pa-1>
-        <v-flex xs10>
-          <span class="font-weight-bold headline text-lowercase">{{ name }}</span>
+        <v-flex xs9>
+          <span class="font-weight-bold headline text-lowercase text-truncate">{{ name }}</span>
         </v-flex>
-        <v-flex class="text-right" xs2>
-          <span class="font-weight-bold headline text-lowercase">{{ getStateCounter(states) }}</span>
+        <v-flex class="text-right" xs3>
+          <span class="font-weight-bold headline text-lowercase text-truncate">{{ getStateCounter(states) }}</span>
         </v-flex>
       </v-layout>
     </v-flex>

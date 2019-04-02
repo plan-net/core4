@@ -27,10 +27,9 @@ export default {
   watch: {
     authenticated (newValue, oldValue) {
       // ToDo: check login/logout behavior
+      this.$disconnect()
 
       if (newValue && newValue !== oldValue) {
-        this.$disconnect()
-
         let token = JSON.parse(localStorage.getItem('user'))['token']
         this.$connect(`${WS_BASE_PATH}/v1/event?token=${token}`)
       }
