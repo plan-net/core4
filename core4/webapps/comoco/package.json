@@ -1,0 +1,64 @@
+{
+  "name": "core-widgets",
+  "version": "0.9.0",
+  "private": true,
+  "core4": {
+    "build_command" : [
+      "yarn install",
+      "yarn build --dest dist --modern"
+    ],
+    "dist": "./dist"
+  },
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "test:e2e": "vue-cli-syarnervice test:e2e",
+    "preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo core4/webapps/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git fetch --depth 1 origin develop && git checkout develop && cd ../../ && cp -R node_modules/_pnbi-base/core4/webapps/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
+  },
+  "dependencies": {
+    "highcharts": "^7.0.3",
+    "highcharts-vue": "^1.2.0",
+    "pnbi-base": "file:node_modules/pnbi-base",
+    "vue-grid-layout": "^2.3.4"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.3.0",
+    "@vue/cli-plugin-e2e-cypress": "^3.3.0",
+    "@vue/cli-plugin-eslint": "^3.3.0",
+    "@vue/cli-service": "^3.3.0",
+    "@vue/eslint-config-standard": "^4.0.0",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.8.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "node-sass": "^4.9.0",
+    "sass-loader": "^7.0.1",
+    "vue-native-websocket": "2.0.12",
+    "vue-template-compiler": "^2.5.21",
+    "vuetify": "^1.5.7"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "@vue/standard"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}

@@ -76,6 +76,10 @@ class CoreApiServer(CoreApiContainer):
         (r'/widgets', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
             "title": "core widgets"
+        }),
+        (r'/comoco', CoreStaticFileHandler, {
+            "path": "/webapps/comoco/dist",
+            "title": "comoco"
         })
     ]
 
