@@ -10,7 +10,6 @@
 import inspect
 import json
 import os
-import pickle
 import sys
 from distutils import log
 from subprocess import check_call
@@ -28,6 +27,20 @@ import pip
 if tuple([int(i) for i in pip.__version__.split(".")]) < (18, 1):
     sys.exit("requires pip version 18.1 or higher, "
              "Upgrade with `pip install --upgrade pip`")
+
+WEBDIST = os.path.join(os.path.dirname(sys.executable), "..", "webapps.dist")
+
+
+def write_webdist(webapps):
+    with open(WEBDIST, "w", encoding="utf-8") as fh:
+        json.dump(webapps, fh, indent=2)
+
+
+def read_webdist():
+    if os.path.exists(WEBDIST):
+        with open(WEBDIST, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    return []
 
 
 def read_install_requires(folder):
@@ -71,10 +84,7 @@ class BuildCore4Web(build_py):
                                     "dist": dist,
                                     "command": command
                                 })
-        webapps_file = os.path.join(os.path.dirname(sys.executable), "..",
-                                    "webapps.dist")
-        self.print("writing to [{}]".format(webapps_file))
-        pickle.dump(webapps, open(webapps_file, "wb"))
+        write_webdist(webapps)
 
 
 class BuildCore4(build_py):
@@ -84,33 +94,28 @@ class BuildCore4(build_py):
 
     def run(self):
         start_dir = os.path.abspath(os.curdir)
-        webapps_file = os.path.join(os.path.dirname(sys.executable), "..",
-                                    "webapps.dist")
-        if os.path.exists(webapps_file):
-            self.print("reading from [{}]".format(webapps_file))
-            webapps = pickle.load(open(webapps_file, "rb"))
-            for copy in webapps:
-                self.print(
-                    "build [{}] in [{}] build in [{}]".format(
-                        copy["package"], copy["package_dir"],
-                        copy["build_path"]))
-                os.chdir(copy["package_dir"])
-                os.chdir(copy["build_path"])
-                if os.path.exists(copy["dist"]):
-                    self.print("clean [{}]".format(copy["dist"]))
-                    shutil.rmtree(copy["dist"])
-                for part in copy["command"]:
-                    check_call(part, shell=True)
-                os.chdir(copy["dist"])
-                if copy["package"] not in self.package_data:
-                    self.package_data[copy["package"]] = []
-                for (path, directories, filenames) in os.walk("."):
-                    for filename in filenames:
-                        relname = os.path.join(copy["dist_path"], path,
-                                               filename)
-                        self.print("adding [{}]".format(relname))
-                        self.package_data[copy["package"]].append(relname)
-        # self.print("final {}".format(self.package_data))
+        webapps = read_webdist()
+        for copy in webapps:
+            self.print(
+                "build [{}] in [{}] build in [{}]".format(
+                    copy["package"], copy["package_dir"],
+                    copy["build_path"]))
+            os.chdir(copy["package_dir"])
+            os.chdir(copy["build_path"])
+            if os.path.exists(copy["dist"]):
+                self.print("clean [{}]".format(copy["dist"]))
+                shutil.rmtree(copy["dist"])
+            for part in copy["command"]:
+                check_call(part, shell=True)
+            os.chdir(copy["dist"])
+            if copy["package"] not in self.package_data:
+                self.package_data[copy["package"]] = []
+            for (path, directories, filenames) in os.walk("."):
+                for filename in filenames:
+                    relname = os.path.join(copy["dist_path"], path,
+                                           filename)
+                    self.print("adding [{}]".format(relname))
+                    self.package_data[copy["package"]].append(relname)
         os.chdir(start_dir)
         build_py.run(self)
 
