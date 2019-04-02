@@ -1,8 +1,18 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,700,800');
-@font-face { 
-  font-family: "Poetsen One"; 
-  src: url("../assets/PoetsenOne-Regular.ttf"); 
+@import url('https://fonts.googleapis.com/css?family=Baloo+Bhaina');
+body.core4os{
+  h2.app-title{
+    font-family: 'Baloo Bhaina', cursive !important;
+    padding-top: 8px;
+    font-size: 32px;
   }
+  .bi-headline {
+    font-family: 'Baloo Bhaina', cursive !important;
+    font-size: 36px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+}
 
  body,
 button,
@@ -24,18 +34,7 @@ textarea {
 .v-btn {
   font-weight: 600;
 }
-body.core-iv{
-  h2.app-title{
-    font-family: 'Poetsen One', cursive !important;
-    font-size: 28px;
-  }
-  .bi-headline {
-    font-family: 'Poetsen One', cursive !important;
-    font-size: 36px;
-    text-align: center;
-    text-transform: uppercase;
-  }
-}
+
 .display-1 {
   font-family: "Open Sans", sans-serif !important;
   font-size: 34px !important;

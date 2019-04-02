@@ -4,7 +4,7 @@
   "core4": {
     "build_command" : [
       "yarn install",
-      "yarn build"
+      "yarn build --dest dist --modern"
     ],
     "dist": "./dist"
   },
@@ -31,16 +31,6 @@
     "node-sass": "^4.9.0",
     "sass-loader": "^7.0.1",
     "vue-template-compiler": "^2.5.21"
-  },
-  "tmp": {
-    "devDependencies": {
-      "gulp": "^3.9.1",
-      "gulp-run": "^1.7.1",
-      "@vue/cli-plugin-e2e-cypress": "^3.3.0"
-    },
-    "scripts": {
-      "test:e2e": "vue-cli-service test:e2e"
-    }
   },
   "eslintConfig": {
     "root": true,
