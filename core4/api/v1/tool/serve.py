@@ -294,7 +294,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         self.setup_logging()
         intro = core4.service.introspect.CoreIntrospector()
-        if filter is not None:
+        if filter:
             if not isinstance(filter, list):
                 filter = [filter]
             for i in range(len(filter)):
@@ -302,7 +302,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     filter[i] += "."
         scope = []
         for api in intro.iter_api_container():
-            if filter is None:
+            if not filter:
                 scope.append(api)
             else:
                 if not isinstance(filter, list):

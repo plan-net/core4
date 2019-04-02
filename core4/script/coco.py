@@ -21,7 +21,7 @@ Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
-  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [FILTER...]
+  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [--filter=FILTER]...
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -101,10 +101,10 @@ def worker(name):
 
 def app(**kwargs):
     core4.logger.mixin.logon()
-    filter = kwargs.get("filter", [])
-    if "port" in kwargs:
+    filter = kwargs.get("filter", None)
+    if "port" in kwargs and kwargs["port"] is not None:
         kwargs["port"] = int(kwargs["port"])
-    if filter is not None:
+    if filter:
         if not isinstance(filter, list):
             filter = [filter]
         projects = set()
@@ -481,8 +481,9 @@ def main():
     elif args["--worker"]:
         worker(args["IDENTIFIER"])
     elif args["--application"]:
-        app(args["IDENTIFIER"], args["--port"], args["FILTER"],
-            args["--routing"], args["--address"])
+        app(name=args["IDENTIFIER"], port=args["--port"],
+            filter=args["--filter"], routing=args["--routing"],
+            address=args["--address"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
@@ -526,5 +527,4 @@ def main():
 
 
 if __name__ == '__main__':
-    #main()
-    app(filter=["home", "home.a"], port=5010)
+    main()
