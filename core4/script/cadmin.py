@@ -183,6 +183,7 @@ class CoreAdminInstaller(CoreBase, InstallMixin):
         Build the webapps distributions if requested and upgrade the Python
         package.
         """
+        self.print("  upgrading from local folder [{}]".format(source))
         os.chdir(source)
         if self.web:
             self.popen(self.venv_python, "setup.py", "build_web")
@@ -240,18 +241,19 @@ class CoreAdminInstaller(CoreBase, InstallMixin):
             local_commit, "changed to [{}]".format(remote_commit)
             if local_commit != remote_commit else "no changes"))
         if force or local_commit != remote_commit:
+            webapps_file = os.path.join(
+                os.path.dirname(self.venv_python), "..", "webapps.dist")
+            if os.path.exists(webapps_file):
+                self.web = True
+                self.print("  found existing [{}] to build webapps".format(
+                           webapps_file))
             if not test:
-                webapps_file = os.path.join(
-                    os.path.dirname(self.venv_python), "..", "webapps.dist")
-                if os.path.exists(webapps_file):
-                    self.web = True
-                if force or reset:
+                if reset:
                     self.repository = repos
                     self.reset()
                     self.install()
                 else:
                     if os.path.exists(repos):
-                        self.print("HERE" * 10)
                         commit_hash = self.pip_install_local(repos)
                     else:
                         commit_hash = self.pip_upgrade_remote(repos)

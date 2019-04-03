@@ -57,7 +57,7 @@ class BuildCore4Web(build_py):
         self.announce("core4.setup: " + msg, level=log.INFO)
 
     def run(self):
-        webapps = []
+        webapps = {}
         for package in self.packages:
             package_dir = os.path.abspath(self.get_package_dir(package))
             for (path, directories, filenames) in os.walk(package_dir):
@@ -71,19 +71,18 @@ class BuildCore4Web(build_py):
                                 "build_command", [])
                             dist = package_json["core4"].get("dist", None)
                             dist_path = os.path.join(
-                                path[len(package_dir) + 1:],
-                                dist)
+                                path[len(package_dir) + 1:], dist)
                             if dist:
-                                self.print("found [{}] in [{}]".format(
-                                    dist_path, package))
-                                webapps.append({
-                                    "package": package,
-                                    "package_dir": package_dir,
-                                    "build_path": path,
-                                    "dist_path": dist_path,
-                                    "dist": dist,
-                                    "command": command
-                                })
+                                if path not in webapps:
+                                    self.print("found [{}] in [{}]".format(
+                                        dist_path, package))
+                                    webapps[path] = {
+                                        "package": package,
+                                        # "package_dir": package_dir,
+                                        "dist_path": dist_path,
+                                        "dist": dist,
+                                        "command": command
+                                    }
         write_webdist(webapps)
 
 
@@ -95,27 +94,22 @@ class BuildCore4(build_py):
     def run(self):
         start_dir = os.path.abspath(os.curdir)
         webapps = read_webdist()
-        for copy in webapps:
+        for pkg_path, meta in webapps.items():
             self.print(
-                "build [{}] in [{}] build in [{}]".format(
-                    copy["package"], copy["package_dir"],
-                    copy["build_path"]))
-            os.chdir(copy["package_dir"])
-            os.chdir(copy["build_path"])
-            if os.path.exists(copy["dist"]):
-                self.print("clean [{}]".format(copy["dist"]))
-                shutil.rmtree(copy["dist"])
-            for part in copy["command"]:
+                "package [{}] build in [{}]".format(meta["package"], pkg_path))
+            os.chdir(pkg_path)
+            if os.path.exists(pkg_path):
+                self.print("clean [{}]".format(meta["dist"]))
+                shutil.rmtree(meta["dist"])
+            for part in meta["command"]:
                 check_call(part, shell=True)
-            os.chdir(copy["dist"])
-            if copy["package"] not in self.package_data:
-                self.package_data[copy["package"]] = []
-            for (path, directories, filenames) in os.walk("."):
-                for filename in filenames:
-                    relname = os.path.join(copy["dist_path"], path,
-                                           filename)
-                    self.print("adding [{}]".format(relname))
-                    self.package_data[copy["package"]].append(relname)
+            os.chdir(meta["dist"])
+            pkg_name = meta["package"]
+            if pkg_name not in self.package_data:
+                self.package_data[pkg_name] = []
+            self.package_data[pkg_name].append(meta["dist_path"] + "/*")
+            self.package_data[pkg_name].append(meta["dist_path"] + "/**/*")
+            self.print("sourcing [{}]".format(meta["dist_path"]))
         os.chdir(start_dir)
         build_py.run(self)
 

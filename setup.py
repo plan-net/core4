@@ -1,11 +1,15 @@
-# -*- coding: utf-8 -*-
-
 from setuptools import find_packages
 
 try:
     from core4.setup import setup
+    print("using core4.setup")
 except:
-    from core4.script.installer.core4.setup import setup
+    try:
+        from core4.script.installer.core4.setup import setup
+        print("using core4.script.installer.core4")
+    except:
+        from setuptools import setup
+        print("using setuptools")
 
 from subprocess import check_call
 from setuptools.command.test import test as TestCommand
