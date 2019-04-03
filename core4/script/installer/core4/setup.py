@@ -40,7 +40,7 @@ def read_webdist():
     if os.path.exists(WEBDIST):
         with open(WEBDIST, "r", encoding="utf-8") as fh:
             return json.load(fh)
-    return []
+    return {}
 
 
 def read_install_requires(folder):
