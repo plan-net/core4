@@ -436,8 +436,14 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         :param doc: dict (MongoDB document)
         :return: ``True`` if the document has been inserted, else ``False``
         """
-        ret = self.config.sys.journal.insert_one(doc)
-        return ret.inserted_id == doc["_id"]
+        try:
+            ret = self.config.sys.journal.insert_one(doc)
+            return ret.inserted_id == doc["_id"]
+        except pymongo.errors.DuplicateKeyError:
+            self.logger.error("failed to journal job [%s]", doc["_id"])
+        except:
+            raise
+        return False
 
     def _find_job(self, _id, collection):
         # internal method used by .load_job and .find_job
@@ -525,19 +531,19 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                          "trial")
         self.logger.debug("journaling job [%s]", job._id)
         job = self.load_job(job._id)
-        ret = self.config.sys.journal.insert_one(job.serialise())
-        if ret.inserted_id is None:
-            raise RuntimeError(
-                "failed to journal job [{}]".format(job._id))
-        self.logger.debug("removing completed job [%s]", job._id)
-        ret = self.config.sys.queue.delete_one(filter={"_id": job._id})
-        if ret.deleted_count != 1:
-            raise RuntimeError(
-                "failed to remove job [{}] from queue".format(job._id))
-        self.make_stat('complete_job', str(job._id))
-        self.unlock_job(job._id)
-        job.logger.info("done execution with [complete] "
-                        "after [%d] sec.", runtime)
+        if self.journal(job.serialize()):
+            self.logger.debug("removing completed job [%s]", job._id)
+            ret = self.config.sys.queue.delete_one(filter={"_id": job._id})
+            if ret.deleted_count != 1:
+                raise RuntimeError(
+                    "failed to remove job [{}] from queue".format(job._id))
+            self.make_stat('complete_job', str(job._id))
+            self.unlock_job(job._id)
+            job.logger.info("done execution with [complete] "
+                            "after [%d] sec.", runtime)
+        else:
+            self.logger.error(
+                "failed to journal and set job [%s] complete", job._id)
 
     def set_defer(self, job):
         """
