@@ -18,9 +18,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'core4'
-copyright = '2019, Plan-Net Business Intelligence'
-author = 'Michael Rau'
+project = 'core4os'
+copyright = '2019, Plan.Net Business Intelligence'
+author = 'Plan.Net Business Intelligence GmbH & Co. KG'
 
 # The short X.Y version
 version = ''
@@ -139,8 +139,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'core4.tex', 'core4 Documentation',
-     'Michael Rau', 'manual'),
+    (master_doc, 'core4os.tex', 'core4os Documentation',
+     'Plan.Net Business Intelligence GmbH & Co. KG', 'manual'),
 ]
 
 
@@ -149,7 +149,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'core4', 'core4 Documentation',
+    (master_doc, 'core4os', 'core4os Documentation',
      [author], 1)
 ]
 
@@ -160,8 +160,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'core4', 'core4 Documentation',
-     author, 'core4', 'One line description of project.',
+    (master_doc, 'core4os', 'core4 Documentation',
+     author, 'core4os', 'One line description of project.',
      'Miscellaneous'),
 ]
 

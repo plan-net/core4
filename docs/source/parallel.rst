@@ -23,7 +23,7 @@ server and between compute servers in a core4 cluster.
 
 The distributed and parallel job execution is applied to different job classes.
 Special job properties like ``max_parallel`` and ``priority`` control
-distrubted job execution inside and between nodes.
+distributed job execution inside and between nodes.
 
 Parallel execution of the same task following the *divide and conquer* design
 paradigm can be implemented with a simple design pattern. This design pattern
@@ -34,13 +34,13 @@ The following code snippet demonstrates the divide/conquer design patter with
 core4. A job launched with ``chunksize not None`` will launch child jobs at
 the first run (line 8 and line 9). It will then defer (line 10). Job execution
 stops at this position. When the job is relaunched after its ``defer_time``
-(line 3), it will monitor job executon of the children (line 11). The job
+(line 3), it will monitor job execution of the children (line 11). The job
 method ``.monitor`` is simple counting the number of running child jobs and
 defer again, if any children are still up and running or pending (line 18-20).
 This ``.monitor`` method should be extended in real-life applications to report
 progress of the whole job chain using :meth:`.progress <.CoreJob.progress>`.
 
-If no chunksize has been passed as a job parameter, then this job is supposed
+If no chunk size has been passed as a job parameter, this job is supposed
 to do the actual work (line 12).
 
 Plese note, that the actual implementation of ``.divide`` and ``.work`` have
@@ -51,7 +51,7 @@ of the job. In the :doc:`PrimeJob example </example/prime>` for example the
 .. code-block:: python
    :linenos:
 
-    class DivideAndConquery(CoreLoadJob):
+    class DivideAndConquer(CoreLoadJob):
         author = "mra"
         defer_time = 5
         max_parallel = 5

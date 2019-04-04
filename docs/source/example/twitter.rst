@@ -2,7 +2,7 @@
 retrieval and pos tagging of tweets
 ###########################################################
 
-This Project can be found on GitHub aswell:
+This project can be found on GitHub as well:
 https://github.com/Alioun/twitter/
 
 The following example shows a simple and easy way of how you can use core to
@@ -12,13 +12,13 @@ retrieved tweets to build a base for further analyses on those tweets.
 
 Foreign packages used in this example:
 
-tweepy: Tweepy is used as an easy but quite powerful way to use the various twitter apis
-in our case tweepy is only used to access the "Geo Search" API and the standard
-"Search" API. https://github.com/tweepy/tweepy
+tweepy: Tweepy is used as an easy to use, yet quite powerful way to use the
+various twitter apis in our case tweepy is only used to access the "Geo Search"
+API and the standard "Search" API. https://github.com/tweepy/tweepy
 
 nltk: short for "Natural Language Toolkit" is a library combining many different
-libraries used for natural language processing into one convenient package in
-this example we are only using a TweetTokenizer provided by the nltk to try to
+libraries used for natural language processing into one convenient package.
+In this example we are only using a TweetTokenizer provided by the nltk to try to
 clean up the tweets while also tokenizing them for the POS tagger.
 https://github.com/nltk/nltk
 https://www.nltk.org/
@@ -37,14 +37,14 @@ Imports::
 The first part is to retrieve the Tweets.
 
 To be able to retrieve any tweets you need to have an twitter dev app if you
-don't have one yet, you can create on over at
+don't have one yet, you can create one over at
 https://developer.twitter.com/en/apps after you've created one, go into the App
 Details and then to the "Keys and tokens" tab and copy consumer key, consumer
 secret, access token and access token secret into your local.yaml, you can find
-a example twitter.yaml and local.yaml down below.
+an example twitter.yaml and local.yaml down below.
 
 With the authorization requirements cleared we are querying the "Geo Search" to
-get the place id for a specific region (germany in this case).
+get the place id for a specific region (Germany in this case).
 
 Using that place id we can query twitter for all tweets coming from that region.
 The job is set up to stop execution and terminate when it encounters a rate

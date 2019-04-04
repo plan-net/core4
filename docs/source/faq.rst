@@ -9,7 +9,7 @@ The most simple approach to work with multiple core4 environments is to address
 different core4 configuration YAML files with the environment variable
 ``CORE4_CONFIG``. If you have for example a configuration file
 ``~/,core4/local.yaml`` for development and another ``~/.core4/prod.yaml`` with
-read-only connections to your production databases, then swith configuration
+read-only connections to your production databases, then switch configuration
 with::
 
     $ CORE4_CONFIG=~/.core4/local.yaml coco listing
@@ -37,7 +37,7 @@ Restartability of a job is as simple as that:
 #. assign a unique source using :meth:`.CoreLoadJob.set_source`.
 
    * If the source is a file and you do not have a unique filename, then make
-     it unique while transfering the file from core4 ``transfer`` directory
+     it unique while transferring the file from core4 ``transfer`` directory
      to core4 ``process`` directory (see :ref:`system_folder`).
    * If the source is not a file, then create a string representing the load.
 
@@ -51,7 +51,7 @@ of a reporting collection, or a *weekly* update of or machine learning model.
 
 Use this scope by setting the job source to this calender or month. If your
 calculation or aggregation job needs to rerun or needs to be restarted, then
-just purge all existing database records with the scope of this jobb. This is
+just purge all existing database records with the scope of this job. This is
 then the *calender week and year* or the *month and the year* represented by
 the job ``_src``.
 

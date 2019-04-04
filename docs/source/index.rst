@@ -39,6 +39,7 @@
    tools
    faq
    about
+   roadmap
    license
    core4/index
 
