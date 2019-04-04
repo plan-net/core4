@@ -160,7 +160,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'core4os', 'core4 Documentation',
+    (master_doc, 'core4os', 'core4os Documentation',
      author, 'core4os', 'One line description of project.',
      'Miscellaneous'),
 ]

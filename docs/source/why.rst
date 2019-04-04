@@ -1,6 +1,6 @@
-=========
-why core4
-=========
+===========
+why core4os
+===========
 
 core4 utilises Python, the main reason for that choice is that python is the de
 facto standard for Business Intelligence and Data Driven Applications. Below
