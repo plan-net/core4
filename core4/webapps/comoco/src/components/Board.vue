@@ -4,7 +4,7 @@
     <!-- Group info (counter all of jobs with the same states) -->
     <info :name="name" :states="states"></info>
 
-    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs">
+    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs mt-3">
 
       <!-- list of all jobs which belongs to this group -->
       <v-flex v-for="(job, index) in getJobsByGroupName(name)" :key="index" class="jobs-list-item">
@@ -12,14 +12,6 @@
       </v-flex>
     </transition-group>
 
-<!--    <v-layout column class="jobs">-->
-
-<!--      &lt;!&ndash; list of all jobs which belongs to this group &ndash;&gt;-->
-<!--      <v-flex v-for="(job, index) in getJobsByGroupName(name)" :key="index">-->
-<!--        <job :flags="flags" :job="job"></job>-->
-<!--      </v-flex>-->
-
-<!--    </v-layout>-->
   </v-container>
 </template>
 
@@ -73,8 +65,15 @@ $scrollbar-thumb: #5C5C5C;
 $scrollbar-thumb-hover: #737373;
 
 .jobs-list-item {
-  /*transition: opacity .5s;*/
   transition: all 1s;
+}
+
+.jobs-list-leave-active {
+  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+
+.jobs-list-enter-active {
+  transition: all .5s ease;
 }
 
 .jobs-list-enter, .jobs-list-leave-to
@@ -82,10 +81,6 @@ $scrollbar-thumb-hover: #737373;
   opacity: 0;
   transform: translateX(30px);
 }
-
-/*.jobs-list-leave-active {*/
-/*  position: absolute;*/
-/*}*/
 
 /*.theme--dark .board {
   background-color: $jobs-board-bck-color;
@@ -97,6 +92,7 @@ $scrollbar-thumb-hover: #737373;
 
 .board {
   min-width: 230px;
+  min-height: 100px;
   background-color: $jobs-board-bck-color;
 }
 
@@ -128,11 +124,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 1904px) {
   .jobs {
-    max-height: calc(100vh - 220px); /* -620px size with chart */
+    max-height: calc(100vh - 620px);
   }
 
   .board {
-    height: calc(100vh - 100px); /* -620px size with chart */
+    height: calc(100vh - 525px);
   }
 }
 
@@ -142,11 +138,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 1281px)and (max-width: 1904px) {
   .jobs {
-    max-height: calc(100vh - 220px); /* -620px size with chart */
+    max-height: calc(100vh - 620px);
   }
 
   .board {
-    height: calc(100vh - 100px); /* -620px size with chart */
+    height: calc(100vh - 525px);
   }
 }
 
@@ -156,11 +152,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 960px) and (max-width: 1264px) {
   .jobs {
-    max-height: calc(100vh - 220px); /* -620px size with chart */
+    max-height: calc(100vh - 620px);
   }
 
   .board {
-    height: calc(100vh - 100px); /* -620px size with chart */
+    height: calc(100vh - 525px);
   }
 }
 

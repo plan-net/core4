@@ -8,9 +8,9 @@
           </v-flex>
         </v-layout>
       </v-flex>
-<!--      <v-flex ma-2 hidden-sm-and-down>-->
-<!--        <chart></chart>-->
-<!--      </v-flex>-->
+      <v-flex ma-2 hidden-sm-and-down>
+        <chart></chart>
+      </v-flex>
     </v-layout>
   </pnbi-page>
 </template>
@@ -19,12 +19,12 @@
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-// import Chart from '@/components/Chart'
+import Chart from '@/components/Chart'
 
 export default {
   name: 'home',
   components: {
-    Board
+    Board, Chart
   },
   data () {
     return {

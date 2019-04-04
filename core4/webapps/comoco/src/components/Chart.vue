@@ -8,6 +8,60 @@ import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import streamgraph from 'highcharts/modules/streamgraph'
 
+import { createObjectWithDefaultValues } from "../helper";
+import { jobStates } from "../settings";
+
+const chartData = createObjectWithDefaultValues(Object.keys(jobStates), [])
+
+chartData.error = {
+  name: 'error',
+  color: '#d70f14',
+  data: [
+    {x: 1554285600000, y: 2}, // 12:00
+    {x: 1554286500000, y: 0}, // 12:15
+
+    {x: 1554286560000, y: 22}, // 12:16
+    {x: 1554286620000, y: 16}, // 12:17
+    {x: 1554286680000, y: 3}, // 12:18
+    {x: 1554286740000, y: 0}, // 12:19
+    {x: 1554286800000, y: 0}, // 12:20
+
+    {x: 1554287400000, y: 8}, // 12:30
+
+    {x: 1554287580000, y: 10}, // 12:33
+    {x: 1554287940000, y: 2}, // 12:39
+    {x: 1554288060000, y: 0}, // 12:41
+
+    {x: 1554288300000, y: 25}, // 12:45
+    {x: 1554289200000, y: 3} // 13:00
+  ]
+}
+
+chartData.running = {
+  name: 'running',
+  color: '#64a505',
+  data: [
+    {x: 1554285600000, y: 5}, // 12:00
+    {x: 1554286500000, y: 0}, // 12:15
+
+    {x: 1554286560000, y: 1}, // 12:16
+    {x: 1554286620000, y: 2}, // 12:17
+    {x: 1554286680000, y: 3}, // 12:18
+    {x: 1554286740000, y: 4}, // 12:19
+    {x: 1554286800000, y: 5}, // 12:20
+
+
+    {x: 1554287400000, y: 9}, // 12:30
+
+    {x: 1554287580000, y: 0}, // 12:33
+    {x: 1554287940000, y: 0}, // 12:39
+    {x: 1554288060000, y: 0}, // 12:41
+
+    {x: 1554288300000, y: 5}, // 12:45
+    {x: 1554289200000, y: 4} // 13:00
+  ]
+}
+
 Highcharts.theme = {
   chart: {},
   title: {
@@ -77,9 +131,6 @@ Highcharts.dateFormats = {
 
 streamgraph(Highcharts)
 
-// var colors = Highcharts.getOptions().colors
-var colors = ['#d70f14', '#8d1407', '#d8c9c7', '#ffc107', '#f1f128', '#11dea2', '#64a505']
-
 export default {
   name: 'JobsStat',
   components: {
@@ -89,9 +140,7 @@ export default {
     return {
       chartOptions: {
         chart: {
-          title: '',
           type: 'streamgraph',
-          marginBottom: 30,
           zoomType: 'x',
           backgroundColor: {
             linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
@@ -102,88 +151,14 @@ export default {
           },
           style: {
             fontFamily: '\'Unica One\', sans-serif'
-          },
-          plotBorderColor: '#606063'
+          }
         },
 
-        // Make sure connected countries have similar colors
-        colors: [
-          colors[0],
-          colors[1],
-          colors[2],
-          colors[3],
-          colors[4],
-          // East Germany, West Germany and Germany
-          Highcharts.color(colors[5]).brighten(0.2).get(),
-          Highcharts.color(colors[5]).brighten(0.1).get(),
-
-          colors[5],
-          colors[6],
-          colors[7],
-          colors[8],
-          colors[9],
-          colors[0],
-          colors[1],
-          colors[3],
-          // Soviet Union, Russia
-          Highcharts.color(colors[2]).brighten(-0.1).get(),
-          Highcharts.color(colors[2]).brighten(-0.2).get(),
-          Highcharts.color(colors[2]).brighten(-0.3).get()
-        ],
-
-        // title: {
-        //   floating: true,
-        //   align: 'left',
-        //   text: 'Winter Olympic Medal Wins'
-        // },
-        // subtitle: {
-        //   floating: true,
-        //   align: 'left',
-        //   y: 30,
-        //   text: 'Source: <a href="https://www.sports-reference.com/olympics/winter/1924/">sports-reference.com</a>'
-        // },
-
-        xAxis: {
-          top: 10,
-          crosshair: true,
-          type: 'datetime',
-          tickInterval: 1.8e+6, // one week
-          // tickInterval: 7 * 24 * 36e5, // one week
-          labels: {
-            reserveSpace: false,
-            format: '{value: %H:%M}',
-            // format: '{value:Week %W/%Y}',
-            align: 'right',
-            rotation: -30
-          },
-          margin: 10
-          // lineWidth: 0,
-          // tickWidth: 0
+        title: {
+          floating: true,
+          align: 'left',
+          text: 'Queue dashboard'
         },
-        // xAxis: {
-        //   maxPadding: 0,
-        //   type: 'category',
-        //   crosshair: true,
-        //   categories: [],
-        //   labels: {
-        //     align: 'left',
-        //     reserveSpace: false,
-        //     rotation: 270,
-        //     style: {
-        //       color: '#E0E0E3'
-        //     }
-        //   },
-        //   lineWidth: 0,
-        //   margin: 10,
-        //   tickWidth: 0
-        // },
-
-        yAxis: {
-          visible: false
-          // startOnTick: true,
-          // endOnTick: true
-        },
-
         legend: {
           enabled: true,
           layout: 'horizontal',
@@ -194,81 +169,25 @@ export default {
             color: '#E0E0E3'
           }
         },
-
-        plotOptions: {
-          series: {
-            label: {
-              minFontSize: 5,
-              maxFontSize: 15,
-              style: {
-                color: 'rgba(255,255,255,0.75)'
-              }
+        xAxis: {
+          type: 'datetime',
+          crosshair: true,
+          // tickInterval: 1.8e+6, // 30 min
+          labels: {
+            reserveSpace: false,
+            dateTimeLabelFormats: {
+              month: '%e. %b',
+              year: '%b'
             }
           }
         },
-
-        // annotations: [{
-        //   labels: [{
-        //     point: {
-        //       x: 5.5,
-        //       xAxis: 0,
-        //       y: 30,
-        //       yAxis: 0
-        //     },
-        //     text: 'Cancelled<br>during<br>World War II'
-        //   }, {
-        //     point: {
-        //       x: 18,
-        //       xAxis: 0,
-        //       y: 90,
-        //       yAxis: 0
-        //     },
-        //     text: 'Soviet Union fell,<br>Germany united'
-        //   }],
-        //   labelOptions: {
-        //     backgroundColor: 'rgba(255,255,255,0.5)',
-        //     borderColor: 'silver'
-        //   }
-        // }],
-
-        // plotOptions: {
-        //   series: {
-        //     label: {
-        //       minFontSize: 5,
-        //       maxFontSize: 15,
-        //       style: {
-        //         color: 'rgba(255,255,255,0.75)'
-        //       }
-        //     }
-        //   }
-        // },
-        series: [
-          {
-            name: 'running',
-            color: '#64a505',
-            data: [1, 4, 22, 3, 0],
-            pointInterval: 1.8e+6,
-            pointStart: Date.UTC(2019, 4, 1)
-          },
-          {
-            name: 'error',
-            color: '#d70f14',
-            data: [7, 14, 7, 9, 1],
-            pointInterval: 1.8e+6,
-            pointStart: Date.UTC(2019, 4, 1)
-          },
-          {
-            name: 'pending',
-            color: '#ffc107',
-            data: [3, 0, 0, 1, 18],
-            pointInterval: 1.8e+6,
-            pointStart: Date.UTC(2019, 4, 1)
-          }
-        ],
-        exporting: {
-          sourceWidth: 800,
-          sourceHeight: 600
-        }
+        yAxis: {
+          visible: false,
+          startOnTick: false,
+          endOnTick: false
+        },
+        // series: [...{chartData}]
+        series: [chartData.error, chartData.running]
       }
     }
   }
