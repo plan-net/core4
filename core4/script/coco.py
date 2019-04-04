@@ -118,7 +118,7 @@ def app(**kwargs):
             raise core4.error.Core4UsageError(
                 "you must not serve applications from different projects")
         kwargs["filter"] = kw_filter
-        param = []
+        param = ["debug=False"]
         for p in ["name", "port", "address", "routing", "filter"]:
             val = kwargs.get(p, None)
             if isinstance(val, str):
@@ -243,7 +243,7 @@ def listing(*state):
             job["_id"],
             "{:8.8s}".format(job["state"]),
             "{:4.4s}".format(flag),
-            "{:3.0f}%".format(100. * progress),
+            "{:3.0f}%".format(100. * (progress or 0.)),
             "{:03d}{:1s}".format(job["priority"], "F" if job.get(
                 "force", False) else " "),
             "{:3d}/{:3d}".format(

@@ -540,7 +540,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         env = os.environ
         if "PYTHONPATH" in env:
             del env["PYTHONPATH"]
-        self.logger.debug("execute with [%s]:\n%s", python_path, cmd)
+        #self.logger.debug("execute with [%s]:\n%s", python_path, cmd)
         proc = subprocess.Popen([python_path, "-c", cmd], stdout=stdout,
                                 stderr=subprocess.STDOUT, env=env)
         os.chdir(currdir)
