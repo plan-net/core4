@@ -179,6 +179,7 @@ reviewed on a regular bases. *ERROR* level messages require attention.
 *CRITICAL* messages require immediate attention.
 
 
+.. note:: core4 logging uses UTC internally.
 
 
 .. _logging howto: https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library
