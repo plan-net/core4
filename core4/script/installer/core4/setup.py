@@ -81,7 +81,7 @@ class BuildCore4Web(build_py):
                                     self.print(
                                         "clean [{}]".format(dist_path))
                                     shutil.rmtree(dist_path)
-                                rel_path = dist_path[(package_dir) + 1:]
+                                rel_path = dist_path[len(package_dir) + 1:]
                                 if rel_path not in webapps:
                                     self.print("found [{}] in [{}]".format(
                                         rel_path, package))
