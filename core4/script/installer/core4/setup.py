@@ -99,8 +99,8 @@ class BuildCore4(build_py):
         start_dir = os.path.abspath(os.curdir)
         webapps = read_webdist()
         for pkg_path, meta in webapps.items():
-            self.print(
-                "package [{}] build in [{}]".format(meta["package"], pkg_path))
+            self.print("package [{}] build in [{}]".format(meta["package"],
+                                                           pkg_path))
             os.chdir(pkg_path)
             if os.path.exists(meta["dist"]):
                 self.print("clean [{}]".format(meta["dist"]))
