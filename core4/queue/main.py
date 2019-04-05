@@ -531,7 +531,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                          "trial")
         self.logger.debug("journaling job [%s]", job._id)
         job = self.load_job(job._id)
-        if self.journal(job.serialize()):
+        if self.journal(job.serialise()):
             self.logger.debug("removing completed job [%s]", job._id)
             ret = self.config.sys.queue.delete_one(filter={"_id": job._id})
             if ret.deleted_count != 1:
