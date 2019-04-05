@@ -75,11 +75,11 @@ class CoreApiServer(CoreApiContainer):
         (r'/event/?', EventHandler, None),
         (r'/widgets', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
-            "title": "core widgets"
+            "title": "core widgets", "protected": False
         }),
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",
-            "title": "comoco"
+            "title": "comoco", "protected": False
         })
     ]
 
