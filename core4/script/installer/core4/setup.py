@@ -73,8 +73,8 @@ class BuildCore4Web(build_py):
                             dist = package_json["core4"].get("dist", None)
                             if dist:
                                 self.print(
-                                    "package_dir: {}".format(package_dir))
-                                self.print("dist: {}".format(dist))
+                                    "package_path: {}".format(package_dir))
+                                #self.print("dist: {}".format(dist))
                                 dist_path = os.path.join(path, dist)
                                 self.print("dist_path: {}".format(dist_path))
                                 if os.path.exists(dist_path):
@@ -88,7 +88,7 @@ class BuildCore4Web(build_py):
                                     webapps[path] = {
                                         "package": package,
                                         # "package_dir": package_dir,
-                                        "dist_path": dist_path,
+                                        "dist_path": rel_path,
                                         #"dist": dist,
                                         "command": command
                                     }
