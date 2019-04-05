@@ -87,9 +87,9 @@ class BuildCore4Web(build_py):
                                         rel_path, package))
                                     webapps[path] = {
                                         "package": package,
-                                        # "package_dir": package_dir,
+                                        "package_dir": package_dir,
                                         "dist_path": rel_path,
-                                        #"dist": dist,
+                                        "dist": dist,
                                         "command": command
                                     }
         write_webdist(webapps)
