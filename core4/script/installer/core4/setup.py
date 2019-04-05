@@ -30,7 +30,6 @@ if tuple([int(i) for i in pip.__version__.split(".")]) < (18, 1):
 
 WEBDIST = os.path.join(os.path.dirname(sys.executable), "..", "webapps.dist")
 
-
 def write_webdist(webapps):
     with open(WEBDIST, "w", encoding="utf-8") as fh:
         json.dump(webapps, fh, indent=2)
@@ -57,6 +56,8 @@ class BuildCore4Web(build_py):
         self.announce("core4.setup: " + msg, level=log.INFO)
 
     def run(self):
+        self.print("setup from [{}]".format(
+            sys.modules[self.__module__].__file__))
         webapps = {}
         for package in self.packages:
             package_dir = os.path.abspath(self.get_package_dir(package))
@@ -96,6 +97,8 @@ class BuildCore4(build_py):
         self.announce("core4.setup: " + msg, level=log.INFO)
 
     def run(self):
+        self.print("setup from [{}]".format(
+            sys.modules[self.__module__].__file__))
         start_dir = os.path.abspath(os.curdir)
         webapps = read_webdist()
         for pkg_path, meta in webapps.items():
@@ -107,7 +110,7 @@ class BuildCore4(build_py):
                 shutil.rmtree(meta["dist"])
             for part in meta["command"]:
                 check_call(part, shell=True)
-            os.chdir(meta["dist"])
+            os.chdir(start_dir)
             pkg_name = meta["package"]
             if pkg_name not in self.package_data:
                 self.package_data[pkg_name] = []
@@ -115,6 +118,8 @@ class BuildCore4(build_py):
             self.package_data[pkg_name].append(meta["dist_path"] + "/**/*")
             self.print("sourcing [{}]".format(meta["dist_path"]))
         os.chdir(start_dir)
+        build_py.finalize_options(self)
+        self.print("package_data: {}".format(self.package_data))
         build_py.run(self)
 
 

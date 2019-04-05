@@ -11,10 +11,12 @@ except:
         from setuptools import setup
         print("using setuptools")
 
+
 from subprocess import check_call
 from setuptools.command.test import test as TestCommand
 
 import core4
+
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
