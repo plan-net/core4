@@ -73,22 +73,18 @@ class BuildCore4Web(build_py):
                             dist = package_json["core4"].get("dist", None)
                             if dist:
                                 self.print(
-                                    "package_path: {}".format(package_dir))
-                                #self.print("dist: {}".format(dist))
-                                dist_path = os.path.join(path, dist)
+                                    "package_dir: {}".format(package_dir))
+                                self.print("dist: {}".format(dist))
+                                dist_path = os.path.join(
+                                    path[len(package_dir) + 1:], dist)
                                 self.print("dist_path: {}".format(dist_path))
-                                if os.path.exists(dist_path):
-                                    self.print(
-                                        "clean [{}]".format(dist_path))
-                                    shutil.rmtree(dist_path)
-                                rel_path = dist_path[len(package_dir) + 1:]
-                                if rel_path not in webapps:
+                                if path not in webapps:
                                     self.print("found [{}] in [{}]".format(
-                                        rel_path, package))
+                                        dist_path, package))
                                     webapps[path] = {
                                         "package": package,
-                                        "package_dir": package_dir,
-                                        "dist_path": rel_path,
+                                        # "package_dir": package_dir,
+                                        "dist_path": dist_path,
                                         "dist": dist,
                                         "command": command
                                     }
@@ -109,6 +105,9 @@ class BuildCore4(build_py):
             self.print("package [{}] build in [{}]".format(meta["package"],
                                                            pkg_path))
             os.chdir(pkg_path)
+            if os.path.exists(meta["dist"]):
+                self.print("clean [{}]".format(meta["dist"]))
+                shutil.rmtree(meta["dist"])
             for part in meta["command"]:
                 check_call(part, shell=True)
             os.chdir(start_dir)
