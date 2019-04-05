@@ -70,9 +70,13 @@ class BuildCore4Web(build_py):
                             command = package_json["core4"].get(
                                 "build_command", [])
                             dist = package_json["core4"].get("dist", None)
-                            dist_path = os.path.join(
-                                path[len(package_dir) + 1:], dist)
                             if dist:
+                                self.print(
+                                    "package_dir: {}".format(package_dir))
+                                self.print("dist: {}".format(dist))
+                                dist_path = os.path.join(
+                                    path[len(package_dir) + 1:], dist)
+                                self.print("dist_path: {}".format(dist_path))
                                 if path not in webapps:
                                     self.print("found [{}] in [{}]".format(
                                         dist_path, package))
