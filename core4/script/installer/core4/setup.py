@@ -77,10 +77,10 @@ class BuildCore4Web(build_py):
                                 self.print("dist: {}".format(dist))
                                 dist_path = os.path.join(path, dist)
                                 self.print("dist_path: {}".format(dist_path))
-                                if os.path.exists(path):
+                                if os.path.exists(dist_path):
                                     self.print(
-                                        "clean [{}]".format(path))
-                                    shutil.rmtree(path)
+                                        "clean [{}]".format(dist_path))
+                                    shutil.rmtree(dist_path)
                                 rel_path = path[len(package_dir) + 1:]
                                 if rel_path not in webapps:
                                     self.print("found [{}] in [{}]".format(
@@ -88,7 +88,7 @@ class BuildCore4Web(build_py):
                                     webapps[path] = {
                                         "package": package,
                                         # "package_dir": package_dir,
-                                        "dist_path": rel_path,
+                                        "dist_path": dist_path,
                                         #"dist": dist,
                                         "command": command
                                     }
