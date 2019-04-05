@@ -98,7 +98,7 @@ class BuildCore4(build_py):
             self.print(
                 "package [{}] build in [{}]".format(meta["package"], pkg_path))
             os.chdir(pkg_path)
-            if os.path.exists(pkg_path):
+            if os.path.exists(meta["dist"]):
                 self.print("clean [{}]".format(meta["dist"]))
                 shutil.rmtree(meta["dist"])
             for part in meta["command"]:
