@@ -75,17 +75,21 @@ class BuildCore4Web(build_py):
                                 self.print(
                                     "package_dir: {}".format(package_dir))
                                 self.print("dist: {}".format(dist))
-                                dist_path = os.path.join(
-                                    path[len(package_dir) + 1:], dist)
+                                dist_path = os.path.join(path, dist)
                                 self.print("dist_path: {}".format(dist_path))
-                                if path not in webapps:
+                                if os.path.exists(path):
+                                    self.print(
+                                        "clean [{}]".format(path))
+                                    shutil.rmtree(path)
+                                rel_path = path[len(package_dir) + 1:]
+                                if rel_path not in webapps:
                                     self.print("found [{}] in [{}]".format(
-                                        dist_path, package))
+                                        rel_path, package))
                                     webapps[path] = {
                                         "package": package,
                                         # "package_dir": package_dir,
-                                        "dist_path": dist_path,
-                                        "dist": dist,
+                                        "dist_path": rel_path,
+                                        #"dist": dist,
                                         "command": command
                                     }
         write_webdist(webapps)
@@ -105,9 +109,6 @@ class BuildCore4(build_py):
             self.print("package [{}] build in [{}]".format(meta["package"],
                                                            pkg_path))
             os.chdir(pkg_path)
-            if os.path.exists(meta["dist"]):
-                self.print("clean [{}]".format(meta["dist"]))
-                shutil.rmtree(meta["dist"])
             for part in meta["command"]:
                 check_call(part, shell=True)
             os.chdir(start_dir)

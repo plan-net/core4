@@ -188,7 +188,7 @@ class CoreAdminInstaller(CoreBase, InstallMixin):
         if self.web:
             self.popen(self.venv_python, "setup.py", "build_web")
         os.chdir(source)
-        self.popen(self.venv_pip, "-v", "install", "--upgrade", ".")
+        self.popen(self.venv_pip, "-vvv", "install", "--upgrade", ".")
         commit_hash = self.get_local_commit()
         self.print("  commit [{}] at [{}]".format(
             commit_hash, source))
@@ -275,6 +275,7 @@ class CoreAdminInstaller(CoreBase, InstallMixin):
         return (url, requested_version)
 
     def popen(self, *args):
+        self.print("run [{}]".format(args))
         proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
         logfile = open(LOGFILE, "a", encoding="utf-8")
         for line in proc.stdout:
