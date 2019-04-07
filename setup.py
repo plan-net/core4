@@ -1,33 +1,8 @@
 from setuptools import find_packages
+from setuptools import setup
 
-try:
-    from core4.setup import setup
-    print("using core4.setup")
-except:
-    try:
-        from core4.script.installer.core4.setup import setup
-        print("using core4.script.installer.core4")
-    except:
-        from setuptools import setup
-        print("using setuptools")
-
-
-from subprocess import check_call
-from setuptools.command.test import test as TestCommand
 
 import core4
-
-
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
-
-class SphinxCommand(TestCommand):
-
-    def run_tests(self):
-        check_call(
-            ["sphinx-build", "-a", "-q", "docs/source", "docs/build/html"])
-        print("\nopen core4 documentation at docs/build/html/index.html")
 
 
 setup(
@@ -38,11 +13,9 @@ setup(
     description="core4os delivers a unified insights platform from data "
                 "integration, and information/workflow automation to "
                 "web-based business applications.",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/m-rau/core4",
-    packages=find_packages(exclude=['docs', 'tests*', 'project*', 'demo*',
-                                    'example*', 'other*']),
+    url="https://github.com/plan-net/core4",
+    packages=find_packages(exclude=['docs', 'tests*', 'project*', 'example*',
+                                    'other*']),
     entry_points={
         'console_scripts': [
             'coco=core4.script.coco:main',
