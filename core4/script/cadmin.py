@@ -27,15 +27,17 @@ Options:
 """
 
 import datetime
-from docopt import docopt
-import os
-from core4.base.main import CoreBase
-import core4.const
-import shutil
-from subprocess import Popen, STDOUT, PIPE, DEVNULL
-import sys
-import re
 import json
+import os
+import re
+import shutil
+import sys
+from subprocess import Popen, STDOUT, PIPE, DEVNULL
+
+from docopt import docopt
+
+import core4.const
+from core4.base.main import CoreBase
 
 LOGFILE = os.path.join(os.path.abspath("."), "cadmin.log")
 CLONE = ".origin"
@@ -298,8 +300,12 @@ class CoreInstaller(CoreBase, InstallMixin):
                 self.build()
 
 
-class CoreUpdater():
-    pass
+class CoreUpdater(CoreBase, InstallMixin):
+
+    def upgrade(self, test, force):
+        for project in os.listdir(self.config.folder.home):
+            installer = CoreInstaller(project)
+            installer.upgrade(test, force)
 
 
 def run(args):
@@ -315,8 +321,7 @@ def run(args):
             installer.upgrade(args["--test"], args["--force"])
         else:
             installer = CoreUpdater()
-            installer.upgrade(args["--test"], args["--reset"], args["--force"],
-                              args["--web"])
+            installer.upgrade(args["--test"], args["--force"])
     elif args["uninstall"]:
         installer = CoreInstaller(args["PROJECT"])
         installer.uninstall()
