@@ -7,7 +7,7 @@
       "yarn install",
       "yarn build --dest dist --modern"
     ],
-    "dist": "./distx"
+    "dist": "./dist"
   },
   "scripts": {
     "serve": "vue-cli-service serve",
