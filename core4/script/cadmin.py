@@ -128,7 +128,8 @@ class CoreInstaller(CoreBase, InstallMixin):
     def write_config(self):
         data = {
             "repository": self.repository,
-            "commit": self.get_local_commit()
+            "commit": self.get_local_commit(),
+            "web": self.web
         }
         json.dump(data, open(self.project_config, "w", encoding="utf-8"))
 
@@ -277,6 +278,7 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.print("upgrading [{}]".format(self.project))
         data = self.read_config()
         self.repository = data["repository"]
+        self.web = data["web"]
         current = data["commit"]
         self.checkout()
         latest = self.get_local_commit()
@@ -287,15 +289,14 @@ class CoreInstaller(CoreBase, InstallMixin):
             self.print("  latest [{}] != current commit [{}]".format(
                 latest, current))
             self.print("  project [{}] requires upgrade".format(self.project))
-        # os.makedirs(self.root)
-        # self.print("  created project root [{}]".format(self.root))
-        # self.install_venv()
-        # self.upgrade_pip()
-        # self.checkout()
-        # self.install_project()
-        # self.write_config()
-        # if self.web:
-        #     self.build()
+        if force:
+            self.print("  force upgrade with [{}]".format(self.project))
+        if not test and (force or latest != current):
+            self.install_project()
+            self.write_config()
+            if self.web:
+                self.build()
+
 
 class CoreUpdater():
     pass
