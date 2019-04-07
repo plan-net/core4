@@ -121,7 +121,10 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.print("  created project root [{}]".format(self.root))
         self.install_venv()
         self.upgrade_pip()
-        self.checkout()
+        if os.path.isdir(self.repository):
+            self.clone = self.repository
+        else:
+            self.checkout()
         self.install_project()
         self.write_config()
         if self.web:
@@ -282,7 +285,10 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.repository = data["repository"]
         self.web = data["web"]
         current = data["commit"]
-        self.checkout()
+        if os.path.isdir(self.repository):
+            self.clone = self.repository
+        else:
+            self.checkout()
         latest = self.get_local_commit()
         if latest == current:
             self.print("  latest [{}] == current commit".format(latest))
