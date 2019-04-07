@@ -16,6 +16,7 @@ setup(
     url="https://github.com/plan-net/core4",
     packages=find_packages(exclude=['docs', 'tests*', 'project*', 'example*',
                                     'other*']),
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             'coco=core4.script.coco:main',
