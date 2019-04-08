@@ -19,7 +19,9 @@ function getBasePath () {
     return window.APIBASE_CORE.replace('http:', 'ws:')
   }
 
-  return `ws://${window.location.hostname}${window.APIBASE_CORE}`
+  console.error(`incorrect network protocol ${window.location.href}`)
+
+  return `ws://${window.location.host}/core4/api`
 }
 
 export default {
