@@ -226,13 +226,16 @@ class CoreInstaller(CoreBase, InstallMixin):
             self.install_webapp(build["base"], build["dist"])
 
     def install_webapp(self, base, dist):
-        command = "import core4; print({}.__file__)".format(self.project)
+        command = "import {p:s}; print({ps}.__file__)".format(p=self.project)
         os.chdir(self.root)
         proc = Popen([self.python, "-c", command], env=self.env, stdout=PIPE,
                      stderr=STDOUT)
         (out, _) = proc.communicate()
+        #self.print("out: [{}]".format(out.decode("utf-8").strip()))
         pkg_clone = os.path.join(self.clone, self.project)
+        #self.print("pkg_clone: [{}]".format(pkg_clone))
         part = base[len(pkg_clone) + 1:]
+        #self.print("part: [{}]".format(part))
         target = os.path.join(os.path.dirname(out.decode("utf-8")), part, dist)
         if os.path.exists(target):
             self.print("    clean [{}]".format(target))
