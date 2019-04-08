@@ -15,21 +15,6 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
   return clone(Object.assign(...iterator.map(k => ({ [k]: clone(defaultValue) }))))
 }
 
-/**
- * Get host name by window location
- *
- * @returns {string}
- */
-function getBasePath () {
-  if (window.location.href.includes('http')) {
-    // index.html
-    return window.APIBASE_CORE.replace('http:', 'ws:')
-  }
-
-  return `ws://${window.location.hostname}${window.APIBASE_CORE}`
-}
-
 export {
-  createObjectWithDefaultValues,
-  getBasePath
+  createObjectWithDefaultValues
 }
