@@ -12,7 +12,15 @@
 <script>
 import SideNavigation from '@/components/SideNavigation'
 import { mapGetters } from 'vuex'
-import { getBasePath } from './helper'
+
+function getBasePath () {
+  if (window.location.href.includes('http')) {
+    // index.html
+    return window.APIBASE_CORE.replace('http:', 'ws:')
+  }
+
+  return `ws://${window.location.hostname}${window.APIBASE_CORE}`
+}
 
 export default {
   name: 'CORE4',
