@@ -10,14 +10,20 @@
       window.APIBASE_CORE = "/core4/api";
       window.APIBASE_APP = "/voting";
 
-      const dev = window.location.hostname.indexOf('localhost') >= -1;
+      const dev = window.location.hostname.indexOf('localhost') >= 0;
 
       if(dev){
         //local dev
-        const devPrefix = "http://localhost:5001"
+        const devPrefix = "http://" + "localhost:5001";
 
         window.APIBASE_CORE = devPrefix + window.APIBASE_CORE;
         window.APIBASE_APP = devPrefix + window.APIBASE_APP;
+      } else {
+        // prod
+        const prodPrefix = "http://" + window.location.host;
+
+        window.APIBASE_CORE = prodPrefix + window.APIBASE_CORE;
+        window.APIBASE_APP = prodPrefix + window.APIBASE_APP;
       }
     </script>
   </head>
