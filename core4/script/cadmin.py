@@ -184,7 +184,7 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.print(
             "  installing Python virtual environment in [{}]".format(
                 self.venv))
-        self.popen(sys.executable, "-m", "venv", self.venv)
+        self.popen("/usr/bin/python3", "-m", "venv", self.venv)
 
     def upgrade_pip(self):
         """
