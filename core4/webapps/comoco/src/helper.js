@@ -20,7 +20,7 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
  *
  * @returns {string}
  */
-const getBasePath = () => {
+function getBasePath () {
   if (window.location.href.includes('http')) {
     // index.html
     return window.APIBASE_CORE.replace('http:', 'ws:')

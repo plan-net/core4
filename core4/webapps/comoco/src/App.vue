@@ -14,8 +14,6 @@ import SideNavigation from '@/components/SideNavigation'
 import { mapGetters } from 'vuex'
 import { getBasePath } from './helper'
 
-const WS_BASE_PATH = getBasePath()
-
 export default {
   name: 'CORE4',
   components: {
@@ -31,7 +29,7 @@ export default {
 
       if (newValue && newValue !== oldValue) {
         let token = JSON.parse(localStorage.getItem('user'))['token']
-        this.$connect(`${WS_BASE_PATH}/v1/event?token=${token}`)
+        this.$connect(`${getBasePath()}/v1/event?token=${token}`)
       }
     }
   }
