@@ -18,7 +18,7 @@ export default {
           return val
         })
       }
-    },
+    }
     // _items: {
     //   get () { return this.items },
     //   set (item) {
@@ -82,7 +82,6 @@ export default {
         return true
       }
       this.itemsDefault.filter(defaultItem => {
-        console.log(defaultItem);
         // this._items = this.items.filter(headerItem => {
         //   let key = Object.keys(headerItem)[0]
         //   if (header.value === key) {

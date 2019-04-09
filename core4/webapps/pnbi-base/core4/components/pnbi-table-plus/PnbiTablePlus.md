@@ -88,7 +88,6 @@ This is a wrapper for v-data-table and accepts all attributes and slots from
               this.headers = data.tableResponce.headers
               this.totalItems = data.tableResponce.totalItems
             })
-          // console.log('filter event', this.headers.filter(item => item.searchValue))
         },
         onSeachQueryUpdate (query) {
           // TODO update items
@@ -125,7 +124,6 @@ This is a wrapper for v-data-table and accepts all attributes and slots from
             const { sortBy, descending, page, rowsPerPage } = this.pagination
             const totalItems = items.length
 
-            console.log('API Request', this.pagination, this.requestObj.filter)
 
             // BE sorting
             if (this.pagination.sortBy && items.length > 1) {

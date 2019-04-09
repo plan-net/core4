@@ -91,32 +91,31 @@ export default {
   created: function () {
     // Initialize localItems
     this.computedItems = this.computedItems.map(item => {
-      if(item.default && item.selectedForSearch != false) {
+      if (item.default && item.selectedForSearch != false) {
         item.selectedForSearch = true
       }
-      if(!item.searchValue && item.selectedForSearch != false) {
+      if (!item.searchValue && item.selectedForSearch != false) {
         item.searchValue = item.default
       }
-      return item;
+      return item
     })
   },
   computed: {
     computedItems: {
       get () {
         let obj = this.$helper.clone(this.items)
-        obj = obj.map(item =>{
-          if(item.required) {
-            if(!item.searchValue) {
+        obj = obj.map(item => {
+          if (item.required) {
+            if (!item.searchValue) {
               item.searchValue = item.default
             }
             item.selectedForSearch = true
           }
-          return item;
+          return item
         })
         return obj
       },
-      set(items) {
-        console.log('changed', items);
+      set (items) {
         this.$emit('updateItems', items)
       }
     }
@@ -140,7 +139,7 @@ export default {
     },
     onItemUpdate (item) {
       this.computedItems = this.computedItems.map(chip => {
-        if(chip.value === item.value) {
+        if (chip.value === item.value) {
           chip = item
         }
         return chip

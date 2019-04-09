@@ -127,15 +127,14 @@ export default {
       }).then(val => {
         this.finished = true
       }, err => {
+        // TODO: Fixme
         this.error = err
-        console.war(err)
         this.$nextTick(function () {
           this.$validator.validateAll()
         })
       }).catch((err) => {
         /// TODO: what can happen? error neccessary?
         this.error = err
-        console.war(err)
         this.$nextTick(function () {
           this.$validator.validateAll()
         })

@@ -1,7 +1,7 @@
 <template>
   <div class="core-background auth-page">
     <!-- TODO -  component -->
-    <template v-if="dialogPrivacy">
+   <!--  <template v-if="dialogPrivacy">
       <v-dialog
         v-model="dialogPrivacy"
         fullscreen
@@ -61,7 +61,7 @@
           </v-card-text>
         </v-card>
       </v-dialog>
-    </template>
+    </template> -->
     <!-- LOGIN dialog -->
     <v-dialog
       v-model="dialogLogin"
@@ -165,10 +165,10 @@
 </template>
 
 <script>
-import Privacy from '../privacy/Privacy'
-import Imprint from '../imprint/Imprint'
+/* import Privacy from '../privacy/Privacy'
+import Imprint from '../imprint/Imprint' */
 import { mapGetters, mapActions } from 'vuex'
-import CookieService from '../../cookie.service.js'
+// import CookieService from '../../cookie.service.js'
 
 export default {
   created () {
@@ -187,8 +187,7 @@ export default {
     })
   }, */
   components: {
-    Privacy,
-    Imprint
+
   },
   data () {
     return {
@@ -201,13 +200,6 @@ export default {
     }
   },
   watch: {
-    profile (newValue, oldValue) {
-      console.log(oldValue.error)
-      console.log(newValue.error)
-      // this.$validator.validateAll()
-      // console.log(newValue)
-      // TODO checkCookieLayer
-    }
   },
   computed: {
     nextRoute () {
@@ -235,7 +227,7 @@ export default {
       }, val => {
         this.$validator.validateAll()
       })
-    },
+    }
     /*     checkCookieLayer () {
       Auth.profile().then(
         profile => {
@@ -261,7 +253,7 @@ export default {
         () => {}
       )
     }, */
-    onOptInClick (cookie = false) {
+    /*     onOptInClick (cookie = false) {
       CookieService.setPriPolCookie()
       CookieService.optIn({
         _id: this.profile._id,
@@ -286,7 +278,7 @@ export default {
           window.location.assign(this.nextRoute)
         }
       })
-    }
+    } */
   }
 }
 </script>

@@ -50,7 +50,6 @@
 </template>
 
 <script>
-import moment from 'moment'
 export default {
   // current item is the advancedSearchItem
   props: ['item'],
@@ -69,22 +68,21 @@ export default {
   computed: {
     localItem: {
       get: function () {
-        if(this.internalLocalItem === null) {
+        if (this.internalLocalItem === null) {
           let obj = this.$helper.clone(this.item)
           // item with default search value
-          if(obj.searchValue) {
+          if (obj.searchValue) {
             obj.myKey = Object.keys(this.item.searchValue)[0]
             obj.myValue = this.item.searchValue[obj.myKey]
-            obj.chipText = "test"
+            obj.chipText = 'test'
           } else if (obj.default) {
-            console.log('default', obj);
             obj.myKey = Object.keys(this.item.default)[0]
             obj.myValue = this.item.default[obj.myKey]
-            obj = Object.assign(obj, {searchValue:{[obj.myKey]:obj.myValue} })
+            obj = Object.assign(obj, { searchValue: { [obj.myKey]: obj.myValue } })
           } else {
-            obj.myKey = '$eq';
+            obj.myKey = '$eq'
             obj.myValue = ''
-            obj = Object.assign(obj, {chipText:'', searchValue:{[obj.myKey]:obj.myValue} })
+            obj = Object.assign(obj, { chipText: '', searchValue: { [obj.myKey]: obj.myValue } })
           }
           return obj
         } else {
@@ -100,11 +98,11 @@ export default {
         return this.localItem.myKey
       },
       set: function (newKey) {
-        if(this.item.searchValue) {
+        if (this.item.searchValue) {
           const oldKey = Object.keys(this.item.searchValue)[0]
           this.setChipText(newKey, this.item.searchValue[oldKey])
         }
-        this.localItem = Object.assign(this.localItem, {myKey:newKey})
+        this.localItem = Object.assign(this.localItem, { myKey: newKey })
       }
     }
   },
@@ -122,7 +120,7 @@ export default {
      * @param selectedKey string
      */
     defineInitChip () {
-      if(this.localItem.default) {
+      if (this.localItem.default) {
         let key = Object.keys(this.localItem.searchValue)[0]
         this.setChipText(key, this.localItem.searchValue[key])
         this.applyFilter()
@@ -132,17 +130,17 @@ export default {
       this.equalsNumber = null
       this.lessNumber = null
       this.greaterNumber = null
-      switch(key) {
+      switch (key) {
         case '$eq':
-          this.localItem = Object.assign(this.localItem, {chipText:'', searchValue:{[key]:value}})
+          this.localItem = Object.assign(this.localItem, { chipText: '', searchValue: { [key]: value } })
           this.equalsNumber = value
           break
         case '$lt':
-          this.localItem = Object.assign(this.localItem, {chipText:'lower than', searchValue:{[key]:value} })
+          this.localItem = Object.assign(this.localItem, { chipText: 'lower than', searchValue: { [key]: value } })
           this.lessNumber = value
           break
         case '$gt':
-          this.localItem = Object.assign(this.localItem, {chipText:'greater than', searchValue:{[key]:value}})
+          this.localItem = Object.assign(this.localItem, { chipText: 'greater than', searchValue: { [key]: value } })
           this.greaterNumber = value
           break
       }
