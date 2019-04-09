@@ -9,10 +9,32 @@ import { jobStates, jobGroups } from './settings.js'
 
 Vue.use(Vuex)
 
+const colors = {
+  pending: '#ffc107',
+  deferred: '#f1f128',
+  failed: '#11dea2',
+  running: '#64a505',
+  error: '#d70f14',
+  inactive: '#8d1407',
+  killed: '#d8c9c7'
+}
+
+var chartInitValue = {
+  timestemp: '',
+  pending: 0,
+  deferred: 0,
+  failed: 0,
+  running: 0,
+  error: 0,
+  inactive: 0,
+  killed: 0
+}
+
 export default new Vuex.Store({
   plugins: [createLogger()],
   state: {
     queue: {},
+    chartValues: {},
     socket: {
       isConnected: false,
       message: '',
@@ -40,6 +62,40 @@ export default new Vuex.Store({
       // summary - ws type notification (all jobs in queue)
       if (message.name === 'summary') {
         state.queue = groupDataAndJobStat(message.data, 'state')
+
+        let obj = {
+          pending: 0,
+          deferred: 0,
+          failed: 0,
+          running: 0,
+          error: 0,
+          inactive: 0,
+          killed: 0
+        }
+
+        for (let key in message.data.queue) {
+          obj[key] = message.data.queue[key]
+        }
+
+        state.chartValues = obj
+      }
+
+      if (message.name === 'enqueue_job') {
+        let obj = {
+          pending: 0,
+          deferred: 0,
+          failed: 0,
+          running: 0,
+          error: 0,
+          inactive: 0,
+          killed: 0
+        }
+
+        for (let key in message.data.queue) {
+          obj[key] = message.data.queue[key]
+        }
+
+        state.chartValues = obj
       }
     },
     // mutations for reconnect methods
@@ -53,6 +109,9 @@ export default new Vuex.Store({
   },
   getters: {
     ...mapGettersJobGroups(jobGroups),
+    getChart: (state) => {
+      return state.chartValues
+    },
     getJobsByGroupName: (state, getters) => (groupName) => {
       return getters[groupName]
     },

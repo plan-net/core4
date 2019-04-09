@@ -1,66 +1,17 @@
 <template>
-      <vue-highcharts :options="chartOptions" ref="chart"></vue-highcharts>
+  <div>
+    <vue-highcharts :options="chartOptions" :updateArgs="[true, true, { duration: 1000}]" ref="chart"></vue-highcharts>
+<!--    <vue-highcharts :options="chartOptions" :updateArgs="updateArgs" ref="chart"></vue-highcharts>-->
+  </div>
 </template>
 
 <script>
-
+import { mapGetters } from 'vuex'
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import streamgraph from 'highcharts/modules/streamgraph'
 
-import { createObjectWithDefaultValues } from "../helper";
-import { jobStates } from "../settings";
-
-const chartData = createObjectWithDefaultValues(Object.keys(jobStates), [])
-
-chartData.error = {
-  name: 'error',
-  color: '#d70f14',
-  data: [
-    {x: 1554285600000, y: 2}, // 12:00
-    {x: 1554286500000, y: 0}, // 12:15
-
-    {x: 1554286560000, y: 22}, // 12:16
-    {x: 1554286620000, y: 16}, // 12:17
-    {x: 1554286680000, y: 3}, // 12:18
-    {x: 1554286740000, y: 0}, // 12:19
-    {x: 1554286800000, y: 0}, // 12:20
-
-    {x: 1554287400000, y: 8}, // 12:30
-
-    {x: 1554287580000, y: 10}, // 12:33
-    {x: 1554287940000, y: 2}, // 12:39
-    {x: 1554288060000, y: 0}, // 12:41
-
-    {x: 1554288300000, y: 25}, // 12:45
-    {x: 1554289200000, y: 3} // 13:00
-  ]
-}
-
-chartData.running = {
-  name: 'running',
-  color: '#64a505',
-  data: [
-    {x: 1554285600000, y: 5}, // 12:00
-    {x: 1554286500000, y: 0}, // 12:15
-
-    {x: 1554286560000, y: 1}, // 12:16
-    {x: 1554286620000, y: 2}, // 12:17
-    {x: 1554286680000, y: 3}, // 12:18
-    {x: 1554286740000, y: 4}, // 12:19
-    {x: 1554286800000, y: 5}, // 12:20
-
-
-    {x: 1554287400000, y: 9}, // 12:30
-
-    {x: 1554287580000, y: 0}, // 12:33
-    {x: 1554287940000, y: 0}, // 12:39
-    {x: 1554288060000, y: 0}, // 12:41
-
-    {x: 1554288300000, y: 5}, // 12:45
-    {x: 1554289200000, y: 4} // 13:00
-  ]
-}
+streamgraph(Highcharts)
 
 Highcharts.theme = {
   chart: {},
@@ -113,23 +64,18 @@ Highcharts.theme = {
   }
 }
 
-// Apply the theme
-Highcharts.setOptions(Highcharts.theme)
-
-Highcharts.dateFormats = {
-  // W: function (timestamp) {
-  //   var date = new Date(timestamp)
-  //   var day = date.getUTCDay() === 0 ? 7 : date.getUTCDay()
-  //   var dayNumber
-  //
-  //   date.setDate(date.getUTCDate() + 4 - day)
-  //   dayNumber = Math.floor((date.getTime() - new Date(date.getUTCFullYear(), 0, 1, -6)) / 86400000)
-  //
-  //   return 1 + Math.floor(dayNumber / 7)
-  // }
+const mapping = {
+  pending: 0,
+  deferred: 1,
+  failed: 2,
+  running: 3,
+  error: 4,
+  inactive: 5,
+  killed: 6
 }
 
-streamgraph(Highcharts)
+// Apply the theme
+Highcharts.setOptions(Highcharts.theme)
 
 export default {
   name: 'JobsStat',
@@ -138,7 +84,42 @@ export default {
   },
   data () {
     return {
-      chartOptions: {
+      pointOnPlot: 5
+    }
+  },
+  watch: {
+    getChart: {
+      handler: function (val, oldVal) {
+
+        if (!this.$refs.chart) {
+          return null
+        }
+
+        let chart = this.$refs.chart.chart
+
+        for (let key in val) {
+          let series = chart.series[mapping[key]]
+          let x = (new Date()).getTime()
+          let y = Math.round(Math.random() * 100)
+
+          series.addPoint([x, y], false)
+        }
+        chart.redraw()
+      },
+      deep: true
+    }
+  },
+  computed: {
+    ...mapGetters(['getChart']),
+    shift () {
+      if (this.$refs.chart && this.$refs.chart.chart.series.data[0]) {
+        return this.$refs.chart.chart.series.data[0] > this.pointOnPlot
+      } else {
+        return false
+      }
+    },
+    chartOptions () {
+      return {
         chart: {
           type: 'streamgraph',
           zoomType: 'x',
@@ -153,10 +134,9 @@ export default {
             fontFamily: '\'Unica One\', sans-serif'
           }
         },
-
         title: {
           floating: true,
-          align: 'left',
+          align: 'right',
           text: 'Queue dashboard'
         },
         legend: {
@@ -186,8 +166,44 @@ export default {
           startOnTick: false,
           endOnTick: false
         },
-        // series: [...{chartData}]
-        series: [chartData.error, chartData.running]
+        series: [
+          {
+            name: 'pending',
+
+            color: '#ffc107',
+            data: [[(new Date()).getTime(), 0]]
+          },
+          {
+            name: 'deferred',
+            color: '#f1f128',
+            data: [[(new Date()).getTime(), 0]]
+          },
+          {
+            name: 'failed',
+            color: '#11dea2',
+            data: [[(new Date()).getTime(), 0]]
+          },
+          {
+            name: 'running',
+            color: '#64a505',
+            data: [[(new Date()).getTime(), 0]]
+          },
+          {
+            name: 'error',
+            color: '#d70f14',
+            data: [[(new Date()).getTime(), 0]]
+          },
+          {
+            name: 'inactive',
+            color: '#8d1407',
+            data: [[(new Date()).getTime(), 0]]
+          },
+          {
+            name: 'killed',
+            color: '#d8c9c7',
+            data: [[(new Date()).getTime(), 0]]
+          }
+        ]
       }
     }
   }
