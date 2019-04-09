@@ -13,9 +13,8 @@ Vue.use(PnbiBase, {
   config: {
     DARK: true,
     THEME,
-    TITLE: 'CORE4OS-Landingpage',
-    IGNORED_ERRORS: [],
-    APP_IDENTIFIER: 'core4os-landingpage'
+    TITLE: 'Welcome to CORE4OS',
+    APP_IDENTIFIER: 'welcome-to-core4os'
   },
   store
 })
