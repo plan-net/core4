@@ -115,6 +115,7 @@ export default {
         if (is.number(this.value)) {
           return (this.value / this.unit).toLocaleString('de-DE')
         }
+        return null
       },
       set: function (newValue) {
         if (newValue === '') {

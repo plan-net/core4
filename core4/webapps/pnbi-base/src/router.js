@@ -17,6 +17,7 @@ export default new Router({
       component: Home,
       beforeEnter: (to, from, next) => {
         const loggedIn = window.localStorage.getItem('user')
+        // TODO: fixme - we should also call profile to see if user is logged in
         if (loggedIn) {
           window.location.assign(window.REDIRECTION)
         }

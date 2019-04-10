@@ -14,13 +14,13 @@ export default {
      * Just a string
      */
     text: {
-      type: String | null
+      type: String
     },
     /**
      * Is rendered as html: <strong>No</strong> data
      */
     html: {
-      type: String | null
+      type: String
     }
   },
   computed: {

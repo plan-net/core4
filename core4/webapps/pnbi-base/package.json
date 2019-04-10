@@ -14,11 +14,21 @@
     "build": "vue-cli-service build --no-clean",
     "lint": "vue-cli-service lint",
     "test:e2e": "vue-cli-service test:e2e",
-    "preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo core4/webapps/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git fetch --depth 1 origin develop && git checkout develop && cd ../../ && cp -R node_modules/_pnbi-base/core4/webapps/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
+    "____preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo core4/webapps/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git fetch --depth 1 origin develop && git checkout develop && cd ../../ && cp -R node_modules/_pnbi-base/core4/webapps/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
   },
   "dependencies": {
     "core-js": "^2.6.5",
-    "pnbi-base": "file:node_modules/pnbi-base"
+    "numbro": "^2.1.0", 
+    "axios": "^0.18.0", 
+    "moment": "^2.24.0", 
+    "vee-validate": "^2.0.6", 
+    "vue-router": "^3.0.1", 
+    "vue": "^2.6.10", 
+    "vuetify": "^1.5.9", 
+    "vuex": "^3.0.1",
+    "is": "^3.2.1",
+    "vue-i18n": "^7.3.2",
+    "material-design-icons-iconfont": "^4.0.5"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.5.0",

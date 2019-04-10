@@ -1,4 +1,5 @@
 // vue.config.js
+const path = require('path')
 module.exports = {
   outputDir: '../../api/v1/request/_static',
   assetsDir: 'assets',
@@ -18,6 +19,11 @@ module.exports = {
     }
   },
   configureWebpack: {
+    resolve: {
+      alias: {
+        'pnbi-base': path.resolve(__dirname, '.')
+      }
+    },
     output: {
       filename: 'assets/[name].js',
       chunkFilename: 'assets/[name].js'
