@@ -2,6 +2,8 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
 
+import moment from 'moment'
+
 import { clone } from 'pnbi-base/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
 
@@ -9,32 +11,31 @@ import { jobStates, jobGroups } from './settings.js'
 
 Vue.use(Vuex)
 
-const colors = {
-  pending: '#ffc107',
-  deferred: '#f1f128',
-  failed: '#11dea2',
-  running: '#64a505',
-  error: '#d70f14',
-  inactive: '#8d1407',
-  killed: '#d8c9c7'
-}
+// const colors = {
+//   pending: '#ffc107',
+//   deferred: '#f1f128',
+//   failed: '#11dea2',
+//   running: '#64a505',
+//   error: '#d70f14',
+//   inactive: '#8d1407',
+//   killed: '#d8c9c7'
+// }
 
-var chartInitValue = {
-  timestemp: '',
-  pending: 0,
-  deferred: 0,
-  failed: 0,
-  running: 0,
-  error: 0,
-  inactive: 0,
-  killed: 0
-}
+// var chartInitValue = {
+//   timestemp: '',
+//   pending: 0,
+//   deferred: 0,
+//   failed: 0,
+//   running: 0,
+//   error: 0,
+//   inactive: 0,
+//   killed: 0
+// }
 
 export default new Vuex.Store({
   plugins: [createLogger()],
   state: {
     queue: {},
-    chartValues: {},
     socket: {
       isConnected: false,
       message: '',
@@ -61,41 +62,7 @@ export default new Vuex.Store({
 
       // summary - ws type notification (all jobs in queue)
       if (message.name === 'summary') {
-        state.queue = groupDataAndJobStat(message.data, 'state')
-
-        let obj = {
-          pending: 0,
-          deferred: 0,
-          failed: 0,
-          running: 0,
-          error: 0,
-          inactive: 0,
-          killed: 0
-        }
-
-        for (let key in message.data.queue) {
-          obj[key] = message.data.queue[key]
-        }
-
-        state.chartValues = obj
-      }
-
-      if (message.name === 'enqueue_job') {
-        let obj = {
-          pending: 0,
-          deferred: 0,
-          failed: 0,
-          running: 0,
-          error: 0,
-          inactive: 0,
-          killed: 0
-        }
-
-        for (let key in message.data.queue) {
-          obj[key] = message.data.queue[key]
-        }
-
-        state.chartValues = obj
+        state.queue = groupDataAndJobStat(message.created, message.data, 'state')
       }
     },
     // mutations for reconnect methods
@@ -109,8 +76,8 @@ export default new Vuex.Store({
   },
   getters: {
     ...mapGettersJobGroups(jobGroups),
-    getChart: (state) => {
-      return state.chartValues
+    getChartData: (state) => {
+      return state.queue.stat
     },
     getJobsByGroupName: (state, getters) => (groupName) => {
       return getters[groupName]
@@ -153,6 +120,7 @@ function mapGettersJobGroups (arr) {
 /**
  * Assort array of all jobs in groups + get job statistic
  *
+ * @param {string} created - timestamp
  * @param {array} arr - array of all jobs
  * @param {string} groupingKey - job object key by which we will do grouping
  *
@@ -160,7 +128,7 @@ function mapGettersJobGroups (arr) {
  *                     e. g. {'stat': {'waiting': 5, ...}, 'running': [<job>, ..., <job>], ...}
  */
 // ToDo: elegant decouple group data and job statistic
-function groupDataAndJobStat (arr, groupingKey) {
+function groupDataAndJobStat (created, arr, groupingKey) {
   let groupsDict = {}
   let initialState = createObjectWithDefaultValues(jobStates)
 
@@ -171,6 +139,8 @@ function groupDataAndJobStat (arr, groupingKey) {
     (groupsDict[group] = groupsDict[group] || []).push(job)
 
     initialState[jobState] += job['n']
+    // debugger
+    // initialState['created'] = moment(created, 'MM/DD/YYYY HH:mm:ss').utc().format('MM/DD/YYYY HH:mm:ss')
   })
 
   return { 'stat': initialState, ...groupsDict }

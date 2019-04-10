@@ -7,7 +7,9 @@ import { mapGetters } from 'vuex'
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
+
 stockInit(Highcharts)
+
 Highcharts.theme = {
   colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066',
     '#eeaaee', '#55BF3B', '#DF5353', '#7798BF', '#aaeeee'],
@@ -80,7 +82,8 @@ Highcharts.theme = {
   plotOptions: {
     series: {
       dataLabels: {
-        color: '#B0B0B3'
+        color: '#FFFFFF'
+        // color: '#B0B0B3'
       },
       marker: {
         lineColor: '#333'
@@ -205,7 +208,7 @@ Highcharts.theme = {
   textColor: '#C0C0C0',
   contrastTextColor: '#F0F0F3',
   maskColor: 'rgba(255,255,255,0.3)'
-};
+}
 
 // Apply the theme
 Highcharts.setOptions(Highcharts.theme)
@@ -217,31 +220,30 @@ export default {
   },
   data () {
     return {
-
+      init: false
     }
   },
   watch: {
-    getChart: {
-      handler: function (val, oldVal) {
-        if (!this.$refs.chart) {
-          return null
-        }
+    getChartData: {
+      handler (val) {
+        if (!this.$refs.chart) return null
 
         let chart = this.$refs.chart.chart
-        var running = chart.series[0]
-        var pending = chart.series[1]
-        var deferred = chart.series[2]
-        var failed = chart.series[3]
-        var error = chart.series[4]
-        var inactive = chart.series[5]
-        var killed = chart.series[6]
-        var arr = [running, pending, deferred, failed, error, inactive, killed]
 
-        var shift = pending.data.lenght > 10
-        var x = (new Date()).getTime()// current time
+        const running = chart.series[0]
+        const pending = chart.series[1]
+        const deferred = chart.series[2]
+        const failed = chart.series[3]
+        const error = chart.series[4]
+        const inactive = chart.series[5]
+        const killed = chart.series[6]
+        const arr = [running, pending, deferred, failed, error, inactive, killed]
+
+        // const shift = running.data.length > 10 // ToDo: discuss with Michael
+        const x = (new Date()).getTime()
 
         arr.forEach((item) => {
-          item.addPoint([x, Math.round(Math.random() * 200)], false, shift, { duration: 1000 })
+          item.addPoint([x, val[item.name]], false, false)
         })
 
         chart.redraw()
@@ -249,43 +251,28 @@ export default {
       deep: true
     }
   },
+  mounted () {
+    if (!this.$refs.chart) return null
+
+    const chart = this.$refs.chart.chart
+    const x = (new Date()).getTime()// current time
+
+    chart.series.forEach(item => {
+      item.addPoint([x, (this.getChartData && this.getChartData[item.name]) || 0], false, false)
+    })
+
+    chart.redraw()
+  },
   computed: {
-    ...mapGetters(['getChart']),
+    ...mapGetters(['getChartData']),
     chartOptions () {
       return {
         chart: {
-          events: {
-            load: function () {
-
-              // set up the updating of the chart each second
-              // var chart = this
-              // var running = this.series[0]
-              // var pending = this.series[1]
-              // var deferred = this.series[2]
-              // var failed = this.series[3]
-              // var error = this.series[4]
-              // var inactive = this.series[5]
-              // var killed = this.series[6]
-              // var arr = [running, pending, deferred, failed, error, inactive, killed]
-              //
-              // var shift = pending.data.lenght > 10
-              //
-              // setInterval(function () {
-              //   var x = (new Date()).getTime()// current time
-              //
-              //   arr.forEach((item) => {
-              //     item.addPoint([x, Math.round(Math.random() * 200)], false, shift, { duration: 1000 })
-              //   })
-              //
-              //   chart.redraw()
-              // }, 3000)
-            }
-          },
           zoomType: 'x'
         },
 
         time: {
-          useUTC: false
+          useUTC: true
         },
 
         rangeSelector: {
@@ -301,11 +288,13 @@ export default {
             type: 'hour',
             count: 1,
             text: '1h'
-          }, {
-            type: 'day',
-            count: 1,
-            text: '1d'
-          }, {
+          },
+          // {
+          //   type: 'day',
+          //   count: 1,
+          //   text: '1d'
+          // },
+          {
             type: 'all',
             text: 'All'
           }],
@@ -329,8 +318,24 @@ export default {
         },
 
         plotOptions: {
+          area: {
+            stacking: 'normal'
+          },
           series: {
             showInNavigator: true
+          }
+        },
+
+        yAxis: {
+          title: {
+            text: 'Job count',
+            margin: 20
+          },
+          allowDecimals: false
+        },
+        xAxis: {
+          title: {
+            text: 'Time in UTC (Coordinated Universal Time)'
           }
         },
 
@@ -338,8 +343,9 @@ export default {
           {
             name: 'running',
             color: '#64a505',
-            type: 'area',
-            data: [[(new Date()).getTime(), 0]],
+            type: 'areaspline',
+            data: [],
+            // data: [[(new Date()).getTime(), 0]],
             fillColor: {
               linearGradient: {
                 x1: 0,
@@ -349,16 +355,17 @@ export default {
               },
               stops: [
                 [0, '#64a505'],
-                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
               ]
             }
           },
           {
             name: 'pending',
             color: '#ffc107',
-            type: 'area',
-            visible: false, // legend for this series by default
-            data: [[(new Date()).getTime(), 0]],
+            type: 'areaspline',
+            visible: true, // legend for this series by default
+            data: [],
+            // data: [[(new Date()).getTime(), 0]],
             fillColor: {
               linearGradient: {
                 x1: 0,
@@ -368,16 +375,17 @@ export default {
               },
               stops: [
                 [0, '#ffc107'],
-                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
               ]
             }
           },
           {
             name: 'deferred',
             color: '#f1f128',
-            type: 'area',
-            visible: false, // legend for this series by default
-            data: [[(new Date()).getTime(), 0]],
+            type: 'areaspline',
+            visible: true, // legend for this series by default
+            data: [],
+            // data: [[(new Date()).getTime(), 0]],
             fillColor: {
               linearGradient: {
                 x1: 0,
@@ -387,16 +395,17 @@ export default {
               },
               stops: [
                 [0, '#f1f128'],
-                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
               ]
             }
           },
           {
             name: 'failed',
             color: '#11dea2',
-            type: 'area',
-            visible: false, // legend for this series by default
-            data: [[(new Date()).getTime(), 0]],
+            type: 'areaspline',
+            visible: true, // legend for this series by default
+            data: [],
+            // data: [[(new Date()).getTime(), 0]],
             fillColor: {
               linearGradient: {
                 x1: 0,
@@ -406,15 +415,16 @@ export default {
               },
               stops: [
                 [0, '#11dea2'],
-                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
               ]
             }
           },
           {
             name: 'error',
             color: '#d70f14',
-            type: 'area',
-            data: [[(new Date()).getTime(), 0]],
+            type: 'areaspline',
+            data: [],
+            // data: [[(new Date()).getTime(), 0]],
             fillColor: {
               linearGradient: {
                 x1: 0,
@@ -424,15 +434,16 @@ export default {
               },
               stops: [
                 [0, '#d70f14'],
-                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
               ]
             }
           },
           {
             name: 'inactive',
             color: '#8d1407',
-            type: 'area',
-            data: [[(new Date()).getTime(), 0]],
+            type: 'areaspline',
+            data: [],
+            // data: [[(new Date()).getTime(), 0]],
             fillColor: {
               linearGradient: {
                 x1: 0,
@@ -442,15 +453,16 @@ export default {
               },
               stops: [
                 [0, '#8d1407'],
-                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
               ]
             }
           },
           {
             name: 'killed',
             color: '#d8c9c7',
-            type: 'area',
-            data: [[(new Date()).getTime(), 0]],
+            type: 'areaspline',
+            data: [],
+            // data: [[(new Date()).getTime(), 0]],
             fillColor: {
               linearGradient: {
                 x1: 0,
@@ -460,7 +472,7 @@ export default {
               },
               stops: [
                 [0, '#d8c9c7'],
-                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
               ]
             }
           }

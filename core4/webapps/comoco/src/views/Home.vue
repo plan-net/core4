@@ -4,13 +4,13 @@
       <v-flex>
         <v-layout row wrap xs12>
           <v-flex v-for="(states, group) in groupsJobsByStates" :key="group" class="ma-2 flex-equal-size">
-            <board xs12 md4 lg4 xl4 :name="group" :flags="flags" :states="states"></board>
+            <board xs12 md4 lg4 xl4 :name="group" :flags="flags" :states="states" class="pa-3"></board>
           </v-flex>
         </v-layout>
       </v-flex>
-<!--      <v-flex ma-2 hidden-sm-and-down>-->
-<!--        <chart></chart>-->
-<!--      </v-flex>-->
+      <v-flex ma-2 hidden-sm-and-down>
+        <chart></chart>
+      </v-flex>
       <v-flex ma-2 hidden-sm-and-down>
         <chart-2></chart-2>
       </v-flex>
