@@ -458,7 +458,7 @@ def main():
         worker(args["IDENTIFIER"])
     elif args["--application"]:
         app(name=args["IDENTIFIER"], port=args["--port"],
-            project=args["--project"], filter=args["--filter"],
+            project=args["--home"], filter=args["--filter"],
             routing=args["--routing"], address=args["--address"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
