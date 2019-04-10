@@ -231,11 +231,8 @@ class CoreInstaller(CoreBase, InstallMixin):
         proc = Popen([self.python, "-c", command], env=self.env, stdout=PIPE,
                      stderr=STDOUT)
         (out, _) = proc.communicate()
-        #self.print("out: [{}]".format(out.decode("utf-8").strip()))
         pkg_clone = os.path.join(self.clone, self.project)
-        #self.print("pkg_clone: [{}]".format(pkg_clone))
         part = base[len(pkg_clone) + 1:]
-        #self.print("part: [{}]".format(part))
         target = os.path.join(os.path.dirname(out.decode("utf-8")), part, dist)
         if os.path.exists(target):
             self.print("    clean [{}]".format(target))
