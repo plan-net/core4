@@ -21,7 +21,7 @@ Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
-  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [--filter=FILTER]...
+  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [--home=HOME] [--filter=FILTER]...
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -81,7 +81,7 @@ import core4.service.introspect
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.introspect.command import ENQUEUE_ARG, SERVE_ALL
+from core4.service.introspect.command import ENQUEUE_ARG
 from core4.service.operation import build, release
 
 QUEUE = core4.queue.main.CoreQueue()
@@ -101,35 +101,12 @@ def worker(name):
 
 def app(**kwargs):
     core4.logger.mixin.logon()
-    filter = kwargs.get("filter", None)
-    if "port" in kwargs and kwargs["port"] is not None:
-        kwargs["port"] = int(kwargs["port"])
-    if filter:
-        if not isinstance(filter, list):
-            filter = [filter]
-        projects = set()
-        kw_filter = []
-        for i in range(len(filter)):
-            projects.add(filter[i].split(".")[0])
-            kw_filter.append(filter[i])
-            if not filter[i].endswith("."):
-                filter[i] += "."
-        if len(projects) > 1:
-            raise core4.error.Core4UsageError(
-                "you must not serve applications from different projects")
-        kwargs["filter"] = kw_filter
-        param = ["debug=False"]
-        for p in ["name", "port", "address", "routing", "filter"]:
-            val = kwargs.get(p, None)
-            if isinstance(val, str):
-                val = '"{}"'.format(val)
-            else:
-                val = "{}".format(str(val))
-            param.append("{}={}".format(p, val))
-        core4.service.introspect.exec_project(
-            projects.pop(), SERVE_ALL, comm=False, param=", ".join(param))
-    else:
+    try:
         core4.api.v1.tool.functool.serve_all(**kwargs)
+    except KeyboardInterrupt:
+        print(" .. interrupt.")
+    except:
+        raise
 
 
 def scheduler(name):
@@ -481,8 +458,8 @@ def main():
         worker(args["IDENTIFIER"])
     elif args["--application"]:
         app(name=args["IDENTIFIER"], port=args["--port"],
-            filter=args["--filter"], routing=args["--routing"],
-            address=args["--address"])
+            project=args["--project"], filter=args["--filter"],
+            routing=args["--routing"], address=args["--address"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
