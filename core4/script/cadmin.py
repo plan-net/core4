@@ -226,7 +226,7 @@ class CoreInstaller(CoreBase, InstallMixin):
             self.install_webapp(build["base"], build["dist"])
 
     def install_webapp(self, base, dist):
-        command = "import {p:s}; print({ps}.__file__)".format(p=self.project)
+        command = "import {p:s}; print({p:s}.__file__)".format(p=self.project)
         os.chdir(self.root)
         proc = Popen([self.python, "-c", command], env=self.env, stdout=PIPE,
                      stderr=STDOUT)
