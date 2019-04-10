@@ -87,8 +87,8 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
                               reuse_port=reuse_port, routing=routing, **kwargs)
 
 
-def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
-              routing=None, **kwargs):
+def serve_all(project=None, filter=None, port=None, address=None, name=None,
+              reuse_port=True, routing=None, **kwargs):
     """
     Serve all enabled core :class:`.CoreApiContainer` classes.
 
@@ -98,7 +98,7 @@ def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
     provided filters will be in scope of API application serving.
 
     For other arguments see :meth:`serve`.
-
+    # todo: docu
     :param filter: one or multiple str values to filter
                    :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
                    of the :class:`.CoreApiContainer` to be served.
@@ -115,5 +115,15 @@ def serve_all(filter=None, port=None, address=None, name=None, reuse_port=True,
                     node hostname or address and port
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
-    CoreApiServerTool().serve_all(filter, port, address, name, reuse_port,
+    CoreApiServerTool().serve_all(project, filter, port, address, name, reuse_port,
                                   routing, **kwargs)
+
+
+if __name__ == '__main__':
+    from core4.logger.mixin import logon
+    logon()
+    #serve_all(filter=[])
+    #serve_all()
+    #serve_all(filter=["core4"])
+    #serve_all(filter=["project."])
+    serve_all(project="tv")

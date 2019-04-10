@@ -313,6 +313,7 @@ class CoreUpdater(CoreBase, InstallMixin):
 
     def upgrade(self, test, force):
         for project in os.listdir(self.config.folder.home):
+            # todo: check if this is actually a folder and a core4 project
             installer = CoreInstaller(project)
             installer.upgrade(test, force)
 

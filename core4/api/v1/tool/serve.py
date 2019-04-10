@@ -27,6 +27,7 @@ from core4.base import CoreBase
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.logger import CoreLoggerMixin
 from core4.util.data import rst2html
+from core4.service.introspect.command import SERVE
 
 
 class CoreApiServerTool(CoreBase, CoreLoggerMixin):
@@ -51,6 +52,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         RootContainer.routes = {}
         RootContainer.containers = []
         for container_cls in list(args) + [RootContainer]:
+            if isinstance(container_cls, str):
+                modname = ".".join(container_cls.split(".")[:-1])
+                clsname = container_cls.split(".")[-1]
+                module = importlib.import_module(modname)
+                container_cls = getattr(module, clsname)
             container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
             if not container_obj.enabled:
@@ -144,7 +150,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             self.unregister()
             for container in RootContainer.containers:
                 container.on_exit()
-
 
     async def heartbeat(self):
         """
@@ -269,7 +274,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.logger.info("unregistering server [%s]", self.identifier)
         self.reset_handler()
 
-    def serve_all(self, filter=None, port=None, address=None, name=None,
+    def serve_all_old(self, filter=None, port=None, address=None, name=None,
                   reuse_port=True, routing=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
@@ -322,3 +327,35 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         if scope:
             self.serve(*clist, port=port, name=name, address=address,
                        reuse_port=reuse_port, routing=routing, **kwargs)
+
+    def serve_all(self, project=None, filter=None, port=None, address=None,
+                  name=None, reuse_port=True, routing=None):
+        if not project:
+            project = self.project
+        if filter is None:
+            filter = [project]
+        for i in range(len(filter)):
+            if not filter[i].endswith("."):
+                filter[i] += "."
+        scope = []
+        intro = core4.service.introspect.CoreIntrospector()
+        for project, data in intro.list_project(project):
+            for container in data["container"]:
+                if not filter:
+                    scope.append(container["name"])
+                else:
+                    for f in filter:
+                        if container["name"].startswith(f):
+                            scope.append(container["name"])
+                            break
+        if scope:
+            args = dict(
+                port=port,
+                address=address,
+                name=name,
+                reuse_port=reuse_port,
+                routing=routing,
+            )
+            core4.service.introspect.exec_project(project, SERVE, a=scope,
+                                                  kw=args)
+
