@@ -101,6 +101,9 @@ def worker(name):
 
 def app(**kwargs):
     core4.logger.mixin.logon()
+    if "home" in kwargs:
+        kwargs["project"] = kwargs["home"]
+        del kwargs["home"]
     try:
         core4.api.v1.tool.functool.serve_all(**kwargs)
     except KeyboardInterrupt:
