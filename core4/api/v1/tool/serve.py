@@ -107,7 +107,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
         name = name or "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
-        self.port = port or self.config.api.port
+        self.port = int(port or self.config.api.port)
         self.address = address or "0.0.0.0"
         self.hostname = core4.util.node.get_hostname()
 
