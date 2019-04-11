@@ -73,9 +73,9 @@ class CoreApiServer(CoreApiContainer):
         (r'/access/(.*)', AccessHandler, None, "AccessHandler"),
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
-        (r'/widgets', CoreStaticFileHandler, {
+        (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
-            "title": "core widgets", "protected": False
+            "title": "core4os", "protected": False
         }),
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",

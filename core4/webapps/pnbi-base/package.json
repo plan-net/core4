@@ -4,9 +4,9 @@
   "___core4": {
     "build_command" : [
       "yarn install",
-      "yarn build --dest dist --modern --no-clean"
+      "yarn build --dest dist --modern"
     ],
-    "dist": "../../api/v1/request/_static"
+    "dist": "dist"
   },
   "private": true,
   "scripts": {

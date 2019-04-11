@@ -14,7 +14,6 @@ export default new Router({
       component: WebComponentsWrapper,
       beforeEnter: (to, from, next) => {
         const loggedIn = window.localStorage.getItem('user')
-        console.log(loggedIn, '--------------------')
         next()
       }
     },

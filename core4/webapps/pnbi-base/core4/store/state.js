@@ -60,7 +60,7 @@ const actions = {
     router.instance.push('/')
   },
   gotoLogin ({ commit }) {
-    window.localStorage.clear()
+    window.localStorage.removeItem('user')
     commit('clear_profile')
     router.instance.push('/login')
   },

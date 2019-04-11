@@ -1,7 +1,7 @@
 // vue.config.js
 const path = require('path')
 module.exports = {
-  outputDir: '../../api/v1/request/_static',
+  // outputDir: '../../api/v1/request/_static',
   assetsDir: 'assets',
   lintOnSave: true,
   publicPath: './',
