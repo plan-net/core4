@@ -1,23 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>core4</title>
-    <link rel="stylesheet" type="text/css" href="default.css">
-</head>
-<body>
-
-<hr/>
-<h1>Welcome to core4</h1>
-<hr/>
-<ul>
-    <li>
-        <a href="/core4/api/login">LOGIN</a>
-    </li>
-    <li>
-        <a href="/core4/api/info">WIDGET COLLECTION</a>
-    </li>
-</ul>
-
-</body>
-</html>
+<!DOCTYPE html><html lang=en><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1"><link rel=icon href=favicon.ico><title>CORE4OS</title><script>window.REDIRECTION = 'http://35.158.149.95/core4/api/v1/widgets'</script><script>window.APIBASE_CORE = "/core4/api";
+      const dev = window.location.hostname.indexOf('localhost') > -1;
+      if(dev){
+        //local dev
+        const devPrefix = "http://localhost:5001"
+        window.APIBASE_CORE = devPrefix + window.APIBASE_CORE;
+      }</script><link href=assets/app.js rel=preload as=script><link href=assets/chunk-vendors.js rel=preload as=script></head><body><noscript><strong>We're sorry but pnbi-base doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id=app></div><script src=assets/chunk-vendors.js></script><script src=assets/app.js></script></body></html>

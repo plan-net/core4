@@ -31,7 +31,7 @@ export default {
      * Sets dialog width
      */
     width: {
-      type: String | Number,
+      type: [String, Number],
       default: '640px'
     },
     /**

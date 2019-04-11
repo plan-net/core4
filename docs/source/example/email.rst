@@ -7,7 +7,7 @@ functionality within a CoreJob. Here, the MailMixin located in
 ``core4/util/email`` is used.
 
 The mixin provides the method ``send_mail()``.
-It requires a string or list of receipients, a message (str)
+It requires a string or list of recipients, a message (str)
 (if the message is in html, one has to set the html=True argument) and a
 subject (also str).
 

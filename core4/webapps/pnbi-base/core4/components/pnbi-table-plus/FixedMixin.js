@@ -13,7 +13,6 @@ export default {
   mounted () {
     this.$nextTick(function () {
       const fixedHeader = this.fixedHeader
-      console.log('fixedHeader', fixedHeader)
       const fixedFooter = this.fixedFooter
       if (fixedHeader || fixedFooter) {
         datatable = this.$el.querySelector('.v-datatable')

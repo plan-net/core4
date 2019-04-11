@@ -74,7 +74,7 @@ Use ``chist`` command line tool to display logging output:
   polling period is 1 second. Set the polling period with an argument, i.e.
   ``chist -f 15`` to follow in 15 seconds periods.
 
-Default maching is case-insensitive. Change this behavior for options text
+Default matching is case-insensitive. Change this behavior for options text
 filters with ``--case-sensitive``.
 
 See more details with ``chist --help``
@@ -85,12 +85,11 @@ See more details with ``chist --help``
 ``cadmin`` - core4 administration
 #################################
 
-``cadmin`` is the core4 deployment utility. Use ``cadmin`` to install and
-upgrade core4 and core4 projects.
+``cadmin`` is the core4 deployment and frontend build utility. Use ``cadmin``
+to install and upgrade core4 and core4 projects.
 
 You must specify the project as well as the core4 framework repository location
-at ``--install``. The ``--upgrade`` uses this information to verify and install
+at ``install``. The ``upgrade`` uses this information to verify and install
 any new release. Use the ``--test`` option to check any updates exist. Use
-``--reset`` option together with ``--install`` to purge and reinstall any
+``--reset`` option together with ``install`` to purge and reinstall any
 existing installation.
-

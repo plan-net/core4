@@ -394,6 +394,20 @@ providing a blue print for other concrete CoreJob implementations
             self.logger.info("Got result within the multiplication: [%d]", result)
 
 
+Access Permissions
+------------------
+job://.../x|r
+
+There are two flags who determine the permission of a Job:
+
+- **x**
+   Execute flag, this allows the job to be accessed, changed and executed without
+   restrictions.
+
+- **r**
+   Read Flag, this only allows for basic job info to be read, it prevents the job
+   from being changed and executed and only allows for the job info to be read.
+
 Best practices
 --------------
 
@@ -495,9 +509,3 @@ principles also:
 -   **choose meaningful function-/class-/variable-names**
         choosing simple, yet descriptive names will greatly help you maintain or
         extend your code.
-
-
-.. the following aspects should be described
-   - access permission read/execute with jobs, i.e. job://.../x|r
-   * we will have to talk about the implications of this, i have no idea
-      on how this works.

@@ -433,9 +433,16 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                             # this is Python virtual environment:
                             out = core4.service.introspect.exec_project(
                                 project, ITERATE, comm=True)
-                            yield (project, json.loads(out))
+                            try:
+                                yield (project, json.loads(out))
+                            except:
+                                self.logger.error("failed to load [%s]",
+                                                  project)
                         else:
                             # no Python virtual environment:
+                            self.logger.error("failed to load [%s] due to"
+                                              "missing Python virtual "
+                                              "environment", project)
                             yield (project, None)
             os.chdir(currpath)
         else:
@@ -521,14 +528,12 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if home is not None:
             python_path = os.path.join(home, project, VENV_PYTHON)
             if not os.path.exists(python_path):
+                self.logger.warning("python not found at [%s]", python_path)
                 python_path = None
         if python_path is None:
-            self.logger.warning("python not found at [%s], use fallback",
-                                python_path)
             python_path = sys.executable
-        else:
-            self.logger.debug("python found at [%s]", python_path)
-            os.chdir(os.path.join(home, project))
+        self.logger.debug("python found at [%s]", python_path)
+        #os.chdir(os.path.join(home, project))
         cmd = command.format(*args, **kwargs)
         if wait:
             if comm:

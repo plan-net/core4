@@ -1,6 +1,6 @@
 import Auth from '../Auth'
 import bus from '../event-bus.js'
-import CookieService from '../internal/cookie.service.js'
+// import CookieService from '../internal/cookie.service.js'
 import router from '../internal/routes/index.js'
 import { axiosInternal } from '../internal/axios.config.js'
 
@@ -8,12 +8,12 @@ const state = {
   hasOwnTheme: false,
   loading: false,
   dark: false,
-  title: 'CORE',
+  title: 'CORE4OS',
   notification: null,
 
   profile: {
     error: null,
-    cookie: CookieService.isPriPolCookieSet(),
+    // cookie: CookieService.isPriPolCookieSet(),
     authenticated: false,
     name: null,
     email: 'No email',
@@ -80,10 +80,7 @@ const actions = {
       Auth.login(payload).then(result => {
         resolve(true)
         dispatch('gotoStart')
-      }/* , () => {
-        reject(new Error('LoginError'))
-        commit('set_profile', { error: 'auth' })
-      } */).catch((err) => {
+      }).catch((err) => {
         console.log(err.response, 'Login.Error')
         commit('set_profile', { error: 'auth' })
         reject(new Error('LoginError'))
@@ -148,7 +145,7 @@ const mutations = {
   },
   clear_profile (state, payload) {
     state.profile = {
-      cookie: CookieService.isPriPolCookieSet(),
+      // cookie: CookieService.isPriPolCookieSet(),
       authenticated: false,
       name: null
     }

@@ -23,7 +23,6 @@ export default {
         return temp
       },
       set: function (newVal) {
-        //console.log('newVal', newVal)
       }
     }
   },
@@ -39,7 +38,6 @@ export default {
      * set header.found true|false for specific display
      */
     filterHeadersBySearch (searchStr) {
-      console.log('searchStr', searchStr);
       this.localStorageHeaders = this.localStorageHeaders.map(header => {
         if (searchStr === '' || searchStr === null || searchStr === undefined) {
           header.highlight = false
@@ -74,7 +72,6 @@ export default {
       return JSON.parse(window.localStorage.getItem(this.localStorageName))
     },
     updateHeaders () {
-      console.log('save');
       this.saveToLocalStorage(this.localStorageHeaders)
       this.$updateHeaderDom(this.localStorageHeaders)
     },

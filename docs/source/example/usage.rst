@@ -1,6 +1,6 @@
-====================
+####################
 core usage reporting
-====================
+####################
 
 With this use case you follow
 
@@ -24,7 +24,6 @@ day, week, month, quarter and year.
 But first things first. Let's start with project setup.
 
 
-=============
 project setup
 =============
 
@@ -49,7 +48,6 @@ home environment with::
     source enter_env
 
 
-==================
 job implementation
 ==================
 
@@ -160,7 +158,7 @@ The job class is located in module ``home.usage`` with name
 
 This job initialises the source and target collection from core4 configuration
 in method ``.initialise`` (line 23). This method is automatically spawned after
-job instantiation. The main method ``.execute`` (line 35) intialises the
+job instantiation. The main method ``.execute`` (line 35) initialises the
 parameters ``start``, ``end``, ``aggregate`` and ``reset``.
 
 The ``start`` parameter is set with method ``.get_start``. If no explicit start
@@ -194,7 +192,6 @@ Lines 88 - 90 exist for development purposes. The ``execute`` command triggers
 job execution without the need to start a dedicated core4 worker process.
 
 
-==================
 API implementation
 ==================
 
@@ -295,7 +292,7 @@ With mode ``plot`` the handler method retrieves the data using method async
 parameters (line 28 and 29), and creates a Bokeh figure (lines 30ff.).
 
 With mode ``raw`` the handler method retrieves the data, too and returns the
-data to the front end.
+data to the front-end.
 
 .. note:: The :meth:`.reply` method provides special processing of the HTTP
           Content-Type header and supports rendering of pandas dataframes as
@@ -303,7 +300,6 @@ data to the front end.
           the requested content type.
 
 
-===============
 Widget template
 ===============
 
@@ -339,11 +335,10 @@ The following HTML snippet is the widget template used by the API (line 38).
 
 The ``raw`` directive includes the Bokeh resources rendered (line 39 of the
 API request handler, above). The ``div`` *myplot* locates the Bokeh chart. The
-``fetch`` statement chain addresses the json response delivered by the request
+``fetch`` statement chain addresses the JSON response delivered by the request
 handler (see line 37 of the API request handler, above).
 
 
-============
 Final commit
 ============
 

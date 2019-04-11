@@ -2,7 +2,7 @@
 
    <div style="text-align: center">
    <p style="font-size: 3em;">
-     core4
+     core4os
    </p>
    <p style="font-size: 2.5em;">
      The Python Insight Platform
@@ -39,6 +39,7 @@
    tools
    faq
    about
+   roadmap
    license
    core4/index
 

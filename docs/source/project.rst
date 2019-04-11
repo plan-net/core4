@@ -18,7 +18,6 @@ folder structure::
      |- .venv                ... Python virtual environment directory
      |- .repos               ... bare git repository controlling the project
      |- requirements.txt     ... requirements build from ``pip freeze``
-     |- install_requires.txt ... requirements installed with setup.py
      |- tests                ... unit tests
      |- README.md            ... long description
      |- setup.py             ... setup file
@@ -68,7 +67,7 @@ project repository location
 For seamless deployment in any runtime environment the project needs to be
 stored and synchronised with git versioning system. :ref:`project_creation`
 automatically creates a bare git repository. This repository is linked to your
-projedt sources.
+project sources.
 
 This repository carries an initial commit, a branch ``master`` and a branch
 ``develop``.
@@ -84,16 +83,3 @@ command and remove the bare repository in ``.repos`` from the project sources::
 
 
 See also :doc:`deploy` and :doc:`tools`.
-
-
-Python project requirements
----------------------------
-
-Project creation with command ``coco --init`` (see :ref:`coco`) and
-func:`core4.service.project.make_project` create empty files
-``requirements.txt`` and ``install_requires.txt``. Define your Python
-requirements in ``install_requires.txt``. This file is parsed during
-``pip install`` respectively ``python setup.py install`` as it defines the
-typical ``install_requires`` attribute in ``setup.py``. Use
-``requirements.txt`` to manually define the working versions before
-commit/push, for example with ``pip freeze > requirements.txt``.

@@ -2,7 +2,7 @@
 calculation of prime numbers with Amazon Web Services (AWS)
 ###########################################################
 
-The following job identifies prime numbers. Is is based on examples of Micha
+The following job identifies prime numbers. It is based on examples of Micha
 Gorelick's and Ian Ozsvald's phantastic book *High Performance Python*.
 
 The prime calculation is encapsulated in method ``check_prime`` which is used

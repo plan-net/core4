@@ -18,7 +18,7 @@ of an API endpoint starts with a :class:`.CoreRequestHandler`::
         self.reply("hello world")
 
 
-This handler supports the ``GET`` method and all other method requests raise a
+This handler supports the ``GET`` method, all other method requests raise a
 ``405 - Method not allowed`` error.
 
 Next, attach the request handler to a :class:`.CoreApplicationContainer`. Such
@@ -109,7 +109,7 @@ To create a response you can use :mod:`tornado` methods like
 :meth:`.finish <tornado.web.finish>` as well as the templating mechanics of
 :mod:`tornado` like :meth:`.render <tornado.web.render>`.
 
-core4 introduces an additional method :meth:`.reply` and which supports the
+core4 introduces an additional method :meth:`.reply` which supports the
 creation of the following media types:
 
 * application/json
@@ -576,10 +576,10 @@ and for example::
 
     <img src="{{ static_url('image.png') }}"\>
 
-Both directivrs serve static files ``style.css`` and ``image.png`` from the
+Both directives serve static files ``style.css`` and ``image.png`` from the
 specified static directory.
 
-core4 also ships with a default static directory which can used to serve
+core4 also ships with a default static directory which can be used to serve
 default styles for example::
 
     <link rel="stylesheet" type="text/css" href="{{ default_static('default.css') }}">
@@ -718,14 +718,6 @@ provides additional handler properties available as properties and methods:
   the container object of the application and handler
 * ``_flash``:
 
-
-example vue rendering
-#####################
-
-core4 static file with global variable injection
-static file with single endpoint to js rendered page
-
-
 single page applications (SPA)
 ##############################
 
@@ -742,7 +734,7 @@ static file with single endpoint to js rendered page
 config overwrite
 ################
 
-Similar to jobs you can specify a core4 configuration specific for a
+Similar to jobs you can define a core4 configuration specific for a
 :class:`.CoreRequestHandler`. The following attributes overrule the handler's
 class properties and arguments defined by the :class:`.CoreApiContainer` (see
 :ref:`rule_arguments`):

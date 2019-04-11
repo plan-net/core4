@@ -81,7 +81,6 @@ export default {
     sendFilterUpdateEvent: _debounce(function send (items) {
       const visibleItems = items.filter(item => item.selectedForSearch)
       const enabledForSearchItems = items.filter(item => item.searchValue)
-      console.log('--', visibleItems, enabledForSearchItems)
       this.localStorageHeaders = items
       this.saveToLocalStorage(this.localStorageHeaders)
       if (visibleItems.length === enabledForSearchItems.length) {
