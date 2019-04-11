@@ -2,8 +2,6 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
 
-import moment from 'moment'
-
 import { clone } from 'pnbi-base/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
 
@@ -139,8 +137,7 @@ function groupDataAndJobStat (created, arr, groupingKey) {
     (groupsDict[group] = groupsDict[group] || []).push(job)
 
     initialState[jobState] += job['n']
-    // debugger
-    // initialState['created'] = moment(created, 'MM/DD/YYYY HH:mm:ss').utc().format('MM/DD/YYYY HH:mm:ss')
+    // initialState['created'] = created // moment(created).utc().valueOf()
   })
 
   return { 'stat': initialState, ...groupsDict }

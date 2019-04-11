@@ -21,8 +21,7 @@
     "highcharts-vue": "^1.2.0",
     "pnbi-base": "file:node_modules/pnbi-base",
     "vue-grid-layout": "^2.3.4",
-    "vue-native-websocket": "2.0.12",
-    "moment": "^2.24.0"
+    "vue-native-websocket": "2.0.12"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",

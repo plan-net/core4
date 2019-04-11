@@ -8,11 +8,11 @@
           </v-flex>
         </v-layout>
       </v-flex>
+<!--      <v-flex ma-2 hidden-sm-and-down>-->
+<!--        <streamgraph-chart></streamgraph-chart>-->
+<!--      </v-flex>-->
       <v-flex ma-2 hidden-sm-and-down>
-        <chart></chart>
-      </v-flex>
-      <v-flex ma-2 hidden-sm-and-down>
-        <chart-2></chart-2>
+        <stock-chart></stock-chart>
       </v-flex>
     </v-layout>
   </pnbi-page>
@@ -22,13 +22,13 @@
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-import Chart from '@/components/Chart'
-import Chart2 from '@/components/Chart2'
+import streamgraphChart from '@/components/StreamgraphChart'
+import stockChart from '@/components/StockChart'
 
 export default {
   name: 'home',
   components: {
-    Board, Chart, Chart2
+    Board, streamgraphChart, stockChart
   },
   methods: {
     handler () {

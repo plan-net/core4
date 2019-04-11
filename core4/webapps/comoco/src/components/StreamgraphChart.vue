@@ -1,15 +1,68 @@
 <template>
-      <vue-highcharts constructor-type="stockChart" :options="chartOptions" ref="chart"></vue-highcharts>
+  <div>
+    <vue-highcharts :options="chartOptions" :updateArgs="[true, true, { duration: 1000}]" ref="chart"></vue-highcharts>
+<!--    <vue-highcharts :options="chartOptions" :updateArgs="updateArgs" ref="chart"></vue-highcharts>-->
+  </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
-import stockInit from 'highcharts/modules/stock'
+import streamgraph from 'highcharts/modules/streamgraph'
 
-stockInit(Highcharts)
+streamgraph(Highcharts)
 
+// Highcharts.theme = {
+//   chart: {},
+//   title: {
+//     enabled: false
+//   },
+//   subtitle: {
+//     enabled: false
+//   },
+//   xAxis: {
+//     labels: {
+//       style: {
+//         color: '#E0E0E3'
+//       }
+//     }
+//   },
+//   yAxis: {
+//     // gridLineColor: '#707073',
+//     labels: {
+//       style: {
+//         color: '#E0E0E3'
+//       }
+//     }
+//     // lineColor: '#707073',
+//     // minorGridLineColor: '#505053',
+//     // tickColor: '#707073',
+//     // tickWidth: 1,
+//     // title: {
+//     //   style: {
+//     //     color: '#A0A0A3'
+//     //   }
+//     // }
+//   },
+//   tooltip: {
+//     backgroundColor: 'rgba(0, 0, 0, 0.85)',
+//     style: {
+//       color: '#F0F0F0'
+//     }
+//   },
+//   legend: {
+//     itemStyle: {
+//       color: '#E0E0E3'
+//     },
+//     itemHoverStyle: {
+//       color: '#FFF'
+//     },
+//     itemHiddenStyle: {
+//       color: '#606063'
+//     }
+//   }
+// }
 Highcharts.theme = {
   colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066',
     '#eeaaee', '#55BF3B', '#DF5353', '#7798BF', '#aaeeee'],
@@ -26,19 +79,7 @@ Highcharts.theme = {
     },
     plotBorderColor: '#606063'
   },
-  title: {
-    style: {
-      color: '#E0E0E3',
-      textTransform: 'uppercase',
-      fontSize: '20px'
-    }
-  },
-  subtitle: {
-    style: {
-      color: '#E0E0E3',
-      textTransform: 'uppercase'
-    }
-  },
+
   xAxis: {
     gridLineColor: '#707073',
     labels: {
@@ -48,13 +89,7 @@ Highcharts.theme = {
     },
     lineColor: '#707073',
     minorGridLineColor: '#505053',
-    tickColor: '#707073',
-    title: {
-      style: {
-        color: '#A0A0A3'
-
-      }
-    }
+    tickColor: '#707073'
   },
   yAxis: {
     gridLineColor: '#707073',
@@ -66,12 +101,7 @@ Highcharts.theme = {
     lineColor: '#707073',
     minorGridLineColor: '#505053',
     tickColor: '#707073',
-    tickWidth: 1,
-    title: {
-      style: {
-        color: '#A0A0A3'
-      }
-    }
+    tickWidth: 1
   },
   tooltip: {
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -138,8 +168,6 @@ Highcharts.theme = {
       }
     }
   },
-
-  // scroll charts
   rangeSelector: {
     buttonTheme: {
       fill: '#505053',
@@ -214,13 +242,13 @@ Highcharts.theme = {
 Highcharts.setOptions(Highcharts.theme)
 
 export default {
-  name: 'JobsStat2',
+  name: 'streamgraphChart',
   components: {
     VueHighcharts: Chart
   },
   data () {
     return {
-      init: false
+      pointOnPlot: 5
     }
   },
   watch: {
@@ -239,11 +267,11 @@ export default {
         const killed = chart.series[6]
         const arr = [running, pending, deferred, failed, error, inactive, killed]
 
-        // const shift = running.data.length > 10 // ToDo: discuss with Michael
+        const shift = running.data.length > 100 // ToDo: 7 days history
         const x = (new Date()).getTime()
 
         arr.forEach((item) => {
-          item.addPoint([x, val[item.name]], false, false)
+          item.addPoint([x, val[item.name]], false, shift)
         })
 
         chart.redraw()
@@ -251,61 +279,31 @@ export default {
       deep: true
     }
   },
-  mounted () {
-    if (!this.$refs.chart) return null
-
-    const chart = this.$refs.chart.chart
-    const x = (new Date()).getTime()// current time
-
-    chart.series.forEach(item => {
-      item.addPoint([x, (this.getChartData && this.getChartData[item.name]) || 0], false, false)
-    })
-
-    chart.redraw()
-  },
   computed: {
     ...mapGetters(['getChartData']),
+    shift () {
+      if (this.$refs.chart && this.$refs.chart.chart.series.data[0]) {
+        return this.$refs.chart.chart.series.data[0] > this.pointOnPlot
+      } else {
+        return false
+      }
+    },
     chartOptions () {
       return {
         chart: {
-          zoomType: 'x'
-        },
-
-        time: {
-          useUTC: true
-        },
-
-        rangeSelector: {
-          buttons: [{
-            count: 1,
-            type: 'minute',
-            text: '1M'
-          }, {
-            count: 5,
-            type: 'minute',
-            text: '5M'
-          }, {
-            type: 'hour',
-            count: 1,
-            text: '1h'
+          type: 'streamgraph',
+          zoomType: 'x',
+          backgroundColor: {
+            linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+            stops: [
+              [0, '#393939'],
+              [1, '#3e3e40']
+            ]
           },
-          // {
-          //   type: 'day',
-          //   count: 1,
-          //   text: '1d'
-          // },
-          {
-            type: 'all',
-            text: 'All'
-          }],
-          inputEnabled: false,
-          selected: 4
+          style: {
+            fontFamily: '\'Unica One\', sans-serif'
+          }
         },
-
-        exporting: {
-          enabled: false
-        },
-
         legend: {
           enabled: true,
           layout: 'horizontal',
@@ -316,7 +314,22 @@ export default {
             color: '#E0E0E3'
           }
         },
-
+        xAxis: {
+          title: {
+            text: 'Time in UTC (Coordinated Universal Time)',
+            margin: 30
+          },
+          type: 'datetime',
+          crosshair: true,
+          // tickInterval: 1.8e+6, // 30 min
+          labels: {
+            reserveSpace: false,
+            dateTimeLabelFormats: {
+              month: '%e. %b',
+              year: '%b'
+            }
+          }
+        },
         plotOptions: {
           area: {
             stacking: 'normal'
@@ -333,148 +346,70 @@ export default {
           },
           allowDecimals: false
         },
-        xAxis: {
-          title: {
-            text: 'Time in UTC (Coordinated Universal Time)'
-          }
+
+        rangeSelector: {
+          buttons: [{
+            count: 1,
+            type: 'minute',
+            text: '1M'
+          }, {
+            count: 5,
+            type: 'minute',
+            text: '5M'
+          }, {
+            type: 'hour',
+            count: 1,
+            text: '1h'
+          }, {
+            type: 'all',
+            text: 'All'
+          }],
+          inputEnabled: false,
+          selected: 3
         },
 
         series: [
           {
-            name: 'running',
-            color: '#64a505',
-            type: 'areaspline',
-            data: [],
-            // data: [[(new Date()).getTime(), 0]],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#64a505'],
-                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
-              ]
-            }
-          },
-          {
             name: 'pending',
+            type: 'streamgraph',
             color: '#ffc107',
-            type: 'areaspline',
-            visible: true, // legend for this series by default
-            data: [],
-            // data: [[(new Date()).getTime(), 0]],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#ffc107'],
-                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
-              ]
-            }
+            data: [[(new Date()).getTime(), 0]]
           },
           {
             name: 'deferred',
+            type: 'streamgraph',
             color: '#f1f128',
-            type: 'areaspline',
-            visible: true, // legend for this series by default
-            data: [],
-            // data: [[(new Date()).getTime(), 0]],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#f1f128'],
-                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
-              ]
-            }
+            data: [[(new Date()).getTime(), 0]]
           },
           {
             name: 'failed',
+            type: 'streamgraph',
             color: '#11dea2',
-            type: 'areaspline',
-            visible: true, // legend for this series by default
-            data: [],
-            // data: [[(new Date()).getTime(), 0]],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#11dea2'],
-                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
-              ]
-            }
+            data: [[(new Date()).getTime(), 0]]
+          },
+          {
+            name: 'running',
+            type: 'streamgraph',
+            color: '#64a505',
+            data: [[(new Date()).getTime(), 0]]
           },
           {
             name: 'error',
+            type: 'streamgraph',
             color: '#d70f14',
-            type: 'areaspline',
-            data: [],
-            // data: [[(new Date()).getTime(), 0]],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#d70f14'],
-                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
-              ]
-            }
+            data: [[(new Date()).getTime(), 0]]
           },
           {
             name: 'inactive',
+            type: 'streamgraph',
             color: '#8d1407',
-            type: 'areaspline',
-            data: [],
-            // data: [[(new Date()).getTime(), 0]],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#8d1407'],
-                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
-              ]
-            }
+            data: [[(new Date()).getTime(), 0]]
           },
           {
             name: 'killed',
+            type: 'streamgraph',
             color: '#d8c9c7',
-            type: 'areaspline',
-            data: [],
-            // data: [[(new Date()).getTime(), 0]],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#d8c9c7'],
-                [1, Highcharts.Color('#393939').setOpacity(0).get('rgba')]
-              ]
-            }
+            data: [[(new Date()).getTime(), 0]]
           }
         ]
       }

@@ -65,19 +65,27 @@ $scrollbar-thumb: #5C5C5C;
 $scrollbar-thumb-hover: #737373;
 
 .jobs-list-item {
-  transition: all 1s;
+  transition: all .5s;
 }
 
-.jobs-list-leave-active {
-  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+.jobs-list-enter {
+  opacity: 0;
+  transform: translateX(30px);
 }
 
 .jobs-list-enter-active {
-  transition: all .5s ease;
 }
 
-.jobs-list-enter, .jobs-list-leave-to
-  /* .list-complete-leave-active below version 2.1.8 */ {
+.jobs-list-leave {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.jobs-list-leave-active {
+  transform: translateX(30px);
+}
+
+.jobs-list-leave-to {
   opacity: 0;
   transform: translateX(30px);
 }
@@ -124,11 +132,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 1904px) {
   .jobs {
-    max-height: calc(100vh - 620px);
+    max-height: calc(100vh - 548px);
   }
 
   .board {
-    height: calc(100vh - 525px);
+    height: calc(100vh - 435px);
   }
 }
 
@@ -138,11 +146,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 1281px)and (max-width: 1904px) {
   .jobs {
-    max-height: calc(100vh - 620px);
+    max-height: calc(100vh - 548px);
   }
 
   .board {
-    height: calc(100vh - 525px);
+    height: calc(100vh - 435px);
   }
 }
 
@@ -152,11 +160,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 960px) and (max-width: 1264px) {
   .jobs {
-    max-height: calc(100vh - 620px);
+    max-height: calc(100vh - 548px);
   }
 
   .board {
-    height: calc(100vh - 525px);
+    height: calc(100vh - 435px);
   }
 }
 
@@ -166,7 +174,7 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 600px) and (max-width: 960px) {
   .jobs {
-    max-height: calc(100vh - 220px);
+    max-height: calc(100vh - 236px);
   }
 
   .board {
@@ -180,7 +188,7 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (max-width: 600px) {
   .jobs {
-    max-height: calc(100vh - 220px);
+    max-height: calc(100vh - 236px);
   }
 
   .board {
