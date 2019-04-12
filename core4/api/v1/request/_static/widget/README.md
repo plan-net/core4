@@ -16,10 +16,9 @@ Widgets included some standard dependencies:
 * Popper  [Popper.js](https://popper.js.org/)
 * bootstrap-material-design  [BS Material Design](https://fezvrasta.github.io/bootstrap-material-design/docs/4.0/getting-started/introduction/)
 
-All JavaScrit have been packaged into one file containing all JavaScripts:
+All JavaScript files have been packaged into one file:
 
 **jq.pop.bsmd.min.js**
-
 
 ### Default widget template for developers
 
