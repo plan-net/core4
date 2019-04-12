@@ -2,6 +2,16 @@
  * General jobs config. Existing job states, existing job flags, existing job groups
  */
 
+const jobColors = {
+  pending: '#ffc107',
+  deferred: '#f1f128',
+  failed: '#11dea2',
+  running: '#64a505',
+  error: '#d70f14',
+  inactive: '#8d1407',
+  killed: '#d8c9c7'
+}
+
 const jobStates = {
   pending: 'waiting',
   deferred: 'waiting',
@@ -46,5 +56,6 @@ export {
   groupsJobsByStates,
   jobStates,
   jobGroups,
-  jobFlags
+  jobFlags,
+  jobColors
 }

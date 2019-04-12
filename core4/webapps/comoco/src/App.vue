@@ -31,7 +31,6 @@ export default {
   },
   watch: {
     authenticated (newValue, oldValue) {
-      // ToDo: check login/logout behavior
       this.$disconnect()
 
       if (newValue && newValue !== oldValue) {

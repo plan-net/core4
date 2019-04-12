@@ -7,31 +7,13 @@ import { createObjectWithDefaultValues } from './helper'
 
 import { jobStates, jobGroups } from './settings.js'
 
+const debug = process.env.NODE_ENV !== 'production'
+const plugins = debug ? [createLogger({})] : []
+
 Vue.use(Vuex)
 
-// const colors = {
-//   pending: '#ffc107',
-//   deferred: '#f1f128',
-//   failed: '#11dea2',
-//   running: '#64a505',
-//   error: '#d70f14',
-//   inactive: '#8d1407',
-//   killed: '#d8c9c7'
-// }
-
-// var chartInitValue = {
-//   timestemp: '',
-//   pending: 0,
-//   deferred: 0,
-//   failed: 0,
-//   running: 0,
-//   error: 0,
-//   inactive: 0,
-//   killed: 0
-// }
-
 export default new Vuex.Store({
-  plugins: [createLogger()],
+  plugins,
   state: {
     queue: {},
     socket: {
