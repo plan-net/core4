@@ -57,3 +57,7 @@ def execute(job, **kwargs):
     worker.config.sys.queue.delete_one(filter={"_id": enq_doc._id})
     worker.config.sys.journal.delete_one(filter={"_id": enq_doc._id})
     return doc
+
+def find_job(**kwargs):
+    queue = core4.queue.main.CoreQueue()
+    return list(queue.config.sys.queue.find(filter=kwargs))
