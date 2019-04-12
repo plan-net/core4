@@ -6,10 +6,13 @@ import {
   clone
 } from 'pnbi-base/core4/helper'
 import router from '@/router'
+const debug = process.env.NODE_ENV !== 'production'
+const plugins = debug ? [createLogger({})] : []
+
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  plugins: [createLogger()],
+  plugins,
   state: {
     widgetsObj: {},
     widgetsList: [],
