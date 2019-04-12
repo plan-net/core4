@@ -14,7 +14,7 @@ const jobStates = {
 
 const jobFlags = {
   killed: 'k',
-  nonstop: 'n',
+  wall: 'n', // nonstop
   removed: 'r',
   zombie: 'z'
 }

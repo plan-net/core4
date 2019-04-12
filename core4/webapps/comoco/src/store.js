@@ -9,6 +9,27 @@ import { jobStates, jobGroups } from './settings.js'
 
 Vue.use(Vuex)
 
+// const colors = {
+//   pending: '#ffc107',
+//   deferred: '#f1f128',
+//   failed: '#11dea2',
+//   running: '#64a505',
+//   error: '#d70f14',
+//   inactive: '#8d1407',
+//   killed: '#d8c9c7'
+// }
+
+// var chartInitValue = {
+//   timestemp: '',
+//   pending: 0,
+//   deferred: 0,
+//   failed: 0,
+//   running: 0,
+//   error: 0,
+//   inactive: 0,
+//   killed: 0
+// }
+
 export default new Vuex.Store({
   plugins: [createLogger()],
   state: {
@@ -39,7 +60,7 @@ export default new Vuex.Store({
 
       // summary - ws type notification (all jobs in queue)
       if (message.name === 'summary') {
-        state.queue = groupDataAndJobStat(message.data, 'state')
+        state.queue = groupDataAndJobStat(message.created, message.data, 'state')
       }
     },
     // mutations for reconnect methods
@@ -53,6 +74,9 @@ export default new Vuex.Store({
   },
   getters: {
     ...mapGettersJobGroups(jobGroups),
+    getChartData: (state) => {
+      return state.queue.stat
+    },
     getJobsByGroupName: (state, getters) => (groupName) => {
       return getters[groupName]
     },
@@ -94,6 +118,7 @@ function mapGettersJobGroups (arr) {
 /**
  * Assort array of all jobs in groups + get job statistic
  *
+ * @param {string} created - timestamp
  * @param {array} arr - array of all jobs
  * @param {string} groupingKey - job object key by which we will do grouping
  *
@@ -101,7 +126,7 @@ function mapGettersJobGroups (arr) {
  *                     e. g. {'stat': {'waiting': 5, ...}, 'running': [<job>, ..., <job>], ...}
  */
 // ToDo: elegant decouple group data and job statistic
-function groupDataAndJobStat (arr, groupingKey) {
+function groupDataAndJobStat (created, arr, groupingKey) {
   let groupsDict = {}
   let initialState = createObjectWithDefaultValues(jobStates)
 
@@ -112,6 +137,7 @@ function groupDataAndJobStat (arr, groupingKey) {
     (groupsDict[group] = groupsDict[group] || []).push(job)
 
     initialState[jobState] += job['n']
+    // initialState['created'] = created // moment(created).utc().valueOf()
   })
 
   return { 'stat': initialState, ...groupsDict }

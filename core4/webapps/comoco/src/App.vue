@@ -10,7 +10,6 @@
 </template>
 
 <script>
-import SideNavigation from '@/components/SideNavigation'
 import { mapGetters } from 'vuex'
 
 function getBasePath () {
@@ -26,9 +25,7 @@ function getBasePath () {
 
 export default {
   name: 'CORE4',
-  components: {
-    SideNavigation
-  },
+  components: {},
   computed: {
     ...mapGetters(['authenticated'])
   },

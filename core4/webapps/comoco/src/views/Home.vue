@@ -4,13 +4,16 @@
       <v-flex>
         <v-layout row wrap xs12>
           <v-flex v-for="(states, group) in groupsJobsByStates" :key="group" class="ma-2 flex-equal-size">
-            <board xs12 md4 lg4 xl4 :name="group" :flags="flags" :states="states"></board>
+            <board xs12 md4 lg4 xl4 :name="group" :flags="flags" :states="states" class="pa-3"></board>
           </v-flex>
         </v-layout>
       </v-flex>
 <!--      <v-flex ma-2 hidden-sm-and-down>-->
-<!--        <chart></chart>-->
+<!--        <streamgraph-chart></streamgraph-chart>-->
 <!--      </v-flex>-->
+      <v-flex ma-2 hidden-sm-and-down>
+        <stock-chart></stock-chart>
+      </v-flex>
     </v-layout>
   </pnbi-page>
 </template>
@@ -19,12 +22,23 @@
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-// import Chart from '@/components/Chart'
+import streamgraphChart from '@/components/StreamgraphChart'
+import stockChart from '@/components/StockChart'
 
 export default {
   name: 'home',
   components: {
-    Board
+    Board, streamgraphChart, stockChart
+  },
+  methods: {
+    handler () {
+      var args = arguments
+      for (var arg of args) {
+        if (arg instanceof Function) {
+          arg()
+        }
+      }
+    }
   },
   data () {
     return {

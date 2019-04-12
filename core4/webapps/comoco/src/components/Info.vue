@@ -1,10 +1,10 @@
 <template>
-  <v-layout column xs12 class="board-header mb-3">
+  <v-layout column xs12 class="border-info">
     <v-flex xs12>
       <v-layout row xs12>
 
         <!-- Iterate for all states which belongs to the group and display amount of all jobs with this state  -->
-        <v-flex v-for="(state, index) in states" :key="index" :class="`state-${state}`" class="board-groups">
+        <v-flex v-for="(state, index) in states" :key="index" :class="`state-${state}`" class="info-groups">
           <v-layout row xs12 class="text-truncate pa-1">
             <v-flex xs8>
               <span class="font-weight-bold grey--text">{{ state }}:</span>
@@ -61,10 +61,10 @@ export default {
 <style scoped lang="scss">
 @import '../style/comoco';
 
-.board-header{
+.border-info{
   background-color:  #282828;
 
-  .board-groups{
+  .info-groups{
     flex: 1 1 0;
 
     &:not(:last-child){

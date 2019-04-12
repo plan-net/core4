@@ -12,7 +12,7 @@ export default new Router({
       component: Home,
       meta: {
         auth: true,
-        hideNav: false,
+        hideNav: true,
         title: 'Home'
       }
     }
