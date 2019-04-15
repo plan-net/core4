@@ -94,9 +94,6 @@ export default {
   watch: {
   },
   computed: {
-    nextRoute () {
-      return this.$route.query.next
-    },
     ...mapGetters([
       'profile',
       'title'
@@ -119,6 +116,7 @@ export default {
         window.location.assign(this.$route.query.next || window.REDIRECTION)
         // this.$validator.validateAll()
       }, val => {
+        window.localStorage.removeItem('user')
         this.$validator.validateAll()
       })
     }
