@@ -39,6 +39,10 @@ from core4.api.v1.request.standard.event import EventHandler
 from core4.api.v1.request.standard.event import EventHistoryHandler
 from core4.api.v1.request.standard.event import EventWatch
 from core4.api.v1.request.standard.event import QueueWatch
+from core4.api.v1.request.standard.login import LoginHandler
+from core4.api.v1.request.standard.logout import LogoutHandler
+from core4.api.v1.request.standard.profile import ProfileHandler
+from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.tool.functool import serve
 
@@ -59,28 +63,49 @@ class CoreApiServer(CoreApiContainer):
     """
     root = "/core4/api/v1"
     rules = [
+
         (r'/jobs/poll', JobStream),
         (r'/jobs/poll/(.*)', JobStream, None, "JobStream"),
         (r'/jobs/history', JobHistoryHandler),
         (r'/jobs/history/(.*)', JobHistoryHandler, None, "JobHistory"),
-        (r'/system/?', SystemHandler),
         (r'/jobs', JobHandler),
         (r'/jobs/(.*)', JobHandler, None, "JobHandler"),
         (r'/enqueue/?', JobPost),
+
+        (r'/system/?', SystemHandler),
+
         (r'/roles', RoleHandler),
         (r'/roles/(.*)', RoleHandler, None, "RoleHandler"),
         (r'/access', AccessHandler),
         (r'/access/(.*)', AccessHandler, None, "AccessHandler"),
+
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
+
         (r'/widgets', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
             "title": "core widgets", "protected": False
         }),
+
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",
             "title": "comoco", "protected": False
+        }),
+
+        (r"/login", LoginHandler),
+        (r"/logout", LogoutHandler),
+
+        (r"/profile", ProfileHandler),
+
+        (r'/setting', SettingHandler),
+        (r'/setting/(.*)', SettingHandler),
+
+        (r'', CoreStaticFileHandler, {
+            "path": "./request/_static",
+            "protected": False,
+            "title": "core4 landing page",
         })
+
     ]
 
     def on_exit(self):
@@ -88,4 +113,4 @@ class CoreApiServer(CoreApiContainer):
 
 
 if __name__ == '__main__':
-    serve(CoreApiServer, routing="localhost:5001", address="0.0.0.0")
+    serve(CoreApiServer, routing="localhost:5001", port=5001, core4api=False)

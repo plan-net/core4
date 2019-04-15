@@ -53,7 +53,8 @@ setup(
             "pytest-runner",
             "requests",
             "coverage",
-            "sphinx-rtd-theme"
+            "sphinx-rtd-theme",
+            "websockets"
         ]
     },
     zip_safe=False,
