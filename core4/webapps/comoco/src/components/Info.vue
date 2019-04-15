@@ -62,7 +62,6 @@ export default {
 @import '../style/comoco';
 
 .border-info{
-  background-color:  #282828;
 
   .info-groups{
     flex: 1 1 0;
@@ -71,33 +70,33 @@ export default {
       margin-right: 2px;
     }
   }
-}
 
-.state-pending {
-  border-top: 5px solid $pending;
-}
+  .state-pending {
+    border-top: 5px solid $pending;
+  }
 
-.state-deferred {
-  border-top: 5px solid $deferred;
-}
+  .state-deferred {
+    border-top: 5px solid $deferred;
+  }
 
-.state-failed {
-  border-top: 5px solid $failed;
-}
+  .state-failed {
+    border-top: 5px solid $failed;
+  }
 
-.state-running {
-  border-top: 5px solid $running;
-}
+  .state-running {
+    border-top: 5px solid $running;
+  }
 
-.state-error {
-  border-top: 5px solid $error;
-}
+  .state-error {
+    border-top: 5px solid $error;
+  }
 
-.state-inactive {
-  border-top: 5px solid $inactive;
-}
+  .state-inactive {
+    border-top: 5px solid $inactive;
+  }
 
-.state-killed {
-  border-top: 5px solid $killed;
+  .state-killed {
+    border-top: 5px solid $killed;
+  }
 }
 </style>

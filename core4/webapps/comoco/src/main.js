@@ -9,6 +9,9 @@ import PnbiBase from 'pnbi-base/core4'
 import THEME from 'pnbi-base/core4/themes/pnbi/theme-vuetify'
 import { i18n } from 'pnbi-base/core4/translations'
 
+import '@/style/theme-dark.scss'
+import '@/style/theme-light.scss'
+
 Vue.use(VueNativeSock, ' ', {
   store: store,
   format: 'json',
@@ -21,7 +24,7 @@ Vue.use(VueNativeSock, ' ', {
 Vue.use(PnbiBase, {
   router,
   config: {
-    DARK: true,
+    // DARK: true,
     THEME,
     TITLE: 'COMOCO',
     IGNORED_ERRORS: [],

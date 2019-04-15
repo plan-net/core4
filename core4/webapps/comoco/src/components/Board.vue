@@ -60,10 +60,6 @@ export default {
 <style scoped lang="scss">
 @import '../style/comoco';
 
-$scrollbar-track: #4A4A4A;
-$scrollbar-thumb: #5C5C5C;
-$scrollbar-thumb-hover: #737373;
-
 .jobs-list-item {
   transition: all .5s;
 }
@@ -90,40 +86,9 @@ $scrollbar-thumb-hover: #737373;
   transform: translateX(30px);
 }
 
-/*.theme--dark .board {
-  background-color: $jobs-board-bck-color;
-}*/
-
-/*.theme--light .board {*/
-/*  background-color: #FFF;*/
-/*}*/
-
 .board {
   min-width: 230px;
   min-height: 100px;
-  background-color: $jobs-board-bck-color;
-}
-
-.jobs {
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  &::-webkit-scrollbar-track {
-    background-color: $scrollbar-track;
-  }
-
-  &::-webkit-scrollbar {
-    width: 5px;
-    background-color: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: $scrollbar-thumb;
-  }
-
-  &:hover::-webkit-scrollbar-thumb {
-    background-color: $scrollbar-thumb-hover;
-  }
 }
 
 /*

@@ -8,9 +8,6 @@
           </v-flex>
         </v-layout>
       </v-flex>
-<!--      <v-flex ma-2 hidden-sm-and-down>-->
-<!--        <streamgraph-chart></streamgraph-chart>-->
-<!--      </v-flex>-->
       <v-flex ma-2 hidden-sm-and-down>
         <stock-chart></stock-chart>
       </v-flex>
