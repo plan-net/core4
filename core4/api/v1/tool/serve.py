@@ -12,6 +12,7 @@ Implements :class:`.CoreApiServerTool to serve one or multiple
 
 import importlib
 
+import core4.api.v1.server
 import core4.const
 import core4.error
 import core4.service
@@ -22,6 +23,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.routing
 from core4.api.v1.request.main import CoreBaseHandler
+from core4.api.v1.server import CoreApiServer
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
 from core4.service.introspect.command import SERVE
@@ -99,10 +101,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         routes = []
         container = []
         if core4api:
-            from core4.api.v1.server import CoreApiServer
-            if CoreApiServer not in args:
+            qual_names = [a.qual_name() for a in args]
+            if CoreApiServer.qual_name() not in qual_names:
                 args = list(args)
-                args.append(CoreApiServer)
+                args.append(core4.api.v1.server.CoreApiServer)
         for container_cls in args:
             if not container_cls.enabled:
                 self.logger.warning("starting NOT enabled container [%s]",

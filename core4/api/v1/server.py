@@ -44,7 +44,6 @@ from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
-from core4.api.v1.tool.functool import serve
 
 event = EventWatch()
 IOLoop.current().add_callback(event.watch)
@@ -82,7 +81,7 @@ class CoreApiServer(CoreApiContainer):
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
 
-        (r'/widgets', CoreStaticFileHandler, {
+        (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
             "title": "core widgets", "protected": False
         }),
@@ -100,12 +99,6 @@ class CoreApiServer(CoreApiContainer):
         (r'/setting', SettingHandler),
         (r'/setting/(.*)', SettingHandler),
 
-        (r'', CoreStaticFileHandler, {
-            "path": "./request/_static",
-            "protected": False,
-            "title": "core4 landing page",
-        })
-
     ]
 
     def on_exit(self):
@@ -113,4 +106,5 @@ class CoreApiServer(CoreApiContainer):
 
 
 if __name__ == '__main__':
-    serve(CoreApiServer, routing="localhost:5001", port=5001, core4api=False)
+    from core4.api.v1.tool.functool import serve
+    serve(CoreApiServer)
