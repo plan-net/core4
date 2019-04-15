@@ -59,9 +59,9 @@ class EventHandler(CoreWebSocketHandler):
     """
     Web socket handler to process channel interests and to deliver
 
-    # chat messages on channel _message_
-    # job events from ``sys.event`` on channel _queue_
-    # aggregated job states from ``sys.queue`` on channel _queue_
+    #. chat messages on channel _message_
+    #. job events from ``sys.event`` on channel _queue_
+    #. aggregated job states from ``sys.queue`` on channel _queue_
 
     See :doc:`/example/index` for an example about _events_ and an example
     about _messages_.
