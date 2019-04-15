@@ -216,4 +216,4 @@ class JobCollection(pymongo.collection.Collection):
             document["$set"].update(self._job)
         else:
             document["$set"] = self._job
-        super()._update(sock_info, criteria, document, *args, **kwargs)
+        return super()._update(sock_info, criteria, document, *args, **kwargs)
