@@ -1,14 +1,23 @@
 <template>
+  <v-layout>
+    <v-flex class="chart">
       <vue-highcharts constructor-type="stockChart" :options="chartOptions" ref="chart"></vue-highcharts>
+    </v-flex>
+  </v-layout>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
+
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
 
+import { jobColors } from '../settings'
+
 stockInit(Highcharts)
+
+var defaultTheme = Highcharts.getOptions()
 
 Highcharts.theme = {
   colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066',
@@ -237,43 +246,17 @@ export default {
   },
   data () {
     return {
-      init: false
+      timer: 1000,
+      timerId: undefined
     }
   },
-  watch: {
-    getChartData: {
-      handler (val) {
-        // if (!this.$refs.chart) return null
-        //
-        // let chart = this.$refs.chart.chart
-        //
-        // const running = chart.series[0]
-        // const pending = chart.series[1]
-        // const deferred = chart.series[2]
-        // const failed = chart.series[3]
-        // const error = chart.series[4]
-        // const inactive = chart.series[5]
-        // const killed = chart.series[6]
-        // const arr = [running, pending, deferred, failed, error, inactive, killed]
-        //
-        // // const shift = running.data.length > 10 // ToDo: discuss with Michael
-        // const x = (new Date()).getTime()
-        //
-        // arr.forEach((item) => {
-        //   item.addPoint([x, val[item.name]], false, false)
-        // })
-        //
-        // chart.redraw()
-      },
-      deep: true
-    }
-  },
-  mounted () {
-    let component = this
+  mounted () { // fired after the element has been created
     if (!this.$refs.chart) return null
 
-    const chart = this.$refs.chart.chart
+    const component = this
+    const chart = component.$refs.chart.chart
 
+    // ToDo: write a comment why it should be like this
     const running = chart.series[0]
     const pending = chart.series[1]
     const deferred = chart.series[2]
@@ -281,25 +264,23 @@ export default {
     const error = chart.series[4]
     const inactive = chart.series[5]
     const killed = chart.series[6]
+
     const arr = [running, pending, deferred, failed, error, inactive, killed]
-    // const x = (new Date()).getTime()// current time
-    //
-    // chart.series.forEach(item => {
-    //   item.addPoint([x, (component.$store.getters.getChartData && component.$store.getters.getChartData[item.name]) || 0], false, false)
-    // })
-    //
-    // chart.redraw()
 
-    setInterval(() => {
-      if (!component.$store.getters.getChartData) return
+    component.timerId = setTimeout(function update () {
       const x = (new Date()).getTime()// current time
+      const shift = running.length > 3600 // 1 hour
 
-      arr.forEach(item => {
-        item.addPoint([x, component.$store.getters.getChartData[item.name]], false, false)
-      })
+      if (component.getChartData) {
+        arr.forEach(item => {
+          item.addPoint([x, component.getChartData[item.name]], false, shift)
+        })
 
-      chart.redraw()
-    }, 1000)
+        chart.redraw()
+      }
+
+      component.timerId = setTimeout(update, component.timer)
+    }, component.timer)
   },
   computed: {
     ...mapGetters(['getChartData']),
@@ -340,16 +321,11 @@ export default {
             text: '1h'
           },
           {
-            type: 'day',
-            count: 1,
-            text: '1d'
-          },
-          {
             type: 'all',
             text: 'All'
           }],
           inputEnabled: false,
-          selected: 6
+          selected: 5
         },
 
         exporting: {
@@ -395,140 +371,46 @@ export default {
           }
         },
 
-        series: [
-          {
-            name: 'running',
-            color: '#64a505',
-            type: 'areaspline',
-            data: [],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#64a505'],
-                [1, Highcharts.Color('#64a505').setOpacity(0).get('rgba')]
-              ]
-            }
-          },
-          {
-            name: 'pending',
-            color: '#ffc107',
-            type: 'areaspline',
-            visible: true, // legend for this series by default
-            data: [],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#ffc107'],
-                [1, Highcharts.Color('#ffc107').setOpacity(0).get('rgba')]
-              ]
-            }
-          },
-          {
-            name: 'deferred',
-            color: '#f1f128',
-            type: 'areaspline',
-            visible: true, // legend for this series by default
-            data: [],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#f1f128'],
-                [1, Highcharts.Color('#f1f128').setOpacity(0).get('rgba')]
-              ]
-            }
-          },
-          {
-            name: 'failed',
-            color: '#11dea2',
-            type: 'areaspline',
-            visible: true, // legend for this series by default
-            data: [],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#11dea2'],
-                [1, Highcharts.Color('#11dea2').setOpacity(0).get('rgba')]
-              ]
-            }
-          },
-          {
-            name: 'error',
-            color: '#d70f14',
-            type: 'areaspline',
-            data: [],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#d70f14'],
-                [1, Highcharts.Color('#d70f14').setOpacity(0).get('rgba')]
-              ]
-            }
-          },
-          {
-            name: 'inactive',
-            color: '#8d1407',
-            type: 'areaspline',
-            data: [],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#8d1407'],
-                [1, Highcharts.Color('#8d1407').setOpacity(0).get('rgba')]
-              ]
-            }
-          },
-          {
-            name: 'killed',
-            color: '#d8c9c7',
-            type: 'areaspline',
-            data: [],
-            fillColor: {
-              linearGradient: {
-                x1: 0,
-                y1: 0,
-                x2: 0,
-                y2: 1
-              },
-              stops: [
-                [0, '#d8c9c7'],
-                [1, Highcharts.Color('#d8c9c7').setOpacity(0).get('rgba')]
-              ]
-            }
-          }
-        ]
+        series: createSeriesData()
       }
     }
+  },
+  beforeDestroy () {
+    clearTimeout(this.timerId)
   }
+}
+
+// ================================================================= //
+// Private methods
+// ================================================================= //
+
+function createSeriesData () {
+  let arr = []
+
+  for (let key in jobColors) {
+    const color = jobColors[key]
+
+    arr.push({
+      name: key,
+      color: color,
+      type: 'areaspline',
+      data: [],
+      fillColor: {
+        linearGradient: {
+          x1: 0,
+          y1: 0,
+          x2: 0,
+          y2: 1
+        },
+        stops: [
+          [0, color],
+          [1, Highcharts.Color(color).setOpacity(0).get('rgba')]
+        ]
+      }
+    })
+  }
+
+  return arr
 }
 </script>
 

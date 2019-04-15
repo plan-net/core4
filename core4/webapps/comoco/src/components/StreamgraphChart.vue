@@ -239,7 +239,7 @@ Highcharts.theme = {
 }
 
 // Apply the theme
-Highcharts.setOptions(Highcharts.theme)
+// Highcharts.setOptions(Highcharts.theme)
 
 export default {
   name: 'streamgraphChart',
@@ -248,37 +248,70 @@ export default {
   },
   data () {
     return {
-      pointOnPlot: 5
+      timer: 1000,
+      timerId: undefined
     }
   },
-  watch: {
-    getChartData: {
-      handler (val) {
-        if (!this.$refs.chart) return null
+  mounted () { // fired after the element has been created
+    if (!this.$refs.chart) return null
 
-        let chart = this.$refs.chart.chart
+    const component = this
+    const chart = component.$refs.chart.chart
 
-        const running = chart.series[0]
-        const pending = chart.series[1]
-        const deferred = chart.series[2]
-        const failed = chart.series[3]
-        const error = chart.series[4]
-        const inactive = chart.series[5]
-        const killed = chart.series[6]
-        const arr = [running, pending, deferred, failed, error, inactive, killed]
+    // ToDo: write a comment why it should be like this
+    const running = chart.series[0]
+    const pending = chart.series[1]
+    const deferred = chart.series[2]
+    const failed = chart.series[3]
+    const error = chart.series[4]
+    const inactive = chart.series[5]
+    const killed = chart.series[6]
 
-        const shift = running.data.length > 100 // ToDo: 7 days history
-        const x = (new Date()).getTime()
+    const arr = [running, pending, deferred, failed, error, inactive, killed]
 
-        arr.forEach((item) => {
-          item.addPoint([x, val[item.name]], false, shift)
-        })
+    component.timerId = setTimeout(function update () {
+      if (!component.getChartData) return null
 
-        chart.redraw()
-      },
-      deep: true
-    }
+      const x = (new Date()).getTime()// current time
+      const shift = running.length > 3600 // 1 hour
+
+      arr.forEach(item => {
+        item.addPoint([x, component.getChartData[item.name]], false, shift)
+      })
+
+      chart.redraw()
+
+      component.timerId = setTimeout(update, component.timer)
+    }, component.timer)
   },
+  // watch: {
+  //   getChartData: {
+  //     handler (val) {
+  //       if (!this.$refs.chart) return null
+  //
+  //       let chart = this.$refs.chart.chart
+  //
+  //       const running = chart.series[0]
+  //       const pending = chart.series[1]
+  //       const deferred = chart.series[2]
+  //       const failed = chart.series[3]
+  //       const error = chart.series[4]
+  //       const inactive = chart.series[5]
+  //       const killed = chart.series[6]
+  //       const arr = [running, pending, deferred, failed, error, inactive, killed]
+  //
+  //       const shift = running.data.length > 100 // ToDo: 7 days history
+  //       const x = (new Date()).getTime()
+  //
+  //       arr.forEach((item) => {
+  //         item.addPoint([x, val[item.name]], false, shift)
+  //       })
+  //
+  //       chart.redraw()
+  //     },
+  //     deep: true
+  //   }
+  // },
   computed: {
     ...mapGetters(['getChartData']),
     shift () {
@@ -290,128 +323,128 @@ export default {
     },
     chartOptions () {
       return {
-        chart: {
-          type: 'streamgraph',
-          zoomType: 'x',
-          backgroundColor: {
-            linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
-            stops: [
-              [0, '#393939'],
-              [1, '#3e3e40']
-            ]
-          },
-          style: {
-            fontFamily: '\'Unica One\', sans-serif'
-          }
-        },
-        legend: {
-          enabled: true,
-          layout: 'horizontal',
-          align: 'center',
-          verticalAlign: 'bottom',
-          borderWidth: 0,
-          style: {
-            color: '#E0E0E3'
-          }
-        },
-        xAxis: {
-          title: {
-            text: 'Time in UTC (Coordinated Universal Time)',
-            margin: 30
-          },
-          type: 'datetime',
-          crosshair: true,
-          // tickInterval: 1.8e+6, // 30 min
-          labels: {
-            reserveSpace: false,
-            dateTimeLabelFormats: {
-              month: '%e. %b',
-              year: '%b'
-            }
-          }
-        },
-        plotOptions: {
-          area: {
-            stacking: 'normal'
-          },
-          series: {
-            showInNavigator: true
-          }
-        },
-
-        yAxis: {
-          title: {
-            text: 'Job count',
-            margin: 20
-          },
-          allowDecimals: false
-        },
-
-        rangeSelector: {
-          buttons: [{
-            count: 1,
-            type: 'minute',
-            text: '1M'
-          }, {
-            count: 5,
-            type: 'minute',
-            text: '5M'
-          }, {
-            type: 'hour',
-            count: 1,
-            text: '1h'
-          }, {
-            type: 'all',
-            text: 'All'
-          }],
-          inputEnabled: false,
-          selected: 3
-        },
-
-        series: [
-          {
-            name: 'pending',
-            type: 'streamgraph',
-            color: '#ffc107',
-            data: [[(new Date()).getTime(), 0]]
-          },
-          {
-            name: 'deferred',
-            type: 'streamgraph',
-            color: '#f1f128',
-            data: [[(new Date()).getTime(), 0]]
-          },
-          {
-            name: 'failed',
-            type: 'streamgraph',
-            color: '#11dea2',
-            data: [[(new Date()).getTime(), 0]]
-          },
-          {
-            name: 'running',
-            type: 'streamgraph',
-            color: '#64a505',
-            data: [[(new Date()).getTime(), 0]]
-          },
-          {
-            name: 'error',
-            type: 'streamgraph',
-            color: '#d70f14',
-            data: [[(new Date()).getTime(), 0]]
-          },
-          {
-            name: 'inactive',
-            type: 'streamgraph',
-            color: '#8d1407',
-            data: [[(new Date()).getTime(), 0]]
-          },
-          {
-            name: 'killed',
-            type: 'streamgraph',
-            color: '#d8c9c7',
-            data: [[(new Date()).getTime(), 0]]
-          }
-        ]
+        // chart: {
+        //   type: 'streamgraph',
+        //   zoomType: 'x',
+        //   backgroundColor: {
+        //     linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+        //     stops: [
+        //       [0, '#393939'],
+        //       [1, '#3e3e40']
+        //     ]
+        //   },
+        //   style: {
+        //     fontFamily: '\'Unica One\', sans-serif'
+        //   }
+        // },
+        // legend: {
+        //   enabled: true,
+        //   layout: 'horizontal',
+        //   align: 'center',
+        //   verticalAlign: 'bottom',
+        //   borderWidth: 0,
+        //   style: {
+        //     color: '#E0E0E3'
+        //   }
+        // },
+        // xAxis: {
+        //   title: {
+        //     text: 'Time in UTC (Coordinated Universal Time)',
+        //     margin: 30
+        //   },
+        //   type: 'datetime',
+        //   crosshair: true,
+        //   // tickInterval: 1.8e+6, // 30 min
+        //   labels: {
+        //     reserveSpace: false,
+        //     dateTimeLabelFormats: {
+        //       month: '%e. %b',
+        //       year: '%b'
+        //     }
+        //   }
+        // },
+        // plotOptions: {
+        //   area: {
+        //     stacking: 'normal'
+        //   },
+        //   series: {
+        //     showInNavigator: true
+        //   }
+        // },
+        //
+        // yAxis: {
+        //   title: {
+        //     text: 'Job count',
+        //     margin: 20
+        //   },
+        //   allowDecimals: false
+        // },
+        //
+        // rangeSelector: {
+        //   buttons: [{
+        //     count: 1,
+        //     type: 'minute',
+        //     text: '1M'
+        //   }, {
+        //     count: 5,
+        //     type: 'minute',
+        //     text: '5M'
+        //   }, {
+        //     type: 'hour',
+        //     count: 1,
+        //     text: '1h'
+        //   }, {
+        //     type: 'all',
+        //     text: 'All'
+        //   }],
+        //   inputEnabled: false,
+        //   selected: 3
+        // },
+        //
+        // series: [
+        //   {
+        //     name: 'pending',
+        //     type: 'streamgraph',
+        //     color: '#ffc107',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'deferred',
+        //     type: 'streamgraph',
+        //     color: '#f1f128',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'failed',
+        //     type: 'streamgraph',
+        //     color: '#11dea2',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'running',
+        //     type: 'streamgraph',
+        //     color: '#64a505',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'error',
+        //     type: 'streamgraph',
+        //     color: '#d70f14',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'inactive',
+        //     type: 'streamgraph',
+        //     color: '#8d1407',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'killed',
+        //     type: 'streamgraph',
+        //     color: '#d8c9c7',
+        //     data: []
+        //   }
+        // ]
       }
     }
   }
