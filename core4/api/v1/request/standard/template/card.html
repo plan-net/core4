@@ -13,10 +13,10 @@
     
     <ul>
         <li><b>AT:</b> {{ handler.started }}</li>
+        <li><b>ID:</b> {{ handler.rsc_id }}</li>
         <li><b>TITLE:</b> {{ handler.title }}</li>
         <li><b>AUTHOR:</b> {{ handler.author }}</li>
         <li><b>QUAL_NAME:</b> {{ handler.qual_name() }}</li>
-        <li><b>NAME:</b> {{ handler.url_name }}</li>
         <li><b>ICON: <i class="material-icons">{{ handler.icon }}</i></b> - {{ handler.icon }}</li>
         <li><b>ENTER:</b> <a href="{{ handler.enter_url }}">{{ handler.enter_url }}</a>
         <li><b>HELP:</b> <a href="{{ handler.help_url }}">{{ handler.help_url }}</a>

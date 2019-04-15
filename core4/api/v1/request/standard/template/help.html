@@ -13,7 +13,7 @@
     <li><b>AUTHOR:</b> {{ author }}</li>
     <li><b>TITLE:</b> {{ title }}</li>
     <li><b>ENTER:</b> <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-    <li><b>RULE ID:</b> {{ route_id }}</li>
+    <li><b>RESOURCE ID:</b> {{ rsc_id }}</li>
     <li><b>PROTECTED:</b> {{ protected }}</li>
     <li><b>ICON:</b> <i class="material-icons">{{ icon }}</i>  - {{ icon }}</li>
     <li><b>ARGS:</b> {{ args }}</li>
@@ -23,11 +23,17 @@
     <li><b>PATTERN:</b>
         <ul>
         {% for p in pattern %}
-            <li>{{ p }}</li>
+            <li>
+                {% if p["name"] is not None %}
+                    <b>{{ p["name"] }}:</b>
+                {% else %}
+                    <b>no name:</b>
+                {% end if %}
+                {{ p["regex"] }}
+            </li>
         {% end %}
         </ul>
     </li>
-    <li><b>NAME:</b> {{ url_name }}</li>
     <li><b>CARD:</b> <a href="{{ card_url }}">{{ card_url }}</a></li>
     <li><b>MISSING</b>
         <ul>
@@ -60,7 +66,7 @@
 
 <h2>Introduction</h2>
 
-{% raw description %}
+{% raw description_html %}
 
 <hr/>
 

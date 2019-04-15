@@ -57,22 +57,29 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
         if default_static and not default_static.startswith("/"):
             default_static = os.path.join(os.path.dirname(core4.__file__),
                                           default_static)
-        path = self.request.path[len(core4.const.INFO_URL) + 1:]
-        (mode, md5_route, *path) = path.split("/")
-        (app, container, specs) = self.application.find_md5(md5_route)
-        if mode == "def":
-            root = default_static
-        elif mode == "pro":
-            root = specs.target.set_path("static_path", container,
-                                         **specs.target_kwargs)
-        else:
-            root = default_static
-        self.root = root
-        self.path_args = ["/".join(path)]
-        full_path = os.path.join(self.root, self.path_args[0])
-        if not os.path.exists(full_path):
-            self.logger.error(
-                "static file not found [%s]", full_path)
+        prefix = self.application.container.get_root("asset")
+        parts = self.request.path[len(prefix) + 1:].split("/")
+        mode = parts[0]
+        rsc_id = parts[1]
+        path = "/".join(parts[2:])
+        if mode in ("default", "project"):
+            if mode == "default":
+                root = default_static
+            else:
+                handler = self.application.lookup[rsc_id]["handler"]
+                if path.startswith("/"):
+                    root = handler.target.project_path()
+                    path = path[1:]
+                else:
+                    root = handler.target.set_path(
+                        "static_path", self.application.container,
+                        **handler.target_kwargs)
+            self.root = root
+            self.path_args = [path]
+            full_path = os.path.join(self.root, self.path_args[0])
+            if not os.path.exists(full_path):
+                self.logger.error(
+                    "static file not found [%s]", full_path)
         self.identifier = ObjectId()
         await self.prepare_protection()
 

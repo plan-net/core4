@@ -8,23 +8,16 @@
 """
 Implements :class:`.InfoHandler` to retrieve API endpoint details.
 """
-from tornado.web import HTTPError
 
-import core4.const
-import core4.util.node
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.util.data import rst2html
+from core4.queue.query import QueryMixin
 
-class InfoHandler(CoreRequestHandler):
+
+class InfoHandler(CoreRequestHandler, QueryMixin):
     title = "server endpoint information"
     author = "mra"
 
-    async def enter(self):
-        raise HTTPError(400, "You cannot directly enter this endpoint. "
-                             "You must provide a route ID to retrieve API "
-                             "endpoint help")
-
-    async def get(self, ids):
+    async def get(self):
         """
         Retrieve API endpoint details/help.
 
@@ -56,7 +49,6 @@ class InfoHandler(CoreRequestHandler):
             - **card_url** (*str*): URL to card page
             - **enter_url** (*str*): URL to enter
             - **help_url** (*str*): URL to help page
-            - **url_name** (*str*): name of the URL to be used in method
               :meth:`.reverse_url`
             - **method** (*list*): with method details
 
@@ -83,38 +75,46 @@ class InfoHandler(CoreRequestHandler):
             cookies=signin.cookies)
             >>> rv.json()
         """
-
-        parts = ids.split("/")
-        md5_route = parts[0]
-        route = self.application.find_md5(md5_route, all=True)
-        (app, container, specs) = route[0]
-        html = rst2html(str(specs.target.__doc__))
-        doc = dict(
-            route_id=md5_route,
-            args=str(specs.target_kwargs),
-            author=specs.target.author,
-            container=container.qual_name(),
-            description=html["body"],
-            error=html["error"],
-            icon=specs.target.icon,
-            project=specs.target.get_project(),
-            protected=specs.target.protected,
-            qual_name=specs.target.qual_name(),
-            url_name=specs.name or md5_route,
-            tag=specs.target.tag,
-            title=specs.target.title,
-            version=specs.target.version(),
-        )
-        if specs.target_kwargs:
-            for attr in specs.target.propagate:
-                if attr in doc:
-                    doc[attr] = specs.target_kwargs.get(attr, doc[attr])
-        doc["pattern"] = [specs.matcher.regex.pattern for app, container, specs in route]
-        doc["help_url"] = core4.const.HELP_URL + "/" + doc["route_id"]
-        doc["enter_url"] = core4.const.ENTER_URL + "/" + doc["route_id"]
-        doc["card_url"] = core4.const.CARD_URL + "/" + doc["route_id"]
-        doc["method"] = self.application.handler_help(specs.target)
-
+        ret = await self.get_handler()
         if self.wants_html():
-            return self.render("standard/template/help.html", **doc)
-        return self.reply(doc)
+            return self.render("template/widget.html",
+                               data=ret)
+        self.reply(ret)
+
+    async def get_card(self, rsc_id):
+        handler = self.application.lookup[rsc_id]["handler"]
+        return handler.__doc__
+
+    async def get_handler(self):
+        alive = [(d["protocol"], d["hostname"], d["port"])
+                 for d in await self.get_daemon_async(kind="app")]
+        handler = {}
+        inactive = 0
+        async for doc in self.config.sys.handler.find():
+            if ((doc["protocol"], doc["hostname"], doc["port"]) in alive) \
+                    and (doc["started_at"] is not None):
+                del doc["_id"]
+                handler.setdefault(doc["rsc_id"], []).append(doc)
+            else:
+                inactive += 1
+        self.logger.debug("found [%d] handler alive, [%d] inactive",
+                          len(handler), inactive)
+        ret = []
+        detail = ("hostname", "protocol", "port", "routing", "container")
+        for rsc_id, data in handler.items():
+            first = data[0].copy()
+            for attr in detail:
+                del first[attr]
+            first["endpoint"] = []
+            info = set()
+            for d in data:
+                for c in d["container"]:
+                    url = "{}{}".format(
+                        d["routing"], c[2])
+                    info.add(url)
+                for k in ("started_at", "created_at"):
+                    first[k] = min(first[k], d[k])
+            first["endpoint"] += sorted(list(info))
+            ret.append(first)
+        ret.sort(key=lambda r: (str(r["title"]), r["qual_name"]))
+        return ret
