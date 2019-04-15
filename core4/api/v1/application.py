@@ -33,12 +33,6 @@ Please note that :meth:`.serve` can handle one or multiple
 the following example::
 
     serve(TestContainer, AnotherContainer)
-
-Additionally this module features :class:`RootContainer`. This container is
-attached to *each* :class:`.CoreApiContainer` and delivers core4 default
-resource, i.e. ``/login``, ``/logout``, ``/profile``, ``/file``, ``/info``,
-and the root endpoint ``/``. All these default endpoints are routed under a
-dedicated core4 api endpoint (defaults to ``/core4/api/v1``).
 """
 
 import hashlib
@@ -163,13 +157,14 @@ class CoreApiContainer(CoreBase):
         :return: yields :class:`tornado.web.URLSpec` objects
         """
         yield tornado.web.URLSpec(
-            pattern=self.get_root("/info"),
+            pattern=self.get_root(core4.const.INFO_URL),
             handler=InfoHandler,
             kwargs=None,
             name=None
         )
         yield tornado.web.URLSpec(
-            pattern=self.get_root("/asset/(default|project)/(.+?)/(.*)"),
+            pattern=self.get_root("/{}/(default|project)/(.+?)/(.*)".format(
+                core4.const.ASSET_MODE)),
             handler=CoreAssetHandler,
             kwargs=None,
             name=None
@@ -302,21 +297,22 @@ class CoreApplication(tornado.web.Application):
         page requests are forwarded to the handler's
         :meth:`.CoreRequestHandler.enter` method (``XENTER``).
         """
-        if request.path.startswith(self.container.get_root("/info")):
-            root = self.container.get_root("/info")
+        if request.path.startswith(self.container.get_root(
+                core4.const.INFO_URL)):
+            root = self.container.get_root(core4.const.INFO_URL)
             split = request.path[len(root) + 1:].split("/")
             if len(split) == 2:
                 mode = split[0]
                 handler = self.lookup[split[1]]["handler"]
-                if mode == "card":
+                if mode == core4.const.CARD_MODE:
                     request.method = core4.const.CARD_METHOD
                     return self.get_handler_delegate(request, handler.target,
                                                      handler.target_kwargs)
-                elif mode == "enter":
+                elif mode == core4.const.ENTER_MODE:
                     request.method = core4.const.ENTER_METHOD
                     return self.get_handler_delegate(request, handler.target,
                                                      handler.target_kwargs)
-                elif mode == "help":
+                elif mode == core4.const.HELP_MODE:
                     request.method = core4.const.HELP_METHOD
                     return self.get_handler_delegate(request, handler.target,
                                                      handler.target_kwargs)

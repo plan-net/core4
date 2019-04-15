@@ -46,19 +46,10 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
     :class:`.CoreApiContainer` class. The container delivers the following
     default endpoints under it's ``root``:
 
-    * ``/login`` serving
-      :class:`core4.api.v1.request.standard.login.LoginHandler`
-    * ``/logout`` serving
-      :class:`core4.api.v1.request.standard.logout.LogoutHandler`
-    * ``/profile`` serving
-      :class:`core4.api.v1.request.standard.profile.ProfileHandler`
-    * ``/file`` serving
-      :class:`core4.api.v1.request.standard.file.CoreFileHandler`
+    * ``/asset`` serving
+      :class:`core4.api.v1.request.standard.file.CoreAssetHandler`
     * ``/info`` serving
-      :class:`core4.api.v1.request.standard.info.InfoHandler` and
-      :class:`core4.api.v1.request.standard.route.RouteHandler`
-    * ``/`` serving
-      :class:`core4.api.v1.request.static.CoreStaticFileHandler`
+      :class:`core4.api.v1.request.standard.info.InfoHandler`
 
     .. note:: This method creates the required core4 environment including
               the standard core4 folders (see config setting ``folder``,

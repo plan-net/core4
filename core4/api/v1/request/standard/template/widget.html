@@ -5,13 +5,14 @@
     <meta charset="UTF-8">
     <title>{{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="{{ default_static('widget/bootstrap-material-design.custom.css') }}">
+    <link rel="stylesheet" href="{{ default_static('bootstrap-material-design.custom.css') }}">
 </head>
 <body>
 
 <div class="container">
     <div>
-        <h1>{{ handler.qual_name() }}</h1>
+        <h1>ENDPOINT COLLECTION</h1>
+        <hr/>
         {% for h in data %}
             <h2>{{ h["title"] }}</h2>
             <h4>{{ h["qual_name"] }}</h4>
@@ -33,7 +34,7 @@
                                 <ul>
                                     {% for mode in ["card", "help", "enter"] %}
                                         <li>
-                                            <a href="{{ ep }}/info/{{ mode }}/{{ h['rsc_id'] }}">{{ mode }}</a>
+                                            <a href="{{ ep }}/_info/{{ mode }}/{{ h['rsc_id'] }}">{{ mode }}</a>
                                         </li>
                                     {% end for %}
                                 </ul>
@@ -42,6 +43,7 @@
                     </ul>
                 </li>
             </ul>
+            <hr/>
         {% end for %}
 
     </div>

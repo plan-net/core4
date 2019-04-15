@@ -55,6 +55,16 @@ def close_watchers():
     event.change_stream.close()
 
 
+class CoreWidgetServer(CoreApiContainer):
+    root = ""
+    rules = [
+        (r'/', CoreStaticFileHandler, {
+            "path": "/webapps/widgets/dist",
+            "title": "core4 widgets", "protected": False
+        })
+    ]
+
+
 class CoreApiServer(CoreApiContainer):
     """
     Default :class:`.CoreApiContainer` serving the standard core4 endpoints
@@ -81,11 +91,6 @@ class CoreApiServer(CoreApiContainer):
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
 
-        (r'/', CoreStaticFileHandler, {
-            "path": "/webapps/widgets/dist",
-            "title": "core widgets", "protected": False
-        }),
-
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",
             "title": "comoco", "protected": False
@@ -107,4 +112,4 @@ class CoreApiServer(CoreApiContainer):
 
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
-    serve(CoreApiServer)
+    serve(CoreApiServer, CoreWidgetServer)

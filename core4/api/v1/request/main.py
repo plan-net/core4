@@ -350,9 +350,9 @@ class CoreBaseHandler(CoreBase):
         path = parts[:-2]
         handler = self.application.lookup[rsc_id]["handler"]
         if self.enter_url is None:
-            self.enter_url = "/".join(path + ["enter", rsc_id])
-        self.help_url = "/".join(path + ["help", rsc_id])
-        self.card_url = "/".join(path + ["card", rsc_id])
+            self.enter_url = "/".join(path + [core4.const.ENTER_MODE, rsc_id])
+        self.help_url = "/".join(path + [core4.const.HELP_MODE, rsc_id])
+        self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
 
     def xcard(self, *args, **kwargs):
         """
@@ -515,8 +515,9 @@ class CoreBaseHandler(CoreBase):
         :param path: name
         :return: full url
         """
-        url = "{}/asset/default/{}/{}".format(
-            self.application.container.root, self.rsc_id, path)
+        url = "{}/{}/default/{}/{}".format(
+            self.application.container.root, core4.const.ASSET_MODE,
+            self.rsc_id, path)
         return url
 
     def static_url(self, path):
@@ -536,8 +537,9 @@ class CoreBaseHandler(CoreBase):
         :param kwargs:
         :return: full url
         """
-        url = "{}/asset/project/{}/{}".format(
-            self.application.container.root, self.rsc_id, path)
+        url = "{}/{}/project/{}/{}".format(
+            self.application.container.root, core4.const.ASSET_MODE,
+            self.rsc_id, path)
         return url
 
     def get_template_namespace(self):
