@@ -1,5 +1,9 @@
 <template>
+  <v-layout>
+    <v-flex class="chart">
       <vue-highcharts constructor-type="stockChart" :options="chartOptions" ref="chart"></vue-highcharts>
+    </v-flex>
+  </v-layout>
 </template>
 
 <script>
@@ -12,6 +16,8 @@ import stockInit from 'highcharts/modules/stock'
 import { jobColors } from '../settings'
 
 stockInit(Highcharts)
+
+var defaultTheme = Highcharts.getOptions()
 
 Highcharts.theme = {
   colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066',

@@ -11,17 +11,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-
-function getBasePath () {
-  if (window.location.href.includes('http')) {
-    // index.html
-    return window.APIBASE_CORE.replace('http:', 'ws:')
-  }
-
-  console.error(`incorrect network protocol ${window.location.href}`)
-
-  return `ws://${window.location.host}/core4/api`
-}
+import { getBasePath } from './helper'
 
 export default {
   name: 'CORE4',
@@ -37,6 +27,11 @@ export default {
         let token = JSON.parse(localStorage.getItem('user'))['token']
         this.$connect(`${getBasePath()}/v1/event?token=${token}`)
       }
+    },
+    dark (newValue, oldValue) {
+      console.log('dark mode', newValue)
+      console.log('  new value: ', newValue)
+      console.log('  old value', oldValue)
     }
   }
 }

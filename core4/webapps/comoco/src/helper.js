@@ -15,6 +15,23 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
   return clone(Object.assign(...iterator.map(k => ({ [k]: clone(defaultValue) }))))
 }
 
+/**
+ * Get base path base on mode: dev or prod
+ *
+ * @returns {string}
+ */
+function getBasePath () {
+  if (window.location.href.includes('http')) {
+    // index.html
+    return window.APIBASE_CORE.replace('http:', 'ws:')
+  }
+
+  console.error(`incorrect network protocol ${window.location.href}`)
+
+  return `ws://${window.location.host}/core4/api`
+}
+
 export {
-  createObjectWithDefaultValues
+  createObjectWithDefaultValues,
+  getBasePath
 }

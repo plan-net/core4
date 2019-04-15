@@ -239,7 +239,7 @@ Highcharts.theme = {
 }
 
 // Apply the theme
-Highcharts.setOptions(Highcharts.theme)
+// Highcharts.setOptions(Highcharts.theme)
 
 export default {
   name: 'streamgraphChart',
@@ -323,128 +323,128 @@ export default {
     },
     chartOptions () {
       return {
-        chart: {
-          type: 'streamgraph',
-          zoomType: 'x',
-          backgroundColor: {
-            linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
-            stops: [
-              [0, '#393939'],
-              [1, '#3e3e40']
-            ]
-          },
-          style: {
-            fontFamily: '\'Unica One\', sans-serif'
-          }
-        },
-        legend: {
-          enabled: true,
-          layout: 'horizontal',
-          align: 'center',
-          verticalAlign: 'bottom',
-          borderWidth: 0,
-          style: {
-            color: '#E0E0E3'
-          }
-        },
-        xAxis: {
-          title: {
-            text: 'Time in UTC (Coordinated Universal Time)',
-            margin: 30
-          },
-          type: 'datetime',
-          crosshair: true,
-          // tickInterval: 1.8e+6, // 30 min
-          labels: {
-            reserveSpace: false,
-            dateTimeLabelFormats: {
-              month: '%e. %b',
-              year: '%b'
-            }
-          }
-        },
-        plotOptions: {
-          area: {
-            stacking: 'normal'
-          },
-          series: {
-            showInNavigator: true
-          }
-        },
-
-        yAxis: {
-          title: {
-            text: 'Job count',
-            margin: 20
-          },
-          allowDecimals: false
-        },
-
-        rangeSelector: {
-          buttons: [{
-            count: 1,
-            type: 'minute',
-            text: '1M'
-          }, {
-            count: 5,
-            type: 'minute',
-            text: '5M'
-          }, {
-            type: 'hour',
-            count: 1,
-            text: '1h'
-          }, {
-            type: 'all',
-            text: 'All'
-          }],
-          inputEnabled: false,
-          selected: 3
-        },
-
-        series: [
-          {
-            name: 'pending',
-            type: 'streamgraph',
-            color: '#ffc107',
-            data: []
-          },
-          {
-            name: 'deferred',
-            type: 'streamgraph',
-            color: '#f1f128',
-            data: []
-          },
-          {
-            name: 'failed',
-            type: 'streamgraph',
-            color: '#11dea2',
-            data: []
-          },
-          {
-            name: 'running',
-            type: 'streamgraph',
-            color: '#64a505',
-            data: []
-          },
-          {
-            name: 'error',
-            type: 'streamgraph',
-            color: '#d70f14',
-            data: []
-          },
-          {
-            name: 'inactive',
-            type: 'streamgraph',
-            color: '#8d1407',
-            data: []
-          },
-          {
-            name: 'killed',
-            type: 'streamgraph',
-            color: '#d8c9c7',
-            data: []
-          }
-        ]
+        // chart: {
+        //   type: 'streamgraph',
+        //   zoomType: 'x',
+        //   backgroundColor: {
+        //     linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+        //     stops: [
+        //       [0, '#393939'],
+        //       [1, '#3e3e40']
+        //     ]
+        //   },
+        //   style: {
+        //     fontFamily: '\'Unica One\', sans-serif'
+        //   }
+        // },
+        // legend: {
+        //   enabled: true,
+        //   layout: 'horizontal',
+        //   align: 'center',
+        //   verticalAlign: 'bottom',
+        //   borderWidth: 0,
+        //   style: {
+        //     color: '#E0E0E3'
+        //   }
+        // },
+        // xAxis: {
+        //   title: {
+        //     text: 'Time in UTC (Coordinated Universal Time)',
+        //     margin: 30
+        //   },
+        //   type: 'datetime',
+        //   crosshair: true,
+        //   // tickInterval: 1.8e+6, // 30 min
+        //   labels: {
+        //     reserveSpace: false,
+        //     dateTimeLabelFormats: {
+        //       month: '%e. %b',
+        //       year: '%b'
+        //     }
+        //   }
+        // },
+        // plotOptions: {
+        //   area: {
+        //     stacking: 'normal'
+        //   },
+        //   series: {
+        //     showInNavigator: true
+        //   }
+        // },
+        //
+        // yAxis: {
+        //   title: {
+        //     text: 'Job count',
+        //     margin: 20
+        //   },
+        //   allowDecimals: false
+        // },
+        //
+        // rangeSelector: {
+        //   buttons: [{
+        //     count: 1,
+        //     type: 'minute',
+        //     text: '1M'
+        //   }, {
+        //     count: 5,
+        //     type: 'minute',
+        //     text: '5M'
+        //   }, {
+        //     type: 'hour',
+        //     count: 1,
+        //     text: '1h'
+        //   }, {
+        //     type: 'all',
+        //     text: 'All'
+        //   }],
+        //   inputEnabled: false,
+        //   selected: 3
+        // },
+        //
+        // series: [
+        //   {
+        //     name: 'pending',
+        //     type: 'streamgraph',
+        //     color: '#ffc107',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'deferred',
+        //     type: 'streamgraph',
+        //     color: '#f1f128',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'failed',
+        //     type: 'streamgraph',
+        //     color: '#11dea2',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'running',
+        //     type: 'streamgraph',
+        //     color: '#64a505',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'error',
+        //     type: 'streamgraph',
+        //     color: '#d70f14',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'inactive',
+        //     type: 'streamgraph',
+        //     color: '#8d1407',
+        //     data: []
+        //   },
+        //   {
+        //     name: 'killed',
+        //     type: 'streamgraph',
+        //     color: '#d8c9c7',
+        //     data: []
+        //   }
+        // ]
       }
     }
   }
