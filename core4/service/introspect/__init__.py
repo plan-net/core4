@@ -330,11 +330,10 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                         self.logger.debug("found job [%s]", cls.qual_name())
                         self._job[cls.qual_name()] = cls
                 elif mro == core4.api.v1.application.CoreApiContainer:
-                    if cls != core4.api.v1.application.RootContainer:
-                        if cls.qual_name() not in self._api_container:
-                            self.logger.debug("found api container [%s]",
-                                              cls.qual_name())
-                            self._api_container[cls.qual_name()] = cls
+                    if cls.qual_name() not in self._api_container:
+                        self.logger.debug("found api container [%s]",
+                                          cls.qual_name())
+                        self._api_container[cls.qual_name()] = cls
 
     def _import_module(self, name):
         # internal helper method to safely import a core4 module
@@ -533,7 +532,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if python_path is None:
             python_path = sys.executable
         self.logger.debug("python found at [%s]", python_path)
-        #os.chdir(os.path.join(home, project))
+        # os.chdir(os.path.join(home, project))
         cmd = command.format(*args, **kwargs)
         if wait:
             if comm:
