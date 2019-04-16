@@ -8,9 +8,8 @@ core4 provides a simple authentication, authorization and access permission
 scheme managed by the core4 API request handlers :class:`.LoginHandler`,
 and :class:`.RoleHandler`.
 
-The :class:`LoginHandler` is part of the default handlers attached to each
-web server (see :class:`.RootContainer`). The :class:`.RoleHandler` is reserved
-for core4 administrators AKA *COPs*.
+Both classes are delivered through the :class:`.CoreApiServer'. The
+:class:`.RoleHandler` is reserved for core4 administrators AKA *COPs*.
 
 *COPs* can grant access to jobs, API requests, and databases. Additionally
 application keys can be defined to customise specific access permissions, e.g.

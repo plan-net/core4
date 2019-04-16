@@ -29,7 +29,7 @@ A blueprint for server definition and startup is::
 
 
 Please note that :meth:`.serve` can handle one or multiple
-:class:`.CoreApiServer` objects with multiple endpoints and resources as in
+:class:`.CoreApiContainner` objects with multiple endpoints and resources as in
 the following example::
 
     serve(TestContainer, AnotherContainer)
@@ -59,7 +59,7 @@ class CoreRoutingRule(tornado.routing.Rule):
     """
     Routing rule inherited from :class:`tornado.routing.Rule. Adds the
     rule attribute ``.rsc_id`` which is used by core4 to uniquely identify
-    rules.
+    resource handlers.
     """
 
     def __init__(self, rsc_id, *args, **kwargs):
@@ -70,12 +70,12 @@ class CoreRoutingRule(tornado.routing.Rule):
 class CoreApiContainer(CoreBase):
     """
     :class:`CoreApiContainer` class is a container for a single or multiple
-    :class:`.CoreRequestHandler` and is based on torando's class
-    :class:`tornado.web.RequestHandler`. A container encapsulates endpoint
-    resources under the same :attr:`.root` URL defined by the :attr:`.root`
-    attribute.
+    :class:`.CoreRequestHandler`, :class.`.CoreStaticFilehandler` or
+    :class:`.CoreWebSocketHandler`. It is based on the appropriate torando
+    classes. a container encapsulates endpoint resources under the same
+    :attr:`.root` URL prefix.
 
-    The default ``root`` is the project name.
+    The default ``root`` is equal to the project name.
     """
 
     #: if ``True`` then the application container is deployed with serve_all
@@ -128,8 +128,8 @@ class CoreApiContainer(CoreBase):
 
     def get_root(self, path=None):
         """
-        Returns the container`s ``root`` URL or prefixes the passed relative
-        path with the container's ``root``
+        Returns the container`s ``root`` URL prefix or prefixes the passed
+        relative path with the prefix.
 
         :param path: relative path (optional)
         :return: ``root`` or absolute path below ``root``
@@ -150,14 +150,15 @@ class CoreApiContainer(CoreBase):
     def iter_rule(self):
         """
         Returns a :class:`tornado.web.URLSpec` as specified by the container's
-        :attr:`rules` attribute. This rule attribute can either be an
+        :attr:`rules` attribute. This rules attribute can either be an
         ``URLSpec`` by itself or a tuple of ``pattern``, ``handler`` class,
         an optional ``kwargs`` to be passed to the handler and an optional
         rule ``name``.
 
         Additionally the following default handlers are added:
 
-        * ``/_info`` to deliver the collection of available endpoints
+        * ``/_info`` to deliver the collection of available endpoints, the
+          resources' card, help and enter UrL
         * ``/_asset`` to deliver assets
         * ``/_kill`` to kill the server
 
@@ -232,8 +233,8 @@ class CoreApiContainer(CoreBase):
     def make_application(self):
         """
         Validates and pre-processes :class:`CoreApiContainer` rules and
-        transfers a handler lookup dictionary to :class:`RootContainer` for
-        reverse URL lookup.
+        transfers a handler lookup dictionary to :class:`CoreApiServerTool`
+        for reverse URL lookup.
 
         :return: :class:`.CoreApplication` instance
         """
@@ -274,10 +275,19 @@ class CoreApiContainer(CoreBase):
         self.started = core4.util.node.now()
         return app
 
-    def on_exit(self):
-        pass
 
     def on_enter(self):
+        """
+        Overwrite this method for code to be executed when the container enters
+        the io loop.
+        """
+        pass
+
+    def on_exit(self):
+        """
+        Overwrite this method for code to be executed when the container exits
+        the io loop.
+        """
         pass
 
 
