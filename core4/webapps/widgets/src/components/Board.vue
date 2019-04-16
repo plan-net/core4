@@ -66,44 +66,65 @@
         >
           <v-card>
             <v-card-text>
-              <v-icon @click="removeFromBoard(widget._id)" ripple small class="remove-icon grey--text">clear</v-icon>
-              <div class="text-xs-center" style="padding-top: 54px;">
+              <v-layout class="icon-container">
                 <v-tooltip top>
                   <v-btn
-                    @click="$router.push({ name: 'widget', params: { widgetId: widget._id } })"
-                    slot="activator"
+                    @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
                     icon
-                    large
+                    small
+                    slot="activator"
                     ripple
                   >
                     <v-icon
+                      small
                       color="grey"
-                      large
-                    >open_in_new</v-icon>
-                  </v-btn>
-                  <span>Open widget</span>
-                </v-tooltip>
-                <v-tooltip top>
-                  <v-btn
-                    @click="$router.push({ name: 'help', params: { widgetId: widget._id } })"
-                    icon
-                    slot="activator"
-                    large
-                    ripple
-                  >
-                    <v-icon
-                      color="grey"
-                      large
                     >help</v-icon>
                   </v-btn>
                   <span>Help</span>
                 </v-tooltip>
+                <v-tooltip top>
+                  <v-btn
+                    @click="removeFromBoard(widget.rsc_id)"
+                    icon
+                    small
+                    slot="activator"
+                    ripple
+                  >
+                    <v-icon
+                      ripple
+                      small
+                      class="grey--text"
+                    >clear</v-icon>
+                  </v-btn>
+                  <span>Remove from board</span>
+                </v-tooltip>
+              </v-layout>
+              <div
+                class="text-xs-center"
+                style="padding-top: 54px;"
+              >
+                <v-tooltip top>
+                  <v-btn class="open-widget-btn"
+                    @click="$router.push({ name: 'widget', params: { widgetId: widget.rsc_id } })"
+                    slot="activator"
+                    icon
+                    large
+                    ripple
+                  >
+                    <v-icon
+                      color="grey"
+                      large
+                    >{{widget.icon}}</v-icon>
+                  </v-btn>
+                  <span>Open widget</span>
+                </v-tooltip>
+
               </div>
             </v-card-text>
             <v-card-title>
               <v-layout column>
                 <span>{{widget.title}}</span>
-                <small class="grey--text">{{widget.qual_name}}</small>
+                <small class="grey--text tooltip">{{widget.qual_name}}</small>
               </v-layout>
               <v-spacer></v-spacer>
               <v-icon class="widget-drag-icon white--text">drag_indicator</v-icon>
@@ -144,7 +165,7 @@ export default {
       over: false,
       cellSize: {
         w: 360,
-        h: 260
+        h: 250
       },
       oldSortOrder: null,
       maxColumnCount: 4,
@@ -187,7 +208,7 @@ export default {
       set: function (newValue) {
         this.$nextTick(function () {
           if (this.isMouseDown === false) {
-            const sortOrder = newValue.map(val => val._id)
+            const sortOrder = newValue.map(val => val.rsc_id)
             this.$store.dispatch('updateBoardWidgets', sortOrder)
           }
         })
@@ -210,6 +231,7 @@ export default {
       this.over = true
     },
     onDrop (item) {
+      console.log(item)
       this.addToBoard(item.widgetId)
     }
   }
@@ -217,28 +239,43 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.remove-icon{
-  position: absolute;
-  top: 5px;
-  right: 8px;
-  opacity: .5;
-}
 .headline {
   text-transform: initial;
 }
 /deep/ .v-card__text {
   padding: 0;
-  height: calc(100% - 68px);
+  height: calc(100%);
   iframe {
     background-color: #fff;
     width: 100%;
     height: 100%;
+  }
+  .icon-container {
+    position: absolute;
+    margin-right: 3px;
+    right: 0;
+    .v-btn{
+      margin: 0;
+    }
+  }
+  .open-widget-btn{
+    border: 1px solid red;
+  }
+}
+/deep/ .v-card {
+  position: relative;
+  .v-card__title {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
 }
 /deep/ .v-card__title {
   span,
   small {
     white-space: nowrap;
+    letter-spacing: -0.05em;
     max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
