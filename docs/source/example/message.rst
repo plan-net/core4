@@ -19,7 +19,7 @@ First you will have to create two users.
     from requests import post, get
 
     # login as admin
-    login = get("http://devops:5001/core4/api/login?username=admin&password=hans")
+    login = get("http://devops:5001/core4/api/v1/login?username=admin&password=hans")
     token = login.json()["data"]["token"]
     # create user1
     rv = post("http://devops:5001/core4/api/v1/roles",

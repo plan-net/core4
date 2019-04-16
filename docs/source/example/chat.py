@@ -31,7 +31,7 @@ def main():
     if args["PASSWORD"] is None:
         args["PASSWORD"] = getpass("enter password: ")
 
-    LOGIN_URL = "{HOSTNAME:s}/core4/api/login" \
+    LOGIN_URL = "{HOSTNAME:s}/core4/api/v1/login" \
                 "?username={USERNAME:s}&password={PASSWORD:s}"
     SOCKET_URL = "{HOSTNAME:s}/core4/api/v1/event?token={token:s}"
 
@@ -56,7 +56,7 @@ def main():
     print("> web socket connected")
 
     # announce interest
-    ws.send(json.dumps({"type": "interest", "data": ["message"]}))
+    ws.send(json.dumps({"type": "interest", "data": ["message", "system"]}))
 
     thread = Thread(target=listening, args=(ws,))
     thread.start()

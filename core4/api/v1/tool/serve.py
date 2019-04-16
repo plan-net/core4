@@ -34,6 +34,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     """
     Helper class to :meth:`.serve` :class:`CoreApiContainer` classes.
     """
+    container = []
 
     def prepare(self, name, address, port, routing):
         self.startup = core4.util.node.mongo_now()
@@ -74,6 +75,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.logger.info("open %ssecure socket on port [%s:%d] routed at [%s]",
                          "" if http_args.get("ssl_options") else "NOT ",
                          self.address, self.port, self.routing)
+        return server
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
               routing=None, core4api=False, **kwargs):
@@ -99,7 +101,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         http_args = self.prepare(name, address, port, routing)
         routes = []
-        container = []
+        CoreApiServerTool.container = []
         if core4api:
             qual_names = [a.qual_name() for a in args]
             if CoreApiServer.qual_name() not in qual_names:
@@ -118,12 +120,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
             application = container_obj.make_application()
-            if root in [c.get_root() for c in container]:
+            if root in [c.get_root() for c in CoreApiServerTool.container]:
                 raise core4.error.Core4SetupError(
                     "routing root [{}] already exists [{}]".format(
                         root, container_cls.qual_name())
                 )
-            container.append(container_obj)
+            CoreApiServerTool.container.append(container_obj)
             self.logger.info("successfully registered container [%s]",
                              container_cls.qual_name())
             routes.append(
@@ -132,20 +134,25 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             )
         router = tornado.routing.RuleRouter(routes)
         self.register(router)
+        for obj in CoreApiServerTool.container:
+            obj.on_enter()
         self.start_http(http_args, router, reuse_port)
         tornado.ioloop.IOLoop.current().spawn_callback(self.heartbeat)
         try:
             tornado.ioloop.IOLoop().current().start()
         except KeyboardInterrupt:
-            tornado.ioloop.IOLoop().current().stop()
             raise SystemExit()
         except:
-            tornado.ioloop.IOLoop().current().stop()
             raise
         finally:
             self.unregister()
-            for obj in container:
+            for obj in CoreApiServerTool.container:
                 obj.on_exit()
+            tornado.ioloop.IOLoop().current().stop()
+
+    @classmethod
+    def stop(cls):
+        tornado.ioloop.IOLoop().current().stop()
 
     async def heartbeat(self):
         """

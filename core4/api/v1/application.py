@@ -46,6 +46,7 @@ import core4.error
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.standard.info import InfoHandler
+from core4.api.v1.request.kill import KillHandler
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.request.standard.asset import CoreAssetHandler
@@ -154,6 +155,12 @@ class CoreApiContainer(CoreBase):
         an optional ``kwargs`` to be passed to the handler and an optional
         rule ``name``.
 
+        Additionally the following default handlers are added:
+
+        * ``/_info`` to deliver the collection of available endpoints
+        * ``/_asset`` to deliver assets
+        * ``/_kill`` to kill the server
+
         :return: yields :class:`tornado.web.URLSpec` objects
         """
         yield tornado.web.URLSpec(
@@ -163,8 +170,14 @@ class CoreApiContainer(CoreBase):
             name=None
         )
         yield tornado.web.URLSpec(
+            pattern=self.get_root(core4.const.KILL_URL),
+            handler=KillHandler,
+            kwargs=None,
+            name=None
+        )
+        yield tornado.web.URLSpec(
             pattern=self.get_root("/{}/(default|project)/(.+?)/(.*)".format(
-                core4.const.ASSET_MODE)),
+                core4.const.ASSET_URL)),
             handler=CoreAssetHandler,
             kwargs=None,
             name=None
@@ -262,6 +275,9 @@ class CoreApiContainer(CoreBase):
         return app
 
     def on_exit(self):
+        pass
+
+    def on_enter(self):
         pass
 
 
