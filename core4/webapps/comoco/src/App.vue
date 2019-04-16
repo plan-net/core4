@@ -10,37 +10,28 @@
 </template>
 
 <script>
-import SideNavigation from '@/components/SideNavigation'
 import { mapGetters } from 'vuex'
-
-function getBasePath () {
-  if (window.location.href.includes('http')) {
-    // index.html
-    return window.APIBASE_CORE.replace('http:', 'ws:')
-  }
-
-  console.error(`incorrect network protocol ${window.location.href}`)
-
-  return `ws://${window.location.host}/core4/api`
-}
+import { getBasePath } from './helper'
 
 export default {
   name: 'CORE4',
-  components: {
-    SideNavigation
-  },
+  components: {},
   computed: {
     ...mapGetters(['authenticated'])
   },
   watch: {
     authenticated (newValue, oldValue) {
-      // ToDo: check login/logout behavior
       this.$disconnect()
 
       if (newValue && newValue !== oldValue) {
         let token = JSON.parse(localStorage.getItem('user'))['token']
         this.$connect(`${getBasePath()}/v1/event?token=${token}`)
       }
+    },
+    dark (newValue, oldValue) {
+      console.log('dark mode', newValue)
+      console.log('  new value: ', newValue)
+      console.log('  old value', oldValue)
     }
   }
 }

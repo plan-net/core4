@@ -1,10 +1,10 @@
 <template>
-  <v-layout column xs12 class="board-header mb-3">
+  <v-layout column xs12 class="border-info">
     <v-flex xs12>
       <v-layout row xs12>
 
         <!-- Iterate for all states which belongs to the group and display amount of all jobs with this state  -->
-        <v-flex v-for="(state, index) in states" :key="index" :class="`state-${state}`" class="board-groups">
+        <v-flex v-for="(state, index) in states" :key="index" :class="`state-${state}`" class="info-groups">
           <v-layout row xs12 class="text-truncate pa-1">
             <v-flex xs8>
               <span class="font-weight-bold grey--text">{{ state }}:</span>
@@ -61,43 +61,42 @@ export default {
 <style scoped lang="scss">
 @import '../style/comoco';
 
-.board-header{
-  background-color:  #282828;
+.border-info{
 
-  .board-groups{
+  .info-groups{
     flex: 1 1 0;
 
     &:not(:last-child){
       margin-right: 2px;
     }
   }
-}
 
-.state-pending {
-  border-top: 5px solid $pending;
-}
+  .state-pending {
+    border-top: 5px solid $pending;
+  }
 
-.state-deferred {
-  border-top: 5px solid $deferred;
-}
+  .state-deferred {
+    border-top: 5px solid $deferred;
+  }
 
-.state-failed {
-  border-top: 5px solid $failed;
-}
+  .state-failed {
+    border-top: 5px solid $failed;
+  }
 
-.state-running {
-  border-top: 5px solid $running;
-}
+  .state-running {
+    border-top: 5px solid $running;
+  }
 
-.state-error {
-  border-top: 5px solid $error;
-}
+  .state-error {
+    border-top: 5px solid $error;
+  }
 
-.state-inactive {
-  border-top: 5px solid $inactive;
-}
+  .state-inactive {
+    border-top: 5px solid $inactive;
+  }
 
-.state-killed {
-  border-top: 5px solid $killed;
+  .state-killed {
+    border-top: 5px solid $killed;
+  }
 }
 </style>

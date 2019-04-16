@@ -7,10 +7,13 @@ import { createObjectWithDefaultValues } from './helper'
 
 import { jobStates, jobGroups } from './settings.js'
 
+const debug = process.env.NODE_ENV !== 'production'
+const plugins = debug ? [createLogger({})] : []
+
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  plugins: [createLogger()],
+  plugins,
   state: {
     queue: {},
     socket: {
@@ -39,7 +42,7 @@ export default new Vuex.Store({
 
       // summary - ws type notification (all jobs in queue)
       if (message.name === 'summary') {
-        state.queue = groupDataAndJobStat(message.data, 'state')
+        state.queue = groupDataAndJobStat(message.created, message.data, 'state')
       }
     },
     // mutations for reconnect methods
@@ -53,6 +56,9 @@ export default new Vuex.Store({
   },
   getters: {
     ...mapGettersJobGroups(jobGroups),
+    getChartData: (state) => {
+      return state.queue.stat
+    },
     getJobsByGroupName: (state, getters) => (groupName) => {
       return getters[groupName]
     },
@@ -94,6 +100,7 @@ function mapGettersJobGroups (arr) {
 /**
  * Assort array of all jobs in groups + get job statistic
  *
+ * @param {string} created - timestamp
  * @param {array} arr - array of all jobs
  * @param {string} groupingKey - job object key by which we will do grouping
  *
@@ -101,7 +108,7 @@ function mapGettersJobGroups (arr) {
  *                     e. g. {'stat': {'waiting': 5, ...}, 'running': [<job>, ..., <job>], ...}
  */
 // ToDo: elegant decouple group data and job statistic
-function groupDataAndJobStat (arr, groupingKey) {
+function groupDataAndJobStat (created, arr, groupingKey) {
   let groupsDict = {}
   let initialState = createObjectWithDefaultValues(jobStates)
 
@@ -112,6 +119,7 @@ function groupDataAndJobStat (arr, groupingKey) {
     (groupsDict[group] = groupsDict[group] || []).push(job)
 
     initialState[jobState] += job['n']
+    // initialState['created'] = created // moment(created).utc().valueOf()
   })
 
   return { 'stat': initialState, ...groupsDict }
