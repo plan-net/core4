@@ -57,18 +57,17 @@ const api = {
         const token = `?token=${JSON.parse(window.localStorage.getItem('user')).token}`
         const widgets = result.data
         let endpoint
+        let pathEnd
         return widgets.map(val => {
           endpoint = {}
-          // val.endpoint[0]
-          const end = `${val.rsc_id}${token}`
-          endpoint.card_url = `card/${end}`
-          endpoint.enter_url = `enter/${end}`
-          endpoint.help_url = `help/${end}`
+          pathEnd = `${val.rsc_id}${token}`
+          endpoint.card_url = `${val.endpoint[0]}/info/card/${pathEnd}`
+          endpoint.enter_url = `${val.endpoint[0]}/info/enter/${pathEnd}`
+          endpoint.help_url = `${val.endpoint[0]}/info/help/${pathEnd}`
           val.endpoint = endpoint
           delete val.project
           delete val.started_at
           delete val.created_at
-          console.log(val)
           return val
         })
       })

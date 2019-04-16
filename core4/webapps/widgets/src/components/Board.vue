@@ -64,7 +64,7 @@
           :key="widget.id"
           drag-selector=".v-card__title"
         >
-          <v-card>
+          <v-card @click.self="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })">
             <v-card-text>
               <v-layout class="icon-container">
                 <v-tooltip top>
@@ -104,19 +104,10 @@
                 style="padding-top: 54px;"
               >
                 <v-tooltip top>
-                  <v-btn class="open-widget-btn"
-                    @click="$router.push({ name: 'widget', params: { widgetId: widget.rsc_id } })"
-                    slot="activator"
-                    icon
-                    large
-                    ripple
-                  >
-                    <v-icon
-                      color="grey"
-                      large
-                    >{{widget.icon}}</v-icon>
-                  </v-btn>
-                  <span>Open widget</span>
+                  <v-icon class="open-widget-icon" slot="activator"
+                    color="grey" @click="$router.push({ name: 'widget', params: { widgetId: widget.rsc_id } })"
+                  >{{widget.icon}}</v-icon>
+                <span>Open widget</span>
                 </v-tooltip>
 
               </div>
@@ -258,11 +249,16 @@ export default {
       margin: 0;
     }
   }
-  .open-widget-btn{
-    border: 1px solid red;
+  .open-widget-icon{
+    font-size: 64px !important;
   }
 }
 /deep/ .v-card {
+  &:hover{
+    transition: background-color 0.5s ease-in;
+    background-color: var(--v-secondary-lighten4);
+    cursor: pointer;
+  }
   position: relative;
   .v-card__title {
     position: absolute;

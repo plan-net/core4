@@ -230,7 +230,6 @@ export default new Vuex.Store({
   },
   getters: {
     widgetById: state => id => {
-      console.log(id)
       return state.widgetsObj[id]
     },
     widgetsList (state) {
