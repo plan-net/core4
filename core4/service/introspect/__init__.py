@@ -524,7 +524,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         project = name.split(".")[0]
         home = self.config.folder.home
         python_path = None
-        currdir = os.curdir
+        currdir = os.path.abspath(os.curdir)
         if home is not None:
             python_path = os.path.join(home, project, VENV_PYTHON)
             if not os.path.exists(python_path):
@@ -545,7 +545,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         env = os.environ
         if "PYTHONPATH" in env:
             del env["PYTHONPATH"]
-        self.logger.debug("execute with [%s]:\n%s", python_path, cmd)
+        self.logger.debug("execute with [%s] in [%s]:\n%s", python_path,
+                          currdir, cmd)
         proc = subprocess.Popen([python_path, "-c", cmd], stdout=stdout,
                                 stderr=subprocess.STDOUT, env=env)
         os.chdir(currdir)
