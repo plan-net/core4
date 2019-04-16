@@ -516,7 +516,7 @@ class CoreBaseHandler(CoreBase):
         :return: full url
         """
         url = "{}/{}/default/{}/{}".format(
-            self.application.container.root, core4.const.ASSET_MODE,
+            self.application.container.root, core4.const.ASSET_URL,
             self.rsc_id, path)
         return url
 
@@ -538,7 +538,7 @@ class CoreBaseHandler(CoreBase):
         :return: full url
         """
         url = "{}/{}/project/{}/{}".format(
-            self.application.container.root, core4.const.ASSET_MODE,
+            self.application.container.root, core4.const.ASSET_URL,
             self.rsc_id, path)
         return url
 

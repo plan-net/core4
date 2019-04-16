@@ -57,7 +57,7 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
         if default_static and not default_static.startswith("/"):
             default_static = os.path.join(os.path.dirname(core4.__file__),
                                           default_static)
-        prefix = self.application.container.get_root(core4.const.ASSET_MODE)
+        prefix = self.application.container.get_root(core4.const.ASSET_URL)
         parts = self.request.path[len(prefix) + 1:].split("/")
         mode = parts[0]
         rsc_id = parts[1]
