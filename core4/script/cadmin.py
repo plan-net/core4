@@ -9,15 +9,16 @@
 cadmin - core-4 build and deployment utililty.
 
 Usage:
-  cadmin install [--reset] [--web] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--web] [--force] [PROJECT]
-  cadmin uninstall PROJECT
+  cadmin install [--reset] [--web] [--home=HOME] REPOSITORY PROJECT
+  cadmin upgrade [--test] [--web] [--home=HOME] [--force] [PROJECT]
+  cadmin uninstall [--home=HOME] PROJECT
 
 Arguments:
   REPOSITORY  requirements specifier with VCS support (see pip documentation)
   PROJECT     project name
 
 Options:
+  --home=HOME   set core4 home directory, defaults to config.folder.home
   -r --reset    reset existing project root
   -w --web      build and install web apps
   -f --force    force build and installation
@@ -67,9 +68,10 @@ class InstallMixin():
 
 class CoreInstaller(CoreBase, InstallMixin):
 
-    def __init__(self, project, repository=None, reset=False, web=False):
+    def __init__(self, project, repository=None, reset=False, web=False,
+                 home=None):
         super().__init__()
-        self.home = self.config.folder.home
+        self.home = home or self.config.folder.home
         self.project = project
         self.repository = repository
         self.reset = reset
@@ -308,8 +310,9 @@ class CoreInstaller(CoreBase, InstallMixin):
 
 class CoreUpdater(CoreBase, InstallMixin):
 
-    def upgrade(self, test, force):
-        for project in os.listdir(self.config.folder.home):
+    def upgrade(self, test, force, home=None):
+        home = home or self.config.folder.home
+        for project in os.listdir(home):
             # todo: check if this is actually a folder and a core4 project
             installer = CoreInstaller(project)
             installer.upgrade(test, force)
@@ -320,17 +323,18 @@ def run(args):
     if args["install"]:
         installer = CoreInstaller(
             args["PROJECT"], args["REPOSITORY"], args["--reset"],
-            args["--web"])
+            args["--web"], args["--home"])
         installer.install()
     elif args["upgrade"]:
         if args["PROJECT"]:
-            installer = CoreInstaller(args["PROJECT"])
+            installer = CoreInstaller(args["PROJECT"], home=args["--home"])
             installer.upgrade(args["--test"], args["--force"])
         else:
             installer = CoreUpdater()
-            installer.upgrade(args["--test"], args["--force"])
+            installer.upgrade(args["--test"], args["--force"],
+                              home=args["--home"])
     elif args["uninstall"]:
-        installer = CoreInstaller(args["PROJECT"])
+        installer = CoreInstaller(args["PROJECT"], home=args["--home"])
         installer.uninstall()
     else:
         raise SystemExit("nothing to do.")
