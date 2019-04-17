@@ -6,18 +6,18 @@ core4 applies the same mechanics of release management and deployment/rollout
 for all *core4 projects* as well as for *core4 itself*. Even though the tools
 and mechanics are the same, the process and steps involved may vary. The
 rigidity, quality management control, deployment and go-live for an individual
-project depend on the specific needs, the business criticaility and hence
+project depend on the specific needs, the business criticality and hence
 nature of the project.
 
-The scope of this section is the outline and describe the release management
+The scope of this section is to outline and describe the release management
 and deployment process applied to core4. You might use it as a blueprint for
 other core4 *projects*. Yet we strongly advise to carefully analyse the
 requirements of each project *before* rollout and to make an informed decision
 if you create alternatives or shortcuts. core4 considers itself as an agile
 data integration, execution automation and smart insight apps architecture.
-Nonetheless anticipate the implementation, build, test, release and deployment
-activities and processes to actively manage core4 operations and user
-experience.
+Nevertheless you have to consciously manage core4 operations dependening on the
+implementation, build, test, release and deployment activities and processes.
+Anticipate your requirements and forthcoming scenarios.
 
 releated documents
 ==================
@@ -56,7 +56,7 @@ where continuous regression tests are executed.
 
 Only members of the *core4 developer* team are allowed to push changes to
 *develop*. All other contributors are supposed to fork the core4 source code
-and execute *pull requests* to the maintainers. See ``CONTRIBUTING.md'
+and execute *pull requests* to the maintainers. See ``CONTRIBUTING.md``
 document in the source code tree.
 
 feature branches
@@ -75,7 +75,7 @@ release planning and the release branch
 
 The developers and maintainers retain the :doc:`roadmap`. With the decision for
 a new release, a new release branch is created from *develop* using
-`'coco --build``. Only members of the development team are allowed to create
+``coco --build``. Only members of the development team are allowed to create
 a release branch. New features and fixes are still supposed to first go into
 the *develop* branch and are merged into the release branch by the maintainer
 team.
@@ -91,7 +91,7 @@ versioning scheme
 
 The core system at Serviceplan/Plan.Net was first developed in 2014. Version 1
 was a prototype for data integration and automation. Version 2 was the first
-production version. Version 3 included the addition of a REST Api, front-end
+production version. Version 3 included the addition of a ReST API, front-end
 applications and mini application AKA widgets.
 
 Core version 4 is the Python 3 ported version.
@@ -103,7 +103,7 @@ scheme.
 
 Instead we work with the following scheme known as semantic versioning:
 
-# major number - increments reflect significant, possibly breaking changes and
-  extensions
-# minor number - increments reflect minor and non-breaking changes
-# maintenance number - increments reflect bug fixes and improvements
+#. major number - increments reflect significant, possibly breaking changes and
+   extensions
+#. minor number - increments reflect minor and non-breaking changes
+#. maintenance number - increments reflect bug fixes and improvements
