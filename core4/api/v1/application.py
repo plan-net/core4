@@ -207,12 +207,14 @@ class CoreApiContainer(CoreBase):
                     name = ret.pop(0)
                 except IndexError:
                     name = None
+            if pattern.endswith("/"):
+                pattern = pattern[:-1]
             if issubclass(handler, CoreStaticFileHandler):
                 if kwargs is None:
                     kwargs = {}
                 kwargs["enter"] = pattern
                 yield tornado.web.URLSpec(
-                    pattern=pattern + "/(.*)$",
+                    pattern= pattern + "/(.*)$",
                     handler=handler,
                     kwargs=kwargs,
                     name=name
