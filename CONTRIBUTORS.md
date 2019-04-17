@@ -8,9 +8,11 @@ All entries are in the form:
 
 ## Maintainers:
     Michael Rau <m-rau>
+    Marek Mrugalla <marekmru>
     
 ## Contributors:
     Alioun Diagne <Alioun>
+    Marek Mrugalla <marekmru>
     Markus Kral <MarkusKral>
     Michael Rau <m-rau>
     Olha Todorashko <OlhaTodorashko>
