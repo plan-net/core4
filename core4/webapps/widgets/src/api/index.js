@@ -52,7 +52,7 @@ const api = {
   },
   getWidgets () {
     return axiosInternal
-      .get(`/info`, { params: { per_page: 1000, page: 0 } })
+      .get(`/_info`, { params: { per_page: 1000, page: 0 } })
       .then(result => {
         const token = `?token=${JSON.parse(window.localStorage.getItem('user')).token}`
         const widgets = result.data
@@ -61,9 +61,9 @@ const api = {
         return widgets.map(val => {
           endpoint = {}
           pathEnd = `${val.rsc_id}${token}`
-          endpoint.card_url = `${val.endpoint[0]}/info/card/${pathEnd}`
-          endpoint.enter_url = `${val.endpoint[0]}/info/enter/${pathEnd}`
-          endpoint.help_url = `${val.endpoint[0]}/info/help/${pathEnd}`
+          endpoint.card_url = `${val.endpoint[0]}/_info/card/${pathEnd}`
+          endpoint.enter_url = `${val.endpoint[0]}/_info/enter/${pathEnd}`
+          endpoint.help_url = `${val.endpoint[0]}/_info/help/${pathEnd}`
           val.endpoint = endpoint
           delete val.project
           delete val.started_at
