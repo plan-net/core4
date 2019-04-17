@@ -51,10 +51,12 @@ class CoreWidgetServer(CoreApiContainer):
     rules = [
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",
+            "static_path": "/webapps/comoco/dist",
             "title": "core4 monitoring and control", "protected": False
         }),
         (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
+            "static_path": "/webapps/widgets/dist",
             "title": "core4 home", "protected": False
         })
     ]
