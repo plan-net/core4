@@ -77,10 +77,10 @@
         <drag
           class="drag"
           v-for="item in widgets"
-          :key="item._id"
+          :key="item.rsc_id"
           :effect-allowed="item.effectAllowed"
           drop-effect="copy"
-          :transfer-data="{ widgetId: item._id }"
+          :transfer-data="{ widgetId: item.rsc_id }"
         >
           <v-list-tile class="mini-widget">
             <v-list-tile-content>
@@ -91,7 +91,7 @@
             <v-list-tile-action>
               <v-tooltip left>
                 <v-btn
-                  @click="$router.push({ name: 'widget', params: { widgetId: item._id } })"
+                  @click="$router.push({ name: 'widget', params: { widgetId: item.rsc_id } })"
                   slot="activator"
                   icon
                   small
@@ -106,7 +106,7 @@
               </v-tooltip>
               <v-tooltip left>
                 <v-btn
-                  @click="$router.push({ name: 'help', params: { widgetId: item._id } })"
+                  @click="$router.push({ name: 'help', params: { widgetId: item.rscrsc_id } })"
                   icon
                   slot="activator"
                   small
@@ -158,7 +158,7 @@ export default {
         }
         return true
       }).map(val => {
-        const effect = activeBoardWidgets.includes(val._id) ? 'none' : 'copy'
+        const effect = activeBoardWidgets.includes(val.rsc_id) ? 'none' : 'copy'
         val.effectAllowed = [effect]
         return val
       })
