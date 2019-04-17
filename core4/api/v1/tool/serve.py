@@ -110,6 +110,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 module = importlib.import_module(modname)
                 container_cls = getattr(module, clsname)
             container_list.append(container_cls)
+        container_list.sort(key=lambda r: r.qual_name())
         if core4api:
             qual_names = [a.qual_name() for a in container_list]
             if CoreApiServer.qual_name() not in qual_names:
