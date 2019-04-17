@@ -113,8 +113,10 @@ export default {
     onLogin () {
       const { username, password } = this
       this.login({ username, password }).then(val => {
-        window.location.assign(this.$route.query.next || window.REDIRECTION)
-        // this.$validator.validateAll()
+        if (this.$route.query.next != null) {
+          window.location.assign(this.$route.query.next)
+        }
+        this.$validator.validateAll()
       }, val => {
         window.localStorage.removeItem('user')
         this.$validator.validateAll()
