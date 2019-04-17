@@ -102,12 +102,20 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         http_args = self.prepare(name, address, port, routing)
         routes = []
         CoreApiServerTool.container = []
+        container_list = []
+        for container_cls in args:
+            if isinstance(container_cls, str):
+                modname = ".".join(container_cls.split(".")[:-1])
+                clsname = container_cls.split(".")[-1]
+                module = importlib.import_module(modname)
+                container_cls = getattr(module, clsname)
+            container_list.append(container_cls)
         if core4api:
-            qual_names = [a.qual_name() for a in args]
+            qual_names = [a.qual_name() for a in container_list]
             if CoreApiServer.qual_name() not in qual_names:
                 args = list(args)
                 args.append(core4.api.v1.server.CoreApiServer)
-        for container_cls in args:
+        for container_cls in container_list:
             if not container_cls.enabled:
                 self.logger.warning("starting NOT enabled container [%s]",
                                     container_cls.qual_name())
