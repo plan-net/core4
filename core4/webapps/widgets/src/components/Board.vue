@@ -84,7 +84,7 @@
                 </v-tooltip>
                 <v-tooltip top>
                   <v-btn
-                    @click="removeFromBoard(widget.rsc_id)"
+                    @click="removeFromBoard(widget.rsc_id || widget.id)"
                     icon
                     small
                     slot="activator"

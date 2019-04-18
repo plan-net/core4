@@ -152,7 +152,6 @@ export default new Vuex.Store({
     },
     removeFromBoard ({
       commit,
-      dispatch,
       getters
     }, widgetId) {
       commit('remove_from_board', widgetId)
