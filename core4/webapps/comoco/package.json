@@ -18,7 +18,7 @@
   "dependencies": {
     "highcharts": "^7.0.3",
     "highcharts-vue": "^1.2.0",
-    "core4ui": "1.0.0", 
+    "core4ui": "https://github.com/plan-net/core4ui.git#develop",
     "vue-grid-layout": "^2.3.4",
     "vue-native-websocket": "2.0.12"
   },
