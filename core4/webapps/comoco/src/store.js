@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
 
-import { clone } from 'pnbi-base/core4/helper'
+import { clone } from 'core4ui/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
 
 import { jobStates, jobGroups } from './settings.js'

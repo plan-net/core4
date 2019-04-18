@@ -1,4 +1,4 @@
-import { clone } from 'pnbi-base/core4/helper'
+import { clone } from 'core4ui/core4/helper'
 
 /**
  * Create object with defined keys with default value for each key

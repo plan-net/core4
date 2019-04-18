@@ -1,5 +1,5 @@
 <template>
-  <pnbi-page>
+  <c4-page>
     <v-layout column>
       <v-flex>
         <v-layout row wrap xs12>
@@ -12,30 +12,19 @@
         <stock-chart></stock-chart>
       </v-flex>
     </v-layout>
-  </pnbi-page>
+  </c4-page>
 </template>
 
 <script>
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-import streamgraphChart from '@/components/StreamgraphChart'
 import stockChart from '@/components/StockChart'
 
 export default {
   name: 'home',
   components: {
-    Board, streamgraphChart, stockChart
-  },
-  methods: {
-    handler () {
-      var args = arguments
-      for (var arg of args) {
-        if (arg instanceof Function) {
-          arg()
-        }
-      }
-    }
+    Board, stockChart
   },
   data () {
     return {
