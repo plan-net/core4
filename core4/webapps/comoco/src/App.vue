@@ -27,11 +27,6 @@ export default {
         let token = JSON.parse(localStorage.getItem('user'))['token']
         this.$connect(`${getBasePath()}/v1/event?token=${token}`)
       }
-    },
-    dark (newValue, oldValue) {
-      console.log('dark mode', newValue)
-      console.log('  new value: ', newValue)
-      console.log('  old value', oldValue)
     }
   }
 }

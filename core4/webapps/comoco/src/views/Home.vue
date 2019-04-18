@@ -19,23 +19,12 @@
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-import streamgraphChart from '@/components/StreamgraphChart'
 import stockChart from '@/components/StockChart'
 
 export default {
   name: 'home',
   components: {
-    Board, streamgraphChart, stockChart
-  },
-  methods: {
-    handler () {
-      var args = arguments
-      for (var arg of args) {
-        if (arg instanceof Function) {
-          arg()
-        }
-      }
-    }
+    Board, stockChart
   },
   data () {
     return {
