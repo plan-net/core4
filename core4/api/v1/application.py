@@ -88,6 +88,7 @@ class CoreApiContainer(CoreBase):
     rules = []
 
     upwind = ["log_level", "enabled", "root"]
+    concurr = True
 
     def __init__(self, **kwargs):
         CoreBase.__init__(self)
@@ -212,7 +213,7 @@ class CoreApiContainer(CoreBase):
             if issubclass(handler, CoreStaticFileHandler):
                 if kwargs is None:
                     kwargs = {}
-                kwargs["enter"] = pattern
+                kwargs["enter"] = handler.enter_url or pattern or "/"
                 yield tornado.web.URLSpec(
                     pattern= pattern + "/(.*)$",
                     handler=handler,
