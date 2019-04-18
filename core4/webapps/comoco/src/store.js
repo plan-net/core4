@@ -6,7 +6,7 @@ import { clone } from 'pnbi-base/core4/helper'
 import { createObjectWithDefaultValues, to } from './helper'
 
 import { jobStates, jobGroups } from './settings.js'
-import Service from './services.js'
+import comocoService from './comocoService.js'
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -24,21 +24,7 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async getJobHistory () {
-      let err
-      let setting
-      let history;
 
-      [err, setting] = await to(Service.settings())
-      if (!setting) console.log(err);
-
-      // ToDo: get correct start date
-
-      [err, history] = await to(Service.history(/* start date */))
-      if (!history) console.log(err)
-
-      return history
-    }
   },
   mutations: {
     SOCKET_ONOPEN (state, event) {
