@@ -3,10 +3,10 @@ import App from './App.vue'
 import router from './router'
 import store from './store'
 
-import PnbiBase from 'pnbi-base/core4'
-import 'pnbi-base/core4/themes/pnbi/theme-pnbi.scss'
-import THEME from 'pnbi-base/core4/themes/pnbi/theme-vuetify'
-import { i18n } from 'pnbi-base/core4/translations'
+import PnbiBase from 'core4ui/core4'
+import 'core4ui/core4/themes/core4/theme-c4.scss'
+import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
+import { i18n } from 'core4ui/core4/translations'
 import VueDragDrop from 'vue-drag-drop'
 
 Vue.use(PnbiBase, {

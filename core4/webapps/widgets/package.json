@@ -13,12 +13,15 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo core4/webapps/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git fetch --depth 1 origin develop && git checkout develop && cd ../../ && cp -R node_modules/_pnbi-base/core4/webapps/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
+    "__preinstall": "rm -rf node_modules/_pnbi-base && rm -rf node_modules/pnbi-base && mkdir -p node_modules/_pnbi-base && cd node_modules/_pnbi-base && git init && git config core.sparsecheckout true && echo core4/webapps/pnbi-base/ >> .git/info/sparse-checkout && git remote add -f origin https://github.com/plan-net/core4.git && git fetch --depth 1 origin develop && git checkout develop && cd ../../ && cp -R node_modules/_pnbi-base/core4/webapps/pnbi-base node_modules/pnbi-base && rm -rf node_modules/_pnbi-base"
   },
   "dependencies": {
     "@dattn/dnd-grid": "^0.0.14",
-    "pnbi-base": "file:node_modules/pnbi-base",
+    "core4ui": "https://github.com/plan-net/core4ui.git#develop", 
     "vue-drag-drop": "^1.1.4"
+  },
+  "old": {
+    "core4ui": "https://github.com/plan-net/core4ui.git#develop"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",
