@@ -1,5 +1,5 @@
 <template>
-  <pnbi-page>
+  <c4-page>
     <v-layout column>
       <v-flex>
         <v-layout row wrap xs12>
@@ -12,7 +12,7 @@
         <stock-chart></stock-chart>
       </v-flex>
     </v-layout>
-  </pnbi-page>
+  </c4-page>
 </template>
 
 <script>

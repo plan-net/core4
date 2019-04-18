@@ -1,4 +1,4 @@
-import { axiosInternal } from 'pnbi-base/core4/internal/axios.config.js'
+import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 
 export default {
   getWidgets () {

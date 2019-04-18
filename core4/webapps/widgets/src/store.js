@@ -4,7 +4,7 @@ import createLogger from 'vuex/dist/logger'
 import api from '@/api'
 import {
   clone
-} from 'pnbi-base/core4/helper'
+} from 'core4ui/core4/helper'
 import router from '@/router'
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -152,7 +152,6 @@ export default new Vuex.Store({
     },
     removeFromBoard ({
       commit,
-      dispatch,
       getters
     }, widgetId) {
       commit('remove_from_board', widgetId)
