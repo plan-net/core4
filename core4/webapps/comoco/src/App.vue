@@ -25,7 +25,7 @@ export default {
 
       if (newValue && newValue !== oldValue) {
         let token = JSON.parse(localStorage.getItem('user'))['token']
-        this.$connect(`${getBasePath()}/v1/event?token=${token}`)
+        this.$connect(`${getBasePath()}/event?token=${token}`)
       }
     }
   }
