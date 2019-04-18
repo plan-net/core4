@@ -1,6 +1,7 @@
 <template>
   <pnbi-page>
     <v-layout column>
+<!--      <v-flex color="info"><v-btn color="info" @click="toggleDark()" :full-width="true">Change theme</v-btn></v-flex>-->
       <v-flex>
         <v-layout row wrap xs12>
           <v-flex v-for="(states, group) in groupsJobsByStates" :key="group" class="ma-2 flex-equal-size">
@@ -16,31 +17,36 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
+
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-import streamgraphChart from '@/components/StreamgraphChart'
 import stockChart from '@/components/StockChart'
 
 export default {
   name: 'home',
   components: {
-    Board, streamgraphChart, stockChart
+    Board, stockChart
   },
   methods: {
-    handler () {
-      var args = arguments
-      for (var arg of args) {
-        if (arg instanceof Function) {
-          arg()
-        }
-      }
-    }
+    ...mapActions([
+      'toggleDark'
+    ])
+    // handler () {
+    //   var args = arguments
+    //   for (var arg of args) {
+    //     if (arg instanceof Function) {
+    //       arg()
+    //     }
+    //   }
+    // }
   },
   data () {
     return {
       groupsJobsByStates: groupsJobsByStates, // {waiting: [pending, ..., failed], running: [running], stopped: [error, ..., killed]
-      flags: jobFlags // Z R N K
+      flags: jobFlags, // Z R N K
+      dark: false
     }
   }
 }

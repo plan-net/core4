@@ -31,7 +31,15 @@ function getBasePath () {
   return `ws://${window.location.host}/core4/api`
 }
 
+function to (promise) {
+  return promise.then(data => {
+    return [null, data]
+  })
+    .catch(err => [err])
+}
+
 export {
   createObjectWithDefaultValues,
-  getBasePath
+  getBasePath,
+  to
 }

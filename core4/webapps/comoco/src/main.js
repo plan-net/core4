@@ -24,7 +24,7 @@ Vue.use(VueNativeSock, ' ', {
 Vue.use(PnbiBase, {
   router,
   config: {
-    // DARK: true,
+    // DARK: false,
     THEME,
     TITLE: 'COMOCO',
     IGNORED_ERRORS: [],

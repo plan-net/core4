@@ -250,6 +250,11 @@ export default {
       timerId: undefined
     }
   },
+  created () {
+    this.$store.dispatch('getJobHistory').then(res => {
+      console.log('olha: ', res)
+    })
+  },
   mounted () { // fired after the element has been created
     if (!this.$refs.chart) return null
 
@@ -267,6 +272,7 @@ export default {
 
     const arr = [running, pending, deferred, failed, error, inactive, killed]
 
+    // ToDo: explain why we use Timeout instead Interval
     component.timerId = setTimeout(function update () {
       const x = (new Date()).getTime()// current time
       const shift = running.length > 3600 // 1 hour
