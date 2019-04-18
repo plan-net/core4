@@ -350,7 +350,7 @@ class CoreBaseHandler(CoreBase):
         parts = self.request.path.split("/")
         rsc_id = parts[-1]
         path = parts[:-2]
-        handler = self.application.lookup[rsc_id]["handler"]
+        #handler = self.application.lookup[rsc_id]["handler"]
         if self.enter_url is None:
             self.enter_url = "/".join(path + [core4.const.ENTER_MODE, rsc_id])
         self.help_url = "/".join(path + [core4.const.HELP_MODE, rsc_id])
@@ -364,7 +364,7 @@ class CoreBaseHandler(CoreBase):
         :return: result of :meth:`.card`
         """
         self._urls()
-        self.absolute_path = "xcard"
+        self.absolute_path = ""
         return self.card()
 
     def xenter(self, *args, **kwargs):
@@ -375,7 +375,7 @@ class CoreBaseHandler(CoreBase):
         :return: result of :meth:`.enter`
         """
         self.request.method = "GET"
-        self.absolute_path = "xenter"
+        self.absolute_path = ""
         return self.enter()
 
     def xhelp(self, *args, **kwargs):
@@ -410,7 +410,7 @@ class CoreBaseHandler(CoreBase):
         :return: result of :meth:`.help`
         """
         self._urls()
-        self.absolute_path = "xhelp"
+        self.absolute_path = ""
         handler = self.application.lookup[self.rsc_id]["handler"]
         pattern = self.application.lookup[self.rsc_id]["pattern"]
         rst = rst2html(str(self.__doc__))

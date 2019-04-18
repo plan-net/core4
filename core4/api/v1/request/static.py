@@ -15,7 +15,7 @@ import os
 
 import tornado.routing
 from tornado.web import StaticFileHandler
-
+from typing import Generator
 from core4.api.v1.request.main import CoreBaseHandler
 
 DEFAULT_FILENAME = "index.html"
@@ -83,3 +83,11 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
         """
         self.logger.debug("redirecting to [%s]", self._enter)
         return self.redirect(self._enter)
+
+    @classmethod
+    def get_content(
+        cls, abspath: str, start: int = None, end: int = None
+    ) -> Generator[bytes, None, None]:
+        if abspath != "":
+            return StaticFileHandler.get_content(abspath, start, end)
+        return []
