@@ -504,8 +504,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             "daemon": list(self.iter_daemon())
         }
 
-    def exec_project(self, name, command, wait=True, comm=False, *args,
-                     **kwargs):
+    def exec_project(self, name, command, wait=True, comm=False, replace=False,
+                     *args, **kwargs):
         """
         Execute command using the Python interpreter of the project's virtual
         environment.
@@ -546,6 +546,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             del env["PYTHONPATH"]
         self.logger.debug("execute with [%s] in [%s]:\n%s", python_path,
                           currdir, cmd)
+        if replace:
+            os.execve(python_path, [python_path, "-c", cmd], env)
         proc = subprocess.Popen([python_path, "-c", cmd], stdout=stdout,
                                 stderr=subprocess.STDOUT, env=env)
         os.chdir(currdir)
@@ -561,7 +563,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             proc.wait()
 
 
-def exec_project(name, command, wait=True, comm=False, *args, **kwargs):
+def exec_project(name, command, wait=True, comm=False, replace=False, *args,
+                 **kwargs):
     """
     helper method to spawn commands in the context of core4 project
     environment.
@@ -576,4 +579,5 @@ def exec_project(name, command, wait=True, comm=False, *args, **kwargs):
     :return: STDOUT if ``wait is True``, else nothing is returned
     """
     intro = CoreIntrospector()
-    return intro.exec_project(name, command, wait, comm, *args, **kwargs)
+    return intro.exec_project(name, command, wait, comm, replace, *args,
+                              **kwargs)
