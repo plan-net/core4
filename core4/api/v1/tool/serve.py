@@ -192,9 +192,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         )
         while True:
             nxt = gen.sleep(sleep)
-            doc = await sys_worker.find_one(
+            cnt = await sys_worker.count_documents(
                 {"_id": "__halt__", "timestamp": {"$gte": self.startup}})
-            if doc is not None:
+            if cnt > 0:
                 self.logger.debug("stop IOLoop now")
                 break
             await sys_worker.update_one(
@@ -208,7 +208,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "phase.exit": core4.util.node.mongo_now()
             }}
         )
-        # await sys_worker.delete_one({"_id": self.routing})
         tornado.ioloop.IOLoop.current().stop()
 
     def register(self, router):
@@ -326,9 +325,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             project = self.project
         if filter is None:
             filter = [project]
-        for i in range(len(filter)):
-            if not filter[i].endswith("."):
-                filter[i] += "."
+        # for i in range(len(filter)):
+        #     if not filter[i].endswith("."):
+        #         filter[i] += "."
         scope = []
         intro = core4.service.introspect.CoreIntrospector()
         for project, data in intro.list_project(project):
@@ -349,4 +348,4 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 routing=routing,
             )
             core4.service.introspect.exec_project(project, SERVE, a=scope,
-                                                  kw=args)
+                                                  kw=args, replace=True)
