@@ -326,7 +326,6 @@ class CoreUpdater(CoreBase, InstallMixin):
 
 
 def run(args):
-    print(args)
     t0 = datetime.datetime.now()
     if args["install"]:
         installer = CoreInstaller(
@@ -355,20 +354,8 @@ def run(args):
 
 def main():
     args = args = docopt(__doc__, help=True)
-    # print(args)
     run(args)
 
 
 if __name__ == '__main__':
-    # args = {'--force': False,
-    #         '--home': '/home/mra/core4home',
-    #         '--reset': True,
-    #         '--test': False,
-    #         '--web': False,
-    #         'PROJECT': 'home4',
-    #         'REPOSITORY': None,
-    #         'install': False,
-    #         'uninstall': False,
-    #         'upgrade': True}
     main()
-    #run(args)
