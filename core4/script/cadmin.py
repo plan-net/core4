@@ -12,6 +12,7 @@ Usage:
   cadmin install [--reset] [--web] [--home=HOME] REPOSITORY PROJECT
   cadmin upgrade [--test] [--force] [--reset] [--web] [--home=HOME] [PROJECT...]
   cadmin uninstall [--home=HOME] PROJECT...
+  cadmin version [--home=HOME] [PROJECT...]
 
 Arguments:
   REPOSITORY  requirements specifier with VCS support (see pip documentation)
@@ -314,15 +315,27 @@ class CoreInstaller(CoreBase, InstallMixin):
                 if self.web:
                     self.build()
 
+    def version(self):
+        args = [self.python,
+                "-c",
+                "import {p}; print({p}.__version__, {p}.__built__)".format(
+                    p=self.project)]
+        proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
+        (stdout, stderr) = proc.communicate()
+        return stdout.decode("utf-8")
+
 
 class CoreUpdater(CoreBase, InstallMixin):
 
     def upgrade(self, test, force, reset, home=None):
-        home = home or self.config.folder.home
-        for project in os.listdir(home):
-            # todo: check if this is actually a folder and a core4 project
+        for project in self.list_project(home):
             installer = CoreInstaller(project, reset=reset, home=home)
             installer.upgrade(test, force)
+
+    def list_project(self, home=None):
+        home = home or self.config.folder.home
+        for project in os.listdir(home):
+            yield project
 
 
 def run(args):
@@ -346,6 +359,21 @@ def run(args):
         for project in args["PROJECT"]:
             installer = CoreInstaller(project, home=args["--home"])
             installer.uninstall()
+    elif args["version"]:
+        if args["PROJECT"]:
+            project = args["PROJECT"]
+        else:
+            installer = CoreUpdater()
+            project = installer.list_project(args["--home"])
+        for p in project:
+            installer = CoreInstaller(p, home=args["--home"])
+            out = installer.version()
+            try:
+                version, *build = out.split()
+                print("{} - {}, build {}".format(
+                    p, version, " ".join(build)))
+            except Exception as exc:
+                print("error:", p, exc, out)
     else:
         raise SystemExit("nothing to do.")
     runtime = datetime.datetime.now() - t0
