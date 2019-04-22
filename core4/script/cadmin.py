@@ -10,7 +10,7 @@ cadmin - core-4 build and deployment utililty.
 
 Usage:
   cadmin install [--reset] [--web] [--home=HOME] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--web] [--home=HOME] [--force] [PROJECT]
+  cadmin upgrade [--test] [--force] [--reset] [--web] [--home=HOME] [PROJECT]
   cadmin uninstall [--home=HOME] PROJECT
 
 Arguments:
@@ -20,8 +20,8 @@ Arguments:
 Options:
   --home=HOME   set core4 home directory, defaults to config.folder.home
   -r --reset    reset existing project root
+  -f --force    force build and installation even if no changes
   -w --web      build and install web apps
-  -f --force    force build and installation
   -t --test     dry-run
   -h --help     show this screen
   -v --version  show version
@@ -120,6 +120,8 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.check_for_install()
         self.print("installing [{}]".format(self.project))
         os.makedirs(self.root)
+        os.chdir(self.root)
+
         self.print("  created project root [{}]".format(self.root))
         self.install_venv()
         self.upgrade_pip()
@@ -301,24 +303,28 @@ class CoreInstaller(CoreBase, InstallMixin):
             self.print("  project [{}] requires upgrade".format(self.project))
         if force:
             self.print("  force upgrade with [{}]".format(self.project))
-        if not test and (force or latest != current):
-            self.install_project()
-            self.write_config()
-            if self.web:
-                self.build()
+        if not test and (self.reset or force or latest != current):
+            if self.reset:
+                self.install()
+            else:
+                self.install_project()
+                self.write_config()
+                if self.web:
+                    self.build()
 
 
 class CoreUpdater(CoreBase, InstallMixin):
 
-    def upgrade(self, test, force, home=None):
+    def upgrade(self, test, force, reset, home=None):
         home = home or self.config.folder.home
         for project in os.listdir(home):
             # todo: check if this is actually a folder and a core4 project
-            installer = CoreInstaller(project)
+            installer = CoreInstaller(project, reset=reset, home=home)
             installer.upgrade(test, force)
 
 
 def run(args):
+    # print(args)
     t0 = datetime.datetime.now()
     if args["install"]:
         installer = CoreInstaller(
@@ -327,12 +333,13 @@ def run(args):
         installer.install()
     elif args["upgrade"]:
         if args["PROJECT"]:
-            installer = CoreInstaller(args["PROJECT"], home=args["--home"])
+            installer = CoreInstaller(args["PROJECT"], reset=args["--reset"],
+                                      home=args["--home"])
             installer.upgrade(args["--test"], args["--force"])
         else:
             installer = CoreUpdater()
-            installer.upgrade(args["--test"], args["--force"],
-                              home=args["--home"])
+            installer.upgrade(args["--test"], args["--force"], args["--reset"],
+                              args["--home"])
     elif args["uninstall"]:
         installer = CoreInstaller(args["PROJECT"], home=args["--home"])
         installer.uninstall()
@@ -343,8 +350,21 @@ def run(args):
 
 
 def main():
-    run(args=docopt(__doc__, help=True))
+    args = args = docopt(__doc__, help=True)
+    # print(args)
+    run(args)
 
 
 if __name__ == '__main__':
+    # args = {'--force': False,
+    #         '--home': '/home/mra/core4home',
+    #         '--reset': True,
+    #         '--test': False,
+    #         '--web': False,
+    #         'PROJECT': 'home4',
+    #         'REPOSITORY': None,
+    #         'install': False,
+    #         'uninstall': False,
+    #         'upgrade': True}
     main()
+    #run(args)
