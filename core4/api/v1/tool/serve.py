@@ -114,8 +114,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         if core4api:
             qual_names = [a.qual_name() for a in container_list]
             if CoreApiServer.qual_name() not in qual_names:
-                args = list(args)
-                args.append(core4.api.v1.server.CoreApiServer)
+                container_list.append(core4.api.v1.server.CoreApiServer)
         for container_cls in container_list:
             if not container_cls.enabled:
                 self.logger.warning("starting NOT enabled container [%s]",
