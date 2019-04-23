@@ -10,7 +10,7 @@ cadmin - core-4 build and deployment utililty.
 
 Usage:
   cadmin install [--reset] [--web] [--home=HOME] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--force] [--reset] [--web] [--home=HOME] [PROJECT...]
+  cadmin upgrade [--test] [--force] [--reset] [--web] [--core4] [--home=HOME] [PROJECT...]
   cadmin uninstall [--home=HOME] PROJECT...
   cadmin version [--home=HOME] [PROJECT...]
 
@@ -283,7 +283,9 @@ class CoreInstaller(CoreBase, InstallMixin):
                                 "dist": dist
                             }
 
-    def upgrade(self, test=False, force=False):
+    def upgrade(self, test=False, force=False, core4=False):
+        if self.project == "core4" and core4:
+            return
         self.check_for_upgrade()
         self.print("upgrading [{}]".format(self.project))
         data = self.read_config()
@@ -292,6 +294,7 @@ class CoreInstaller(CoreBase, InstallMixin):
         current = data["commit"]
         if os.path.isdir(self.repository):
             self.clone = self.repository
+            self.print("  installing from [{}]".format(self.clone))
         else:
             self.checkout()
         latest = self.get_local_commit()
@@ -306,13 +309,17 @@ class CoreInstaller(CoreBase, InstallMixin):
             self.print("  force upgrade with [{}]".format(self.project))
         if self.reset:
             self.print("  reset [{}]".format(self.project))
-        if not test and (self.reset or force or latest != current):
+        if core4:
+            self.print("  reset [core4] of [{}]".format(self.project))
+            if not test:
+                self.popen(self.pip, "uninstall", "core4", "--yes")
+        if not test and (self.reset or force or core4 or latest != current):
             if self.reset:
                 self.install()
             else:
                 self.install_project()
                 self.write_config()
-                if self.web:
+                if self.web and (not core4 or force):
                     self.build()
 
     def version(self):
@@ -327,11 +334,6 @@ class CoreInstaller(CoreBase, InstallMixin):
 
 class CoreUpdater(CoreBase, InstallMixin):
 
-    def upgrade(self, test, force, reset, home=None):
-        for project in self.list_project(home):
-            installer = CoreInstaller(project, reset=reset, home=home)
-            installer.upgrade(test, force)
-
     def list_project(self, home=None):
         home = home or self.config.folder.home
         for project in os.listdir(home):
@@ -340,31 +342,26 @@ class CoreUpdater(CoreBase, InstallMixin):
 
 def run(args):
     t0 = datetime.datetime.now()
+    if args["PROJECT"]:
+        project = args["PROJECT"]
+    else:
+        installer = CoreUpdater()
+        project = installer.list_project(args["--home"])
     if args["install"]:
         installer = CoreInstaller(
-            args["PROJECT"][0], args["REPOSITORY"], args["--reset"],
+            project[0], args["REPOSITORY"], args["--reset"],
             args["--web"], args["--home"])
         installer.install()
     elif args["upgrade"]:
-        if args["PROJECT"]:
-            for project in args["PROJECT"]:
-                installer = CoreInstaller(
-                    project, reset=args["--reset"], home=args["--home"])
-                installer.upgrade(args["--test"], args["--force"])
-        else:
-            installer = CoreUpdater()
-            installer.upgrade(args["--test"], args["--force"], args["--reset"],
-                              args["--home"])
+        for p in project:
+            installer = CoreInstaller(
+                p, reset=args["--reset"], home=args["--home"])
+            installer.upgrade(args["--test"], args["--force"], args["--core4"])
     elif args["uninstall"]:
-        for project in args["PROJECT"]:
-            installer = CoreInstaller(project, home=args["--home"])
+        for p in project:
+            installer = CoreInstaller(p, home=args["--home"])
             installer.uninstall()
     elif args["version"]:
-        if args["PROJECT"]:
-            project = args["PROJECT"]
-        else:
-            installer = CoreUpdater()
-            project = installer.list_project(args["--home"])
         for p in project:
             installer = CoreInstaller(p, home=args["--home"])
             out = installer.version()
@@ -381,7 +378,7 @@ def run(args):
 
 
 def main():
-    args = args = docopt(__doc__, help=True)
+    args = docopt(__doc__, help=True)
     run(args)
 
 
