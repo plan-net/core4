@@ -110,7 +110,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 module = importlib.import_module(modname)
                 container_cls = getattr(module, clsname)
             container_list.append(container_cls)
-        container_list.sort(key=lambda r: r.qual_name())
+        #container_list.sort(key=lambda r: r.qual_name())
         if core4api:
             qual_names = [a.qual_name() for a in container_list]
             if CoreApiServer.qual_name() not in qual_names:
@@ -134,8 +134,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         root, container_cls.qual_name())
                 )
             CoreApiServerTool.container.append(container_obj)
-            self.logger.info("successfully registered container [%s]",
-                             container_cls.qual_name())
+            self.logger.info("successfully registered container [%s] at [%s]",
+                             container_cls.qual_name(), root + ".*")
             routes.append(
                 tornado.routing.Rule(tornado.routing.PathMatches(
                     root + ".*"), application)
