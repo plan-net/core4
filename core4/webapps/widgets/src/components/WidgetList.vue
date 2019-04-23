@@ -20,7 +20,7 @@
           <v-autocomplete
             v-model="tags"
             :disabled="false"
-            :items="autocompleteItems"
+            :items="autocompleteItems.all"
             chips
             box
             solo
@@ -61,7 +61,6 @@
         </v-flex>
         <v-toolbar-side-icon
           :large="miniVariant"
-          class=""
           @click="miniVariant = !miniVariant"
         >
           <v-icon color="primary">widgets</v-icon>
@@ -74,6 +73,15 @@
         group
         tag="v-list"
       >
+        <v-layout key="-1000000" row wrap class="pb-2 pt-1">
+          <v-chip small @click="tags = [item.label];" style="margin: 2px;"
+            v-for="item in autocompleteItems.most"
+            :key="item.label"
+          >
+            <v-avatar class="primary">{{item.count}}</v-avatar>
+            {{item.label}}
+          </v-chip>
+        </v-layout>
         <drag
           class="drag"
           v-for="item in widgets"
@@ -106,7 +114,7 @@
               </v-tooltip>
               <v-tooltip left>
                 <v-btn
-                  @click="$router.push({ name: 'help', params: { widgetId: item.rscrsc_id } })"
+                  @click="$router.push({ name: 'help', params: { widgetId: item.rsc_id } })"
                   icon
                   slot="activator"
                   small
@@ -130,6 +138,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import _ from 'lodash'
 export default {
   name: 'widget-list',
   components: {
@@ -148,7 +157,7 @@ export default {
           for (let index = 0; index < this.tags.length; index++) {
             const tag = this.tags[index]
             // if()
-            if (val.title.toLowerCase().includes(tag)) {
+            if (((val.title || '') + val.qual_name).toLowerCase().includes(tag)) {
               ret = true
               break
             }
@@ -166,9 +175,22 @@ export default {
     autocompleteItems () {
       // TODO - all words seperated
       let ret = this.widgetSet.map(val => {
-        return val.title.toLowerCase().split(' ')
+        const one = (val.title || '').toLowerCase().split(' ')
+        const two = (val.qual_name || '').replace('core4.api.v1.request', '').toLowerCase().split('.')
+        return one.concat(two).filter(val => val !== '').filter(val => {
+          return val !== 'and' && val !== 'core4' && val !== 'for'
+        })
       })
       ret = [].concat.apply([], ret) // flatten [['s'], 'x'] => ['s', 'x']
+      const count = _.countBy(ret)
+      const most = _.sortBy(
+        Object.keys(count).filter(key => count[key] > 2).map(val => {
+          return {
+            label: val,
+            count: count[val]
+          }
+        }), o => o.count).reverse()
+
       ret = [...new Set(ret)]// unique
       ret = ret.map(
         text => {
@@ -177,7 +199,10 @@ export default {
           }
         }
       )
-      return ret.filter(i => new RegExp(this.tag, 'i').test(i.text))
+      return {
+        most,
+        all: ret.filter(i => new RegExp(this.tag, 'i').test(i.text))
+      }
     }
   },
   methods: {
@@ -200,6 +225,9 @@ export default {
 <style scoped lang="css">
 .mini-widget {
   height: 72px;
+}
+div >>> .v-chip__content{
+  cursor: pointer !important;
 }
 </style>
 
