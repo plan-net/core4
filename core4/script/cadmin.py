@@ -44,6 +44,12 @@ from core4.base.main import CoreBase
 LOGFILE = os.path.join(os.path.abspath("."), "cadmin.log")
 CLONE = ".origin"
 CONFIG = ".config"
+VERSION_COMMAND = """
+import {p}
+import core4
+print({p}.__version__, {p}.__built__, 
+      "with core4", core4.__version__, core4.__built__)
+"""
 
 if os.path.exists(LOGFILE):
     os.unlink(LOGFILE)
@@ -323,10 +329,7 @@ class CoreInstaller(CoreBase, InstallMixin):
                     self.build()
 
     def version(self):
-        args = [self.python,
-                "-c",
-                "import {p}; print({p}.__version__, {p}.__built__)".format(
-                    p=self.project)]
+        args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
         proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
         (stdout, stderr) = proc.communicate()
         return stdout.decode("utf-8")
