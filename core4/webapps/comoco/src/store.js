@@ -131,15 +131,15 @@ function groupDataAndJobStat (created, arr, groupingKey) {
  * Unique key for job
  *
  * @param obj {object} - job
- * @returns {string} - unique_key based on full name, job(s) amount and related job flags
- *                     e. g. core.account.brandinvestor.job.monitor.SolverChild-3-Zombie-Wall
+ * @returns {string} - unique_key based on full name, job state, job(s) amount and related job flags
+ *                     e. g. core.account.brandinvestor.job.monitor.SolverChild-pending-3-zombie-wall
  */
 function uniqueKey (obj) {
-  let value = `${obj.name}-${obj.n}` // core.account.brandinvestor.job.monitor.SolverChild-<job amount>
+  let value = `${obj.name}-${obj.state}-${obj.n}` // core.account.brandinvestor.job.monitor.SolverChild-pending-3
 
   for (let key in jobFlags) {
     if (obj[key]) value += `-${key}`
   }
 
-  return value // core.account.brandinvestor.job.monitor.SolverChild-3-Zombie-Wall
+  return value // core.account.brandinvestor.job.monitor.SolverChild-pending-3-zombie-wall
 }
