@@ -25,7 +25,15 @@ class LoginHandler(CoreRequestHandler):
         """
         Same as :meth:`.post`
         """
-        await self.post()
+        token = await self._login()
+        if token:
+            return self.reply({
+                "token": token
+            })
+        self.set_header('WWW-Authenticate', 'Basic realm=Restricted')
+        #raise HTTPError(401)
+        self.set_status(401)
+        self.write_error(401)
 
     async def post(self):
         """
@@ -84,18 +92,23 @@ class LoginHandler(CoreRequestHandler):
             >>> get("http://localhost:5001/core4/api/profile", headers=h)
             <Response [200]>
         """
+        token = await self._login()
+        if token:
+            return self.reply({
+                "token": token
+            })
+        self.set_status(401)
+        self.write_error(401)
+        #raise HTTPError(401)
+
+    async def _login(self):
         user = await self.verify_user()
         if user:
             token = self.create_token(user.name)
             self.current_user = user.name
             await user.login()
-            return self.reply({
-                "token": token
-            })
-        self.set_header('WWW-Authenticate', 'Basic realm=Restricted')
-        self.set_status(401)
-        if self.wants_json():
-            self.write_error(401)
+            return token
+        return None
 
     async def put(self):
         """

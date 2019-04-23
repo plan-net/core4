@@ -1,5 +1,5 @@
 <template>
-  <pnbi-page>
+  <c4-page>
     <v-layout column>
 <!--      <v-flex color="info"><v-btn color="info" @click="toggleDark()" :full-width="true">Change theme</v-btn></v-flex>-->
       <v-flex>
@@ -13,7 +13,7 @@
         <stock-chart></stock-chart>
       </v-flex>
     </v-layout>
-  </pnbi-page>
+  </c4-page>
 </template>
 
 <script>
@@ -22,6 +22,7 @@ import { mapActions } from 'vuex'
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
+import streamgraphChart from '@/components/StreamgraphChart'
 import stockChart from '@/components/StockChart'
 
 export default {

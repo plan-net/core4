@@ -58,6 +58,13 @@ def execute(job, **kwargs):
     worker.config.sys.journal.delete_one(filter={"_id": enq_doc._id})
     return doc
 
+
 def find_job(**kwargs):
+    """
+    Finds the job using the passed ``kwargs`` as filter arguments.
+
+    :param kwargs: MongoDB filter arguments
+    :return: list of jobs matching the filter criteria
+    """
     queue = core4.queue.main.CoreQueue()
     return list(queue.config.sys.queue.find(filter=kwargs))

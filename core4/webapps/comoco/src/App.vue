@@ -1,12 +1,12 @@
 <template>
-  <pnbi-webapp :full-width="true">
+  <c4-webapp :full-width="true">
     <side-navigation slot="navigation-slot"></side-navigation>
     <div slot="router">
       <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
         <router-view />
       </transition>
     </div>
-  </pnbi-webapp>
+  </c4-webapp>
 </template>
 
 <script>
@@ -25,7 +25,7 @@ export default {
 
       if (newValue && newValue !== oldValue) {
         let token = JSON.parse(localStorage.getItem('user'))['token']
-        this.$connect(`${getBasePath()}/v1/event?token=${token}`)
+        this.$connect(`${getBasePath()}/event?token=${token}`)
       }
     }
   }

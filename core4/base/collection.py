@@ -9,7 +9,7 @@
 This module implement :class:`.CoreCollection`, featuring database
 access and :class:`.CoreJobCollection` derived from
 :class:`.CoreCollection` with extended features for MongoDB collection
-access with :class:`.CoreJob`.
+access for :class:`.CoreJob`.
 """
 
 import pymongo.collection

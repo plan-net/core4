@@ -4,7 +4,7 @@
     <!-- Group info (counter all of jobs with the same states) -->
     <info :name="name" :states="states"></info>
 
-    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs mt-3">
+    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs mt-3" >
 
       <!-- list of all jobs which belongs to this group -->
       <v-flex v-for="job in getJobsByGroupName(name)" :key="job.name" class="jobs-list-item">

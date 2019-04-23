@@ -15,7 +15,7 @@ import os
 
 import tornado.routing
 from tornado.web import StaticFileHandler
-
+from typing import Generator
 from core4.api.v1.request.main import CoreBaseHandler
 
 DEFAULT_FILENAME = "index.html"
@@ -37,12 +37,13 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
 
     def __init__(self, *args, **kwargs):
         try:
-            self.route_id = kwargs.pop("_route_id")
+            self.rsc_id = kwargs.pop("_rsc_id")
         except KeyError:
-            self.route_id = None
+            self.rsc_id = None
         CoreBaseHandler.__init__(self, *args, **kwargs)
         if "path" not in kwargs:
             kwargs["path"] = self.path
+        self._enter = kwargs.pop("enter", None)
         StaticFileHandler.__init__(self, *args, **kwargs)
 
     def initialize(self, path=None, default_filename=None, *args,
@@ -80,13 +81,13 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
         :meth:`.CoreApplication.find_handler`.
 
         """
-        parts = self.request.path.split("/")
-        md5_route_id = parts[-1]
-        ret = self.application.find_md5(md5_route_id)
-        if ret is None:
-            return self.redirect("/")
-        (app, container, specs) = ret
-        self.logger.info("redirecting to [%s]", specs.matcher.regex.pattern)
-        matcher = tornado.routing.PathMatches(specs.matcher.regex.pattern)
-        url = matcher.reverse("")
-        return self.redirect(url)
+        self.logger.debug("redirecting to [%s]", self._enter)
+        return self.redirect(self._enter)
+
+    @classmethod
+    def get_content(
+        cls, abspath: str, start: int = None, end: int = None
+    ) -> Generator[bytes, None, None]:
+        if abspath != "":
+            return StaticFileHandler.get_content(abspath, start, end)
+        return []

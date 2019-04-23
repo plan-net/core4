@@ -353,7 +353,19 @@ class CoreBase:
         return os.path.dirname(cls.module().__file__)
 
     def trigger(self, name, channel=None, data=None, author=None):
-        # todo: requires documentation
+        """
+        Triggers an event in collection ``sys.event``.
+
+        This methods uses a special mongo connection with write concern ``0``.
+        If the collection ``sys.event`` does not exist, it is created as a
+        capped collection with size configured by key ``config.event.size``.
+
+        :param name: of the event
+        :param channel: of the event, defaults to channel name ``system``
+        :param data: to be attached to the event
+        :param author: of the event, defaults to the current username
+        :return: event id (MongoDB ``_id``)
+        """
         if self._event is None:
             conn = self.config.sys.event.connect(concurr=False)
             if conn:

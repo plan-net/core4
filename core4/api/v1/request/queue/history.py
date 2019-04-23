@@ -48,7 +48,7 @@ class JobHistoryHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get
-            >>> signin = get("http://devops:5001/core4/api/login?username=admin&password=hans")
+            >>> signin = get("http://devops:5001/core4/api/v1/login?username=admin&password=hans")
             >>> signin
             <Response [200]>
             >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?token=" + signin.json()["data"]["token"])

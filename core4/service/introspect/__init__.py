@@ -330,11 +330,10 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                         self.logger.debug("found job [%s]", cls.qual_name())
                         self._job[cls.qual_name()] = cls
                 elif mro == core4.api.v1.application.CoreApiContainer:
-                    if cls != core4.api.v1.application.RootContainer:
-                        if cls.qual_name() not in self._api_container:
-                            self.logger.debug("found api container [%s]",
-                                              cls.qual_name())
-                            self._api_container[cls.qual_name()] = cls
+                    if cls.qual_name() not in self._api_container:
+                        self.logger.debug("found api container [%s]",
+                                          cls.qual_name())
+                        self._api_container[cls.qual_name()] = cls
 
     def _import_module(self, name):
         # internal helper method to safely import a core4 module
@@ -505,8 +504,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             "daemon": list(self.iter_daemon())
         }
 
-    def exec_project(self, name, command, wait=True, comm=False, *args,
-                     **kwargs):
+    def exec_project(self, name, command, wait=True, comm=False, replace=False,
+                     *args, **kwargs):
         """
         Execute command using the Python interpreter of the project's virtual
         environment.
@@ -524,7 +523,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         project = name.split(".")[0]
         home = self.config.folder.home
         python_path = None
-        currdir = os.curdir
+        currdir = os.path.abspath(os.curdir)
         if home is not None:
             python_path = os.path.join(home, project, VENV_PYTHON)
             if not os.path.exists(python_path):
@@ -533,7 +532,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if python_path is None:
             python_path = sys.executable
         self.logger.debug("python found at [%s]", python_path)
-        #os.chdir(os.path.join(home, project))
+        # os.chdir(os.path.join(home, project))
         cmd = command.format(*args, **kwargs)
         if wait:
             if comm:
@@ -545,7 +544,10 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         env = os.environ
         if "PYTHONPATH" in env:
             del env["PYTHONPATH"]
-        self.logger.debug("execute with [%s]:\n%s", python_path, cmd)
+        self.logger.debug("execute with [%s] in [%s]:\n%s", python_path,
+                          currdir, cmd)
+        if replace:
+            os.execve(python_path, [python_path, "-c", cmd], env)
         proc = subprocess.Popen([python_path, "-c", cmd], stdout=stdout,
                                 stderr=subprocess.STDOUT, env=env)
         os.chdir(currdir)
@@ -561,7 +563,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             proc.wait()
 
 
-def exec_project(name, command, wait=True, comm=False, *args, **kwargs):
+def exec_project(name, command, wait=True, comm=False, replace=False, *args,
+                 **kwargs):
     """
     helper method to spawn commands in the context of core4 project
     environment.
@@ -576,4 +579,5 @@ def exec_project(name, command, wait=True, comm=False, *args, **kwargs):
     :return: STDOUT if ``wait is True``, else nothing is returned
     """
     intro = CoreIntrospector()
-    return intro.exec_project(name, command, wait, comm, *args, **kwargs)
+    return intro.exec_project(name, command, wait, comm, replace, *args,
+                              **kwargs)

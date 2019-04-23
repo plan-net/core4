@@ -12,74 +12,73 @@ Implements :class:`.CoreApiServerTool to serve one or multiple
 
 import importlib
 
-import tornado.httpserver
-import tornado.ioloop
-import tornado.routing
-from tornado import gen
-
+import core4.api.v1.server
 import core4.const
 import core4.error
 import core4.service
 import core4.service.introspect
+import core4.service.setup
 import core4.util.node
-from core4.api.v1.application import RootContainer
-from core4.base import CoreBase
+import tornado.httpserver
+import tornado.ioloop
+import tornado.routing
 from core4.api.v1.request.main import CoreBaseHandler
+from core4.api.v1.server import CoreApiServer
+from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
-from core4.util.data import rst2html
 from core4.service.introspect.command import SERVE
+from tornado import gen
 
 
 class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     """
     Helper class to :meth:`.serve` :class:`CoreApiContainer` classes.
     """
+    container = []
 
-    def make_routes(self, *args, **kwargs):
-        """
-        Based on the list of :class:`.CoreApiContainer` classes this method
-        creates the required routing :class:`tornado.routing.RuleRouter`
-        objects prefixed with the containers` prefix :attr:`.root` property.
+    def prepare(self, name, address, port, routing):
+        self.startup = core4.util.node.mongo_now()
 
-        :param args: list of :class:`.CoreApiContainer` classes
-        :param kwargs: keyword arguments to be passed to the
-                       :class:`CoreApplication` instances derived from
-                       :class:`tornado.web.Application`
-        :return: :class:`tornado.routing.RuleRouter` object
-        """
-        routes = []
-        roots = set()
-        RootContainer.routes = {}
-        RootContainer.containers = []
-        for container_cls in list(args) + [RootContainer]:
-            if isinstance(container_cls, str):
-                modname = ".".join(container_cls.split(".")[:-1])
-                clsname = container_cls.split(".")[-1]
-                module = importlib.import_module(modname)
-                container_cls = getattr(module, clsname)
-            container_obj = container_cls(**kwargs)
-            root = container_obj.get_root()
-            if not container_obj.enabled:
-                self.logger.warning("starting NOT enabled container [%s]",
-                                    container_obj.qual_name())
-            if root in roots:
-                raise core4.error.Core4SetupError(
-                    "routing root [{}] already exists [{}]".format(
-                        root, container_cls.qual_name())
-                )
-            self.logger.info("successfully registered container [%s]",
-                             container_cls.qual_name())
-            application = container_obj.make_application()
-            routes.append(
-                tornado.routing.Rule(tornado.routing.PathMatches(
-                    root + ".*"), application)
-            )
-            roots.add(root)
-            RootContainer.containers.append(container_obj)
-        return tornado.routing.RuleRouter(routes)
+        self.setup_logging()
+        core4.service.setup.CoreSetup().make_all()
+
+        # http server settings
+        http_args = {}
+        cert_file = self.config.api.crt_file
+        key_file = self.config.api.key_file
+        if cert_file and key_file:
+            self.logger.info("securing server with [%s]", cert_file)
+            http_args["ssl_options"] = {
+                "certfile": cert_file,
+                "keyfile": key_file,
+            }
+            self.protocol = "https"
+        else:
+            self.protocol = "http"
+
+        # global settings
+        name = name or "app"
+        self.identifier = "@".join([name, core4.util.node.get_hostname()])
+        self.port = int(port or self.config.api.port)
+        self.address = address or "0.0.0.0"
+        self.hostname = core4.util.node.get_hostname()
+        self.routing = "{}://{}".format(
+            self.protocol, routing or "%s:%d" % (self.address, self.port))
+        if self.routing.endswith("/"):
+            self.routing = self.routing[:-1]
+        return http_args
+
+    def start_http(self, http_args, router, reuse_port):
+        server = tornado.httpserver.HTTPServer(router, **http_args)
+        server.bind(self.port, address=self.address, reuse_port=reuse_port)
+        server.start()
+        self.logger.info("open %ssecure socket on port [%s:%d] routed at [%s]",
+                         "" if http_args.get("ssl_options") else "NOT ",
+                         self.address, self.port, self.routing)
+        return server
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
-              routing=None, **kwargs):
+              routing=None, core4api=False, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -100,56 +99,68 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
-        self.startup = core4.util.node.mongo_now()
-        self.setup_logging()
-        setup = core4.service.setup.CoreSetup()
-        setup.make_all()
-
-        name = name or "app"
-        self.identifier = "@".join([name, core4.util.node.get_hostname()])
-        self.port = int(port or self.config.api.port)
-        self.address = address or "0.0.0.0"
-        self.hostname = core4.util.node.get_hostname()
-
-        http_args = {}
-        cert_file = self.config.api.crt_file
-        key_file = self.config.api.key_file
-        if cert_file and key_file:
-            self.logger.info("securing server with [%s]", cert_file)
-            http_args["ssl_options"] = {
-                "certfile": cert_file,
-                "keyfile": key_file,
-            }
-            self.protocol = "https"
-        else:
-            self.protocol = "http"
-
-        self.routing = routing or "%s:%d" % (self.address, self.port)
-        self.routing = self.protocol + "://" + self.routing
-        if self.routing.endswith("/"):
-            self.routing = self.routing[:-1]
-
-        self.router = self.make_routes(*args, **kwargs)
-
-        server = tornado.httpserver.HTTPServer(self.router, **http_args)
-        server.bind(self.port, address=self.address, reuse_port=reuse_port)
-        server.start()
-        self.logger.info("open %ssecure socket on port [%s:%d] routed at [%s]",
-                         "" if http_args.get("ssl_options") else "NOT ",
-                         self.address, self.port, self.routing)
-        self.register()
+        http_args = self.prepare(name, address, port, routing)
+        routes = []
+        CoreApiServerTool.container = []
+        container_list = []
+        for container_cls in args:
+            if isinstance(container_cls, str):
+                modname = ".".join(container_cls.split(".")[:-1])
+                clsname = container_cls.split(".")[-1]
+                module = importlib.import_module(modname)
+                container_cls = getattr(module, clsname)
+            container_list.append(container_cls)
+        #container_list.sort(key=lambda r: r.qual_name())
+        if core4api:
+            qual_names = [a.qual_name() for a in container_list]
+            if CoreApiServer.qual_name() not in qual_names:
+                container_list.append(core4.api.v1.server.CoreApiServer)
+        for container_cls in container_list:
+            if not container_cls.enabled:
+                self.logger.warning("starting NOT enabled container [%s]",
+                                    container_cls.qual_name())
+                continue
+            if isinstance(container_cls, str):
+                modname = ".".join(container_cls.split(".")[:-1])
+                clsname = container_cls.split(".")[-1]
+                module = importlib.import_module(modname)
+                container_cls = getattr(module, clsname)
+            container_obj = container_cls(**kwargs)
+            root = container_obj.get_root()
+            application = container_obj.make_application()
+            if root in [c.get_root() for c in CoreApiServerTool.container]:
+                raise core4.error.Core4SetupError(
+                    "routing root [{}] already exists [{}]".format(
+                        root, container_cls.qual_name())
+                )
+            CoreApiServerTool.container.append(container_obj)
+            self.logger.info("successfully registered container [%s] at [%s]",
+                             container_cls.qual_name(), root + ".*")
+            routes.append(
+                tornado.routing.Rule(tornado.routing.PathMatches(
+                    root + ".*"), application)
+            )
+        router = tornado.routing.RuleRouter(routes)
+        self.register(router)
+        for obj in CoreApiServerTool.container:
+            obj.on_enter()
+        self.start_http(http_args, router, reuse_port)
         tornado.ioloop.IOLoop.current().spawn_callback(self.heartbeat)
         try:
             tornado.ioloop.IOLoop().current().start()
         except KeyboardInterrupt:
-            tornado.ioloop.IOLoop().current().stop()
             raise SystemExit()
         except:
             raise
         finally:
             self.unregister()
-            for container in RootContainer.containers:
-                container.on_exit()
+            for obj in CoreApiServerTool.container:
+                obj.on_exit()
+            tornado.ioloop.IOLoop().current().stop()
+
+    @classmethod
+    def stop(cls):
+        tornado.ioloop.IOLoop().current().stop()
 
     async def heartbeat(self):
         """
@@ -180,9 +191,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         )
         while True:
             nxt = gen.sleep(sleep)
-            doc = await sys_worker.find_one(
+            cnt = await sys_worker.count_documents(
                 {"_id": "__halt__", "timestamp": {"$gte": self.startup}})
-            if doc is not None:
+            if cnt > 0:
                 self.logger.debug("stop IOLoop now")
                 break
             await sys_worker.update_one(
@@ -196,87 +207,99 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "phase.exit": core4.util.node.mongo_now()
             }}
         )
-        # await sys_worker.delete_one({"_id": self.routing})
         tornado.ioloop.IOLoop.current().stop()
 
-    def register(self):
+    def register(self, router):
         """
         Registers all endpoints of the tornado server in ``sys.handler``.
         """
         self.logger.info("registering server [%s] at [%s]", self.identifier,
                          self.routing)
-        update = {}
-        for md5_route, routes in RootContainer.routes.items():
-            for (app, container, specs) in routes:
-                pattern = specs.matcher.regex.pattern
-                cls = specs.target
-                if issubclass(cls, CoreBaseHandler):
-                    args = specs.target_kwargs
-                    html = rst2html(str(cls.__doc__))
+        coll = self.config.sys.handler
+        total, reset = self.reset_handler()
+        created = 0
+        updated = 0
+        data = {}
+        for app in router.rules:
+            for rule in app.target.wildcard_router.rules:
+                handler = rule.target
+                if issubclass(handler, CoreBaseHandler):
                     doc = dict(
-                        routing=self.routing,
-                        args=str(args),
-                        author=cls.author,
-                        container=container.qual_name(),
-                        description=html["body"],
-                        error=html["error"],
-                        icon=cls.icon,
-                        project=cls.get_project(),
-                        protected=cls.protected,
                         protocol=self.protocol,
-                        qual_name=cls.qual_name(),
-                        tag=cls.tag,
-                        title=cls.title,
-                        version=cls.version(),
-                        started_at=self.startup
+                        hostname=self.hostname,
+                        port=self.port,
+                        routing=self.routing,
+
+                        started_at=self.startup,
+                        container=[],
+                        rsc_id=rule.rsc_id,
+
+                        author=handler.author,
+                        icon=handler.icon,
+                        project=handler.get_project(),
+                        protected=handler.protected,
+                        qual_name=handler.qual_name(),
+                        tag=handler.tag,
+                        title=handler.title,
+                        version=handler.version()
                     )
-                    if args:
-                        for attr in cls.propagate:
-                            if attr in doc:
-                                doc[attr] = args.get(attr, doc[attr])
-                    lookup = (self.hostname, self.port, md5_route)
-                    if lookup not in update:
-                        doc["pattern"] = []
-                        update[lookup] = doc
-                    update[lookup]["pattern"].append((specs.name, pattern))
-            self.reset_handler()
-            coll = self.config.sys.handler
-            for lookup, doc in update.items():
-                coll.update_one(
-                    {
-                        "hostname": lookup[0],
-                        "port": lookup[1],
-                        "route_id": lookup[2]
-                    },
-                    {
-                        "$set": doc,
-                        "$setOnInsert": {
-                            "created_at": self.startup
-                        }
-                    },
-                    upsert=True
-                )
+                    # respect and populate handler arguments to overwrite
+                    for attr, value in rule.target_kwargs.items():
+                        if attr in handler.propagate and attr in doc:
+                            doc[attr] = value
+                    data.setdefault(rule.rsc_id, doc)
+                    data[rule.rsc_id]["container"].append(
+                        (app.target.container.qual_name(),
+                         rule.matcher.regex.pattern,
+                         app.target.container.get_root(),
+                         rule.name))
+        for rsc_id, doc in data.items():
+            ret = coll.update_one(
+                filter={
+                    "hostname": self.hostname,
+                    "port": self.port,
+                    "rsc_id": rsc_id
+                },
+                update={
+                    "$set": doc,
+                    "$setOnInsert": {
+                        "created_at": self.startup
+                    }
+                },
+                upsert=True
+            )
+            if ret.upserted_id:
+                created += 1
+            else:
+                updated += 1
+
+        self.logger.info("found [%s] application, handlers registered [%d], "
+                         "reset [%d], updated [%d], created [%d]",
+                         len(router.rules), total, reset, updated, created)
 
     def reset_handler(self):
         """
         Removes all registered handlers
         :return:
         """
-        self.config.sys.handler.update_many(
+        ret = self.config.sys.handler.update_many(
             {"hostname": self.hostname, "port": self.port},
             {"$set": {"started_at": None}}
         )
+        return ret.matched_count, ret.modified_count
 
     def unregister(self):
         """
         Unregisters all endpoints of the tornado server in ``sys.handler``.
         """
-        self.logger.info("unregistering server [%s]", self.identifier)
-        self.reset_handler()
+        total, reset = self.reset_handler()
+        self.logger.info("unregistering server [%s] with [%d] handlers, "
+                         "[%d] reset", self.identifier, total, reset)
 
-    def serve_all_old(self, filter=None, port=None, address=None, name=None,
-                  reuse_port=True, routing=None, **kwargs):
+    def serve_all(self, project=None, filter=None, port=None, address=None,
+                  name=None, reuse_port=True, routing=None):
         """
+        todo: docs require update
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
 
@@ -297,46 +320,13 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
-        self.setup_logging()
-        intro = core4.service.introspect.CoreIntrospector()
-        if filter:
-            if not isinstance(filter, list):
-                filter = [filter]
-            for i in range(len(filter)):
-                if not filter[i].endswith("."):
-                    filter[i] += "."
-        scope = []
-        for api in intro.iter_api_container():
-            if not filter:
-                scope.append(api)
-            else:
-                if not isinstance(filter, list):
-                    filter = [filter]
-                for f in filter:
-                    if api["name"].startswith(f):
-                        scope.append(api)
-                        break
-        clist = []
-        for api in scope:
-            modname = ".".join(api["name"].split(".")[:-1])
-            clsname = api["name"].split(".")[-1]
-            module = importlib.import_module(modname)
-            cls = getattr(module, clsname)
-            self.logger.debug("added [%s]", api["name"])
-            clist.append(cls)
-        if scope:
-            self.serve(*clist, port=port, name=name, address=address,
-                       reuse_port=reuse_port, routing=routing, **kwargs)
-
-    def serve_all(self, project=None, filter=None, port=None, address=None,
-                  name=None, reuse_port=True, routing=None):
         if not project:
             project = self.project
         if filter is None:
             filter = [project]
-        for i in range(len(filter)):
-            if not filter[i].endswith("."):
-                filter[i] += "."
+        # for i in range(len(filter)):
+        #     if not filter[i].endswith("."):
+        #         filter[i] += "."
         scope = []
         intro = core4.service.introspect.CoreIntrospector()
         for project, data in intro.list_project(project):
@@ -357,5 +347,4 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 routing=routing,
             )
             core4.service.introspect.exec_project(project, SERVE, a=scope,
-                                                  kw=args)
-
+                                                  kw=args, replace=True)

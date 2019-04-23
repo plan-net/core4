@@ -36,13 +36,14 @@
    http_api
    access
    deploy
+   release
    tools
    faq
    about
    roadmap
+   history
    license
    core4/index
-
 
 Indices and tables
 ==================

@@ -29,36 +29,27 @@ A blueprint for server definition and startup is::
 
 
 Please note that :meth:`.serve` can handle one or multiple
-:class:`.CoreApiServer` objects with multiple endpoints and resources as in
+:class:`.CoreApiContainner` objects with multiple endpoints and resources as in
 the following example::
 
     serve(TestContainer, AnotherContainer)
-
-Additionally this module features :class:`RootContainer`. This container is
-attached to *each* :class:`.CoreApiContainer` and delivers core4 default
-resource, i.e. ``/login``, ``/logout``, ``/profile``, ``/file``, ``/info``,
-and the root endpoint ``/``. All these default endpoints are routed under a
-dedicated core4 api endpoint (defaults to ``/core4/api/v1``).
 """
 
 import hashlib
 from pprint import pformat
 
+import tornado.routing
+import tornado.web
+
 import core4.const
 import core4.error
 import core4.util.node
-import tornado.routing
-import tornado.web
 from core4.api.v1.request.default import DefaultHandler
-from core4.api.v1.request.info import InfoHandler
+from core4.api.v1.request.standard.info import InfoHandler
+from core4.api.v1.request.kill import KillHandler
 from core4.api.v1.request.main import CoreBaseHandler
-from core4.api.v1.request.standard.asset import CoreAssetHandler
-from core4.api.v1.request.standard.login import LoginHandler
-from core4.api.v1.request.standard.logout import LogoutHandler
-from core4.api.v1.request.standard.profile import ProfileHandler
-from core4.api.v1.request.standard.route import RouteHandler
-from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
+from core4.api.v1.request.standard.asset import CoreAssetHandler
 from core4.base.main import CoreBase
 
 STATIC_PATTERN = "/(.*)$"
@@ -67,24 +58,24 @@ STATIC_PATTERN = "/(.*)$"
 class CoreRoutingRule(tornado.routing.Rule):
     """
     Routing rule inherited from :class:`tornado.routing.Rule. Adds the
-    rule attribute ``.route_id``  which is used by core4 to identify rules
-    without a route_name.
+    rule attribute ``.rsc_id`` which is used by core4 to uniquely identify
+    resource handlers.
     """
 
-    def __init__(self, route_id, *args, **kwargs):
+    def __init__(self, rsc_id, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.route_id = route_id
+        self.rsc_id = rsc_id
 
 
 class CoreApiContainer(CoreBase):
     """
     :class:`CoreApiContainer` class is a container for a single or multiple
-    :class:`.CoreRequestHandler` and is based on torando's class
-    :class:`tornado.web.RequestHandler`. A container encapsulates endpoint
-    resources under the same :attr:`.root` URL defined by the :attr:`.root`
-    attribute.
+    :class:`.CoreRequestHandler`, :class.`.CoreStaticFilehandler` or
+    :class:`.CoreWebSocketHandler`. It is based on the appropriate torando
+    classes. a container encapsulates endpoint resources under the same
+    :attr:`.root` URL prefix.
 
-    The default ``root`` is the project name.
+    The default ``root`` is equal to the project name.
     """
 
     #: if ``True`` then the application container is deployed with serve_all
@@ -97,6 +88,7 @@ class CoreApiContainer(CoreBase):
     rules = []
 
     upwind = ["log_level", "enabled", "root"]
+    concurr = True
 
     def __init__(self, **kwargs):
         CoreBase.__init__(self)
@@ -137,8 +129,8 @@ class CoreApiContainer(CoreBase):
 
     def get_root(self, path=None):
         """
-        Returns the container`s ``root`` URL or prefixes the passed relative
-        path with the container's ``root``
+        Returns the container`s ``root`` URL prefix or prefixes the passed
+        relative path with the prefix.
 
         :param path: relative path (optional)
         :return: ``root`` or absolute path below ``root``
@@ -159,13 +151,39 @@ class CoreApiContainer(CoreBase):
     def iter_rule(self):
         """
         Returns a :class:`tornado.web.URLSpec` as specified by the container's
-        :attr:`rules` attribute. This rule attribute can either be an
+        :attr:`rules` attribute. This rules attribute can either be an
         ``URLSpec`` by itself or a tuple of ``pattern``, ``handler`` class,
         an optional ``kwargs`` to be passed to the handler and an optional
         rule ``name``.
 
+        Additionally the following default handlers are added:
+
+        * ``/_info`` to deliver the collection of available endpoints, the
+          resources' card, help and enter UrL
+        * ``/_asset`` to deliver assets
+        * ``/_kill`` to kill the server
+
         :return: yields :class:`tornado.web.URLSpec` objects
         """
+        yield tornado.web.URLSpec(
+            pattern=self.get_root(core4.const.INFO_URL),
+            handler=InfoHandler,
+            kwargs=None,
+            name=None
+        )
+        yield tornado.web.URLSpec(
+            pattern=self.get_root(core4.const.KILL_URL),
+            handler=KillHandler,
+            kwargs=None,
+            name=None
+        )
+        yield tornado.web.URLSpec(
+            pattern=self.get_root("/{}/(default|project)/(.+?)/(.*)".format(
+                core4.const.ASSET_URL)),
+            handler=CoreAssetHandler,
+            kwargs=None,
+            name=None
+        )
         for ret in self.rules:
             if isinstance(ret, tornado.web.URLSpec):
                 pattern = self.get_root(ret.regex.pattern)
@@ -190,9 +208,14 @@ class CoreApiContainer(CoreBase):
                     name = ret.pop(0)
                 except IndexError:
                     name = None
+            if pattern.endswith("/"):
+                pattern = pattern[:-1]
             if issubclass(handler, CoreStaticFileHandler):
+                if kwargs is None:
+                    kwargs = {}
+                kwargs["enter"] = handler.enter_url or pattern or "/"
                 yield tornado.web.URLSpec(
-                    pattern=pattern + "/(.*)$",
+                    pattern= pattern + "/(.*)$",
                     handler=handler,
                     kwargs=kwargs,
                     name=name
@@ -213,8 +236,8 @@ class CoreApiContainer(CoreBase):
     def make_application(self):
         """
         Validates and pre-processes :class:`CoreApiContainer` rules and
-        transfers a handler lookup dictionary to :class:`RootContainer` for
-        reverse URL lookup.
+        transfers a handler lookup dictionary to :class:`CoreApiServerTool`
+        for reverse URL lookup.
 
         :return: :class:`.CoreApplication` instance
         """
@@ -227,42 +250,47 @@ class CoreApiContainer(CoreBase):
                 kwargs = {}
             else:
                 kwargs = rule.kwargs.copy()
-            # md5 includes prefix and route
             sorted_kwargs = pformat(kwargs)
             if issubclass(cls, CoreBaseHandler):
                 qn = cls.qual_name()
             else:
                 qn = ".".join([cls.__module__, cls.__name__])
-            hash_base = "{}:{}".format(qn, sorted_kwargs)
-            md5_route = hashlib.md5(hash_base.encode("utf-8")).hexdigest()
-            kwargs["_route_id"] = md5_route
+            hash_base = " ".join([qn, sorted_kwargs])
+            rsc_id = hashlib.md5(hash_base.encode("utf-8")).hexdigest()
+            kwargs["_rsc_id"] = rsc_id
             if routing not in unique:
                 unique.add(routing)
                 rules.append(
                     CoreRoutingRule(
-                        md5_route,
+                        rsc_id,
                         tornado.routing.PathMatches(routing),
                         target=cls, target_kwargs=kwargs, name=rule.name))
-                # lookup applies to core request handlers only
                 if issubclass(cls, CoreBaseHandler):
-                    self.logger.info(
+                    self.logger.debug(
                         "started [%s] on [%s] as [%s] with [%s]",
                         rule.target.qual_name(),
                         rule.regex.pattern,
-                        rule.name or md5_route, kwargs)
+                        rule.name or rsc_id, kwargs)
             else:
                 raise core4.error.Core4SetupError(
                     "route [%s] already exists" % routing)
         app = CoreApplication(rules, self, **self._settings)
-        # transfer routes lookup with handler/routing md5 and app to container
-        for rule in rules:
-            if rule.route_id not in RootContainer.routes:
-                RootContainer.routes[rule.route_id] = []
-            RootContainer.routes[rule.route_id].append((app, self, rule))
         self.started = core4.util.node.now()
         return app
 
+
+    def on_enter(self):
+        """
+        Overwrite this method for code to be executed when the container enters
+        the io loop.
+        """
+        pass
+
     def on_exit(self):
+        """
+        Overwrite this method for code to be executed when the container exits
+        the io loop.
+        """
         pass
 
 
@@ -278,6 +306,15 @@ class CoreApplication(tornado.web.Application):
         super().__init__(handlers, *args, **kwargs)
         self.container = container
         self.identifier = container.identifier
+        self.lookup = {}
+        for handler in handlers:
+            self.lookup.setdefault(handler.rsc_id, {
+                "handler": handler,
+                "pattern": []
+            })["pattern"].append({
+                "regex": handler.matcher.regex.pattern,
+                "name": handler.name
+            })
 
     def find_handler(self, request, **kwargs):
         """
@@ -289,49 +326,26 @@ class CoreApplication(tornado.web.Application):
         page requests are forwarded to the handler's
         :meth:`.CoreRequestHandler.enter` method (``XENTER``).
         """
-
-        def _find():
-            parts = request.path.split("/")
-            while parts[-1] == "":
-                parts.pop()
-            md5_route_id = parts.pop()
-            return self.find_md5(md5_route_id)
-
-        if request.path.startswith(core4.const.CARD_URL):
-            (app, container, specs) = _find()
-            request.method = core4.const.CARD_METHOD
-            return self.get_handler_delegate(request, specs.target,
-                                             specs.target_kwargs)
-        elif request.path.startswith(core4.const.ENTER_URL):
-            (app, container, specs) = _find()
-            request.method = core4.const.ENTER_METHOD
-            return self.get_handler_delegate(request, specs.target,
-                                             specs.target_kwargs)
+        if request.path.startswith(self.container.get_root(
+                core4.const.INFO_URL)):
+            root = self.container.get_root(core4.const.INFO_URL)
+            split = request.path[len(root) + 1:].split("/")
+            if len(split) == 2:
+                mode = split[0]
+                handler = self.lookup[split[1]]["handler"]
+                if mode == core4.const.CARD_MODE:
+                    request.method = core4.const.CARD_METHOD
+                    return self.get_handler_delegate(request, handler.target,
+                                                     handler.target_kwargs)
+                elif mode == core4.const.ENTER_MODE:
+                    request.method = core4.const.ENTER_METHOD
+                    return self.get_handler_delegate(request, handler.target,
+                                                     handler.target_kwargs)
+                elif mode == core4.const.HELP_MODE:
+                    request.method = core4.const.HELP_METHOD
+                    return self.get_handler_delegate(request, handler.target,
+                                                     handler.target_kwargs)
         return super().find_handler(request, **kwargs)
-
-    def find_md5(self, route_id, all=False):
-        """
-        Find the passed ``route_id`` lookup built during the creation of
-        application (:meth:`.make_application`). The ``route_id`` represents
-        a MD5 checksum based on the ``qual_name`` of the handler and the
-        parameters of the handler used during construction in
-        :class:`.CoreApiContainer`. The combination of a ``qual_name`` and the
-        custom parameters are considered *unique*.
-
-        :param route_id: find the request handler based on
-            :class:`.CoreRequestHandler` by the ``route_id`` MD5 digest.
-        :param all: retrieve the first (``all is False``) or *all* handlers,
-            defaults to ``False``
-            :class:`.CoreRequestHandler` by the ``route_id`` MD5 digest.
-        :return: tuple of (:class:`.Application`, :class:`.CoreApiContainer`,
-            :class:`.CoreRoutingRule`)
-        """
-        route = RootContainer.routes.get(route_id, None)
-        if route is None:
-            return None
-        if not all:
-            return route[0]
-        return route
 
     def handler_help(self, cls):
         """
@@ -344,37 +358,3 @@ class CoreApplication(tornado.web.Application):
         from core4.service.introspect.api import CoreApiInspector
         inspect = core4.service.introspect.api.CoreApiInspector()
         return inspect.handler_info(cls)
-
-
-class RootContainer(CoreApiContainer):
-    """
-    This class is automatically attached to each server with :meth:`serve``
-    or :meth:`serve_all` to deliver the following standard request handlers
-    with core4:
-
-    * ``/core4/api/login`` with :class:`.LoginHandler`
-    * ``/core4/api/logout`` with :class:`.LogoutHandler`
-    * ``/core4/api/profile`` with :class:`.ProfileHandler`
-    * ``/core4/api/file`` for static file access with :class:`FileHandler`
-    * ``/core4/api/info`` with :class:`.RouteHandler` and :class:`.InfoHandler`
-    * ``/core4/api/setting`` with :class:`.SettingHandler`
-    * ``/`` for ``favicon.ico`` delivery with :class:`.CoreStaticFileHandler`
-    """
-    root = ""
-    rules = [
-        (core4.const.CORE4_API + r"/login", LoginHandler),
-        (core4.const.CORE4_API + r"/logout", LogoutHandler),
-        (core4.const.CORE4_API + r"/profile", ProfileHandler),
-        (core4.const.CORE4_API + r"/file/(.*)", CoreAssetHandler),
-        (core4.const.CORE4_API + r'/info', RouteHandler),
-        (core4.const.CORE4_API + r'/info/(.+)', InfoHandler),
-        (core4.const.CORE4_API + r'/setting', SettingHandler),
-        (core4.const.CORE4_API + r'/setting/(.*)', SettingHandler),
-        (r'', CoreStaticFileHandler, {
-            "path": "./request/_static",
-            "protected": False,
-            "title": "core4 landing page",
-        })
-    ]
-    routes = {}
-    containers = []

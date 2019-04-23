@@ -4,7 +4,7 @@ import createLogger from 'vuex/dist/logger'
 import api from '@/api'
 import {
   clone
-} from 'pnbi-base/core4/helper'
+} from 'core4ui/core4/helper'
 import router from '@/router'
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -37,22 +37,23 @@ export default new Vuex.Store({
       dispatch('setLoading', false)
     },
     updateWidgets ({
-      commit,
-      dispatch
+      commit
     }, payload) {
       commit('update_widgets', payload)
     },
 
     async getBoards ({
-      commit,
       dispatch
     }) {
-      const boards = await api.getBoards()
-      dispatch('setBoards', boards)
+      try {
+        const boards = await api.getBoards()
+        dispatch('setBoards', boards)
+      } catch (err) {
+
+      }
     },
     async setBoards ({
-      commit,
-      dispatch
+      commit
     }, boards) {
       if (boards.length) {
         commit('set_boards', boards)
@@ -62,7 +63,6 @@ export default new Vuex.Store({
     },
     setActiveBoard ({
       commit,
-      dispatch,
       getters
     }, name) {
       if (name) {
@@ -138,7 +138,6 @@ export default new Vuex.Store({
     },
     addToBoard ({
       commit,
-      dispatch,
       getters
     }, widgetId) {
       const board = getters.activeBoard
@@ -153,7 +152,6 @@ export default new Vuex.Store({
     },
     removeFromBoard ({
       commit,
-      dispatch,
       getters
     }, widgetId) {
       commit('remove_from_board', widgetId)
@@ -220,10 +218,10 @@ export default new Vuex.Store({
     },
     set_widgets (state, payload) {
       state.widgetsObj = payload.reduce((obj, item) => {
-        obj[item._id] = item
+        obj[item.rsc_id] = item
         return obj
       }, {})
-      state.widgetsList = payload.map(val => val._id)
+      state.widgetsList = payload.map(val => val.rsc_id)
     },
     set_ready (state, payload) {
       state.ready = payload

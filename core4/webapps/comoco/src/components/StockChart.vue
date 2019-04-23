@@ -17,7 +17,7 @@ import { jobColors } from '../settings'
 
 stockInit(Highcharts)
 
-var defaultTheme = Highcharts.getOptions()
+// var defaultTheme = Highcharts.getOptions()
 
 Highcharts.theme = {
   colors: ['#2b908f', '#90ee7e', '#f45b5b', '#7798BF', '#aaeeee', '#ff0066',
@@ -275,7 +275,7 @@ export default {
     // ToDo: explain why we use Timeout instead Interval
     component.timerId = setTimeout(function update () {
       const x = (new Date()).getTime()// current time
-      const shift = running.length > 3600 // 1 hour
+      const shift = running.data.length > 3600 // 1 hour
 
       if (component.getChartData) {
         arr.forEach(item => {
@@ -321,17 +321,17 @@ export default {
             type: 'minute',
             text: '30m'
           },
-          {
-            type: 'hour',
-            count: 1,
-            text: '1h'
-          },
+          // {
+          //   type: 'hour',
+          //   count: 1,
+          //   text: '1h'
+          // },
           {
             type: 'all',
             text: 'All'
           }],
           inputEnabled: false,
-          selected: 5
+          selected: 4
         },
 
         exporting: {

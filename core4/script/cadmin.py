@@ -9,18 +9,20 @@
 cadmin - core-4 build and deployment utililty.
 
 Usage:
-  cadmin install [--reset] [--web] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--web] [--force] [PROJECT]
-  cadmin uninstall PROJECT
+  cadmin install [--reset] [--web] [--home=HOME] REPOSITORY PROJECT
+  cadmin upgrade [--test] [--force] [--reset] [--web] [--home=HOME] [PROJECT...]
+  cadmin uninstall [--home=HOME] PROJECT...
+  cadmin version [--home=HOME] [PROJECT...]
 
 Arguments:
   REPOSITORY  requirements specifier with VCS support (see pip documentation)
   PROJECT     project name
 
 Options:
+  --home=HOME   set core4 home directory, defaults to config.folder.home
   -r --reset    reset existing project root
+  -f --force    force build and installation even if no changes
   -w --web      build and install web apps
-  -f --force    force build and installation
   -t --test     dry-run
   -h --help     show this screen
   -v --version  show version
@@ -67,9 +69,10 @@ class InstallMixin():
 
 class CoreInstaller(CoreBase, InstallMixin):
 
-    def __init__(self, project, repository=None, reset=False, web=False):
+    def __init__(self, project, repository=None, reset=False, web=False,
+                 home=None):
         super().__init__()
-        self.home = self.config.folder.home
+        self.home = home or self.config.folder.home
         self.project = project
         self.repository = repository
         self.reset = reset
@@ -118,6 +121,8 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.check_for_install()
         self.print("installing [{}]".format(self.project))
         os.makedirs(self.root)
+        os.chdir(self.root)
+
         self.print("  created project root [{}]".format(self.root))
         self.install_venv()
         self.upgrade_pip()
@@ -299,39 +304,76 @@ class CoreInstaller(CoreBase, InstallMixin):
             self.print("  project [{}] requires upgrade".format(self.project))
         if force:
             self.print("  force upgrade with [{}]".format(self.project))
-        if not test and (force or latest != current):
-            self.install_project()
-            self.write_config()
-            if self.web:
-                self.build()
+        if self.reset:
+            self.print("  reset [{}]".format(self.project))
+        if not test and (self.reset or force or latest != current):
+            if self.reset:
+                self.install()
+            else:
+                self.install_project()
+                self.write_config()
+                if self.web:
+                    self.build()
+
+    def version(self):
+        args = [self.python,
+                "-c",
+                "import {p}; print({p}.__version__, {p}.__built__)".format(
+                    p=self.project)]
+        proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
+        (stdout, stderr) = proc.communicate()
+        return stdout.decode("utf-8")
 
 
 class CoreUpdater(CoreBase, InstallMixin):
 
-    def upgrade(self, test, force):
-        for project in os.listdir(self.config.folder.home):
-            # todo: check if this is actually a folder and a core4 project
-            installer = CoreInstaller(project)
+    def upgrade(self, test, force, reset, home=None):
+        for project in self.list_project(home):
+            installer = CoreInstaller(project, reset=reset, home=home)
             installer.upgrade(test, force)
+
+    def list_project(self, home=None):
+        home = home or self.config.folder.home
+        for project in os.listdir(home):
+            yield project
 
 
 def run(args):
     t0 = datetime.datetime.now()
     if args["install"]:
         installer = CoreInstaller(
-            args["PROJECT"], args["REPOSITORY"], args["--reset"],
-            args["--web"])
+            args["PROJECT"][0], args["REPOSITORY"], args["--reset"],
+            args["--web"], args["--home"])
         installer.install()
     elif args["upgrade"]:
         if args["PROJECT"]:
-            installer = CoreInstaller(args["PROJECT"])
-            installer.upgrade(args["--test"], args["--force"])
+            for project in args["PROJECT"]:
+                installer = CoreInstaller(
+                    project, reset=args["--reset"], home=args["--home"])
+                installer.upgrade(args["--test"], args["--force"])
         else:
             installer = CoreUpdater()
-            installer.upgrade(args["--test"], args["--force"])
+            installer.upgrade(args["--test"], args["--force"], args["--reset"],
+                              args["--home"])
     elif args["uninstall"]:
-        installer = CoreInstaller(args["PROJECT"])
-        installer.uninstall()
+        for project in args["PROJECT"]:
+            installer = CoreInstaller(project, home=args["--home"])
+            installer.uninstall()
+    elif args["version"]:
+        if args["PROJECT"]:
+            project = args["PROJECT"]
+        else:
+            installer = CoreUpdater()
+            project = installer.list_project(args["--home"])
+        for p in project:
+            installer = CoreInstaller(p, home=args["--home"])
+            out = installer.version()
+            try:
+                version, *build = out.split()
+                print("{} - {}, build {}".format(
+                    p, version, " ".join(build)))
+            except Exception as exc:
+                print("error:", p, exc, out)
     else:
         raise SystemExit("nothing to do.")
     runtime = datetime.datetime.now() - t0
@@ -339,7 +381,8 @@ def run(args):
 
 
 def main():
-    run(args=docopt(__doc__, help=True))
+    args = args = docopt(__doc__, help=True)
+    run(args)
 
 
 if __name__ == '__main__':

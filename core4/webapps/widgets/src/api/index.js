@@ -1,4 +1,4 @@
-import { axiosInternal } from 'pnbi-base/core4/internal/axios.config.js'
+import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import store from '@/store.js'
 const api = {
   createBoard (dto) {
@@ -16,10 +16,10 @@ const api = {
       .then(result => {
         if (result.data.boards == null) {
           // initialize, so we can use put
-          axiosInternal
+          /*           axiosInternal
             .post('/setting/core_widgets', { data: { boards: [] } })
             .then(result => {})
-            .catch(error => Promise.reject(error))
+            .catch(error => Promise.reject(error)) */
           return []
         }
         return result.data.boards
@@ -52,17 +52,22 @@ const api = {
   },
   getWidgets () {
     return axiosInternal
-      .get(`/info`, { params: { per_page: 1000, page: 0 } })
+      .get(`/_info`, { params: { per_page: 1000, page: 0 } })
       .then(result => {
         const token = `?token=${JSON.parse(window.localStorage.getItem('user')).token}`
         const widgets = result.data
+        let endpoint
+        let pathEnd
         return widgets.map(val => {
-          val.endpoint = val.endpoint[0]
-          val.endpoint.card_url = `${val.endpoint.card_url}${token}`
-          val.endpoint.enter_url = `${val.endpoint.enter_url}${token}`
-          val.endpoint.help_url = `${val.endpoint.help_url}${token}`
+          endpoint = {}
+          pathEnd = `${val.rsc_id}${token}`
+          endpoint.card_url = `${val.endpoint[0]}/_info/card/${pathEnd}`
+          endpoint.enter_url = `${val.endpoint[0]}/_info/enter/${pathEnd}`
+          endpoint.help_url = `${val.endpoint[0]}/_info/help/${pathEnd}`
+          val.endpoint = endpoint
           delete val.project
-          delete val.route_id
+          delete val.started_at
+          delete val.created_at
           return val
         })
       })
@@ -73,23 +78,12 @@ const api = {
 // no additional request - just interceptors for getting boards on first contact
 axiosInternal.interceptors.response.use(
   response => {
-    /*     if (response.config.url.includes('core4/api/setting') && response.config.method === 'get') {
-      const boards = response.data.data.core_widgets.boards
-      if (boards != null) {
-        store.dispatch('setBoards', boards)
-      } else {
-        axiosInternal
-          .post('/setting/core_widgets', { data: { boards: [] } })
-          .then(result => {
-          })
-          .catch(error => Promise.reject(error))
-      }
-    } */
     return response
   }, error => {
     // First load of the widget app
     if (
-      error.config.url.includes('core4/api/setting') &&
+      error.config.url.includes(`${window.APIBASE_CORE}/setting`) &&
+      // error.config.url.includes('core4/api/v1/setting') &&
       error.config.method === 'get' &&
       error.response.status === 400
     ) {
