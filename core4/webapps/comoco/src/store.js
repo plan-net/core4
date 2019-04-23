@@ -5,7 +5,7 @@ import createLogger from 'vuex/dist/logger'
 import { clone } from 'core4ui/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
 
-import { jobStates, jobGroups } from './settings.js'
+import { jobStates, jobGroups, jobFlags } from './settings.js'
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -113,6 +113,8 @@ function groupDataAndJobStat (created, arr, groupingKey) {
   let initialState = createObjectWithDefaultValues(jobStates)
 
   arr.forEach((job) => {
+    if (!job.key) job.key = uniqueKey(job)
+
     let jobState = job[groupingKey]
     let group = jobStates[jobState] || 'other';
 
@@ -123,4 +125,21 @@ function groupDataAndJobStat (created, arr, groupingKey) {
   })
 
   return { 'stat': initialState, ...groupsDict }
+}
+
+/**
+ * Unique key for job
+ *
+ * @param obj {object} - job
+ * @returns {string} - unique_key based on full name, job(s) amount and related job flags
+ *                     e. g. core.account.brandinvestor.job.monitor.SolverChild-3-Zombie-Wall
+ */
+function uniqueKey (obj) {
+  let value = `${obj.name}-${obj.n}` // core.account.brandinvestor.job.monitor.SolverChild-<job amount>
+
+  for (let key in jobFlags) {
+    if (obj[key]) value += `-${key}`
+  }
+
+  return value // core.account.brandinvestor.job.monitor.SolverChild-3-Zombie-Wall
 }
