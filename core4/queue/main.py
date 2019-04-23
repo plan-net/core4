@@ -30,7 +30,7 @@ from core4.base import CoreBase
 from core4.queue.helper.job.base import CoreAbstractJobMixin
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
-from core4.service.introspect.command import RESTART
+from core4.service.introspect.command import RESTART, KILL
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
                  core4.queue.job.STATE_FAILED)
@@ -630,6 +630,22 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                             state, runtime, job.attempts_left,
                             job.last_error["exception"],
                             "\n".join(job.last_error["traceback"]))
+
+    def exec_kill(self, doc):
+        """
+        Kill the job of the passed MongoDB doc with a valid ``_id`` and
+        ``name``. Uses :meth:`._exec_kill` directly or with the Python virtual
+        environment if :meth:`.exec_kill` raises an ``ImportError``.
+
+        :param doc: valid ``sys.queue`` document of the job to be killed
+        """
+        try:
+            self._exec_kill(doc["_id"])
+        except ImportError:
+            core4.service.introspect.exec_project(
+                doc["name"], KILL, job_id=str(doc["_id"]))
+        except Exception:
+            raise
 
     def _exec_kill(self, _id):
         # internal method used by virtual python interpreter to kill job
