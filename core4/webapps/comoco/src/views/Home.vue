@@ -22,7 +22,6 @@ import { mapActions } from 'vuex'
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-import streamgraphChart from '@/components/StreamgraphChart'
 import stockChart from '@/components/StockChart'
 
 export default {
@@ -34,14 +33,6 @@ export default {
     ...mapActions([
       'toggleDark'
     ])
-    // handler () {
-    //   var args = arguments
-    //   for (var arg of args) {
-    //     if (arg instanceof Function) {
-    //       arg()
-    //     }
-    //   }
-    // }
   },
   data () {
     return {

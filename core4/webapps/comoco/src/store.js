@@ -2,13 +2,12 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
 
-import { clone } from 'pnbi-base/core4/helper'
-import { createObjectWithDefaultValues, to } from './helper'
-import { clone } from 'core4ui/core4/helper'
+// import { clone } from 'pnbi-base/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
+import { clone } from 'core4ui/core4/helper'
 
 import { jobStates, jobGroups } from './settings.js'
-import comocoService from './comocoService.js'
+// import comocoService from './comocoService.js'
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -26,13 +25,17 @@ export default new Vuex.Store({
     }
   },
   actions: {
-
+    getJobHistory () {
+      // return Vue.prototype.$getChartHistory()
+    }
   },
   mutations: {
     SOCKET_ONOPEN (state, event) {
       Vue.prototype.$socket = event.currentTarget
       Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue'] })
       state.socket.isConnected = true
+
+      // Vue.prototype.$getChartHistory()
     },
     SOCKET_ONCLOSE (state, event) {
       state.socket.isConnected = false

@@ -1,20 +1,18 @@
-import { axiosInternal } from 'pnbi-base/core4/internal/axios.config.js'
+import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 
 // const API_URL = environment.apiUrl;
 
-export class ApiService {
-  // constructor (name) {}
-
-  getSettings (query) {
+export default {
+  getSetting (query) {
     const path = query ? `/setting/${query}` : `/setting`
 
     return axiosInternal
       .get(path)
       .then(result => result.data)
       .catch(error => Promise.reject(error))
-  }
+  },
 
-  getJobsHistory (start) {
+  getJobHistory (start) {
     let token = JSON.parse(localStorage.getItem('user'))['token']
 
     return axiosInternal
@@ -23,21 +21,34 @@ export class ApiService {
       .catch(error => Promise.reject(error))
   }
 }
+// import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
+//
+// // const API_URL = environment.apiUrl;
+//
 // export default {
-//   settings (query) {
-//     const path = query ? `/setting/${query}` : `/setting`
+//   install (Vue, options) {
+//     // ES6 way of const job = options.job
+//     // const { <name> } = options
 //
-//     return axiosInternal
-//       .get(path)
-//       .then(result => result.data)
-//       .catch(error => Promise.reject(error))
-//   },
-//   history (start) {
-//     let token = JSON.parse(localStorage.getItem('user'))['token']
-//
-//     return axiosInternal
-//       .get(`v1/jobs/history?token=${token}`)
-//       .then(result => result.data)
-//       .catch(error => Promise.reject(error))
+//     Vue.prototype.$getSetting = getSetting
+//     Vue.prototype.$getJobHistory = getJobHistory
 //   }
+// }
+//
+// function getSetting (query) {
+//   const path = query ? `/setting/${query}` : `/setting`
+//
+//   return axiosInternal
+//     .get(path)
+//     .then(result => result.data)
+//     .catch(error => Promise.reject(error))
+// }
+//
+// function getJobHistory (start) {
+//   let token = JSON.parse(localStorage.getItem('user'))['token']
+//
+//   return axiosInternal
+//     .get(`v1/jobs/history?token=${token}`)
+//     .then(result => result.data)
+//     .catch(error => Promise.reject(error))
 // }

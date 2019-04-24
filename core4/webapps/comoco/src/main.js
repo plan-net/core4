@@ -9,9 +9,14 @@ import PnbiBase from 'core4ui/core4'
 import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
 import { i18n } from 'core4ui/core4/translations'
 
+import comocoService from './comocoService'
+
 import '@/style/theme-dark.scss'
 import '@/style/theme-light.scss'
 
+// =============================================================================================== //
+// Extend app with native WebSocket                                                                //
+// =============================================================================================== //
 Vue.use(VueNativeSock, ' ', {
   store: store,
   format: 'json',
@@ -21,6 +26,9 @@ Vue.use(VueNativeSock, ' ', {
   reconnectionDelay: 3000 // how long to initially wait before attempting a new (1000)
 })
 
+// =============================================================================================== //
+// Extend app with PnbiBase feature                                                                //
+// =============================================================================================== //
 Vue.use(PnbiBase, {
   router,
   config: {
@@ -32,6 +40,11 @@ Vue.use(PnbiBase, {
   },
   store
 })
+
+// =============================================================================================== //
+// Extend app with services                                                                        //
+// =============================================================================================== //
+Vue.use(comocoService)
 
 Vue.config.productionTip = false
 
