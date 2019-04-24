@@ -252,20 +252,26 @@ export default {
     }
   },
   async created () {
-    let start
-    let perPage = 100
-    let jobsPerPage
 
-    try {
-      start = await this.$getChartHistory()
-    } catch (e) {
-      console.log(e)
-    }
+    // for (let jobs of nextPage(this)) {
+    //   jobs.then(res => { console.log(res) })
+    // }
 
-    for (let page of range(++start.page, Math.round(start.page_count / (perPage / 10)))) {
-      jobsPerPage = await this.$getJobHistory(page, perPage)
-      console.log(jobsPerPage)
-    }
+
+    // let start
+    // let perPage = 100
+    // let jobsPerPage
+    //
+    // try {
+    //   start = await this.$getChartHistory()
+    // } catch (e) {
+    //   console.log(e)
+    // }
+    //
+    // for (let page of range(++start.page, Math.round(start.page_count / (perPage / 10)))) {
+    //   jobsPerPage = await this.$getJobHistory(page, perPage)
+    //   console.log(jobsPerPage)
+    // }
     // this.$store.dispatch('getChartHistory').then(res => {
     //   console.log('stock chart history: ', res)
     // })
@@ -430,9 +436,24 @@ function createSeriesData () {
       }
     })
   }
-
-  return arr
 }
+
+function * nextPage (context) {
+  let last
+  let jobsPerPage = 100
+
+  try {
+    last = yield context.$getChartHistory()
+  } catch (e) {
+    console.log(e)
+  }
+
+  for (let page of range(last.page, Math.round(last.page_count / (jobsPerPage / 10)))) {
+    console.log(page)
+    // last = yield context.$getJobHistory(page, jobsPerPage)
+  }
+}
+
 </script>
 
 <style scoped>

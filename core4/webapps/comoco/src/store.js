@@ -32,21 +32,7 @@ export default new Vuex.Store({
       reconnectError: false
     }
   },
-  actions: {
-    async getChartHistory () {
-      let fullHistory
-
-      try {
-        fullHistory = Vue.prototype.$getChartHistory()
-      } catch (e) {
-        console.log(e)
-      }
-
-      this.state.history.isSet = true
-
-      return fullHistory
-    }
-  },
+  actions: {},
   mutations: {
     SOCKET_ONOPEN (state, event) {
       Vue.prototype.$socket = event.currentTarget
