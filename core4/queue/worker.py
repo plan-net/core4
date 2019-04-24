@@ -43,7 +43,7 @@ import core4.queue.query
 import core4.service.introspect
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
-from core4.service.introspect.command import EXECUTE, KILL
+from core4.service.introspect.command import EXECUTE
 
 #: processing steps in the main loop of :class:`.CoreWorker`
 STEPS = (
@@ -434,7 +434,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             if not found:
                 self.logger.error("pid [%s] not exists, killing",
                                   doc["locked"]["pid"])
-                self.queue._exec_kill(doc["_id"])
+                self.queue.exec_kill(doc)
 
     def kill_pid(self, doc):
         """
@@ -447,13 +447,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             (found, proc) = self.pid_exists(doc)
             if found and proc:
                 proc.kill()
-            try:
-                self.queue._exec_kill(doc["_id"])
-            except ImportError:
-                core4.service.introspect.exec_project(
-                    doc["name"], KILL, job_id=str(doc["_id"]))
-            except Exception:
-                raise
+            self.queue.exec_kill(doc)
 
     def pid_exists(self, doc):
         """

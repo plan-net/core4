@@ -2,12 +2,10 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
 
-// import { clone } from 'pnbi-base/core4/helper'
-import { createObjectWithDefaultValues } from './helper'
 import { clone } from 'core4ui/core4/helper'
+import { createObjectWithDefaultValues } from './helper'
 
-import { jobStates, jobGroups } from './settings.js'
-// import comocoService from './comocoService.js'
+import { jobStates, jobGroups, jobFlags } from './settings.js'
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -34,8 +32,6 @@ export default new Vuex.Store({
       Vue.prototype.$socket = event.currentTarget
       Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue'] })
       state.socket.isConnected = true
-
-      // Vue.prototype.$getChartHistory()
     },
     SOCKET_ONCLOSE (state, event) {
       state.socket.isConnected = false
@@ -121,6 +117,8 @@ function groupDataAndJobStat (created, arr, groupingKey) {
   let initialState = createObjectWithDefaultValues(jobStates)
 
   arr.forEach((job) => {
+    if (!job.key) job.key = uniqueKey(job)
+
     let jobState = job[groupingKey]
     let group = jobStates[jobState] || 'other';
 
@@ -131,4 +129,21 @@ function groupDataAndJobStat (created, arr, groupingKey) {
   })
 
   return { 'stat': initialState, ...groupsDict }
+}
+
+/**
+ * Unique key for job
+ *
+ * @param obj {object} - job
+ * @returns {string} - unique_key based on full name, job state, job(s) amount and related job flags
+ *                     e. g. core.account.brandinvestor.job.monitor.SolverChild-pending-3-zombie-wall
+ */
+function uniqueKey (obj) {
+  let value = `${obj.name}-${obj.state}-${obj.n}` // core.account.brandinvestor.job.monitor.SolverChild-pending-3
+
+  for (let key in jobFlags) {
+    if (obj[key]) value += `-${key}`
+  }
+
+  return value // core.account.brandinvestor.job.monitor.SolverChild-pending-3-zombie-wall
 }

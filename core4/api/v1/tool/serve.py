@@ -329,15 +329,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         #         filter[i] += "."
         scope = []
         intro = core4.service.introspect.CoreIntrospector()
-        for project, data in intro.list_project(project):
-            for container in data["container"]:
-                if not filter:
-                    scope.append(container["name"])
-                else:
-                    for f in filter:
-                        if container["name"].startswith(f):
-                            scope.append(container["name"])
-                            break
+        for f in filter:
+            for project, data in intro.list_project(project):
+                for container in data["container"]:
+                    if container["name"].startswith(f):
+                        scope.append(container["name"])
         if scope:
             args = dict(
                 port=port,
