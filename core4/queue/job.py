@@ -578,7 +578,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
 
         :return: dict
         """
-        doc = dict([(k, self.__dict__[k]) for k in SERIALISE_ARGS])
+        doc = dict([(k, getattr(self, k)) for k in SERIALISE_ARGS])
         if self._id is None:
             del doc["_id"]
         return doc
@@ -594,7 +594,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
         """
         obj = cls()
         for k in kwargs:
-            if k in obj.__dict__:
+            if hasattr(obj, k):
                 obj.__dict__[k] = kwargs[k]
         obj.identifier = obj._id
         obj.validate()

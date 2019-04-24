@@ -79,7 +79,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         core4.service.setup.CoreSetup().make_queue()
         job = self.job_factory(name or cls, **kwargs)
         # update job properties
-        job.__dict__["attempts_left"] = job.__dict__["attempts"]
+        job.__dict__["attempts_left"] = getattr(job, "attempts")
         job.__dict__["state"] = STATE_PENDING
         enqueued_from = {
             "at": lambda: core4.util.node.mongo_now(),
