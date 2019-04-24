@@ -190,7 +190,7 @@ export default new Vuex.Store({
       state.activeBoard.widgets = widgets
     },
     update_board_name (state, name) {
-      const board = state.boardsObj[state.activeBoard]
+      const board = state.boardsObj[state.activeBoard.name]
       board.name = name
     },
     add_to_board (state, widgetId) {
