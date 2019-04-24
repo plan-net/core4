@@ -49,7 +49,7 @@ logging:
 event:
   write_concern: 0
   size: 549755813888  # 0.5tB
-  queue_interval: 1
+  queue_interval: 3
 
 # base class defaults
 base:
