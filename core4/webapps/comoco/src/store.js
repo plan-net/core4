@@ -15,7 +15,17 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   plugins,
   state: {
-    queue: {},
+    queue: {
+      // stat: {},
+      // running: [],
+      // stopped: [],
+      // waiting: []
+    },
+    history: {
+      isSet: false,
+      temporaryQueue: [],
+      history: []
+    },
     socket: {
       isConnected: false,
       message: '',
@@ -23,8 +33,18 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    getJobHistory () {
-      // return Vue.prototype.$getChartHistory()
+    async getChartHistory () {
+      let fullHistory
+
+      try {
+        fullHistory = Vue.prototype.$getChartHistory()
+      } catch (e) {
+        console.log(e)
+      }
+
+      this.state.history.isSet = true
+
+      return fullHistory
     }
   },
   mutations: {
@@ -147,3 +167,15 @@ function uniqueKey (obj) {
 
   return value // core.account.brandinvestor.job.monitor.SolverChild-pending-3-zombie-wall
 }
+
+// function has_next* (iterable_data) {
+//   let iterable = iter(iterable_data)
+//   let last = next(iterable)
+//
+//   for (let value in iterable) {
+//     yield last
+//     last = value
+//   }
+//
+//   yield last
+// }

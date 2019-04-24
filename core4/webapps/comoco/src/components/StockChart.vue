@@ -14,6 +14,7 @@ import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
 
 import { jobColors } from '../settings'
+import { range } from '../helper'
 
 stockInit(Highcharts)
 
@@ -250,10 +251,24 @@ export default {
       timerId: undefined
     }
   },
-  created () {
-    this.$store.dispatch('getJobHistory').then(res => {
-      console.log('olha: ', res)
-    })
+  async created () {
+    let start
+    let perPage = 100
+    let jobsPerPage
+
+    try {
+      start = await this.$getChartHistory()
+    } catch (e) {
+      console.log(e)
+    }
+
+    for (let page of range(++start.page, Math.round(start.page_count / (perPage / 10)))) {
+      jobsPerPage = await this.$getJobHistory(page, perPage)
+      console.log(jobsPerPage)
+    }
+    // this.$store.dispatch('getChartHistory').then(res => {
+    //   console.log('stock chart history: ', res)
+    // })
   },
   mounted () { // fired after the element has been created
     if (!this.$refs.chart) return null
@@ -386,9 +401,9 @@ export default {
   }
 }
 
-// ================================================================= //
+// ======================================================================================= //
 // Private methods
-// ================================================================= //
+// ======================================================================================= //
 
 function createSeriesData () {
   let arr = []

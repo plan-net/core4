@@ -32,14 +32,46 @@ function getBasePath () {
 }
 
 function to (promise) {
-  return promise.then(data => {
-    return [null, data]
-  })
+  return promise
+    .then(data => {
+      return [null, data]
+    })
     .catch(err => [err])
+}
+
+function range (from, to) {
+  return {
+    from: from,
+    to: to,
+
+    [Symbol.iterator] () {
+      return this
+    },
+
+    next () {
+      if (this.current === undefined) {
+        this.current = this.from
+      }
+
+      if (this.current <= this.to) {
+        return {
+          done: false,
+          value: this.current++
+        }
+      } else {
+        delete this.current
+        return {
+          done: true
+        }
+      }
+    }
+
+  }
 }
 
 export {
   createObjectWithDefaultValues,
   getBasePath,
-  to
+  to,
+  range
 }

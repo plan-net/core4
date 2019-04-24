@@ -9,7 +9,7 @@ import PnbiBase from 'core4ui/core4'
 import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
 import { i18n } from 'core4ui/core4/translations'
 
-import comocoService from './comocoService'
+import service from './service'
 
 import '@/style/theme-dark.scss'
 import '@/style/theme-light.scss'
@@ -44,7 +44,7 @@ Vue.use(PnbiBase, {
 // =============================================================================================== //
 // Extend app with services                                                                        //
 // =============================================================================================== //
-Vue.use(comocoService)
+Vue.use(service)
 
 Vue.config.productionTip = false
 
