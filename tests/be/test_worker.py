@@ -7,6 +7,9 @@ import datetime
 import psutil
 import threading
 import time
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import core4.base.main
 import core4.logger.mixin
@@ -419,7 +422,9 @@ def test_ok(queue, worker):
 
 @pytest.mark.timeout(30)
 def test_error(queue, worker):
+    cwd = os.path.join(os.path.dirname(__file__), "..")
     import project.work
+    os.chdir(cwd)
     queue.enqueue(project.work.ErrorJob)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
