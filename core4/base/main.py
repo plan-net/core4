@@ -183,9 +183,10 @@ class CoreBase:
                 module = importlib.import_module(self.project)
             if hasattr(module, "__project__"):
                 if module.__project__ == CORE4:
-                    return os.path.join(
-                        os.path.dirname(module.__file__),
-                        self.project + core4.config.main.CONFIG_EXTENSION)
+                    return os.path.abspath(
+                        os.path.join(
+                            os.path.dirname(module.__file__),
+                            self.project + core4.config.main.CONFIG_EXTENSION))
         return None
 
     def _make_config(self, *args, **kwargs):
