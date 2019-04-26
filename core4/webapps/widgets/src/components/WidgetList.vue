@@ -130,6 +130,7 @@
           drop-effect="copy"
           :transfer-data="{ widgetId: item.rsc_id }"
         >
+          <div @mouseover="onMouseOver(item)" @mouseleave="onMouseLeave(item)"> <!-- v-list-tile doenst react on mouseover-->
           <v-list-tile
             class="mini-widget"
             avatar
@@ -137,7 +138,10 @@
             <!--         <v-list-tile-avatar>
               <v-icon color="grey" medium>{{ item.icon }}</v-icon>
             </v-list-tile-avatar> -->
-            <v-list-tile-content>
+            <v-list-tile-avatar>
+              <v-icon v-if="item.effectAllowed[0] === 'copy'" class="widget-drag-icon grey--text" small>drag_indicator</v-icon>
+            </v-list-tile-avatar>
+            <v-list-tile-content >
               <v-list-tile-title style="font-weight: 700;">{{ item.title }}</v-list-tile-title>
               <v-list-tile-sub-title v-text="item.qual_name"></v-list-tile-sub-title>
             </v-list-tile-content>
@@ -193,6 +197,7 @@
               </v-tooltip>
             </v-list-tile-action> -->
           </v-list-tile>
+          </div>
         </drag>
 
       </v-slide-y-transition>
@@ -273,7 +278,25 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['addToBoard', 'toggleWidgetListOpen']),
+    onMouseOver (item) {
+      if (item.effectAllowed[0] === 'none') {
+        // this.$bus.$emit('mouseOver', item.rsc_id)
+        this.setWidgetOver({
+          $over: true,
+          id: item.rsc_id
+        })
+      }
+    },
+    onMouseLeave (item) {
+      if (item.effectAllowed[0] === 'none') {
+        this.setWidgetOver({
+          $over: false,
+          id: item.rsc_id
+        })
+        // this.$bus.$emit('mouseLeave', item.rsc_id)
+      }
+    },
+    ...mapActions(['addToBoard', 'toggleWidgetListOpen', 'setWidgetOver']),
     removeTagFromSearch (item) {
       const index = this.tags.indexOf(item.text)
       if (index >= 0) { this.tags.splice(index, 1) }
@@ -296,11 +319,19 @@ div >>> .v-chip__content {
   cursor: pointer !important;
 }
 div >>> .v-list__tile {
-  padding-left: 12px;
+  padding-left: 3px;
   padding-right: 0;
 }
 div >>> .v-list__tile__avatar {
-  min-width: 48px;
+  min-width: 18px;
+  width: 18px;
+}
+div >>> .v-list__tile__avatar .v-avatar {
+}
+div >>> .v-list__tile__avatar .widget-drag-icon {
+  margin-left: -12px;
+  padding-top: 3px;
+  align-items: flex-start
 }
 div >>> .v-list__tile__content {
   padding-right: 3px;
@@ -310,11 +341,9 @@ div >>> .v-list__tile__action {
 }
 div >>> .v-list__tile__action.with-hover {
   transition: background-color 0.25s ease-in;
-  xxxxbackground-color: var(--v-secondary-lighten3);
 }
 div >>> .v-list__tile__action.with-hover:hover {
   cursor: grab;
-  xxxxbackground-color: var(--v-secondary-lighten4);
 }
 div >>> .v-list__tile__action .v-icon {
   margin-right: 6px;

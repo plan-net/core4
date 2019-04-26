@@ -108,7 +108,6 @@ export default new Vuex.Store({
     },
     updateBoardWidgets ({
       commit,
-      dispatch,
       getters
     }, widgets) {
       commit('update_board_widgets', widgets)
@@ -164,9 +163,20 @@ export default new Vuex.Store({
       api.updateBoard({
         boards
       })
+    },
+    setWidgetOver ({
+      commit,
+      getters
+    }, payload) {
+      commit('set_widget_over', payload)
     }
   },
   mutations: {
+    set_widget_over (state, payload) {
+      const widget = clone(state.widgetsObj[payload.id])
+      widget.$over = payload.$over
+      state.widgetsObj[payload.id] = widget
+    },
     set_widgetlist_open (state, payload) {
       state.widgetListOpen = payload
     },

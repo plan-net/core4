@@ -64,54 +64,75 @@
           :key="widget.id"
           drag-selector=".v-card__title"
         >
-          <v-card @click.self="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })">
-            <v-card-text>
-              <v-layout class="icon-container">
-                <v-tooltip top>
-                  <v-btn
-                    @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
-                    icon
+          <v-card :class="{'over': widget.$over}">
+            <v-layout class="icon-container">
+              <v-tooltip top>
+                <v-btn
+                  @click="openInNew(widget)"
+                  icon
+                  small
+                  slot="activator"
+                  ripple
+                >
+                  <v-icon
                     small
-                    slot="activator"
-                    ripple
-                  >
-                    <v-icon
-                      small
-                      color="grey"
-                    >help</v-icon>
-                  </v-btn>
-                  <span>Help</span>
-                </v-tooltip>
-                <v-tooltip top>
-                  <v-btn
-                    @click="removeFromBoard(widget.rsc_id || widget.id)"
-                    icon
+                    color="grey"
+                  >open_in_new</v-icon>
+                </v-btn>
+                <span>Open widget in new tab</span>
+              </v-tooltip>
+              <v-tooltip top>
+                <v-btn
+                  @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
+                  icon
+                  small
+                  slot="activator"
+                  ripple
+                >
+                  <v-icon
                     small
-                    slot="activator"
+                    color="grey"
+                  >help</v-icon>
+                </v-btn>
+                <span>Open widget help page</span>
+              </v-tooltip>
+              <v-spacer></v-spacer>
+              <v-tooltip top>
+                <v-btn
+                  @click="removeFromBoard(widget.rsc_id || widget.id)"
+                  icon
+                  small
+                  slot="activator"
+                  ripple
+                >
+                  <v-icon
                     ripple
-                  >
-                    <v-icon
-                      ripple
-                      small
-                      class="grey--text"
-                    >clear</v-icon>
-                  </v-btn>
-                  <span>Remove from board</span>
-                </v-tooltip>
-              </v-layout>
+                    small
+                    class="grey--text"
+                  >clear</v-icon>
+                </v-btn>
+                <span>Remove widget from board</span>
+              </v-tooltip>
+            </v-layout>
+            <a :href="widget.endpoint.enter_url" @click.prevent="()=>{}">
+            <v-card-text @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })" :alt="widget.endpoint.enter_url">
+
               <div
                 class="text-xs-center"
                 style="padding-top: 54px;"
               >
                 <v-tooltip top>
-                  <v-icon class="open-widget-icon" slot="activator"
-                    color="grey" @click="$router.push({ name: 'widget', params: { widgetId: widget.rsc_id } })"
+                  <v-icon
+                    class="open-widget-icon"
+                    slot="activator"
+                    color="grey"
                   >{{widget.icon}}</v-icon>
-                <span>Open widget</span>
+                  <span>Open widget</span>
                 </v-tooltip>
 
               </div>
             </v-card-text>
+            </a>
             <v-card-title>
               <v-layout column>
                 <span>{{widget.title}}</span>
@@ -148,8 +169,36 @@ export default {
       this.onResize()
     })
   },
-  watch: {
-
+  methods: {
+    openInNew (widget) {
+      window.open('/#/widget/' + widget.rsc_id, '_blank')
+    },
+    mouseDown () {
+      this.isMouseDown = true
+    },
+    mouseUp () {
+      this.isMouseDown = false
+    },
+    onResize: lodash.debounce(function () {
+      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth
+      if (this.widgetListOpen) {
+        this.elWidth -= 360 - 15 // wide List document.querySelector('.widget-list')).offsetWidth
+      } else {
+        this.elWidth -= 60 - 15// miniVariant
+      }
+    },
+    750),
+    ...mapActions(['addToBoard', 'removeFromBoard']),
+    onOver (item) {
+      this.over = true
+    },
+    onDrop (item) {
+      this.addToBoard(item.widgetId)
+    }
+  },
+  beforeDestroy () {
+    /*     this.$bus.$off('mouseOver')
+    this.$bus.$off('mouseOver') */
   },
   data () {
     return {
@@ -207,37 +256,25 @@ export default {
         })
       }
     }
-  },
-  methods: {
-    mouseDown () {
-      this.isMouseDown = true
-    },
-    mouseUp () {
-      this.isMouseDown = false
-    },
-    onResize: lodash.debounce(function () {
-      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth
-      if (this.widgetListOpen) {
-        this.elWidth -= 360 - 10 // wide List document.querySelector('.widget-list')).offsetWidth
-      } else {
-        this.elWidth -= 60 - 10// miniVariant
-      }
-    },
-    750),
-    ...mapActions(['addToBoard', 'removeFromBoard']),
-    onOver (item) {
-      this.over = true
-    },
-    onDrop (item) {
-      this.addToBoard(item.widgetId)
-    }
   }
 }
 </script>
 
 <style scoped lang="scss">
+.over {
+  transition: box-shadow 0.3s ease-in-out;
+}
 .headline {
   text-transform: initial;
+}
+.icon-container {
+  position: absolute;
+  margin-right: 0;
+  left: 0;
+  right: 0;
+  .v-btn {
+    margin: 0;
+  }
 }
 /deep/ .v-card__text {
   padding: 0;
@@ -247,21 +284,17 @@ export default {
     width: 100%;
     height: 100%;
   }
-  .icon-container {
-    position: absolute;
-    margin-right: 3px;
-    right: 0;
-    .v-btn{
-      margin: 0;
-    }
-  }
-  .open-widget-icon{
+  .open-widget-icon {
     font-size: 64px !important;
   }
 }
 /deep/ .v-card {
-  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
-  &:hover{
+  a{
+    text-decoration: none;
+  }
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12);
+  &:hover {
     transition: background-color 0.5s ease-in;
     background-color: var(--v-secondary-lighten4);
     cursor: pointer;
@@ -308,15 +341,20 @@ export default {
     height: 100%;
   }
 }
-
 </style>
 <style scoped lang="scss">
 .theme--dark {
+  .over {
+    box-shadow: 0px 0px 4px 2px rgba(255, 255, 255, 0.45) !important;
+  }
   /deep/ .v-card__title {
     background-color: var(--v-secondary-lighten2);
   }
 }
 .theme--light {
+  .over {
+    box-shadow: 0px 0px 5px 3px rgba(0, 0, 0, 0.33) !important;
+  }
   /deep/ .v-card__title {
     background-color: darken(#fff, 10);
     color: var(--v-secondary-lighten2);
