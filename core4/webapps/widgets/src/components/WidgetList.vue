@@ -59,21 +59,23 @@
             </template>
           </v-autocomplete>
         </v-flex>
+
         <v-toolbar-side-icon
           :large="miniVariant"
-          @click="miniVariant = !miniVariant"
+          @click="toggleWidgetListOpen()"
         >
           <v-icon color="primary">widgets</v-icon>
         </v-toolbar-side-icon>
+
       </v-layout>
 
       <v-slide-y-transition
         v-if="!miniVariant"
-        class="px-2"
+        class="pl-2 pr-3 pt-0"
         group
         tag="v-list"
       >
-        <v-layout key="-1000000" row wrap class="pb-2 pt-1">
+        <!--         <v-layout key="-1000000" row wrap class="pb-2 pt-1">
           <v-chip small @click="tags = [item.label];" style="margin: 2px;"
             v-for="item in autocompleteItems.most"
             :key="item.label"
@@ -81,22 +83,84 @@
             <v-avatar class="primary">{{item.count}}</v-avatar>
             {{item.label}}
           </v-chip>
-        </v-layout>
+        </v-layout> -->
+        <v-subheader key="-99999">
+          Widgets
+          <v-spacer></v-spacer>
+          <v-chip
+            small
+            color="accent"
+          >
+            {{widgets.length}}
+          </v-chip>
+          <v-btn
+            icon
+            class="mr-0"
+            @click="helpDialogOpen = true"
+          >
+            <v-icon color="grey">help</v-icon>
+          </v-btn>
+          <v-dialog
+            v-model="helpDialogOpen"
+            max-width="960px"
+          >
+            <v-card>
+              <v-card-text>
+                  <img alt="Howto Drag" src="../assets/howto-drag.jpg" style="width: 100%; height: auto;" class="mb-2">
+                Add new Widgets to the current board.
+                You can drag and drop widgets into the current board or alternatively use the <v-icon>add</v-icon> button.
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="primary"
+
+                  @click="helpDialogOpen=false"
+                >Close</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-subheader>
         <drag
           class="drag"
+          :class="{'is-not-draggable': item.effectAllowed[0] === 'none'}"
           v-for="item in widgets"
           :key="item.rsc_id"
           :effect-allowed="item.effectAllowed"
           drop-effect="copy"
           :transfer-data="{ widgetId: item.rsc_id }"
         >
-          <v-list-tile class="mini-widget">
+          <v-list-tile
+            class="mini-widget"
+            avatar
+          >
+            <!--         <v-list-tile-avatar>
+              <v-icon color="grey" medium>{{ item.icon }}</v-icon>
+            </v-list-tile-avatar> -->
             <v-list-tile-content>
               <v-list-tile-title style="font-weight: 700;">{{ item.title }}</v-list-tile-title>
               <v-list-tile-sub-title v-text="item.qual_name"></v-list-tile-sub-title>
-
             </v-list-tile-content>
-            <v-list-tile-action>
+            <v-tooltip
+              left
+              v-if="item.effectAllowed[0] !== 'none'"
+            >
+              <template v-slot:activator="{ on }">
+                <v-list-tile-action
+                  @click="addToBoard(item.rsc_id)"
+                  v-on="on"
+                  class="with-hover"
+                >
+                  <v-icon>add</v-icon>
+
+                </v-list-tile-action>
+              </template>
+              <span>Add to board</span>
+            </v-tooltip>
+            <v-list-tile-action v-else>
+              <v-icon>check</v-icon>
+            </v-list-tile-action>
+            <!-- <v-list-tile-action>
               <v-tooltip left>
                 <v-btn
                   @click="$router.push({ name: 'widget', params: { widgetId: item.rsc_id } })"
@@ -127,7 +191,7 @@
                 </v-btn>
                 <span>Help</span>
               </v-tooltip>
-            </v-list-tile-action>
+            </v-list-tile-action> -->
           </v-list-tile>
         </drag>
 
@@ -137,14 +201,17 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import _ from 'lodash'
 export default {
   name: 'widget-list',
   components: {
   },
   computed: {
-    ...mapGetters(['widgetSet']),
+    ...mapGetters(['widgetSet', 'widgetListOpen']),
+    miniVariant () {
+      return !this.widgetListOpen
+    },
     widgets () {
       const activeBoard = this.$store.getters.activeBoard
       const activeBoardWidgets = ((activeBoard || {}).widgets) || []
@@ -206,6 +273,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['addToBoard', 'toggleWidgetListOpen']),
     removeTagFromSearch (item) {
       const index = this.tags.indexOf(item.text)
       if (index >= 0) { this.tags.splice(index, 1) }
@@ -215,7 +283,8 @@ export default {
     return {
       open: true,
       searchInput: '',
-      miniVariant: false,
+      helpDialogOpen: false,
+      // miniVariant: false,
       tags: []
     }
   }
@@ -223,20 +292,54 @@ export default {
 </script>
 
 <style scoped lang="css">
-.mini-widget {
-  height: 72px;
-}
-div >>> .v-chip__content{
+div >>> .v-chip__content {
   cursor: pointer !important;
+}
+div >>> .v-list__tile {
+  padding-left: 12px;
+  padding-right: 0;
+}
+div >>> .v-list__tile__avatar {
+  min-width: 48px;
+}
+div >>> .v-list__tile__content {
+  padding-right: 3px;
+}
+div >>> .v-list__tile__action {
+  min-width: 36px;
+}
+div >>> .v-list__tile__action.with-hover {
+  transition: background-color 0.25s ease-in;
+  xxxxbackground-color: var(--v-secondary-lighten3);
+}
+div >>> .v-list__tile__action.with-hover:hover {
+  cursor: grab;
+  xxxxbackground-color: var(--v-secondary-lighten4);
+}
+div >>> .v-list__tile__action .v-icon {
+  margin-right: 6px;
+}
+div >>> .v-subheader {
+  font-weight: 600;
+  padding-left: 12px;
+  padding-right: 3px;
 }
 </style>
 
 <style scoped lang="scss">
+.drag {
+  cursor: grab;
+
+  &.is-not-draggable {
+    cursor: unset !important;
+  }
+}
 .widget-list {
   padding-top: 65px;
 }
 .mini-widget {
-  margin-bottom: 2px;
+  height: 58px;
+  margin-bottom: 6px;
   position: relative;
   &:after {
     content: "";
@@ -251,6 +354,7 @@ div >>> .v-chip__content{
     z-index: 100;
   }
 }
+
 .v-autocomplete {
   position: relative;
   &:after {
@@ -266,6 +370,12 @@ div >>> .v-chip__content{
   }
 }
 .theme--dark {
+  /deep/ .v-list__tile__action.with-hover {
+    background-color: var(--v-secondary-lighten3);
+  }
+  /deep/ .v-list__tile__action.with-hover:hover {
+    background-color: var(--v-secondary-lighten4);
+  }
   .mini-widget {
     background-color: var(--v-secondary-lighten2);
     &:after {
@@ -285,6 +395,15 @@ div >>> .v-chip__content{
   }
 }
 .theme--light {
+  /deep/ .v-chip__content {
+    color: #fff;
+  }
+  /deep/ .v-list__tile__action.with-hover {
+    background-color: rgba(0, 0, 0, 0.15);
+  }
+  /deep/ .v-list__tile__action.with-hover:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
   .mini-widget {
     background-color: darken(#fff, 5);
     &:after {

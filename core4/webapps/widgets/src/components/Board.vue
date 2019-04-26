@@ -42,7 +42,7 @@
     <drop
       class="drop"
       @drop="onDrop"
-      :class="{ 'over':over }"
+      :class="{ over }"
       @dragover="onOver"
       @dragleave="over = false"
     >
@@ -144,7 +144,9 @@ export default {
     Howto
   },
   mounted () {
-
+    this.$nextTick(function () {
+      this.onResize()
+    })
   },
   watch: {
 
@@ -170,7 +172,7 @@ export default {
     noBoards () {
       return !this.activeBoard && !this.name
     },
-    ...mapGetters(['activeBoard']),
+    ...mapGetters(['activeBoard', 'widgetListOpen']),
     name () {
       return (this.activeBoard || {}).name
     },
@@ -215,6 +217,11 @@ export default {
     },
     onResize: lodash.debounce(function () {
       this.elWidth = (this.$el || document.querySelector('body')).offsetWidth
+      if (this.widgetListOpen) {
+        this.elWidth -= 360 - 10 // wide List document.querySelector('.widget-list')).offsetWidth
+      } else {
+        this.elWidth -= 60 - 10// miniVariant
+      }
     },
     750),
     ...mapActions(['addToBoard', 'removeFromBoard']),
@@ -222,7 +229,6 @@ export default {
       this.over = true
     },
     onDrop (item) {
-      console.log(item)
       this.addToBoard(item.widgetId)
     }
   }
@@ -254,6 +260,7 @@ export default {
   }
 }
 /deep/ .v-card {
+  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
   &:hover{
     transition: background-color 0.5s ease-in;
     background-color: var(--v-secondary-lighten4);
@@ -301,8 +308,7 @@ export default {
     height: 100%;
   }
 }
-.dnd-grid-container {
-}
+
 </style>
 <style scoped lang="scss">
 .theme--dark {
