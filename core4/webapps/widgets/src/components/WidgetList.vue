@@ -30,7 +30,7 @@
             auto-select-first
             hide-details
             :open-on-clear="false"
-            menu-props="auto, closeOnContentClick"
+            :menu-props="{auto: true, closeOnContentClick:true}"
             label="Search"
             item-text="text"
             item-value="text"
@@ -48,14 +48,14 @@
               </v-chip>
             </template>
             <template v-slot:item="data">
-              <template v-if="typeof data.item !== 'object'">
+           <!--    <template v-if="typeof data.item !== 'object'">
                 <v-list-tile-content v-text="data.item"></v-list-tile-content>
               </template>
-              <template v-else>
+              <template v-else> -->
                 <v-list-tile-content>
                   <v-list-tile-title v-html="data.item.text"></v-list-tile-title>
                 </v-list-tile-content>
-              </template>
+              <!-- </template> -->
             </template>
           </v-autocomplete>
         </v-flex>
@@ -89,7 +89,7 @@
           <v-spacer></v-spacer>
           <v-chip
             small
-            color="accent"
+            color="grey darken-1"
           >
             {{widgets.length}}
           </v-chip>
@@ -221,15 +221,16 @@ export default {
       const activeBoard = this.$store.getters.activeBoard
       const activeBoardWidgets = ((activeBoard || {}).widgets) || []
       return this.$store.getters.widgetSet.filter(val => {
+        const searchString = val.$search.join(' ')
         if (this.searchInput && this.searchInput.length > 2) {
-          return val.title.toLowerCase().includes(this.searchInput)
+          return searchString.toLowerCase().includes(this.searchInput)
         }
         if (this.tags != null && this.tags.length) {
           let ret = false
           for (let index = 0; index < this.tags.length; index++) {
             const tag = this.tags[index]
             // if()
-            if (((val.title || '') + val.qual_name).toLowerCase().includes(tag)) {
+            if (searchString.toLowerCase().includes(tag.toLowerCase())) {
               ret = true
               break
             }
@@ -246,13 +247,7 @@ export default {
     },
     autocompleteItems () {
       // TODO - all words seperated
-      let ret = this.widgetSet.map(val => {
-        const one = (val.title || '').toLowerCase().split(' ')
-        const two = (val.qual_name || '').replace('core4.api.v1.request', '').toLowerCase().split('.')
-        return one.concat(two).filter(val => val !== '').filter(val => {
-          return val !== 'and' && val !== 'core4' && val !== 'for'
-        })
-      })
+      let ret = this.widgetSet.map(val => val.$search) // arr of arrs
       ret = [].concat.apply([], ret) // flatten [['s'], 'x'] => ['s', 'x']
       const count = _.countBy(ret)
       const most = _.sortBy(
@@ -315,6 +310,7 @@ export default {
 </script>
 
 <style scoped lang="css">
+
 div >>> .v-chip__content {
   cursor: pointer !important;
 }
@@ -356,6 +352,7 @@ div >>> .v-subheader {
 </style>
 
 <style scoped lang="scss">
+
 .drag {
   cursor: grab;
 
@@ -367,7 +364,7 @@ div >>> .v-subheader {
   padding-top: 65px;
 }
 .mini-widget {
-  height: 58px;
+  min-height: 58px;
   margin-bottom: 6px;
   position: relative;
   &:after {

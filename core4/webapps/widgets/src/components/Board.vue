@@ -1,4 +1,5 @@
 <template>
+<!-- https://github.com/kutlugsahin/smooth-dnd -->
   <div v-resize.quiet="onResize">
     <template v-if=noBoards>
       <div class="text-xs-center pt-5">
@@ -42,7 +43,7 @@
     <drop
       class="drop"
       @drop="onDrop"
-      :class="{ over }"
+      :class="{ 'over-board': over }"
       @dragover="onOver"
       @dragleave="over = false"
     >
@@ -58,91 +59,100 @@
         :margin="margin"
         :bubble-up="bubbleUp"
       >
-        <dnd-grid-box
-          v-for="widget in internalWidgets"
-          :box-id="widget.id"
-          :key="widget.id"
-          drag-selector=".v-card__title"
-        >
-          <v-card :class="{'over': widget.$over}">
-            <v-layout class="icon-container">
-              <v-tooltip top>
-                <v-btn
-                  @click="openInNew(widget)"
-                  icon
-                  small
-                  slot="activator"
-                  ripple
-                >
-                  <v-icon
-                    small
-                    color="grey"
-                  >open_in_new</v-icon>
-                </v-btn>
-                <span>Open widget in new tab</span>
-              </v-tooltip>
-              <v-tooltip top>
-                <v-btn
-                  @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
-                  icon
-                  small
-                  slot="activator"
-                  ripple
-                >
-                  <v-icon
-                    small
-                    color="grey"
-                  >help</v-icon>
-                </v-btn>
-                <span>Open widget help page</span>
-              </v-tooltip>
-              <v-spacer></v-spacer>
-              <v-tooltip top>
-                <v-btn
-                  @click="removeFromBoard(widget.rsc_id || widget.id)"
-                  icon
-                  small
-                  slot="activator"
-                  ripple
-                >
-                  <v-icon
-                    ripple
-                    small
-                    class="grey--text"
-                  >clear</v-icon>
-                </v-btn>
-                <span>Remove widget from board</span>
-              </v-tooltip>
-            </v-layout>
-            <a :href="widget.endpoint.enter_url" @click.prevent="()=>{}">
-            <v-card-text @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })" :alt="widget.endpoint.enter_url">
-
-              <div
-                class="text-xs-center"
-                style="padding-top: 54px;"
-              >
+          <dnd-grid-box
+            v-for="widget in internalWidgets"
+            :key="widget.id"
+            :box-id="widget.id"
+            drag-selector=".v-card__title"
+          >
+            <v-card :class="{'over': widget.$over}">
+              <v-layout class="icon-container">
                 <v-tooltip top>
-                  <v-icon
-                    class="open-widget-icon"
+                  <v-btn
+                    @click="openInNew(widget)"
+                    icon
+                    small
                     slot="activator"
-                    color="grey"
-                  >{{widget.icon}}</v-icon>
-                  <span>Open widget</span>
+                    ripple
+                  >
+                    <v-icon
+                      small
+                      color="grey"
+                    >open_in_new</v-icon>
+                  </v-btn>
+                  <span>Open widget in new tab</span>
                 </v-tooltip>
-
-              </div>
-            </v-card-text>
-            </a>
-            <v-card-title>
-              <v-layout column>
-                <span>{{widget.title}}</span>
-                <small class="grey--text tooltip">{{widget.qual_name}}</small>
+                <v-tooltip top>
+                  <v-btn
+                    @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
+                    icon
+                    small
+                    slot="activator"
+                    ripple
+                  >
+                    <v-icon
+                      small
+                      color="grey"
+                    >help</v-icon>
+                  </v-btn>
+                  <span>Open widget help page</span>
+                </v-tooltip>
+                <v-spacer></v-spacer>
+                <v-tooltip top>
+                  <v-btn
+                    @click="removeFromBoard(widget.rsc_id || widget.id)"
+                    icon
+                    small
+                    slot="activator"
+                    ripple
+                  >
+                    <v-icon
+                      ripple
+                      small
+                      class="grey--text"
+                    >clear</v-icon>
+                  </v-btn>
+                  <span>Remove widget from board</span>
+                </v-tooltip>
               </v-layout>
-              <v-spacer></v-spacer>
-              <v-icon class="widget-drag-icon white--text">drag_indicator</v-icon>
-            </v-card-title>
-          </v-card>
-        </dnd-grid-box>
+              <template v-if="widget.endpoint">
+
+                <a
+                  :href="widget.endpoint.enter_url"
+                  @click.prevent="()=>{}"
+                >
+                  <v-card-text
+                    @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
+                    :alt="widget.endpoint.enter_url"
+                  >
+
+                    <div
+                      class="text-xs-center"
+                      style="padding-top: 54px;"
+                    >
+                      <v-tooltip top>
+                        <v-icon
+                          class="open-widget-icon"
+                          slot="activator"
+                          color="grey"
+                        >{{widget.icon}}</v-icon>
+                        <span>Open widget</span>
+                      </v-tooltip>
+
+                    </div>
+                  </v-card-text>
+                </a>
+              </template>
+              <v-card-title>
+                <v-layout column>
+                  <span>{{widget.title}}</span>
+                  <small class="grey--text tooltip">{{widget.qual_name}}</small>
+                </v-layout>
+                <v-spacer></v-spacer>
+                <v-icon class="widget-drag-icon white--text">drag_indicator</v-icon>
+              </v-card-title>
+            </v-card>
+          </dnd-grid-box>
       </dnd-grid-container>
     </drop>
   </div>
@@ -261,7 +271,17 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.list-enter-active, .list-leave-active {
+  transition: all 1s;
+}
+.list-enter, .list-leave-to /* .list-leave-active below version 2.1.8 */ {
+  opacity: 0;
+  transform: translateY(30px);
+}
 .over {
+  transition: box-shadow 0.3s ease-in-out;
+}
+.over-board {
   transition: box-shadow 0.3s ease-in-out;
 }
 .headline {
@@ -289,7 +309,7 @@ export default {
   }
 }
 /deep/ .v-card {
-  a{
+  a {
     text-decoration: none;
   }
   box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
