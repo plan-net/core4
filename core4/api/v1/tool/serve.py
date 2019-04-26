@@ -34,7 +34,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     """
     Helper class to :meth:`.serve` :class:`CoreApiContainer` classes.
     """
-    container = []
+
+    def initialise_object(self):
+        self.container = []
 
     def prepare(self, name=None, address=None, port=None, routing=None):
         self.startup = core4.util.node.mongo_now()
@@ -55,7 +57,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             self.protocol = "https"
         else:
             self.protocol = "http"
-
         # global settings
         name = name or "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
@@ -77,52 +78,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                          self.address, self.port, self.routing)
         return server
 
-    def create_routes(self, *args, core4api=False, **kwargs):
-        routes = []
-        CoreApiServerTool.container = []
-        container_list = []
-        for container_cls in args:
-            if isinstance(container_cls, str):
-                modname = ".".join(container_cls.split(".")[:-1])
-                clsname = container_cls.split(".")[-1]
-                module = importlib.import_module(modname)
-                container_cls = getattr(module, clsname)
-            container_list.append(container_cls)
-        # container_list.sort(key=lambda r: r.qual_name())
-        if core4api:
-            qual_names = [a.qual_name() for a in container_list]
-            for addon in (CoreApiServer, CoreWidgetServer):
-                if addon.qual_name() not in qual_names:
-                    container_list.append(addon)
-        for container_cls in container_list:
-            if not container_cls.enabled:
-                self.logger.warning("starting NOT enabled container [%s]",
-                                    container_cls.qual_name())
-                continue
-            if isinstance(container_cls, str):
-                modname = ".".join(container_cls.split(".")[:-1])
-                clsname = container_cls.split(".")[-1]
-                module = importlib.import_module(modname)
-                container_cls = getattr(module, clsname)
-            container_obj = container_cls(**kwargs)
-            root = container_obj.get_root()
-            application = container_obj.make_application()
-            if root in [c.get_root() for c in CoreApiServerTool.container]:
-                raise core4.error.Core4SetupError(
-                    "routing root [{}] already exists [{}]".format(
-                        root, container_cls.qual_name())
-                )
-            CoreApiServerTool.container.append(container_obj)
-            self.logger.info("successfully registered container [%s] at [%s]",
-                             container_cls.qual_name(), root + ".*")
-            routes.append(
-                tornado.routing.Rule(tornado.routing.PathMatches(
-                    root + ".*"), application)
-            )
-        return routes
-
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
-              routing=None, core4api=False, ioloop=None, **kwargs):
+              routing=None, core4api=True):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -143,16 +100,16 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
-        http_args = self.prepare(name, address, port, routing)
-        routes = self.create_routes(*args, core4api=core4api, **kwargs)
-        router = tornado.routing.RuleRouter(routes)
-        self.register(router)
-        for obj in CoreApiServerTool.container:
-            obj.on_enter()
-        self.start_http(http_args, router, reuse_port)
-        if ioloop is None:
-            ioloop = tornado.ioloop.IOLoop.current()
-        ioloop.spawn_callback(self.heartbeat)
+        self.create_routes(*args, port=port, address=address, name=name,
+                           reuse_port=reuse_port, routing=routing,
+                           core4api=core4api)
+        self.init_callback()
+        self.start_loop()
+
+    def init_callback(self):
+        tornado.ioloop.IOLoop.current().spawn_callback(self.heartbeat)
+
+    def start_loop(self):
         try:
             tornado.ioloop.IOLoop().current().start()
         except KeyboardInterrupt:
@@ -161,14 +118,59 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             raise
         finally:
             self.unregister()
-            for obj in CoreApiServerTool.container:
-                obj.on_exit()
-            ioloop.stop()
+            #tornado.ioloop.IOLoop().current().stop()
 
+    def create_routes(self, *args, name=None, address=None, port=None,
+                      routing=None, core4api=False, reuse_port=True, **kwargs):
+        http_args = self.prepare(name, address, port, routing)
+        routes = []
+        container_list = []
+        for container_cls in args:
+            if isinstance(container_cls, str):
+                modname = ".".join(container_cls.split(".")[:-1])
+                clsname = container_cls.split(".")[-1]
+                module = importlib.import_module(modname)
+                container_cls = getattr(module, clsname)
+            container_list.append(container_cls)
+        if core4api:
+            qual_names = [a.qual_name() for a in container_list]
+            for addon in (CoreApiServer, CoreWidgetServer):
+                if addon.qual_name() not in qual_names:
+                    container_list.append(addon)
+        for container_cls in container_list:
+            if not container_cls.enabled:
+                self.logger.warning("starting NOT enabled container [%s]",
+                                    container_cls.qual_name())
+                continue
+            if isinstance(container_cls, str):
+                modname = ".".join(container_cls.split(".")[:-1])
+                clsname = container_cls.split(".")[-1]
+                module = importlib.import_module(modname)
+                container_cls = getattr(module, clsname)
+            container_obj = container_cls(**kwargs)
+            root = container_obj.get_root()
+            application = container_obj.make_application()
+            if root in [c.get_root() for c in self.container]:
+                raise core4.error.Core4SetupError(
+                    "routing root [{}] already exists [{}]".format(
+                        root, container_cls.qual_name())
+                )
+            self.container.append(container_obj)
+            self.logger.info("successfully registered container [%s] at [%s]",
+                             container_cls.qual_name(), root + ".*")
+            routes.append(
+                tornado.routing.Rule(tornado.routing.PathMatches(
+                    root + ".*"), application)
+            )
+        router = tornado.routing.RuleRouter(routes)
+        self.register(router)
+        for obj in self.container:
+            obj.on_enter()
+        return self.start_http(http_args, router, reuse_port)
 
-    @classmethod
-    def stop(cls):
-        tornado.ioloop.IOLoop().current().stop()
+    # @classmethod
+    # def stop(cls):
+    #     tornado.ioloop.IOLoop().current().stop()
 
     async def heartbeat(self):
         """
@@ -301,6 +303,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         Unregisters all endpoints of the tornado server in ``sys.handler``.
         """
         total, reset = self.reset_handler()
+        for obj in self.container:
+            obj.on_exit()
         self.logger.info("unregistering server [%s] with [%d] handlers, "
                          "[%d] reset", self.identifier, total, reset)
 
