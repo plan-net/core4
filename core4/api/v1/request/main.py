@@ -9,10 +9,11 @@
 core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
 """
 import base64
-import datetime
+import json
 import os
 import traceback
 
+import datetime
 import dateutil.parser
 import jwt
 import mimeparse
@@ -242,7 +243,7 @@ class CoreBaseHandler(CoreBase):
                         "successfully loaded [%s] by [%s] from [%s] "
                         "expiring [%s]", username, *source, self.token_exp)
                     self.set_secure_cookie("token", token)
-                    #self.set_header("token", token)
+                    # self.set_header("token", token)
                     return user
         elif username and password:
             try:
@@ -350,7 +351,7 @@ class CoreBaseHandler(CoreBase):
         parts = self.request.path.split("/")
         rsc_id = parts[-1]
         path = parts[:-2]
-        #handler = self.application.lookup[rsc_id]["handler"]
+        # handler = self.application.lookup[rsc_id]["handler"]
         if self.enter_url is None:
             self.enter_url = "/".join(path + [core4.const.ENTER_MODE, rsc_id])
         self.help_url = "/".join(path + [core4.const.HELP_MODE, rsc_id])
@@ -575,13 +576,12 @@ class CoreBaseHandler(CoreBase):
         elif "error" in kwargs:
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
-        if self.wants_json():
-            self.finish(ret)
-        elif self.wants_html():
+        if self.wants_html():
             ret["contact"] = self.config.api.contact
             self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
+        self.finish(ret)
 
     def _build_json(self, message, code, **kwargs):
         # internal method to wrap the response
@@ -897,13 +897,16 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         if self.request.body:
             try:
                 body_arguments = json_decode(self.request.body.decode("UTF-8"))
-            except:
-                self.logger.warning("failed to parse body arguments",
-                                    exc_info=True)
+            except UnicodeDecodeError:
                 pass
+            except json.decoder.JSONDecodeError:
+                pass
+            except Exception:
+                raise HTTPError(400)
             else:
-                for k, v in body_arguments.items():
-                    self.request.arguments.setdefault(k, []).append(v)
+                if isinstance(body_arguments, dict):
+                    for k, v in body_arguments.items():
+                        self.request.arguments.setdefault(k, []).append(v)
         await super().prepare()
 
     def decode_argument(self, value, name=None):
