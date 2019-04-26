@@ -39,6 +39,16 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.container = []
 
     def prepare(self, name=None, address=None, port=None, routing=None):
+        """
+        Prepare the service with
+
+        :param name: of the service
+        :param address: to listen to
+        :param port: to listen to
+        :param routing: masquerading domain name if behind a proxy
+
+        :return: the configured HTTP server arguments, see core4.config.api
+        """
         self.startup = core4.util.node.mongo_now()
 
         self.setup_logging()
@@ -70,6 +80,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         return http_args
 
     def start_http(self, http_args, router, reuse_port=True):
+        """
+        Starts the HTTP server with the passed arguments
+
+        :return: HTTP server instance
+        """
         server = tornado.httpserver.HTTPServer(router, **http_args)
         server.bind(self.port, address=self.address, reuse_port=reuse_port)
         server.start()
@@ -97,7 +112,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param routing: URL including the protocol and hostname of the server,
                         defaults to the protocol depending on SSL settings, the
                         node hostname or address and port
-        :param on_exit: callback function which will be called at server exit
         :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         self.create_routes(*args, port=port, address=address, name=name,
@@ -107,9 +121,15 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.start_loop()
 
     def init_callback(self):
+        """
+        Adds :meth:`.heartbeat` to the ioloop.
+        """
         tornado.ioloop.IOLoop.current().spawn_callback(self.heartbeat)
 
     def start_loop(self):
+        """
+        Starts the ioloop
+        """
         try:
             tornado.ioloop.IOLoop().current().start()
         except KeyboardInterrupt:
@@ -122,6 +142,26 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
     def create_routes(self, *args, name=None, address=None, port=None,
                       routing=None, core4api=False, reuse_port=True, **kwargs):
+        """
+        Instantiates the passed :class:`.CoreApiContainer`, adds the default
+        containers :class:`.CoreApiServer` and :class:`.CoreWidgetServer`
+        (if ``core4api is True``, defaults to ``False``), registers all
+        handlers and starts the HTTP server.
+
+        :param args: :class:`.CoreApiContainer`
+        :param name: of the tornado service, defaults to ``app``
+        :param address: to listen to, defaults to ``0.0.0.0``
+        :param port: to listen to, see core4.config.api.port
+        :param routing: masquerading domain name if serving behind a load
+                        balancer
+        :param core4api: ``True`` to append default containers, defaults to
+                         ``False``
+        :param reuse_port: tells the kernel to reuse a local socket in
+                           ``TIME_WAIT`` state, defaults to ``True``
+        :param kwargs: keyword arguments to be passed with instantiation of
+                       each :class:`.CoreApplication`
+        :return: HTTP server instance
+        """
         http_args = self.prepare(name, address, port, routing)
         routes = []
         container_list = []
@@ -300,7 +340,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
     def unregister(self):
         """
-        Unregisters all endpoints of the tornado server in ``sys.handler``.
+        Spawns :meth:`.CoreApiContainer.exit` for each registered api container
+        and Unregisters all endpoints of the tornado server in ``sys.handler``.
         """
         total, reset = self.reset_handler()
         for obj in self.container:
@@ -336,9 +377,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             project = self.project
         if filter is None:
             filter = [project]
-        # for i in range(len(filter)):
-        #     if not filter[i].endswith("."):
-        #         filter[i] += "."
         scope = []
         intro = core4.service.introspect.CoreIntrospector()
         for f in filter:
