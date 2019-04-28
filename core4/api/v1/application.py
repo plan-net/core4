@@ -332,19 +332,21 @@ class CoreApplication(tornado.web.Application):
             split = request.path[len(root) + 1:].split("/")
             if len(split) == 2:
                 mode = split[0]
-                handler = self.lookup[split[1]]["handler"]
-                if mode == core4.const.CARD_MODE:
-                    request.method = core4.const.CARD_METHOD
-                    return self.get_handler_delegate(request, handler.target,
-                                                     handler.target_kwargs)
-                elif mode == core4.const.ENTER_MODE:
-                    request.method = core4.const.ENTER_METHOD
-                    return self.get_handler_delegate(request, handler.target,
-                                                     handler.target_kwargs)
-                elif mode == core4.const.HELP_MODE:
-                    request.method = core4.const.HELP_METHOD
-                    return self.get_handler_delegate(request, handler.target,
-                                                     handler.target_kwargs)
+                lu = self.lookup.get(split[1], {})
+                handler = lu.get("handler", None)
+                if handler:
+                    if mode == core4.const.CARD_MODE:
+                        request.method = core4.const.CARD_METHOD
+                        return self.get_handler_delegate(request, handler.target,
+                                                         handler.target_kwargs)
+                    elif mode == core4.const.ENTER_MODE:
+                        request.method = core4.const.ENTER_METHOD
+                        return self.get_handler_delegate(request, handler.target,
+                                                         handler.target_kwargs)
+                    elif mode == core4.const.HELP_MODE:
+                        request.method = core4.const.HELP_METHOD
+                        return self.get_handler_delegate(request, handler.target,
+                                                         handler.target_kwargs)
         return super().find_handler(request, **kwargs)
 
     def handler_help(self, cls):
