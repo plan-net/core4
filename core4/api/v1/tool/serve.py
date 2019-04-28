@@ -138,7 +138,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             raise
         finally:
             self.unregister()
-            #tornado.ioloop.IOLoop().current().stop()
+            tornado.ioloop.IOLoop().current().stop()
 
     def create_routes(self, *args, name=None, address=None, port=None,
                       routing=None, core4api=False, reuse_port=True, **kwargs):
