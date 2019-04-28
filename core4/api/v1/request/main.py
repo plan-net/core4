@@ -67,6 +67,8 @@ class CoreBaseHandler(CoreBase):
     enter_url = None
     #: default material icon
     icon = "copyright"
+    #: open in new window/tab
+    blank = False
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
