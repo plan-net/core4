@@ -27,8 +27,8 @@ from docutils.parsers.rst.directives import register_directive
 import pytz, tzlocal
 
 
-LOCAL_TZ = pytz.timezone(tzlocal.get_localzone().zone)
-#LOCAL_TZ = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+LOCAL_TZ = lambda: pytz.timezone(tzlocal.get_localzone().zone)
+
 NAPOLEON = sphinx.ext.napoleon.Config(
     napoleon_use_param=False,
     napoleon_use_rtype=True,
@@ -59,7 +59,7 @@ def dfutc2local(col):
     :return: local class:`pandas.core.series.Series` without timezone
     """
     return col.dt.tz_localize("UTC").dt.tz_convert(
-        LOCAL_TZ).dt.tz_localize(None)
+        LOCAL_TZ()).dt.tz_localize(None)
 
 
 def utc2local(dt):
@@ -70,7 +70,7 @@ def utc2local(dt):
     :return: local class:`datetime.datetime` without timezone
     """
     return dt.replace(tzinfo=datetime.timezone.utc).astimezone(
-        LOCAL_TZ).replace(tzinfo=None)
+        LOCAL_TZ()).replace(tzinfo=None)
 
 
 def local2utc(dt):
@@ -80,7 +80,7 @@ def local2utc(dt):
     :param col: class:`datetime.datetime` without timezone information
     :return: class:`datetime.datetime` without timezone in UTC
     """
-    local_dt = LOCAL_TZ.localize(dt, is_dst=None)
+    local_dt = LOCAL_TZ().localize(dt, is_dst=None)
     return local_dt.astimezone(pytz.utc)
 
 
