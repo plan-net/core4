@@ -1,7 +1,4 @@
-from pprint import pprint
-
 import pytest
-import os
 
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.main import CoreRequestHandler
@@ -29,7 +26,6 @@ class SimpleHandler(CoreRequestHandler):
 
 
 class LinkHandler1(CoreRequestHandler):
-
     enter_url = "http://www.google.de"
     title = "goto"
 
@@ -40,8 +36,10 @@ class InfoServer1(CoreApiContainer):
         (r"/simple", SimpleHandler),
         (r"/google", LinkHandler1, {"title": "goto google"}),
         (r"/g", LinkHandler1, {"enter_url": "http://uni-xxx.de"}),
-        (r"/info", CoreStaticFileHandler, {"path": "static/", "title": "static info"}),
+        (r"/info", CoreStaticFileHandler,
+         {"path": "static/", "title": "static info"}),
     ]
+
 
 class InfoServer2(CoreApiContainer):
     root = "/test2"
@@ -73,15 +71,17 @@ async def test_simple(info_server):
         rv = await info_server.get("/core4/api/v1/_info/" + mode + "/" + r1)
         assert rv.code == 404
 
+
 async def get_info(server, qn, key="qual_name"):
     rv = await server.get("/core4/api/v1/_info")
     assert rv.code == 200
     return [i for i in rv.json()["data"] if i[key] and qn in i[key]]
 
+
 async def test_info_listing(info_server):
     await info_server.login()
     handler = await get_info(info_server, 'tests.api.test_info.LinkHandler1')
-    assert len(handler) == 3
+    assert len(handler) == 4
     enter = [i["enter_url"] for i in handler]
     assert "http://uni-m.de" in enter
     assert "http://uni-xxx.de" in enter
@@ -104,7 +104,9 @@ async def test_static_info(info_server):
 
     url = "/test/_info/help/" + rscid
     rv = await info_server.get(url)
+    # print(rv.body)
     assert rv.ok
+
 
 async def test_link_info(info_server):
     await info_server.login()
@@ -127,5 +129,3 @@ async def test_link_info(info_server):
     url = "/test/_info/enter/" + rscid
     rv = await info_server.get(url)
     assert rv.code == 405  # todo: requires improvement == redirect
-
-
