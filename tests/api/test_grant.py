@@ -101,6 +101,7 @@ async def test_grant(core4api):
 
     mongo = pymongo.MongoClient(
         "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
+    #with pytest.raises(pymongo.errors.OperationFailure):
     _ = mongo["core4test"].list_collection_names()
 
     data = {

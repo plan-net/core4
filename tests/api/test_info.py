@@ -5,6 +5,7 @@ from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.server import CoreApiServer
 from tests.api.test_test import setup, mongodb, run
+from pprint import pprint
 
 _ = setup
 _ = mongodb
