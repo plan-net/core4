@@ -34,7 +34,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     """
     Helper class to :meth:`.serve` :class:`CoreApiContainer` classes.
     """
-    container = []
 
     def initialise_object(self):
         self.container = []
@@ -203,32 +202,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 tornado.routing.Rule(tornado.routing.PathMatches(
                     root + ".*"), application)
             )
-        return routes
-
-    def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
-              routing=None, core4api=False, ioloop=None, **kwargs):
-        """
-        Starts the tornado HTTP server listening on the specified port and
-        enters tornado's IOLoop.
-
-        :param args: one or more :class:`CoreApiContainer` classes
-        :param port: to listen, defaults to ``5001``, see core4 configuration
-                     setting ``api.port``
-        :param address: IP address or hostname.  If it's a hostname, the server
-                        will listen on all IP addresses associated with the
-                        name.  Address may be an empty string or None to listen
-                        on all  available interfaces.
-        :param name: to identify the server
-        :param reuse_port: tells the kernel to reuse a local socket in
-                           ``TIME_WAIT`` state, defaults to ``True``
-        :param routing: URL including the protocol and hostname of the server,
-                        defaults to the protocol depending on SSL settings, the
-                        node hostname or address and port
-        :param on_exit: callback function which will be called at server exit
-        :param kwargs: to be passed to all :class:`CoreApiApplication`
-        """
-        http_args = self.prepare(name, address, port, routing)
-        routes = self.create_routes(*args, core4api=core4api, **kwargs)
         router = tornado.routing.RuleRouter(routes)
         self.register(router)
         for obj in self.container:
