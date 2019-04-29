@@ -54,7 +54,8 @@ setup(
             "requests",
             "coverage",
             "sphinx-rtd-theme",
-            "websockets"
+            "websockets",
+            ""
         ]
     },
     zip_safe=False,

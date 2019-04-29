@@ -307,6 +307,8 @@ class CoreInstaller(CoreBase, InstallMixin):
         else:
             self.checkout()
         latest = self.get_local_commit()
+        if self.web:
+            self.print("  will build web apps")
         if latest == current:
             self.print("  latest [{}] == current commit".format(latest))
             self.print("  no changes with [{}]".format(self.project))
