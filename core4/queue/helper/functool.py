@@ -52,7 +52,7 @@ def execute(job, **kwargs):
     enq_doc = enqueue(job, **kwargs)
     worker = core4.queue.worker.CoreWorker(name="manual")
     worker.at = core4.util.node.mongo_now()
-    worker.start_job(enq_doc.serialise(), async=False)
+    worker.start_job(enq_doc.serialise(), run_async=False)
     doc = worker.queue.job_detail(enq_doc._id)
     worker.config.sys.queue.delete_one(filter={"_id": enq_doc._id})
     worker.config.sys.journal.delete_one(filter={"_id": enq_doc._id})
