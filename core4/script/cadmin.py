@@ -9,8 +9,8 @@
 cadmin - core-4 build and deployment utililty.
 
 Usage:
-  cadmin install [--reset] [--web] [--home=HOME] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--force] [--reset] [--web] [--core4] [--home=HOME] [PROJECT...]
+  cadmin install [--reset] [--web] [--home=HOME] [--build=APP...] REPOSITORY PROJECT
+  cadmin upgrade [--test] [--force] [--reset] [--core4] [--home=HOME] [PROJECT...]
   cadmin uninstall [--home=HOME] PROJECT...
   cadmin version [--home=HOME] [PROJECT...]
 
@@ -19,13 +19,14 @@ Arguments:
   PROJECT     project name
 
 Options:
-  --home=HOME   set core4 home directory, defaults to config.folder.home
-  -r --reset    reset existing project root
-  -f --force    force build and installation even if no changes
-  -w --web      build and install web apps
-  -t --test     dry-run
-  -h --help     show this screen
-  -v --version  show version
+  --home=HOME     set core4 home directory, defaults to config.folder.home
+  -r --reset      reset existing project root
+  -f --force      force build and installation even if no changes
+  -w --web        build and install web apps
+  -b --build=APP  build and install web apps
+  -t --test       dry-run
+  -h --help       show this screen
+  -v --version    show version
 """
 
 import datetime
@@ -121,7 +122,7 @@ class CoreInstaller(CoreBase, InstallMixin):
             raise SystemExit("virtual environment [{}] not found".format(
                 self.venv))
 
-    def install(self):
+    def install(self, filter=None):
         if self.reset:
             self.uninstall()
         self.check_for_install()
@@ -139,7 +140,7 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.install_project()
         self.write_config()
         if self.web:
-            self.build()
+            self.build(filter)
 
     def write_config(self):
         data = {
@@ -228,13 +229,14 @@ class CoreInstaller(CoreBase, InstallMixin):
         assert ret == 0
         return "\n".join(stdout)
 
-    def build(self):
+    def build(self, filter):
         self.print("  build webapps in [{}]".format(self.clone))
         for build in self.identify_webapp():
-            self.print("    build [{}]".format(build["base"]))
-            self.clean_webapp(os.path.join(build["base"], build["dist"]))
-            self.build_webapp(build["base"], build["command"])
-            self.install_webapp(build["base"], build["dist"])
+            if filter == [] or build["name"] in filter:
+                self.print("    build [{}]".format(build["base"]))
+                self.clean_webapp(os.path.join(build["base"], build["dist"]))
+                self.build_webapp(build["base"], build["command"])
+                self.install_webapp(build["base"], build["dist"])
 
     def install_webapp(self, base, dist):
         command = "import {p:s}; print({p:s}.__file__)".format(p=self.project)
@@ -286,7 +288,8 @@ class CoreInstaller(CoreBase, InstallMixin):
                             yield {
                                 "base": os.path.join(path, directory),
                                 "command": command,
-                                "dist": dist
+                                "dist": dist,
+                                "name": pkg_json.get("name", None)
                             }
 
     def upgrade(self, test=False, force=False, core4=False):
@@ -326,7 +329,7 @@ class CoreInstaller(CoreBase, InstallMixin):
                 self.install_project()
                 self.write_config()
                 if self.web and (not core4 or force):
-                    self.build()
+                    self.build([])
 
     def version(self):
         args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
@@ -354,7 +357,7 @@ def run(args):
         installer = CoreInstaller(
             project[0], args["REPOSITORY"], args["--reset"],
             args["--web"], args["--home"])
-        installer.install()
+        installer.install(args["--build"])
     elif args["upgrade"]:
         for p in project:
             installer = CoreInstaller(
@@ -382,6 +385,7 @@ def run(args):
 
 def main():
     args = docopt(__doc__, help=True)
+    #print(args)
     run(args)
 
 
