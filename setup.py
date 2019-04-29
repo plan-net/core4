@@ -51,6 +51,7 @@ setup(
             "pytest",
             "pytest-timeout",
             "pytest-runner",
+            "pytest-tornasync",
             "requests",
             "coverage",
             "sphinx-rtd-theme",

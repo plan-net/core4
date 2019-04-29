@@ -212,16 +212,19 @@ class CoreBaseHandler(CoreBase):
                 token = auth_header[7:]
                 source = ("token", "Auth Bearer")
         else:
-            token = self.get_argument("token", default=None, remove=True)
-            username = self.get_argument("username", default=None, remove=True)
-            password = self.get_argument("password", default=None, remove=True)
+            token = self.get_secure_cookie("token")
             if token is not None:
-                source = ("token", "args")
-            elif username and password:
-                source = ("username", "args")
-            else:
                 source = ("token", "cookie")
-                token = self.get_secure_cookie("token")
+            else:
+                token = self.get_argument("token", default=None, remove=True)
+                if token is not None:
+                    source = ("token", "args")
+                else:
+                    username = self.get_argument("username", default=None,
+                                                 remove=True)
+                    password = self.get_argument("password", default=None,
+                                                 remove=True)
+                    source = ("username", "args")
         if token:
             payload = self.parse_token(token)
             username = payload.get("name")
@@ -685,6 +688,7 @@ class CoreBaseHandler(CoreBase):
         :return: value
         """
         kwargs["default"] = kwargs.get("default", ARG_DEFAULT)
+
         ret = self._get_argument(name, source=self.request.arguments,
                                  *args, strip=False, **kwargs)
         if as_type and ret is not None:

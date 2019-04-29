@@ -26,6 +26,21 @@ def test_role_init():
     with pytest.raises(KeyError):
         CoreRole(bla=123)
 
+async def test_auth_delegation(core4api):
+    URL = '/core4/api/v1/login'
+    resp = await core4api.get(URL + '?username=admin&password=hans')
+    assert resp.code == 200
+    cookie = list(resp.cookie().values())
+    header = {"Cookie": "token=" + cookie[0].coded_value}
+    resp = await core4api.get(URL, headers=header)
+    data = {}
+    data["name"] = "mkr"
+    data["realname"] = "Markus Kral"
+    data["email"] = "test@test.de"
+    data["password"] = "test"
+    rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
+    assert rv.json()["code"] == 200
+
 
 def test_perm_validate():
     p = core4.api.v1.request.role.field.PermField(key="perm",
@@ -378,6 +393,58 @@ async def test_empty(core4api):
     oid = "5be414ccde8b69542b70f4d7"
     rv = await core4api.get("/core4/api/v1/roles/" + oid)
     assert rv.code == 404
+
+
+async def test_nested_regex(core4api):
+    await core4api.login()
+    names = ['Liese', 'Lisa', 'Lieselotte', 'Hans']
+    for i in range(1, 4):
+        data = {
+            "name": "test_role_%03d" % i,
+            "realname": names.pop(0),
+        }
+        rv = await core4api.post("/core4/api/v1/roles", body=data)
+        assert rv.json()["code"] == 200
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["Li*"]}}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert ret["total_count"] == 3
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["Liese"]}}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 1
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["L*"]}, "name": "test_role_001"}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 1
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=3&sort=realname&order=-1'
+        '&filter={"realname": {"$in": ["Lies*", "Lisa"]}}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 3
+    rv = await core4api.get(
+        '/core4/api/v1/roles?per_page=10&sort=realname&order=-1'
+        '&filter={"$and":[{"realname":{"$in": ["Li*"]}}, '
+        '{"realname":{"$ne":"Lisa"}}]}'
+    )
+    assert rv.code == 200
+    ret = rv.json()
+    assert rv.code == 200
+    assert ret["total_count"] == 2
 
 
 async def test_delete(core4api):
@@ -786,4 +853,25 @@ async def test_recursion(core4api):
     # test1 = loop.run_sync(lambda: CoreRole.find_one(name="test_role1"))
     # assert test1.role == ['test_role2', 'test_role3']
     # assert loop.run_sync(test1.casc_perm) == ['app://1', 'app://2', 'app://3']
-    #
+async def test_cookie_create(core4api):
+    """
+    Test to create a user using a cookie for authentication.
+    core4api.login sets the authorization-header,  so both ways of creating a
+    user are tested.
+    A user requires an email and a password, if creating a user while
+    authenticating via url-parameters or body-parameters the  password will get
+    overwritten. One cannot create a user any longer.
+    :param core4api: core4api
+    """
+    URL = '/core4/api/v1/login'
+    resp = await core4api.get(URL + '?username=admin&password=hans')
+    assert resp.code == 200
+    cookie = list(resp.cookie().values())
+    header = {"Cookie": "token=" + cookie[0].coded_value}
+    data = {}
+    data["name"] = "mkr"
+    data["realname"] = "Markus Kral"
+    data["email"] = "test@test.de"
+    data["password"] = "test"
+    rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
+    assert rv.json()["code"] == 200
