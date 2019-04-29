@@ -163,6 +163,14 @@ class ConnectTag(yaml.YAMLObject):
         """
         return self.connect(concurr=True)
 
+    def connect_sync(self):
+        """
+        Same as :meth:`.connect` with ``concurr=False``.
+
+        :return: :class:`.CoreCollection`
+        """
+        return self.connect(concurr=False)
+
     def __getattr__(self, item):
         return getattr(self.connect(), item)
 

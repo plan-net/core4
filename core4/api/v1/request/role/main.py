@@ -407,7 +407,8 @@ class RoleHandler(CoreRequestHandler):
         Deletes an existing user or role.
 
         Methods:
-            DELETE /roles/<_id> - delete user/role with ``_id``
+            DELETE /roles/<_id>?etag=<etag>
+            DELETE /roles/<_id>/<etag>
 
         Parameters:
             _id (str): of the user/role to delete
@@ -447,13 +448,16 @@ class RoleHandler(CoreRequestHandler):
                 'timestamp': '2018-11-15T06:24:52.262685'
             }
         """
+        if "/" in _id:
+            _id, *e = _id.split("/")
+            etag = self.parse_objectid("/".join(e))
+        else:
+            etag = self.get_argument("etag", as_type=ObjectId)
         oid = self.parse_objectid(_id)
         ret = await CoreRole().find_one(_id=oid)
-        etag = self.get_argument("etag", as_type=ObjectId)
         if ret is None:
             raise HTTPError(404, "role [%s] not found", oid)
         ret.data["etag"].set(etag)
-
         try:
             removed = await ret.delete()
         except (AttributeError, TypeError, core4.error.Core4ConflictError,

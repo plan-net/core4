@@ -69,7 +69,7 @@ class AccessHandler(CoreRequestHandler):
             }
         """
         manager = CoreAccessManager(self.user)
-        if protocol == "":
+        if protocol is None or protocol == "":
             body = await manager.synchronise_all()
         else:
             body = await manager.synchronise(protocol)

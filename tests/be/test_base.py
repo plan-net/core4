@@ -13,6 +13,8 @@ import core4.config.tag
 import core4.error
 import core4.service.setup
 
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
@@ -105,7 +107,7 @@ def test_project():
 def test_project_conf():
     import project.test
     t = project.test.Test()
-    assert t.project_config().endswith("core4/project/project.yaml")
+    assert t.project_config().endswith("/core4/tests/project/project.yaml")
     assert t.config.mongo_database, "core4test"
     assert repr(t) == "project.test.Test()"
     assert "/core4test/sys.role" in t.config.sys.role.info_url
@@ -119,9 +121,10 @@ def test_main():
         pp = os.environ["PYTHONPATH"].split(":")
     else:
         pp = []
-    pp.append(os.path.dirname(core4.__file__) + "/..")
+    pp.append(os.path.dirname(core4.__file__) + "/../tests")
     os.environ["PYTHONPATH"] = ":".join(pp)
     out = check_output([sys.executable, project.test.__file__], env=environ)
+    print(">>>", out)
     assert out.decode(
         "utf-8").strip() == 'core4.base.main.CoreBase project.test.Test'
 

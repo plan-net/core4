@@ -67,6 +67,8 @@ class CoreBaseHandler(CoreBase):
     enter_url = None
     #: default material icon
     icon = "copyright"
+    #: open in new window/tab
+    blank = False
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
@@ -461,7 +463,9 @@ class CoreBaseHandler(CoreBase):
         Renders the default help page. This method is to be overwritten for
         custom help page impelementation.
         """
-        return self.render(self.help_html_page, **data)
+        if self.wants_html():
+            return self.render(self.help_html_page, **data)
+        return self.reply(data)
 
     def get_template_path(self):
         """

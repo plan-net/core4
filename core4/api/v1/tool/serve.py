@@ -36,7 +36,20 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     """
     container = []
 
+    def initialise_object(self):
+        self.container = []
+
     def prepare(self, name=None, address=None, port=None, routing=None):
+        """
+        Prepare the service with
+
+        :param name: of the service
+        :param address: to listen to
+        :param port: to listen to
+        :param routing: masquerading domain name if behind a proxy
+
+        :return: the configured HTTP server arguments, see core4.config.api
+        """
         self.startup = core4.util.node.mongo_now()
 
         self.setup_logging()
@@ -55,7 +68,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             self.protocol = "https"
         else:
             self.protocol = "http"
-
         # global settings
         name = name or "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
@@ -69,6 +81,11 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         return http_args
 
     def start_http(self, http_args, router, reuse_port=True):
+        """
+        Starts the HTTP server with the passed arguments
+
+        :return: HTTP server instance
+        """
         server = tornado.httpserver.HTTPServer(router, **http_args)
         server.bind(self.port, address=self.address, reuse_port=reuse_port)
         server.start()
@@ -77,9 +94,77 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                          self.address, self.port, self.routing)
         return server
 
-    def create_routes(self, *args, core4api=False, **kwargs):
+    def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
+              routing=None, core4api=True):
+        """
+        Starts the tornado HTTP server listening on the specified port and
+        enters tornado's IOLoop.
+
+        :param args: one or more :class:`CoreApiContainer` classes
+        :param port: to listen, defaults to ``5001``, see core4 configuration
+                     setting ``api.port``
+        :param address: IP address or hostname.  If it's a hostname, the server
+                        will listen on all IP addresses associated with the
+                        name.  Address may be an empty string or None to listen
+                        on all  available interfaces.
+        :param name: to identify the server
+        :param reuse_port: tells the kernel to reuse a local socket in
+                           ``TIME_WAIT`` state, defaults to ``True``
+        :param routing: URL including the protocol and hostname of the server,
+                        defaults to the protocol depending on SSL settings, the
+                        node hostname or address and port
+        :param kwargs: to be passed to all :class:`CoreApiApplication`
+        """
+        self.create_routes(*args, port=port, address=address, name=name,
+                           reuse_port=reuse_port, routing=routing,
+                           core4api=core4api)
+        self.init_callback()
+        self.start_loop()
+
+    def init_callback(self):
+        """
+        Adds :meth:`.heartbeat` to the ioloop.
+        """
+        tornado.ioloop.IOLoop.current().spawn_callback(self.heartbeat)
+
+    def start_loop(self):
+        """
+        Starts the ioloop
+        """
+        try:
+            tornado.ioloop.IOLoop().current().start()
+        except KeyboardInterrupt:
+            raise SystemExit()
+        except:
+            raise
+        finally:
+            self.unregister()
+            tornado.ioloop.IOLoop().current().stop()
+
+    def create_routes(self, *args, name=None, address=None, port=None,
+                      routing=None, core4api=False, reuse_port=True, **kwargs):
+        """
+        Instantiates the passed :class:`.CoreApiContainer`, adds the default
+        containers :class:`.CoreApiServer` and :class:`.CoreWidgetServer`
+        (if ``core4api is True``, defaults to ``False``), registers all
+        handlers and starts the HTTP server.
+
+        :param args: :class:`.CoreApiContainer`
+        :param name: of the tornado service, defaults to ``app``
+        :param address: to listen to, defaults to ``0.0.0.0``
+        :param port: to listen to, see core4.config.api.port
+        :param routing: masquerading domain name if serving behind a load
+                        balancer
+        :param core4api: ``True`` to append default containers, defaults to
+                         ``False``
+        :param reuse_port: tells the kernel to reuse a local socket in
+                           ``TIME_WAIT`` state, defaults to ``True``
+        :param kwargs: keyword arguments to be passed with instantiation of
+                       each :class:`.CoreApplication`
+        :return: HTTP server instance
+        """
+        http_args = self.prepare(name, address, port, routing)
         routes = []
-        CoreApiServerTool.container = []
         container_list = []
         for container_cls in args:
             if isinstance(container_cls, str):
@@ -88,7 +173,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 module = importlib.import_module(modname)
                 container_cls = getattr(module, clsname)
             container_list.append(container_cls)
-        # container_list.sort(key=lambda r: r.qual_name())
         if core4api:
             qual_names = [a.qual_name() for a in container_list]
             for addon in (CoreApiServer, CoreWidgetServer):
@@ -107,12 +191,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             container_obj = container_cls(**kwargs)
             root = container_obj.get_root()
             application = container_obj.make_application()
-            if root in [c.get_root() for c in CoreApiServerTool.container]:
+            if root in [c.get_root() for c in self.container]:
                 raise core4.error.Core4SetupError(
                     "routing root [{}] already exists [{}]".format(
                         root, container_cls.qual_name())
                 )
-            CoreApiServerTool.container.append(container_obj)
+            self.container.append(container_obj)
             self.logger.info("successfully registered container [%s] at [%s]",
                              container_cls.qual_name(), root + ".*")
             routes.append(
@@ -147,28 +231,13 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         routes = self.create_routes(*args, core4api=core4api, **kwargs)
         router = tornado.routing.RuleRouter(routes)
         self.register(router)
-        for obj in CoreApiServerTool.container:
+        for obj in self.container:
             obj.on_enter()
-        self.start_http(http_args, router, reuse_port)
-        if ioloop is None:
-            ioloop = tornado.ioloop.IOLoop.current()
-        ioloop.spawn_callback(self.heartbeat)
-        try:
-            tornado.ioloop.IOLoop().current().start()
-        except KeyboardInterrupt:
-            raise SystemExit()
-        except:
-            raise
-        finally:
-            self.unregister()
-            for obj in CoreApiServerTool.container:
-                obj.on_exit()
-            ioloop.stop()
+        return self.start_http(http_args, router, reuse_port)
 
-
-    @classmethod
-    def stop(cls):
-        tornado.ioloop.IOLoop().current().stop()
+    # @classmethod
+    # def stop(cls):
+    #     tornado.ioloop.IOLoop().current().stop()
 
     async def heartbeat(self):
         """
@@ -249,7 +318,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         qual_name=handler.qual_name(),
                         tag=handler.tag,
                         title=handler.title,
-                        version=handler.version()
+                        version=handler.version(),
+                        enter_url=handler.enter_url,
+                        blank=handler.blank
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
@@ -298,9 +369,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
 
     def unregister(self):
         """
-        Unregisters all endpoints of the tornado server in ``sys.handler``.
+        Spawns :meth:`.CoreApiContainer.exit` for each registered api container
+        and Unregisters all endpoints of the tornado server in ``sys.handler``.
         """
         total, reset = self.reset_handler()
+        for obj in self.container:
+            obj.on_exit()
         self.logger.info("unregistering server [%s] with [%d] handlers, "
                          "[%d] reset", self.identifier, total, reset)
 
@@ -332,9 +406,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             project = self.project
         if filter is None:
             filter = [project]
-        # for i in range(len(filter)):
-        #     if not filter[i].endswith("."):
-        #         filter[i] += "."
         scope = []
         intro = core4.service.introspect.CoreIntrospector()
         for f in filter:
