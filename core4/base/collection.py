@@ -61,7 +61,7 @@ class CoreCollection:
 
     def __repr__(self):
         return "CoreConnection(" \
-               "async='{async}', " \
+               "async_conn='{async_conn}', " \
                "scheme='{scheme}', " \
                "hostname='{hostname}', " \
                "username='{username}', " \

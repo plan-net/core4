@@ -43,7 +43,7 @@ def make_connection(connection):
         mode = "sync"
     if url in CACHE[mode]:
         return CACHE[mode][url]
-    if connection.async:
+    if connection.async_conn:
         CACHE[mode][url] = motor.MotorClient(
             url, tz_aware=False, connect=False)
     else:
