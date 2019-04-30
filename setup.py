@@ -55,7 +55,7 @@ setup(
             "coverage",
             "sphinx-rtd-theme",
             "websockets",
-            ""
+            "python-tornasync"
         ]
     },
     zip_safe=False,
