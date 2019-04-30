@@ -603,7 +603,6 @@ def test_nonstop(queue, worker):
                 if "successfully set non-stop job" in d["message"]]) == 1
 
 
-@pytest.mark.timeout(30)
 def test_progress2(queue, worker):
     queue.enqueue(ProgressJob, progress_interval=1)
     worker.start(1)
