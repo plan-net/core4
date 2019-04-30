@@ -249,7 +249,7 @@ class CoreBaseHandler(CoreBase):
                     return user
         elif username and password:
             try:
-                user = await CoreRole().find_one(name=username)
+                user = await CoreRole.find_one(name=username)
             except:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
@@ -463,9 +463,7 @@ class CoreBaseHandler(CoreBase):
         Renders the default help page. This method is to be overwritten for
         custom help page impelementation.
         """
-        if self.wants_html():
-            return self.render(self.help_html_page, **data)
-        return self.reply(data)
+        return self.render(self.help_html_page, **data)
 
     def get_template_path(self):
         """

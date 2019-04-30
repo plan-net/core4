@@ -613,7 +613,6 @@ def test_nonstop(queue, worker):
                 if "successfully set non-stop job" in d["message"]]) == 1
 
 
-@pytest.mark.timeout(30)
 def test_progress2(queue, worker):
     queue.enqueue(ProgressJob, progress_interval=1)
     worker.start(1)
@@ -621,6 +620,15 @@ def test_progress2(queue, worker):
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data
                 if "progress" in d["message"] and d["level"] == "DEBUG"]) >= 5
+
+def test_progress3(queue, worker):
+
+    queue.enqueue(ProgressJob)
+    worker.start(1)
+    worker.wait_queue()
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
 
 
 class NoProgressJob(core4.queue.job.CoreJob):

@@ -1,12 +1,20 @@
-import pymongo
 import pytest
-
+import motor
+import pymongo.errors
 import core4.api.v1.request.role.field
 from tests.api.test_test import setup, mongodb, core4api
 
 _ = setup
 _ = mongodb
 _ = core4api
+
+
+@pytest.fixture(autouse=True)
+def reset_user(tmpdir, mongodb):
+    ret = mongodb.client.admin.command('usersInfo')
+    for user in ret["users"]:
+        if user["user"].startswith("test_reg_"):
+            mongodb.client.admin.command('dropUser', user["user"])
 
 
 async def test_login(core4api):
@@ -17,9 +25,21 @@ async def test_login(core4api):
 
 
 async def test_grant(core4api):
+
+    async def _access(access):
+        mongo = motor.MotorClient(
+            "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
+        _ = await mongo.server_info()
+        _ = await mongo["core4test"].list_collection_names()
+        assert await mongo.core4test.sys.role.count_documents({}) > 0
+
+    async def _no_access(access):
+        with pytest.raises(pymongo.errors.OperationFailure):
+            await _access(access)
+
     await core4api.login()
     data = {
-        "name": "test_role1",
+        "name": "test_reg_test_role1",
         "realname": "test role1",
         "password": "123456",
         "email": "test@mail.com",
@@ -28,76 +48,52 @@ async def test_grant(core4api):
         ],
         "perm": []
     }
-    rv = await core4api.post("/core4/api/v1/roles", body=data)
+    rv = await core4api.post("/core4/api/v1/roles", json=data)
     assert rv.code == 200
     id = rv.json()["data"]["_id"]
     etag = rv.json()["data"]["etag"]
 
-    admin_token = core4api.token
-    core4api.token = None
-    rv = await core4api.get(
-        "/core4/api/v1/login?username=test_role1&password=123456")
-    assert rv.code == 200
-    token = rv.json()["data"]["token"]
-    core4api.token = token
-
+    await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.get("/core4/api/v1/profile")
     assert rv.code == 200
 
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
-
     access = rv.json()["data"]["mongodb"]
-    print(access)
-    mongo = pymongo.MongoClient(
-        "mongodb://test_role1:" + access + "@localhost:27017")
-    print(mongo.server_info())
-    with pytest.raises(pymongo.errors.OperationFailure):
-        _ = mongo["core4test"].list_collection_names()
 
+    await _no_access(access)
+
+    core4api.set_admin()
     data = {
         "etag": etag,
         "perm": [
             "mongodb://core4test"
         ]
     }
-
-    core4api.token = admin_token
-    rv = await core4api.put("/core4/api/v1/roles/" + id, body=data)
+    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_role1:" + access + "@localhost:27017")
-    # print(mongo.server_info())
-    with pytest.raises(pymongo.errors.OperationFailure):
-        _ = mongo["core4test"].list_collection_names()
+    await _no_access(access)
 
-    core4api.token = token
+    await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
     access = rv.json()["data"]["mongodb"]
-    print(access)
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_role1:" + access + "@localhost:27017")
-    print(mongo.server_info())
-    print(mongo["core4test"].list_collection_names())
+    await _access(access)
 
     data = {
         "etag": etag,
         "realname": "no change"
     }
 
-    core4api.token = admin_token
-    rv = await core4api.put("/core4/api/v1/roles/" + id, body=data)
+    core4api.set_admin()
+    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_role1:" + access + "@localhost:27017")
-    # print(mongo.server_info())
-    print(mongo["core4test"].list_collection_names())
+    await _access(access)
 
     data = {
         "etag": etag,
@@ -107,33 +103,44 @@ async def test_grant(core4api):
         ]
     }
 
-    rv = await core4api.put("/core4/api/v1/roles/" + id, body=data)
+    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
+    etag = rv.json()["data"]["etag"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_role1:" + access + "@localhost:27017")
-    with pytest.raises(pymongo.errors.OperationFailure):
-        print(mongo.server_info())
-    with pytest.raises(pymongo.errors.OperationFailure):
-        _ = mongo["core4test"].list_collection_names()
+    await _no_access(access)
 
-    core4api.token = token
+    await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access/mongodb")
     assert rv.code == 200
-    print(rv.json())
     access = rv.json()["data"]
-    print(access)
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_role1:" + access + "@localhost:27017")
-    print(mongo.server_info())
-    _ = mongo["core4test"].list_collection_names()
+    await _access(access)
+
+    data = {
+        "etag": etag,
+        "perm": [
+            "mongodb://other"
+        ]
+    }
+
+    core4api.set_admin()
+    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
+    assert rv.code == 200
+
+    await _no_access(access)
+
+    await core4api.login("test_reg_test_role1", "123456")
+    rv = await core4api.post("/core4/api/v1/access/mongodb")
+    assert rv.code == 200
+    access = rv.json()["data"]
+
+    await _no_access(access)
 
 
 async def add_user(http, username):
     http.set_admin()
     rv = await http.post("/core4/api/v1/roles",
-                         body={
+                         json={
                              "name": username,
                              "role": ["standard_user"],
                              "email": username + "@mail.com",
@@ -151,7 +158,7 @@ async def test_server_test(core4api):
     await core4api.login()
     rv = await core4api.get("/core4/api/v1/profile")
     assert rv.code == 200
-    await add_user(core4api, "user1")
+    await add_user(core4api, "test_reg_user1")
     rv = await core4api.get("/core4/api/v1/profile")
     assert rv.code == 200
     rv = await core4api.get("/core4/api/v1/roles")
@@ -185,7 +192,7 @@ async def test_server_test(core4api):
 async def add_job_user(http, username, perm):
     http.set_admin()
     rv = await http.post("/core4/api/v1/roles",
-                         body={
+                         json={
                              "name": username,
                              "role": ["standard_user"],
                              "email": username + "@mail.com",
@@ -204,7 +211,7 @@ async def add_job_user(http, username, perm):
 async def test_enqeuue(core4api):
     await core4api.login()
     await add_job_user(
-        core4api, "user1", [
+        core4api, "test_reg_user1", [
             "api://core4.api.v1.request.queue.job.JobPost",
             "api://core4.api.v1.request.queue.job.JobHandler",
             "job://core4.queue.helper.*/x"
@@ -216,7 +223,7 @@ async def test_enqeuue(core4api):
     rv = await core4api.get("/core4/api/v1/jobs/" + jid)
     assert rv.code == 200
     await add_job_user(
-        core4api, "user2",
+        core4api, "test_reg_user2",
         ["api://core4.api.v1.request.queue.job.JobHandler"])
     rv = await core4api.post(
         "/core4/api/v1/jobs/enqueue?name=core4.queue.helper.job.example.DummyJob")
@@ -242,14 +249,14 @@ class MyJob(core4.queue.job.CoreJob):
 async def test_job_listing(core4api):
     await core4api.login()
     for i in range(0, 10):
-        rv = await core4api.post("/core4/api/v1/jobs/enqueue", body={
+        rv = await core4api.post("/core4/api/v1/jobs/enqueue", json={
             "name": "core4.queue.helper.job.example.DummyJob",
             "id": i + 1
         }, headers={"Content-Type": "application/json"})
         assert rv.code == 200
 
     for i in range(0, 6):
-        rv = await core4api.post("/core4/api/v1/jobs/enqueue", body={
+        rv = await core4api.post("/core4/api/v1/jobs/enqueue", json={
             "name": "tests.api.test_grant.MyJob",
             "id": i + 1
         }, headers={"Content-Type": "application/json"})
@@ -257,7 +264,7 @@ async def test_job_listing(core4api):
     rv = await core4api.get("/core4/api/v1/jobs")
     assert rv.json()["total_count"] == 16
 
-    await add_job_user(core4api, "user1", perm=[
+    await add_job_user(core4api, "test_reg_user1", perm=[
         "api://core4.api.v1.request.queue.job.*",
         "job://core4.queue.helper.job.*/r"
     ])
@@ -265,7 +272,7 @@ async def test_job_listing(core4api):
     assert rv.json()["total_count"] == 10
 
     core4api.set_admin()
-    await add_job_user(core4api, "user2", perm=[
+    await add_job_user(core4api, "test_reg_user2", perm=[
         "api://core4.api.v1.request.queue.job.*",
         "job://core4.queue.helper.*/x"
     ])
@@ -280,13 +287,13 @@ async def test_job_listing(core4api):
     rv = await core4api.get("/core4/api/v1/jobs")
     assert rv.json()["total_count"] == 6
 
-    rv = await core4api.post("/core4/api/v1/jobs/enqueue", body={
+    rv = await core4api.post("/core4/api/v1/jobs/enqueue", json={
         "name": "tests.api.test_grant.MyJob"
     }, headers={"Content-Type": "application/json"})
     assert rv.code == 403
 
     core4api.set_admin()
-    await add_job_user(core4api, "user4", perm=[
+    await add_job_user(core4api, "test_reg_user4", perm=[
         "api://core4.api.v1.request.queue.job.*",
         "job://tests.+/x"
     ])
@@ -308,7 +315,7 @@ async def test_job_listing(core4api):
 
 async def test_job_access(core4api):
     await core4api.login()
-    token3 = await add_job_user(core4api, "user3", perm=[
+    token3 = await add_job_user(core4api, "test_reg_user3", perm=[
         "api://core4.api.v1.request.queue.job.*",
         "job://tests.+/r"
     ])
@@ -321,7 +328,7 @@ async def test_job_access(core4api):
     })
     assert rv.code == 403
 
-    token4 = await add_job_user(core4api, "user4", perm=[
+    token4 = await add_job_user(core4api, "test_reg_user4", perm=[
         "api://core4.api.v1.request.queue.job.*",
         "job://tests.+/x"
     ])
@@ -374,34 +381,34 @@ async def test_job_access(core4api):
 async def test_profile_cascade(core4api):
     await core4api.login()
     rv = await core4api.post("/core4/api/v1/roles", json=dict(
-        name="role",
+        name="test_reg_role",
         realname="test role",
         perm=["api://core4.api.v1.abc"]
     ))
     assert rv.code == 200
     rv = await core4api.post("/core4/api/v1/roles", json=dict(
-        name="role2",
+        name="test_reg_role2",
         realname="test role2",
         perm=["api://core4.api.v1.aaa"]
     ))
     assert rv.code == 200
     rv = await core4api.post("/core4/api/v1/roles", json=dict(
-        name="user",
+        name="test_reg_user",
         realname="test user",
         password="password",
         email="test@user.com",
         perm=["api://core4.api.v1.request"],
-        role=["role", "role2"]
+        role=["test_reg_role", "test_reg_role2"]
     ))
     assert rv.code == 200
     user_id = rv.json()["data"]["_id"]
     core4api.token = None
-    await core4api.login("user", "password")
+    await core4api.login("test_reg_user", "password")
     assert rv.code == 200
     rv = await core4api.get("/core4/api/v1/profile")
     assert rv.code == 200
     data = rv.json()["data"]
-    assert data["name"] == "user"
+    assert data["name"] == "test_reg_user"
     assert data["_id"] == user_id
     assert data["email"] == "test@user.com"
     assert data["realname"] == "test user"
@@ -410,7 +417,7 @@ async def test_profile_cascade(core4api):
                             'api://core4.api.v1.request']
     assert data["last_login"] is not None
     assert data["is_active"]
-    assert data["role"] == ['role', 'role2']
+    assert data["role"] == ['test_reg_role', 'test_reg_role2']
     assert data["token_expires"] is not None
 
 

@@ -76,7 +76,7 @@ def connect_database(conn_str, callback, concurr=False, **kwargs):
     opts["hostname"] = hostname
     opts["database"] = database
     opts["collection"] = "/".join(collection)
-    opts["async"] = concurr
+    opts["async_conn"] = concurr
     if hostname:
         return callback(**opts)
     raise core4.error.Core4ConfigurationError("no mongo connected")

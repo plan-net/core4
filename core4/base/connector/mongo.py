@@ -27,7 +27,7 @@ def make_connection(connection):
     :param connection: :class:`.CoreCollection` object
     :return: MongoClient, see :class:`pymongo.mongo_client.MongoClient`
              or MotorClient, see :class:`motor.MotorClient` if the connection
-             object has ``connection.async == True``.
+             object has ``connection.async_conn == True``.
     """
     global CACHE
     url = 'mongodb://'
@@ -37,13 +37,13 @@ def make_connection(connection):
             url += ":" + connection.password
         url += "@"
     url += str(connection.hostname)
-    if connection.async:
+    if connection.async_conn:
         mode = "async"
     else:
         mode = "sync"
     if url in CACHE[mode]:
         return CACHE[mode][url]
-    if connection.async:
+    if connection.async_conn:
         CACHE[mode][url] = motor.MotorClient(
             url, tz_aware=False, connect=False)
     else:

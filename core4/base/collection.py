@@ -35,7 +35,7 @@ class CoreCollection:
 
     def __init__(
             self, scheme, hostname, database, collection, username=None,
-            password=None, async=False):
+            password=None, async_conn=False):
         """
         Instantiates a CoreCollection object with
 
@@ -54,14 +54,14 @@ class CoreCollection:
         self.username = username
         self.password = password
         self._connection = None
-        self.async = async
+        self.async_conn = async_conn
         if self.scheme not in SCHEME:
             raise core4.error.Core4ConfigurationError(
                 "unknown scheme [{}]".format(self.scheme))
 
     def __repr__(self):
         return "CoreConnection(" \
-               "async='{async}', " \
+               "async_conn='{async_conn}', " \
                "scheme='{scheme}', " \
                "hostname='{hostname}', " \
                "username='{username}', " \
