@@ -21,7 +21,8 @@ Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
-  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [--home=HOME] [--filter=FILTER]...
+  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] \
+[--address=ADDRESS] [--home=HOME] [--filter=FILTER]...
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -39,6 +40,7 @@ Usage:
   coco --jobs
   coco --project
   coco --container
+  coco --dump [PROJECT]
   coco --version
 
 Options:
@@ -56,14 +58,15 @@ Options:
   -j --jobs       enumerate available jobs
   -c --container  enumerate available API container
   -p --project    enumerate available core4 projects
+  -u --dump       project introspection (json dump)
   -y --yes        Assume yes on all requests.
 """
 
-import datetime
 import json
 import re
 from pprint import pprint
 
+import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
 
@@ -438,16 +441,24 @@ def project():
         if summary[project]:
             for mod in summary[project]["project"]:
                 modules[mod["name"]] = mod
-            print("{} ({}) with Python {}, pip {}".format(
-                modules[project]["name"], modules[project]["version"],
+            print("{} - {} ({}) "
+                  "with Python {}, "
+                  "pip {}, "
+                  "core4 - {} ({})".format(
+                modules[project]["name"],
+                modules[project]["version"],
+                modules[project]["built"],
                 summary[project]["python_version"],
                 summary[project]["pip"],
+                modules["core4"]["version"],
+                modules["core4"]["built"]
             ))
-            for mod in sorted(modules.keys()):
-                if mod != project:
-                    print("  {} ({})".format(
-                        modules[mod]["name"], modules[mod]["version"]
-                    ))
+
+
+def data_dump():
+    intro = core4.service.introspect.CoreIntrospector()
+    summary = dict(intro.list_project())
+    print(json.dumps(summary, indent="  ", sort_keys=True))
 
 
 def main():
@@ -496,6 +507,8 @@ def main():
         jobs()
     elif args["--project"]:
         project()
+    elif args["--dump"]:
+        data_dump()
     elif args["--container"]:
         container()
     else:
