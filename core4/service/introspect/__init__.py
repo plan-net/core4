@@ -25,6 +25,7 @@ from pip import __version__ as pip_version
 import core4.api.v1.application
 import core4.base
 import core4.queue.job
+from core4.queue.helper.job.base import CoreAbstractJobMixin
 import core4.queue.query
 import core4.service.introspect
 import core4.util.node
@@ -157,31 +158,33 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         * ``name`` (see :meth:`.qual_name`)
         * ``author``
         * ``schedule``
-        * ``hidden``
         * ``doc`` (the ``__doc__`` string of the job class)
         * ``tag``
         * ``valid`` (``True`` if job properties and configuration is valid, else
           ``False``)
         * ``exception`` with type and traceback in case of errors
 
-        .. note:: Jobs with a ``.hidden`` attribute of ``None`` are not
-                  retrieved. All other jobs irrespective of their hidden value
-                  (``True`` or ``False``) are enumerated.
-
         :return: list of dict generator
         """
         self._load()
         for qual_name, cls in self._job.items():
             try:
-                obj = cls()
                 filename = cls.module().__file__
-                if obj.hidden is None:
-                    continue  # applies to core4.queue.job.CoreJob
+                docstring = cls.__doc__
+                if cls.qual_name() == core4.queue.job.CoreJob.qual_name():
+                    continue
+                if issubclass(cls, (CoreAbstractJobMixin, )):
+                    continue
+                obj = cls()
                 obj.validate()
+                tag = obj.tag
                 validate = True
                 exception = None
+                schedule = obj.schedule
             except Exception:
                 validate = False
+                tag = cls.tag
+                schedule = None
                 exc_info = sys.exc_info()
                 exception = {
                     "exception": repr(exc_info[1]),
@@ -192,11 +195,10 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             yield {
                 "name": qual_name,
                 "source": filename,
-                "author": obj.author,
-                "schedule": obj.schedule,
-                "hidden": obj.hidden,
-                "doc": obj.__doc__,
-                "tag": obj.tag,
+                "author": cls.author,
+                "schedule": schedule,
+                "doc": docstring,
+                "tag": tag,
                 "valid": validate,
                 "exception": exception,
             }

@@ -79,7 +79,6 @@ class CoreScheduler(CoreDaemon):
         * ``_ie`` - the :meth:`.qual_name`
         * ``author`` - of the job
         * ``schedule`` - in cron format
-        * ``hidden`` - job property
         * ``doc`` - the doc string
         * ``tag`` - list
         * ``valid`` - indicates if the job is valid
