@@ -50,8 +50,6 @@ def test_load():
     jobs = list(intro.iter_job())
     assert [j for j in jobs if j["name"] == "core4.queue.helper.job.example.DummyJob"]
     assert not [j for j in jobs if j["name"] == "core4.queue.job.CoreJob"]
-    hidden_job = [j for j in jobs if "HiddenJob" in j["name"]][0]
-    assert hidden_job["hidden"]
     no_author_job = [j for j in jobs if "NoAuthorJob" in j["name"]][0]
     assert not no_author_job["valid"]
     assert "missing author" in no_author_job["exception"]["exception"]

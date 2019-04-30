@@ -41,9 +41,6 @@ ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
 
-START = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-import sys
-sys.path.append(START)
 
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
