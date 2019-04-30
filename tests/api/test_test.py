@@ -22,6 +22,7 @@ MONGO_DATABASE = 'core4test'
 ASSET_FOLDER = '../asset'
 
 
+
 def asset(*filename, exists=True):
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, ASSET_FOLDER, *filename)

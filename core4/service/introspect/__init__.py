@@ -541,9 +541,9 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                 stdout = None
         else:
             stdout = subprocess.DEVNULL
-        env = os.environ
-        if "PYTHONPATH" in env:
-            del env["PYTHONPATH"]
+        env = os.environ.copy()
+        # if "PYTHONPATH" in env:
+        #     del env["PYTHONPATH"]
         self.logger.debug("execute with [%s] in [%s]:\n%s", python_path,
                           currdir, cmd)
         if replace:

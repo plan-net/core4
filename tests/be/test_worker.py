@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import ctypes
-import sys
-import signal
 import datetime
-import psutil
+import os
+import signal
+import sys
 import threading
 import time
-import os
+
+import psutil
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -39,6 +40,10 @@ import core4.util.tool
 ASSET_FOLDER = '../asset'
 MONGO_URL = 'mongodb://core:654321@localhost:27017'
 MONGO_DATABASE = 'core4test'
+
+START = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+import sys
+sys.path.append(START)
 
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
@@ -152,6 +157,22 @@ class ProgressJob(core4.queue.job.CoreJob):
             time.sleep(0.25)
 
 
+#@pytest.mark.timeout(30)
+def test_success_after_failure(queue, worker):
+    import tests.project.work
+    queue.enqueue(tests.project.work.ErrorJob, success=True)
+    worker.start(1)
+    worker.wait_queue()
+    data = list(queue.config.sys.log.find())
+    assert sum([1 for d in data if "done execution" in d["message"]]) == 3
+    assert sum([1 for d in data if
+                "done execution with [failed]" in d["message"]]) == 2
+    assert sum([1 for d in data if
+                "done execution with [complete]" in d["message"]]) == 1
+
+
+
+
 @pytest.mark.timeout(30)
 def test_progress1(queue, worker):
     # fh = open("/tmp/test.txt", "w", encoding="utf-8")
@@ -164,6 +185,7 @@ def test_progress1(queue, worker):
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data
                 if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
+
 
 @pytest.mark.timeout(30)
 def test_register(caplog):
@@ -220,7 +242,7 @@ def test_setup():
     worker.start()
 
 
-#@pytest.mark.timeout(30)
+# @pytest.mark.timeout(30)
 def test_maintenance():
     queue = core4.queue.main.CoreQueue()
     queue.enter_maintenance()
@@ -274,7 +296,8 @@ def test_offset():
     dequeued_id.append(worker.get_next_job()["_id"])
     dequeued_id.append(worker.get_next_job()["_id"])
     dequeued_id.append(worker.get_next_job()["_id"])
-    enqueued_job = queue.enqueue(core4.queue.helper.job.example.DummyJob, i=5, priority=10)
+    enqueued_job = queue.enqueue(core4.queue.helper.job.example.DummyJob, i=5,
+                                 priority=10)
     dequeued_job = worker.get_next_job()
     assert enqueued_job._id == dequeued_job["_id"]
     assert enqueued_id[0:len(dequeued_id)] == dequeued_id
@@ -287,6 +310,7 @@ def test_lock():
     job = worker.get_next_job()
     assert queue.lock_job(job["_id"], worker.identifier)
     assert queue.lock_job(job["_id"], worker.identifier) is False
+
 
 
 def test_remove(mongodb):
@@ -350,7 +374,6 @@ def test_start_job():
     print(job.finished_at)
     print(job.finished_at - job.started_at)
     print(job.runtime)
-
 
 @pytest.mark.timeout(30)
 def test_start_job2(queue):
@@ -422,10 +445,8 @@ def test_ok(queue, worker):
 
 @pytest.mark.timeout(30)
 def test_error(queue, worker):
-    cwd = os.path.join(os.path.dirname(__file__), "..")
-    import project.work
-    os.chdir(cwd)
-    queue.enqueue(project.work.ErrorJob)
+    import tests.project.work
+    queue.enqueue(tests.project.work.ErrorJob)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.25)
@@ -433,6 +454,8 @@ def test_error(queue, worker):
             break
     worker.stop()
     data = list(queue.config.sys.log.find())
+    from pprint import pprint
+    pprint(data)
     assert sum([1 for d in data if "done execution" in d["message"]]) == 3
     assert sum([1 for d in data if "start execution" in d["message"]]) == 3
     delta = [d["created"] for d in data if
@@ -441,24 +464,10 @@ def test_error(queue, worker):
     assert (delta[2] - delta[1]).total_seconds() >= 3
 
 
-@pytest.mark.timeout(30)
-def test_success_after_failure(queue, worker):
-    import project.work
-    queue.enqueue(project.work.ErrorJob, success=True)
-    worker.start(1)
-    worker.wait_queue()
-    data = list(queue.config.sys.log.find())
-    assert sum([1 for d in data if "done execution" in d["message"]]) == 3
-    assert sum([1 for d in data if
-                "done execution with [failed]" in d["message"]]) == 2
-    assert sum([1 for d in data if
-                "done execution with [complete]" in d["message"]]) == 1
-
-
 @pytest.mark.timeout(90)
 def test_defer(queue, worker):
-    import project.work
-    queue.enqueue(project.work.DeferJob)
+    import tests.project.work
+    queue.enqueue(tests.project.work.DeferJob)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
@@ -474,9 +483,9 @@ def test_defer(queue, worker):
 
 @pytest.mark.timeout(90)
 def test_mass_defer(queue, worker, mongodb):
-    import project.work
+    import tests.project.work
     for i in range(0, 10):
-        queue.enqueue(project.work.DeferJob, i=i, success=True, defer_time=1,
+        queue.enqueue(tests.project.work.DeferJob, i=i, success=True, defer_time=1,
                       defer_max=2)
     worker.start(4)
     while queue.config.sys.queue.count_documents({}) > 0:
@@ -488,8 +497,8 @@ def test_mass_defer(queue, worker, mongodb):
 
 @pytest.mark.timeout(30)
 def test_fail2inactive(queue, worker, mongodb):
-    import project.work
-    queue.enqueue(project.work.ErrorJob, defer_max=5, attempts=10)
+    import tests.project.work
+    queue.enqueue(tests.project.work.ErrorJob, defer_max=5, attempts=10)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
@@ -500,8 +509,8 @@ def test_fail2inactive(queue, worker, mongodb):
 
 @pytest.mark.timeout(30)
 def test_remove_failed(queue, worker, mongodb):
-    import project.work
-    job = queue.enqueue(project.work.ErrorJob, attempts=5, sleep=1)
+    import tests.project.work
+    job = queue.enqueue(tests.project.work.ErrorJob, attempts=5, sleep=1)
     worker.start(1)
     while queue.config.sys.queue.count_documents({"state": "running"}) == 0:
         time.sleep(0.25)
@@ -515,8 +524,8 @@ def test_remove_failed(queue, worker, mongodb):
 
 @pytest.mark.timeout(30)
 def test_remove_deferred(queue, worker, mongodb):
-    import project.work
-    job = queue.enqueue(project.work.DeferJob, defer_time=10)
+    import tests.project.work
+    job = queue.enqueue(tests.project.work.DeferJob, defer_time=10)
     worker.start(1)
     while queue.config.sys.queue.count_documents({"state": "deferred"}) == 0:
         time.sleep(0.25)
@@ -546,8 +555,8 @@ def test_remove_complete(queue, worker, mongodb):
 
 @pytest.mark.timeout(90)
 def test_remove_inactive(queue, worker):
-    import project.work
-    job = queue.enqueue(project.work.DeferJob, defer_max=1)
+    import tests.project.work
+    job = queue.enqueue(tests.project.work.DeferJob, defer_max=1)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
@@ -565,8 +574,8 @@ def test_remove_inactive(queue, worker):
 
 @pytest.mark.timeout(30)
 def test_remove_error(queue, worker):
-    import project.work
-    job = queue.enqueue(project.work.ErrorJob, attempts=1)
+    import tests.project.work
+    job = queue.enqueue(tests.project.work.ErrorJob, attempts=1)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
@@ -584,7 +593,8 @@ def test_remove_error(queue, worker):
 
 @pytest.mark.timeout(30)
 def test_nonstop(queue, worker):
-    job = queue.enqueue(core4.queue.helper.job.example.DummyJob, sleep=5, wall_time=1)
+    job = queue.enqueue(core4.queue.helper.job.example.DummyJob, sleep=5,
+                        wall_time=1)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(0.1)
