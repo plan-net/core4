@@ -249,7 +249,7 @@ class CoreBaseHandler(CoreBase):
                     return user
         elif username and password:
             try:
-                user = await CoreRole().find_one(name=username)
+                user = await CoreRole.find_one(name=username)
             except:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
