@@ -1,6 +1,6 @@
-import pymongo
 import pytest
-
+import motor
+import pymongo.errors
 import core4.api.v1.request.role.field
 from tests.api.test_test import setup, mongodb, core4api
 
@@ -25,6 +25,18 @@ async def test_login(core4api):
 
 
 async def test_grant(core4api):
+
+    async def _access(access):
+        mongo = motor.MotorClient(
+            "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
+        _ = await mongo.server_info()
+        _ = await mongo["core4test"].list_collection_names()
+        assert await mongo.core4test.sys.role.count_documents({}) > 0
+
+    async def _no_access(access):
+        with pytest.raises(pymongo.errors.OperationFailure):
+            await _access(access)
+
     await core4api.login()
     data = {
         "name": "test_reg_test_role1",
@@ -45,17 +57,11 @@ async def test_grant(core4api):
     rv = await core4api.get("/core4/api/v1/profile")
     assert rv.code == 200
 
-    await core4api.login("test_reg_test_role1", "123456")
-
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
-
     access = rv.json()["data"]["mongodb"]
-    mongo = pymongo.MongoClient(
-        "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
-    _ = mongo.server_info()
-    with pytest.raises(pymongo.errors.OperationFailure):
-        _ = mongo["core4test"].list_collection_names()
+
+    await _no_access(access)
 
     core4api.set_admin()
     data = {
@@ -68,20 +74,14 @@ async def test_grant(core4api):
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
-    with pytest.raises(pymongo.errors.OperationFailure):
-        _ = mongo["core4test"].list_collection_names()
+    await _no_access(access)
 
     await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
     access = rv.json()["data"]["mongodb"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
-    _ = mongo.server_info()
-    _ = mongo["core4test"].list_collection_names()
+    await _access(access)
 
     data = {
         "etag": etag,
@@ -93,11 +93,7 @@ async def test_grant(core4api):
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
-
-    _ = mongo.server_info()
-    _ = mongo["core4test"].list_collection_names()
+    await _access(access)
 
     data = {
         "etag": etag,
@@ -109,23 +105,36 @@ async def test_grant(core4api):
 
     rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
+    etag = rv.json()["data"]["etag"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
-    with pytest.raises(pymongo.errors.OperationFailure):
-        _ = mongo.server_info()
-    with pytest.raises(pymongo.errors.OperationFailure):
-        _ = mongo["core4test"].list_collection_names()
+    await _no_access(access)
 
     await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access/mongodb")
     assert rv.code == 200
     access = rv.json()["data"]
 
-    mongo = pymongo.MongoClient(
-        "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
-    _ = mongo.server_info()
-    _ = mongo["core4test"].list_collection_names()
+    await _access(access)
+
+    data = {
+        "etag": etag,
+        "perm": [
+            "mongodb://other"
+        ]
+    }
+
+    core4api.set_admin()
+    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
+    assert rv.code == 200
+
+    await _no_access(access)
+
+    await core4api.login("test_reg_test_role1", "123456")
+    rv = await core4api.post("/core4/api/v1/access/mongodb")
+    assert rv.code == 200
+    access = rv.json()["data"]
+
+    await _no_access(access)
 
 
 async def add_user(http, username):
