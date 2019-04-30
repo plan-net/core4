@@ -378,9 +378,12 @@ class RoleHandler(CoreRequestHandler):
             perm=self.get_argument(
                 "perm", as_type=list, default=None)
         )
+        set_perm = False
         for k, v in kwargs.items():
             if v is not None:
                 ret.data[k].set(v)
+                if k == "perm":
+                    set_perm = True
         try:
             saved = await ret.save()
         except (AttributeError, TypeError, core4.error.Core4ConflictError,
@@ -397,8 +400,8 @@ class RoleHandler(CoreRequestHandler):
                 self.reply(ret.to_response())
             else:
                 self.reply("no changes")
-        if "perm" in kwargs:
-            self.logger.debug("revoke access grants")
+        if set_perm:
+            self.logger.info("revoke access grants with {}".format(kwargs))
             manager = CoreAccessManager(ret)
             await manager.reset_all()
 
