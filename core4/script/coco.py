@@ -40,7 +40,6 @@ Usage:
   coco --jobs
   coco --project
   coco --container
-  coco --dump [PROJECT]
   coco --version
 
 Options:
@@ -58,15 +57,14 @@ Options:
   -j --jobs       enumerate available jobs
   -c --container  enumerate available API container
   -p --project    enumerate available core4 projects
-  -u --dump       project introspection (json dump)
   -y --yes        Assume yes on all requests.
 """
 
+import datetime
 import json
 import re
 from pprint import pprint
 
-import datetime
 from bson.objectid import ObjectId
 from docopt import docopt
 
@@ -79,8 +77,7 @@ import core4.queue.job
 import core4.queue.main
 import core4.queue.scheduler
 import core4.queue.worker
-import core4.service.introspect
-import core4.service.introspect
+import core4.service.introspect.main
 import core4.service.project
 import core4.util.data
 import core4.util.node
@@ -363,44 +360,32 @@ def init(name, description, yes):
 
 
 def jobs():
-    intro = core4.service.introspect.CoreIntrospector()
-    summary = dict(intro.list_project())
-    for project in sorted(summary.keys()):
-        if summary[project]:
-            if "job" in summary[project]:
-                jobs = []
-                for job in summary[project]["job"]:
-                    job_project = job["name"].split(".")[0]
-                    if job_project == project:
-                        jobs.append(job["name"])
-                if jobs:
-                    print("{}".format(project))
-                    for job in sorted(jobs):
-                        print("  {}".format(job))
+    intro = core4.service.introspect.main.CoreIntrospector2()
+    seen = set()
+    for project in intro.introspect():
+        if project["name"] not in seen:
+            print(project["name"], "-", project["version"])
+            for job in sorted([j["name"] for j in project["jobs"]]):
+                print("  " + job)
+            seen.add(project["name"])
 
 
 def container():
-    intro = core4.service.introspect.CoreIntrospector()
-    summary = dict(intro.list_project())
-    for project in sorted(summary.keys()):
-        if summary[project]:
-            if "container" in summary[project]:
-                containers = []
-                for container in summary[project]["container"]:
-                    container_project = container["name"].split(".")[0]
-                    if container_project == project:
-                        containers.append((container["name"],
-                                           container["rules"]))
-                if containers:
-                    print(project)
-                    for container in sorted(containers):
-                        print("  {}".format(container[0]))
-                        for rule in container[1]:
-                            print("    {}: {}".format(rule[1], rule[0]))
+    intro = core4.service.introspect.main.CoreIntrospector2()
+    seen = set()
+    for project in intro.introspect():
+        if project["name"] not in seen:
+            print(project["name"], "-", project["version"])
+            for api in sorted(project["api_containers"],
+                              key=lambda r: r["name"]):
+                print("  {} ({})".format(api["name"], api["root"]))
+                for rule in api["rules"]:
+                    print("    {} ({})".format(rule[1], rule[0]))
+            seen.add(project["name"])
 
 
 def who():
-    intro = core4.service.introspect.CoreIntrospector()
+    intro = core4.service.introspect.main.CoreIntrospector2()
     summary = intro.summary()
     print("USER:")
     print("  {:s} IN {}".format(summary["user"]["name"],
@@ -434,32 +419,21 @@ def who():
 
 
 def project():
-    intro = core4.service.introspect.CoreIntrospector()
-    summary = dict(intro.list_project())
-    for project in sorted(summary.keys()):
-        modules = {}
-        if summary[project]:
-            for mod in summary[project]["project"]:
-                modules[mod["name"]] = mod
-            print("{} - {} ({}) "
-                  "with Python {}, "
-                  "pip {}, "
-                  "core4 - {} ({})".format(
-                modules[project]["name"],
-                modules[project]["version"],
-                modules[project]["built"],
-                summary[project]["python_version"],
-                summary[project]["pip"],
-                modules["core4"]["version"],
-                modules["core4"]["built"]
-            ))
-
-
-def data_dump():
-    intro = core4.service.introspect.CoreIntrospector()
-    summary = dict(intro.list_project())
-    print(json.dumps(summary, indent="  ", sort_keys=True))
-
+    intro = core4.service.introspect.main.CoreIntrospector2()
+    seen = set()
+    for project in intro.introspect():
+        if project["name"] not in seen:
+            print(
+                "{} - {} ({}) with Python {}, pip {}, core4 - {} ({})".format(
+                    project["name"],
+                    project["version"],
+                    project["build"],
+                    project["python_version"],
+                    project["pip"],
+                    project["core4_version"],
+                    project["core4_build"]
+                ))
+            seen.add(project["name"])
 
 def main():
     args = docopt(__doc__, help=True, version=core4.__version__)
@@ -507,13 +481,10 @@ def main():
         jobs()
     elif args["--project"]:
         project()
-    elif args["--dump"]:
-        data_dump()
     elif args["--container"]:
         container()
     else:
         raise SystemExit("nothing to do.")
-
 
 if __name__ == '__main__':
     main()
