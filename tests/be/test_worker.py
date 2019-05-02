@@ -492,7 +492,7 @@ def test_mass_defer(queue, worker, mongodb):
     worker.stop()
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(60)
 def test_fail2inactive(queue, worker, mongodb):
     import tests.project.work
     queue.enqueue(tests.project.work.ErrorJob, defer_max=5, attempts=10)
