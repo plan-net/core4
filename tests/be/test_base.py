@@ -107,6 +107,7 @@ def test_project():
 def test_project_conf():
     import project.test
     t = project.test.Test()
+    print(t.project_config())
     assert t.project_config().endswith("/core4/tests/project/project.yaml")
     assert t.config.mongo_database, "core4test"
     assert repr(t) == "project.test.Test()"

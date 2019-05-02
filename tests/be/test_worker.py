@@ -656,7 +656,7 @@ class ForeverJob(core4.queue.job.CoreJob):
         time.sleep(60 * 60 * 24)
 
 
-@pytest.mark.timeout(20)
+@pytest.mark.timeout(30)
 def test_no_pid(queue, worker):
     job = queue.enqueue(ForeverJob)
     worker.start(1)

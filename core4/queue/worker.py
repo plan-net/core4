@@ -32,15 +32,15 @@ To stop the worker start a new Python interpreter and go with::
 
 import collections
 import signal
+from datetime import timedelta
 
 import psutil
 import pymongo
-from datetime import timedelta
 
 import core4.queue.job
 import core4.queue.process
 import core4.queue.query
-import core4.service.introspect
+import core4.service.introspect.main
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
 from core4.service.introspect.command import EXECUTE
@@ -75,6 +75,15 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
+
+    def startup(self):
+        """
+        Implements the **startup** phase of the scheduler. The method is based
+        on :class:`.CoreDaemon` implementation and additionally spawns
+        :meth:`.collect_job`.
+        """
+        super().startup()
+        self.collect_job()
 
     def cleanup(self):
         """
@@ -148,6 +157,14 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.start_job(doc)
 
     def start_job(self, doc, run_async=True):
+        """
+        This method is called by :meth:`.work_jobs` and encapsulated for
+        testing purposes, only.
+
+        :param doc: job document to launch
+        :param run_async: run asynchronous (default) wait for process to
+                          complete
+        """
         now = self.at
         update = {
             "state": core4.queue.job.STATE_RUNNING,
@@ -172,7 +189,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.logger.info("launching [%s] with _id [%s]", doc["name"],
                          doc["_id"])
         if run_async:
-            core4.service.introspect.exec_project(
+            core4.service.introspect.main.exec_project(
                 doc["name"], EXECUTE, wait=False, job_id=str(doc["_id"]))
         else:
             from core4.queue.process import CoreWorkerProcess

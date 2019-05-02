@@ -11,7 +11,6 @@ import core4.queue.main
 import core4.queue.worker
 import core4.util.node
 
-# from tests.pytest_util import *
 
 LOOP_INTERVAL = 0.25
 libc = ctypes.CDLL(None)

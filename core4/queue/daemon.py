@@ -16,6 +16,7 @@ import time
 import core4.queue.main
 import core4.util.node
 from core4.base.main import CoreBase
+from core4.service.introspect.main import CoreIntrospector
 
 
 class CoreDaemon(CoreBase):
@@ -82,6 +83,76 @@ class CoreDaemon(CoreBase):
         self.enter_phase("startup")
         self.create_env()
         self.cleanup()
+
+    def collect_job(self):
+        """
+        Collects meta data about all known jobs and inserts this information
+        into ``sys.job``. The collection's primary use is to store the
+        ``created_at`` and general ``__schedule__`` attributes to manage
+        scheduling gaps.
+
+        This method is used by :class:`.CoreWorker` and :class:`.CoreScheduler`
+        to register existing jobs.
+
+        The following attributes are saved:
+
+        * ``_id`` - the :meth:`.qual_name`
+        * ``author`` - of the job
+        * ``created_at`` - the date/time when the job has be initially released
+        * ``updated_at`` - the date/time when the job has been released lately
+        * ``doc`` - the doc string
+        * ``exception`` - exception raised with ``traceback``
+        * ``filename`` - source of the job
+        * ``project`` - name
+        * ``schedule`` - in cron format
+        * ``tag`` - list of tags
+        * ``valid`` - indicates if the job is valid
+        """
+        self.config.sys.job.update_many(
+            filter={},
+            update={
+                "$set": {
+                    "updated_at": None
+                },
+            }
+        )
+        now = core4.util.node.mongo_now()
+        self.job = {}
+        self.logger.info("start registration")
+        intro = CoreIntrospector()
+        for project in intro.introspect():
+            for job in project["jobs"]:
+                self.logger.debug("registering job [%s]", job["name"])
+                if job["name"] in self.job:
+                    self.logger.error("seen [%s]", job["name"])
+                update = job.copy()
+                del update["name"]
+                update["updated_at"] = now
+                update["project"] = project["name"]
+                self.config.sys.job.update_one(
+                    filter={
+                        "_id": job["name"]
+                    },
+                    update={
+                        "$set": update,
+                        "$setOnInsert": {
+                            "created_at": now
+                        },
+                    },
+                    upsert=True
+                )
+                if job["valid"] and job["schedule"]:
+                    doc = self.config.sys.job.find_one(
+                        {"_id": job["name"]},
+                        projection=["created_at"])
+                    self.job[job["name"]] = {
+                        "updated_at": now,
+                        "schedule": job["schedule"],
+                        "created_at": doc["created_at"]
+                    }
+                    self.logger.info("schedule [%s] at [%s]",
+                                     job["name"], job["schedule"])
+        self.logger.info("registered [%d] jobs to schedule", len(self.job))
 
     def cleanup(self):
         """
