@@ -46,7 +46,7 @@ def enqueue(job, **kwargs):
                 found[0], ENQUEUE_ARG, qual_name=name,
                 args="**%s" % (str(kwargs)), comm=True)
             return stdout
-    return queue.enqueue(name=name, **kwargs)
+    return queue.enqueue(name=name, **kwargs)._id
 
 
 def execute(job, **kwargs):
