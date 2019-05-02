@@ -22,7 +22,7 @@ Usage:
   coco --halt
   coco --worker [IDENTIFIER]
   coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] \
-[--address=ADDRESS] [--home=HOME] [--filter=FILTER]...
+[--address=ADDRESS] [--project=PROJECT] [--filter=FILTER]...
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -38,7 +38,7 @@ Usage:
   coco --release
   coco --who
   coco --jobs
-  coco --project
+  coco --home
   coco --container
   coco --version
 
@@ -56,7 +56,7 @@ Options:
   -o --who        show system information
   -j --jobs       enumerate available jobs
   -c --container  enumerate available API container
-  -p --project    enumerate available core4 projects
+  -m --home       enumerate available core4 projects in home folder
   -y --yes        Assume yes on all requests.
 """
 
@@ -73,6 +73,7 @@ import core4.api.v1.tool
 import core4.api.v1.tool.functool
 import core4.error
 import core4.logger.mixin
+import core4.queue.helper.functool
 import core4.queue.job
 import core4.queue.main
 import core4.queue.scheduler
@@ -81,7 +82,6 @@ import core4.service.introspect.main
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.introspect.command import ENQUEUE_ARG
 from core4.service.operation import build, release
 
 QUEUE = core4.queue.main.CoreQueue()
@@ -343,15 +343,7 @@ def enqueue(qual_name, *args):
                 raise json.JSONDecodeError("failed to parse %s" % (s), s, 0)
     else:
         data = {}
-    try:
-        job_id = QUEUE.enqueue(name=qual_name[0], **data)._id
-    except ImportError:
-        stdout = core4.service.introspect.exec_project(
-            qual_name[0], ENQUEUE_ARG, qual_name=qual_name[0],
-            args="**%s" % (str(data)), comm=True)
-        job_id = stdout
-    except:
-        raise
+    job_id = core4.queue.helper.functool.enqueue(qual_name[0], **data)
     print(job_id)
 
 
@@ -360,18 +352,18 @@ def init(name, description, yes):
 
 
 def jobs():
-    intro = core4.service.introspect.main.CoreIntrospector2()
+    intro = core4.service.introspect.main.CoreIntrospector()
     seen = set()
-    for project in intro.introspect():
+    for project in intro.retrospect():
         if project["name"] not in seen:
-            print(project["name"], "-", project["version"])
+            print(project["name"])
             for job in sorted([j["name"] for j in project["jobs"]]):
                 print("  " + job)
             seen.add(project["name"])
 
 
 def container():
-    intro = core4.service.introspect.main.CoreIntrospector2()
+    intro = core4.service.introspect.main.CoreIntrospector()
     seen = set()
     for project in intro.introspect():
         if project["name"] not in seen:
@@ -385,7 +377,7 @@ def container():
 
 
 def who():
-    intro = core4.service.introspect.main.CoreIntrospector2()
+    intro = core4.service.introspect.main.CoreIntrospector()
     summary = intro.summary()
     print("USER:")
     print("  {:s} IN {}".format(summary["user"]["name"],
@@ -418,8 +410,8 @@ def who():
         print("  none.")
 
 
-def project():
-    intro = core4.service.introspect.main.CoreIntrospector2()
+def home():
+    intro = core4.service.introspect.main.CoreIntrospector()
     seen = set()
     for project in intro.introspect():
         if project["name"] not in seen:
@@ -435,6 +427,7 @@ def project():
                 ))
             seen.add(project["name"])
 
+
 def main():
     args = docopt(__doc__, help=True, version=core4.__version__)
     if args["--halt"]:
@@ -443,7 +436,7 @@ def main():
         worker(args["IDENTIFIER"])
     elif args["--application"]:
         app(name=args["IDENTIFIER"], port=args["--port"],
-            project=args["--home"], filter=args["--filter"],
+            project=args["--project"], filter=args["--filter"],
             routing=args["--routing"], address=args["--address"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
@@ -479,12 +472,13 @@ def main():
         who()
     elif args["--jobs"]:
         jobs()
-    elif args["--project"]:
-        project()
+    elif args["--home"]:
+        home()
     elif args["--container"]:
         container()
     else:
         raise SystemExit("nothing to do.")
+
 
 if __name__ == '__main__':
     main()
