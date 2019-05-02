@@ -25,10 +25,7 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
 
     * ``debug`` - defaults to ``True``
     * ``compress_response`` - defaults to ``True``
-    * ``cookie_secret`` - no default defined
-
-    .. warning:: core4 configuration setting ``cookie_secret`` does not provide
-                 any defaults and must be set.
+    * ``cookie_secret`` - not so secret default defined
 
     Additionally the following core4 config settings specify the tornado
     application:
@@ -40,23 +37,24 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
     * ``port`` - default port (5001)
     * ``error_html_page`` - default error page with content type ``text/html``
     * ``error_text_page`` - default error page with content tpe ``text/plain``
+    * ``card_html_page`` - default card page
+    * ``help_html_page`` - default help page
 
     Each :class:`.CoreApiContainer` is defined by a unique ``root`` URL. This
     ``root`` URL defaults to the project name and is specified in the
     :class:`.CoreApiContainer` class. The container delivers the following
     default endpoints under it's ``root``:
 
-    * ``/asset`` serving
+    * ``/_asset`` serving
       :class:`core4.api.v1.request.standard.file.CoreAssetHandler`
-    * ``/info`` serving
+    * ``/_info`` serving
       :class:`core4.api.v1.request.standard.info.InfoHandler`
 
-    .. note:: This method creates the required core4 environment including
+    .. note:: This method creates the required core4 setup including
               the standard core4 folders (see config setting ``folder``,
               the default users and roles (see config setting
               ``admin_username``, ``admin_realname``, ``admin_password``,
               ``user_rolename``, ``user_realname`` and ``user_permission``.
-
 
     :param args: class dervived from :class:`.CoreApiContainer`
     :param port: to serve, defaults to core4 config ``api.port``
@@ -72,6 +70,9 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
                     which the server is to be contacted and might be used if a
                     proxy routes the requests. To map the proxy behavior this
                     parameter is supposed to reflect the proxy setting.
+    :param core4api: add the core4 standard api containers
+                     :class:`.CoreApiContainer` and
+                     :class:`.CoreWidgetContainer`, defaults to ``True``
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve(*args, port=port, address=address, name=name,
@@ -82,15 +83,13 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
 def serve_all(project=None, filter=None, port=None, address=None, name=None,
               reuse_port=True, routing=None, **kwargs):
     """
-    Serve all enabled core :class:`.CoreApiContainer` classes.
-
-    To filter :class:`.CoreApiContainer` classes to be served use one or
-    multiple  ``filter`` arguments. All :class:`.CoreApiContainer` with a
+    Serve all core :class:`.CoreApiContainer` classes of a given project and
+    one or more filters. All :class:`.CoreApiContainer` with a
     :meth:`.qual_name <core4.base.main.CoreBase.qual_name>` starting with the
     provided filters will be in scope of API application serving.
 
     For other arguments see :meth:`serve`.
-    # todo: docu
+
     :param filter: one or multiple str values to filter
                    :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
                    of the :class:`.CoreApiContainer` to be served.
@@ -107,5 +106,6 @@ def serve_all(project=None, filter=None, port=None, address=None, name=None,
                     node hostname or address and port
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
-    CoreApiServerTool().serve_all(project, filter, port, address, name, reuse_port,
+    CoreApiServerTool().serve_all(project, filter, port, address, name,
+                                  reuse_port,
                                   routing, **kwargs)
