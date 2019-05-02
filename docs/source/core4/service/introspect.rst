@@ -6,7 +6,7 @@ introspect
 general purpose meta information
 ================================
 
-.. automodule:: core4.service.introspect
+.. automodule:: core4.service.introspect.main
     :members:
     :undoc-members:
 
