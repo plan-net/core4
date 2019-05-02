@@ -75,6 +75,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
+        self.job = None
 
     def startup(self):
         """
@@ -83,7 +84,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         :meth:`.collect_job`.
         """
         super().startup()
-        self.collect_job()
+        intro = core4.service.introspect.main.CoreIntrospector()
+        self.job = intro.collect_job()
 
     def cleanup(self):
         """

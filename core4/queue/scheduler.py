@@ -68,7 +68,8 @@ class CoreScheduler(CoreDaemon):
         :meth:`.collect_job`.
         """
         super().startup()
-        self.collect_job()
+        intro = core4.service.introspect.main.CoreIntrospector()
+        self.job = intro.collect_job()
 
     def loop(self):
         """

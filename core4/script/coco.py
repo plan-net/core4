@@ -37,27 +37,28 @@ Usage:
   coco --build
   coco --release
   coco --who
-  coco --jobs
+  coco --jobs [--introspect]
   coco --home
   coco --container
   coco --version
 
 Options:
-  -e --enqueue    enqueue job
-  -w --worker     launch worker
-  -s --scheduler  launch scheduler
-  -a --alive      worker alive/dead state
-  -i --info       job state summary
-  -l --listing    job listing
-  -d --detail     job details
-  -x --halt       immediate system halt
-  -h --help       show this screen.
-  -v --version    show version.
-  -o --who        show system information
-  -j --jobs       enumerate available jobs
-  -c --container  enumerate available API container
-  -m --home       enumerate available core4 projects in home folder
-  -y --yes        Assume yes on all requests.
+  -e --enqueue     enqueue job
+  -w --worker      launch worker
+  -s --scheduler   launch scheduler
+  -a --alive       worker alive/dead state
+  -i --info        job state summary
+  -l --listing     job listing
+  -d --detail      job details
+  -x --halt        immediate system halt
+  -h --help        show this screen.
+  -v --version     show version.
+  -o --who         show system information
+  -j --jobs        enumerate available jobs
+  -n --introspect  register available jobs in sys.job
+  -c --container   enumerate available API container
+  -m --home        enumerate available core4 projects in home folder
+  -y --yes         Assume yes on all requests.
 """
 
 import datetime
@@ -351,8 +352,10 @@ def init(name, description, yes):
     core4.service.project.make_project(name, description, yes)
 
 
-def jobs():
+def jobs(introspect=False):
     intro = core4.service.introspect.main.CoreIntrospector()
+    if introspect:
+        intro.collect_job()
     seen = set()
     for project in intro.retrospect():
         if project["name"] not in seen:
@@ -471,7 +474,7 @@ def main():
     elif args["--who"]:
         who()
     elif args["--jobs"]:
-        jobs()
+        jobs(args["--introspect"])
     elif args["--home"]:
         home()
     elif args["--container"]:
