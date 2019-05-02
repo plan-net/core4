@@ -355,7 +355,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         enters tornado's IOLoop.
 
         :param project: containing the :class:`.CoreApiContainer` to serve,
-                        defaults to ``core4`
+                        defaults to ``core4``
         :param filter: list of str matching the :class:`.CoreApiContainer`
                        :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
         :param port: to listen, defaults to ``5001``, see core4 configuration

@@ -285,10 +285,10 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
 
         * ``name`` - ``qual_name``
         * ``filename``
-        * ``author``  cls.author,
+        * ``author``
         * ``doc`` - doc string
         * ``schedule``
-        * ``tag`
+        * ``tag``
         * ``valid``
         * ``exception``
 
