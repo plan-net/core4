@@ -5,10 +5,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#: command used to call :meth:`.CoreIntrospector2.run` method
+#: command used to call :meth:`.CoreIntrospector.run` method
 ITERATE = """
-from core4.service.introspect.main import CoreIntrospector2
-print(CoreIntrospector2().run(dump=True))
+from core4.service.introspect.main import CoreIntrospector
+print(CoreIntrospector().run(dump=True))
 """
 
 #: command used to enqueue a job without job arguments
