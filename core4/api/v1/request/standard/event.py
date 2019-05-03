@@ -44,6 +44,7 @@ class QueueWatch(CoreBase, QueryMixin):
     stop = False
 
     async def watch(self):
+        QueueWatch.stop = False
         coll = self.config.sys.queue.connect_async()
         pipeline = self.pipeline_queue_state()
         interval = self.config.event.queue_interval

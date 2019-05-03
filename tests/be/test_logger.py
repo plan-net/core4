@@ -2,9 +2,12 @@ import glob
 import importlib
 import logging
 import os
+import sys
 import unittest
 
 import pymongo
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import core4.base
 import core4.config

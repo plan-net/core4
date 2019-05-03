@@ -13,13 +13,17 @@ functions :func:`enqueue` and :func:`execute`.
 import core4.logger
 import core4.queue.main
 import core4.queue.worker
+import core4.service.introspect.main
 import core4.service.setup
 import core4.util.node
+from core4.service.introspect.command import ENQUEUE_ARG
 
 
 def enqueue(job, **kwargs):
     """
-    Eenqueue a job.
+    Eenqueue a job. Uses the Python virtual environment of the project if
+    ``config.folder.home`` is defined. If no core4 home folder is defined, the
+    current environment is scanned for the job to be launched.
 
     :param job: qual_name or job class
     :param kwargs: arguments to be passed to the job
@@ -27,11 +31,22 @@ def enqueue(job, **kwargs):
     :return: enqueued job object
     """
     if isinstance(job, str):
-        kwargs["name"] = job
+        name = job
     else:
-        kwargs["cls"] = job
+        name = job.qual_name()
     queue = core4.queue.main.CoreQueue()
-    return queue.enqueue(**kwargs)
+    home = queue.config.folder.home
+    if home:
+        intro = core4.service.introspect.main.CoreIntrospector()
+        data = intro.retrospect()
+        found = [d["name"] for d in data
+                 if name in [i["name"] for i in d["jobs"]]]
+        if found:
+            stdout = core4.service.introspect.main.exec_project(
+                found[0], ENQUEUE_ARG, qual_name=name,
+                args="**%s" % (str(kwargs)), comm=True)
+            return stdout
+    return queue.enqueue(name=name, **kwargs)._id
 
 
 def execute(job, **kwargs):
@@ -46,16 +61,21 @@ def execute(job, **kwargs):
 
     :return: final MongoDB job document from ``sys.queue``
     """
+    if isinstance(job, str):
+        name = job
+    else:
+        name = job.qual_name()
     setup = core4.service.setup.CoreSetup()
     setup.make_all()
     core4.logger.logon()
-    enq_doc = enqueue(job, **kwargs)
+    queue = core4.queue.main.CoreQueue()
+    job = queue.enqueue(name=name, **kwargs)
     worker = core4.queue.worker.CoreWorker(name="manual")
     worker.at = core4.util.node.mongo_now()
-    worker.start_job(enq_doc.serialise(), async=False)
-    doc = worker.queue.job_detail(enq_doc._id)
-    worker.config.sys.queue.delete_one(filter={"_id": enq_doc._id})
-    worker.config.sys.journal.delete_one(filter={"_id": enq_doc._id})
+    worker.start_job(job.serialise(), run_async=False)
+    doc = worker.queue.job_detail(job._id)
+    worker.config.sys.queue.delete_one(filter={"_id": job._id})
+    worker.config.sys.journal.delete_one(filter={"_id": job._id})
     return doc
 
 

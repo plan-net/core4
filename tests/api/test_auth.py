@@ -1,345 +1,252 @@
-import multiprocessing
-from pprint import pprint
-
+import os
+import re
+import datetime
 import pytest
-import requests
-import time
-import tornado.gen
-from tornado.ioloop import IOLoop
+import json
 
-from core4.api.v1.application import CoreApiContainer
-from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.request.queue.job import JobHandler
-from core4.api.v1.request.queue.job import JobPost
-from core4.api.v1.request.role.main import RoleHandler
-from core4.api.v1.request.static import CoreStaticFileHandler
+import core4.queue.main
+from tests.api.test_test import setup, core4api
 from core4.api.v1.tool.functool import serve
-from core4.queue.helper.functool import execute
-from tests.api.test_response import setup
-import core4.util.node
+from core4.api.v1.server import CoreApiServer
+
 
 _ = setup
-
-
-class StopHandler(CoreRequestHandler):
-    protected = False
-
-    def get(self):
-        self.logger.warning("stop IOLoop now: %s", IOLoop.current())
-        IOLoop.current().stop()
-
-
-class CoreApiTestServer1(CoreApiContainer):
-    enabled = True
-    rules = (
-        (r'/kill', StopHandler),
-        (r'/static1', CoreStaticFileHandler, {"path": "static1"}),
-        (r'/roles/?(.*)', RoleHandler),
-        (r'/enqueue', JobPost),
-        (r'/jobs/?(.*)', JobHandler),
-    )
-
-
-class HttpServer:
-
-    def __init__(self, *args):
-        self.cls = args
-        self.port = 5555
-        self.process = None
-        self.process = multiprocessing.Process(target=self.run)
-        self.process.start()
-        while True:
-            try:
-                url = self.url("/core4/api/profile")
-                requests.get(url, timeout=1)
-                break
-            except:
-                pass
-            time.sleep(1)
-            tornado.gen.sleep(1)
-        self.signin = requests.get(
-            self.url("/core4/api/login?username=admin&password=hans"))
-        self.token = self.signin.json()["data"]["token"]
-        assert self.signin.status_code == 200
-
-    def url(self, url):
-        hostname = core4.util.node.get_hostname()
-        return "http://{}:{}".format(hostname, self.port) + url
-
-    def request(self, method, url, base=True, **kwargs):
-        if base:
-            u = self.url(url)
-        else:
-            u = url
-        if "token" in kwargs:
-            token = kwargs.pop("token")
-            if token is not None:
-                kwargs.setdefault("headers", {})[
-                    "Authorization"] = "Bearer " + token
-            return requests.request(method, u, **kwargs)
-        else:
-            if self.token:
-                kwargs.setdefault("headers", {})[
-                    "Authorization"] = "Bearer " + self.token
-            return requests.request(method, u,
-                                    cookies=self.signin.cookies, **kwargs)
-
-    def get(self, url, **kwargs):
-        return self.request("GET", url, **kwargs)
-
-    def post(self, url, **kwargs):
-        return self.request("POST", url, **kwargs)
-
-    def put(self, url, **kwargs):
-        return self.request("PUT", url, **kwargs)
-
-    def delete(self, url, **kwargs):
-        return self.request("DELETE", url, **kwargs)
-
-    def run(self):
-        serve(*self.cls, port=self.port)
-
-    def stop(self):
-        rv = self.get("/tests/kill")
-        assert rv.status_code == 200
-        self.process.join()
+_ = core4api
 
 
 @pytest.fixture()
-def http():
-    server = HttpServer(CoreApiTestServer1)
-    yield server
-    server.stop()
+def short_expire(tmpdir):
+    os.environ["CORE4_OPTION_api__token__expiration"] = "!!int 8"
+    os.environ["CORE4_OPTION_api__token__refresh"] = "!!int 4"
 
 
-def add_user(http, username):
-    # rv = http.post("/tests/roles", json={"name": rolename,
-    #                                      "perm": ["api://core4.api.v1.*"]})
-    # assert rv.status_code == 200
-    rv = http.post("/tests/roles",
-                   json={
-                       "name": username,
-                       "role": ["standard_user"],
-                       "email": username + "@mail.com",
-                       "password": username
-                   })
-    assert rv.status_code == 200
-    conn = http.get(
-        "/core4/api/login?username=" + username + "&password=" + username,
-        token=None)
-    assert conn.status_code == 200
-    return conn.json()["data"]["token"]
+async def test_login(core4api):
+    resp = await core4api.get(
+        '/core4/api/v1/login?username=admin&password=hans')
+    assert resp.code == 200
+    js = resp.json()
+    assert "timestamp" in js
+    assert "_id" in js
+    assert js["code"] == 200
+    assert js["message"] == "OK"
+    assert resp.headers.get("token") == resp.json()["data"]["token"]
+    assert resp.json()["data"]["token"] is not None
 
 
-def add_job_user(http, username, perm):
-    # rolename = "role_" + username
-    # rv = http.post("/tests/roles", json={"name": rolename,
-    #                                      "perm": ["api://core4.api.v1.*"]})
-    # assert rv.status_code == 200
-    rv = http.post("/tests/roles",
-                   json={
-                       "name": username,
-                       "role": ["standard_user"],
-                       "email": username + "@mail.com",
-                       "password": username,
-                       "perm": perm
-                   })
-    assert rv.status_code == 200
-    conn = http.get(
-        "/core4/api/login?username=" + username + "&password=" + username,
-        token=None)
-    assert conn.status_code == 200
-    return conn.json()["data"]["token"]
+async def test_cookie(core4api):
+    resp = await core4api.get(
+        '/core4/api/v1/login?username=admin&password=hans')
+    assert resp.code == 200
+    cookie = resp.headers.get("set-cookie")
+    resp = await core4api.get(
+        '/core4/api/v1/login', headers={"Cookie": cookie})
+    assert resp.code == 200
 
 
-def test_server_test(http):
-    rv = http.get("/core4/api/profile")
-    assert rv.status_code == 200
-    token = add_user(http, "user1")
-    rv = http.get("/core4/api/profile", token=token)
-    assert rv.status_code == 200
-    rv = http.get("/tests/roles", token=token)
-    assert rv.status_code == 403
-    rv = http.get("/tests/enqueue", token=token)
-    assert rv.status_code == 403
-    rv = http.get("/core4/api/logout", token=token)
-    assert rv.status_code == 200
-    rv = http.get("/core4/api/info", token=token)
-    assert rv.status_code == 200
-    pprint(rv.json())
+async def test_token(core4api):
+    resp = await core4api.get(
+        '/core4/api/v1/login?username=admin&password=hans')
+    assert resp.code == 200
+    token = resp.json()["data"]["token"]
+    resp = await core4api.get('/core4/api/v1/login?token=' + token)
+    assert resp.code == 200
 
 
-# def test_collection_job(http):
-#     execute(ApiJob)
-#     token = add_user(http, "user1")
-#     rv = http.get("/core4/api/info", token=token)
-#     for elem in rv.json()["data"]:
-#         print(elem["qual_name"])
-#         rv = http.get(elem["card_url"], token=token, base=False)
-#         assert rv.status_code in (401, 200)
-#
-#     rv = http.get("/core4/api/info")
-#     check = {
-#         'core4.api.v1.request.queue.job.JobPost': 403,
-#         'core4.api.v1.request.role.main.RoleHandler': 403,
-#         'core4.api.v1.request.queue.job.JobHandler': 403,
-#         'core4.api.v1.request.standard.route.RouteHandler': 200,
-#         'core4.api.v1.request.standard.profile.ProfileHandler': 200,
-#         'core4.api.v1.request.standard.file.CoreFileHandler': 200,
-#         'core4.api.v1.request.standard.login.LoginHandler': 200,
-#         'core4.api.v1.request.standard.logout.LogoutHandler': 200,
-#         'core4.api.v1.request.static.CoreStaticFileHandler': 200
-#     }
-#     for elem in rv.json()["data"]:
-#         qual_name = elem["qual_name"]
-#         if qual_name in check:
-#             rv = http.get(elem["card_url"], token=token, base=False)
-#             assert check[qual_name] == rv.status_code
+async def test_body(core4api):
+    resp = await core4api.post(
+        '/core4/api/v1/login', body={"username": "admin", "password": "hans"})
+    assert resp.code == 200
+    token = resp.json()["data"]["token"]
+    resp = await core4api.post('/core4/api/v1/login', body={"token": token})
+    assert resp.code == 200
 
 
-def test_enqeuue(http):
-    token = add_job_user(
-        http, "user1", [
-            "api://core4.api.v1.request.queue.job.JobPost",
-            "job://core4.queue.helper.*/x"
-        ])
-    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.example.DummyJob",
-                   token=token)
-    assert rv.status_code == 200
-    token = add_job_user(
-        http, "user2", ["api://core4.api.v1.request.queue.job.JobHandler"])
-    rv = http.post("/tests/enqueue?name=core4.queue.helper.job.example.DummyJob",
-                   token=token)
-    assert rv.status_code == 403
+async def test_invalid_login(core4api):
+    resp = await core4api.post(
+        '/core4/api/v1/login', body={"username": "admin", "password": "xxxx"})
+    assert resp.code == 401
+
+    resp = await core4api.post(
+        '/core4/api/v1/login', json={"username": "admin", "password": "xxxx"})
+    assert resp.code == 401
+
+    resp = await core4api.post(
+        '/core4/api/v1/login', json={"username": "admin", "password": "hans"})
+    assert resp.code == 200
 
 
-import core4.queue.job
+async def test_no_args(core4api):
+    rv = await core4api.get("/core4/api/v1/login")
+    assert rv.code == 401
+    rv = await core4api.get("/core4/api/v1/login?bla=1")
+    assert rv.code == 401
+    rv = await core4api.get('/core4/api/v1/login?username=abc')
+    assert rv.code == 401
+    rv = await core4api.get('/core4/api/v1/login?username=admin&password=1')
+    assert rv.code == 401
 
 
-class MyJob(core4.queue.job.CoreJob):
-    author = "mra"
+async def test_pass_auth(core4api):
+    rv = await core4api.get('/core4/api/v1/profile')
+    assert rv.code == 401
+    rv = await core4api.get(
+        '/core4/api/v1/profile?username=admin&password=hans')
+    assert rv.code == 200
 
 
-def test_job_listing(http):
-    for i in range(0, 10):
-        rv = http.post("/tests/enqueue", json={
-            "name": "core4.queue.helper.job.example.DummyJob",
-            "id": i + 1
-        })
-        assert rv.status_code == 200
-
-    for i in range(0, 6):
-        rv = http.post("/tests/enqueue", json={
-            "name": "tests.api.test_auth.MyJob",
-            "id": i + 1
-        })
-        assert rv.status_code == 200
-    rv = http.get("/tests/jobs")
-    assert rv.json()["total_count"] == 16
-
-    token1 = add_job_user(http, "user1", perm=[
-        "api://core4.api.v1.request.queue.job.*",
-        "job://core4.queue.helper.job.*/r"
-    ])
-    rv = http.get("/tests/jobs", token=token1)
-    assert rv.json()["total_count"] == 10
-
-    token2 = add_job_user(http, "user2", perm=[
-        "api://core4.api.v1.request.queue.job.*",
-        "job://core4.queue.helper.*/x"
-    ])
-    rv = http.get("/tests/jobs", token=token2)
-    assert rv.json()["total_count"] == 10
-
-    token3 = add_job_user(http, "user3", perm=[
-        "api://core4.api.v1.request.queue.job.*",
-        "job://tests.+/r"
-    ])
-    rv = http.get("/tests/jobs", token=token3)
-    assert rv.json()["total_count"] == 6
-
-    rv = http.post("/tests/enqueue", token=token3, json={
-        "name": "tests.api.test_auth.MyJob"
-    })
-    assert rv.status_code == 403
-
-    token4 = add_job_user(http, "user4", perm=[
-        "api://core4.api.v1.request.queue.job.*",
-        "job://tests.+/x"
-    ])
-    rv = http.get("/tests/jobs", token=token4)
-    assert rv.json()["total_count"] == 6
-
-    rv = http.post("/tests/enqueue", token=token4, json={
-        "name": "tests.api.test_auth.MyJob"
-    })
-    assert rv.status_code == 200
-    job_id = rv.json()["data"]["_id"]
-
-    rv = http.get("/tests/jobs", token=token4)
-    assert rv.json()["total_count"] == 7
-
-    rv = http.get("/tests/jobs/" + job_id, token=token4)
-    assert rv.status_code == 200
+async def test_login_expired(short_expire, core4api):
+    await core4api.login()
+    rv = await core4api.get('/core4/api/v1/profile')
+    assert rv.code == 200
+    t0 = datetime.datetime.now()
+    while True:
+        rv = await core4api.get('/core4/api/v1/profile')
+        if rv.code != 200:
+            break
+    assert round((datetime.datetime.now() - t0).total_seconds(), 0) >= 8
+    assert rv.code == 401
 
 
-def test_job_access(http):
-    token3 = add_job_user(http, "user3", perm=[
-        "api://core4.api.v1.request.queue.job.*",
-        "job://tests.+/r"
-    ])
-    rv = http.get("/tests/jobs", token=token3)
-    assert rv.status_code == 200
-    assert rv.json()["total_count"] == 0
+async def test_login_extended(short_expire, core4api):
+    await core4api.login()
+    rv = await core4api.get('/core4/api/v1/profile')
+    assert rv.code == 200
+    t0 = datetime.datetime.now()
+    while True:
+        rv = await core4api.get('/core4/api/v1/profile')
+        print("check")
+        if "token" in rv.headers:
+            core4api.token = rv.headers["token"]
+            break
+    assert rv.code == 200
+    assert round((datetime.datetime.now() - t0).total_seconds()) >= 4
+    t0 = datetime.datetime.now()
+    while True:
+        rv = await core4api.get('/core4/api/v1/profile')
+        if rv.code != 200:
+            break
+    assert round((datetime.datetime.now() - t0).total_seconds()) >= 8
+    assert rv.code == 401
 
-    rv = http.post("/tests/enqueue", token=token3, json={
-        "name": "tests.api.test_auth.MyJob"
-    })
-    assert rv.status_code == 403
+async def test_restricted_user(core4api):
+    await core4api.login()
+    rv = await core4api.get("/core4/api/v1/roles")
+    assert rv.code == 200
+    rv = await core4api.post("/core4/api/v1/roles", json=dict(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=["api://core4.api.v1"]
+    ))
+    user_id = rv.json()["data"]["_id"]
+    etag = rv.json()["data"]["etag"]
+    assert rv.code == 200
 
-    token4 = add_job_user(http, "user4", perm=[
-        "api://core4.api.v1.request.queue.job.*",
-        "job://tests.+/x"
-    ])
-    rv = http.get("/tests/jobs", token=token4)
-    assert rv.json()["total_count"] == 0
+    rv = await core4api.get("/core4/api/v1/roles/" + user_id)
+    assert rv.code == 200
+    assert rv.json()["data"]["name"] == "user"
 
-    rv = http.post("/tests/enqueue", token=token4, json={
-        "name": "tests.api.test_auth.MyJob"
-    })
-    assert rv.status_code == 200
-    job_id = rv.json()["data"]["_id"]
-
-    rv = http.get("/tests/jobs", token=token4)
+    js = json.dumps({"name": "user"})
+    rv = await core4api.get("/core4/api/v1/roles?filter=" + js)
+    assert rv.code == 200
     assert rv.json()["total_count"] == 1
 
-    rv = http.get("/tests/jobs", token=token3)
-    assert rv.json()["total_count"] == 1
+    await core4api.login("user", "password")
+    rv = await core4api.get("/core4/api/v1/profile")
+    assert rv.json()["data"]["name"] == "user"
+    assert rv.code == 200
 
-    rv = http.get("/tests/jobs/" + job_id, token=token4)
-    assert rv.status_code == 200
+    core4api.set_admin()
+    rv = await core4api.put("/core4/api/v1/roles/" + user_id, json=dict(
+        perm=[],
+        etag=etag
+    ))
+    assert rv.code == 200
 
-    rv = http.get("/tests/jobs/" + job_id, token=token3)
-    assert rv.status_code == 200
-
-    rv = http.delete("/tests/jobs/" + job_id, token=token3)
-    assert rv.status_code == 403
-
-    rv = http.put("/tests/jobs/" + job_id + "?action=kill", token=token3)
-    assert rv.status_code == 403
-
-    rv = http.put("/tests/jobs/" + job_id + "?action=kill", token=token4)
-    assert rv.status_code == 200
-
-    rv = http.put("/tests/jobs/" + job_id + "?action=restart", token=token3)
-    assert rv.status_code == 403
-
-    rv = http.put("/tests/jobs/" + job_id + "?action=restart", token=token4)
-    assert rv.status_code == 400
-
-    rv = http.delete("/tests/jobs/" + job_id, token=token4)
-    assert rv.status_code == 200
+    await core4api.login("user", "password")
+    rv = await core4api.get("/core4/api/v1/profile")
+    assert rv.code == 403
 
 
-if __name__ == '__main__':
-    serve(CoreApiTestServer1)
+async def test_login_inactive(core4api):
+    await core4api.login()
+    rv = await core4api.post("/core4/api/v1/roles", json=dict(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=["api://core4.api.v1"]
+    ))
+    assert rv.code == 200
+    user_id = rv.json()["data"]["_id"]
+    etag = rv.json()["data"]["etag"]
+
+    await core4api.login("user", "password")
+
+    core4api.set_admin()
+    rv = await core4api.put("/core4/api/v1/roles/" + user_id, json=dict(
+        is_active=False,
+        etag=etag
+    ))
+    assert rv.code == 200
+
+    core4api.token = None
+    rv = await core4api.get("/core4/api/v1/login?username=user&password=password")
+    assert rv.code == 401
+
+
+def test_admin_settings1():
+    os.environ["CORE4_OPTION_api__admin_username"] = "hello"
+    os.environ["CORE4_OPTION_api__admin_password"] = "~"
+    os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
+    with pytest.raises(TypeError):
+        serve(CoreApiServer)
+
+
+def test_admin_settings2():
+    os.environ["CORE4_OPTION_api__admin_username"] = "~"
+    os.environ["CORE4_OPTION_api__admin_password"] = "123456"
+    os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
+    with pytest.raises(TypeError):
+        serve(CoreApiServer)
+
+
+def test_admin_settings3():
+    os.environ["CORE4_OPTION_api__admin_username"] = "hello"
+    os.environ["CORE4_OPTION_api__admin_password"] = "123456"
+    os.environ["CORE4_OPTION_api__contact"] = "~"
+    with pytest.raises(TypeError):
+        serve(CoreApiServer)
+
+
+async def test_password_reset(core4api):
+    await core4api.login()
+    rv = await core4api.post("/core4/api/v1/roles", json=dict(
+        name="user",
+        realname="test user",
+        password="password",
+        email="test@user.com",
+        perm=["api://core4.api.v1"]
+    ))
+    user_id = rv.json()["data"]["_id"]
+    etag = rv.json()["data"]["etag"]
+    assert rv.code == 200
+
+    await core4api.login("user", "password")
+    rv = await core4api.put("/core4/api/v1/login?email=test@user.com")
+    assert rv.code == 200
+
+    q = core4.queue.main.CoreQueue()
+    data = list(q.config.sys.log.find())
+    msg = [d for d in data if "send token" in d["message"]][0]
+    token = re.search(r"token \[(.+?)\]", msg["message"]).groups()[0]
+    rv = await core4api.put("/core4/api/v1/login?token=" + token + "&password=world")
+    assert rv.code == 200
+
+    core4api.token = None
+    rv = await core4api.get("/core4/api/v1/login?username=user&password=password")
+    assert rv.code == 401
+
+    rv = await core4api.get("/core4/api/v1/login?username=user&password=world")
+    assert rv.code == 200

@@ -4,9 +4,12 @@ import pytest
 from pprint import pprint
 import core4.logger.mixin
 from core4.queue.job import CoreJob
-from core4.service.introspect import CoreIntrospector
+from core4.service.introspect.main import CoreIntrospector
 from tests.be.util import asset
+from core4.queue.scheduler import CoreScheduler
 
+MONGO_URL = 'mongodb://core:654321@localhost:27017'
+MONGO_DATABASE = 'core4test'
 
 @pytest.fixture(autouse=True)
 def reset(tmpdir):
@@ -15,6 +18,13 @@ def reset(tmpdir):
     core4.logger.mixin.CoreLoggerMixin.completed = False
     # setup
     os.environ["CORE4_CONFIG"] = asset("config/empty.yaml")
+    os.environ["CORE4_OPTION_logging__stderr"] = "DEBUG"
+    os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
+    os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
+    os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+
+    os.environ["CORE4_OPTION_folder__home"] = "/home/mra/core4home"
+
     core4.logger.mixin.logon()
     yield
     # singletons
@@ -44,45 +54,42 @@ class OkJob(HiddenJob):
     """
     author = 'mra'
 
-
-def test_load():
+def test_create():
     intro = CoreIntrospector()
-    jobs = list(intro.iter_job())
-    assert [j for j in jobs if j["name"] == "core4.queue.helper.job.example.DummyJob"]
-    assert not [j for j in jobs if j["name"] == "core4.queue.job.CoreJob"]
-    hidden_job = [j for j in jobs if "HiddenJob" in j["name"]][0]
-    assert hidden_job["hidden"]
-    no_author_job = [j for j in jobs if "NoAuthorJob" in j["name"]][0]
-    assert not no_author_job["valid"]
-    assert "missing author" in no_author_job["exception"]["exception"]
-    ok_job = [j for j in jobs if "OkJob" in j["name"]][0]
-    assert ok_job["schedule"] is None
-    assert "this job is ok" in ok_job["doc"]
-    # pprint(jobs)
+    intro.run(capture=False)
+    for project in intro.project:
+        print(project)
+        pprint(project.module)
+        print("jobs")
+        pprint(list(project.jobs))
+        print("api containner")
+        pprint(list(project.api_containers))
+        print("modules")
+        pprint(project._modules)
+        print()
 
-
-def test_discover():
+def test_introspect():
     intro = CoreIntrospector()
-    project = dict([(p["name"], p) for p in intro.iter_project()])
-    for name in ("tests", "project", "core4"):
-        assert name in project.keys()
-        assert "version" in project[name].keys()
-        assert "name" in project[name].keys()
-        assert "title" in project[name].keys()
-        assert "built" in project[name].keys()
+    for project in intro.introspect():
+        pprint(project)
 
-def test_api_container():
+def test_jobs():
     intro = CoreIntrospector()
-    ret = list(intro.iter_api_container())
-    #print(ret)
+    j = []
+    for project in intro.introspect():
+        for job in project["jobs"]:
+            print(job["name"], job["schedule"], job["valid"])
+            j.append(job["name"])
+    print(sorted(j))
+
+def test_schedule():
+    scheduler = CoreScheduler()
+    scheduler.collect_job()
 
 
-def test_list_project():
+def test_container():
     intro = CoreIntrospector()
-    data = list(intro.list_project())
-    pprint(data)
-
-
-def test_iter_all():
-    intro = CoreIntrospector()
-    pprint(intro.iter_all())
+    for project in intro.introspect():
+        print(project["name"])
+        for container in project["api_containers"]:
+            print(container["name"])

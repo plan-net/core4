@@ -64,7 +64,7 @@ export default {
   },
   filters: {
     shortName: value => value.split('.').slice(-1)[0],
-    accountName: value => value.split('.')[2]
+    accountName: value => value.split('.')[0]
   }
 }
 </script>

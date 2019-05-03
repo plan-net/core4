@@ -15,11 +15,11 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-dialog v-model="helpDialog" max-width="960px">
+    <v-dialog v-model="helpDialogOpen" max-width="960px">
       <v-card>
         <v-card-text>
           <howto type="layer">
-            <v-btn slot="button-slot" color="primary" @click.stop="helpDialog=false">Close</v-btn>
+            <v-btn slot="button-slot" color="primary" @click.stop="helpDialogOpen=false">Close</v-btn>
           </howto>
         </v-card-text>
       </v-card>
@@ -40,7 +40,7 @@
           </v-subheader>
         </v-flex>
         <v-flex class="text-xs-right pr-3">
-            <v-btn icon color="grey--text" @click="helpDialog = true">
+            <v-btn icon color="grey--text" @click="helpDialogOpen = true">
               <v-icon small >help</v-icon>
             </v-btn>
         </v-flex>
@@ -128,7 +128,7 @@ export default {
     return {
       activeBoard: null,
       nameDialog: false,
-      helpDialog: false,
+      helpDialogOpen: false,
       deleteDialog: false,
       itemToDelete: false
     }
