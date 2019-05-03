@@ -48,8 +48,8 @@ CONFIG = ".config"
 VERSION_COMMAND = """
 import {p}
 import core4
-print({p}.__version__, {p}.__built__, 
-      "with core4", core4.__version__, core4.__built__)
+print(", ".join([{p}.__version__, {p}.__built__, core4.__version__, 
+                 core4.__built__]))
 """
 
 if os.path.exists(LOGFILE):
@@ -338,7 +338,20 @@ class CoreInstaller(CoreBase, InstallMixin):
         args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
         proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
         (stdout, stderr) = proc.communicate()
-        return stdout.decode("utf-8")
+        data = self.read_config()
+        (version, build, core4_version, *core4_build) = stdout.decode(
+            "utf-8").strip().split(", ")
+        return {
+            "repository": data["repository"],
+            "web": data["web"],
+            "version": version,
+            "build": build,
+            "core4": {
+                "version": core4_version,
+                "build": ", ".join(core4_build)
+            },
+            "error": stderr or None
+        }
 
 
 class CoreUpdater(CoreBase, InstallMixin):
@@ -373,13 +386,17 @@ def run(args):
     elif args["version"]:
         for p in project:
             installer = CoreInstaller(p, home=args["--home"])
-            out = installer.version()
-            try:
-                version, *build = out.split()
-                print("{} - {}, build {}".format(
-                    p, version, " ".join(build)))
-            except Exception as exc:
-                print("error:", p, exc, out)
+            data = installer.version()
+            print(p)
+            if data["error"]:
+                print("  ERROR:\n{}".format(data["error"]))
+            else:
+                print("  version: {}".format(data["version"]))
+                print("  build:   {} {} webapps".format(
+                    data["build"], "with" if data["web"] else "without"))
+                print("  source:  {}".format(data["repository"]))
+                print("  core4:   {}, build {}".format(
+                    data["core4"]["version"], data["core4"]["build"]))
     else:
         raise SystemExit("nothing to do.")
     runtime = datetime.datetime.now() - t0
@@ -388,7 +405,7 @@ def run(args):
 
 def main():
     args = docopt(__doc__, help=True)
-    #print(args)
+    # print(args)
     run(args)
 
 
