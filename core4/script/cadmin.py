@@ -232,7 +232,8 @@ class CoreInstaller(CoreBase, InstallMixin):
     def build(self, filter):
         self.print("  build webapps in [{}]".format(self.clone))
         for build in self.identify_webapp():
-            if filter and (filter == [] or build["name"] in filter):
+            if ((filter is not None)
+                    and (filter == [] or build["name"] in filter)):
                 self.print("    build [{}]".format(build["base"]))
                 self.clean_webapp(os.path.join(build["base"], build["dist"]))
                 self.build_webapp(build["base"], build["command"])
