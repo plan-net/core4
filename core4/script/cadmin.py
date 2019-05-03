@@ -161,6 +161,13 @@ class CoreInstaller(CoreBase, InstallMixin):
                          stderr=DEVNULL).communicate()
         return out.decode("utf-8").strip()
 
+    def get_commit_datetime(self, commit):
+        os.chdir(self.clone)
+        (out, _) = Popen(["git", "--no-pager", "log", "-n", "1",
+                          "--pretty=format:%aD", commit], env=self.env,
+                         stdout=PIPE, stderr=DEVNULL).communicate()
+        return out.decode("utf-8").strip()
+
     def checkout(self):
         """
         Clone and checkout appropriate version from remote git repository.
@@ -339,13 +346,23 @@ class CoreInstaller(CoreBase, InstallMixin):
         proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
         (stdout, stderr) = proc.communicate()
         data = self.read_config()
+        self.repository = data["repository"]
+        self.web = data["web"]
+        current = data["commit"]
+        if os.path.isdir(self.repository):
+            self.clone = self.repository
+        timestamp = self.get_commit_datetime(current)
         (version, build, core4_version, *core4_build) = stdout.decode(
             "utf-8").strip().split(", ")
         return {
-            "repository": data["repository"],
-            "web": data["web"],
+            "repository": self.repository,
+            "web": self.web,
             "version": version,
             "build": build,
+            "commit": {
+                "hash": data["commit"],
+                "timestamp": timestamp
+            },
             "core4": {
                 "version": core4_version,
                 "build": ", ".join(core4_build)
@@ -391,9 +408,11 @@ def run(args):
             if data["error"]:
                 print("  ERROR:\n{}".format(data["error"]))
             else:
-                print("  version: {}".format(data["version"]))
-                print("  build:   {} {} webapps".format(
-                    data["build"], "with" if data["web"] else "without"))
+                print("  version: {} ({}) {} webapps".format(
+                    data["version"], data["build"],
+                    "with" if data["web"] else "without"))
+                print("  commit:  {} ({})".format(
+                    data["commit"]["timestamp"], data["commit"]["hash"]))
                 print("  source:  {}".format(data["repository"]))
                 print("  core4:   {}, build {}".format(
                     data["core4"]["version"], data["core4"]["build"]))
