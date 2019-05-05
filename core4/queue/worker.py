@@ -86,6 +86,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         super().startup()
         intro = core4.service.introspect.main.CoreIntrospector()
         self.job = intro.collect_job()
+        # ignore signal from children to avoid defunct zombies
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     def cleanup(self):
         """
@@ -107,8 +109,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         :return: dict with step ``name``, ``interval``, ``next`` timestamp
              to execute and method reference ``call``
         """
-        # ignore signal from children to avoid defunct zombies
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         plan = []
         now = core4.util.node.now()
         for s in self.steps:

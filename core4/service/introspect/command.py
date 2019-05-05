@@ -29,6 +29,8 @@ print(job._id)
 
 #: command used to start job processing with :meth:`.CoreWorkerProecess.start`
 EXECUTE = """
+import signal
+signal.signal(signal.SIGCHLD, signal.SIG_DFL)
 from core4.queue.process import CoreWorkerProcess
 CoreWorkerProcess().start("{job_id:s}")
 """
