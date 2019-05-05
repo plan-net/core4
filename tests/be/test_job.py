@@ -17,6 +17,7 @@ import core4.queue.helper
 import core4.queue.helper.functool
 import core4.queue.helper.job
 import core4.queue.helper.job.example
+import core4.queue.helper.job.base
 import core4.queue.job
 import core4.queue.main
 import core4.service.setup
@@ -535,3 +536,14 @@ def test_progress_enqueue():
     assert job.attempts == 10
     assert job.chain == []
     assert job.prog == {"value": None, "message": None}
+
+
+def test_temp_folder():
+    job = core4.queue.helper.job.base.CoreLoadJob()
+    f = job.make_temp("test.file")
+    folder, filename = os.path.split(f)
+    assert filename == "test.file"
+    tf = job.make_temp()
+    assert os.path.isfile(tf) is False
+    td = job.make_temp(folder=True)
+    assert os.path.isdir(td)
