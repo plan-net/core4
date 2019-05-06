@@ -122,7 +122,7 @@
                   @click.prevent="()=>{}"
                 >
                   <v-card-text
-                    @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
+                    @click="$router.push({ name: 'enter', params: { widgetId: widget.rsc_id } })"
                     :alt="widget.endpoint.enter_url"
                   >
 
