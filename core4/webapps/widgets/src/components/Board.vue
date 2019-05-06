@@ -126,7 +126,7 @@
                     :alt="widget.endpoint.enter_url"
                   >
 
-                    <div
+  <!--                   <div
                       class="text-xs-center"
                       style="padding-top: 54px;"
                     >
@@ -139,7 +139,23 @@
                         <span>Open widget</span>
                       </v-tooltip>
 
-                    </div>
+                    </div> -->
+                                     <iframe
+                  :src="widget.endpoint.card_url"
+                  frameborder="0"
+                ></iframe>
+<!--               <div
+                class="text-xs-center"
+                style="padding-top: 54px;"
+              >
+                <v-tooltip top>
+                  <v-icon class="open-widget-icon" slot="activator"
+                    color="grey" @click="$router.push({ name: 'widget', params: { widgetId: widget.rsc_id } })"
+                  >{{widget.icon}}</v-icon>
+                <span>Open widget</span>
+                </v-tooltip>
+
+              </div> -->
                   </v-card-text>
                 </a>
               </template>
