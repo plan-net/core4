@@ -23,7 +23,7 @@ def reset(tmpdir):
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
 
-    os.environ["CORE4_OPTION_folder__home"] = "/home/mra/core4home"
+    #os.environ["CORE4_OPTION_folder__home"] = "/home/mra/core4home"
 
     core4.logger.mixin.logon()
     yield
