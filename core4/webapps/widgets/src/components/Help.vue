@@ -21,10 +21,10 @@ export default {
       switch (this.$route.name) {
         case 'help':
           return this.widget.endpoint.help_url
-        case 'widget':
-          return this.widget.endpoint.enter_url
+        // case 'widget':
+        // case 'enter':
         default:
-          return ''
+          return this.widget.endpoint.enter_url
       }
     }
   }
