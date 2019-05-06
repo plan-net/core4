@@ -3,7 +3,7 @@ value: 1
 mongo_database: core4test2
 coll1: !connect mongodb://coll1
 coll2: !connect mongodb://core4test/coll2
-coll3: !connect mongodb://core:654321@localhost:27017/core4test/coll2/collx
+coll3: !connect mongodb://core:654321@testmongo:27017/core4test/coll2/collx
 v1: !!float 3
 v2: !!bool TRUE
 v3: !!int 4

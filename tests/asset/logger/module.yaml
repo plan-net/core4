@@ -24,7 +24,7 @@ logging:
       mongo_handler:
         class: core4.logger.handler.MongoLoggingHandler
         level: DEBUG
-        connection: !connect mongodb://core:654321@localhost:27017/core4test/sys.log
+        connection: !connect mongodb://core:654321@testmongo:27017/core4test/sys.log
 
     root:
       level: DEBUG

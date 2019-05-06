@@ -28,7 +28,7 @@ async def test_grant(core4api):
 
     async def _access(access):
         mongo = motor.MotorClient(
-            "mongodb://test_reg_test_role1:" + access + "@localhost:27017")
+            "mongodb://test_reg_test_role1:" + access + "@testmongo:27017")
         _ = await mongo.server_info()
         _ = await mongo["core4test"].list_collection_names()
         assert await mongo.core4test.sys.role.count_documents({}) > 0

@@ -8,7 +8,7 @@ from core4.service.introspect.main import CoreIntrospector
 from tests.be.util import asset
 from core4.queue.scheduler import CoreScheduler
 
-MONGO_URL = 'mongodb://core:654321@localhost:27017'
+MONGO_URL = 'mongodb://core:654321@testmongo:27017'
 MONGO_DATABASE = 'core4test'
 
 @pytest.fixture(autouse=True)
@@ -84,7 +84,7 @@ def test_jobs():
 
 def test_schedule():
     scheduler = CoreScheduler()
-    scheduler.collect_job()
+    scheduler.startup()
 
 
 def test_container():
