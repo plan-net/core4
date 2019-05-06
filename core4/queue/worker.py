@@ -76,6 +76,11 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
         self.job = None
+        self.handle_signal()
+
+    def handle_signal(self):
+        # ignore signal from children to avoid defunct zombies
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     def startup(self):
         """
@@ -86,8 +91,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         super().startup()
         intro = core4.service.introspect.main.CoreIntrospector()
         self.job = intro.collect_job()
-        # ignore signal from children to avoid defunct zombies
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     def cleanup(self):
         """
