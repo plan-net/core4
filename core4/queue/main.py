@@ -13,24 +13,24 @@ example by :mod:`core4.queue.worker` and :mod:`core4.queue.process`.
 import importlib
 import sys
 import traceback
+from datetime import timedelta
 
 import pymongo.collection
 import pymongo.errors
 import pymongo.write_concern
 from bson.objectid import ObjectId
-from datetime import timedelta
 
+import core4.const
 import core4.error
-import core4.service.introspect
+import core4.service.introspect.main
 import core4.service.setup
 import core4.util.node
 import core4.util.tool
-import core4.const
 from core4.base import CoreBase
 from core4.queue.helper.job.base import CoreAbstractJobMixin
 from core4.queue.job import STATE_PENDING
 from core4.queue.query import QueryMixin
-from core4.service.introspect.command import RESTART
+from core4.service.introspect.command import RESTART, KILL
 
 STATE_WAITING = (core4.queue.job.STATE_DEFERRED,
                  core4.queue.job.STATE_FAILED)
@@ -79,7 +79,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         core4.service.setup.CoreSetup().make_queue()
         job = self.job_factory(name or cls, **kwargs)
         # update job properties
-        job.__dict__["attempts_left"] = job.__dict__["attempts"]
+        job.__dict__["attempts_left"] = getattr(job, "attempts")
         job.__dict__["state"] = STATE_PENDING
         enqueued_from = {
             "at": lambda: core4.util.node.mongo_now(),
@@ -312,7 +312,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 if doc is None:
                     raise core4.error.CoreJobNotFound(
                         "job [{}] not found".format(_id))
-                new_id = core4.service.introspect.exec_project(
+                new_id = core4.service.introspect.main.exec_project(
                     doc["name"], RESTART, job_id=str(doc["_id"]), comm=True)
             except:
                 raise
@@ -631,6 +631,22 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                             job.last_error["exception"],
                             "\n".join(job.last_error["traceback"]))
 
+    def exec_kill(self, doc):
+        """
+        Kill the job of the passed MongoDB doc with a valid ``_id`` and
+        ``name``. Uses :meth:`._exec_kill` directly or with the Python virtual
+        environment if :meth:`.exec_kill` raises an ``ImportError``.
+
+        :param doc: valid ``sys.queue`` document of the job to be killed
+        """
+        try:
+            self._exec_kill(doc["_id"])
+        except ImportError:
+            core4.service.introspect.main.exec_project(
+                doc["name"], KILL, job_id=str(doc["_id"]))
+        except Exception:
+            raise
+
     def _exec_kill(self, _id):
         # internal method used by virtual python interpreter to kill job
         oid = ObjectId(_id)
@@ -668,7 +684,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                          job.state, runtime)
 
     def make_stat(self, event, _id):
-        # todo: requires updated documentation
         """
         Collects current job state counts from ``sys.queue`` and inserts a
         record into ``sys.event``.

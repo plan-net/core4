@@ -46,7 +46,7 @@ class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
         return sorted([os.path.join(path, f) for f in os.listdir(path) if
                        pattern is None or pattern.match(f) is not None])
 
-    def _make_file(self, key, filename=None, base=None):
+    def _make_file(self, key, filename=None, base=None, folder=False):
         if key == "temp":
             path = self.config.get_folder(key)
         else:
@@ -54,14 +54,17 @@ class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
                                 base or self.project)
         if filename is None:
             filename = tempfile.mktemp(dir=path)
-        (dirpart, filename) = os.path.split(filename)
-        if dirpart:
-            path = os.path.join(path, dirpart)
-        fullname = os.path.join(path, filename)
+        if folder:
+            path = fullname = filename
+        else:
+            (dirpart, filename) = os.path.split(filename)
+            if dirpart:
+                path = os.path.join(path, dirpart)
+            fullname = os.path.join(path, filename)
         if not os.path.exists(path):
             self.logger.debug("make directory [%s]", path)
             os.makedirs(path)
-        self.logger.debug("make file [%s]", fullname)
+        self.logger.debug("temp at [%s]", fullname)
         return fullname
 
     def list_proc(self, pattern=None, base=None):
@@ -114,7 +117,7 @@ class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
         """
         return self._make_file("transfer", filename, base)
 
-    def make_temp(self, filename=None):
+    def make_temp(self, filename=None, folder=False):
         """
         Returns the full filename of a file in the temp folder. If not
         ``filename`` is passed or is ``None``, then a temporary file is
@@ -124,7 +127,15 @@ class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
             file name is created and returned
         :return: full filename
         """
-        return self._make_file("transfer", filename)
+        return self._make_file("temp", filename, folder=folder)
+
+    def make_temp_folder(self):
+        """
+        Returns the full path name of a temporary folder.
+
+        :return: full path name of the folder
+        """
+        return self._make_file("temp", folder=True)
 
     def _move(self, source, key, base):
         filename = os.path.basename(source)

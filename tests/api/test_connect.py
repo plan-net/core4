@@ -1,58 +1,70 @@
-import os
-
 import pytest
+
+import core4.api.v1.request.role.field
+from core4.api.v1.request.role.main import CoreRole
+from core4.api.v1.server import CoreApiServer
 from core4.api.v1.application import CoreApiContainer
-from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.request.standard.access import AccessHandler
-from tests.api.test_response import setup, LocalTestServer, StopHandler
-from core4.base.main import CoreBase
+from tests.api.test_test import run, setup, mongodb
 import pymongo
-import pymongo.errors
+
 
 _ = setup
+_ = mongodb
 
-# curr_dir = os.path.abspath(os.curdir)
-#
-# ASSET_FOLDER = '../asset'
-# MONGO_URL = 'mongodb://core:654321@localhost:27017'
-# MONGO_DATABASE = 'core4test'
-
-class HandlerTest(CoreRequestHandler):
+class SyncHandler(CoreRequestHandler):
     author = "mra"
 
     def get(self):
-        out = "{}\n{}".format(self.config.sys.queue.connection,
-                              self.config.sys.queue.async)
-        self.reply(out)
+        coll = self.config.sys.queue.connect_sync()
+        self.reply({
+            "connect": str(coll),
+            "collection": str(coll.connection)
+        })
 
-class CoreApiTestServer(CoreApiContainer):
+class AsyncHandler(CoreRequestHandler):
+    author = "mra"
+
+    def get(self):
+        coll = self.config.sys.queue.connect_async()
+        self.reply({
+            "connect": str(coll),
+            "collection": str(coll.connection)
+        })
+
+
+class MyContainer(CoreApiContainer):
+
+    root = "/test"
     rules = [
-        (r'/kill', StopHandler),
-        (r'/test', HandlerTest),
+        (r"/sync", SyncHandler),
+        (r"/async", AsyncHandler)
+
     ]
 
 
-class HttpServer(LocalTestServer):
-
-    def start(self, *args, **kwargs):
-        return CoreApiTestServer
-
-
-@pytest.fixture()
-def http():
-    server = HttpServer()
-    yield server
-    server.stop()
+@pytest.yield_fixture
+def core4_test():
+    yield from run(
+        MyContainer,
+        CoreApiServer
+    )
 
 
-def test_base():
-    base = CoreBase()
-    assert isinstance(base.config.sys.queue.connection, pymongo.MongoClient)
-    assert not base.config.sys.queue.async
+async def test_connect(core4_test):
+    await core4_test.login()
+    resp = await core4_test.get(
+        '/core4/api/v1/profile')
+    assert resp.code == 200
 
-def test_handler(http):
-    rv = http.get("/test")
-    out = rv.json()["data"].split("\n")
-    assert out[0].startswith("MotorClient")
-    assert out[1].strip() == "True"
+    resp = await core4_test.get(
+        '/test/sync')
+    assert resp.code == 200
+    assert "async_conn=\'False\'" in resp.json()["data"]["connect"]
+    assert resp.json()["data"]["collection"].startswith("MongoClient")
+
+    resp = await core4_test.get(
+        '/test/async')
+    assert resp.code == 200
+    assert "async_conn=\'True\'" in resp.json()["data"]["connect"]
+    assert resp.json()["data"]["collection"].startswith("MotorClient")

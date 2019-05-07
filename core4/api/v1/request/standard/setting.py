@@ -186,7 +186,7 @@ class SettingHandler(CoreRequestHandler):
         username_param = self.get_argument("username", default=None)
         user_details = await self.user.detail()
 
-        if username_param is not None and self.user.is_admin():
+        if username_param is not None and await self.user.is_admin():
             lookup = await CoreRole().find_one(name=username_param)
             detail = await lookup.detail()
             return detail['_id']

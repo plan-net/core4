@@ -46,7 +46,7 @@ import core4.error
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.standard.info import InfoHandler
-from core4.api.v1.request.kill import KillHandler
+#from core4.api.v1.request.kill import KillHandler
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.request.standard.asset import CoreAssetHandler
@@ -171,12 +171,12 @@ class CoreApiContainer(CoreBase):
             kwargs=None,
             name=None
         )
-        yield tornado.web.URLSpec(
-            pattern=self.get_root(core4.const.KILL_URL),
-            handler=KillHandler,
-            kwargs=None,
-            name=None
-        )
+        # yield tornado.web.URLSpec(
+        #     pattern=self.get_root(core4.const.KILL_URL),
+        #     handler=KillHandler,
+        #     kwargs=None,
+        #     name=None
+        # )
         yield tornado.web.URLSpec(
             pattern=self.get_root("/{}/(default|project)/(.+?)/(.*)".format(
                 core4.const.ASSET_URL)),
@@ -332,19 +332,21 @@ class CoreApplication(tornado.web.Application):
             split = request.path[len(root) + 1:].split("/")
             if len(split) == 2:
                 mode = split[0]
-                handler = self.lookup[split[1]]["handler"]
-                if mode == core4.const.CARD_MODE:
-                    request.method = core4.const.CARD_METHOD
-                    return self.get_handler_delegate(request, handler.target,
-                                                     handler.target_kwargs)
-                elif mode == core4.const.ENTER_MODE:
-                    request.method = core4.const.ENTER_METHOD
-                    return self.get_handler_delegate(request, handler.target,
-                                                     handler.target_kwargs)
-                elif mode == core4.const.HELP_MODE:
-                    request.method = core4.const.HELP_METHOD
-                    return self.get_handler_delegate(request, handler.target,
-                                                     handler.target_kwargs)
+                lu = self.lookup.get(split[1], {})
+                handler = lu.get("handler", None)
+                if handler:
+                    if mode == core4.const.CARD_MODE:
+                        request.method = core4.const.CARD_METHOD
+                        return self.get_handler_delegate(request, handler.target,
+                                                         handler.target_kwargs)
+                    elif mode == core4.const.ENTER_MODE:
+                        request.method = core4.const.ENTER_METHOD
+                        return self.get_handler_delegate(request, handler.target,
+                                                         handler.target_kwargs)
+                    elif mode == core4.const.HELP_MODE:
+                        request.method = core4.const.HELP_METHOD
+                        return self.get_handler_delegate(request, handler.target,
+                                                         handler.target_kwargs)
         return super().find_handler(request, **kwargs)
 
     def handler_help(self, cls):

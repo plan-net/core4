@@ -106,7 +106,7 @@ class LoginHandler(CoreRequestHandler):
         if user:
             token = self.create_token(user.name)
             self.current_user = user.name
-            await user.login()
+            #await user.login()
             return token
         return None
 

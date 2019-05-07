@@ -484,6 +484,9 @@ json body and also from the URL-encoded form (not in scope of this example)::
             self.reply(
                 "got: %s (%dsec. to now)" % (dt, delta))
 
+        def post(self):
+            self.get()
+
 
     class CoreApiServer(CoreApiContainer):
         root = "args"

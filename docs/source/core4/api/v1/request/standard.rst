@@ -27,10 +27,10 @@ profile endpoint
     :show-inheritance:
 
 
-API collection endpoint
-#######################
+API collection endpoint (info)
+##############################
 
-.. automodule:: core4.api.v1.request.standard.route
+.. automodule:: core4.api.v1.request.standard.info
     :members:
     :show-inheritance:
 

@@ -4,7 +4,7 @@ import createLogger from 'vuex/dist/logger'
 import api from '@/api'
 import {
   clone
-} from 'pnbi-base/core4/helper'
+} from 'core4ui/core4/helper'
 import router from '@/router'
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -14,6 +14,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   plugins,
   state: {
+    widgetListOpen: true,
     widgetsObj: {},
     widgetsList: [],
 
@@ -35,6 +36,11 @@ export default new Vuex.Store({
       const widgets = await api.getWidgets()
       commit('set_widgets', widgets)
       dispatch('setLoading', false)
+    },
+    toggleWidgetListOpen ({
+      commit, state
+    }, payload) {
+      commit('set_widgetlist_open', !state.widgetListOpen)
     },
     updateWidgets ({
       commit
@@ -75,7 +81,6 @@ export default new Vuex.Store({
     },
     async createBoard ({
       commit,
-      dispatch,
       getters
     }, board) {
       try {
@@ -103,7 +108,6 @@ export default new Vuex.Store({
     },
     updateBoardWidgets ({
       commit,
-      dispatch,
       getters
     }, widgets) {
       commit('update_board_widgets', widgets)
@@ -152,7 +156,6 @@ export default new Vuex.Store({
     },
     removeFromBoard ({
       commit,
-      dispatch,
       getters
     }, widgetId) {
       commit('remove_from_board', widgetId)
@@ -160,9 +163,23 @@ export default new Vuex.Store({
       api.updateBoard({
         boards
       })
+    },
+    setWidgetOver ({
+      commit,
+      getters
+    }, payload) {
+      commit('set_widget_over', payload)
     }
   },
   mutations: {
+    set_widget_over (state, payload) {
+      const widget = clone(state.widgetsObj[payload.id])
+      widget.$over = payload.$over
+      state.widgetsObj[payload.id] = widget
+    },
+    set_widgetlist_open (state, payload) {
+      state.widgetListOpen = payload
+    },
     set_boards (state, payload) {
       state.boardsObj = payload.reduce((obj, item) => {
         obj[item.name] = item
@@ -191,7 +208,7 @@ export default new Vuex.Store({
       state.activeBoard.widgets = widgets
     },
     update_board_name (state, name) {
-      const board = state.boardsObj[state.activeBoard]
+      const board = state.boardsObj[state.activeBoard.name]
       board.name = name
     },
     add_to_board (state, widgetId) {
@@ -237,6 +254,9 @@ export default new Vuex.Store({
     },
     widgetSet (state) {
       return clone(state.widgetsList.map(id => state.widgetsObj[id]))
+    },
+    widgetListOpen (state) {
+      return state.widgetListOpen
     },
     boardsSet (state) {
       return clone(state.boardsList.map(name => state.boardsObj[name]))

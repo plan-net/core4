@@ -1,7 +1,7 @@
 
 DEFAULT:
    mongo_database: core4test2
-   mongo_url: mongodb://core:654321@localhost:27017
+   mongo_url: mongodb://core:654321@testmongo:27017
 
 test:
    value: 4

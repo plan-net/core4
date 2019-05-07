@@ -378,9 +378,12 @@ class RoleHandler(CoreRequestHandler):
             perm=self.get_argument(
                 "perm", as_type=list, default=None)
         )
+        set_perm = False
         for k, v in kwargs.items():
             if v is not None:
                 ret.data[k].set(v)
+                if k == "perm":
+                    set_perm = True
         try:
             saved = await ret.save()
         except (AttributeError, TypeError, core4.error.Core4ConflictError,
@@ -397,8 +400,8 @@ class RoleHandler(CoreRequestHandler):
                 self.reply(ret.to_response())
             else:
                 self.reply("no changes")
-        if "perm" in kwargs:
-            self.logger.debug("revoke access grants")
+        if set_perm:
+            self.logger.info("revoke access grants with {}".format(kwargs))
             manager = CoreAccessManager(ret)
             await manager.reset_all()
 
@@ -407,7 +410,8 @@ class RoleHandler(CoreRequestHandler):
         Deletes an existing user or role.
 
         Methods:
-            DELETE /roles/<_id> - delete user/role with ``_id``
+            DELETE /roles/<_id>?etag=<etag>
+            DELETE /roles/<_id>/<etag>
 
         Parameters:
             _id (str): of the user/role to delete
@@ -447,13 +451,16 @@ class RoleHandler(CoreRequestHandler):
                 'timestamp': '2018-11-15T06:24:52.262685'
             }
         """
+        if "/" in _id:
+            _id, *e = _id.split("/")
+            etag = self.parse_objectid("/".join(e))
+        else:
+            etag = self.get_argument("etag", as_type=ObjectId)
         oid = self.parse_objectid(_id)
         ret = await CoreRole().find_one(_id=oid)
-        etag = self.get_argument("etag", as_type=ObjectId)
         if ret is None:
             raise HTTPError(404, "role [%s] not found", oid)
         ret.data["etag"].set(etag)
-
         try:
             removed = await ret.delete()
         except (AttributeError, TypeError, core4.error.Core4ConflictError,

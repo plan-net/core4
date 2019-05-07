@@ -1,4 +1,4 @@
-import { axiosInternal } from 'pnbi-base/core4/internal/axios.config.js'
+import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import store from '@/store.js'
 const api = {
   createBoard (dto) {
@@ -51,6 +51,33 @@ const api = {
     return this._putBoards({ boards })
   },
   getWidgets () {
+    const fields = {
+      title: 'String',
+      qual_name: 'DotSeperated',
+      tags: 'Array',
+      decription: 'String',
+      author: 'String'
+    }
+    function constructSearchString (widget) {
+      let $search = ''
+      Object.keys(fields).forEach(key => {
+        if (widget[key] != null) {
+          if (fields[key] === 'String') {
+            $search += widget[key] + ' '
+          } else if (fields[key] === 'Array') {
+            if (widget[key].length) {
+              $search += widget[key].join(' ') + ' '
+            }
+          } else {
+            const tmp = (widget.qual_name || '').split('.').join(' ') + ' '
+            $search += tmp
+          }
+        }
+      })
+      /* replace words and whitespace */
+      $search = $search.replace(/ for| and| v1| api| request| core4/gi, '').replace(/\s+/g, ' ').trim()
+      return Object.assign(widget, { $search: $search.split(' ') })
+    }
     return axiosInternal
       .get(`/_info`, { params: { per_page: 1000, page: 0 } })
       .then(result => {
@@ -68,7 +95,7 @@ const api = {
           delete val.project
           delete val.started_at
           delete val.created_at
-          return val
+          return constructSearchString(val)
         })
       })
       .catch(error => Promise.reject(error))

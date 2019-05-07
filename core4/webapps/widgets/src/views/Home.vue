@@ -1,7 +1,7 @@
 <template>
-  <pnbi-page>
+  <c4-page>
     <router-view />
-  </pnbi-page>
+  </c4-page>
 </template>
 <script>
 export default {

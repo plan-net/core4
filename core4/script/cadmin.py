@@ -9,22 +9,24 @@
 cadmin - core-4 build and deployment utililty.
 
 Usage:
-  cadmin install [--reset] [--web] [--home=HOME] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--web] [--home=HOME] [--force] [PROJECT]
-  cadmin uninstall [--home=HOME] PROJECT
+  cadmin install [--reset] [--web] [--home=HOME] [--build=APP...] REPOSITORY PROJECT
+  cadmin upgrade [--test] [--force] [--reset] [--core4] [--home=HOME] [PROJECT...]
+  cadmin uninstall [--home=HOME] PROJECT...
+  cadmin version [--home=HOME] [PROJECT...]
 
 Arguments:
   REPOSITORY  requirements specifier with VCS support (see pip documentation)
   PROJECT     project name
 
 Options:
-  --home=HOME   set core4 home directory, defaults to config.folder.home
-  -r --reset    reset existing project root
-  -w --web      build and install web apps
-  -f --force    force build and installation
-  -t --test     dry-run
-  -h --help     show this screen
-  -v --version  show version
+  --home=HOME     set core4 home directory, defaults to config.folder.home
+  -r --reset      reset existing project root
+  -f --force      force build and installation even if no changes
+  -w --web        build and install web apps
+  -b --build=APP  build and install web apps
+  -t --test       dry-run
+  -h --help       show this screen
+  -v --version    show version
 """
 
 import datetime
@@ -43,6 +45,12 @@ from core4.base.main import CoreBase
 LOGFILE = os.path.join(os.path.abspath("."), "cadmin.log")
 CLONE = ".origin"
 CONFIG = ".config"
+VERSION_COMMAND = """
+import {p}
+import core4
+print(", ".join([{p}.__version__, {p}.__built__, core4.__version__, 
+                 core4.__built__]))
+"""
 
 if os.path.exists(LOGFILE):
     os.unlink(LOGFILE)
@@ -114,12 +122,14 @@ class CoreInstaller(CoreBase, InstallMixin):
             raise SystemExit("virtual environment [{}] not found".format(
                 self.venv))
 
-    def install(self):
+    def install(self, filter=None):
         if self.reset:
             self.uninstall()
         self.check_for_install()
         self.print("installing [{}]".format(self.project))
         os.makedirs(self.root)
+        os.chdir(self.root)
+
         self.print("  created project root [{}]".format(self.root))
         self.install_venv()
         self.upgrade_pip()
@@ -130,7 +140,7 @@ class CoreInstaller(CoreBase, InstallMixin):
         self.install_project()
         self.write_config()
         if self.web:
-            self.build()
+            self.build(filter)
 
     def write_config(self):
         data = {
@@ -149,6 +159,13 @@ class CoreInstaller(CoreBase, InstallMixin):
         (out, _) = Popen(["git", "--no-pager", "log", "-n", "1",
                           "--pretty=format:%H"], env=self.env, stdout=PIPE,
                          stderr=DEVNULL).communicate()
+        return out.decode("utf-8").strip()
+
+    def get_commit_datetime(self, commit):
+        os.chdir(self.clone)
+        (out, _) = Popen(["git", "--no-pager", "log", "-n", "1",
+                          "--pretty=format:%aD", commit], env=self.env,
+                         stdout=PIPE, stderr=DEVNULL).communicate()
         return out.decode("utf-8").strip()
 
     def checkout(self):
@@ -219,13 +236,14 @@ class CoreInstaller(CoreBase, InstallMixin):
         assert ret == 0
         return "\n".join(stdout)
 
-    def build(self):
+    def build(self, filter):
         self.print("  build webapps in [{}]".format(self.clone))
         for build in self.identify_webapp():
-            self.print("    build [{}]".format(build["base"]))
-            self.clean_webapp(os.path.join(build["base"], build["dist"]))
-            self.build_webapp(build["base"], build["command"])
-            self.install_webapp(build["base"], build["dist"])
+            if (filter == [] or build["name"] in filter):
+                self.print("    build [{}]".format(build["base"]))
+                self.clean_webapp(os.path.join(build["base"], build["dist"]))
+                self.build_webapp(build["base"], build["command"])
+                self.install_webapp(build["base"], build["dist"])
 
     def install_webapp(self, base, dist):
         command = "import {p:s}; print({p:s}.__file__)".format(p=self.project)
@@ -277,10 +295,13 @@ class CoreInstaller(CoreBase, InstallMixin):
                             yield {
                                 "base": os.path.join(path, directory),
                                 "command": command,
-                                "dist": dist
+                                "dist": dist,
+                                "name": pkg_json.get("name", None)
                             }
 
-    def upgrade(self, test=False, force=False):
+    def upgrade(self, test=False, force=False, core4=False):
+        if self.project == "core4" and core4:
+            return
         self.check_for_upgrade()
         self.print("upgrading [{}]".format(self.project))
         data = self.read_config()
@@ -289,9 +310,12 @@ class CoreInstaller(CoreBase, InstallMixin):
         current = data["commit"]
         if os.path.isdir(self.repository):
             self.clone = self.repository
+            self.print("  installing from [{}]".format(self.clone))
         else:
             self.checkout()
         latest = self.get_local_commit()
+        if self.web:
+            self.print("  will build web apps")
         if latest == current:
             self.print("  latest [{}] == current commit".format(latest))
             self.print("  no changes with [{}]".format(self.project))
@@ -301,41 +325,96 @@ class CoreInstaller(CoreBase, InstallMixin):
             self.print("  project [{}] requires upgrade".format(self.project))
         if force:
             self.print("  force upgrade with [{}]".format(self.project))
-        if not test and (force or latest != current):
-            self.install_project()
-            self.write_config()
-            if self.web:
-                self.build()
+        if self.reset:
+            self.print("  reset [{}]".format(self.project))
+        if core4:
+            self.print("  reset [core4] of [{}]".format(self.project))
+            if not test:
+                self.popen(self.pip, "uninstall", "core4", "--yes")
+        if not test and (self.reset or force or core4 or latest != current):
+            if self.reset:
+                self.install([])
+            else:
+                self.install_project()
+                self.write_config()
+                if self.web and (not core4 or force):
+                    self.build([])
+
+    def version(self):
+        args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
+        proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
+        (stdout, stderr) = proc.communicate()
+        data = self.read_config()
+        self.repository = data["repository"]
+        self.web = data["web"]
+        current = data["commit"]
+        if os.path.isdir(self.repository):
+            self.clone = self.repository
+        timestamp = self.get_commit_datetime(current)
+        (version, build, core4_version, *core4_build) = stdout.decode(
+            "utf-8").strip().split(", ")
+        return {
+            "repository": self.repository,
+            "web": self.web,
+            "version": version,
+            "build": build,
+            "commit": {
+                "hash": data["commit"],
+                "timestamp": timestamp
+            },
+            "core4": {
+                "version": core4_version,
+                "build": ", ".join(core4_build)
+            },
+            "error": stderr or None
+        }
 
 
 class CoreUpdater(CoreBase, InstallMixin):
 
-    def upgrade(self, test, force, home=None):
+    def list_project(self, home=None):
         home = home or self.config.folder.home
         for project in os.listdir(home):
-            # todo: check if this is actually a folder and a core4 project
-            installer = CoreInstaller(project)
-            installer.upgrade(test, force)
+            yield project
 
 
 def run(args):
     t0 = datetime.datetime.now()
+    if args["PROJECT"]:
+        project = args["PROJECT"]
+    else:
+        installer = CoreUpdater()
+        project = installer.list_project(args["--home"])
     if args["install"]:
         installer = CoreInstaller(
-            args["PROJECT"], args["REPOSITORY"], args["--reset"],
+            project[0], args["REPOSITORY"], args["--reset"],
             args["--web"], args["--home"])
-        installer.install()
+        installer.install(args["--build"])
     elif args["upgrade"]:
-        if args["PROJECT"]:
-            installer = CoreInstaller(args["PROJECT"], home=args["--home"])
-            installer.upgrade(args["--test"], args["--force"])
-        else:
-            installer = CoreUpdater()
-            installer.upgrade(args["--test"], args["--force"],
-                              home=args["--home"])
+        for p in project:
+            installer = CoreInstaller(
+                p, reset=args["--reset"], home=args["--home"])
+            installer.upgrade(args["--test"], args["--force"], args["--core4"])
     elif args["uninstall"]:
-        installer = CoreInstaller(args["PROJECT"], home=args["--home"])
-        installer.uninstall()
+        for p in project:
+            installer = CoreInstaller(p, home=args["--home"])
+            installer.uninstall()
+    elif args["version"]:
+        for p in project:
+            installer = CoreInstaller(p, home=args["--home"])
+            data = installer.version()
+            print(p)
+            if data["error"]:
+                print("  ERROR:\n{}".format(data["error"]))
+            else:
+                print("  version: {} ({}) {} webapps".format(
+                    data["version"], data["build"],
+                    "with" if data["web"] else "without"))
+                print("  commit:  {} ({})".format(
+                    data["commit"]["timestamp"], data["commit"]["hash"]))
+                print("  source:  {}".format(data["repository"]))
+                print("  core4:   {}, build {}".format(
+                    data["core4"]["version"], data["core4"]["build"]))
     else:
         raise SystemExit("nothing to do.")
     runtime = datetime.datetime.now() - t0
@@ -343,7 +422,9 @@ def run(args):
 
 
 def main():
-    run(args=docopt(__doc__, help=True))
+    args = docopt(__doc__, help=True)
+    # print(args)
+    run(args)
 
 
 if __name__ == '__main__':

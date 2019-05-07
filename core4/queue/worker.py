@@ -32,18 +32,18 @@ To stop the worker start a new Python interpreter and go with::
 
 import collections
 import signal
+from datetime import timedelta
 
 import psutil
 import pymongo
-from datetime import timedelta
 
 import core4.queue.job
 import core4.queue.process
 import core4.queue.query
-import core4.service.introspect
+import core4.service.introspect.main
 import core4.util.node
 from core4.queue.daemon import CoreDaemon
-from core4.service.introspect.command import EXECUTE, KILL
+from core4.service.introspect.command import EXECUTE
 
 #: processing steps in the main loop of :class:`.CoreWorker`
 STEPS = (
@@ -75,6 +75,22 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.stats_collector.append(
             (min(psutil.cpu_percent(percpu=True)),
              psutil.virtual_memory()[4] / 2. ** 20))
+        self.job = None
+        self.handle_signal()
+
+    def handle_signal(self):
+        # ignore signal from children to avoid defunct zombies
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+
+    def startup(self):
+        """
+        Implements the **startup** phase of the scheduler. The method is based
+        on :class:`.CoreDaemon` implementation and additionally spawns
+        :meth:`.collect_job`.
+        """
+        super().startup()
+        intro = core4.service.introspect.main.CoreIntrospector()
+        self.job = intro.collect_job()
 
     def cleanup(self):
         """
@@ -96,8 +112,6 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         :return: dict with step ``name``, ``interval``, ``next`` timestamp
              to execute and method reference ``call``
         """
-        # ignore signal from children to avoid defunct zombies
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         plan = []
         now = core4.util.node.now()
         for s in self.steps:
@@ -147,7 +161,15 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             return
         self.start_job(doc)
 
-    def start_job(self, doc, async=True):
+    def start_job(self, doc, run_async=True):
+        """
+        This method is called by :meth:`.work_jobs` and encapsulated for
+        testing purposes, only.
+
+        :param doc: job document to launch
+        :param run_async: run asynchronous (default) wait for process to
+                          complete
+        """
         now = self.at
         update = {
             "state": core4.queue.job.STATE_RUNNING,
@@ -171,8 +193,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         self.queue.make_stat('request_start_job', str(doc["_id"]))
         self.logger.info("launching [%s] with _id [%s]", doc["name"],
                          doc["_id"])
-        if async:
-            core4.service.introspect.exec_project(
+        if run_async:
+            core4.service.introspect.main.exec_project(
                 doc["name"], EXECUTE, wait=False, job_id=str(doc["_id"]))
         else:
             from core4.queue.process import CoreWorkerProcess
@@ -434,7 +456,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             if not found:
                 self.logger.error("pid [%s] not exists, killing",
                                   doc["locked"]["pid"])
-                self.queue._exec_kill(doc["_id"])
+                self.queue.exec_kill(doc)
 
     def kill_pid(self, doc):
         """
@@ -447,13 +469,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
             (found, proc) = self.pid_exists(doc)
             if found and proc:
                 proc.kill()
-            try:
-                self.queue._exec_kill(doc["_id"])
-            except ImportError:
-                core4.service.introspect.exec_project(
-                    doc["name"], KILL, job_id=str(doc["_id"]))
-            except Exception:
-                raise
+            self.queue.exec_kill(doc)
 
     def pid_exists(self, doc):
         """
