@@ -28,7 +28,7 @@ def enqueue(job, **kwargs):
     :param job: qual_name or job class
     :param kwargs: arguments to be passed to the job
 
-    :return: enqueued job object
+    :return: _id of the enqueued job
     """
     if isinstance(job, str):
         name = job
@@ -79,7 +79,7 @@ def execute(job, **kwargs):
     return doc
 
 
-def find_job(**kwargs):
+def find_job(filter=None, **kwargs):
     """
     Finds the job using the passed ``kwargs`` as filter arguments.
 
@@ -87,4 +87,6 @@ def find_job(**kwargs):
     :return: list of jobs matching the filter criteria
     """
     queue = core4.queue.main.CoreQueue()
+    if filter:
+        return list(queue.config.sys.queue.find(filter=filter))
     return list(queue.config.sys.queue.find(filter=kwargs))
