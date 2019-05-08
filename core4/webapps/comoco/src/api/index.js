@@ -19,14 +19,15 @@ export default {
       .catch(error => Promise.reject(error))
   },
 
-  getJobHistory (page, perPage, filter) {
+  getJobHistory (page, perPage, filter, sort) {
     let token = JSON.parse(localStorage.getItem('user'))['token']
     let pageArg = page ? `page=${page}` : ''
     let perPageArg = perPage ? `&per_page=${perPage}` : ''
     let filterArg = filter ? `&filter=${filter}` : ''
+    let sortArg = sort || 'asc'
 
     return axiosInternal
-      .get(`/jobs/history?${pageArg}${perPageArg}${filterArg}&token=${token}`)
+      .get(`/jobs/history?${pageArg}${perPageArg}${filterArg}&order=${sortArg}&token=${token}`)
       .then(res => {
         return {
           total_count: res.total_count,

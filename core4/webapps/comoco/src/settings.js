@@ -2,6 +2,8 @@
  * General jobs config. Existing job states, existing job flags, existing job groups
  */
 
+const jobs = ['running', 'pending', 'deferred', 'failed', 'error', 'inactive', 'killed']
+
 const jobColors = {
   pending: '#ffc107',
   deferred: '#f1f128',
@@ -53,6 +55,7 @@ const groupsJobsByStates = (function (states) {
 const jobGroups = Object.keys(groupsJobsByStates)
 
 export {
+  jobs,
   groupsJobsByStates,
   jobStates,
   jobGroups,

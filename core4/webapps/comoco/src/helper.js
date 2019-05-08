@@ -39,7 +39,7 @@ function to (promise) {
     .catch(err => [err])
 }
 
-function range (from, to) {
+function range (from, to, reverse) {
   return {
     from: from,
     to: to,
@@ -49,29 +49,120 @@ function range (from, to) {
     },
 
     next () {
-      if (this.current === undefined) {
-        this.current = this.from
-      }
+      if (reverse) {
+        if (this.current === undefined) {
+          this.current = this.to
+        }
 
-      if (this.current <= this.to) {
-        return {
-          done: false,
-          value: this.current++
+        if (this.current >= this.from) {
+          return {
+            done: false,
+            value: this.current--
+          }
+        } else {
+          delete this.current
+          return {
+            done: true
+          }
         }
       } else {
-        delete this.current
-        return {
-          done: true
+        if (this.current === undefined) {
+          this.current = this.from
+        }
+
+        if (this.current <= this.to) {
+          return {
+            done: false,
+            value: this.current++
+          }
+        } else {
+          delete this.current
+          return {
+            done: true
+          }
         }
       }
     }
-
   }
+}
+
+function isPromise (obj) {
+  return Boolean(obj) && typeof obj.then === 'function'
+}
+
+function isGenerator (fn) {
+  return fn.constructor.name === 'GeneratorFunction'
+}
+
+function subscribeDecorator (funcGenerator) {
+  if (!isGenerator(funcGenerator)) {
+    console.warn(`Function ${funcGenerator} should be generator`)
+
+    return funcGenerator
+  }
+
+  if (!window.setImmediate) {
+    window.setImmediate = (function () {
+      let head = {}
+      let tail = head // очередь вызовов, 1-связный список
+
+      let ID = Math.random() // unique id
+
+      function onmessage (e) {
+        if (e.data !== ID) return // не наше сообщение
+        head = head.next
+        let func = head.func
+        delete head.func
+        func()
+      }
+
+      if (window.addEventListener) { // IE9+
+        window.addEventListener('message', onmessage)
+      } else { // IE8
+        window.attachEvent('onmessage', onmessage)
+      }
+
+      return function (func) {
+        tail = tail.next = { func: func }
+        window.postMessage(ID, '*')
+      }
+    }())
+  }
+
+  const next = (iter, callbacks, prev = undefined) => {
+    const { onNext, onCompleted } = callbacks
+    const item = iter.next(prev)
+    const value = item.value
+
+    if (item.done) {
+      return onCompleted()
+    }
+
+    if (isPromise(value)) {
+      value.then(val => {
+        onNext(val)
+        setImmediate(() => next(iter, callbacks, val))
+      })
+    } else {
+      onNext(value)
+      setImmediate(() => next(iter, callbacks, value))
+    }
+  }
+
+  const gensync = (fn) => (...args) => ({
+    subscribe: (onNext, onError, onCompleted) => {
+      next(fn(...args), { onNext, onError, onCompleted })
+    }
+  })
+
+  return gensync(funcGenerator)
 }
 
 export {
   createObjectWithDefaultValues,
   getBasePath,
   to,
-  range
+  range,
+  isPromise,
+  subscribeDecorator
 }

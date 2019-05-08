@@ -1,5 +1,7 @@
+import moment from 'moment'
+
 import api from './api/index.js'
-import { to } from './helper'
+import { range, subscribeDecorator } from './helper'
 
 export default {
   install (Vue, options) {
@@ -13,28 +15,48 @@ export default {
     }
 
     // extend with custom API
-    Vue.prototype.$getChartHistory = getChartHistory
+    Vue.prototype.$getChartHistory = subscribeDecorator(chartHistory)
   }
 }
 
-async function getChartHistory () {
-  let err
+async function getChartHistory (perPage, sort) {
   let setting
   let history
-  // let startDate
 
-  // [err, setting] = await to(api.getSetting('comoco'))
-  // if (!setting) console.log(err)
+  // ToDo: change to 7 days, check error flow
+  let startDate = moment.utc().subtract(60, 'd').format('YYYY-MM-DDTHH:mm:ss')
+  let filter = { 'created': { '$gte': startDate } } // mongoDB filter
 
   try {
     setting = await api.getSetting()
+
+    if (setting.comoco && setting.comoco.startDate) {
+      filter['$gte'] = setting.comoco.startDate
+    }
+
+    filter = JSON.stringify(filter)
+
+    history = await api.getJobHistory(null, perPage, filter, sort)
+  } catch (err) {
+    throw Error(err)
+  }
+
+  history.startDate = filter
+
+  return history
+}
+
+function * chartHistory () {
+  let start
+  let perPage = 100
+
+  try {
+    start = yield getChartHistory(perPage)
   } catch (e) {
     console.log(e)
   }
 
-  // ToDo: get correct start date
-  [err, history] = await to(api.getJobHistory(/* start date */))
-  if (!history) console.log(err)
-
-  return history
+  for (let page of range(++start.page, --start.page_count)) {
+    yield api.getJobHistory(page, perPage, start.startDate)
+  }
 }

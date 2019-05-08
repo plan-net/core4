@@ -7,14 +7,14 @@
 </template>
 
 <script>
+import moment from 'moment'
 import { mapGetters } from 'vuex'
 
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
 
-import { jobColors } from '../settings'
-import { range } from '../helper'
+import { jobs, jobColors } from '../settings'
 
 stockInit(Highcharts)
 
@@ -251,27 +251,7 @@ export default {
       timerId: undefined
     }
   },
-  async created () {
-
-    // for (let jobs of nextPage(this)) {
-    //   jobs.then(res => { console.log(res) })
-    // }
-
-
-    // let start
-    // let perPage = 100
-    // let jobsPerPage
-    //
-    // try {
-    //   start = await this.$getChartHistory()
-    // } catch (e) {
-    //   console.log(e)
-    // }
-    //
-    // for (let page of range(++start.page, Math.round(start.page_count / (perPage / 10)))) {
-    //   jobsPerPage = await this.$getJobHistory(page, perPage)
-    //   console.log(jobsPerPage)
-    // }
+  created () {
     // this.$store.dispatch('getChartHistory').then(res => {
     //   console.log('stock chart history: ', res)
     // })
@@ -281,33 +261,87 @@ export default {
 
     const component = this
     const chart = component.$refs.chart.chart
+    const series = chart.series.reduce((computedResult, currentItem) => {
+      computedResult[currentItem.name] = currentItem
+
+      return computedResult
+    }, {})
 
     // ToDo: write a comment why it should be like this
-    const running = chart.series[0]
-    const pending = chart.series[1]
-    const deferred = chart.series[2]
-    const failed = chart.series[3]
-    const error = chart.series[4]
-    const inactive = chart.series[5]
-    const killed = chart.series[6]
+    // const chartSeriesReference = Object.values(series)
+    const chartSeriesReference = [series.running, series.pending, series.deferred, series.failed, series.error, series.inactive, series.killed]
 
-    const arr = [running, pending, deferred, failed, error, inactive, killed]
+    chart.showLoading('Loading data from server...')
 
-    // ToDo: explain why we use Timeout instead Interval
-    component.timerId = setTimeout(function update () {
-      const x = (new Date()).getTime()// current time
-      const shift = running.data.length > 3600 // 1 hour
+    const history = jobs.reduce((computedResult, job) => {
+      computedResult[job] = []
 
-      if (component.getChartData) {
-        arr.forEach(item => {
-          item.addPoint([x, component.getChartData[item.name]], false, shift)
+      return computedResult
+    }, {})
+
+    const onNext = val => {
+      console.log(val)
+      let historyWithoutDuplicates = {}
+
+      // response from serve sometimes have 2 object with the same creation date,
+      // highchart don't allowed to set points with the same creation date,
+      // need to merge object with the same creation date to one
+      // so the created key become unique
+      val.data.forEach(item => {
+        if (!historyWithoutDuplicates[item.created]) {
+          historyWithoutDuplicates[item.created] = jobs.reduce((computedResult, job) => {
+            computedResult[job] = item[job] || 0
+
+            return computedResult
+          }, {})
+        } else {
+          for (let key in item) {
+            if (key !== 'created' && key !== 'total') {
+              historyWithoutDuplicates[item.created][key] = item[key]
+            }
+          }
+        }
+      })
+
+      // convert created date value into timestamp,
+      // convert all history values into hightchart points
+      // in ascending order
+      for (let createdTime in historyWithoutDuplicates) {
+        const timestamp = new Date(createdTime).getTime()
+
+        Object.keys(history).forEach(job => {
+          history[job].push([timestamp, historyWithoutDuplicates[createdTime][job]])
         })
-
-        chart.redraw()
       }
 
-      component.timerId = setTimeout(update, component.timer)
-    }, component.timer)
+      chartSeriesReference.forEach(item => {
+        item.setData(history[item.name], false, true, false)
+      })
+      chart.redraw()
+      chart.hideLoading()
+    }
+
+    const onCompleted = () => {
+      console.log('onCompleted function')
+
+      // ToDo: explain why we use Timeout instead Interval
+      component.timerId = setTimeout(function update () {
+        const x = (new Date()).getTime()// current time
+        const shift = series.running.data.length > 3600 // 1 hour
+
+        if (component.getChartData) {
+          chartSeriesReference.forEach(item => {
+            item.addPoint([x, component.getChartData[item.name]], false, shift)
+          })
+
+          chart.redraw()
+        }
+
+        component.timerId = setTimeout(update, component.timer)
+      }, component.timer)
+    }
+
+    this.$getChartHistory().subscribe(onNext, err => console.log(err), onCompleted)
   },
   computed: {
     ...mapGetters(['getChartData']),
@@ -342,17 +376,17 @@ export default {
             type: 'minute',
             text: '30m'
           },
-          // {
-          //   type: 'hour',
-          //   count: 1,
-          //   text: '1h'
-          // },
+          {
+            type: 'day',
+            count: 1,
+            text: '1d'
+          },
           {
             type: 'all',
             text: 'All'
           }],
           inputEnabled: false,
-          selected: 4
+          selected: 5
         },
 
         exporting: {
@@ -422,6 +456,9 @@ function createSeriesData () {
       color: color,
       type: 'areaspline',
       data: [],
+      dataGrouping: {
+        enabled: true
+      },
       fillColor: {
         linearGradient: {
           x1: 0,
@@ -436,22 +473,8 @@ function createSeriesData () {
       }
     })
   }
-}
 
-function * nextPage (context) {
-  let last
-  let jobsPerPage = 100
-
-  try {
-    last = yield context.$getChartHistory()
-  } catch (e) {
-    console.log(e)
-  }
-
-  for (let page of range(last.page, Math.round(last.page_count / (jobsPerPage / 10)))) {
-    console.log(page)
-    // last = yield context.$getJobHistory(page, jobsPerPage)
-  }
+  return arr
 }
 
 </script>
