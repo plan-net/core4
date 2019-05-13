@@ -261,8 +261,8 @@ export default {
 
     const component = this
     const chart = component.$refs.chart.chart
-    const series = chart.series.reduce((computedResult, currentItem) => {
-      computedResult[currentItem.name] = currentItem
+    const series = chart.series.reduce((computedResult, series) => {
+      computedResult[series.name] = series
 
       return computedResult
     }, {})
@@ -273,69 +273,96 @@ export default {
 
     chart.showLoading('Loading data from server...')
 
+    // {running: [], ..., error:[]}
     const history = jobs.reduce((computedResult, job) => {
       computedResult[job] = []
 
       return computedResult
     }, {})
 
+    let last
+
     const onNext = val => {
       console.log(val)
-      let historyWithoutDuplicates = {}
+
+      val.data.forEach((item, i, arr) => {
+        item.timestamp = new Date(item.created).getTime()
+
+        if (item.timestamp === last || item.timestamp < last) {
+          arr[i].timestamp = last + 100
+        }
+
+        Object.keys(history).forEach(job => {
+          history[job].push([item.timestamp, item[job] || 0])
+        })
+
+        last = arr[i].timestamp
+      })
+
+      // let historyWithoutDuplicates = {}
 
       // response from serve sometimes have 2 object with the same creation date,
       // highchart don't allowed to set points with the same creation date,
       // need to merge object with the same creation date to one
       // so the created key become unique
-      val.data.forEach(item => {
-        if (!historyWithoutDuplicates[item.created]) {
-          historyWithoutDuplicates[item.created] = jobs.reduce((computedResult, job) => {
-            computedResult[job] = item[job] || 0
+      // val.data.forEach(item => {
+      //   if (!historyWithoutDuplicates[item.created]) {
+      //     historyWithoutDuplicates[item.created] = jobs.reduce((computedResult, job) => {
+      //       computedResult[job] = item[job] || 0
+      //
+      //       return computedResult
+      //     }, {})
+      //   } else {
+      //     for (let key in item) {
+      //       if (key !== 'created' && key !== 'total') {
+      //         historyWithoutDuplicates[item.created][key] = item[key]
+      //       }
+      //     }
+      //   }
+      // })
+      //
+      // console.log(historyWithoutDuplicates)
+      //
+      // // convert created date value into timestamp,
+      // // convert all history values into hightchart points
+      // // in ascending order
+      // for (let createdTime in historyWithoutDuplicates) {
+      //   const timestamp = new Date(createdTime).getTime()
+      //
+      //   Object.keys(history).forEach(job => {
+      //     history[job].push([timestamp, historyWithoutDuplicates[createdTime][job]])
+      //   })
+      // }
 
-            return computedResult
-          }, {})
-        } else {
-          for (let key in item) {
-            if (key !== 'created' && key !== 'total') {
-              historyWithoutDuplicates[item.created][key] = item[key]
-            }
-          }
-        }
-      })
+      // chartSeriesReference.forEach(item => {
+      //   item.setData(history[item.name])
+      //   // item.setData(history[item.name], false, true, false)
+      // })
+      // // chart.redraw()
+      // chart.hideLoading()
+    }
 
-      // convert created date value into timestamp,
-      // convert all history values into hightchart points
-      // in ascending order
-      for (let createdTime in historyWithoutDuplicates) {
-        const timestamp = new Date(createdTime).getTime()
-
-        Object.keys(history).forEach(job => {
-          history[job].push([timestamp, historyWithoutDuplicates[createdTime][job]])
-        })
-      }
+    const onCompleted = () => {
+      console.log('onCompleted function')
 
       chartSeriesReference.forEach(item => {
         item.setData(history[item.name], false, true, false)
       })
       chart.redraw()
       chart.hideLoading()
-    }
-
-    const onCompleted = () => {
-      console.log('onCompleted function')
 
       // ToDo: explain why we use Timeout instead Interval
       component.timerId = setTimeout(function update () {
         const x = (new Date()).getTime()// current time
         const shift = series.running.data.length > 3600 // 1 hour
 
-        if (component.getChartData) {
+        // if (component.getChartData) {
           chartSeriesReference.forEach(item => {
             item.addPoint([x, component.getChartData[item.name]], false, shift)
           })
 
           chart.redraw()
-        }
+        // }
 
         component.timerId = setTimeout(update, component.timer)
       }, component.timer)
@@ -400,6 +427,14 @@ export default {
           enabled: true
         },
 
+        // navigator: {
+        //   adaptToUpdatedData: false
+        // },
+        //
+        // scrollbar: {
+        //   liveRedraw: false
+        // },
+
         legend: {
           enabled: true,
           layout: 'horizontal',
@@ -429,7 +464,11 @@ export default {
         xAxis: {
           title: {
             text: 'Time in UTC (Coordinated Universal Time)'
-          }
+          },
+          events: {
+            setExtremes: (e) => { console.log(`setExtremes, e = `, e) }
+          },
+          // minRange: 3600 * 1000 // one hour
         },
 
         series: createSeriesData()

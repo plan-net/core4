@@ -5,7 +5,7 @@ import createLogger from 'vuex/dist/logger'
 import { clone } from 'core4ui/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
 
-import { jobStates, jobGroups, jobFlags } from './settings.js'
+import { jobStates, jobGroups, jobFlags, jobs } from './settings.js'
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -16,10 +16,10 @@ export default new Vuex.Store({
   plugins,
   state: {
     queue: {
-      // stat: {},
-      // running: [],
-      // stopped: [],
-      // waiting: []
+      stat: createObjectWithDefaultValues(jobs, 0),
+      running: [],
+      stopped: [],
+      waiting: []
     },
     history: {
       isSet: false,
@@ -141,27 +141,15 @@ function groupDataAndJobStat (created, arr, groupingKey) {
  * Unique key for job
  *
  * @param obj {object} - job
- * @returns {string} - unique_key based on full name, job state, job(s) amount and related job flags
- *                     e. g. core.account.brandinvestor.job.monitor.SolverChild-pending-zombie-wall
+ * @returns {string} - unique_key based on full name, job state and related job flags
+ *                     e. g. core.account.xxx.job.monitor.SolChild-pending-zombie-wall
  */
 function uniqueKey (obj) {
-  let value = `${obj.name}-${obj.state}` // core.account.brandinvestor.job.monitor.SolverChild-pending
+  let value = `${obj.name}-${obj.state}` // core.account.xxx.job.monitor.SolChild-pending
 
   for (let key in jobFlags) {
     if (obj[key]) value += `-${key}`
   }
 
-  return value // core.account.brandinvestor.job.monitor.SolverChild-pending-zombie-wall
+  return value // core.account.xxx.job.monitor.SolChild-pending-zombie-wall
 }
-
-// function has_next* (iterable_data) {
-//   let iterable = iter(iterable_data)
-//   let last = next(iterable)
-//
-//   for (let value in iterable) {
-//     yield last
-//     last = value
-//   }
-//
-//   yield last
-// }

@@ -31,6 +31,13 @@ function getBasePath () {
   return `ws://${window.location.host}/core4/api`
 }
 
+/**
+ * Decorator for async/await error flow
+ * e.g. [error, success] = await to(<Promise>)
+ *
+ * @param promise {promise}
+ * @returns {Q.Promise<any[]>}
+ */
 function to (promise) {
   return promise
     .then(data => {
@@ -39,6 +46,14 @@ function to (promise) {
     .catch(err => [err])
 }
 
+/**
+ * Iterable range builder
+ *
+ * @param from {number}
+ * @param to {number}
+ * @param reverse {boolean}
+ * @returns {object} - iterable object
+ */
 function range (from, to, reverse) {
   return {
     from: from,
@@ -86,17 +101,35 @@ function range (from, to, reverse) {
   }
 }
 
+/**
+ * Check is object is a Promise
+ *
+ * @param obj {object}
+ * @returns {boolean}
+ */
 function isPromise (obj) {
   return Boolean(obj) && typeof obj.then === 'function'
 }
 
+/**
+ * Check is function is Generator function
+ *
+ * @param fn {function}
+ * @returns {boolean}
+ */
 function isGenerator (fn) {
   return fn.constructor.name === 'GeneratorFunction'
 }
 
+/**
+ * Decorator for generator function, make subscribe flow aka Rx approach
+ *
+ * @param funcGenerator {function}
+ * @returns {(function(...[*]): {subscribe: subscribe})}
+ */
 function subscribeDecorator (funcGenerator) {
   if (!isGenerator(funcGenerator)) {
-    console.warn(`Function ${funcGenerator} should be generator`)
+    console.warn(`Function ${funcGenerator} should be a generator`)
 
     return funcGenerator
   }
