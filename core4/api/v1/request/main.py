@@ -58,7 +58,7 @@ class CoreBaseHandler(CoreBase):
     #: handler author
     author = None
     #: tag listing
-    tag = []
+    tag = ['api']
     #: template path, if not defined use absolute or relative path
     template_path = None
     #: static file path, if not defined use relative path
