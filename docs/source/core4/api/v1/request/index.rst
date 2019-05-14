@@ -7,7 +7,6 @@ endpoints and request handlers
 
    main
    static
-   info
    standard
    role
    queue

@@ -10,6 +10,7 @@ core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
 """
 import base64
 import datetime
+import json
 import os
 import traceback
 
@@ -32,7 +33,7 @@ import core4.error
 import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
-from core4.util.data import parse_boolean, json_encode, json_decode
+from core4.util.data import parse_boolean, json_encode, json_decode, rst2html
 from core4.util.pager import PageResult
 
 tornado.escape.json_encode = json_encode
@@ -54,10 +55,12 @@ class CoreBaseHandler(CoreBase):
     protected = True
     #: handler title
     title = None
+    #: handler subtitle (defaults to qual_name)
+    subtitle = None
     #: handler author
     author = None
     #: tag listing
-    tag = []
+    tag = ['api']
     #: template path, if not defined use absolute or relative path
     template_path = None
     #: static file path, if not defined use relative path
@@ -66,6 +69,8 @@ class CoreBaseHandler(CoreBase):
     enter_url = None
     #: default material icon
     icon = "copyright"
+    #: open in new window/tab
+    target = None
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
@@ -89,6 +94,7 @@ class CoreBaseHandler(CoreBase):
         self.error_text_page = rel(self.config.api.error_text_page)
         self.card_html_page = rel(self.config.api.card_html_page)
         self.help_html_page = rel(self.config.api.help_html_page)
+        self.info_html_page = rel(self.config.api.info_html_page)
         self.started = core4.util.node.now()
         self._flash = []
         self.user = None
@@ -209,16 +215,19 @@ class CoreBaseHandler(CoreBase):
                 token = auth_header[7:]
                 source = ("token", "Auth Bearer")
         else:
-            token = self.get_argument("token", default=None, remove=True)
-            username = self.get_argument("username", default=None, remove=True)
-            password = self.get_argument("password", default=None, remove=True)
+            token = self.get_secure_cookie("token")
             if token is not None:
-                source = ("token", "args")
-            elif username and password:
-                source = ("username", "args")
-            else:
                 source = ("token", "cookie")
-                token = self.get_secure_cookie("token")
+            else:
+                token = self.get_argument("token", default=None, remove=True)
+                if token is not None:
+                    source = ("token", "args")
+                else:
+                    username = self.get_argument("username", default=None,
+                                                 remove=True)
+                    password = self.get_argument("password", default=None,
+                                                 remove=True)
+                    source = ("username", "args")
         if token:
             payload = self.parse_token(token)
             username = payload.get("name")
@@ -235,16 +244,18 @@ class CoreBaseHandler(CoreBase):
                     if (core4.util.node.now()
                         - datetime.datetime.fromtimestamp(
                                 payload["timestamp"])).total_seconds() > renew:
-                        self.create_token(username)
+                        token = self.create_token(username)
                         self.logger.debug("refresh token [%s] to [%s]",
                                           username, self.token_exp)
                     self.logger.debug(
                         "successfully loaded [%s] by [%s] from [%s] "
                         "expiring [%s]", username, *source, self.token_exp)
+                    self.set_secure_cookie("token", token)
+                    # self.set_header("token", token)
                     return user
         elif username and password:
             try:
-                user = await CoreRole().find_one(name=username)
+                user = await CoreRole.find_one(name=username)
             except:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
@@ -342,23 +353,64 @@ class CoreBaseHandler(CoreBase):
                 "\n".join(traceback.format_tb(tb))
             )
 
-    def xcard(self, *args, **kwargs):
+    async def meta(self):
+        """
+        Returns meta data as specified in :meth:`.CoreApiContainer.get_handler`
+
+        Additionally the following attributes are added:
+
+        * icon (str) - material icon label
+        * card_url (str) - URL for the card of this handler on this server
+        * help_url (str) - URL for the help of this handler on this server
+        * enter_url (str) - URL for the landing page of this handler on this
+          server
+        * args (dict) - passed to the class at startup
+        * description (str) - plain text doc string
+        * description_html (str) - rendered HTML doc string
+        * description_error (list) - of str with parsing errors
+        * method (list) of dict with key ``parts`` for all method documentation
+          sections, ``method`` for the method, ``html`` for the rendered method
+          documentation
+
+        :return: dict of attributes and values
+        """
+        self.absolute_path = ""
+        self.request.method = "GET"
+        parts = self.request.path.split("/")
+        rsc_id = parts[-1]
+        path = parts[:-2]
+        if self.enter_url is None:
+            self.enter_url = "/".join(path + [core4.const.ENTER_MODE, rsc_id])
+        self.help_url = "/".join(path + [core4.const.HELP_MODE, rsc_id])
+        self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
+        handler = self.application.lookup[self.rsc_id]["handler"]
+        pattern = self.application.lookup[self.rsc_id]["pattern"]
+        doc = await self.application.container.get_handler(rsc_id)
+        rst = rst2html(str(self.__doc__))
+        doc.update(dict(
+            args=handler.target_kwargs,
+            description=self.__doc__,
+            description_html=rst["body"],
+            description_error=rst["error"],
+            icon=self.icon,
+            pattern=pattern,
+            container=self.application.container.qual_name(),
+            card_url=self.card_url,
+            enter_url=self.enter_url,
+            help_url=self.help_url,
+            method=self.application.handler_help(self.__class__)
+        ))
+        return doc
+
+    async def xcard(self, *args, **kwargs):
         """
         Prepares the ``card`` page and triggers :meth:`.card` which is to be
         overwritten for custom widget card implementations.
 
         :return: result of :meth:`.card`
         """
-        self.request.method = "GET"
-        parts = self.request.path.split("/")
-        md5_route = parts[-1]
-        (app, container, specs) = self.application.find_md5(md5_route)
-        self.absolute_path = "xcard"
-        if self.enter_url is None:
-            self.enter_url = "/".join([core4.const.ENTER_URL, md5_route])
-        self.help_url = "/".join([core4.const.HELP_URL, md5_route])
-        self.url_name = specs.name or md5_route
-        return self.card()
+        doc = await self.meta()
+        return self.card(**doc)
 
     def xenter(self, *args, **kwargs):
         """
@@ -367,26 +419,49 @@ class CoreBaseHandler(CoreBase):
 
         :return: result of :meth:`.enter`
         """
-        self.request.method = "GET"
-        parts = self.request.path.split("/")
-        # md5_route_id = parts[-1]
-        self.absolute_path = "xenter"
         return self.enter()
 
-    def card(self):
+    async def xhelp(self, *args, **kwargs):
+        """
+        Prepares the ``help`` page and triggers :meth:`.help` which is to be
+        overwritten for custom widget help page implementations.
+
+        The method creates the following parameters to render:
+
+
+        :return: result of :meth:`.help`
+        """
+        doc = await self.meta()
+        return self.help(**doc)
+
+    def card(self, **data):
         """
         Renders the default card page. This method is to be overwritten for
         custom card page impelementation.
+
+        :param
+
+
         """
-        return self.render(self.card_html_page)
+        return self.render(self.card_html_page, **data)
 
     def enter(self):
         """
         Renders the default endpoint entry. This method is to be overwritten
         for custom entry impelementation. The default implementation redirects
         to the endpoint's GET method.
+
+        Please note that this method is not called, if the request handler's
+        ``enter_url`` property is set.
         """
         return self.get()
+
+    def help(self, **data):
+        """
+        Renders the default help page. This method is to be overwritten for
+        custom help page impelementation.
+        """
+        return self.render(self.help_html_page, **data)
 
     def get_template_path(self):
         """
@@ -409,7 +484,7 @@ class CoreBaseHandler(CoreBase):
         ``file://`` as absolute path names. Second, the method differentiates
         templates with and without a leading slash (``/``). A leading slash
         addresses templates from the root path of the project (absolute paths).
-        Relative paths address tempaltes in the specified template folder. See
+        Relative paths address templates in the specified template folder. See
         :meth:`.set_path` about this template folder.
 
         :param template_name: file name
@@ -434,36 +509,21 @@ class CoreBaseHandler(CoreBase):
         self.logger.debug("template_path is [%s]", self.template_path)
         return super().render_string(template_name, **kwargs)
 
-    def _url(self, mode, path, include_host):
-        """
-        Build urls to :class:`.CoreFileHandler` to serve static files.
-
-        :param mode: ``def`` for default folder and ``rel`` for relative paths
-        :param path: name
-        :param include_host: adds the hostname and port if ``True``
-        :return: full url
-        """
-        prefix = ""
-        if include_host:
-            prefix = "%s://%s" % (self.request.protocol, self.request.host)
-        if not path.startswith("/"):
-            path = "/" + path
-        return "".join([prefix, core4.const.FILE_URL, "/" + mode + "/",
-                        self.route_id, path])
-
-    def default_static(self, path, include_host=None):
+    def default_static(self, path):
         """
         Build urls to core4 default static folder. The method is in scope of
         the templating namespace.
 
 
         :param path: name
-        :param include_host: adds the hostname and port if ``True``
         :return: full url
         """
-        return self._url("def", path, include_host)
+        url = "{}/{}/default/{}/{}".format(
+            self.application.container.get_root(), core4.const.ASSET_URL,
+            self.rsc_id, path)
+        return url
 
-    def static_url(self, path, include_host=None, **kwargs):
+    def static_url(self, path):
         """
         Translates the static URL into a route for :class:`.CoreFileHandler`.
         The method is in scope of the templating namespace.
@@ -480,7 +540,10 @@ class CoreBaseHandler(CoreBase):
         :param kwargs:
         :return: full url
         """
-        return self._url("pro", path, include_host)
+        url = "{}/{}/project/{}/{}".format(
+            self.application.container.get_root(), core4.const.ASSET_URL,
+            self.rsc_id, path)
+        return url
 
     def get_template_namespace(self):
         """
@@ -513,13 +576,12 @@ class CoreBaseHandler(CoreBase):
         elif "error" in kwargs:
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
-        if self.wants_json():
-            self.finish(ret)
-        elif self.wants_html():
+        if self.wants_html():
             ret["contact"] = self.config.api.contact
             self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
+        self.finish(ret)
 
     def _build_json(self, message, code, **kwargs):
         # internal method to wrap the response
@@ -621,6 +683,7 @@ class CoreBaseHandler(CoreBase):
         :return: value
         """
         kwargs["default"] = kwargs.get("default", ARG_DEFAULT)
+
         ret = self._get_argument(name, source=self.request.arguments,
                                  *args, strip=False, **kwargs)
         if as_type and ret is not None:
@@ -689,9 +752,9 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         method.
         """
         try:
-            self.route_id = kwargs.pop("_route_id")
+            self.rsc_id = kwargs.pop("_rsc_id")
         except KeyError:
-            self.route_id = None
+            self.rsc_id = None
         CoreBaseHandler.__init__(self, *args, **kwargs)
         RequestHandler.__init__(self, *args, **kwargs)
 
@@ -835,13 +898,16 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         if self.request.body:
             try:
                 body_arguments = json_decode(self.request.body.decode("UTF-8"))
-            except:
-                self.logger.warning("failed to parse body arguments",
-                                    exc_info=True)
+            except UnicodeDecodeError:
                 pass
+            except json.decoder.JSONDecodeError:
+                pass
+            except Exception:
+                raise HTTPError(400)
             else:
-                for k, v in body_arguments.items():
-                    self.request.arguments.setdefault(k, []).append(v)
+                if isinstance(body_arguments, dict):
+                    for k, v in body_arguments.items():
+                        self.request.arguments.setdefault(k, []).append(v)
         await super().prepare()
 
     def decode_argument(self, value, name=None):
@@ -991,6 +1057,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                     await tornado.gen.sleep(0.000000001)  # 1 nanosecond
         self.finish()
 
+    # todo: fix required
     async def reverse_url(self, name, *args):
         """
         Returns a URL path for handler named ``name``
@@ -1039,7 +1106,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             })
             if alive > 0:
                 found.append(doc)
-        if len(found) == 1:
+        if len(found) > 0:
             route = found[0]
             matcher = tornado.routing.PathMatches(route["pattern"][1])
             url = matcher.reverse(*args)

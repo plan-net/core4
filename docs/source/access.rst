@@ -8,16 +8,22 @@ core4 provides a simple authentication, authorization and access permission
 scheme managed by the core4 API request handlers :class:`.LoginHandler`,
 and :class:`.RoleHandler`.
 
-The :class:`LoginHandler` is part of the default handlers attached to each
-web server (see :class:`.RootContainer`). The :class:`.RoleHandler` is reserved
-for core4 administrators AKA *COPs*.
+Both handlers are delivered through the :class:`.CoreApiServer'. The
+:class:`.RoleHandler` is reserved for core4 administrators AKA *COPs*.
 
 *COPs* can grant access to jobs, API requests, and databases. Additionally
 application keys can be defined to customise specific access permissions, e.g.
 for frontend features.
 
 
-The structure of the permission scheme for jobs is::
+permission schemes
+==================
+
+
+job access
+----------
+
+The structure of the permission scheme **for jobs** is::
 
     job://[qual_name]/[rx]
 
@@ -31,7 +37,10 @@ These permissions are automatically verified when the user interacts with all
 API request handlers in ``core4.api.v1.request.queue``
 
 
-The structure of the permission scheme for API requests is::
+API handler access
+------------------
+
+The structure of the permission scheme **for API handlers** is::
 
     api://[qual_name]
 
@@ -57,7 +66,10 @@ These permissions are automatically verified when the user interacts with the
 API request handlers in ``core4.api.v1.request``
 
 
-The structure of the permission scheme for MongoDB database access is::
+database access
+---------------
+
+The structure of the permission scheme **for MongoDB database** access is::
 
     mongodb://[database]
 
@@ -71,7 +83,10 @@ a user requires the following permission::
     mongodb://core4
 
 
-The structure of the permission scheme for custom application keys is::
+custom access
+-------------
+
+The structure of the permission scheme **for custom application keys** is::
 
     app://[key]
 
@@ -131,7 +146,7 @@ The default settings of this role are::
           example below.
 
 
-example::
+**example**::
 
     from requests import post
     url = "http://localhost:5001/core4/api/v1"

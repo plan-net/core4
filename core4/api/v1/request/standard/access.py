@@ -14,6 +14,9 @@ from core4.api.v1.request.role.access.manager import CoreAccessManager
 
 
 class AccessHandler(CoreRequestHandler):
+    """
+    core4 database access handler.
+    """
     title = "database access manager"
     author = "mra"
 
@@ -66,7 +69,7 @@ class AccessHandler(CoreRequestHandler):
             }
         """
         manager = CoreAccessManager(self.user)
-        if protocol == "":
+        if protocol is None or protocol == "":
             body = await manager.synchronise_all()
         else:
             body = await manager.synchronise(protocol)

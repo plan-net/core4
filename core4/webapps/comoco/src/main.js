@@ -4,10 +4,13 @@ import router from './router'
 import store from './store'
 import VueNativeSock from 'vue-native-websocket'
 
-import PnbiBase from 'pnbi-base/core4'
-// import 'pnbi-base/core4/themes/pnbi/theme-pnbi.scss'
-import THEME from 'pnbi-base/core4/themes/pnbi/theme-vuetify'
-import { i18n } from 'pnbi-base/core4/translations'
+import PnbiBase from 'core4ui/core4'
+// import 'core4ui/core4/themes/pnbi/theme-pnbi.scss'
+import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
+import { i18n } from 'core4ui/core4/translations'
+
+import '@/style/theme-dark.scss'
+import '@/style/theme-light.scss'
 
 Vue.use(VueNativeSock, ' ', {
   store: store,
@@ -21,7 +24,7 @@ Vue.use(VueNativeSock, ' ', {
 Vue.use(PnbiBase, {
   router,
   config: {
-    DARK: true,
+    // DARK: true,
     THEME,
     TITLE: 'COMOCO',
     IGNORED_ERRORS: [],

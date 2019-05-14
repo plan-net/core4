@@ -1,6 +1,6 @@
-====================
+####################
 core usage reporting
-====================
+####################
 
 With this use case you follow
 
@@ -24,7 +24,6 @@ day, week, month, quarter and year.
 But first things first. Let's start with project setup.
 
 
-=============
 project setup
 =============
 
@@ -49,7 +48,6 @@ home environment with::
     source enter_env
 
 
-==================
 job implementation
 ==================
 
@@ -194,7 +192,6 @@ Lines 88 - 90 exist for development purposes. The ``execute`` command triggers
 job execution without the need to start a dedicated core4 worker process.
 
 
-==================
 API implementation
 ==================
 
@@ -303,7 +300,6 @@ data to the front-end.
           the requested content type.
 
 
-===============
 Widget template
 ===============
 
@@ -343,7 +339,6 @@ API request handler, above). The ``div`` *myplot* locates the Bokeh chart. The
 handler (see line 37 of the API request handler, above).
 
 
-============
 Final commit
 ============
 

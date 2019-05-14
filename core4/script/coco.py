@@ -21,7 +21,8 @@ Usage:
   coco --init [PROJECT] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
-  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] [--address=ADDRESS] [--filter=FILTER]...
+  coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] \
+[--address=ADDRESS] [--project=PROJECT] [--filter=FILTER]...
   coco --scheduler [IDENTIFIER]
   coco --alive
   coco --enqueue QUAL_NAME [ARGS]...
@@ -36,27 +37,28 @@ Usage:
   coco --build
   coco --release
   coco --who
-  coco --jobs
-  coco --project
+  coco --jobs [--introspect]
+  coco --home
   coco --container
   coco --version
 
 Options:
-  -e --enqueue    enqueue job
-  -w --worker     launch worker
-  -s --scheduler  launch scheduler
-  -a --alive      worker alive/dead state
-  -i --info       job state summary
-  -l --listing    job listing
-  -d --detail     job details
-  -x --halt       immediate system halt
-  -h --help       show this screen.
-  -v --version    show version.
-  -o --who        show system information
-  -j --jobs       enumerate available jobs
-  -c --container  enumerate available API container
-  -p --project    enumerate available core4 projects
-  -y --yes        Assume yes on all requests.
+  -e --enqueue     enqueue job
+  -w --worker      launch worker
+  -s --scheduler   launch scheduler
+  -a --alive       worker alive/dead state
+  -i --info        job state summary
+  -l --listing     job listing
+  -d --detail      job details
+  -x --halt        immediate system halt
+  -h --help        show this screen.
+  -v --version     show version.
+  -o --who         show system information
+  -j --jobs        enumerate available jobs
+  -n --introspect  register available jobs in sys.job
+  -c --container   enumerate available API container
+  -m --home        enumerate available core4 projects in home folder
+  -y --yes         Assume yes on all requests.
 """
 
 import datetime
@@ -72,16 +74,15 @@ import core4.api.v1.tool
 import core4.api.v1.tool.functool
 import core4.error
 import core4.logger.mixin
+import core4.queue.helper.functool
 import core4.queue.job
 import core4.queue.main
 import core4.queue.scheduler
 import core4.queue.worker
-import core4.service.introspect
-import core4.service.introspect
+import core4.service.introspect.main
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.introspect.command import ENQUEUE_ARG, SERVE_ALL
 from core4.service.operation import build, release
 
 QUEUE = core4.queue.main.CoreQueue()
@@ -101,35 +102,12 @@ def worker(name):
 
 def app(**kwargs):
     core4.logger.mixin.logon()
-    filter = kwargs.get("filter", None)
-    if "port" in kwargs and kwargs["port"] is not None:
-        kwargs["port"] = int(kwargs["port"])
-    if filter:
-        if not isinstance(filter, list):
-            filter = [filter]
-        projects = set()
-        kw_filter = []
-        for i in range(len(filter)):
-            projects.add(filter[i].split(".")[0])
-            kw_filter.append(filter[i])
-            if not filter[i].endswith("."):
-                filter[i] += "."
-        if len(projects) > 1:
-            raise core4.error.Core4UsageError(
-                "you must not serve applications from different projects")
-        kwargs["filter"] = kw_filter
-        param = ["debug=False"]
-        for p in ["name", "port", "address", "routing", "filter"]:
-            val = kwargs.get(p, None)
-            if isinstance(val, str):
-                val = '"{}"'.format(val)
-            else:
-                val = "{}".format(str(val))
-            param.append("{}={}".format(p, val))
-        core4.service.introspect.exec_project(
-            projects.pop(), SERVE_ALL, comm=False, param=", ".join(param))
-    else:
+    try:
         core4.api.v1.tool.functool.serve_all(**kwargs)
+    except KeyboardInterrupt:
+        print(" .. interrupt.")
+    except:
+        raise
 
 
 def scheduler(name):
@@ -366,15 +344,7 @@ def enqueue(qual_name, *args):
                 raise json.JSONDecodeError("failed to parse %s" % (s), s, 0)
     else:
         data = {}
-    try:
-        job_id = QUEUE.enqueue(name=qual_name[0], **data)._id
-    except ImportError:
-        stdout = core4.service.introspect.exec_project(
-            qual_name[0], ENQUEUE_ARG, qual_name=qual_name[0],
-            args="**%s" % (str(data)), comm=True)
-        job_id = stdout
-    except:
-        raise
+    job_id = core4.queue.helper.functool.enqueue(qual_name[0], **data)
     print(job_id)
 
 
@@ -382,45 +352,35 @@ def init(name, description, yes):
     core4.service.project.make_project(name, description, yes)
 
 
-def jobs():
-    intro = core4.service.introspect.CoreIntrospector()
-    summary = dict(intro.list_project())
-    for project in sorted(summary.keys()):
-        if summary[project]:
-            if "job" in summary[project]:
-                jobs = []
-                for job in summary[project]["job"]:
-                    job_project = job["name"].split(".")[0]
-                    if job_project == project:
-                        jobs.append(job["name"])
-                if jobs:
-                    print("{}".format(project))
-                    for job in sorted(jobs):
-                        print("  {}".format(job))
+def jobs(introspect=False):
+    intro = core4.service.introspect.main.CoreIntrospector()
+    if introspect:
+        intro.collect_job()
+    seen = set()
+    for project in intro.retrospect():
+        if project["name"] not in seen:
+            print(project["name"])
+            for job in sorted([j["name"] for j in project["jobs"]]):
+                print("  " + job)
+            seen.add(project["name"])
 
 
 def container():
-    intro = core4.service.introspect.CoreIntrospector()
-    summary = dict(intro.list_project())
-    for project in sorted(summary.keys()):
-        if summary[project]:
-            if "container" in summary[project]:
-                containers = []
-                for container in summary[project]["container"]:
-                    container_project = container["name"].split(".")[0]
-                    if container_project == project:
-                        containers.append((container["name"],
-                                           container["rules"]))
-                if containers:
-                    print(project)
-                    for container in sorted(containers):
-                        print("  {}".format(container[0]))
-                        for rule in container[1]:
-                            print("    {}: {}".format(rule[1], rule[0]))
+    intro = core4.service.introspect.main.CoreIntrospector()
+    seen = set()
+    for project in intro.introspect():
+        if project["name"] not in seen:
+            print(project["name"], "-", project["version"])
+            for api in sorted(project["api_containers"],
+                              key=lambda r: r["name"]):
+                print("  {} ({})".format(api["name"], api["root"]))
+                for rule in api["rules"]:
+                    print("    {} ({})".format(rule[1], rule[0]))
+            seen.add(project["name"])
 
 
 def who():
-    intro = core4.service.introspect.CoreIntrospector()
+    intro = core4.service.introspect.main.CoreIntrospector()
     summary = intro.summary()
     print("USER:")
     print("  {:s} IN {}".format(summary["user"]["name"],
@@ -453,24 +413,22 @@ def who():
         print("  none.")
 
 
-def project():
-    intro = core4.service.introspect.CoreIntrospector()
-    summary = dict(intro.list_project())
-    for project in sorted(summary.keys()):
-        modules = {}
-        if summary[project]:
-            for mod in summary[project]["project"]:
-                modules[mod["name"]] = mod
-            print("{} ({}) with Python {}, pip {}".format(
-                modules[project]["name"], modules[project]["version"],
-                summary[project]["python_version"],
-                summary[project]["pip"],
-            ))
-            for mod in sorted(modules.keys()):
-                if mod != project:
-                    print("  {} ({})".format(
-                        modules[mod]["name"], modules[mod]["version"]
-                    ))
+def home():
+    intro = core4.service.introspect.main.CoreIntrospector()
+    seen = set()
+    for project in intro.introspect():
+        if project["name"] not in seen:
+            print(
+                "{} - {} ({}) with Python {}, pip {}, core4 - {} ({})".format(
+                    project["name"],
+                    project["version"],
+                    project["build"],
+                    project["python_version"],
+                    project["pip"],
+                    project["core4_version"],
+                    project["core4_build"]
+                ))
+            seen.add(project["name"])
 
 
 def main():
@@ -481,8 +439,8 @@ def main():
         worker(args["IDENTIFIER"])
     elif args["--application"]:
         app(name=args["IDENTIFIER"], port=args["--port"],
-            filter=args["--filter"], routing=args["--routing"],
-            address=args["--address"])
+            project=args["--project"], filter=args["--filter"],
+            routing=args["--routing"], address=args["--address"])
     elif args["--scheduler"]:
         scheduler(args["IDENTIFIER"])
     elif args["--pause"]:
@@ -516,9 +474,9 @@ def main():
     elif args["--who"]:
         who()
     elif args["--jobs"]:
-        jobs()
-    elif args["--project"]:
-        project()
+        jobs(args["--introspect"])
+    elif args["--home"]:
+        home()
     elif args["--container"]:
         container()
     else:

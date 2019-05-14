@@ -82,11 +82,16 @@ class CoreLoggerMixin:
                 existing = conn.connection[
                     conn.database].list_collection_names()
                 if conn.collection not in existing:
-                    conn.connection[conn.database].create_collection(
-                        name=conn.name,
-                        capped=True,
-                        size=self.config.logging.size
-                    )
+                    try:
+                        conn.connection[conn.database].create_collection(
+                            name=conn.name,
+                            capped=True,
+                            size=self.config.logging.size
+                        )
+                        conn.create_index([("created", pymongo.DESCENDING)],
+                                          name="created")
+                    except:
+                        self.logger.warning("failed to create [sys.log]")
                 level = getattr(logging, mongodb)
                 write_concern = self.config.logging.write_concern
                 handler = core4.logger.handler.MongoLoggingHandler(

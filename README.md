@@ -100,7 +100,7 @@ core4os installation
 Clone and install core4os framework in a Python virtual environment:
 
     # clone core4os
-    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+    git clone https://github.com/plan-net/core4.git 
 
     # enter clone
     cd core4
@@ -130,7 +130,8 @@ or build the sphinx documentation yourself with
 3rd party systems and licenses
 ------------------------------
 
-All external packages used within core4 have their license placed within the ``LICENSES`` directory.
+All external packages used within core4 have their license placed within the 
+``LICENSES`` directory.
 
 Those most notably contain:
 

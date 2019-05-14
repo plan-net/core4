@@ -4,22 +4,14 @@
     <!-- Group info (counter all of jobs with the same states) -->
     <info :name="name" :states="states"></info>
 
-    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs">
+    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs mt-3" >
 
       <!-- list of all jobs which belongs to this group -->
-      <v-flex v-for="(job, index) in getJobsByGroupName(name)" :key="index" class="jobs-list-item">
+      <v-flex v-for="job in getJobsByGroupName(name)" :key="job.key" class="jobs-list-item">
         <job :flags="flags" :job="job"></job>
       </v-flex>
     </transition-group>
 
-<!--    <v-layout column class="jobs">-->
-
-<!--      &lt;!&ndash; list of all jobs which belongs to this group &ndash;&gt;-->
-<!--      <v-flex v-for="(job, index) in getJobsByGroupName(name)" :key="index">-->
-<!--        <job :flags="flags" :job="job"></job>-->
-<!--      </v-flex>-->
-
-<!--    </v-layout>-->
   </v-container>
 </template>
 
@@ -68,58 +60,35 @@ export default {
 <style scoped lang="scss">
 @import '../style/comoco';
 
-$scrollbar-track: #4A4A4A;
-$scrollbar-thumb: #5C5C5C;
-$scrollbar-thumb-hover: #737373;
-
 .jobs-list-item {
-  /*transition: opacity .5s;*/
-  transition: all 1s;
+  transition: all .5s;
 }
 
-.jobs-list-enter, .jobs-list-leave-to
-  /* .list-complete-leave-active below version 2.1.8 */ {
+.jobs-list-enter {
   opacity: 0;
   transform: translateX(30px);
 }
 
-/*.jobs-list-leave-active {*/
-/*  position: absolute;*/
-/*}*/
+.jobs-list-enter-active {
+}
 
-/*.theme--dark .board {
-  background-color: $jobs-board-bck-color;
-}*/
+.jobs-list-leave {
+  opacity: 0;
+  transform: translateX(30px);
+}
 
-/*.theme--light .board {*/
-/*  background-color: #FFF;*/
-/*}*/
+.jobs-list-leave-active {
+  transform: translateX(30px);
+}
+
+.jobs-list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
 
 .board {
   min-width: 230px;
-  background-color: $jobs-board-bck-color;
-}
-
-.jobs {
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  &::-webkit-scrollbar-track {
-    background-color: $scrollbar-track;
-  }
-
-  &::-webkit-scrollbar {
-    width: 5px;
-    background-color: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: $scrollbar-thumb;
-  }
-
-  &:hover::-webkit-scrollbar-thumb {
-    background-color: $scrollbar-thumb-hover;
-  }
+  min-height: 100px;
 }
 
 /*
@@ -128,11 +97,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 1904px) {
   .jobs {
-    max-height: calc(100vh - 220px); /* -620px size with chart */
+    max-height: calc(100vh - 548px);
   }
 
   .board {
-    height: calc(100vh - 100px); /* -620px size with chart */
+    height: calc(100vh - 435px);
   }
 }
 
@@ -142,11 +111,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 1281px)and (max-width: 1904px) {
   .jobs {
-    max-height: calc(100vh - 220px); /* -620px size with chart */
+    max-height: calc(100vh - 548px);
   }
 
   .board {
-    height: calc(100vh - 100px); /* -620px size with chart */
+    height: calc(100vh - 435px);
   }
 }
 
@@ -156,11 +125,11 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 960px) and (max-width: 1264px) {
   .jobs {
-    max-height: calc(100vh - 220px); /* -620px size with chart */
+    max-height: calc(100vh - 548px);
   }
 
   .board {
-    height: calc(100vh - 100px); /* -620px size with chart */
+    height: calc(100vh - 435px);
   }
 }
 
@@ -170,7 +139,7 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (min-width: 600px) and (max-width: 960px) {
   .jobs {
-    max-height: calc(100vh - 220px);
+    max-height: calc(100vh - 236px);
   }
 
   .board {
@@ -184,7 +153,7 @@ $scrollbar-thumb-hover: #737373;
 */
 @media (max-width: 600px) {
   .jobs {
-    max-height: calc(100vh - 220px);
+    max-height: calc(100vh - 236px);
   }
 
   .board {

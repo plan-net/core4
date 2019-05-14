@@ -5,10 +5,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-#: command used to call :meth:`.CoreIntrospector.iter_all` method
+#: command used to call :meth:`.CoreIntrospector.run` method
 ITERATE = """
-from core4.service.introspect import CoreIntrospector
-print(CoreIntrospector().iter_all())
+from core4.service.introspect.main import CoreIntrospector
+print(CoreIntrospector().run(dump=True))
 """
 
 #: command used to enqueue a job without job arguments
@@ -29,6 +29,8 @@ print(job._id)
 
 #: command used to start job processing with :meth:`.CoreWorkerProecess.start`
 EXECUTE = """
+import signal
+signal.signal(signal.SIGCHLD, signal.SIG_DFL)
 from core4.queue.process import CoreWorkerProcess
 CoreWorkerProcess().start("{job_id:s}")
 """
@@ -45,10 +47,10 @@ from core4.queue.main import CoreQueue
 CoreQueue()._exec_restart("{job_id:s}")
 """
 
-#: command used to launch app server in project
-SERVE_ALL = """
-from core4.api.v1.tool.functool import serve_all
+#: command used to launch selected app servers in project
+SERVE = """
+from core4.api.v1.tool.functool import serve
 from core4.logger.mixin import logon
 logon()
-serve_all({param})
+serve(*{a}, core4api=False, **{kw})
 """

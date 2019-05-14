@@ -14,16 +14,17 @@ export default {
   },
   computed: {
     widget () {
-      return this.$store.getters.widgetById(this.$route.params.widgetId)
+      const data = this.$store.getters.widgetById(this.$route.params.widgetId)
+      return data
     },
     path () {
       switch (this.$route.name) {
         case 'help':
           return this.widget.endpoint.help_url
-        case 'widget':
-          return this.widget.endpoint.enter_url
+        // case 'widget':
+        // case 'enter':
         default:
-          return ''
+          return this.widget.endpoint.enter_url
       }
     }
   }
@@ -39,7 +40,7 @@ div {
   top: 55px;
   bottom: 0;
   background-color: #fff;
-  padding: 15px 0 0 15px;
+  padding: 0 0 0 0;
   iframe {
     width: 100%;
     height: 100%;

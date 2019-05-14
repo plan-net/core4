@@ -29,8 +29,8 @@ class EventWatch(CoreBase):
 
     async def watch(self):
         coll = self.config.sys.event.connect_async()
-        async with coll.watch(max_await_time_ms=1) as self.change_stream:
-            async for change in self.change_stream:
+        async with coll.watch() as EventWatch.change_stream:
+            async for change in EventWatch.change_stream:
                 if change:
                     EventHandler.on_event(change)
 
@@ -41,11 +41,14 @@ class QueueWatch(CoreBase, QueryMixin):
     using :meth:`on_queue <.EventHandler.on_queue>` method.
     """
 
+    stop = False
+
     async def watch(self):
+        QueueWatch.stop = False
         coll = self.config.sys.queue.connect_async()
         pipeline = self.pipeline_queue_state()
         interval = self.config.event.queue_interval
-        while True:
+        while not QueueWatch.stop:
             nxt = gen.sleep(interval)
             cursor = coll.aggregate(pipeline)
             data = []
@@ -59,9 +62,9 @@ class EventHandler(CoreWebSocketHandler):
     """
     Web socket handler to process channel interests and to deliver
 
-    # chat messages on channel _message_
-    # job events from ``sys.event`` on channel _queue_
-    # aggregated job states from ``sys.queue`` on channel _queue_
+    #. chat messages on channel _message_
+    #. job events from ``sys.event`` on channel _queue_
+    #. aggregated job states from ``sys.queue`` on channel _queue_
 
     See :doc:`/example/index` for an example about _events_ and an example
     about _messages_.
@@ -183,7 +186,6 @@ class EventHandler(CoreWebSocketHandler):
                     or (author != waiter.current_user)):
                 if channel in interest:
                     waiter.write_message(data)
-
     @classmethod
     async def on_queue(cls, change):
         data = {

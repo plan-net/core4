@@ -4,14 +4,32 @@ import datetime
 import pytest
 
 from core4.api.v1.application import CoreApiContainer
-from core4.api.v1.tool.functool import serve
 from core4.api.v1.request.main import CoreRequestHandler
-from tests.api.test_response import setup, LocalTestServer, StopHandler
+from core4.api.v1.server import CoreApiServer
+from tests.api.test_test import run, setup
 
-print(setup)
+_ = setup
+
+
+class MainHandler(CoreRequestHandler):
+    author = "mra"
+
+    def get(self):
+        a = self.get_argument("a", as_type=int)
+        self.reply(dict(
+            a=a
+        ))
+
+
+class BadBodyHandler(CoreRequestHandler):
+    author = "mra"
+
+    def post(self):
+        self.reply("hello world")
 
 
 class ArgsHandler(CoreRequestHandler):
+    author = "mra"
 
     def get(self):
         ret = {}
@@ -37,209 +55,241 @@ class ArgsHandler(CoreRequestHandler):
         self.get()
 
 
-class CoreApiTestServer(CoreApiContainer):
-    enabled = False
+class ContainerTest(CoreApiContainer):
+    root = "/test"
     rules = [
-        (r'/kill', StopHandler),
-        (r'/args', ArgsHandler)
+        ("/abc", MainHandler),
+        ("/bad", BadBodyHandler),
+        ("/args", ArgsHandler)
     ]
 
 
-class HttpServer(LocalTestServer):
-
-    def start(self, *args, **kwargs):
-        return CoreApiTestServer
-
-
-@pytest.fixture()
-def http():
-    server = HttpServer()
-    yield server
-    server.stop()
+@pytest.yield_fixture
+def core4_test():
+    yield from run(
+        CoreApiServer,
+        ContainerTest
+    )
 
 
-def test_server_test(http):
-    rv = http.get("/core4/api/profile", base=False)
-    assert rv.status_code == 200
+async def test_login(core4_test):
+    await core4_test.login()
+    resp = await core4_test.get(
+        '/core4/api/v1/profile')
+    assert resp.code == 200
 
 
-def test_query_args(http):
-    rv = http.get("/args")
-    assert rv.status_code == 200
+async def test_args(core4_test):
+    await core4_test.login()
+    resp = await core4_test.get(
+        '/core4/api/v1/profile')
+    assert resp.code == 200
+
+    resp = await core4_test.get('/test/abc')
+    assert resp.code == 400
+    assert "missing argument" in resp.json()["error"].lower()
+
+    resp = await core4_test.get('/test/abc?a=b')
+    assert resp.code == 400
+    assert "as_type [int]" in resp.json()["error"].lower()
+
+    resp = await core4_test.get('/test/abc?a=1')
+    assert resp.code == 200
+
+
+async def test_bad_body(core4_test):
+    await core4_test.login()
+
+    resp = await core4_test.post('/test/bad', body="hello world")
+    assert resp.code == 200
+
+    resp = await core4_test.post('/test/bad', body='{"a": , 123}')
+    assert resp.code == 200
+
+    resp = await core4_test.post('/test/bad', body='{"a": 123}')
+    assert resp.code == 200
+
+    resp = await core4_test.post('/test/bad', body=b'3\xab Floppy (A).link')
+    assert resp.code == 200
+
+
+async def test_query_args(core4_test):
+    await core4_test.login()
+
+    rv = await core4_test.get("/test/args")
+    assert rv.code == 200
     assert rv.json()["data"]["a1"] == "<class 'NoneType'> = None"
 
-    rv = http.get("/args?a1=123")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a1=123")
+    assert rv.code == 200
     assert rv.json()["data"]["a1"] == "<class 'str'> = 123"
 
-    rv = http.get("/args?a2=123")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a2=123")
+    assert rv.code == 200
     assert rv.json()["data"]["a2"] == "<class 'int'> = 123"
 
-    rv = http.get("/args?a2=123.456")
-    assert rv.status_code == 400
+    rv = await core4_test.get("/test/args?a2=123.456")
+    assert rv.code == 400
 
-    rv = http.get("/args?a1=123&a1=456")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a1=123&a1=456")
+    assert rv.code == 200
     assert rv.json()["data"]["a1"] == "<class 'str'> = 456"
 
     # out of scope since get_arguments is out of scope
-    # rv = http.get("/args?a3=123&a3=456")
-    # assert rv.status_code == 200
+    # rv = core4_test.get("/test/args?a3=123&a3=456")
+    # assert rv.code == 200
     # assert rv.json()["data"]["a3"] == "<class 'list'> = ['123', '456']"
     # print(rv.json()["data"])
 
     # out of scope since get_arguments is out of scope
-    # rv = http.get("/args?a4=123&a4=456")
-    # assert rv.status_code == 200
+    # rv = core4_test.get("/test/args?a4=123&a4=456")
+    # assert rv.code == 200
     # #print(rv.json()["data"]["a4"])
     # assert rv.json()["data"]["a4"] == "<class 'list'> = [123, 456]"
 
-    rv = http.get("/args?a5=y")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a5=y")
+    assert rv.code == 200
     assert rv.json()["data"]["a5"] == "<class 'bool'> = True"
 
-    rv = http.get("/args?a5=0")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a5=0")
+    assert rv.code == 200
     assert rv.json()["data"]["a5"] == "<class 'bool'> = False"
 
-    rv = http.get("/args?a5=on")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a5=on")
+    assert rv.code == 200
     assert rv.json()["data"]["a5"] == "<class 'bool'> = True"
 
-    rv = http.get("/args?a5=off")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a5=off")
+    assert rv.code == 200
     assert rv.json()["data"]["a5"] == "<class 'bool'> = False"
 
-    rv = http.get("/args?a5=T")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a5=T")
+    assert rv.code == 200
     assert rv.json()["data"]["a5"] == "<class 'bool'> = True"
 
-    rv = http.get("/args?a5=xyz")
-    assert rv.status_code == 400
+    rv = await core4_test.get("/test/args?a5=xyz")
+    assert rv.code == 400
     assert 'parameter [a5] expected as_type [bool]' in rv.json()["error"]
 
-    rv = http.get("/args?a6=123.456")
-    assert rv.status_code == 200
+    rv = await core4_test.get("/test/args?a6=123.456")
+    assert rv.code == 200
     assert rv.json()["data"]["a6"] == "<class 'float'> = 123.456"
 
-    rv = http.get('/args?a7={"a": 123, "b": "hello"}')
-    assert rv.status_code == 200
+    rv = await core4_test.get('/test/args?a7={"a": 123, "b": "hello"}')
+    assert rv.code == 200
     assert rv.json()["data"][
                "a7"] == "<class 'dict'> = {\"a\": 123, \"b\": \"hello\"}"
 
-    rv = http.get('/args?a8=2018-2-01')
-    assert rv.status_code == 200
+    rv = await core4_test.get('/test/args?a8=2018-2-01')
+    assert rv.code == 200
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2018-02-01 00:00:00"
 
-    rv = http.get('/args?a8=2018-2-01T12:34:55')
-    assert rv.status_code == 200
+    rv = await core4_test.get('/test/args?a8=2018-2-01T12:34:55')
+    assert rv.code == 200
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2018-02-01 12:34:55"
 
-    rv = http.get('/args?a8=2009-01-01T12:55:12 CET')
-    assert rv.status_code == 200
+    rv = await core4_test.get('/test/args?a8=2009-01-01T12:55:12 CET')
+    assert rv.code == 200
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2009-01-01 11:55:12"
 
 
-def test_json_args(http):
-    rv = http.post("/args")
-    assert rv.status_code == 200
+async def test_json_args(core4_test):
+    await core4_test.login()
+
+    rv = await core4_test.post("/test/args")
+    assert rv.code == 200
     assert rv.json()["data"]["a1"] == "<class 'NoneType'> = None"
 
-    rv = http.post("/args", json={"a1": "123"})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a1": "123"})
+    assert rv.code == 200
     assert rv.json()["data"]["a1"] == "<class 'str'> = 123"
 
-    rv = http.post("/args", json={"a2": 123})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a2": 123})
+    assert rv.code == 200
     assert rv.json()["data"]["a2"] == "<class 'int'> = 123"
 
     # behavior is different to query parameter
-    rv = http.post("/args", json={"a2": 123.456})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a2": 123.456})
+    assert rv.code == 200
     assert rv.json()["data"]["a2"] == "<class 'int'> = 123"
 
     # behavior is different to query parameter
-    rv = http.post("/args", json={"a1": "123", "a1": "456"})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a1": "123", "a1": "456"})
+    assert rv.code == 200
     assert rv.json()["data"]["a1"] == "<class 'str'> = 456"
 
-    # rv = http.get("/args?a4=123&a4=456")
-    # assert rv.status_code == 200
+    # rv = await core4_test.get("/test/args?a4=123&a4=456")
+    # assert rv.code == 200
     # # print(rv.json()["data"]["a4"])
     # assert rv.json()["data"]["a4"] == "<class 'list'> = [123, 456]"
 
-    rv = http.post("/args", json={"a5": True})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a5": True})
+    assert rv.code == 200
     assert rv.json()["data"]["a5"] == "<class 'bool'> = True"
 
-    rv = http.post("/args", json={"a5": False})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a5": False})
+    assert rv.code == 200
     assert rv.json()["data"]["a5"] == "<class 'bool'> = False"
 
     # behavior is different to query parameter
-    # rv = http.get("/args?a5=0")
-    # assert rv.status_code == 200
+    # rv = await core4_test.get("/test/args?a5=0")
+    # assert rv.code == 200
     # assert rv.json()["data"]["a5"] == "<class 'bool'> = False"
 
     # behavior is different to query parameter
-    # rv = http.get("/args?a5=on")
-    # assert rv.status_code == 200
+    # rv = await core4_test.get("/test/args?a5=on")
+    # assert rv.code == 200
     # assert rv.json()["data"]["a5"] == "<class 'bool'> = True"
     #
     # behavior is different to query parameter
-    # rv = http.get("/args?a5=off")
-    # assert rv.status_code == 200
+    # rv = await core4_test.get("/test/args?a5=off")
+    # assert rv.code == 200
     # assert rv.json()["data"]["a5"] == "<class 'bool'> = False"
 
     # behavior is different to query parameter
-    # rv = http.get("/args?a5=T")
-    # assert rv.status_code == 200
+    # rv = await core4_test.get("/test/args?a5=T")
+    # assert rv.code == 200
     # assert rv.json()["data"]["a5"] == "<class 'bool'> = True"
 
-    rv = http.post("/args", json={"a5": "xyz"})
-    assert rv.status_code == 400
+    rv = await core4_test.post("/test/args", body={"a5": "xyz"})
+    assert rv.code == 400
     assert 'parameter [a5] expected as_type [bool]' in rv.json()["error"]
 
-    rv = http.post("/args", json={"a6": 123.456})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a6": 123.456})
+    assert rv.code == 200
     assert rv.json()["data"]["a6"] == "<class 'float'> = 123.456"
 
-    rv = http.post("/args", json={"a7": {"b": "hello", "a": 123}})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args",
+                               body={"a7": {"b": "hello", "a": 123}})
+    assert rv.code == 200
     assert rv.json()["data"][
                "a7"] == "<class 'dict'> = {\"a\": 123, \"b\": \"hello\"}"
 
-    rv = http.post("/args", json={"a8": '2018-2-01'})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a8": '2018-2-01'})
+    assert rv.code == 200
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2018-02-01 00:00:00"
 
-    rv = http.post("/args", json={"a8": '2018-2-01T12:34:55'})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args", body={"a8": '2018-2-01T12:34:55'})
+    assert rv.code == 200
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2018-02-01 12:34:55"
 
-    rv = http.post("/args", json={"a8": '2009-01-01T12:55:12 CET'})
-    assert rv.status_code == 200
+    rv = await core4_test.post("/test/args",
+                               body={"a8": '2009-01-01T12:55:12 CET'})
+    assert rv.code == 200
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2009-01-01 11:55:12"
 
 
-def test_conv_error(http):
-    rv = http.post("/args")
-    assert rv.status_code == 200
+async def test_conv_error(core4_test):
+    await core4_test.login()
+    rv = await core4_test.post("/test/args")
+    assert rv.code == 200
     assert rv.json()["data"]["a1"] == "<class 'NoneType'> = None"
-    # rv = http.get('/args?a8=9999-aa-bb')
-    # assert rv.status_code == 400
-    # assert "parameter [a8] expected as_type [datetime]" in rv.json()["error"]
-    # import time
-    # time.sleep(3)
-    # print("OK")
-
-
-if __name__ == '__main__':
-    serve(CoreApiTestServer)
+    rv = await core4_test.get('/test/args?a8=9999-aa-bb')
+    assert rv.code == 400
+    assert "parameter [a8] expected as_type [datetime]" in rv.json()["error"]

@@ -1,0 +1,2 @@
+
+data1_collection: !connect mongodb://data1

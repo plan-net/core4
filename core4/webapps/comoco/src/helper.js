@@ -1,4 +1,4 @@
-import { clone } from 'pnbi-base/core4/helper'
+import { clone } from 'core4ui/core4/helper'
 
 /**
  * Create object with defined keys with default value for each key
@@ -16,17 +16,19 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
 }
 
 /**
- * Get host name by window location
+ * Get base path base on mode: dev or prod
  *
  * @returns {string}
  */
-const getBasePath = () => {
+function getBasePath () {
   if (window.location.href.includes('http')) {
     // index.html
     return window.APIBASE_CORE.replace('http:', 'ws:')
   }
 
-  return `ws://${window.location.hostname}${window.APIBASE_CORE}`
+  console.error(`incorrect network protocol ${window.location.href}`)
+
+  return `ws://${window.location.host}/core4/api`
 }
 
 export {

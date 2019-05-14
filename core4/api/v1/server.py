@@ -39,17 +39,27 @@ from core4.api.v1.request.standard.event import EventHandler
 from core4.api.v1.request.standard.event import EventHistoryHandler
 from core4.api.v1.request.standard.event import EventWatch
 from core4.api.v1.request.standard.event import QueueWatch
+from core4.api.v1.request.standard.login import LoginHandler
+from core4.api.v1.request.standard.logout import LogoutHandler
+from core4.api.v1.request.standard.profile import ProfileHandler
+from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
-from core4.api.v1.tool.functool import serve
-
-event = EventWatch()
-IOLoop.current().add_callback(event.watch)
-queue = QueueWatch()
-IOLoop.current().add_callback(queue.watch)
 
 
-def close_watchers():
-    event.change_stream.close()
+class CoreWidgetServer(CoreApiContainer):
+    root = ""
+    rules = [
+        (r'/comoco', CoreStaticFileHandler, {
+            "path": "/webapps/comoco/dist",
+            "static_path": "/webapps/comoco/dist",
+            "title": "core4 monitoring and control", "protected": False
+        }),
+        (r'/', CoreStaticFileHandler, {
+            "path": "/webapps/widgets/dist",
+            "static_path": "/webapps/widgets/dist",
+            "title": "core4 home", "protected": False
+        })
+    ]
 
 
 class CoreApiServer(CoreApiContainer):
@@ -63,29 +73,42 @@ class CoreApiServer(CoreApiContainer):
         (r'/jobs/poll/(.*)', JobStream, None, "JobStream"),
         (r'/jobs/history', JobHistoryHandler),
         (r'/jobs/history/(.*)', JobHistoryHandler, None, "JobHistory"),
-        (r'/system/?', SystemHandler),
+        (r'/jobs/enqueue/?', JobPost),
         (r'/jobs', JobHandler),
         (r'/jobs/(.*)', JobHandler, None, "JobHandler"),
-        (r'/enqueue/?', JobPost),
+
+        (r'/system/?', SystemHandler),
+
         (r'/roles', RoleHandler),
         (r'/roles/(.*)', RoleHandler, None, "RoleHandler"),
+
         (r'/access', AccessHandler),
         (r'/access/(.*)', AccessHandler, None, "AccessHandler"),
+
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
-        (r'/widgets', CoreStaticFileHandler, {
-            "path": "/webapps/widgets/dist",
-            "title": "core widgets", "protected": False
-        }),
-        (r'/comoco', CoreStaticFileHandler, {
-            "path": "/webapps/comoco/dist",
-            "title": "comoco", "protected": False
-        })
+
+        (r"/login", LoginHandler),
+        (r"/logout", LogoutHandler),
+
+        (r"/profile", ProfileHandler),
+
+        (r'/setting', SettingHandler),
+        (r'/setting/(.*)', SettingHandler),
     ]
 
+    def on_enter(self):
+        event = EventWatch()
+        IOLoop.current().add_callback(event.watch)
+        queue = QueueWatch()
+        IOLoop.current().add_callback(queue.watch)
+
     def on_exit(self):
-        event.change_stream.close()
+        QueueWatch.stop = True
+        EventWatch.change_stream.close()
 
 
 if __name__ == '__main__':
-    serve(CoreApiServer, routing="localhost:5001", address="0.0.0.0")
+    from core4.api.v1.tool.functool import serve
+
+    serve(CoreApiServer, CoreWidgetServer)

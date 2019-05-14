@@ -8,22 +8,28 @@
         <!-- Job name and amount of jobs with the same name on queue-->
         <v-flex>
           <v-layout row xs12>
-            <v-flex xs9 class="text-truncate">
-              <span class="font-weight-bold subheading">{{ job.name | shortName }}</span>
+            <v-flex class="name text-truncate">
+              <v-tooltip bottom>
+                <span class="font-weight-bold subheading" slot="activator">{{ job.name | shortName }}</span>
+                <span>{{ job.name | shortName }}</span>
+              </v-tooltip>
             </v-flex>
-            <v-flex class="text-right" xs3>
+            <v-flex class="text-right">
               <span class="font-weight-bold title">{{ job.n }}</span>
             </v-flex>
           </v-layout>
         </v-flex>
 
         <!-- Existing job flags-->
-        <v-flex class="align-right caption">
-          <span v-for="(icon, flag) in flags" class="text-uppercase font-weight-bold text--darken-3"
-                :key="flag"
-                :class="[ (job[flag]) ? 'white--text' : 'grey--text']">
-            {{ icon }}
-          </span>
+        <v-flex class="align-right caption flags">
+          <v-tooltip bottom>
+            <span v-for="(icon, flag) in flags" class="text-uppercase font-weight-bold text--darken-3"
+                  :key="flag"
+                  :class="[ (job[flag]) ? 'active' : 'passive']" slot="activator">
+                {{ icon }}
+            </span>
+            <span>K - killed, N - nonstop, R - removed, Z - zombie</span>
+          </v-tooltip>
         </v-flex>
       </v-layout>
     </div>
@@ -58,7 +64,7 @@ export default {
   },
   filters: {
     shortName: value => value.split('.').slice(-1)[0],
-    accountName: value => value.split('.')[2]
+    accountName: value => value.split('.')[0]
   }
 }
 </script>
@@ -76,7 +82,6 @@ export default {
 }
 
 .job {
-  background-color: $job-panel-bck-color;
   position: relative;
 
   &:before {
@@ -85,12 +90,15 @@ export default {
     top: 0;
     right: 0;
     width: 0;
-    border-top: 10px solid $jobs-board-bck-color;
-    border-left: 10px solid $job-panel-bck-color;
+
+    border-top-width: 10px;
+    border-top-style: solid;
+
+    border-left-width: 10px;
+    border-left-style: solid;
   }
 
   &:hover {
-    background-color: #2E2E2E;
 
     &:before{
       content: '';
@@ -98,9 +106,17 @@ export default {
       top: 0;
       right: 0;
       width: 0;
-      border-top: 10px solid $jobs-board-bck-color;
-      border-left: 10px solid #2E2E2E;
+
+      border-top-width: 10px;
+      border-top-style: solid;
+
+      border-left-width: 10px;
+      border-left-style: solid;
     }
+  }
+
+  .name{
+    max-width: 250px;
   }
 }
 

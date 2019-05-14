@@ -9,7 +9,7 @@
 This module implement :class:`.CoreCollection`, featuring database
 access and :class:`.CoreJobCollection` derived from
 :class:`.CoreCollection` with extended features for MongoDB collection
-access with :class:`.CoreJob`.
+access for :class:`.CoreJob`.
 """
 
 import pymongo.collection
@@ -35,7 +35,7 @@ class CoreCollection:
 
     def __init__(
             self, scheme, hostname, database, collection, username=None,
-            password=None, async=False):
+            password=None, async_conn=False):
         """
         Instantiates a CoreCollection object with
 
@@ -54,13 +54,14 @@ class CoreCollection:
         self.username = username
         self.password = password
         self._connection = None
-        self.async = async
+        self.async_conn = async_conn
         if self.scheme not in SCHEME:
             raise core4.error.Core4ConfigurationError(
                 "unknown scheme [{}]".format(self.scheme))
 
     def __repr__(self):
         return "CoreConnection(" \
+               "async_conn='{async_conn}', " \
                "scheme='{scheme}', " \
                "hostname='{hostname}', " \
                "username='{username}', " \
@@ -216,4 +217,4 @@ class JobCollection(pymongo.collection.Collection):
             document["$set"].update(self._job)
         else:
             document["$set"] = self._job
-        super()._update(sock_info, criteria, document, *args, **kwargs)
+        return super()._update(sock_info, criteria, document, *args, **kwargs)
