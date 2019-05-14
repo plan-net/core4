@@ -282,15 +282,16 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         rsc_id=rule.rsc_id,
 
                         author=handler.author,
-                        icon=handler.icon,
+                        #icon=handler.icon,
                         project=handler.get_project(),
                         protected=handler.protected,
                         qual_name=handler.qual_name(),
                         tag=handler.tag,
                         title=handler.title,
-                        version=handler.version(),
+                        subtitle=handler.subtitle,
+                        #version=handler.version(),
                         enter_url=handler.enter_url,
-                        blank=handler.blank
+                        target=handler.target
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
