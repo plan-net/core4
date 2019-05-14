@@ -4,122 +4,177 @@
     <meta charset="UTF-8">
     <title>HELP {{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
+    <!-- <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}"> -->
+    <link rel="stylesheet" type="text/css" href="..\..\_static\bootstrap-material-design.custom.css">
+    <style>
+    .scrollspy-help {
+        position: relative;
+        height:100%;
+        margin-top: .5rem;
+        overflow: auto;
+    }
+    .list-group {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding: .5rem 0;
+    }
+    .card-body{
+        height: 80vh;
+    }
+
+    .row {
+        margin-top: 10vh
+    }
+
+    .container-fluid::before{
+        content:'';
+        display: block;
+        position:absolute;
+        height: 20vh;
+        left: 0;
+        right: 0;
+        top: 0;
+        background-color: var(--accent);
+        z-index: 0;
+        min-height:120px;
+    }
+    .list-group{
+        padding-top: 0px;
+    }
+    </style>
 </head>
 <body>
-    <h1>HELP of {{ handler.__class__.__name__ }}</h1>
-
-    <hr/>
-
-    <h2>{{ title }}</h2>
-    <h4>{{ subtitle }}</h4>
-
-    <ul>
-        <li><b>AT:</b> {{ handler.started }}</li>
-        <li><b>QUAL_NAME:</b> {{ qual_name }}</li>
-        <li><b>AUTHOR:</b> {{ author }} </li>
-        <li><b>ICON: <i class="material-icons">{{ icon }}</i></b> - {{ icon }}</li>
-        <li><b>TAG:</b> {{ ", ".join(tag) }} </li>
-        <li><b>RESOURCE ID:</b> {{ rsc_id }} </li>
-        <li><b>PROJECT:</b> {{ project }} </li>
-        <li><b>THIS PATTERN:</b>
-            <ul>
-            {% for p in pattern %}
-                <li>
-                    {% if p["name"] is not None %}
-                        <b>{{ p["name"] }}:</b>
-                    {% else %}
-                        <b>no name:</b>
-                    {% end if %}
-                    {{ p["regex"] }}
-                </li>
-            {% end %}
-            </ul>
-        </li>
-
-        <li><b>CONTAINER:</b> {{ container }} </li>
-        <li><b>PROTECTED:</b> {{ protected }} </li>
-        <li><b>CREATED AT:</b> {{ created_at }} </li>
-        <li><b>STARTED AT:</b> {{ started_at }} </li>
-        <li><b>TARGET:</b> {{ target }} </li>
-        <li><b>THIS CARD:</b> {{ card_url }} </li>
-        <li><b>THIS HELP:</b> {{ help_url }} </li>
-        <li><b>THIS ENTER_URL:</b> {{ enter_url }} </li>
-        <li><b>CLASS ARGS:</b> {{ args }} </li>
-        <li><b>ENDPOINTS:</b>
-            <ul>
-                {% for ep in endpoint %}
-                <li>
-                    {{ ep }}
-                    <ul>
-                        <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
-                        <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
-                        {% if enter_url != None %}
-                            <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-                        {% else %}
-                            <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
-                        {% end if %}
-                    </ul>
-                </li>
-                {% end for %}
-            </ul>
-        </li>
-        <li><b>DESCRIPTION:</b>
-            <ul>
-                <li>
-                    <b>PLAIN TEXT:</b>
-                    <pre>{{ description }}</pre>
-                </li>
-                <li>
-                    <b>HTML:</b>
-                    <pre>{% raw description_html %}</pre>
-                </li>
-                <li>
-                    <b>parsing error:</b>
-                    <pre>{{ "\n".join(description_error) }}</pre>
-                </li>
-            </ul>
-        </li>
-        <li><b>MISSING</b>
-            <ul>
-                {% if author is None %} <li> AUTHOR </li> {% end %}
-                {% if not title %} <li> TITLE </li> {% end %}
-                {% if method %}
+    <!-- <h1>HELP of {{ handler.__class__.__name__ }}</h1> -->
+    <div class="container-fluid">
+        <div class="row">        
+            <div class="card col-6 offset-md-2" >
+                <div class="card-body" style="position:relative">                
+                    <div data-spy="scroll" data-target="#help-list" data-offset="0" class="scrollspy-help">
+                        <h4 id="list-item-1">{{ title }}</h4>
+                            <h4>{{ subtitle }}</h4>        
+                            <ul>
+                                <li><b>AT:</b> {{ handler.started }}</li>
+                                <li><b>QUAL_NAME:</b> {{ qual_name }}</li>
+                                <li><b>AUTHOR:</b> {{ author }} </li>
+                                <li><b>ICON: <i class="material-icons">{{ icon }}</i></b> - {{ icon }}</li>
+                                <li><b>TAG:</b> {{ ", ".join(tag) }} </li>
+                                <li><b>RESOURCE ID:</b> {{ rsc_id }} </li>
+                                <li><b>PROJECT:</b> {{ project }} </li>
+                                <li><b>THIS PATTERN:</b>
+                                    <ul>
+                                    {% for p in pattern %}
+                                        <li>
+                                            {% if p["name"] is not None %}
+                                                <b>{{ p["name"] }}:</b>
+                                            {% else %}
+                                                <b>no name:</b>
+                                            {% end if %}
+                                            {{ p["regex"] }}
+                                        </li>
+                                    {% end %}
+                                    </ul>
+                                </li>
+                        
+                                <li><b>CONTAINER:</b> {{ container }} </li>
+                                <li><b>PROTECTED:</b> {{ protected }} </li>
+                                <li><b>CREATED AT:</b> {{ created_at }} </li>
+                                <li><b>STARTED AT:</b> {{ started_at }} </li>
+                                <li><b>TARGET:</b> {{ target }} </li>
+                                <li><b>THIS CARD:</b> {{ card_url }} </li>
+                                <li><b>THIS HELP:</b> {{ help_url }} </li>
+                                <li><b>THIS ENTER_URL:</b> {{ enter_url }} </li>
+                                <li><b>CLASS ARGS:</b> {{ args }} </li>
+                                <li><b>ENDPOINTS:</b>
+                                    <ul>
+                                        {% for ep in endpoint %}
+                                        <li>
+                                            {{ ep }}
+                                            <ul>
+                                                <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
+                                                <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
+                                                {% if enter_url != None %}
+                                                    <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
+                                                {% else %}
+                                                    <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
+                                                {% end if %}
+                                            </ul>
+                                        </li>
+                                        {% end for %}
+                                    </ul>
+                                </li>
+                                <li><b>DESCRIPTION:</b>
+                                    <ul>
+                                        <li>
+                                            <b>PLAIN TEXT:</b>
+                                            <pre>{{ description }}</pre>
+                                        </li>
+                                        <li>
+                                            <b>HTML:</b>
+                                            <pre>{% raw description_html %}</pre>
+                                        </li>
+                                        <li>
+                                            <b>parsing error:</b>
+                                            <pre>{{ "\n".join(description_error) }}</pre>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li><b>MISSING</b>
+                                    <ul>
+                                        {% if author is None %} <li> AUTHOR </li> {% end %}
+                                        {% if not title %} <li> TITLE </li> {% end %}
+                                        {% if method %}
+                                            {% for elem in method %}
+                                                {% if elem["parts"] %}
+                                                    {% for part in elem["parts"] %}
+                                                        {% if not elem["parts"][part] %}
+                                                            <li>
+                                                                {{ elem["method"].upper() }} - section
+                                                                <i> {{ part }} </i>
+                                                            </li>
+                                                        {% end %}
+                                                    {% end %}
+                                                {% else %}
+                                                    <li>
+                                                        {{ elem["method"].upper() }} documentation
+                                                    </li>
+                                                {% end %}
+                                            {% end %}
+                                        {% end %}
+                                    </ul>
+                                </li>
+                            </ul>
+                        <h4 id="list-item-2">Introduction</h4>
+                    
+                    {% raw description_html %}                
+                    <hr/>                    
                     {% for elem in method %}
-                        {% if elem["parts"] %}
-                            {% for part in elem["parts"] %}
-                                {% if not elem["parts"][part] %}
-                                    <li>
-                                        {{ elem["method"].upper() }} - section
-                                        <i> {{ part }} </i>
-                                    </li>
-                                {% end %}
-                            {% end %}
-                        {% else %}
-                            <li>
-                                {{ elem["method"].upper() }} documentation
-                            </li>
-                        {% end %}
-                    {% end %}
-                {% end %}
-            </ul>
-        </li>
-    </ul>
-    <hr/>
-
-    {% raw description_html %}
-
-    {% for elem in method %}
-
-        <h2>{{ elem["method"].upper() }}</h2>
-
-        {% raw elem["html"] %}
-
-        <hr/>
-
-    {% end %}
-
+                        <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
+                        <h2></h2>                
+                        {% raw elem["html"] %}                
+                        <hr/>                
+                    {% end %}                    
+                </div>    
+            </div>        
+        </div>
+        <div class="col-3">
+            <div id="help-list" class="list-group">
+                <a class="list-group-item list-group-item-action active" href="#list-item-1">{{ title }}</a>
+                <a class="list-group-item list-group-item-action" href="#list-item-2">Introduction</a>
+                {% for elem in method %}
+                <a class="list-group-item list-group-item-action" href="#{{elem['method'].upper()}}">{{elem['method'].upper()}}</a>            
+                {% end %}                
+            </div>
+        </div>
+    </div>
 </body>
-<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>
+<!-- <script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script> -->
+
+<script type="text/javascript" src="..\..\_static\jq.pop.bsmd.min.js"></script>
+<script src="https://fezvrasta.github.io/bootstrap-material-design/assets/js/vendor/anchor.min.js"></script>
+<script type="text/javascript">
+    console.log($);
+    $('body').scrollspy({ target: '#help-list' })
+</script>
 </body>
 </html>
