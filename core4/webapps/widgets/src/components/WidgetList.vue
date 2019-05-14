@@ -48,13 +48,13 @@
               </v-chip>
             </template>
             <template v-slot:item="data">
-           <!--    <template v-if="typeof data.item !== 'object'">
-                <v-list-tile-content v-text="data.item"></v-list-tile-content>
-              </template>
-              <template v-else> -->
-                <v-list-tile-content>
-                  <v-list-tile-title v-html="data.item.text"></v-list-tile-title>
-                </v-list-tile-content>
+              <!--    <template v-if="typeof data.item !== 'object'">
+                   <v-list-tile-content v-text="data.item"></v-list-tile-content>
+                 </template>
+                 <template v-else> -->
+              <v-list-tile-content>
+                <v-list-tile-title v-html="data.item.text"></v-list-tile-title>
+              </v-list-tile-content>
               <!-- </template> -->
             </template>
           </v-autocomplete>
@@ -106,9 +106,11 @@
           >
             <v-card>
               <v-card-text>
-                  <img alt="Howto Drag" src="../assets/howto-drag.jpg" style="width: 100%; height: auto;" class="mb-2">
+                <img alt="Howto Drag" src="../assets/howto-drag.jpg" style="width: 100%; height: auto;" class="mb-2">
                 Add new Widgets to the current board.
-                You can drag and drop widgets into the current board or alternatively use the <v-icon>add</v-icon> button.
+                You can drag and drop widgets into the current board or alternatively use the
+                <v-icon>add</v-icon>
+                button.
               </v-card-text>
               <v-card-actions>
                 <v-spacer></v-spacer>
@@ -116,7 +118,8 @@
                   color="primary"
 
                   @click="helpDialogOpen=false"
-                >Close</v-btn>
+                >Close
+                </v-btn>
               </v-card-actions>
             </v-card>
           </v-dialog>
@@ -130,73 +133,118 @@
           drop-effect="copy"
           :transfer-data="{ widgetId: item.rsc_id }"
         >
-          <div @mouseover="onMouseOver(item)" @mouseleave="onMouseLeave(item)"> <!-- v-list-tile doenst react on mouseover-->
-          <v-list-tile
-            class="mini-widget"
-            avatar
-          >
-            <!--         <v-list-tile-avatar>
-              <v-icon color="grey" medium>{{ item.icon }}</v-icon>
-            </v-list-tile-avatar> -->
-            <v-list-tile-avatar>
-              <v-icon v-if="item.effectAllowed[0] === 'copy'" class="widget-drag-icon grey--text" small>drag_indicator</v-icon>
-            </v-list-tile-avatar>
-            <v-list-tile-content >
-              <v-list-tile-title style="font-weight: 700;">{{ item.title }}</v-list-tile-title>
-              <v-list-tile-sub-title v-text="item.qual_name"></v-list-tile-sub-title>
-            </v-list-tile-content>
-            <v-tooltip
-              left
-              v-if="item.effectAllowed[0] !== 'none'"
+          <div @mouseover="onMouseOver(item)" @mouseleave="onMouseLeave(item)">
+            <!-- v-list-tile doenst react on mouseover-->
+            <v-list-tile
+              class="mini-widget"
+              avatar
             >
-              <template v-slot:activator="{ on }">
-                <v-list-tile-action
-                  @click="addToBoard(item.rsc_id)"
-                  v-on="on"
-                  class="with-hover"
-                >
-                  <v-icon>add</v-icon>
+              <!--         <v-list-tile-avatar>
+                <v-icon color="grey" medium>{{ item.icon }}</v-icon>
+              </v-list-tile-avatar> -->
+              <!--            <v-list-tile-avatar>
+                            <v-icon v-if="item.effectAllowed[0] === 'copy'" class="widget-drag-icon grey&#45;&#45;text" small>drag_indicator</v-icon>
+                          </v-list-tile-avatar>-->
+              <v-list-tile-action class="with-hover right">
+                <v-tooltip left>
+                  <v-icon @click="openInNew(item)"
+                          slot="activator"
+                          class="grey--text"
+                          small
+                  >open_in_new
+                  </v-icon>
+                  <span>Open widget in new tab</span>
+                </v-tooltip>
+                <v-tooltip left>
+                  <v-icon @click="$router.push({ name: 'enter', params: { widgetId: item.rsc_id } })"
+                          slot="activator"
+                          class="grey--text"
+                          small
+                  >open_in_browser
+                  </v-icon>
+                  <span>Open widget</span>
+                </v-tooltip>
+                <v-tooltip left>
+                  <v-icon
+                    @click="$router.push({ name: 'help', params: { widgetId: item.rsc_id } })"
+                    slot="activator"
+                    class="grey--text"
+                    small
+                  >help
+                  </v-icon>
+                  <span>Open widget help</span>
+                </v-tooltip>
+              </v-list-tile-action>
 
-                </v-list-tile-action>
-              </template>
-              <span>Add to board</span>
-            </v-tooltip>
-            <v-list-tile-action v-else>
-              <v-icon>check</v-icon>
-            </v-list-tile-action>
-            <!-- <v-list-tile-action>
-              <v-tooltip left>
-                <v-btn
-                  @click="$router.push({ name: 'widget', params: { widgetId: item.rsc_id } })"
-                  slot="activator"
-                  icon
-                  small
-                  ripple
+              <v-list-tile-content>
+                <v-list-tile-title style="font-weight: 700;">{{ item.title }}</v-list-tile-title>
+                <v-tooltip
+                  top
                 >
-                  <v-icon
-                    color="grey lighten-1"
-                    small
-                  >open_in_new</v-icon>
-                </v-btn>
-                <span>Open widget</span>
+                  <template v-slot:activator="{ on }">
+                    <v-list-tile-sub-title v-on="on" v-text="item.$qual_name"></v-list-tile-sub-title>
+                  </template>
+                  <span>{{item.qual_name}}</span>
+                </v-tooltip>
+              </v-list-tile-content>
+              <!--<v-tooltip
+                left
+                v-if="item.effectAllowed[0] !== 'none'"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-list-tile-action
+                    @click="addToBoard(item.rsc_id)"
+                    v-on="on"
+                    class="with-hover"
+                  >
+                    <v-icon >add</v-icon>
+
+                  </v-list-tile-action>
+                </template>
+                <span>Add to board</span>
               </v-tooltip>
-              <v-tooltip left>
-                <v-btn
-                  @click="$router.push({ name: 'help', params: { widgetId: item.rsc_id } })"
-                  icon
-                  slot="activator"
-                  small
-                  ripple
+              <v-tooltip
+                left
+                v-else
+              >
+                <template v-slot:activator="{ on }">
+                  <v-list-tile-action
+                    @click="removeFromBoard(item.rsc_id)"
+                    v-on="on"
+                    class="with-hover"
+                  >
+                    <v-icon >remove</v-icon>
+
+                  </v-list-tile-action>
+                </template>
+                <span>Remove from board</span>
+              </v-tooltip>-->
+
+              <v-list-tile-action class="with-hover">
+                <v-tooltip
+                  left
+                  v-if="item.effectAllowed[0] !== 'none'"
                 >
-                  <v-icon
-                    color="grey lighten-1"
-                    small
-                  >help</v-icon>
-                </v-btn>
-                <span>Help</span>
-              </v-tooltip>
-            </v-list-tile-action> -->
-          </v-list-tile>
+                  <template v-slot:activator="{ on }">
+                    <v-icon class="grey--text" v-on="on" @click="addToBoard(item.rsc_id)">
+                      add_circle_outline
+                    </v-icon>
+                  </template>
+                  <span>Add to board</span>
+                </v-tooltip>
+                <v-tooltip
+                  left
+                  v-else
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-icon class="grey--text" @click="removeFromBoard(item.rsc_id)" v-on="on">
+                      remove_circle_outline
+                    </v-icon>
+                  </template>
+                  <span>Remove to board</span>
+                </v-tooltip>
+              </v-list-tile-action>
+            </v-list-tile>
           </div>
         </drag>
 
@@ -206,12 +254,12 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import _ from 'lodash'
+
 export default {
   name: 'widget-list',
-  components: {
-  },
+  components: {},
   computed: {
     ...mapGetters(['widgetSet', 'widgetListOpen']),
     miniVariant () {
@@ -273,6 +321,15 @@ export default {
     }
   },
   methods: {
+    openInNew (widget) {
+      let path = null
+      if (widget.target === 'blank') {
+        path = widget.endpoint.enter_url
+      } else {
+        path = '/#/widget/' + widget.rsc_id
+      }
+      window.open(path, '_blank')
+    },
     onMouseOver (item) {
       if (item.effectAllowed[0] === 'none') {
         // this.$bus.$emit('mouseOver', item.rsc_id)
@@ -288,13 +345,14 @@ export default {
           $over: false,
           id: item.rsc_id
         })
-        // this.$bus.$emit('mouseLeave', item.rsc_id)
       }
     },
-    ...mapActions(['addToBoard', 'toggleWidgetListOpen', 'setWidgetOver']),
+    ...mapActions(['addToBoard', 'removeFromBoard', 'toggleWidgetListOpen', 'setWidgetOver']),
     removeTagFromSearch (item) {
       const index = this.tags.indexOf(item.text)
-      if (index >= 0) { this.tags.splice(index, 1) }
+      if (index >= 0) {
+        this.tags.splice(index, 1)
+      }
     }
   },
   data () {
@@ -310,154 +368,205 @@ export default {
 </script>
 
 <style scoped lang="css">
+  div >>> .with-hover {
+    height: 56px !important;
+  }
 
-div >>> .v-chip__content {
-  cursor: pointer !important;
-}
-div >>> .v-list__tile {
-  padding-left: 3px;
-  padding-right: 0;
-}
-div >>> .v-list__tile__avatar {
-  min-width: 18px;
-  width: 18px;
-}
-div >>> .v-list__tile__avatar .v-avatar {
-}
-div >>> .v-list__tile__avatar .widget-drag-icon {
-  margin-left: -12px;
-  padding-top: 3px;
-  align-items: flex-start
-}
-div >>> .v-list__tile__content {
-  padding-right: 3px;
-}
-div >>> .v-list__tile__action {
-  min-width: 36px;
-}
-div >>> .v-list__tile__action.with-hover {
-  transition: background-color 0.25s ease-in;
-}
-div >>> .v-list__tile__action.with-hover:hover {
-  cursor: grab;
-}
-div >>> .v-list__tile__action .v-icon {
-  margin-right: 6px;
-}
-div >>> .v-subheader {
-  font-weight: 600;
-  padding-left: 12px;
-  padding-right: 3px;
-}
+  div >>> .with-hover.right {
+    padding-top: 0;
+  }
+
+  div >>> .with-hover.right .v-icon {
+    margin-right: 6px !important;
+    margin-bottom: 1px !important;
+    margin-top: 0 !important;
+    font-size: 14px !important;
+  }
+
+  div >>> .with-hover.right .v-tooltip {
+    height: 16px !important;
+  }
+
+  div >>> .v-chip__content {
+    cursor: pointer !important;
+  }
+
+  div >>> .v-list__tile {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /*  div >>> .v-list__tile__avatar {
+      min-width: 22px;
+      width: 22px;
+    }*/
+
+  /*  div >>> .v-list__tile__avatar .v-avatar {
+    }
+
+    div >>> .v-list__tile__avatar .widget-drag-icon {
+      margin-left: -12px;
+      padding-top: 3px;
+      align-items: flex-start
+    }*/
+
+  div >>> .v-list__tile__content {
+    padding-left: 6px;
+    padding-right: 3px;
+  }
+
+  div >>> .v-list__tile__action {
+    padding-right: 4px;
+    min-width: 32px;
+    cursor: grab !important;
+  }
+
+  div >>> .v-list__tile__action.with-hover {
+    transition: background-color 0.25s ease-in;
+  }
+
+  div >>> .v-list__tile__action.with-hover:hover {
+    cursor: grab;
+  }
+
+  /*  div >>> .v-list__tile__action .v-icon {
+      margin-right: 6px;
+    }*/
+
+  div >>> .v-subheader {
+    font-weight: 600;
+    padding-left: 12px;
+    padding-right: 3px;
+  }
 </style>
 
 <style scoped lang="scss">
 
-.drag {
-  cursor: grab;
+  .drag {
+    cursor: grab;
 
-  &.is-not-draggable {
-    cursor: unset !important;
+    &.is-not-draggable {
+      cursor: unset !important;
+    }
   }
-}
-.widget-list {
-  padding-top: 65px;
-}
-.mini-widget {
-  min-height: 58px;
-  margin-bottom: 6px;
-  position: relative;
-  &:after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 12px 12px 0;
-    border-color: transparent darken(#202020, 1) transparent transparent;
-    z-index: 100;
-  }
-}
 
-.v-autocomplete {
-  position: relative;
-  &:after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 12px 12px 0;
-    z-index: 100;
+  .widget-list {
+    padding-top: 65px;
   }
-}
-.theme--dark {
-  /deep/ .v-list__tile__action.with-hover {
-    background-color: var(--v-secondary-lighten3);
-  }
-  /deep/ .v-list__tile__action.with-hover:hover {
-    background-color: var(--v-secondary-lighten4);
-  }
+
   .mini-widget {
-    background-color: var(--v-secondary-lighten2);
+    min-height: 58px;
+    margin-bottom: 6px;
+    position: relative;
+
     &:after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 12px 12px 0;
       border-color: transparent darken(#202020, 1) transparent transparent;
+      z-index: 100;
     }
   }
-  &.v-navigation-drawer {
-    background-color: darken(#202020, 1);
-  }
-  &.v-autocomplete {
-    /deep/ .v-input__slot {
-      background-color: var(--v-secondary-lighten2) !important;
-    }
+
+  .v-autocomplete {
+    position: relative;
+
     &:after {
-      border-color: transparent darken(#202020, 1) transparent transparent;
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 12px 12px 0;
+      z-index: 100;
     }
   }
-}
-.theme--light {
-  /deep/ .v-chip__content {
-    color: #fff;
-  }
-  /deep/ .v-list__tile__action.with-hover {
-    background-color: rgba(0, 0, 0, 0.15);
-  }
-  /deep/ .v-list__tile__action.with-hover:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-  }
-  .mini-widget {
-    background-color: darken(#fff, 5);
-    &:after {
-      border-color: transparent #fff transparent transparent;
+
+  .theme--dark {
+    /deep/ .v-list__tile__action.with-hover {
+      background-color: var(--v-secondary-lighten3);
+    }
+
+    /deep/ .v-list__tile__action.with-hover:hover {
+      background-color: var(--v-secondary-lighten4);
+    }
+
+    .mini-widget {
+      background-color: var(--v-secondary-lighten2);
+
+      &:after {
+        border-color: transparent darken(#202020, 1) transparent transparent;
+      }
+    }
+
+    &.v-navigation-drawer {
+      background-color: darken(#202020, 1);
+    }
+
+    &.v-autocomplete {
+      /deep/ .v-input__slot {
+        background-color: var(--v-secondary-lighten2) !important;
+      }
+
+      &:after {
+        border-color: transparent darken(#202020, 1) transparent transparent;
+      }
     }
   }
-  &.v-autocomplete {
-    &:after {
-      border-color: transparent #fff transparent transparent;
+
+  .theme--light {
+    /deep/ .v-chip__content {
+      color: #fff;
     }
-  }
-  .v-navigation-drawer--right {
-    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2),
+
+    /deep/ .v-list__tile__action.with-hover {
+      background-color: rgba(0, 0, 0, 0.15);
+    }
+
+    /deep/ .v-list__tile__action.with-hover:hover {
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .mini-widget {
+      background-color: darken(#fff, 5);
+
+      &:after {
+        border-color: transparent #fff transparent transparent;
+      }
+    }
+
+    &.v-autocomplete {
+      &:after {
+        border-color: transparent #fff transparent transparent;
+      }
+    }
+
+    .v-navigation-drawer--right {
+      box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2),
       0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12) !important;
-  }
-  .navigation-drawer--mini-variant {
-    box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2),
+    }
+
+    .navigation-drawer--mini-variant {
+      box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2),
       0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12) !important;
+    }
   }
-}
 </style>
 <style lang="scss">
-.theme--dark {
-  /deep/ .dnd-grid-box.placeholder {
-    border: 1px dashed #fff !important;
+  .theme--dark {
+    /deep/ .dnd-grid-box.placeholder {
+      border: 1px dashed #fff !important;
+    }
+
+    /deep/ .dnd-grid-box.dragging {
+      opacity: 0.5 !important;
+    }
   }
-  /deep/ .dnd-grid-box.dragging {
-    opacity: 0.5 !important;
-  }
-}
 </style>

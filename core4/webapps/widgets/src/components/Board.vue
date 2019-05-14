@@ -110,7 +110,7 @@
                       ripple
                       small
                       class="grey--text"
-                    >clear</v-icon>
+                    >remove_circle_outline</v-icon>
                   </v-btn>
                   <span>Remove widget from board</span>
                 </v-tooltip>
