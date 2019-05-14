@@ -207,3 +207,13 @@ async def test_core4_server3(core4api):
     resp = await core4api.post(
         URL, body='{"username": "admin", "password": "hans"}')
     assert resp.code == 200
+
+async def test_core4_server4(core4api):
+    URL = '/core4/api/v1/login'
+    resp = await core4api.get(URL + '?username=admin&password=hans')
+    assert resp.code == 200
+    cookie = list(resp.cookie().values())
+    header = {"Cookie": "token=" + cookie[0].coded_value}
+    resp = await core4api.get(URL, headers=header)
+    assert resp.code == 200
+
