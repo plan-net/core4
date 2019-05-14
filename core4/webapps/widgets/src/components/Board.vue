@@ -66,7 +66,7 @@
             drag-selector=".v-card__title"
           >
             <v-card :class="{'over': widget.$over}">
-              <v-layout class="icon-container">
+              <!--<v-layout class="icon-container">
                 <v-tooltip top>
                   <v-btn
                     @click="openInNew(widget)"
@@ -109,12 +109,12 @@
                     <v-icon
                       ripple
                       small
-                      class="grey--text"
+                      class="grey&#45;&#45;text"
                     >clear</v-icon>
                   </v-btn>
                   <span>Remove widget from board</span>
                 </v-tooltip>
-              </v-layout>
+              </v-layout>-->
               <template v-if="widget.endpoint">
 
                 <a
@@ -159,14 +159,14 @@
                   </v-card-text>
                 </a>
               </template>
-              <v-card-title>
+<!--              <v-card-title>
                 <v-layout column>
                   <span>{{widget.title}}</span>
-                  <small class="grey--text tooltip">{{widget.qual_name}}</small>
+                  <small class="grey&#45;&#45;text tooltip">{{widget.qual_name}}</small>
                 </v-layout>
                 <v-spacer></v-spacer>
-                <v-icon class="widget-drag-icon white--text">drag_indicator</v-icon>
-              </v-card-title>
+                <v-icon class="widget-drag-icon white&#45;&#45;text">drag_indicator</v-icon>
+              </v-card-title>-->
             </v-card>
           </dnd-grid-box>
       </dnd-grid-container>
