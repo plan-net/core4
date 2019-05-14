@@ -12,22 +12,23 @@ Implements :class:`.CoreApiServerTool to serve one or multiple
 
 import importlib
 
+import tornado.httpserver
+import tornado.ioloop
+import tornado.routing
+from tornado import gen
+
 import core4.api.v1.server
 import core4.const
 import core4.error
 import core4.service
-import core4.service.introspect
 import core4.service.setup
 import core4.util.node
-import tornado.httpserver
-import tornado.ioloop
-import tornado.routing
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.server import CoreApiServer, CoreWidgetServer
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
 from core4.service.introspect.command import SERVE
-from tornado import gen
+from core4.service.introspect.main import CoreIntrospector
 
 
 class CoreApiServerTool(CoreBase, CoreLoggerMixin):
@@ -179,7 +180,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     container_list.append(addon)
         for container_cls in container_list:
             if not container_cls.enabled:
-                self.logger.warning("starting NOT enabled container [%s]",
+                self.logger.warning("skipping NOT enabled container [%s]",
                                     container_cls.qual_name())
                 continue
             if isinstance(container_cls, str):
@@ -207,10 +208,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         for obj in self.container:
             obj.on_enter()
         return self.start_http(http_args, router, reuse_port)
-
-    # @classmethod
-    # def stop(cls):
-    #     tornado.ioloop.IOLoop().current().stop()
 
     async def heartbeat(self):
         """
@@ -285,15 +282,16 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         rsc_id=rule.rsc_id,
 
                         author=handler.author,
-                        icon=handler.icon,
+                        #icon=handler.icon,
                         project=handler.get_project(),
                         protected=handler.protected,
                         qual_name=handler.qual_name(),
                         tag=handler.tag,
                         title=handler.title,
-                        version=handler.version(),
+                        subtitle=handler.subtitle,
+                        #version=handler.version(),
                         enter_url=handler.enter_url,
-                        blank=handler.blank
+                        target=handler.target
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
@@ -354,11 +352,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
     def serve_all(self, project=None, filter=None, port=None, address=None,
                   name=None, reuse_port=True, routing=None):
         """
-        todo: docs require update
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
 
-        :param filter: one or more str matching the :class:`.CoreApiContainer`
+        :param project: containing the :class:`.CoreApiContainer` to serve,
+                        defaults to ``core4``
+        :param filter: list of str matching the :class:`.CoreApiContainer`
                        :meth:`.qual_name <core4.base.main.CoreBase.qual_name>`
         :param port: to listen, defaults to ``5001``, see core4 configuration
                      setting ``api.port``
@@ -372,20 +371,20 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         :param routing: URL including the protocol and hostname of the server,
                         defaults to the protocol depending on SSL settings, the
                         node hostname or address and port
-        :param on_exit: callback function which will be called at server exit
-        :param kwargs: to be passed to all :class:`CoreApiApplication`
         """
         if not project:
             project = self.project
-        if filter is None:
-            filter = [project]
+        if not filter:
+            filter = [None]
         scope = []
-        intro = core4.service.introspect.CoreIntrospector()
+        intro = CoreIntrospector()
         for f in filter:
-            for project, data in intro.list_project(project):
-                for container in data["container"]:
-                    if container["name"].startswith(f):
-                        scope.append(container["name"])
+            for pro in intro.introspect():
+                if project == pro["name"]:
+                    for container in pro["api_containers"]:
+                        if f is None or container["name"].startswith(f):
+                            if container["name"] not in scope:
+                                scope.append(container["name"])
         if scope:
             args = dict(
                 port=port,
@@ -394,5 +393,5 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 reuse_port=reuse_port,
                 routing=routing,
             )
-            core4.service.introspect.exec_project(project, SERVE, a=scope,
-                                                  kw=args, replace=True)
+            core4.service.introspect.main.exec_project(
+                project, SERVE, a=scope, kw=args, replace=True)

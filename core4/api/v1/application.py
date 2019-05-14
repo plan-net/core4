@@ -45,12 +45,12 @@ import core4.const
 import core4.error
 import core4.util.node
 from core4.api.v1.request.default import DefaultHandler
-from core4.api.v1.request.standard.info import InfoHandler
-#from core4.api.v1.request.kill import KillHandler
 from core4.api.v1.request.main import CoreBaseHandler
-from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.api.v1.request.standard.asset import CoreAssetHandler
+from core4.api.v1.request.standard.info import InfoHandler
+from core4.api.v1.request.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
+from core4.queue.query import QueryMixin
 
 STATIC_PATTERN = "/(.*)$"
 
@@ -67,7 +67,7 @@ class CoreRoutingRule(tornado.routing.Rule):
         self.rsc_id = rsc_id
 
 
-class CoreApiContainer(CoreBase):
+class CoreApiContainer(CoreBase, QueryMixin):
     """
     :class:`CoreApiContainer` class is a container for a single or multiple
     :class:`.CoreRequestHandler`, :class.`.CoreStaticFilehandler` or
@@ -171,12 +171,6 @@ class CoreApiContainer(CoreBase):
             kwargs=None,
             name=None
         )
-        # yield tornado.web.URLSpec(
-        #     pattern=self.get_root(core4.const.KILL_URL),
-        #     handler=KillHandler,
-        #     kwargs=None,
-        #     name=None
-        # )
         yield tornado.web.URLSpec(
             pattern=self.get_root("/{}/(default|project)/(.+?)/(.*)".format(
                 core4.const.ASSET_URL)),
@@ -215,7 +209,7 @@ class CoreApiContainer(CoreBase):
                     kwargs = {}
                 kwargs["enter"] = handler.enter_url or pattern or "/"
                 yield tornado.web.URLSpec(
-                    pattern= pattern + "/(.*)$",
+                    pattern=pattern + "/(.*)$",
                     handler=handler,
                     kwargs=kwargs,
                     name=name
@@ -278,7 +272,6 @@ class CoreApiContainer(CoreBase):
         self.started = core4.util.node.now()
         return app
 
-
     def on_enter(self):
         """
         Overwrite this method for code to be executed when the container enters
@@ -292,6 +285,105 @@ class CoreApiContainer(CoreBase):
         the io loop.
         """
         pass
+
+    async def get_handler(self, rsc_id=None):
+        """
+        Delivers resource handler infos based on registered data in
+        ``sys.handler``. This data is saved at server startup and provides the
+        following attributes:
+
+        * title
+        * subtitle (str) - defaults to ``qual_name`` if subtitle is not set
+        * qual_name (str)
+        * author (str)
+        * tag (list) - of str. If core4 config setting ``api.age_range`` is
+          defined, then an additional tag is appended indicating when the
+          handler has been published first
+        * rsc_id
+        * project
+        * pattern (list) - of dist with key ``name`` if defined and ``regex``
+        * container (str) - of the parent :class:`.CoreApiContainer`
+        * protected (bool) - defaults to ``True``
+        * created_at (str) - in iso format indicating when the resource has
+          first been published
+        * started_at (str) - in iso format indicating when the resource has
+          been started
+        * target (str) - indicating how the widget has to be spawned, defaults
+          to ``None`` for embedded mode, ``blank`` indicating standalone mode
+        * endpoint (list) - of str representing all available endpoints for
+          this handler
+
+        If no parameter ``rsc_id`` is passed, then a list for all alive
+        request handlers is returned. If a parameter ``rsc_id`` is passed to
+        the method, then the attributes for this resource is returned.
+
+        :param rsc_id: filter for
+        :return: dict or list of ``rsc_id`` is provided.
+        """
+        alive = [(d["protocol"], d["hostname"], d["port"])
+                 for d in await self.get_daemon_async(kind="app")]
+        handler = {}
+        inactive = 0
+        if rsc_id is None:
+            query = {}
+        else:
+            query = {"rsc_id": rsc_id}
+        async for doc in self.config.sys.handler.find(query):
+            if ((doc["protocol"], doc["hostname"], doc["port"]) in alive) \
+                    and (doc["started_at"] is not None):
+                del doc["_id"]
+                handler.setdefault(doc["rsc_id"], []).append(doc)
+            else:
+                inactive += 1
+        self.logger.debug("found [%d] handler alive, [%d] inactive",
+                          len(handler), inactive)
+        ret = []
+        detail = ("hostname", "protocol", "port", "routing", "container")
+        for data in handler.values():
+            first = data[0].copy()
+            for attr in detail:
+                del first[attr]
+            first["endpoint"] = []
+            info = set()
+            for d in data:
+                for c in d["container"]:
+                    url = "{}{}".format(
+                        d["routing"], c[2])
+                    info.add(url)
+                for k in ("started_at", "created_at"):
+                    first[k] = min(first[k], d[k])
+            first["endpoint"] += sorted(list(info))
+            date_range = self.get_date_range(first["created_at"])
+            if first["tag"] is None:
+                first["tag"] = []
+            if date_range:
+                first["tag"].append(date_range)
+            first["subtitle"] = first["subtitle"] or first["qual_name"]
+            ret.append(first)
+        ret.sort(key=lambda r: (str(r["title"]), r["qual_name"]))
+        print(ret)
+        if rsc_id is not None:
+            assert len(ret) == 1
+            return ret[0]
+        return ret
+
+    def get_date_range(self, timestamp):
+        """
+        Translates the passed :class:`datetime.datetime` into a textual
+        representation of date ranges as defined in core4 configuration setting
+        ``api.age_range``.
+
+        :param timestamp: :class:`datetime.datetime`
+        :return: str representation or ``None``
+        """
+        config = self.config.raw_config("api").get("age_range", None)
+        if config:
+            age = core4.util.node.mongo_now() - timestamp
+            age = age.total_seconds() / 60. / 60. / 24.
+            age_text = [t for s, t in config.items() if age <= s]
+            if age_text:
+                return age_text[-1]
+        return None
 
 
 class CoreApplication(tornado.web.Application):
@@ -337,15 +429,18 @@ class CoreApplication(tornado.web.Application):
                 if handler:
                     if mode == core4.const.CARD_MODE:
                         request.method = core4.const.CARD_METHOD
-                        return self.get_handler_delegate(request, handler.target,
+                        return self.get_handler_delegate(request,
+                                                         handler.target,
                                                          handler.target_kwargs)
                     elif mode == core4.const.ENTER_MODE:
                         request.method = core4.const.ENTER_METHOD
-                        return self.get_handler_delegate(request, handler.target,
+                        return self.get_handler_delegate(request,
+                                                         handler.target,
                                                          handler.target_kwargs)
                     elif mode == core4.const.HELP_MODE:
                         request.method = core4.const.HELP_METHOD
-                        return self.get_handler_delegate(request, handler.target,
+                        return self.get_handler_delegate(request,
+                                                         handler.target,
                                                          handler.target_kwargs)
         return super().find_handler(request, **kwargs)
 

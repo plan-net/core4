@@ -2,7 +2,16 @@
 regression tests
 ################
 
-Regression tests require the "tests" variant to setup::
+Regression tests require the "tests" variant to setup and a MongoDB service
+listening to hostname ``testmongo``. Add the following line to your
+``/etc/hosts`` file if your test MongoDB instance is installed on your local
+host::
+
+    127.0.0.1       testmongo
+
+
+Install core4 and execute the regression tests with the following shell
+commands::
 
     # clone core4
     git clone ssh://git.bi.plan-net.com/srv/git/core4.git

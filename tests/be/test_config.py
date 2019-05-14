@@ -34,7 +34,7 @@ class TestConfig(unittest.TestCase):
 
     @property
     def mongo(self):
-        return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
+        return pymongo.MongoClient('mongodb://core:654321@testmongo:27017')
 
     def test_yaml(self):
         conf = MyConfig()
@@ -329,7 +329,7 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(project_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
-                         "core@localhost:27017/core4test1/sys.log")
+                         "core@testmongo:27017/core4test1/sys.log")
         self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
@@ -342,18 +342,18 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(project_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
-                         "core@localhost:27017/core4test/sys.log")
+                         "core@testmongo:27017/core4test/sys.log")
         self.assertRaises(pymongo.errors.OperationFailure,
                           conf["sys"]["log"].count_documents, {})
 
         self.assertEqual(conf.test.coll1.info_url,
-                         "core@localhost:27017/core4test2/coll1")
+                         "core@testmongo:27017/core4test2/coll1")
         self.assertEqual(0, conf.test.coll1.count_documents({}))
         conf.test.coll1.insert_one({})
         self.assertEqual(1, conf.test.coll1.count_documents({}))
         self.assertEqual(1, self.mongo.core4test2.coll1.count_documents({}))
         self.assertEqual(conf.test.coll2.info_url,
-                         "core@localhost:27017/core4test/coll2")
+                         "core@testmongo:27017/core4test/coll2")
         conf.test.coll2.insert_one({})
         self.assertEqual(1, conf.test.coll2.count_documents({}))
         self.assertEqual(1, self.mongo.core4test.coll2.count_documents({}))
@@ -361,7 +361,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(0, self.mongo.core4test2.coll2.count_documents({}))
         self.assertEqual(
             "!connect "
-            "'mongodb://core:654321@localhost:27017/core4test/coll2/collx'",
+            "'mongodb://core:654321@testmongo:27017/core4test/coll2/collx'",
             str(conf.test.coll3))
         self.assertRaises(core4.error.Core4ConfigurationError,
                           conf.test.coll3.connect)
@@ -371,7 +371,7 @@ class TestConfig(unittest.TestCase):
         os.environ["CORE4_CONFIG"] = tests.be.util.asset("config/local1.yaml")
         conf = MyConfig(project_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
-                         "core@localhost:27017/core4test1/sys.log")
+                         "core@testmongo:27017/core4test1/sys.log")
         self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
@@ -401,7 +401,7 @@ class TestConfig(unittest.TestCase):
 
         conf = Config(project_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
-                         "core@localhost:27017/core4test1/sys.log")
+                         "core@testmongo:27017/core4test1/sys.log")
         self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
@@ -420,7 +420,7 @@ class TestConfig(unittest.TestCase):
 
         conf = Config(project_config=("test", extra))
         self.assertEqual(conf["sys"]["log"].info_url,
-                         "core@localhost:27017/core4test2/sys.log")
+                         "core@testmongo:27017/core4test2/sys.log")
         self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
@@ -434,7 +434,7 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(project_config=("test", extra), config_file=local)
         conf._load()
         self.assertEqual(conf["sys"]["log"].info_url,
-                         "core@localhost:27017/core4test/sys.log")
+                         "core@testmongo:27017/core4test/sys.log")
         self.assertEqual(conf["sys"]["log"].count_documents({}), 0)
         coll = conf["sys"]["log"]
         coll.insert_one({})
@@ -563,7 +563,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf.logging.exception.capacity, 42)
         self.assertEqual(conf.logging.stderr, "INFO")
         self.assertNotIn("irrelevant", conf.logging.exception)
-        assert conf.db_info == "core@localhost:27017/core4test/sys.conf"
+        assert conf.db_info == "core@testmongo:27017/core4test/sys.conf"
 
     def test_read_no_db(self):
         local = tests.be.util.asset("config/local3.yaml")
@@ -573,7 +573,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(conf.logging.exception.capacity, 99)
         self.assertEqual(conf.logging.stderr, "INFO")
         self.assertNotIn("irrelevant", conf.logging.exception)
-        assert conf.db_info == "core@localhost:27017/core4test/sys.conf"
+        assert conf.db_info == "core@testmongo:27017/core4test/sys.conf"
 
     def test_extra_read_db(self):
         self.mongo.core4test.sys.conf.insert_one({
@@ -610,25 +610,25 @@ class TestConfig(unittest.TestCase):
     def test_env(self):
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = \
-            "mongodb://core:654321@localhost:27017"
+            "mongodb://core:654321@testmongo:27017"
         os.environ[
             "CORE4_OPTION_sys__mongo_database"] = "core4test2"
         local = tests.be.util.asset("config/empty.yaml")
         conf = MyConfig(config_file=local)
         self.assertEqual("test", conf.mongo_database)
-        self.assertEqual('mongodb://core:654321@localhost:27017',
+        self.assertEqual('mongodb://core:654321@testmongo:27017',
                          conf.mongo_url)
         self.assertEqual("test", conf.logging.mongo_database)
-        self.assertEqual('mongodb://core:654321@localhost:27017',
+        self.assertEqual('mongodb://core:654321@testmongo:27017',
                          conf.logging.mongo_url)
         self.assertEqual("core4test2", conf.sys.mongo_database)
-        self.assertEqual('mongodb://core:654321@localhost:27017',
+        self.assertEqual('mongodb://core:654321@testmongo:27017',
                          conf.sys.mongo_url)
 
     def test_env_connect(self):
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = \
-            "mongodb://core:654321@localhost:27017"
+            "mongodb://core:654321@testmongo:27017"
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
         os.environ[
@@ -642,10 +642,10 @@ class TestConfig(unittest.TestCase):
 
     def test_env_db(self):
         os.environ[
-            "CORE4_OPTION_sys__conf"] = "!connect mongodb://core:654321@localhost:27017/core4test2/sysconf"
+            "CORE4_OPTION_sys__conf"] = "!connect mongodb://core:654321@testmongo:27017/core4test2/sysconf"
         self.mongo.core4test2.sysconf.insert_one({
             "sys": {
-                "log": "!connect mongodb://core:654321@localhost:27017/"
+                "log": "!connect mongodb://core:654321@testmongo:27017/"
                        "core4test1/coll1"
             }
         })
@@ -659,14 +659,14 @@ class TestConfig(unittest.TestCase):
 
     def test_env_db2(self):
         os.environ[
-            "CORE4_OPTION_sys__mongo_url"] = "mongodb://core:654321@localhost:27017"
+            "CORE4_OPTION_sys__mongo_url"] = "mongodb://core:654321@testmongo:27017"
         os.environ[
             "CORE4_OPTION_sys__mongo_database"] = "core4test"
         os.environ[
             "CORE4_OPTION_sys__conf"] = "!connect mongodb://sys.conf"
         self.mongo.core4test.sys.conf.insert_one({
             "sys": {
-                "log": "!connect mongodb://core:654321@localhost:27017/"
+                "log": "!connect mongodb://core:654321@testmongo:27017/"
                        "core4test1/coll1"
             }
         })
@@ -674,9 +674,9 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(config_file=empty)
         # conf._load()
         self.assertEqual(conf["sys"]["conf"].info_url,
-                         "core@localhost:27017/core4test/sys.conf")
+                         "core@testmongo:27017/core4test/sys.conf")
         self.assertEqual(conf["sys"]["log"].info_url,
-                         "core@localhost:27017/core4test1/coll1")
+                         "core@testmongo:27017/core4test1/coll1")
 
         # self.assertEqual(0, conf.sys.log.count_documents({}))
         # for i in range(5):
@@ -686,7 +686,7 @@ class TestConfig(unittest.TestCase):
     def test_db_connect(self):
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = \
-            "mongodb://core:654321@localhost:27017"
+            "mongodb://core:654321@testmongo:27017"
         os.environ[
             "CORE4_OPTION_sys__mongo_database"] = "core4test"
         self.mongo.core4test.sys.conf.insert_one({
@@ -704,7 +704,7 @@ class TestConfig(unittest.TestCase):
     def test_db_connect1(self):
         os.environ[
             "CORE4_OPTION_sys__mongo_url"] = \
-            "mongodb://core:654321@localhost:27017"
+            "mongodb://core:654321@testmongo:27017"
         os.environ[
             "CORE4_OPTION_sys__mongo_database"] = "core4test"
         self.mongo.core4test.sys.conf.insert_one({
@@ -722,7 +722,7 @@ class TestConfig(unittest.TestCase):
     def test_db_connect2(self):
         self.mongo.core4test.sys.conf.insert_one({
             "sys": {
-                "log": "!connect mongodb://core:654321@localhost:27017/"
+                "log": "!connect mongodb://core:654321@testmongo:27017/"
                        "core4test1/coll1"
             }
         })
@@ -797,7 +797,7 @@ class TestConfig(unittest.TestCase):
         extra = tests.be.util.asset("config/extra2.yaml")
         local = tests.be.util.asset("config/local8.yaml")
         conf = MyConfig(project_config=("test", extra), config_file=local)
-        self.assertEqual(conf.sys.mongo_url, "mongodb://localhost:27017")
+        #self.assertEqual(conf.sys.mongo_url, "mongodb://testmongo:27017")
         self.assertEqual(conf.test.job.mongo_url, "mongodb://testhost")
         self.assertEqual(conf.test.job.schedule, "30 * * * *")
         self.assertEqual(conf.test.job.test.my_job.schedule, "10 * * * *")
@@ -847,7 +847,7 @@ class TestConfig(unittest.TestCase):
                 "root": "/tmp"
             },
             "DEFAULT": {
-                "mongo_url": "mongodb://core:654321@localhost:27017",
+                "mongo_url": "mongodb://core:654321@testmongo:27017",
                 "mongo_database": "abc"
             }
         })
@@ -855,10 +855,10 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(config_file=local)
         self.assertEqual(
             str(conf.sys.conf),
-            "!connect 'mongodb://core:654321@localhost:27017"
+            "!connect 'mongodb://core:654321@testmongo:27017"
             "/core4test/sys.conf'")
         self.assertEqual(
-            conf.sys.role.info_url, "core@localhost:27017/abc/sys.role")
+            conf.sys.role.info_url, "core@testmongo:27017/abc/sys.role")
 
     def test_mongo_url_no_str(self):
         self.mongo.core4test.sys.conf.insert_one({
@@ -866,7 +866,7 @@ class TestConfig(unittest.TestCase):
                 "root": "/tmp"
             },
             "DEFAULT": {
-                "mongo_url": "!connect mongodb://core:654321@localhost:27017",
+                "mongo_url": "!connect mongodb://core:654321@testmongo:27017",
                 "mongo_database": "abc"
             }
         })
@@ -874,7 +874,7 @@ class TestConfig(unittest.TestCase):
         conf = MyConfig(config_file=local)
         self.assertEqual(
             str(conf.sys.conf),
-            "!connect 'mongodb://core:654321@localhost:27017"
+            "!connect 'mongodb://core:654321@testmongo:27017"
             "/core4test/sys.conf'")
         with self.assertRaises(core4.error.Core4ConfigurationError):
             x = conf.sys.role.info_url()

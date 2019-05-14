@@ -16,7 +16,7 @@ import core4.service.setup
 import core4.util
 
 ASSET_FOLDER = '../asset'
-MONGO_URL = 'mongodb://core:654321@localhost:27017'
+MONGO_URL = 'mongodb://core:654321@testmongo:27017'
 MONGO_DATABASE = 'core4test'
 
 
