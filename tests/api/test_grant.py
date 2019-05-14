@@ -208,7 +208,7 @@ async def add_job_user(http, username, perm):
     return http.token
 
 
-async def test_enqeuue(core4api):
+async def test_enqueue(core4api):
     await core4api.login()
     await add_job_user(
         core4api, "test_reg_user1", [
