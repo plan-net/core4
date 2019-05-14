@@ -14,7 +14,7 @@ import core4.util.crypt
 import core4.util.node
 from core4.api.v1.request.role.field import *
 from core4.base.main import CoreBase
-from core4.util.pager import CorePager
+import json
 
 ALPHANUM = re.compile(r'^[a-zA-Z0-9_.-]+$')
 EMAIL = re.compile(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
@@ -298,45 +298,29 @@ class CoreRole(CoreBase):
         doc.pop("password", None)
         return doc
 
-    async def load(self, per_page=10, current_page=0, sort_by="_id",
-                   sort_order=1, query_filter={}, user=None, role=None):
+    async def load(self, skip=0, limit=0, filter={}, sort_by=("_id", 1)):
         """
         Retrieve a list of roles in the specified sort order applying optional
         search filters. This method uses core4's :class:`.CorePager`.
 
-        :param per_page: number of records per page
-        :param current_page: to retrieve
-        :param sort_by: single sort attribute
-        :param sort_order: ascending (1) or descending (-1)
-        :param query_filter: MongoDB query dict
-        :param user: if ``True`` retrieves only user roles with email and
-                     password
-        :param role: if ``True`` retrieves only roles without email and
-                     password
-        :return: :class:`.PageResult`
+        :param skip: number of documents to skip
+        :param sort_by: tuple of attribute and sort order (``1`` for ascending,
+                        ``-1`` for descending)
+        :param filter: MongoDB query dict
+        :param limit: number of records to be retrieved
+        :return: :list: resulting documents
         """
 
-        async def _length(filter):
-            return await self.role_collection.count_documents(filter)
 
-        async def _query(skip, limit, filter, sort_by):
-            cur = self.role_collection.find(
-                filter).sort(*sort_by).skip(skip).limit(limit)
-            return await cur.to_list(length=limit)
+        filter = await self.manage_filter(filter)
 
-        if ((user or role) and (not (user and role))):
-            if user:
-                query_filter["email"] = {"$exists": True}
-            if role:
-                query_filter["email"] = {"$exists": False}
+        cur = self.role_collection.find(filter)\
+            .sort(*sort_by)\
+            .skip(skip)\
+            .limit(limit)
 
-        pager = CorePager(per_page=per_page,
-                          current_page=current_page,
-                          length=_length, query=_query,
-                          sort_by=[sort_by, sort_order],
-                          filter=query_filter)
-        page = await pager.page()
-        return page
+        # None will exhaust the whole cursor. no buffering needed here.
+        return await cur.to_list(length=None)
 
     async def load_one(self, **kwargs):
         """
@@ -345,10 +329,14 @@ class CoreRole(CoreBase):
 
         :return: dict of user/role attributes
         """
-        ret = await self.load(per_page=1, current_page=0, query_filter=kwargs)
-        if ret.body:
-            return ret.body[0]
+        ret = await self.load(filter=kwargs)
+        if ret:
+            return ret[0]
         return None
+
+    async def count(self, filter={}):
+        filter = await self.manage_filter(filter)
+        return await self.role_collection.count_documents(filter)
 
     @classmethod
     async def _find_one(cls, **kwargs):
@@ -527,3 +515,66 @@ class CoreRole(CoreBase):
         doc["role"] = sorted([r.name for r in await self.casc_role()
                               if r.name != self.name])
         return doc
+
+    async def manage_filter(self, filter):
+        """
+        If given a dict by backend, returns that dict.
+        If given a string:
+         * is the string a dict representation: try to convert
+         * if not, assume its full text search
+        Pass regex handling to :meth: `.manage_dict_filter`.
+
+        :param filter: query string
+        :return: mongodb query filter
+        """
+        if filter and isinstance(filter, str):
+            if filter.startswith("{") and filter.endswith("}"):
+                try:
+                    query_filter = json.loads(filter)
+                    query_filter = await self.manage_dict_filter(query_filter)
+                except:
+                    raise core4.error.ArgumentParsingError("Can not parse regex"
+                                                           + filter)
+                filter = query_filter
+            else:
+                filter = re.compile(filter)
+                query_filter = \
+                    {
+                        "$or": [
+                            {"name": filter},
+                            {"realname": filter},
+                            {"perm": filter}
+                        ]
+                    }
+                filter = query_filter
+        return filter
+
+    async def manage_dict_filter(self, filter={"_id": ".*"}):
+        """
+        Takes a given dict and translates it to a mongodb query dict.
+        Will compile strings to regex where needed.
+
+        It does not try to convert types, so:
+        "True" or "False" will still be strings.
+
+        :param filter: query dict
+        :return: mongodb query dict.
+        """
+        for k,v in filter.items():
+            if isinstance(v, str):
+                if re.match("^[a-zA-Z0-9_/-]*$", v):
+                    pass
+                else:
+                    filter[k] = re.compile(v)
+            elif isinstance(v, dict):
+                filter[k] = await self.manage_dict_filter(v)
+            elif isinstance(v, list):
+                tmpl = []
+                for i in v:
+                    tempitem = await self.manage_dict_filter({"j": i})
+                    tmpl.append(tempitem["j"])
+                filter[k] = tmpl
+        return filter
+
+    async def distinct_roles(self):
+        return await self.role_collection.distinct("name")
