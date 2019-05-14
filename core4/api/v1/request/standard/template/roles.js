@@ -140,7 +140,7 @@
                                 flat
                             ></v-combobox>
                             <v-text-field
-                                v-model="currentRole.password"
+                                v-model="currentRole.passwd"
                                 label="Password"
                                 :append-icon="showPw ? 'visibility' : 'visibility_off'"
                                 :type="showPw ? 'text': 'password'"

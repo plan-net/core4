@@ -215,19 +215,29 @@ class CoreBaseHandler(CoreBase):
                 token = auth_header[7:]
                 source = ("token", "Auth Bearer")
         else:
-            token = self.get_secure_cookie("token")
+            token = self.get_argument("token", default=None, remove=True)
+            username = self.get_argument("username", default=None, remove=True)
+            password = self.get_argument("password", default=None, remove=True)
             if token is not None:
-                source = ("token", "cookie")
+                source = ("token", "args")
+            elif username and password:
+                source = ("username", "args")
             else:
-                token = self.get_argument("token", default=None, remove=True)
-                if token is not None:
-                    source = ("token", "args")
-                else:
-                    username = self.get_argument("username", default=None,
-                                                 remove=True)
-                    password = self.get_argument("password", default=None,
-                                                 remove=True)
-                    source = ("username", "args")
+                source = ("token", "cookie")
+                token = self.get_secure_cookie("token")
+            # token = self.get_secure_cookie("token")
+            # if token is not None:
+            #     source = ("token", "cookie")
+            # else:
+            #     token = self.get_argument("token", default=None, remove=True)
+            #     if token is not None:
+            #         source = ("token", "args")
+            #     else:
+            #         username = self.get_argument("username", default=None,
+            #                                      remove=True)
+            #         password = self.get_argument("password", default=None,
+            #                                      remove=True)
+            #         source = ("username", "args")
         if token:
             payload = self.parse_token(token)
             username = payload.get("name")

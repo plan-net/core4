@@ -14,7 +14,7 @@
   Realname:
   <input type="text" name="realname" value="max mustermann"><br>
   Password:
-  <input type="password" name="password" value=""><br>
+  <input type="password" name="passwd" value=""><br>
   Permissions:
   <input type="text" name="perms" value="blank line seperated list"><br>
   Active:
@@ -36,7 +36,7 @@ $( "#createForm" ).submit(function( event ) {
     realname = $form.find('input[name="realname"]').val(),
     email = $form.find('input[name="email"]').val(),
     is_active = $form.find('input[name="is_active"]').val(),
-    password = $form.find('input[name="password"]').val(),
+    passwd = $form.find('input[name="passwd"]').val(),
     perm = $form.find('input[name="perms"]').val().split("\n");
 
   //alert(name + email + is_active + perm )
@@ -47,7 +47,7 @@ $( "#createForm" ).submit(function( event ) {
     email: email,
     is_active: is_active,
     perm : perm,
-    password : password
+    passwd : passwd
   })
   .done(function( data ) {
     $( "#postResult" ).empty().append( '<span style="background-color: #00FF00">Sucessfully created user</span>' );
