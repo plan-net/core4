@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
 </head>
 <body>
-    <h1>CARD of {{ handler.__class__.__name__ }}</h1>
+    <h1>HELP of {{ handler.__class__.__name__ }}</h1>
 
     <hr/>
 
@@ -69,6 +69,10 @@
                 <li>
                     <b>PLAIN TEXT:</b>
                     <pre>{{ description }}</pre>
+                </li>
+                <li>
+                    <b>HTML:</b>
+                    <pre>{% raw description_html %}</pre>
                 </li>
                 <li>
                     <b>parsing error:</b>
