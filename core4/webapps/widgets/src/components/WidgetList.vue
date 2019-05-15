@@ -324,9 +324,9 @@ export default {
     openInNew (widget) {
       let path = null
       if (widget.target === 'blank') {
-        path = widget.endpoint.enter_url
+        path = widget.enter_url || widget.endpoint.enter_url
       } else {
-        path = '/#/widget/' + widget.rsc_id
+        path = '/#/enter/' + widget.rsc_id
       }
       window.open(path, '_blank')
     },
