@@ -1,4 +1,4 @@
-<template>
+#<template>
   <v-dialog
     v-model="open"
     persistent
@@ -13,7 +13,7 @@
         <span
           v-else
           class="title"
-        >Create board</span>
+        >New board</span>
       </v-card-title>
       <v-card-text>
         <v-form ref="form">

@@ -16,6 +16,7 @@ import time
 import core4.queue.main
 import core4.util.node
 from core4.base.main import CoreBase
+from core4.service.introspect.main import CoreIntrospector
 
 
 class CoreDaemon(CoreBase):

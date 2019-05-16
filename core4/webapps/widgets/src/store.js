@@ -2,10 +2,9 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import createLogger from 'vuex/dist/logger'
 import api from '@/api'
-import {
-  clone
-} from 'core4ui/core4/helper'
+import { clone } from 'core4ui/core4/helper'
 import router from '@/router'
+
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
 
@@ -14,6 +13,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   plugins,
   state: {
+    scales: [60, 360, 680, 920],
     widgetListOpen: true,
     widgetsObj: {},
     widgetsList: [],
@@ -40,7 +40,7 @@ export default new Vuex.Store({
     toggleWidgetListOpen ({
       commit, state
     }, payload) {
-      commit('set_widgetlist_open', !state.widgetListOpen)
+      commit('set_widgetlist_open', payload)
     },
     updateWidgets ({
       commit
@@ -269,6 +269,9 @@ export default new Vuex.Store({
         return clone(state.activeBoard)
       }
       return null
+    },
+    scales (state) {
+      return state.scales
     },
     ready (state) {
       return state.ready

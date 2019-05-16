@@ -2,7 +2,7 @@
   "name": "core-widgets",
   "version": "0.1.0",
   "core4": {
-    "build_command" : [
+    "build_command": [
       "yarn install",
       "yarn build --dest dist --modern"
     ],

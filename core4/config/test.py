@@ -14,7 +14,7 @@ class TestConfig(CoreConfig):
     cache = False
 
     def __init__(self, project_name=None, project_dict=None, local_dict=None,
-                 extra_dict=None, concurr=False):
+                 extra_dict=None, concurr=False, project_config=None):
         self._project_name = project_name
         self._project_dict = project_dict or {}
         self._local_dict = local_dict or {}

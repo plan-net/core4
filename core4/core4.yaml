@@ -108,6 +108,7 @@ api:
   error_text_page: standard/template/error.txt
   card_html_page: standard/template/card.html
   help_html_page: standard/template/help.html
+  info_html_page: standard/template/info.html
   contact: mail@mailer.com
   reset_password:
     expiration: 28800  # 8h
@@ -124,7 +125,10 @@ api:
   user_permission:
     - api://core4.api.v1.request.standard.*
   verify_ssl: True
-
+  age_range:
+    30: this month
+    180: this half-year
+    360: this year
 email:
   username: ~
   password: ~

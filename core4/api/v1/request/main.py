@@ -10,6 +10,7 @@ core4 :class:`.CoreRequestHandler`, based on :class:`.CoreBaseHandler`.
 """
 import base64
 import datetime
+import json
 import os
 import traceback
 
@@ -54,10 +55,12 @@ class CoreBaseHandler(CoreBase):
     protected = True
     #: handler title
     title = None
+    #: handler subtitle (defaults to qual_name)
+    subtitle = None
     #: handler author
     author = None
     #: tag listing
-    tag = []
+    tag = ['api']
     #: template path, if not defined use absolute or relative path
     template_path = None
     #: static file path, if not defined use relative path
@@ -66,6 +69,8 @@ class CoreBaseHandler(CoreBase):
     enter_url = None
     #: default material icon
     icon = "copyright"
+    #: open in new window/tab
+    target = None
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
@@ -89,6 +94,7 @@ class CoreBaseHandler(CoreBase):
         self.error_text_page = rel(self.config.api.error_text_page)
         self.card_html_page = rel(self.config.api.card_html_page)
         self.help_html_page = rel(self.config.api.help_html_page)
+        self.info_html_page = rel(self.config.api.info_html_page)
         self.started = core4.util.node.now()
         self._flash = []
         self.user = None
@@ -242,11 +248,11 @@ class CoreBaseHandler(CoreBase):
                         "successfully loaded [%s] by [%s] from [%s] "
                         "expiring [%s]", username, *source, self.token_exp)
                     self.set_secure_cookie("token", token)
-                    #self.set_header("token", token)
+                    # self.set_header("token", token)
                     return user
         elif username and password:
             try:
-                user = await CoreRole().find_one(name=username)
+                user = await CoreRole.find_one(name=username)
             except:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
@@ -344,28 +350,64 @@ class CoreBaseHandler(CoreBase):
                 "\n".join(traceback.format_tb(tb))
             )
 
-    def _urls(self):
-        # internal method to extract rsc_id, path and create *_url
+    async def meta(self):
+        """
+        Returns meta data as specified in :meth:`.CoreApiContainer.get_handler`
+
+        Additionally the following attributes are added:
+
+        * icon (str) - material icon label
+        * card_url (str) - URL for the card of this handler on this server
+        * help_url (str) - URL for the help of this handler on this server
+        * enter_url (str) - URL for the landing page of this handler on this
+          server
+        * args (dict) - passed to the class at startup
+        * description (str) - plain text doc string
+        * description_html (str) - rendered HTML doc string
+        * description_error (list) - of str with parsing errors
+        * method (list) of dict with key ``parts`` for all method documentation
+          sections, ``method`` for the method, ``html`` for the rendered method
+          documentation
+
+        :return: dict of attributes and values
+        """
+        self.absolute_path = ""
         self.request.method = "GET"
         parts = self.request.path.split("/")
         rsc_id = parts[-1]
         path = parts[:-2]
-        #handler = self.application.lookup[rsc_id]["handler"]
         if self.enter_url is None:
             self.enter_url = "/".join(path + [core4.const.ENTER_MODE, rsc_id])
         self.help_url = "/".join(path + [core4.const.HELP_MODE, rsc_id])
         self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
+        handler = self.application.lookup[self.rsc_id]["handler"]
+        pattern = self.application.lookup[self.rsc_id]["pattern"]
+        doc = await self.application.container.get_handler(rsc_id)
+        rst = rst2html(str(self.__doc__))
+        doc.update(dict(
+            args=handler.target_kwargs,
+            description=self.__doc__,
+            description_html=rst["body"],
+            description_error=rst["error"],
+            icon=self.icon,
+            pattern=pattern,
+            container=self.application.container.qual_name(),
+            card_url=self.card_url,
+            enter_url=self.enter_url,
+            help_url=self.help_url,
+            method=self.application.handler_help(self.__class__)
+        ))
+        return doc
 
-    def xcard(self, *args, **kwargs):
+    async def xcard(self, *args, **kwargs):
         """
         Prepares the ``card`` page and triggers :meth:`.card` which is to be
         overwritten for custom widget card implementations.
 
         :return: result of :meth:`.card`
         """
-        self._urls()
-        self.absolute_path = ""
-        return self.card()
+        doc = await self.meta()
+        return self.card(**doc)
 
     def xenter(self, *args, **kwargs):
         """
@@ -374,75 +416,31 @@ class CoreBaseHandler(CoreBase):
 
         :return: result of :meth:`.enter`
         """
-        self.request.method = "GET"
-        self.absolute_path = ""
         return self.enter()
 
-    def xhelp(self, *args, **kwargs):
+    async def xhelp(self, *args, **kwargs):
         """
         Prepares the ``help`` page and triggers :meth:`.help` which is to be
         overwritten for custom widget help page implementations.
 
         The method creates the following parameters to render:
 
-        * ``project``
-        * ``args`` - request handler target parameters as defined in
-          :class:`.CoreApiContainer`
-        * ``qual_name``
-        * ``author``
-        * ``description`` - plain text class docstring
-        * ``description_html`` - HTML rendered class docstring
-        * ``description_error`` - HTML rendering errors
-        * ``icon`` - Material icon
-        * ``title``
-        * ``pattern`` - list of associated, named or unnamed routing patterns
-        * ``rsc_id``
-        * ``tag`` - list
-        * ``container`` - qual_name of the associated
-          :class:`.CoreApiContainer`
-        * ``protected``
-        * ``version``
-        * ``card_url``
-        * ``enter_url``
-        * ``help_url``
-        * ``method`` - details rendered documentation of handler methods
 
         :return: result of :meth:`.help`
         """
-        self._urls()
-        self.absolute_path = ""
-        handler = self.application.lookup[self.rsc_id]["handler"]
-        pattern = self.application.lookup[self.rsc_id]["pattern"]
-        rst = rst2html(str(self.__doc__))
-        data = dict(
-            project=self.project,
-            args=handler.target_kwargs,
-            qual_name=self.qual_name(),
-            author=self.author,
-            description=self.__doc__,
-            description_html=rst["body"],
-            description_error=rst["error"],
-            icon=self.icon,
-            title=self.title,
-            pattern=pattern,
-            rsc_id=self.rsc_id,
-            tag=self.tag,
-            container=self.application.container.qual_name(),
-            protected=self.protected,
-            version=self.version(),
-            card_url=self.card_url,
-            enter_url=self.enter_url,
-            help_url=self.help_url,
-            method=self.application.handler_help(self.__class__)
-        )
-        return self.help(data)
+        doc = await self.meta()
+        return self.help(**doc)
 
-    def card(self):
+    def card(self, **data):
         """
         Renders the default card page. This method is to be overwritten for
         custom card page impelementation.
+
+        :param
+
+
         """
-        return self.render(self.card_html_page)
+        return self.render(self.card_html_page, **data)
 
     def enter(self):
         """
@@ -455,7 +453,7 @@ class CoreBaseHandler(CoreBase):
         """
         return self.get()
 
-    def help(self, data):
+    def help(self, **data):
         """
         Renders the default help page. This method is to be overwritten for
         custom help page impelementation.
@@ -575,13 +573,12 @@ class CoreBaseHandler(CoreBase):
         elif "error" in kwargs:
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
-        if self.wants_json():
-            self.finish(ret)
-        elif self.wants_html():
+        if self.wants_html():
             ret["contact"] = self.config.api.contact
             self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             self.render(self.error_text_page, **var)
+        self.finish(ret)
 
     def _build_json(self, message, code, **kwargs):
         # internal method to wrap the response
@@ -897,13 +894,16 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         if self.request.body:
             try:
                 body_arguments = json_decode(self.request.body.decode("UTF-8"))
-            except:
-                self.logger.warning("failed to parse body arguments",
-                                    exc_info=True)
+            except UnicodeDecodeError:
                 pass
+            except json.decoder.JSONDecodeError:
+                pass
+            except Exception:
+                raise HTTPError(400)
             else:
-                for k, v in body_arguments.items():
-                    self.request.arguments.setdefault(k, []).append(v)
+                if isinstance(body_arguments, dict):
+                    for k, v in body_arguments.items():
+                        self.request.arguments.setdefault(k, []).append(v)
         await super().prepare()
 
     def decode_argument(self, value, name=None):

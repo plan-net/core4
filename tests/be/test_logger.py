@@ -2,9 +2,12 @@ import glob
 import importlib
 import logging
 import os
+import sys
 import unittest
 
 import pymongo
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import core4.base
 import core4.config
@@ -38,7 +41,7 @@ class TestLogging(unittest.TestCase):
         self.mongo.drop_database('core4test')
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = "mongodb://core:654321@" \
-                                                 "localhost:27017"
+                                                 "testmongo:27017"
         os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
         os.environ["CORE4_CONFIG"] = tests.be.util.asset("config/empty.yaml")
 
@@ -58,7 +61,7 @@ class TestLogging(unittest.TestCase):
 
     @property
     def mongo(self):
-        return pymongo.MongoClient('mongodb://core:654321@localhost:27017')
+        return pymongo.MongoClient('mongodb://core:654321@testmongo:27017')
 
     def test_log(self):
         os.environ["CORE4_CONFIG"] = tests.be.util.asset("logger/simple.yaml")
@@ -192,7 +195,7 @@ class TestLogging(unittest.TestCase):
         b.logger.critical("this is a CRITICAL error message")
         import other.test
         print(other.test.x)
-        # r = requests.get('http://localhost:27017')
+        # r = requests.get('http://testmongo:27017')
         # self.assertEqual(200, r.status_code)
         data = list(b.config.sys.log.find())
         for doc in data:
@@ -276,7 +279,7 @@ class TestLogging(unittest.TestCase):
                         }
                     },
                     "DEFAULT": {
-                        "mongo_url": "mongodb://core:654321@localhost:27017",
+                        "mongo_url": "mongodb://core:654321@testmongo:27017",
                         "mongo_database": "core4test"
                     },
                     "logging": {
@@ -325,7 +328,7 @@ class TestLogging(unittest.TestCase):
 
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_url"] = \
-            "mongodb://core:654321@localhost:27017"
+            "mongodb://core:654321@testmongo:27017"
         os.environ[
             "CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
         os.environ[
@@ -371,7 +374,7 @@ class TestLogging(unittest.TestCase):
                         }
                     },
                     "DEFAULT": {
-                        "mongo_url": "mongodb://core:654321@localhost:27017",
+                        "mongo_url": "mongodb://core:654321@testmongo:27017",
                         "mongo_database": "core4test"
                     },
                     "logging": {
@@ -405,7 +408,7 @@ class TestLogging(unittest.TestCase):
         b.logger.warning("this is WARNING")
         b.logger.error("this is ERROR")
         b.logger.critical("this is CRITICAL")
-        mongo = pymongo.MongoClient("mongodb://core:654321@localhost:27017")
+        mongo = pymongo.MongoClient("mongodb://core:654321@testmongo:27017")
         info = mongo["core4test"].command('collstats', 'sys.log')
         assert info["capped"]
         assert mongo["core4test"]["sys.log"].count_documents({}) > 0
@@ -414,7 +417,7 @@ class TestLogging(unittest.TestCase):
     def test_event(self):
         base = core4.base.CoreBase()
         base.trigger("test")
-        mongo = pymongo.MongoClient("mongodb://core:654321@localhost:27017")
+        mongo = pymongo.MongoClient("mongodb://core:654321@testmongo:27017")
         info = mongo["core4test"].command('collstats', 'sys.event')
         assert info["capped"]
         assert mongo["core4test"]["sys.event"].count_documents({}) == 1

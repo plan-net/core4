@@ -6,80 +6,116 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
 </head>
-
-<h1>{{ qual_name }}</h1>
-
-<ul>
-    <li><b>AUTHOR:</b> {{ author }}</li>
-    <li><b>TITLE:</b> {{ title }}</li>
-    <li><b>ENTER:</b> <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-    <li><b>RESOURCE ID:</b> {{ rsc_id }}</li>
-    <li><b>PROTECTED:</b> {{ protected }}</li>
-    <li><b>ICON:</b> <i class="material-icons">{{ icon }}</i>  - {{ icon }}</li>
-    <li><b>ARGS:</b> {{ args }}</li>
-    <li><b>CONTAINER:</b> {{ container }}</li>
-    <li><b>PROJECT:</b> {{ project }}</li>
-    <li><b>VERSION:</b> {{ version }}</li>
-    <li><b>PATTERN:</b>
-        <ul>
-        {% for p in pattern %}
-            <li>
-                {% if p["name"] is not None %}
-                    <b>{{ p["name"] }}:</b>
-                {% else %}
-                    <b>no name:</b>
-                {% end if %}
-                {{ p["regex"] }}
-            </li>
-        {% end %}
-        </ul>
-    </li>
-    <li><b>CARD:</b> <a href="{{ card_url }}">{{ card_url }}</a></li>
-    <li><b>MISSING</b>
-        <ul>
-            {% if author is None %} <li> AUTHOR </li> {% end %}
-            {% if not title %} <li> TITLE </li> {% end %}
-            {% if method %}
-                {% for elem in method %}
-                    {% if elem["parts"] %}
-                        {% for part in elem["parts"] %}
-                            {% if not elem["parts"][part] %}
-                                <li>
-                                    {{ elem["method"].upper() }} - section
-                                    <i> {{ part }} </i>
-                                </li>
-                            {% end %}
-                        {% end %}
-                    {% else %}
-                        <li>
-                            {{ elem["method"].upper() }} documentation
-                        </li>
-                    {% end %}
-                {% end %}
-            {% end %}
-        </ul>
-    </li>
-
-</ul>
-
-<hr/>
-
-<h2>Introduction</h2>
-
-{% raw description_html %}
-
-<hr/>
-
-{% for elem in method %}
-
-    <h2>{{ elem["method"].upper() }}</h2>
-
-    {% raw elem["html"] %}
+<body>
+    <h1>CARD of {{ handler.__class__.__name__ }}</h1>
 
     <hr/>
 
-{% end %}
+    <h2>{{ title }}</h2>
+    <h4>{{ subtitle }}</h4>
 
+    <ul>
+        <li><b>AT:</b> {{ handler.started }}</li>
+        <li><b>QUAL_NAME:</b> {{ qual_name }}</li>
+        <li><b>AUTHOR:</b> {{ author }} </li>
+        <li><b>ICON: <i class="material-icons">{{ icon }}</i></b> - {{ icon }}</li>
+        <li><b>TAG:</b> {{ ", ".join(tag) }} </li>
+        <li><b>RESOURCE ID:</b> {{ rsc_id }} </li>
+        <li><b>PROJECT:</b> {{ project }} </li>
+        <li><b>THIS PATTERN:</b>
+            <ul>
+            {% for p in pattern %}
+                <li>
+                    {% if p["name"] is not None %}
+                        <b>{{ p["name"] }}:</b>
+                    {% else %}
+                        <b>no name:</b>
+                    {% end if %}
+                    {{ p["regex"] }}
+                </li>
+            {% end %}
+            </ul>
+        </li>
+
+        <li><b>CONTAINER:</b> {{ container }} </li>
+        <li><b>PROTECTED:</b> {{ protected }} </li>
+        <li><b>CREATED AT:</b> {{ created_at }} </li>
+        <li><b>STARTED AT:</b> {{ started_at }} </li>
+        <li><b>TARGET:</b> {{ target }} </li>
+        <li><b>THIS CARD:</b> {{ card_url }} </li>
+        <li><b>THIS HELP:</b> {{ help_url }} </li>
+        <li><b>THIS ENTER_URL:</b> {{ enter_url }} </li>
+        <li><b>CLASS ARGS:</b> {{ args }} </li>
+        <li><b>ENDPOINTS:</b>
+            <ul>
+                {% for ep in endpoint %}
+                <li>
+                    {{ ep }}
+                    <ul>
+                        <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
+                        <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
+                        {% if enter_url != None %}
+                            <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
+                        {% else %}
+                            <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
+                        {% end if %}
+                    </ul>
+                </li>
+                {% end for %}
+            </ul>
+        </li>
+        <li><b>DESCRIPTION:</b>
+            <ul>
+                <li>
+                    <b>PLAIN TEXT:</b>
+                    <pre>{{ description }}</pre>
+                </li>
+                <li>
+                    <b>parsing error:</b>
+                    <pre>{{ "\n".join(description_error) }}</pre>
+                </li>
+            </ul>
+        </li>
+        <li><b>MISSING</b>
+            <ul>
+                {% if author is None %} <li> AUTHOR </li> {% end %}
+                {% if not title %} <li> TITLE </li> {% end %}
+                {% if method %}
+                    {% for elem in method %}
+                        {% if elem["parts"] %}
+                            {% for part in elem["parts"] %}
+                                {% if not elem["parts"][part] %}
+                                    <li>
+                                        {{ elem["method"].upper() }} - section
+                                        <i> {{ part }} </i>
+                                    </li>
+                                {% end %}
+                            {% end %}
+                        {% else %}
+                            <li>
+                                {{ elem["method"].upper() }} documentation
+                            </li>
+                        {% end %}
+                    {% end %}
+                {% end %}
+            </ul>
+        </li>
+    </ul>
+    <hr/>
+
+    {% raw description_html %}
+
+    {% for elem in method %}
+
+        <h2>{{ elem["method"].upper() }}</h2>
+
+        {% raw elem["html"] %}
+
+        <hr/>
+
+    {% end %}
+
+</body>
 <script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>
 </body>
 </html>
