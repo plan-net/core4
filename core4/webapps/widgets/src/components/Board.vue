@@ -195,18 +195,14 @@ export default {
       window.open(path, '_blank')
     },
     /*    mouseDown () {
-        this.isMouseDown = true
-      },
-      mouseUp () {
-        this.isMouseDown = false
-      }, */
+          this.isMouseDown = true
+        },
+        mouseUp () {
+          this.isMouseDown = false
+        }, */
     onResize: lodash.debounce(function () {
       this.elWidth = (this.$el || document.querySelector('body')).offsetWidth
-      if (this.widgetListOpen) {
-        this.elWidth -= 360 - 15 // wide List document.querySelector('.widget-list')).offsetWidth
-      } else {
-        this.elWidth -= 60 - 15// miniVariant
-      }
+      this.elWidth -= this.widgetListOpen - 15 // wide List document.querySelector('.widget-list')).offsetWidth
     },
     750),
     ...mapActions(['addToBoard', 'removeFromBoard']),
@@ -219,7 +215,7 @@ export default {
   },
   beforeDestroy () {
     /*     this.$bus.$off('mouseOver')
-      this.$bus.$off('mouseOver') */
+        this.$bus.$off('mouseOver') */
   },
   data () {
     return {
