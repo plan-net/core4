@@ -29,7 +29,7 @@
             <v-btn
               icon small
               class="mx-0"
-              @click="helpDialogOpen = true"
+              @click.stop="helpDialogOpen = true"
             >
               <v-icon small color="grey">help</v-icon>
               <v-dialog
@@ -65,7 +65,7 @@
             <v-btn
               icon small
               class="mx-0"
-              @click="boardHelpDialogOpen = true"
+              @click.stop="boardHelpDialogOpen = true"
             >
               <v-icon small color="grey">help</v-icon>
             </v-btn>
