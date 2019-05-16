@@ -180,9 +180,11 @@ export default {
     Howto
   },
   mounted () {
-    this.$nextTick(function () {
-      this.onResize()
-    })
+    window.setTimeout(
+      function () {
+        this.onResize()
+      }.bind(this), 333
+    )
   },
   methods: {
     openInNew (widget) {
@@ -195,18 +197,18 @@ export default {
       window.open(path, '_blank')
     },
     /*    mouseDown () {
-          this.isMouseDown = true
-        },
-        mouseUp () {
-          this.isMouseDown = false
-        }, */
+            this.isMouseDown = true
+          },
+          mouseUp () {
+            this.isMouseDown = false
+          }, */
     onResize: lodash.debounce(function () {
       this.elWidth = (this.$el || document.querySelector('body')).offsetWidth
       this.elWidth -= this.widgetListOpen - 15 // wide List document.querySelector('.widget-list')).offsetWidth
     },
-    750),
+    600),
     ...mapActions(['addToBoard', 'removeFromBoard']),
-    onOver (item) {
+    onOver () {
       this.over = true
     },
     onDrop (item) {
@@ -215,7 +217,7 @@ export default {
   },
   beforeDestroy () {
     /*     this.$bus.$off('mouseOver')
-        this.$bus.$off('mouseOver') */
+          this.$bus.$off('mouseOver') */
   },
   data () {
     return {
