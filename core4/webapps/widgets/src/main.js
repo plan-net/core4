@@ -9,14 +9,15 @@ import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
 import { i18n } from 'core4ui/core4/translations'
 import VueDragDrop from 'vue-drag-drop'
 
+export const config = {
+  THEME,
+  TITLE: 'CORE4OS',
+  // IGNORED_ERRORS: [],
+  APP_IDENTIFIER: 'core'
+}
 Vue.use(PnbiBase, {
   router,
-  config: {
-    THEME,
-    TITLE: 'CORE4OS',
-    // IGNORED_ERRORS: [],
-    APP_IDENTIFIER: 'core'
-  },
+  config,
   store
 })
 

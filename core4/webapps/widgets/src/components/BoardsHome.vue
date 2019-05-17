@@ -3,26 +3,25 @@
     <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
       <board v-if="ready"/>
     </transition>
-    <widget-list />
+    <widget-manager/>
   </div>
 </template>
 
 <script>
-import WidgetList from '@/components/WidgetList'
+import WidgetManager from '@/components/WidgetManager'
 import Board from '@/components/Board'
 
 export default {
   name: 'boards-home',
   components: {
-    WidgetList,
+    WidgetManager,
     Board
   },
   mounted () {
 
   },
   data () {
-    return {
-    }
+    return {}
   },
   computed: {
     ready () {
