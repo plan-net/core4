@@ -14,7 +14,7 @@ Vue.use(PnbiBase, {
   config: {
     THEME,
     TITLE: 'CORE4OS',
-    IGNORED_ERRORS: [],
+    // IGNORED_ERRORS: [],
     APP_IDENTIFIER: 'core'
   },
   store
