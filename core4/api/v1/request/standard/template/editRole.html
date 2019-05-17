@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+</head>
+<body>
+
+
+ <form id="editForm">
+  Rolename:
+  <input type="text" name="name" value="{{ role['name'] }}"><br>
+  email :
+  <input type="text" name="email" value="
+  {% if 'email' in role.keys() %}
+    {{ role['email'] }}
+  {% end %}"><br><br>
+  Realname:
+  <input type="text" name="realname" value="{{ role['realname'] }}"><br>
+  Password:
+  <input type="password" name="passwd" value=""><br>
+  Permissions:
+  <input type="textarea" name="perms" value="{{ role['perm'] }}"><br>
+  Active:
+  <input type="radio" name="is_active" value=""><br><br>
+  <input type="submit" value="Submit">
+</form>
+
+<div id="putResult"></div>
+
+
+<a href="/core4/api/v1/roles/{{ role['_id'] }}"> CANCEL </a>
+
+
+ <script>
+$( "#editForm" ).submit(function( event ) {
+  // prevent html submit
+  event.preventDefault();
+
+  var $form = $( this ),
+    name = $form.find('input[name="name"]').val(),
+    realname = $form.find('input[name="realname"]').val(),
+    email = $form.find('input[name="email"]').val(),
+    is_active = $form.find('input[name="is_active"]').val(),
+    passwd = $form.find('input[name="passwd"]').val(),
+    perm = $form.find('input[name="perms"]').val().split("\n");
+
+  //alert(name + email + is_active + perm )
+  $.ajax({
+  url: "./{{ role["_id"] }}",
+  type: "PUT",
+  // todo: somehow some values are not loaded at all.
+  data: {
+    name: name,
+    realname: realname,
+    email: email,
+    // todo: real input not fake
+    is_active: "True",
+    perm : perm,
+    passwd : passwd,
+    etag: "{{ role["etag"] }}"
+  },
+  success: function( data ) {
+    $( "#putResult" ).empty().append( '<span style="background-color: #00FF00">Sucessfully created user</span>' );
+  },
+  error: function( data ){
+    $( "#putResult" ).empty().append( '<span style="background-color: #FF0000">Could not creat user</span>' );
+  }
+});
+});
+</script>
+
+
+</body>
+
+
+</html>

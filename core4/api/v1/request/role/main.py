@@ -13,6 +13,7 @@ import core4.error
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
 from core4.api.v1.request.role.access.manager import CoreAccessManager
+from core4.util.pager import CorePager
 
 
 class RoleHandler(CoreRequestHandler):
@@ -38,8 +39,8 @@ class RoleHandler(CoreRequestHandler):
             role (list): of role names assigned
             email (str): for actual users; for roles the email attribute is
                          expected to be undefined or ``None``
-            password (str): for actual users; for roles the password attribute
-                            is expected to be undefined or ``None``
+            passwd (str): for actual users; for roles the password attribute
+                          is expected to be undefined or ``None``
             perm (list): of permission protocols
 
         The following permission protocols exist:
@@ -74,7 +75,7 @@ class RoleHandler(CoreRequestHandler):
             >>> from pprint import pprint
             >>> import random
             >>> url = "http://localhost:5001/core4/api/v1"
-            >>> signin = get(url + "/login?username=admin&password=hans")
+            >>> signin = get(url + "/login?username=admin&passwd=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
             >>>
@@ -107,7 +108,7 @@ class RoleHandler(CoreRequestHandler):
             >>>               "realname": "Test User",
             >>>               "role": ["reporting"],
             >>>               "email": "test@plan-net.com",
-            >>>               "password": "tset resu",
+            >>>               "passwd": "tset resu",
             >>>               "perm": ["app://reporting/test"]
             >>>           })
             >>> rv
@@ -125,10 +126,11 @@ class RoleHandler(CoreRequestHandler):
             email=self.get_argument(
                 "email", as_type=str, default=None),
             password=self.get_argument(
-                "password", as_type=str, default=None),
+                "passwd", as_type=str, default=None),
             perm=self.get_argument(
                 "perm", as_type=list, default=[])
         )
+        self.logger.info("perm: " + str(kwargs['perm']))
         try:
             role = CoreRole(**kwargs)
             await role.save()
@@ -251,27 +253,26 @@ class RoleHandler(CoreRequestHandler):
                 'timestamp': '2018-11-15T06:20:31.763471'
             }
         """
-        if _id is None or _id.strip() == "":
-            ret = await CoreRole().load(
-                per_page=self.get_argument(
-                    "per_page", as_type=int, default=10),
-                current_page=self.get_argument(
-                    "page", as_type=int, default=0),
-                query_filter=self.get_argument(
-                    "filter", as_type=dict, default={}),
-                sort_by=self.get_argument(
-                    "sort", as_type=str, default="_id"),
-                sort_order=self.get_argument(
-                    "order", as_type=int, default=1),
-            )
+        if _id == "distinct":
+            roles = CoreRole()
+            self.reply(await roles.distinct_roles())
+        elif _id is None or _id.strip() == "":
+            ret = await self.getRoles()
+
             for doc in ret.body:
                 doc.pop("password", None)
+
+            if self.wants_html():
+                return self.render("../standard/template/roles.js",
+                                   roles=ret.body)
+
             self.reply(ret)
         else:
             oid = self.parse_objectid(_id)
             ret = await CoreRole().find_one(_id=oid)
             if ret is None:
                 raise HTTPError(404, "role [%s] not found", oid)
+            a = await ret.detail()
             self.reply(await ret.detail())
 
     async def put(self, _id):
@@ -291,7 +292,7 @@ class RoleHandler(CoreRequestHandler):
             role (list): of role names assigned
             email (str): for actual users; for roles the email attribute is
                 expected to be undefined or ``None``
-            password (str): for actual users; for roles the password attribute
+            passwd (str): for actual users; for roles the password attribute
                 is expected to be undefined or ``None``
             perm (list): of permission protocols. For valid permission
                 protocols see ``POST`` method.
@@ -374,7 +375,7 @@ class RoleHandler(CoreRequestHandler):
             email=self.get_argument(
                 "email", as_type=str, default=None),
             password=self.get_argument(
-                "password", as_type=str, default=None),
+                "passwd", as_type=str, default=None),
             perm=self.get_argument(
                 "perm", as_type=list, default=None)
         )
@@ -475,3 +476,31 @@ class RoleHandler(CoreRequestHandler):
                 self.reply(True)
             else:
                 self.reply(False)
+
+
+    async def getRoles(self):
+        rolemanager = CoreRole()
+        async def _length(filter):
+            return await rolemanager.count(
+                filter=filter
+                )
+
+
+        async def _query(skip, limit, filter, sort_by):
+            return await rolemanager.load(skip, limit, filter, sort_by)
+
+
+        pager = CorePager(
+            per_page=self.get_argument(
+                "per_page", as_type=int, default=10),
+            current_page=self.get_argument(
+                "page", as_type=int, default=0),
+            filter=self.get_argument(
+                "filter", as_type=str, default="{}"),
+            sort_by=(self.get_argument("sort", as_type=str, default="_id"),
+                     self.get_argument("order", as_type=int, default=1)),
+            query=_query,
+            length=_length
+        )
+
+        return await pager.page()

@@ -100,7 +100,7 @@ core4os installation
 Clone and install core4os framework in a Python virtual environment:
 
     # clone core4os
-    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+    git clone https://github.com/plan-net/core4.git 
 
     # enter clone
     cd core4

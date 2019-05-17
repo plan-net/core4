@@ -41,7 +41,7 @@ async def test_grant(core4api):
     data = {
         "name": "test_reg_test_role1",
         "realname": "test role1",
-        "password": "123456",
+        "passwd": "123456",
         "email": "test@mail.com",
         "role": [
             "standard_user"
@@ -144,7 +144,7 @@ async def add_user(http, username):
                              "name": username,
                              "role": ["standard_user"],
                              "email": username + "@mail.com",
-                             "password": username
+                             "passwd": username
                          })
     assert rv.code == 200
     http.token = None
@@ -196,7 +196,7 @@ async def add_job_user(http, username, perm):
                              "name": username,
                              "role": ["standard_user"],
                              "email": username + "@mail.com",
-                             "password": username,
+                             "passwd": username,
                              "perm": perm
                          })
     assert rv.code == 200
@@ -208,7 +208,7 @@ async def add_job_user(http, username, perm):
     return http.token
 
 
-async def test_enqeuue(core4api):
+async def test_enqueue(core4api):
     await core4api.login()
     await add_job_user(
         core4api, "test_reg_user1", [
@@ -395,7 +395,7 @@ async def test_profile_cascade(core4api):
     rv = await core4api.post("/core4/api/v1/roles", json=dict(
         name="test_reg_user",
         realname="test user",
-        password="password",
+        passwd="password",
         email="test@user.com",
         perm=["api://core4.api.v1.request"],
         role=["test_reg_role", "test_reg_role2"]

@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
 </head>
-<div class="container">
+<body>
     <h1>CARD of {{ handler.__class__.__name__ }}</h1>
- 
+
     <hr/>
 
     <h2>{{ title }}</h2>
@@ -22,7 +22,21 @@
         <li><b>TAG:</b> {{ ", ".join(tag) }} </li>
         <li><b>RESOURCE ID:</b> {{ rsc_id }} </li>
         <li><b>PROJECT:</b> {{ project }} </li>
-        <li><b>THIS PATTERN:</b> {{ pattern }} </li>
+        <li><b>THIS PATTERN:</b>
+            <ul>
+            {% for p in pattern %}
+                <li>
+                    {% if p["name"] is not None %}
+                        <b>{{ p["name"] }}:</b>
+                    {% else %}
+                        <b>no name:</b>
+                    {% end if %}
+                    {{ p["regex"] }}
+                </li>
+            {% end %}
+            </ul>
+        </li>
+
         <li><b>CONTAINER:</b> {{ container }} </li>
         <li><b>PROTECTED:</b> {{ protected }} </li>
         <li><b>CREATED AT:</b> {{ created_at }} </li>
@@ -58,7 +72,7 @@
                 </li>
                 <li>
                     <b>HTML:</b>
-                    {% raw description_html %}
+                    <pre>{% raw description_html %}</pre>
                 </li>
                 <li>
                     <b>parsing error:</b>
@@ -66,12 +80,46 @@
                 </li>
             </ul>
         </li>
+        <li><b>MISSING</b>
+            <ul>
+                {% if author is None %} <li> AUTHOR </li> {% end %}
+                {% if not title %} <li> TITLE </li> {% end %}
+                {% if method %}
+                    {% for elem in method %}
+                        {% if elem["parts"] %}
+                            {% for part in elem["parts"] %}
+                                {% if not elem["parts"][part] %}
+                                    <li>
+                                        {{ elem["method"].upper() }} - section
+                                        <i> {{ part }} </i>
+                                    </li>
+                                {% end %}
+                            {% end %}
+                        {% else %}
+                            <li>
+                                {{ elem["method"].upper() }} documentation
+                            </li>
+                        {% end %}
+                    {% end %}
+                {% end %}
+            </ul>
+        </li>
     </ul>
-
     <hr/>
 
-</div>
-<script src="{{ default_static('widget/jq.pop.bsmd.min.js') }}"></script>
+    {% raw description_html %}
 
+    {% for elem in method %}
+
+        <h2>{{ elem["method"].upper() }}</h2>
+
+        {% raw elem["html"] %}
+
+        <hr/>
+
+    {% end %}
+
+</body>
+<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>
 </body>
 </html>
