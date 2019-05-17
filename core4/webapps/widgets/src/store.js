@@ -14,8 +14,6 @@ export default new Vuex.Store({
   plugins,
   state: {
     scales: [60, 0.3, 0.6, 0.9],
-    // widgetListOpen: 360,
-
     widgetsObj: {},
     widgetsList: [],
 

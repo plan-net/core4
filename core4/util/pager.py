@@ -58,7 +58,7 @@ class CorePager:
 
                 async def _query(skip, limit, filter, sort_by):
                     return self.collection("queue").find(
-                        filter).skip(skip).sort(*sort_by).limit(limit)
+                        filter).skip(skip).sort(sort_by).limit(limit)
 
                 per_page = int(self.get_argument("per_page", 10))
                 current_page = int(self.get_argument("page", 0))

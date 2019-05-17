@@ -7,7 +7,8 @@
 
         <v-tooltip>
           <v-btn
-            @click="$bus.$emit('edit-board-name')"
+            @click="$bus.$emit('e
+            dit-board-name')"
             color="primary"
             large
             dark
@@ -159,7 +160,6 @@ export default {
     Howto
   },
   mounted () {
-
   },
   methods: {
     openInNew (widget) {
@@ -171,7 +171,6 @@ export default {
       }
       window.open(path, '_blank')
     },
-
     ...mapActions(['addToBoard', 'removeFromBoard', 'nextBoard', 'prevBoard']),
     onOver () {
       this.over = true
@@ -347,6 +346,9 @@ export default {
 <style scoped lang="scss">
   .theme--dark {
     .over {
+    
+    
+    
       box-shadow: 0px 0px 4px 2px rgba(255, 255, 255, 0.45) !important;
     }
 
