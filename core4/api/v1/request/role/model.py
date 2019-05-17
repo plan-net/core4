@@ -533,8 +533,8 @@ class CoreRole(CoreBase):
                     query_filter = json.loads(filter)
                     query_filter = await self.manage_dict_filter(query_filter)
                 except:
-                    raise core4.error.ArgumentParsingError("Can not parse regex"
-                                                           + filter)
+                    raise core4.error.ArgumentParsingError(
+                        "Can not parse regex" + filter)
                 filter = query_filter
             else:
                 filter = re.compile(filter)

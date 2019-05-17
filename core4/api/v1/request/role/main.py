@@ -11,8 +11,8 @@ from tornado.web import HTTPError
 
 import core4.error
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.request.role.model import CoreRole
 from core4.api.v1.request.role.access.manager import CoreAccessManager
+from core4.api.v1.request.role.model import CoreRole
 from core4.util.pager import CorePager
 
 
@@ -263,8 +263,7 @@ class RoleHandler(CoreRequestHandler):
                 doc.pop("password", None)
 
             if self.wants_html():
-                return self.render("../standard/template/roles.js",
-                                   roles=ret.body)
+                return self.render("template/roles.html", roles=ret.body)
 
             self.reply(ret)
         else:
@@ -272,7 +271,6 @@ class RoleHandler(CoreRequestHandler):
             ret = await CoreRole().find_one(_id=oid)
             if ret is None:
                 raise HTTPError(404, "role [%s] not found", oid)
-            a = await ret.detail()
             self.reply(await ret.detail())
 
     async def put(self, _id):
@@ -477,18 +475,16 @@ class RoleHandler(CoreRequestHandler):
             else:
                 self.reply(False)
 
-
     async def getRoles(self):
         rolemanager = CoreRole()
+
         async def _length(filter):
             return await rolemanager.count(
                 filter=filter
-                )
-
+            )
 
         async def _query(skip, limit, filter, sort_by):
             return await rolemanager.load(skip, limit, filter, sort_by)
-
 
         pager = CorePager(
             per_page=self.get_argument(
