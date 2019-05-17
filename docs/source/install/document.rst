@@ -5,7 +5,7 @@ documentation build
 Documentation requires the "tests" variant to setup::
 
     # clone core4
-    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+    git clone https://github.com/plan-net/core4.git
 
     # enter clone
     cd core4

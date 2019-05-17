@@ -12,7 +12,7 @@ core4 settings.
     apt-get install python3-pip python3-venv git python3-dev mongodb
 
     # clone core4
-    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+    git clone https://github.com/plan-net/core4.git
 
     # setup and enter Python virtual environment
     cd core4
