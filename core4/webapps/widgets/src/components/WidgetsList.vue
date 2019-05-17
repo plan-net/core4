@@ -62,7 +62,7 @@
               <v-tooltip left>
                 <v-icon @click="openInNew(item)"
                         slot="activator"
-                        class="grey--text"
+
                         small
                 >open_in_new
                 </v-icon>
@@ -71,7 +71,7 @@
               <v-tooltip left>
                 <v-icon @click="$router.push({ name: 'enter', params: { widgetId: item.rsc_id } })"
                         slot="activator"
-                        class="grey--text"
+
                         small
                 >open_in_browser
                 </v-icon>
@@ -81,7 +81,7 @@
                 <v-icon
                   @click="$router.push({ name: 'help', params: { widgetId: item.rsc_id } })"
                   slot="activator"
-                  class="grey--text"
+
                   small
                 >help
                 </v-icon>
@@ -106,7 +106,7 @@
                 v-if="item.effectAllowed[0] !== 'none'"
               >
                 <template v-slot:activator="{ on }">
-                  <v-icon class="grey--text" v-on="on" @click="addToBoard(item.rsc_id)">
+                  <v-icon v-on="on" @click="addToBoard(item.rsc_id)">
                     add_circle_outline
                   </v-icon>
                 </template>
@@ -117,7 +117,7 @@
                 v-else
               >
                 <template v-slot:activator="{ on }">
-                  <v-icon class="grey--text" @click="removeFromBoard(item.rsc_id)" v-on="on">
+                  <v-icon @click="removeFromBoard(item.rsc_id)" v-on="on">
                     remove_circle_outline
                   </v-icon>
                 </template>
@@ -138,13 +138,43 @@ import _ from 'lodash'
 export default {
   name: 'widget-list',
   data () {
+    this.ti = 0
     return {
+      widgetClass: 'xs12',
       searchInput: '',
       tags: []
     }
   },
-  props: {},
+  props: {
+    scale: {
+      type: Number,
+      default: 360,
+      required: true
+    }
+  },
+  mounted () {
+    this.updateLayout()
+  },
+  watch: {
+    scale () {
+      this.updateLayout()
+    }
+  },
   methods: {
+    updateLayout () {
+      window.clearTimeout(this.ti)
+      this.ti = window.setTimeout(function () {
+        const widgetManagerW = document.querySelector('.widget-manager').offsetWidth
+        if (this.scale !== this.scales[0]) {
+          const widgetManagerW2 = widgetManagerW / 400
+          const p2 = Math.ceil(widgetManagerW2)
+          const xs = `xs${12 / p2}`
+          this.widgetClass = xs
+        } else {
+          this.widgetClass = 'xs12'
+        }
+      }.bind(this), 400)
+    },
     ...mapActions(['addToBoard', 'removeFromBoard', 'setWidgetOver']),
     removeTagFromSearch (item) {
       const index = this.tags.indexOf(item.text)
@@ -180,17 +210,7 @@ export default {
   },
 
   computed: {
-    widgetClass () {
-      if (this.widgetListOpen === this.scales[3]) {
-        return 'xs4'
-      }
-      if (this.widgetListOpen === this.scales[2]) {
-        return 'xs6'
-      }
-      return 'xs12'
-    },
-
-    ...mapGetters(['widgetSet', 'widgetListOpen', 'scales']),
+    ...mapGetters(['widgetSet', 'scales']),
     widgets () {
       const activeBoard = this.$store.getters.activeBoard
       const activeBoardWidgets = ((activeBoard || {}).widgets) || []
@@ -250,9 +270,14 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  .v-list > .xs6, .v-list > .xs4{
+  /deep/ .v-icon {
+    color: grey !important;
+  }
+
+  .v-list > .xs6, .v-list > .xs4 {
     padding-right: 6px;
   }
+
   .drag {
     cursor: grab;
 

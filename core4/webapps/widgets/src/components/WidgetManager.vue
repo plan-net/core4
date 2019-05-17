@@ -2,8 +2,8 @@
   <v-layout>
     <v-navigation-drawer
       v-model="open"
-      :width="scale"
-      mini-variant-width="60"
+      :width="scaleAbs"
+      mini-variant-width="40"
       :mini-variant="miniVariant"
       fixed
       floating
@@ -71,74 +71,31 @@
             </v-btn>
           </v-tab>
         </v-tabs>
-        <v-layout align-center justify-end :class="{row: !miniVariant, 'column reverse': miniVariant}"
-                  class="size-toggler pr-3">
+        <v-layout align-center justify-end :class="{'row pr-3': !miniVariant, 'column reverse': miniVariant}"
+                  class="size-toggler">
           <v-btn @click="setWidgetSidebarScale(3)" small icon class="scaler-container"
-                 :disabled="this.scale===this.scales[3]">
+                 :disabled="this.scalePerc===this.scales[3]">
             <div class="scaler dreiviertel"></div>
           </v-btn>
           <v-btn @click="setWidgetSidebarScale(2)" small icon class="scaler-container"
-                 :disabled="this.scale===this.scales[2]">
+                 :disabled="this.scalePerc===this.scales[2]">
             <div class="scaler halb"></div>
           </v-btn>
           <v-btn @click="setWidgetSidebarScale(1)" icon small class="scaler-container"
-                 :disabled="this.scale===this.scales[1]">
+                 :disabled="this.scalePerc===this.scales[1]">
             <div class="scaler viertel"></div>
           </v-btn>
           <v-btn @click="setWidgetSidebarScale(0)" small icon class="scaler-container"
-                 :disabled="this.scale===this.scales[0]">
+                 :disabled="this.scalePerc===this.scales[0]">
             <div class="scaler leer"></div>
           </v-btn>
         </v-layout>
-
-        <!--</div>-->
-        <!--<v-menu left content-class="wdt-sizes-menu"
-                close-on-click
-                open-on-hover
-                offset-x
-                close-on-content-click
-        >
-          <template v-slot:activator="{ on }">
-            <v-btn
-              dark @click="setWidgetSidebarScale(1, true)"
-              class="wdt-sizes-menu-activator"
-              icon
-              v-on="on"
-            >
-              <v-icon color="primary">widgets</v-icon>
-            </v-btn>
-          </template>
-          <v-card>
-            <v-card-text style="padding:0;">
-              <v-layout row>
-                <v-btn @click="setWidgetSidebarScale(3)" small icon class="scaler-container"
-                       :disabled="this.scale===this.scales[3]">
-                  <div class="scaler dreiviertel"></div>
-                </v-btn>
-                <v-btn @click="setWidgetSidebarScale(2)" small icon class="scaler-container"
-                       :disabled="this.scale===this.scales[2]">
-                  <div class="scaler halb"></div>
-                </v-btn>
-                <v-btn @click="setWidgetSidebarScale(1)" icon small class="scaler-container"
-                       :disabled="this.scale===this.scales[1]">
-                  <div class="scaler viertel"></div>
-                </v-btn>
-                <v-btn @click="setWidgetSidebarScale(0)" small icon class="scaler-container"
-                       :disabled="this.scale===this.scales[0]">
-                  <div class="scaler leer"></div>
-                </v-btn>
-              </v-layout>
-            </v-card-text>
-          </v-card>
-        </v-menu>-->
       </v-layout>
       <v-tabs-items v-model="tabs" v-show="!miniVariant">
-        <v-tab-item
-        >
-          <widgets-list/>
+        <v-tab-item>
+          <widgets-list :scale="scalePerc"/>
         </v-tab-item>
-        <v-tab-item
-        >
+        <v-tab-item>
           <side-navigation :help-dialog-open="boardHelpDialogOpen" @close="boardHelpDialogOpen = false"/>
         </v-tab-item>
       </v-tabs-items>
@@ -160,30 +117,43 @@ export default {
     SideNavigation
   },
   mounted () {
-    this.scale = this.scales[1]
+    const bodyW = document.querySelector('body').offsetWidth
+    this.scaleAbs = bodyW * this.scales[1]
+    this.scalePerc = this.scales[1]
   },
   computed: {
-    ...mapGetters(['widgetListOpen', 'dark', 'scales']),
+    ...mapGetters(['dark', 'scales']),
     miniVariant () {
-      return this.scale === this.scales[0]
-      // return !this.widgetListOpen
+      return this.scalePerc === this.scales[0]
     }
   },
   methods: {
-    ...mapActions(['toggleWidgetListOpen']),
+    ...mapActions([]),
     setWidgetSidebarScale (index, reset) {
       if (reset) {
-        this.scale = (this.scale >= this.scales[1]) ? this.scales[0] : this.scales[1]
+        if (this.scale > 70) {
+          this.scale = this.scales[0]
+          this.scalePerc = this.scales[0]
+        } else {
+          this.scale = this.scales[1]
+          this.scalePerc = this.scales[1]
+        }
       } else {
-        this.scale = this.scales[index]
+        if (index === 0) {
+          this.scale = this.scales[index]
+        } else {
+          const bodyW = document.querySelector('body').offsetWidth
+          this.scaleAbs = bodyW * this.scales[index]
+        }
+        this.scalePerc = this.scales[index]
       }
-      this.toggleWidgetListOpen(this.scale)
     }
   },
   data () {
     return {
 
-      scale: 0,
+      scalePerc: 0,
+      scaleAbs: 0,
       tabs: null,
       open: true,
       helpDialogOpen: false,
@@ -275,14 +245,14 @@ export default {
 
   .theme--dark {
     div.scaler {
-      border-color: #fff;
+      border-color: grey;
 
       &:after {
-        background-color: #fff;
+        background-color: grey;
       }
     }
 
-    &.v-navigation-drawer, &.widget-list {
+    &.v-navigation-drawer {
       background-color: darken(#202020, 1);
     }
 
