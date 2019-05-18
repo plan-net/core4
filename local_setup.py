@@ -109,8 +109,9 @@ if not replica:
         shutil.move(mongo_config_file, mongo_config_file + ".backup")
         open(mongo_config_file, "w", encoding="utf-8").write(
             yaml.dump(mongo_config))
-        os.system("service mongodb restart > /dev/null")
-        os.system("sv restart mongodb> /dev/null")
+        os.system("service mongodb restart 1>/dev/null 2>&1")
+        os.system("sv restart mongodb 1>/dev/null 2>&1")
+        os.system("systemctl status mongod.service 1>/dev/null 2>&1")
         while True:
             mongo = pymongo.MongoClient(url)
             try:
