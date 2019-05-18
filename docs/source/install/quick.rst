@@ -26,7 +26,7 @@ core4 settings.
 
 Revisit your core4 settings with::
 
-    coco -who
+    coco --who
 
 
 Start a core4 worker with::
