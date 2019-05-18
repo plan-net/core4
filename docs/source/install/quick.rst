@@ -9,7 +9,7 @@ core4 settings.
    :linenos:
 
     # install prerequisites
-    apt-get install python3-pip python3-venv git python3-dev mongodb
+    sudo apt-get install python3-pip python3-venv python3-dev git mongodb
 
     # clone core4
     git clone https://github.com/plan-net/core4.git
@@ -26,7 +26,7 @@ core4 settings.
 
 Revisit your core4 settings with::
 
-    coco -who
+    coco --who
 
 
 Start a core4 worker with::
