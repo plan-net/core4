@@ -60,10 +60,6 @@ if auth:
     password = ask("  password", hide=True)
     print(username, password)
 
-#auth = True
-#username = "core"
-#password = "654321"
-
 print("Testing connection ...")
 if auth:
     url = "mongodb://{}:{}@{}:{}".format(username, password, hostname, port)
