@@ -4,122 +4,251 @@
     <meta charset="UTF-8">
     <title>HELP {{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
+     <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
+     <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
+    <!-- <link rel="stylesheet" type="text/css" href="..\..\_static\bootstrap-material-design.custom.css"> -->
+    <!--<link rel="stylesheet" type="text/css" href="..\..\_static\widget.css">-->
+
+    <style>
+    .accordion-arrow{
+        position: relative;
+        /* Adjust these values accordingly */
+        top: 6px;
+    }
+    .inner-card{
+        box-shadow: 0 0 0 0;
+    }
+
+    .scrollspy-help {
+        position: relative;
+        height:100%;
+        margin-top: .5rem;
+        overflow: auto;
+    }
+    .list-group {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding: .5rem 0;
+    }
+    .left-card{
+        height: 80vh;
+    }
+
+    .inner-card-body{
+        height: 100%
+    }
+    .row {
+        margin-top: 7vh
+    }
+
+    .container-fluid::before{
+        content:'';
+        display: block;
+        position:absolute;
+        height: 20vh;
+        left: 0;
+        right: 0;
+        top: 0;
+        background-color: var(--accent);
+        z-index: 0;
+        min-height:120px;
+    }
+    .list-group{
+        padding-top: 0px;
+    }
+    .btn-link{
+        padding: 0px;
+        margin: 0px;
+        text-align: left;
+    }
+
+    #accordion{
+        max-width:95%;
+    }
+    </style>
 </head>
 <body>
-    <h1>HELP of {{ handler.__class__.__name__ }}</h1>
+    <!-- <h1>HELP of {{ handler.__class__.__name__ }}</h1> -->
+    <div class="container-fluid">
+        <div class="row mx-auto" style="max-width:1260px">
+            <div class="card left-card col-9 " >
+                <div class="card-body inner-card-body" style="position:relative">
+                    <div data-spy="scroll" data-target="#help-list" data-offset="0" class="scrollspy-help">
+                        <h3 id="list-item-1">{{ title }}</h3>
+                        <h5>{{ subtitle }}</h5>
+                        <div id="accordion">
+                            <div class="card inner-card">
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    QUAL_NAME : {{qual_name}}
+                                </h6>
+                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    AUTHOR : {{author}}
+                                </h6>
+                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    TAG: : {{ ", ".join(tag) }}
+                                </h6>
+                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    ICON : <i class="material-icons">{{ icon }}</i> - {{ icon }}
+                                </h6>
+                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    PROTECTED : {{ protected }}
+                                </h6>
+                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    RESOURCE ID : {{ rsc_id }}
+                                </h6>
+                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    CONTAINER : {{ container }}
+                                </h6>
+                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                    CREATED AT : {{ created_at }}
+                                </h6>                              </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                      THIS ENTER_URL : {{ enter_url }}
+                                </h6>                             </div>
+                              <div class="card-header">
+                                <h6 class="mb-0">
+                                      CLASS ARGS : {{ args }}
+                                </h6>                              </div>
+                            </div>
+                            <div class="card inner-card">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    <div class="card-header" id="headingTwo">
+                                        <h6 class="mb-0 ">
+                                            THIS PATTERN <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
+                                        </h6>
+                                    </div>
+                                </button>
+                              <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+                                <div class="card-body">
+                                    <ul>
+                                        {% for p in pattern %}
+                                            <li>
+                                                {% if p["name"] is not None %}
+                                                    <b>{{ p["name"] }}:</b>
+                                                {% else %}
+                                                    <b>no name:</b>
+                                                {% end if %}
+                                                {{ p["regex"] }}
+                                            </li>
+                                        {% end %}
+                                    </ul>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="card inner-card">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    <div class="card-header" id="headingThree">
+                                        <h6 class="mb-0 ">
+                                            CONTAINER <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
+                                        </h6>
+                                    </div>
+                                </button>
+                                <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+                                  <div class="card-body">
+                                    <div class="md-chips pt-0 pb-0">
+                                        {% for t in tag[:3] %}
+                                        <div class="md-chip">
+                                            {{t}}
+                                        </div>
+                                        {% end %}
+                                    </div>
+                                  </div>
+                                </div>
+                            </div>
+                            <div class="card inner-card">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    <div class="card-header" id="headingFour">
+                                        <h6 class="mb-0 ">
+                                            ENDPOINTS <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
+                                        </h6>
+                                    </div>
+                                </button>
 
-    <hr/>
+                                <div id="collapseFour" class="collapse" aria-labelledby="headingFour" data-parent="#accordion">
+                                    <div class="card-body">
+                                        <ul>
+                                            {% for ep in endpoint %}
+                                            <li>
+                                                {{ ep }}
+                                                <ul>
+                                                    <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
+                                                    <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
+                                                    {% if enter_url != None %}
+                                                        <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
+                                                    {% else %}
+                                                        <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
+                                                    {% end if %}
+                                                </ul>
+                                            </li>
+                                            {% end for %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card inner-card">
+                                 <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                    <div class="card-header" id="headingFive">
+                                      <h6 class="mb-0 ">
+                                            DESCRIPTION <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
+                                      </h6>
+                                    </div>
+                                </button>
+                                    <div id="collapseFive" class="collapse" aria-labelledby="headingFive" data-parent="#accordion">
+                                      <div class="card-body">
+                                            <pre>{% raw description_html %}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                          </div>
+                        <hr/>
+                        <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
 
-    <h2>{{ title }}</h2>
-    <h4>{{ subtitle }}</h4>
-
-    <ul>
-        <li><b>AT:</b> {{ handler.started }}</li>
-        <li><b>QUAL_NAME:</b> {{ qual_name }}</li>
-        <li><b>AUTHOR:</b> {{ author }} </li>
-        <li><b>ICON: <i class="material-icons">{{ icon }}</i></b> - {{ icon }}</li>
-        <li><b>TAG:</b> {{ ", ".join(tag) }} </li>
-        <li><b>RESOURCE ID:</b> {{ rsc_id }} </li>
-        <li><b>PROJECT:</b> {{ project }} </li>
-        <li><b>THIS PATTERN:</b>
-            <ul>
-            {% for p in pattern %}
-                <li>
-                    {% if p["name"] is not None %}
-                        <b>{{ p["name"] }}:</b>
-                    {% else %}
-                        <b>no name:</b>
-                    {% end if %}
-                    {{ p["regex"] }}
-                </li>
-            {% end %}
-            </ul>
-        </li>
-
-        <li><b>CONTAINER:</b> {{ container }} </li>
-        <li><b>PROTECTED:</b> {{ protected }} </li>
-        <li><b>CREATED AT:</b> {{ created_at }} </li>
-        <li><b>STARTED AT:</b> {{ started_at }} </li>
-        <li><b>TARGET:</b> {{ target }} </li>
-        <li><b>THIS CARD:</b> {{ card_url }} </li>
-        <li><b>THIS HELP:</b> {{ help_url }} </li>
-        <li><b>THIS ENTER_URL:</b> {{ enter_url }} </li>
-        <li><b>CLASS ARGS:</b> {{ args }} </li>
-        <li><b>ENDPOINTS:</b>
-            <ul>
-                {% for ep in endpoint %}
-                <li>
-                    {{ ep }}
-                    <ul>
-                        <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
-                        <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
-                        {% if enter_url != None %}
-                            <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-                        {% else %}
-                            <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
-                        {% end if %}
-                    </ul>
-                </li>
-                {% end for %}
-            </ul>
-        </li>
-        <li><b>DESCRIPTION:</b>
-            <ul>
-                <li>
-                    <b>PLAIN TEXT:</b>
-                    <pre>{{ description }}</pre>
-                </li>
-                <li>
-                    <b>HTML:</b>
-                    <pre>{% raw description_html %}</pre>
-                </li>
-                <li>
-                    <b>parsing error:</b>
-                    <pre>{{ "\n".join(description_error) }}</pre>
-                </li>
-            </ul>
-        </li>
-        <li><b>MISSING</b>
-            <ul>
-                {% if author is None %} <li> AUTHOR </li> {% end %}
-                {% if not title %} <li> TITLE </li> {% end %}
-                {% if method %}
-                    {% for elem in method %}
-                        {% if elem["parts"] %}
-                            {% for part in elem["parts"] %}
-                                {% if not elem["parts"][part] %}
-                                    <li>
-                                        {{ elem["method"].upper() }} - section
-                                        <i> {{ part }} </i>
-                                    </li>
-                                {% end %}
-                            {% end %}
-                        {% else %}
-                            <li>
-                                {{ elem["method"].upper() }} documentation
-                            </li>
+                            <span>{% raw description_html %}</span>
+                        <hr/>
+                        {% for elem in method %}
+                            <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
+                            <h2></h2>
+                            {% raw elem["html"] %}
+                            <hr/>
                         {% end %}
-                    {% end %}
+                </div>
+            </div>
+        </div>
+        <div class="col-3">
+            <div id="help-list" class="list-group">
+                <a class="list-group-item list-group-item-action active" href="#list-item-1">{{ title }}</a>
+                <a class="list-group-item list-group-item-action" href="#list-item-2">Introduction</a>
+                {% for elem in method %}
+                <a class="list-group-item list-group-item-action" href="#{{elem['method'].upper()}}">{{elem['method'].upper()}}</a>
                 {% end %}
-            </ul>
-        </li>
-    </ul>
-    <hr/>
-
-    {% raw description_html %}
-
-    {% for elem in method %}
-
-        <h2>{{ elem["method"].upper() }}</h2>
-
-        {% raw elem["html"] %}
-
-        <hr/>
-
-    {% end %}
-
+            </div>
+        </div>
+    </div>
 </body>
 <script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>
+
+<!-- <script type="text/javascript" src="..\..\_static\jq.pop.bsmd.min.js"></script>--> 
+<script src="https://fezvrasta.github.io/bootstrap-material-design/assets/js/vendor/anchor.min.js"></script>
+<script type="text/javascript">
+    console.log($);
+    $('body').scrollspy({ target: '#help-list' })
+</script>
 </body>
 </html>
