@@ -127,7 +127,8 @@ class CoreApiContainer(CoreBase, QueryMixin):
              handler.request.path, request_time, handler.current_user,
              self.identifier, extra={"identifier": identifier})
 
-    def get_root(self, path=None):
+    @classmethod
+    def get_root(cls, path=None):
         """
         Returns the container`s ``root`` URL prefix or prefixes the passed
         relative path with the prefix.
@@ -135,9 +136,9 @@ class CoreApiContainer(CoreBase, QueryMixin):
         :param path: relative path (optional)
         :return: ``root`` or absolute path below ``root``
         """
-        root = self.root
+        root = cls.root
         if root is None:
-            root = self.project
+            root = cls.get_project()
         if not root.startswith("/"):
             root = "/" + root
         if root.endswith("/"):
@@ -361,7 +362,6 @@ class CoreApiContainer(CoreBase, QueryMixin):
             first["subtitle"] = first["subtitle"] or first["qual_name"]
             ret.append(first)
         ret.sort(key=lambda r: (str(r["title"]), r["qual_name"]))
-        print(ret)
         if rsc_id is not None:
             assert len(ret) == 1
             return ret[0]
