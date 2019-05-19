@@ -45,7 +45,7 @@ in development mode::
     source enter_env
 
     # install core4
-    pip install -U git+ssh://git.bi.plan-net.com/srv/git/core4.git
+    pip install -U git+https://github.com/plan-net/core4.git
 
     # install project mypro from current directory in development mode
     pip install -e .

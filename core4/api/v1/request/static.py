@@ -23,8 +23,8 @@ DEFAULT_FILENAME = "index.html"
 
 class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
     """
-    core4 static file handler extends argument parsing with
-    :class:`.CoreApiContainer` and processes the
+    A simple handler based on :class:`tornado.web.StaticFileHandler` to serve
+    static content from a directory.
     """
     SUPPORTED_METHODS = ("GET", "HEAD", "OPTIONS", "XCARD", "XHELP", "XENTER")
     propagate = ("protected", "title", "author", "tag", "static_path",

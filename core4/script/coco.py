@@ -102,12 +102,8 @@ def worker(name):
 
 def app(**kwargs):
     core4.logger.mixin.logon()
-    try:
-        core4.api.v1.tool.functool.serve_all(**kwargs)
-    except KeyboardInterrupt:
-        print(" .. interrupt.")
-    except:
-        raise
+    kwargs["debug"] = False
+    core4.api.v1.tool.functool.serve_all(**kwargs)
 
 
 def scheduler(name):

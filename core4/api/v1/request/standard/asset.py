@@ -21,16 +21,16 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
     :class:`.CoreRequestHandler` static folder settings and the specified
     core4 default static folder.
 
-    To serve assets, the templates must use :meth:`.static_url` and
-    :meth:`.default_static` method. If :meth:`.static_url` addresses an URL
-    with a leading slash (``/``), then the method translates the static asset
-    request into ``/core4/api/v1/file/abc/<md5_route>/<path>``. If the path
+    To serve assets, the templates must use methods :meth:`.static_url` and
+    :meth:`.default_static`. If :meth:`.static_url` addresses an URL with a
+    leading slash (``/``), then the method translates the static asset
+    request into ``/core4/api/v1/_asset/default/<rsc_id>/<path>``. If the path
     does *not* start with a leading slash, then :meth:`.static_url` translates
     the static asset request into
-    ``/core4/api/v1/file/rel/<md5_route>/<path>``. Watch the ``abs`` versus
-    ``rel`` modifier in both URLs. Absolute paths address assets from project
-    root directory. Relative paths address asset from the specified static
-    folder of the handler.
+    ``/core4/api/v1/file/project/<rsc_id>/<path>``. Watch the ``default``
+    versus ``project`` modifier in both URLs. Absolute paths address assets
+    from project root directory. Relative paths address asset from the
+    specified static folder of the handler.
 
     Default asset requests are delivered according to the global core4 static
     file settings as defined by config attribute ``api.default_static``
@@ -42,6 +42,7 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
     title = "asset handler for request handler rule ID"
     default_filename = "index.html"
     icon = "memory"
+    tag = None
 
     def __init__(self, *args, **kwargs):
         CoreRequestHandler.__init__(self, *args, **kwargs)

@@ -92,6 +92,8 @@ const api = {
           endpoint.enter_url = `${val.endpoint[0]}/_info/enter/${pathEnd}`
           endpoint.help_url = `${val.endpoint[0]}/_info/help/${pathEnd}`
           val.endpoint = endpoint
+          const vq = val.qual_name
+          val.$qual_name = vq.substring(0, vq.indexOf('.')) + '...' + vq.substring(vq.lastIndexOf('.') + 1)
           delete val.project
           delete val.started_at
           delete val.created_at

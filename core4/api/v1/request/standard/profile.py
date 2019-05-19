@@ -138,7 +138,7 @@ class ProfileHandler(CoreRequestHandler):
             email=self.get_argument(
                 "email", as_type=str, default=None),
             password=self.get_argument(
-                "password", as_type=str, default=None)
+                "passwd", as_type=str, default=None)
         )
         for k, v in kwargs.items():
             if v is not None:

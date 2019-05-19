@@ -107,5 +107,4 @@ def serve_all(project=None, filter=None, port=None, address=None, name=None,
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve_all(project, filter, port, address, name,
-                                  reuse_port,
-                                  routing, **kwargs)
+                                  reuse_port, routing, **kwargs)
