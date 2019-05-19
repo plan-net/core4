@@ -63,6 +63,39 @@ lines::
       authorization: enabled
 
 
+core4 uses special features of MongoDB which are only available with MongoDB
+version 3.6 and above. Furthermore replication must be set up with your MongoDB
+instance.
+
+.. note:: If you work with core4 in your development environment with a local
+          MongoDB installed you can still set up replication. See for example
+          `Deploy a Replica Set for Testing and Development`_
+
+
+To setup your MongoDB as a replica set you have to add the following additional
+lines to your ``/etc/mongod.conf``::
+
+    replication:
+        oplogSizeMB: 1000
+        replSetName: rs0
+
+
+Furthermore you have to initialise the replica set, for example using MongoDB's
+shell ``mongo``::
+
+    use admin
+    var js = {
+        _id: "rs0",
+        members: [
+            {
+                _id: 0,
+                host: "localhost:27017"
+            }
+        ]
+    }
+    rs.initialize(js)
+
+
 Finally restart mongod with::
 
     service mongod restart
@@ -72,3 +105,5 @@ Test settings and MongoDB connection now with::
 
     mongo --username=core --password=654321 --authenticationDatabase admin
 
+
+.. _Deploy a Replica Set for Testing and Development: https://docs.mongodb.com/manual/tutorial/deploy-replica-set-for-testing/
