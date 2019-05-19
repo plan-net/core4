@@ -13,8 +13,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   plugins,
   state: {
-    scales: [60, 360, 680, 920],
-    widgetListOpen: 360,
+    scales: [60, 0.3, 0.6, 0.9],
     widgetsObj: {},
     widgetsList: [],
 
@@ -37,11 +36,11 @@ export default new Vuex.Store({
       commit('set_widgets', widgets)
       dispatch('setLoading', false)
     },
-    toggleWidgetListOpen ({
+    /*    toggleWidgetListOpen ({
       commit, state
     }, payload) {
       commit('set_widgetlist_open', payload)
-    },
+    }, */
     updateWidgets ({
       commit
     }, payload) {
@@ -123,19 +122,6 @@ export default new Vuex.Store({
     }, board) {
       commit('delete_board', board)
       commit('set_active_board', state.boardsList[0])
-      /* if (state.activeBoard.name === board.name) {
-        const index = state.boardsList.indexOf(board.name)
-        let active = 0
-        if (index < state.boardsList.length - 1) {
-          active = index + 1
-        }
-        if (state.boardsList.length > 1) {
-          commit('set_active_board', state.boardsList[active])
-        } else {
-          commit('set_active_board', null)
-        }
-      }
- */
       api.updateBoard({
         boards: getters.boardsSet
       })
@@ -164,6 +150,31 @@ export default new Vuex.Store({
         boards
       })
     },
+    nextBoard ({
+      commit,
+      getters, state
+    }) {
+      try {
+        const currBoardName = getters.activeBoard.name
+        const index = (state.boardsList.indexOf(currBoardName) + 1) % state.boardsList.length
+        commit('set_active_board', state.boardsList[index])
+      } catch (error) {
+        console.warn(error)
+      }
+    },
+    prevBoard ({
+      commit,
+      getters, state
+    }) {
+      try {
+        const currBoardName = getters.activeBoard.name
+        const prev = (state.boardsList.indexOf(currBoardName) - 1)
+        const index = (prev < 0) ? state.boardsList.length - 1 : prev
+        commit('set_active_board', state.boardsList[index])
+      } catch (error) {
+        console.warn(error)
+      }
+    },
     setWidgetOver ({
       commit,
       getters
@@ -176,9 +187,6 @@ export default new Vuex.Store({
       const widget = clone(state.widgetsObj[payload.id])
       widget.$over = payload.$over
       state.widgetsObj[payload.id] = widget
-    },
-    set_widgetlist_open (state, payload) {
-      state.widgetListOpen = payload
     },
     set_boards (state, payload) {
       state.boardsObj = payload.reduce((obj, item) => {
@@ -255,11 +263,14 @@ export default new Vuex.Store({
     widgetSet (state) {
       return clone(state.widgetsList.map(id => state.widgetsObj[id]))
     },
-    widgetListOpen (state) {
+    /*    widgetListOpen (state) {
       return state.widgetListOpen
-    },
+    }, */
     boardsSet (state) {
       return clone(state.boardsList.map(name => state.boardsObj[name]))
+    },
+    boardsCount (state) {
+      return state.boardsList.length
     },
     boards (state) {
       return state.boardsObj
