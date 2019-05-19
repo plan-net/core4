@@ -225,19 +225,6 @@ class CoreBaseHandler(CoreBase):
             else:
                 source = ("token", "cookie")
                 token = self.get_secure_cookie("token")
-            # token = self.get_secure_cookie("token")
-            # if token is not None:
-            #     source = ("token", "cookie")
-            # else:
-            #     token = self.get_argument("token", default=None, remove=True)
-            #     if token is not None:
-            #         source = ("token", "args")
-            #     else:
-            #         username = self.get_argument("username", default=None,
-            #                                      remove=True)
-            #         password = self.get_argument("password", default=None,
-            #                                      remove=True)
-            #         source = ("username", "args")
         if token:
             payload = self.parse_token(token)
             username = payload.get("name")
@@ -588,9 +575,9 @@ class CoreBaseHandler(CoreBase):
         ret = self._build_json(**var)
         if self.wants_html():
             ret["contact"] = self.config.api.contact
-            self.render(self.error_html_page, **ret)
+            return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
-            self.render(self.error_text_page, **var)
+            return self.render(self.error_text_page, **var)
         self.finish(ret)
 
     def _build_json(self, message, code, **kwargs):
