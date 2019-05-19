@@ -4,12 +4,13 @@ prerequisite installation guide
 
 core4 has on the following prerequisites:
 
-* Linux flavour operating system
-* Python 3.5
-* MongoDB database instance version 3.6.4 or higher up-and-running,
-  download from https://www.mongodb.com/download-center#community
-* pip
-* git
+* Linux flavour operating system, preferred :doc:`Debian 9 <quick>` or
+  :doc:`Ubuntu 18.04 <ubuntu>`
+* Python 3.5 or higher
+* MongoDB database instance version 3.6 or higher up-and-running,
+  see https://www.mongodb.com/download-center#community
+* pip 18.1 or higher
+* git 2 or higher
 
 This step-by-step guide shows how to install and setup all required systems.
 
@@ -21,7 +22,6 @@ Debian 9 ships with Python 3. Check installation with::
 Install pip for Python 3, python-venv and git with::
 
     sudo apt-get install python3-pip python3-venv git python3-dev
-
 
 
 Install MongoDB and enable the service to start at boot time with::

@@ -155,7 +155,7 @@ async def test_user_override(core4api):
     response = await core4api.post("/core4/api/v1/roles", json=dict(
         name="test",
         realname="test user",
-        password="password",
+        passwd="password",
         email="test@user.com",
         perm=["api://core4.api.v1"]
     ))

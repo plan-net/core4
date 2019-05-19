@@ -13,6 +13,7 @@ Usage:
   cadmin upgrade [--test] [--force] [--reset] [--core4] [--home=HOME] [PROJECT...]
   cadmin uninstall [--home=HOME] PROJECT...
   cadmin version [--home=HOME] [PROJECT...]
+  cadmin build [--build=APP...]
 
 Arguments:
   REPOSITORY  requirements specifier with VCS support (see pip documentation)
@@ -48,8 +49,8 @@ CONFIG = ".config"
 VERSION_COMMAND = """
 import {p}
 import core4
-print({p}.__version__, {p}.__built__, 
-      "with core4", core4.__version__, core4.__built__)
+print(", ".join([{p}.__version__, {p}.__built__, core4.__version__, 
+                 core4.__built__]))
 """
 
 if os.path.exists(LOGFILE):
@@ -65,7 +66,7 @@ if tuple([int(i) for i in pip.__version__.split(".")]) < PIP_VERSION:
              "Upgrade with `pip install --upgrade pip`")
 
 
-class InstallMixin():
+class InstallMixin:
     @staticmethod
     def print(msg):
         logfile = open(LOGFILE, "a", encoding="utf-8")
@@ -74,23 +75,82 @@ class InstallMixin():
         print(msg)
 
 
-class CoreInstaller(CoreBase, InstallMixin):
+class WebBuilder(CoreBase, InstallMixin):
+
+    def __init__(self, root):
+        self.root = os.path.abspath(root)
+        self.venv = os.path.join(self.root, core4.const.VENV)
+        self.pip = os.path.join(self.root, core4.const.VENV_PIP)
+        self.python = os.path.join(self.root, core4.const.VENV_PYTHON)
+        self.project_config = os.path.join(self.root, CONFIG)
+        self.env = os.environ
+
+    # self.clone
+
+    def build(self, filter):
+        self.print("  build webapps in [{}]".format(self.root))
+        for build in self.identify_webapp(self.root):
+            if (filter == [] or build["name"] in filter):
+                self.print("    build [{}]".format(build["base"]))
+                self.clean_webapp(os.path.join(build["base"], build["dist"]))
+                self.build_webapp(build["base"], build["command"])
+
+
+    def clean_webapp(self, dist):
+        if os.path.exists(dist):
+            self.print("    clean [{}]".format(dist))
+            shutil.rmtree(dist)
+
+    def build_webapp(self, base, command):
+        os.chdir(base)
+        fh = open(LOGFILE, "a", encoding="utf-8")
+        for cmd in command:
+            self.print("    $ {}".format(cmd))
+            proc = Popen(cmd, shell=True, env=self.env, stdout=PIPE,
+                         stderr=STDOUT)
+            for line in proc.stdout:
+                line = line.decode("utf-8")
+                fh.write(line)
+                self.print("      {}".format(line.strip()))
+        fh.close()
+        os.chdir(self.root)
+
+    def identify_webapp(self, folder):
+        for path, directories, filenames in os.walk(folder):
+            for directory in directories:
+                pkg_json_file = os.path.join(path, directory, "package.json")
+                if os.path.exists(pkg_json_file):
+                    try:
+                        pkg_json = json.load(
+                            open(pkg_json_file, "r", encoding="utf-8"))
+                        if "core4" in pkg_json:
+                            command = pkg_json["core4"].get(
+                                "build_command", None)
+                            dist = pkg_json["core4"].get(
+                                "dist", None)
+                            if command is not None and dist is not None:
+                                yield {
+                                    "base": os.path.join(path, directory),
+                                    "command": command,
+                                    "dist": dist,
+                                    "name": pkg_json.get("name", None)
+                                }
+                    except:
+                        self.print("    failed to parse [{}]".format(
+                            pkg_json_file))
+
+
+class CoreInstaller(WebBuilder):
 
     def __init__(self, project, repository=None, reset=False, web=False,
                  home=None):
-        super().__init__()
         self.home = home or self.config.folder.home
         self.project = project
         self.repository = repository
         self.reset = reset
         self.web = web
-        self.root = os.path.join(self.home, self.project)
-        self.venv = os.path.join(self.root, core4.const.VENV)
-        self.pip = os.path.join(self.root, core4.const.VENV_PIP)
-        self.python = os.path.join(self.root, core4.const.VENV_PYTHON)
+        super().__init__(os.path.join(self.home, self.project))
         self.clone = os.path.join(self.root, CLONE)
-        self.project_config = os.path.join(self.root, CONFIG)
-        self.env = os.environ
         if "PYTHONPATH" in self.env:
             del self.env["PYTHONPATH"]
 
@@ -161,6 +221,13 @@ class CoreInstaller(CoreBase, InstallMixin):
                          stderr=DEVNULL).communicate()
         return out.decode("utf-8").strip()
 
+    def get_commit_datetime(self, commit):
+        os.chdir(self.clone)
+        (out, _) = Popen(["git", "--no-pager", "log", "-n", "1",
+                          "--pretty=format:%aD", commit], env=self.env,
+                         stdout=PIPE, stderr=DEVNULL).communicate()
+        return out.decode("utf-8").strip()
+
     def checkout(self):
         """
         Clone and checkout appropriate version from remote git repository.
@@ -229,69 +296,6 @@ class CoreInstaller(CoreBase, InstallMixin):
         assert ret == 0
         return "\n".join(stdout)
 
-    def build(self, filter):
-        self.print("  build webapps in [{}]".format(self.clone))
-        for build in self.identify_webapp():
-            if filter == [] or build["name"] in filter:
-                self.print("    build [{}]".format(build["base"]))
-                self.clean_webapp(os.path.join(build["base"], build["dist"]))
-                self.build_webapp(build["base"], build["command"])
-                self.install_webapp(build["base"], build["dist"])
-
-    def install_webapp(self, base, dist):
-        command = "import {p:s}; print({p:s}.__file__)".format(p=self.project)
-        os.chdir(self.root)
-        proc = Popen([self.python, "-c", command], env=self.env, stdout=PIPE,
-                     stderr=STDOUT)
-        (out, _) = proc.communicate()
-        pkg_clone = os.path.join(self.clone, self.project)
-        part = base[len(pkg_clone) + 1:]
-        target = os.path.join(os.path.dirname(out.decode("utf-8")), part, dist)
-        if os.path.exists(target):
-            self.print("    clean [{}]".format(target))
-            shutil.rmtree(target)
-        source = os.path.join(base, dist)
-        self.print("    copy [{}] to [{}]".format(source, target))
-        shutil.copytree(source, target)
-
-    def clean_webapp(self, dist):
-        if os.path.exists(dist):
-            self.print("    clean [{}]".format(dist))
-            shutil.rmtree(dist)
-
-    def build_webapp(self, base, command):
-        os.chdir(base)
-        fh = open(LOGFILE, "a", encoding="utf-8")
-        for cmd in command:
-            self.print("    $ {}".format(cmd))
-            proc = Popen(cmd, shell=True, env=self.env, stdout=PIPE,
-                         stderr=STDOUT)
-            for line in proc.stdout:
-                line = line.decode("utf-8")
-                fh.write(line)
-                self.print("      {}".format(line.strip()))
-        fh.close()
-
-    def identify_webapp(self):
-        for path, directories, filenames in os.walk(self.clone):
-            for directory in directories:
-                pkg_json_file = os.path.join(path, directory, "package.json")
-                if os.path.exists(pkg_json_file):
-                    pkg_json = json.load(
-                        open(pkg_json_file, "r", encoding="utf-8"))
-                    if "core4" in pkg_json:
-                        command = pkg_json["core4"].get(
-                            "build_command", None)
-                        dist = pkg_json["core4"].get(
-                            "dist", None)
-                        if command is not None and dist is not None:
-                            yield {
-                                "base": os.path.join(path, directory),
-                                "command": command,
-                                "dist": dist,
-                                "name": pkg_json.get("name", None)
-                            }
-
     def upgrade(self, test=False, force=False, core4=False):
         if self.project == "core4" and core4:
             return
@@ -326,18 +330,66 @@ class CoreInstaller(CoreBase, InstallMixin):
                 self.popen(self.pip, "uninstall", "core4", "--yes")
         if not test and (self.reset or force or core4 or latest != current):
             if self.reset:
-                self.install()
+                self.install([])
             else:
                 self.install_project()
                 self.write_config()
                 if self.web and (not core4 or force):
                     self.build([])
 
+    def build(self, filter):
+        self.print("  build webapps in [{}]".format(self.clone))
+        for build in self.identify_webapp(self.clone):
+            if (filter == [] or build["name"] in filter):
+                self.print("    build [{}]".format(build["base"]))
+                self.clean_webapp(os.path.join(build["base"], build["dist"]))
+                self.build_webapp(build["base"], build["command"])
+                self.install_webapp(build["base"], build["dist"])
+
+    def install_webapp(self, base, dist):
+        command = "import {p:s}; print({p:s}.__file__)".format(p=self.project)
+        os.chdir(self.root)
+        proc = Popen([self.python, "-c", command], env=self.env, stdout=PIPE,
+                     stderr=STDOUT)
+        (out, _) = proc.communicate()
+        pkg_clone = os.path.join(self.clone, self.project)
+        part = base[len(pkg_clone) + 1:]
+        target = os.path.join(os.path.dirname(out.decode("utf-8")), part, dist)
+        if os.path.exists(target):
+            self.print("    clean [{}]".format(target))
+            shutil.rmtree(target)
+        source = os.path.join(base, dist)
+        self.print("    copy [{}] to [{}]".format(source, target))
+        shutil.copytree(source, target)
+
     def version(self):
         args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
         proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
         (stdout, stderr) = proc.communicate()
-        return stdout.decode("utf-8")
+        data = self.read_config()
+        self.repository = data["repository"]
+        self.web = data["web"]
+        current = data["commit"]
+        if os.path.isdir(self.repository):
+            self.clone = self.repository
+        timestamp = self.get_commit_datetime(current)
+        (version, build, core4_version, *core4_build) = stdout.decode(
+            "utf-8").strip().split(", ")
+        return {
+            "repository": self.repository,
+            "web": self.web,
+            "version": version,
+            "build": build,
+            "commit": {
+                "hash": data["commit"],
+                "timestamp": timestamp
+            },
+            "core4": {
+                "version": core4_version,
+                "build": ", ".join(core4_build)
+            },
+            "error": stderr or None
+        }
 
 
 class CoreUpdater(CoreBase, InstallMixin):
@@ -372,13 +424,22 @@ def run(args):
     elif args["version"]:
         for p in project:
             installer = CoreInstaller(p, home=args["--home"])
-            out = installer.version()
-            try:
-                version, *build = out.split()
-                print("{} - {}, build {}".format(
-                    p, version, " ".join(build)))
-            except Exception as exc:
-                print("error:", p, exc, out)
+            data = installer.version()
+            print(p)
+            if data["error"]:
+                print("  ERROR:\n{}".format(data["error"]))
+            else:
+                print("  version: {} ({}) {} webapps".format(
+                    data["version"], data["build"],
+                    "with" if data["web"] else "without"))
+                print("  commit:  {} ({})".format(
+                    data["commit"]["timestamp"], data["commit"]["hash"]))
+                print("  source:  {}".format(data["repository"]))
+                print("  core4:   {}, build {}".format(
+                    data["core4"]["version"], data["core4"]["build"]))
+    elif args["build"]:
+        installer = WebBuilder(".")
+        installer.build(args["--build"])
     else:
         raise SystemExit("nothing to do.")
     runtime = datetime.datetime.now() - t0
@@ -387,7 +448,7 @@ def run(args):
 
 def main():
     args = docopt(__doc__, help=True)
-    #print(args)
+    # print(args)
     run(args)
 
 

@@ -95,7 +95,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         return server
 
     def serve(self, *args, port=None, address=None, name=None, reuse_port=True,
-              routing=None, core4api=True):
+              routing=None, core4api=True, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -117,7 +117,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         """
         self.create_routes(*args, port=port, address=address, name=name,
                            reuse_port=reuse_port, routing=routing,
-                           core4api=core4api)
+                           core4api=core4api, **kwargs)
         self.init_callback()
         self.start_loop()
 
@@ -178,6 +178,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             for addon in (CoreApiServer, CoreWidgetServer):
                 if addon.qual_name() not in qual_names:
                     container_list.append(addon)
+        # fix routing order
+        container_list.sort(key=lambda r: r.get_root(), reverse=True)
         for container_cls in container_list:
             if not container_cls.enabled:
                 self.logger.warning("skipping NOT enabled container [%s]",
@@ -282,15 +284,14 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         rsc_id=rule.rsc_id,
 
                         author=handler.author,
-                        icon=handler.icon,
                         project=handler.get_project(),
                         protected=handler.protected,
                         qual_name=handler.qual_name(),
                         tag=handler.tag,
                         title=handler.title,
-                        version=handler.version(),
+                        subtitle=handler.subtitle,
                         enter_url=handler.enter_url,
-                        blank=handler.blank
+                        target=handler.target
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
@@ -349,7 +350,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                          "[%d] reset", self.identifier, total, reset)
 
     def serve_all(self, project=None, filter=None, port=None, address=None,
-                  name=None, reuse_port=True, routing=None):
+                  name=None, reuse_port=True, routing=None, **kwargs):
         """
         Starts the tornado HTTP server listening on the specified port and
         enters tornado's IOLoop.
@@ -392,5 +393,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 reuse_port=reuse_port,
                 routing=routing,
             )
+            args.update(kwargs)
             core4.service.introspect.main.exec_project(
                 project, SERVE, a=scope, kw=args, replace=True)

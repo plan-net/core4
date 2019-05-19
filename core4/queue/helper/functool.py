@@ -49,6 +49,12 @@ def enqueue(job, **kwargs):
     return queue.enqueue(name=name, **kwargs)._id
 
 
+class DirectWorker(core4.queue.worker.CoreWorker):
+
+    def handle_signal(self):
+        pass
+
+
 def execute(job, **kwargs):
     """
     Enqueue and immediately execute a job in foreground. This
@@ -70,7 +76,7 @@ def execute(job, **kwargs):
     core4.logger.logon()
     queue = core4.queue.main.CoreQueue()
     job = queue.enqueue(name=name, **kwargs)
-    worker = core4.queue.worker.CoreWorker(name="manual")
+    worker = DirectWorker(name="manual")
     worker.at = core4.util.node.mongo_now()
     worker.start_job(job.serialise(), run_async=False)
     doc = worker.queue.job_detail(job._id)

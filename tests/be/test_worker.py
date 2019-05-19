@@ -38,7 +38,7 @@ import core4.util
 import core4.util.tool
 
 ASSET_FOLDER = '../asset'
-MONGO_URL = 'mongodb://core:654321@localhost:27017'
+MONGO_URL = 'mongodb://core:654321@testmongo:27017'
 MONGO_DATABASE = 'core4test'
 
 
@@ -154,7 +154,7 @@ class ProgressJob(core4.queue.job.CoreJob):
             time.sleep(0.25)
 
 
-#@pytest.mark.timeout(30)
+@pytest.mark.timeout(30)
 def test_success_after_failure(queue, worker):
     import tests.project.work
     queue.enqueue(tests.project.work.ErrorJob, success=True)

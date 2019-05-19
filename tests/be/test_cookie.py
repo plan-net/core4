@@ -10,12 +10,12 @@ import tests.be.util
 class TestCookie(unittest.TestCase):
 
     def setUp(self):
-        conn = pymongo.MongoClient('mongodb://core:654321@localhost:27017')
+        conn = pymongo.MongoClient('mongodb://core:654321@testmongo:27017')
         conn.drop_database("core4test")
 
     @property
     def mongo(self):
-        conn = pymongo.MongoClient('mongodb://core:654321@localhost:27017')
+        conn = pymongo.MongoClient('mongodb://core:654321@testmongo:27017')
         return conn["core4test"]["sys.cookie"]
 
     def tearDown(self):
