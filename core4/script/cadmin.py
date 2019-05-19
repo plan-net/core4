@@ -120,21 +120,24 @@ class WebBuilder(CoreBase, InstallMixin):
             for directory in directories:
                 pkg_json_file = os.path.join(path, directory, "package.json")
                 if os.path.exists(pkg_json_file):
-                    pkg_json = json.load(
-                        open(pkg_json_file, "r", encoding="utf-8"))
-                    if "core4" in pkg_json:
-                        command = pkg_json["core4"].get(
-                            "build_command", None)
-                        dist = pkg_json["core4"].get(
-                            "dist", None)
-                        if command is not None and dist is not None:
-                            yield {
-                                "base": os.path.join(path, directory),
-                                "command": command,
-                                "dist": dist,
-                                "name": pkg_json.get("name", None)
-                            }
-
+                    try:
+                        pkg_json = json.load(
+                            open(pkg_json_file, "r", encoding="utf-8"))
+                        if "core4" in pkg_json:
+                            command = pkg_json["core4"].get(
+                                "build_command", None)
+                            dist = pkg_json["core4"].get(
+                                "dist", None)
+                            if command is not None and dist is not None:
+                                yield {
+                                    "base": os.path.join(path, directory),
+                                    "command": command,
+                                    "dist": dist,
+                                    "name": pkg_json.get("name", None)
+                                }
+                    except:
+                        self.print("    failed to parse [{}]".format(
+                            pkg_json_file))
 
 
 class CoreInstaller(WebBuilder):
