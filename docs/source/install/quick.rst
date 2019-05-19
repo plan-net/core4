@@ -3,7 +3,8 @@ quick guide
 ###########
 
 This quick installation guide installs the prerequisites and uses the default
-core4 settings. The setup has been tested with Debian 9 (Stretch).
+core4 settings. The setup has been tested with Debian 9 (Stretch). For Ubuntu
+18.04 there is a dedicated :doc:`Ubuntu 18.04 quick install guide <ubuntu>`.
 
 
 .. code-block:: shell
