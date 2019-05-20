@@ -120,22 +120,19 @@
                 <span>Remove widget from board</span>
               </v-tooltip>
             </v-layout>
-            <template v-if="widget.endpoint">
-              <a
-                :href="widget.endpoint.enter_url"
-                @click.prevent="()=>{}"
+            <a v-if="widget.endpoint"
+               :href="widget.endpoint.enter_url"
+            >
+              <v-card-text
+                @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
+                :alt="widget.endpoint.enter_url"
               >
-                <v-card-text
-                  @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
-                  :alt="widget.endpoint.enter_url"
-                >
-                  <iframe
-                    :src="`${widget.endpoint.card_url}&dark=${dark}`"
-                    frameborder="0"
-                  ></iframe>
-                </v-card-text>
-              </a>
-            </template>
+                <iframe @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
+                        :src="`${widget.endpoint.card_url}&dark=${dark}`"
+                        frameborder="0"
+                ></iframe>
+              </v-card-text>
+            </a>
             <v-card-title>
               <v-icon class="widget-drag-icon white--text">drag_indicator</v-icon>
             </v-card-title>
@@ -161,6 +158,11 @@ export default {
   mounted () {
   },
   methods: {
+    open (event, widget) {
+      console.log(event, widget)
+      event.preventDefault()
+      this.$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })
+    },
     openInNew (widget) {
       let path = null
       if (widget.target === 'blank') {
@@ -276,9 +278,20 @@ export default {
   /deep/ .v-card__text {
     padding: 0;
     height: calc(100%);
+    &:before {
+      cursor: pointer;
+      content: '';
+      display: block;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 38px;
+      top: 28px;
+      background-color: rgba(0, 0, 255, 0.0);
+      z-index: 1000;
+    }
 
     iframe {
-      background-color: #fff;
       width: 100%;
       height: 100%;
     }
@@ -345,9 +358,6 @@ export default {
 <style scoped lang="scss">
   .theme--dark {
     .over {
-    
-    
-    
       box-shadow: 0px 0px 4px 2px rgba(255, 255, 255, 0.45) !important;
     }
 
