@@ -389,9 +389,9 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                         try:
                             js = json.loads(out)
                             data += js
-                        except:
-                            self.logger.error("failed to load [%s]",
-                                              project)
+                        except Exception as exc:
+                            self.logger.error("failed to load [%s]:\n%s\n%s",
+                                              project, exc, out)
                     else:
                         self.logger.error("failed to load [%s] due to"
                                           "missing Python virtual "
