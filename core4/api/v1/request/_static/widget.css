@@ -30,6 +30,11 @@
 .md-chip-rounded {
   border-radius: 32px;
 }
+.widget-card-container, .widget-card{
+  overflow-x: hidden;
+  overflow-y: hidden;
+
+}
 .widget-card-container{
   background: grey;
 }
