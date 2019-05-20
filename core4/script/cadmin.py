@@ -152,9 +152,9 @@ class CoreInstaller(WebBuilder):
         self.home = home or self.config.folder.home
         root = os.path.join(self.home, self.project)
         self.clone = os.path.join(root, CLONE)
+        self.init_vars(root)
         if "PYTHONPATH" in self.env:
             del self.env["PYTHONPATH"]
-        self.init_vars(root)
 
     def check_for_install(self):
         """
