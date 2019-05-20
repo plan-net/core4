@@ -77,7 +77,7 @@ class InstallMixin:
 
 class WebBuilder(CoreBase, InstallMixin):
 
-    def __init__(self, root):
+    def init_vars(self, root):
         self.root = os.path.abspath(root)
         self.venv = os.path.join(self.root, core4.const.VENV)
         self.pip = os.path.join(self.root, core4.const.VENV_PIP)
@@ -144,15 +144,17 @@ class CoreInstaller(WebBuilder):
 
     def __init__(self, project, repository=None, reset=False, web=False,
                  home=None):
+        super().__init__()
         self.project = project
         self.repository = repository
         self.reset = reset
         self.web = web
-        super().__init__(os.path.join(self.home, self.project))
         self.home = home or self.config.folder.home
-        self.clone = os.path.join(self.root, CLONE)
+        root = os.path.join(self.home, self.project)
+        self.clone = os.path.join(root, CLONE)
         if "PYTHONPATH" in self.env:
             del self.env["PYTHONPATH"]
+        self.init_vars(root)
 
     def check_for_install(self):
         """
@@ -438,7 +440,8 @@ def run(args):
                 print("  core4:   {}, build {}".format(
                     data["core4"]["version"], data["core4"]["build"]))
     elif args["build"]:
-        installer = WebBuilder(".")
+        installer = WebBuilder()
+        installer.init_vars(".")
         installer.build(args["--build"])
     else:
         raise SystemExit("nothing to do.")
