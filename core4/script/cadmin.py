@@ -144,12 +144,12 @@ class CoreInstaller(WebBuilder):
 
     def __init__(self, project, repository=None, reset=False, web=False,
                  home=None):
-        self.home = home or self.config.folder.home
         self.project = project
         self.repository = repository
         self.reset = reset
         self.web = web
         super().__init__(os.path.join(self.home, self.project))
+        self.home = home or self.config.folder.home
         self.clone = os.path.join(self.root, CLONE)
         if "PYTHONPATH" in self.env:
             del self.env["PYTHONPATH"]
