@@ -119,16 +119,15 @@
                 </v-btn>
                 <span>Remove widget from board</span>
               </v-tooltip>
-            </v-layout>
+            </v-layout><!--
+               :href="widget.endpoint.enter_url" -->
             <a v-if="widget.endpoint"
-               :href="widget.endpoint.enter_url"
             >
               <v-card-text
-                @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
+                @click="$router.push({ name: 'enter', params: { widgetId: widget.rsc_id } })"
                 :alt="widget.endpoint.enter_url"
               >
-                <iframe @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
-                        :src="`${widget.endpoint.card_url}&dark=${dark}`"
+                <iframe :src="`${widget.endpoint.card_url}&dark=${dark}`"
                         frameborder="0"
                 ></iframe>
               </v-card-text>
