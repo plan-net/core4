@@ -7,8 +7,7 @@
 
         <v-tooltip>
           <v-btn
-            @click="$bus.$emit('e
-            dit-board-name')"
+            @click="$bus.$emit('edit-board-name')"
             color="primary"
             large
             dark

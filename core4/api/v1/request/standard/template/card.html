@@ -145,7 +145,9 @@
                 {% end %}
             </div>
             <p class="widget-description text-muted pt-1 mt-1">
+                {% if description != None %}
                 {{description[:115]}}{% if len(description) > 115 %}…{% end %}
+                {% end if %}
             </p>
             <div class="d-flex flex-row widget-footer">
                 <small class="d-flex flex-row mr-3">
