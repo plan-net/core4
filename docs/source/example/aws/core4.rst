@@ -56,12 +56,7 @@ install core4
 
     cd /srv/core4.prod
 
-    #export LC_ALL=de_DE.UTF8
-    ssh-keygen -R git.bi.plan-net.com
-    ssh-keyscan git.bi.plan-net.com >> /home/admin/.ssh/known_hosts
-
-    # requires private key id_rsa
-    GIT_SSH_COMMAND='ssh -i /home/admin/.ssh/id_rsa' git clone ssh://mra@git.bi.plan-net.com/srv/git/core4.git
+    git clone https://github.com/plan-net/core4.git
 
     cd core4
     git checkout master

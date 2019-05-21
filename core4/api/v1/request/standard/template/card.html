@@ -1,39 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- https://fezvrasta.github.io/bootstrap-material-design/docs/4.0/utilities/ -->
+
 <head>
     <meta charset="UTF-8">
     <title>CARD {{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
-</head>
-<div class="container">
-    <h1>{{ handler.__class__.__name__ }}</h1>
- 
-    <hr/>
-    
-    <ul>
-        <li><b>AT:</b> {{ handler.started }}</li>
-        <li><b>ID:</b> {{ handler.rsc_id }}</li>
-        <li><b>TITLE:</b> {{ handler.title }}</li>
-        <li><b>AUTHOR:</b> {{ handler.author }}</li>
-        <li><b>QUAL_NAME:</b> {{ handler.qual_name() }}</li>
-        <li><b>ICON: <i class="material-icons">{{ handler.icon }}</i></b> - {{ handler.icon }}</li>
-        <li><b>ENTER:</b> <a href="{{ handler.enter_url }}">{{ handler.enter_url }}</a>
-        <li><b>HELP:</b> <a href="{{ handler.help_url }}">{{ handler.help_url }}</a>
-        </li>
+    <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        
+    </style>
 
-        {% import inspect %}
-        {% import importlib %}
-    
-        {% set module = importlib.import_module(handler.__class__.__module__) %}
-    
-        <li><b>FILE:</b> {{ inspect.getfile(module) }}</li>
-    
-    </ul>
-    
-    <hr/>
-</div>
-<script src="{{ default_static('widget/jq.pop.bsmd.min.js') }}"></script>
+</head>
+
+<body class="theme-dark widget-card-container">
+    <div class="container widget-card d-flex flex-row ">
+        <!--<div class="d-flex flex-row widget-card__inner">-->
+        <div class="pr-1">
+            <i class="material-icons widget-icon text-primary">{{ icon }}</i>
+        </div>
+        <div class="d-flex flex-column pl-1">
+            <h1 class="widget-title pt-1">{{ title }}</h1>
+            <h2 class="widget-subtitle text-muted">{{ qual_name.rsplit('.')[0]+'…'+qual_name.rsplit('.')[-1] }}
+            </h2>
+
+            <div class="md-chips pt-0 pb-0">
+                {% for t in tag[:3] %}
+                <div class="md-chip">
+                    {{t}}
+                </div>
+                {% end %}
+            </div>
+            <p class="widget-description text-muted pt-1 mt-1">
+                {% if description != None %}
+                {{description[:115]}}{% if len(description) > 115 %}…{% end %}
+                {% end if %}
+            </p>
+            <div class="d-flex flex-row widget-footer">
+                <small class="d-flex flex-row mr-3">
+                    <i class="material-icons text-success">person</i>
+                    <span class="text-muted pl-1 pt-1">{{author}}</span>
+                </small>
+                <small class="d-flex flex-row">
+                    <i class="material-icons text-success">date_range</i>
+                    <span class="text-muted pl-1 pt-1">{{created_at.strftime("%d.%m.%Y %H:%M")}}</span>
+                </small>
+            </div>
+
+
+
+
+        </div>
+    </div>
+
+
 
 </body>
+<!--<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>-->
+<script>
+    (function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const dark = urlParams.get('dark') === 'true';
+        if (dark) {
+            document.querySelector('body').classList.add('theme-dark')
+        } else {
+            document.querySelector('body').classList.remove('theme-dark')
+            document.querySelector('body').classList.add('theme-light')
+        }
+
+    })();
+</script>
+
+</body>
+
 </html>

@@ -28,42 +28,91 @@ prerequisite installation guide
 
 core4os has on the following prerequisites:
 
-* Linux flavour operating system
-* Python 3.5
-* MongoDB database instance version 3.6.4 or higher up-and-running,
-  download from https://www.mongodb.com/download-center#community
-* pip
-* git
-
-This step-by-step guide shows how to install and setup all required systems.
-
-Debian 9 ships with Python 3. Check installation with:
-
-    python3 --version
+* Linux flavour operating system, preferred Debian 9 or Ubuntu 18.04
+* Python 3.5 or higher
+* MongoDB database instance version 3.6 or higher up-and-running,
+  see https://www.mongodb.com/download-center#community
+* pip 18.1 or higher
+* git 2 or higher
 
 
 Install pip for Python 3, python-venv and git with:
 
-    sudo apt-get install python3-pip python3-venv git
+    # install prerequisites
+    sudo apt-get install python3-pip python3-venv python3-dev git dirmngr --yes
 
 
 Install MongoDB and enable the service to start at boot time with:
 
-    sudo apt-get install dirmngr
+    # install MongoDB
     sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
-    echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.0 main" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+    echo "deb http://repo.mongodb.org/apt/debian "$(lsb_release -sc)"/mongodb-org/4.0 main" | sudo tee /etc/apt/sources.list.d/mongodb.list
     sudo apt-get update
-    sudo apt-get install -y mongodb-org
-    sudo systemctl enable mongod
+    sudo apt-get install mongodb-org --yes
+    sudo systemctl start mongod.service
+    sudo systemctl enable mongod.service
 
 
-Protect MongoDB with a password of your choice. Note that all core4 regression 
-tests use username ``core`` with password ``654321`` on development desktops. 
+Please note that MongoDB requires further configuration. See below.
+
+Install nodejs, yarn and npm to build and setup web tools:
+
+    # install nodejs and npm
+    wget -qO- https://deb.nodesource.com/setup_11.x | sudo bash -
+    sudo apt-get update
+    sudo apt-get install -y nodejs
+    
+    # install yarn
+    wget -qO- https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    sudo apt-get update
+    sudo apt-get install yarn --yes
+    sudo npm -g install vue-cli
+
+    
+core4os installation 
+--------------------
+
+Clone and install core4os framework in a Python virtual environment:
+
+    # clone core4
+    git clone https://github.com/plan-net/core4.git
+    
+    # setup and enter Python virtual environment
+    cd core4
+    python3 -m venv .venv
+    source enter_env
+    
+    # install core4
+    pip install --upgrade pip
+    pip install .
+    
+
+MongoDB setup
+-------------
+
+MongoDB requires further configuration to setup a replica set. core4os uses
+some special features of MongoDB which are only available with replica set.
+
+The interactive script ``local_setup.py`` simplifies this configuration.
+Start the script with ``python local_setup.py`` in your Python virtual
+environment created above. 
+
+
+MongoDB protection
+------------------
+
+Please note that running the core4os regression tests has two additional
+requirements. First, the user ``core`` must exists as a MongoDB user with
+password ``654321``. Second, your MongoDB hostname must have an additional
+domain name ``testmongo``.
+
+
 Ensure your setup is reflected with your core4 ``local.yaml`` configuration 
 file.
 
-Pass the following javascript to the mongo shell. Ensure to update the username
-and password if required:
+Pass the following javascript to the mongo shell to create user ``core`` with
+password ``654321``:
 
     mongo <<- EOF
     use admin
@@ -84,6 +133,13 @@ lines:
       authorization: enabled
 
 
+Add hostname ``testmongo`` to your ``/etc/hosts`` file:
+
+    127.0.0.1   localhost
+    127.0.0.1   devops
+    127.0.0.1   testmongo
+
+
 Finally restart mongod with:
 
     service mongod restart
@@ -93,26 +149,15 @@ Test settings and MongoDB connection now with:
 
     mongo --username=core --password=654321 --authenticationDatabase admin
 
-    
-core4os installation 
---------------------
 
-Clone and install core4os framework in a Python virtual environment:
+build web tools
+---------------
 
-    # clone core4os
-    git clone ssh://git.bi.plan-net.com/srv/git/core4.git
+Use core4os tool ``cadmin`` to build all web tools inside the Python virtual
+environment created above:
 
-    # enter clone
-    cd core4
-
-    # create Python virtual environment
-    python3 -m venv .venv
-
-    # enter Python virtual environment
-    source enter_env
-
-    # install core4 in development mode
-    pip install -e ".[tests]"
+    # build core4 web apps
+    cadmin build
 
 
 further reads
@@ -125,6 +170,10 @@ or build the sphinx documentation yourself with
     pip install -e ".[tests]" 
     cd core4/docs
     make html
+    
+
+There you will find further installation instructions and an Ubuntu 18.04 
+step-by-step installation guide.
 
 
 3rd party systems and licenses
@@ -132,11 +181,3 @@ or build the sphinx documentation yourself with
 
 All external packages used within core4 have their license placed within the 
 ``LICENSES`` directory.
-
-Those most notably contain:
-
-* pymongo
-* pandas
-* tornado
-* sphinx
-
