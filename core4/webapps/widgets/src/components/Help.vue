@@ -2,7 +2,7 @@
   <div>
     <iframe
       v-if="widget"
-      :src="path"
+      :src="`${path}&dark=${dark}`"
       frameborder="0"
     ></iframe>
   </div>
@@ -33,6 +33,9 @@ export default {
     this.$bus.$off('c4-application-close')
   },
   computed: {
+    dark () {
+      return this.$store.getters.dark
+    },
     widget () {
       const data = this.$store.getters.widgetById(this.$route.params.widgetId)
       return data
@@ -58,7 +61,7 @@ export default {
     position: absolute;
     left: 0;
     right: 0;
-    top: 55px;
+    top: 48px;
     bottom: 0;
     background-color: #fff;
     padding: 0 0 0 0;
