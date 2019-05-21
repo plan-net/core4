@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import moment from 'moment'
+// import moment from 'moment'
 import { mapGetters } from 'vuex'
 
 import { Chart } from 'highcharts-vue'
@@ -15,6 +15,7 @@ import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
 
 import { jobs, jobColors } from '../settings'
+import { createObjectWithDefaultValues } from '../helper'
 
 stockInit(Highcharts)
 
@@ -248,7 +249,10 @@ export default {
   data () {
     return {
       timer: 1000,
-      timerId: undefined
+      timerId: null,
+      isHistoryRetrievingInProgress: true,
+      history: createObjectWithDefaultValues(jobs, []),
+      recentQueueUpdates: createObjectWithDefaultValues(jobs, [])
     }
   },
   created () {
@@ -261,117 +265,110 @@ export default {
 
     const component = this
     const chart = component.$refs.chart.chart
-    const series = chart.series.reduce((computedResult, series) => {
-      computedResult[series.name] = series
 
-      return computedResult
-    }, {})
-
-    // ToDo: write a comment why it should be like this
-    // const chartSeriesReference = Object.values(series)
-    const chartSeriesReference = [series.running, series.pending, series.deferred, series.failed, series.error, series.inactive, series.killed]
+    let lastHistoryPointTimestamp
 
     chart.showLoading('Loading data from server...')
 
-    // {running: [], ..., error:[]}
-    const history = jobs.reduce((computedResult, job) => {
-      computedResult[job] = []
+    // store actual queue updates while retrieving history
+    this.$store.subscribe((mutation, state) => {
+      switch (mutation.type) {
+        case 'SOCKET_ONMESSAGE':
+          if (this.isHistoryRetrievingInProgress && !state.initialState) {
+            console.log('recentQueueUpdates', state.event)
+            const event = state.event
 
-      return computedResult
-    }, {})
+            jobs.forEach(item => {
+              const x = (new Date()).getTime() // current time
 
-    let last
+              component.recentQueueUpdates[item].push([x, event[item] || 0])
+            })
+          }
+          break
+      }
+    })
 
     const onNext = val => {
       console.log(val)
+      if (val.data.length) {
+        // response from serve sometimes have objects with the same creation date,
+        // highchart don't allowed to set points with the same creation date,
+        // need to add a 100 milliseconds to creation date so the created key become unique
+        val.data.forEach((item, i, arr) => {
+          item.timestamp = new Date(item.created).getTime()
 
-      val.data.forEach((item, i, arr) => {
-        item.timestamp = new Date(item.created).getTime()
+          if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
+            arr[i].timestamp = lastHistoryPointTimestamp + 50
+          }
 
-        if (item.timestamp === last || item.timestamp < last) {
-          arr[i].timestamp = last + 100
-        }
+          jobs.forEach(job => {
+            component.history[job].push([item.timestamp, item[job] || 0])
+          })
 
-        Object.keys(history).forEach(job => {
-          history[job].push([item.timestamp, item[job] || 0])
+          lastHistoryPointTimestamp = arr[i].timestamp
         })
-
-        last = arr[i].timestamp
-      })
-
-      // let historyWithoutDuplicates = {}
-
-      // response from serve sometimes have 2 object with the same creation date,
-      // highchart don't allowed to set points with the same creation date,
-      // need to merge object with the same creation date to one
-      // so the created key become unique
-      // val.data.forEach(item => {
-      //   if (!historyWithoutDuplicates[item.created]) {
-      //     historyWithoutDuplicates[item.created] = jobs.reduce((computedResult, job) => {
-      //       computedResult[job] = item[job] || 0
-      //
-      //       return computedResult
-      //     }, {})
-      //   } else {
-      //     for (let key in item) {
-      //       if (key !== 'created' && key !== 'total') {
-      //         historyWithoutDuplicates[item.created][key] = item[key]
-      //       }
-      //     }
-      //   }
-      // })
-      //
-      // console.log(historyWithoutDuplicates)
-      //
-      // // convert created date value into timestamp,
-      // // convert all history values into hightchart points
-      // // in ascending order
-      // for (let createdTime in historyWithoutDuplicates) {
-      //   const timestamp = new Date(createdTime).getTime()
-      //
-      //   Object.keys(history).forEach(job => {
-      //     history[job].push([timestamp, historyWithoutDuplicates[createdTime][job]])
-      //   })
-      // }
-
-      // chartSeriesReference.forEach(item => {
-      //   item.setData(history[item.name])
-      //   // item.setData(history[item.name], false, true, false)
-      // })
-      // // chart.redraw()
-      // chart.hideLoading()
+      }
     }
 
     const onCompleted = () => {
       console.log('onCompleted function')
+      let last = {}
 
+      const series = chart.series.reduce((computedResult, series) => {
+        computedResult[series.name] = series
+
+        return computedResult
+      }, {})
+
+      // ToDo: write a comment why it should be like this
+      const chartSeriesReference = [
+        series.running,
+        series.pending,
+        series.deferred,
+        series.failed,
+        series.error,
+        series.inactive,
+        series.killed
+      ]
+
+      component.isHistoryRetrievingInProgress = false
+
+      // add history chunk to chart + recent data from the queue
       chartSeriesReference.forEach(item => {
-        item.setData(history[item.name], false, true, false)
+        const data = component.history[item.name].concat(component.recentQueueUpdates[item.name])
+
+        last[item.name] = data.length ? data[data.length - 1][1] : undefined // ToDo: <--- find better solution
+
+        item.setData(data, false, true, false)
       })
+
       chart.redraw()
       chart.hideLoading()
 
-      // ToDo: explain why we use Timeout instead Interval
+      // recursive Timeout easier than Interval for system pressure
       component.timerId = setTimeout(function update () {
-        const x = (new Date()).getTime()// current time
-        const shift = series.running.data.length > 3600 // 1 hour
+        const x = (new Date()).getTime() // current time
+        const shift = chart.pointCount > 1750 // (250 points for each series)
+        const data = component.isInInitialState ? last : component.getChartData
 
-        // if (component.getChartData) {
-          chartSeriesReference.forEach(item => {
-            item.addPoint([x, component.getChartData[item.name]], false, shift)
-          })
+        chartSeriesReference.forEach(item => {
+          item.addPoint([x, data[item.name] || 0], false, shift)
+        })
 
-          chart.redraw()
-        // }
+        chart.redraw()
 
         component.timerId = setTimeout(update, component.timer)
       }, component.timer)
     }
 
-    this.$getChartHistory().subscribe(onNext, err => console.log(err), onCompleted)
+    const onError = (err) => {
+      console.log(err.type)
+    }
+
+    this.$getChartHistory().subscribe(onNext, onError, onCompleted)
   },
   computed: {
-    ...mapGetters(['getChartData']),
+    ...mapGetters(['isInInitialState', 'getChartData']),
     chartOptions () {
       return {
         chart: {
@@ -453,6 +450,17 @@ export default {
           }
         },
 
+        loading: {
+          // showDuration: 700,
+          hideDuration: 700,
+          labelStyle: {
+            color: 'white'
+          },
+          style: {
+            backgroundColor: 'gray'
+          }
+        },
+
         yAxis: {
           title: {
             text: 'Job count',
@@ -466,8 +474,8 @@ export default {
             text: 'Time in UTC (Coordinated Universal Time)'
           },
           events: {
-            setExtremes: (e) => { console.log(`setExtremes, e = `, e) }
-          },
+            zoom: (e) => { console.log(`zoom, e = `, e) }
+          }
           // minRange: 3600 * 1000 // one hour
         },
 

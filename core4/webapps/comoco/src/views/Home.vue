@@ -1,7 +1,11 @@
 <template>
   <c4-page>
     <v-layout column>
-<!--      <v-flex color="info"><v-btn color="info" @click="toggleDark()" :full-width="true">Change theme</v-btn></v-flex>-->
+      <v-flex>
+       <notification :value="getError.state"  :type="getError.type" :message="getError.message">
+         <component :is="getError.slot"></component>
+       </notification>
+      </v-flex>
       <v-flex>
         <v-layout row wrap xs12>
           <v-flex v-for="(states, group) in groupsJobsByStates" :key="group" class="ma-2 flex-equal-size">
@@ -17,22 +21,26 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapGetters } from 'vuex'
 
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
 import stockChart from '@/components/StockChart'
+import Notification from '@/components/Notification'
+import SocketReconnectError from '@/components/notifications/SocketReconnectError'
 
 export default {
   name: 'home',
   components: {
-    Board, stockChart
+    SocketReconnectError,
+    Notification,
+    Board,
+    stockChart
   },
-  methods: {
-    ...mapActions([
-      'toggleDark'
-    ])
+  methods: {},
+  computed: {
+    ...mapGetters(['getError'])
   },
   data () {
     return {

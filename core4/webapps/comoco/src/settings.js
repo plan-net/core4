@@ -54,7 +54,7 @@ const groupsJobsByStates = (function (states) {
 // Array of all existing job groups ['waiting', 'running', 'stopped']
 const jobGroups = Object.keys(groupsJobsByStates)
 
-const defaultHistoryRange = [4, 'd'] // d - in days
+const defaultHistoryRange = [30, 'd'] // d - in days
 
 export {
   jobs,

@@ -4,8 +4,7 @@ import createLogger from 'vuex/dist/logger'
 
 import { clone } from 'core4ui/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
-
-import { jobStates, jobGroups, jobFlags, jobs } from './settings.js'
+import { jobStates, jobGroups, jobFlags } from './settings.js'
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -15,29 +14,34 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   plugins,
   state: {
+    initialState: true,
     queue: {
-      stat: createObjectWithDefaultValues(jobs, 0),
+      stat: {},
       running: [],
       stopped: [],
       waiting: []
     },
-    history: {
-      isSet: false,
-      temporaryQueue: [],
-      history: []
-    },
+    event: {},
+    // event: createObjectWithDefaultValues(jobs, 0),
     socket: {
       isConnected: false,
       message: '',
       reconnectError: false
+    },
+    error: {
+      state: false,
+      type: 'error',
+      message: '',
+      slot: ''
     }
   },
   actions: {},
   mutations: {
     SOCKET_ONOPEN (state, event) {
       Vue.prototype.$socket = event.currentTarget
-      Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue'] })
+      Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'event'] })
       state.socket.isConnected = true
+      state.error.state = false
     },
     SOCKET_ONCLOSE (state, event) {
       state.socket.isConnected = false
@@ -45,14 +49,29 @@ export default new Vuex.Store({
     SOCKET_ONERROR (state, event) {
       // ToDo: add error flow (message, pop-up etc)
       console.error(state, event)
+      // state.error.state = true
+      // state.error.type = 'error'
+      // state.error.message = 'Cannot connect to the serve.'
     },
     // default handler called for all methods
     SOCKET_ONMESSAGE (state, message) {
       state.socket.message = message
 
       // summary - ws type notification (all jobs in queue)
-      if (message.name === 'summary') {
+      if (message.channel === 'queue') {
+        console.log('queue')
         state.queue = groupDataAndJobStat(message.created, message.data, 'state')
+
+        if (state.initialState) {
+          state.event = state.queue.stat
+        }
+
+        state.initialState = false
+      }
+
+      if (message.channel === 'event') {
+        console.log('event', message.data.queue)
+        state.event = message.data.queue
       }
     },
     // mutations for reconnect methods
@@ -62,12 +81,20 @@ export default new Vuex.Store({
     SOCKET_RECONNECT_ERROR (state) {
       // ToDo: add error flow (message, pop-up etc)
       state.socket.reconnectError = true
+      state.error.state = true
+      state.error.type = 'error'
+      // state.error.message = 'Cannot connect to the serve.'
+      state.error.slot = 'socketReconnectError'
     }
   },
   getters: {
-    ...mapGettersJobGroups(jobGroups),
+    ...mapGettersJobGroups(jobGroups), // getter for each job type (pending, deferred, ..., killed)
+    isInInitialState: (state) => {
+      return state.initialState
+    },
     getChartData: (state) => {
-      return state.queue.stat
+      return state.event
+      // return state.queue.stat
     },
     getJobsByGroupName: (state, getters) => (groupName) => {
       return getters[groupName]
@@ -80,6 +107,9 @@ export default new Vuex.Store({
 
         return previousValue
       }, 0)
+    },
+    getError: (state) => {
+      return state.error
     }
   }
 })

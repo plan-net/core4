@@ -137,12 +137,12 @@ function subscribeDecorator (funcGenerator) {
   if (!window.setImmediate) {
     window.setImmediate = (function () {
       let head = {}
-      let tail = head // очередь вызовов, 1-связный список
+      let tail = head // queue of calls, 1-linked list
 
       let ID = Math.random() // unique id
 
       function onmessage (e) {
-        if (e.data !== ID) return // не наше сообщение
+        if (e.data !== ID) return // not our message
         head = head.next
         let func = head.func
         delete head.func
@@ -163,7 +163,7 @@ function subscribeDecorator (funcGenerator) {
   }
 
   const next = (iter, callbacks, prev = undefined) => {
-    const { onNext, onCompleted } = callbacks
+    const { onNext, onError, onCompleted } = callbacks
     const item = iter.next(prev)
     const value = item.value
 
@@ -175,6 +175,9 @@ function subscribeDecorator (funcGenerator) {
       value.then(val => {
         onNext(val)
         setImmediate(() => next(iter, callbacks, val))
+      }, err => {
+        onError(err)
+        setImmediate(() => next(iter, callbacks, err))
       })
     } else {
       onNext(value)
@@ -190,6 +193,18 @@ function subscribeDecorator (funcGenerator) {
 
   return gensync(funcGenerator)
 }
+
+// const isEmptyy = function (obj) {
+//   if (obj == null) return true
+//
+//   if (Array.isArray(obj) || obj instanceof String) return obj.length === 0
+//
+//   for (let key in obj) {
+//     return isEmptyy(obj[key])
+//   }
+//
+//   return !obj
+// }
 
 export {
   createObjectWithDefaultValues,

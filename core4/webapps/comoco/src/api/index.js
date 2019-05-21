@@ -24,10 +24,10 @@ export default {
     let pageArg = page ? `page=${page}` : ''
     let perPageArg = perPage ? `&per_page=${perPage}` : ''
     let filterArg = filter ? `&filter=${filter}` : ''
-    let sortArg = sort || 'asc'
+    let sortArg = sort || 1
 
     return axiosInternal
-      .get(`/jobs/history?${pageArg}${perPageArg}${filterArg}&order=${sortArg}&token=${token}`)
+      .get(`/jobs/history?${pageArg}${perPageArg}${filterArg}&sort=${sortArg}&token=${token}`)
       .then(res => {
         return {
           total_count: res.total_count,
