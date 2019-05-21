@@ -656,34 +656,13 @@ class CoreBaseHandler(CoreBase):
         return mimeparse.best_match(
             self.supported_types, self.request.headers.get("accept", ""))
 
-    def decode_needed(self, dct):
-        """
-        Hook for json_decode function for custom formatting dictionary
-
-        :param dct: dictionary for parse
-        :return: formatted dictionary
-        """
-        for k, v in dct.items():
-
-            # recursively check dict
-            if isinstance(v, dict):
-                try:
-                    dct[k] = self.decode_needed(dct[k])
-                except:
-                    pass
-
-            # if value is date string then convert this value
-            # into python datetime format for mongoDB querying
-            if isinstance(v, str):
-                try:
-                    dct[k] = datetime.datetime.strptime(v, "%Y-%m-%dT%H:%M:%S")
-                except:
-                    pass
-
-        return dct
-
-
-    def get_argument(self, name, as_type=None, remove=False, *args, **kwargs):
+    def get_argument(self,
+                     name,
+                     as_type=None,
+                     remove=False,
+                     dict_decode=None,
+                     *args,
+                     **kwargs):
         """
         Returns the value of the argument with the given name.
 
@@ -709,6 +688,8 @@ class CoreBaseHandler(CoreBase):
         :param as_type: Python variable type
         :param remove: remove parameter from request arguments, defaults to
             ``False``
+        :param dict_decode: custom function for dict decoding
+
         :return: value
         """
         kwargs["default"] = kwargs.get("default", ARG_DEFAULT)
@@ -723,7 +704,7 @@ class CoreBaseHandler(CoreBase):
                 if as_type == dict:
                     if isinstance(ret, dict):
                         return ret
-                    return json_decode(ret, object_hook=self.decode_needed)
+                    return json_decode(ret, object_hook=dict_decode)
                 if as_type == list:
                     if isinstance(ret, list):
                         return ret
