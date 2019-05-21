@@ -1,7 +1,6 @@
 <template>
   <!-- https://github.com/kutlugsahin/smooth-dnd -->
-  <!--  <div v-resize.quiet="onResize">-->
-  <div>
+  <div v-resize.quiet="onResize">
     <template v-if=noBoards>
       <div class="text-xs-center pt-5">
 
@@ -147,6 +146,8 @@ import { Box, Container } from '@dattn/dnd-grid'
 import '@dattn/dnd-grid/dist/dnd-grid.css'
 import Howto from '@/components/Howto.vue'
 
+const lodash = require('lodash')
+
 export default {
   name: 'board',
   components: {
@@ -155,10 +156,12 @@ export default {
     Howto
   },
   mounted () {
+    this.$nextTick(function () {
+      this.onResize()
+    })
   },
   methods: {
     open (event, widget) {
-      console.log(event, widget)
       event.preventDefault()
       this.$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })
     },
@@ -171,7 +174,12 @@ export default {
       }
       window.open(path, '_blank')
     },
-    ...mapActions(['addToBoard', 'removeFromBoard', 'nextBoard', 'prevBoard']),
+    onResize: lodash.debounce(function () {
+      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth - 15
+      // this.elWidth -= this.widgetListOpen - 15 // wide List document.querySelector('.widget-list')).offsetWidth
+    },
+    600),
+    ...mapActions(['addToBoard', 'removeFromBoard', 'prevBoard', 'nextBoard']),
     onOver () {
       this.over = true
     },
