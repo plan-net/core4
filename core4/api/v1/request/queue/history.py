@@ -32,9 +32,9 @@ class JobHistoryHandler(CoreRequestHandler):
             per_page (int): number of jobs per page
             page (int): requested page (starts counting with ``0``)
             filter (dict): optional mongodb filter
-            sort (str): 'asc' - for ascending sorting,
-                        'desc' - for descending sorting
-                         by default 'desc' sorting
+            sort (str): 1 - for ascending sorting,
+                        -1 - for descending sorting
+                        by default -1 (desc) sorting
 
         Returns:
             data element with list of aggregated job counts For pagination the
@@ -61,14 +61,16 @@ class JobHistoryHandler(CoreRequestHandler):
             >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?page=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?sort=asc&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?sort=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
         """
 
         per_page = self.get_argument("per_page", as_type=int, default=10)
         current_page = self.get_argument("page", as_type=int, default=0)
-        query_filter = self.get_argument("filter", as_type=dict, default={},
+        query_filter = self.get_argument("filter",
+                                         as_type=dict,
+                                         default={},
                                          dict_decode=self.dict_decode)
         sort = self.get_argument("sort", as_type=int, default=-1)
         coll = self.config.sys.event
