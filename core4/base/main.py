@@ -67,6 +67,8 @@ class CoreBase:
     upwind = ["log_level"]
     concurr = False
 
+    _raw_config = None
+
     def __init__(self):
         # query identifier from instantiating object
         if self.identifier is None:
@@ -395,3 +397,14 @@ class CoreBase:
             doc["data"] = data
         inserted = self._event.insert_one(doc)
         return inserted.inserted_id
+
+    @property
+    def raw_config(self):
+        """
+        raw configuration data
+
+        :return: :class:`.ConfigMap`
+        """
+        if self._raw_config is None:
+            self._raw_config = self.config._load(False)
+        return self._raw_config

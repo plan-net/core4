@@ -376,7 +376,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
         :param timestamp: :class:`datetime.datetime`
         :return: str representation or ``None``
         """
-        config = self.config.raw_config("api").get("age_range", None)
+        config = self.raw_config["api"].get("age_range", None)
         if config:
             age = core4.util.node.mongo_now() - timestamp
             age = age.total_seconds() / 60. / 60. / 24.

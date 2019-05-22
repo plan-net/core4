@@ -168,7 +168,7 @@ class SettingHandler(CoreRequestHandler):
 
     def _get_default_setting(self):
         if self.default_setting is None:
-            self.default_setting = self.config.raw_config("user_setting") or {}
+            self.default_setting = self.raw_config.get("user_setting", {})
 
         return self.default_setting
 
