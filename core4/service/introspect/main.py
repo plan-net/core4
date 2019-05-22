@@ -412,8 +412,8 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if home:
             data = {}
             for job in self.config.sys.job.find():
-                if job["updated_at"]:
-                    if job["valid"]:
+                if "updated_at" in job and job["updated_at"]:
+                    if "valid" in job and job["valid"]:
                         if os.path.exists(job["filename"]):
                             data.setdefault(job["project"], [])
                             data[job["project"]].append({
