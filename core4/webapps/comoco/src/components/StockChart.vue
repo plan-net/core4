@@ -250,51 +250,49 @@ export default {
     return {
       timer: 1000,
       timerId: null,
-      isHistoryRetrievingInProgress: true,
       history: createObjectWithDefaultValues(jobs, []),
-      recentQueueUpdates: createObjectWithDefaultValues(jobs, [])
+      socketUpdatesCache: createObjectWithDefaultValues(jobs, [])
     }
   },
-  created () {
-    // this.$store.dispatch('getChartHistory').then(res => {
-    //   console.log('stock chart history: ', res)
-    // })
-  },
+  created () {},
   mounted () { // fired after the element has been created
     if (!this.$refs.chart) return null
 
     const component = this
     const chart = component.$refs.chart.chart
+    const socketNotifications = {
+      SOCKET_ONMESSAGE (state) {
+        if (state.socket.message.channel === 'event') {
+          console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
+          const x = (new Date()).getTime() // current time
+
+          jobs.forEach(item => {
+            component.socketUpdatesCache[item].push([x, state.event[item] || 0])
+          })
+        }
+      }
+    }
 
     let lastHistoryPointTimestamp
 
     chart.showLoading('Loading data from server...')
+    component.$getChartHistory().subscribe(onNext, onError, onCompleted)
 
     // store actual queue updates while retrieving history
-    this.$store.subscribe((mutation, state) => {
-      switch (mutation.type) {
-        case 'SOCKET_ONMESSAGE':
-          if (this.isHistoryRetrievingInProgress && !state.initialState) {
-            console.log('recentQueueUpdates', state.event)
-            const event = state.event
-
-            jobs.forEach(item => {
-              const x = (new Date()).getTime() // current time
-
-              component.recentQueueUpdates[item].push([x, event[item] || 0])
-            })
-          }
-          break
+    const socketUpdateUnsubscribe = this.$store.subscribe((mutation, state) => {
+      if (socketNotifications[mutation.type]) {
+        socketNotifications[mutation.type](state)
       }
     })
 
-    const onNext = val => {
-      console.log(val)
-      if (val.data.length) {
+    function onNext (value) {
+      console.log('on next: ', value)
+      if (value.data.length) { // ToDo: what if length is 0
         // response from serve sometimes have objects with the same creation date,
         // highchart don't allowed to set points with the same creation date,
-        // need to add a 100 milliseconds to creation date so the created key become unique
-        val.data.forEach((item, i, arr) => {
+        // need to add a 50 milliseconds to creation date so the created key become unique
+        // this issue should in the future fix on backend side
+        value.data.forEach((item, i, arr) => {
           item.timestamp = new Date(item.created).getTime()
 
           if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
@@ -302,6 +300,10 @@ export default {
           }
 
           jobs.forEach(job => {
+            // server returns only jobs with a value
+            // {error: 7, pending: 1, created: "2019-05-21T20:24:05.180000", total: 8}
+            // need to add rest possible job type with 0 by our self
+            // {error: 7, pending: 1, running: 0, deferred: 0, failed: 0, inactive: 0, killed: 0}
             component.history[job].push([item.timestamp, item[job] || 0])
           })
 
@@ -310,36 +312,29 @@ export default {
       }
     }
 
-    const onCompleted = () => {
-      console.log('onCompleted function')
-      let last = {}
+    function onError (err) {
+      // ToDo: cover this case
+      console.log('%c on error', 'color: red; font-weight: bold;', err.type)
+    }
 
-      const series = chart.series.reduce((computedResult, series) => {
-        computedResult[series.name] = series
+    function onCompleted () {
+      console.log('%c on completed fired function', 'color: green; font-weight: bold;')
+
+      const chartSeriesReference = chart.series.reduce((computedResult, series) => {
+        if (jobs.includes(series.name)) {
+          computedResult.push(series)
+        }
 
         return computedResult
-      }, {})
+      }, [])
 
-      // ToDo: write a comment why it should be like this
-      const chartSeriesReference = [
-        series.running,
-        series.pending,
-        series.deferred,
-        series.failed,
-        series.error,
-        series.inactive,
-        series.killed
-      ]
+      socketUpdateUnsubscribe()
 
-      component.isHistoryRetrievingInProgress = false
-
-      // add history chunk to chart + recent data from the queue
+      // add history chunk + queue cache to chart
       chartSeriesReference.forEach(item => {
-        const data = component.history[item.name].concat(component.recentQueueUpdates[item.name])
+        const history = component.history[item.name].concat(component.socketUpdatesCache[item.name])
 
-        last[item.name] = data.length ? data[data.length - 1][1] : undefined // ToDo: <--- find better solution
-
-        item.setData(data, false, true, false)
+        item.setData(history, false, true, false)
       })
 
       chart.redraw()
@@ -347,28 +342,24 @@ export default {
 
       // recursive Timeout easier than Interval for system pressure
       component.timerId = setTimeout(function update () {
-        const x = (new Date()).getTime() // current time
-        const shift = chart.pointCount > 1750 // (250 points for each series)
-        const data = component.isInInitialState ? last : component.getChartData
+        if (!component.isStoreInInitialState) {
+          const x = (new Date()).getTime() // current time
+          const shift = chart.pointCount > 1750 // (250 points for each series)
+          const data = component.getChartData
 
-        chartSeriesReference.forEach(item => {
-          item.addPoint([x, data[item.name] || 0], false, shift)
-        })
+          chartSeriesReference.forEach(item => {
+            item.addPoint([x, data[item.name]], false, shift)
+          })
 
-        chart.redraw()
+          chart.redraw()
+        }
 
         component.timerId = setTimeout(update, component.timer)
       }, component.timer)
     }
-
-    const onError = (err) => {
-      console.log(err.type)
-    }
-
-    this.$getChartHistory().subscribe(onNext, onError, onCompleted)
   },
   computed: {
-    ...mapGetters(['isInInitialState', 'getChartData']),
+    ...mapGetters(['isStoreInInitialState', 'getChartData']),
     chartOptions () {
       return {
         chart: {

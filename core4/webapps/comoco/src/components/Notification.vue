@@ -1,5 +1,5 @@
 <template>
-  <v-alert :value="value" :type="type" transition="slide-y-transition">
+  <v-alert :value="show" :type="type" :transition="transition">
     {{message}}
     <slot></slot>
   </v-alert>
@@ -10,9 +10,9 @@ export default {
   name: 'notification',
   props: {
     /**
-     * Show/hide notification parameter
+     * Show/hide notification
      */
-    value: {
+    show: {
       type: [Boolean],
       required: false,
       default: false
@@ -32,6 +32,14 @@ export default {
       type: [String],
       required: false,
       default: ''
+    },
+    /**
+     * Transition type
+     */
+    transition: {
+      type: [String],
+      required: false,
+      default: 'slide-y-transition'
     }
   }
 }

@@ -7,12 +7,13 @@ import VueNativeSock from 'vue-native-websocket'
 import PnbiBase from 'core4ui/core4'
 // import 'core4ui/core4/themes/pnbi/theme-pnbi.scss'
 import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
-import { i18n } from 'core4ui/core4/translations'
+// import { i18n } from './translations/index'
 
 import service from './service'
 
 import '@/style/theme-dark.scss'
 import '@/style/theme-light.scss'
+import { i18n } from './translations'
 
 // =============================================================================================== //
 // Extend app with native WebSocket                                                                //

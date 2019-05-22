@@ -2,7 +2,7 @@
   <c4-page>
     <v-layout column>
       <v-flex>
-       <notification :value="getError.state"  :type="getError.type" :message="getError.message">
+       <notification :show="getError.state"  :type="getError.type" :message="getError.message">
          <component :is="getError.slot"></component>
        </notification>
       </v-flex>

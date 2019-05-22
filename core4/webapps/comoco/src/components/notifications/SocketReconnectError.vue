@@ -1,6 +1,6 @@
 <template>
   <div>
-    Unable connect to the server. Please try <a @click="socketConnect">again</a>.
+    Unable connect to the server. Please try <a @click="socketConnect">again later</a>.
   </div>
 <!--  <v-btn color="primary" @click="socketConnect">Try Again</v-btn>-->
 </template>

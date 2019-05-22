@@ -22,7 +22,6 @@ export default new Vuex.Store({
       waiting: []
     },
     event: {},
-    // event: createObjectWithDefaultValues(jobs, 0),
     socket: {
       isConnected: false,
       message: '',
@@ -89,7 +88,7 @@ export default new Vuex.Store({
   },
   getters: {
     ...mapGettersJobGroups(jobGroups), // getter for each job type (pending, deferred, ..., killed)
-    isInInitialState: (state) => {
+    isStoreInInitialState: (state) => {
       return state.initialState
     },
     getChartData: (state) => {
