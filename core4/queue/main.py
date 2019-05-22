@@ -646,7 +646,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             core4.service.introspect.main.exec_project(
                 doc["name"], KILL, job_id=str(doc["_id"]))
         except Exception:
-            raise
+            self.logger.critical("failed to kill job [%s]", str(doc["_id"]))
 
     def _exec_kill(self, _id):
         # internal method used by virtual python interpreter to kill job
