@@ -7,7 +7,7 @@
 </template>
 
 <script>
-// import moment from 'moment'
+import moment from 'moment'
 import { mapGetters } from 'vuex'
 
 import { Chart } from 'highcharts-vue'
@@ -241,6 +241,8 @@ Highcharts.theme = {
 // Apply the theme
 Highcharts.setOptions(Highcharts.theme)
 
+// let stop = false
+
 export default {
   name: 'stockChart',
   components: {
@@ -255,111 +257,118 @@ export default {
     }
   },
   created () {},
-  mounted () { // fired after the element has been created
-    if (!this.$refs.chart) return null
-
-    const component = this
-    const chart = component.$refs.chart.chart
-    const socketNotifications = {
-      SOCKET_ONMESSAGE (state) {
-        if (state.socket.message.channel === 'event') {
-          console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
-          const x = (new Date()).getTime() // current time
-
-          jobs.forEach(item => {
-            component.socketUpdatesCache[item].push([x, state.event[item] || 0])
-          })
-        }
+  mounted () {
+    // fired after the element has been created
+    // element might not have been added to the DOM
+    this.$nextTick(() => {
+      // element has definitely been added to the DOM
+      if (!this.$refs.chart) {
+        console.log('%c not ready: this.$refs.chart', 'color: red; font-weight: bold;', this.$refs.chart)
       }
-    }
 
-    let lastHistoryPointTimestamp
+      const component = this
+      const chart = component.$refs.chart.chart
+      const socketNotifications = {
+        SOCKET_ONMESSAGE (state) {
+          if (state.socket.message.channel === 'event') {
+            console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
+            const x = (new Date()).getTime() // current time
 
-    chart.showLoading('Loading data from server...')
-    component.$getChartHistory().subscribe(onNext, onError, onCompleted)
-
-    // store actual queue updates while retrieving history
-    const socketUpdateUnsubscribe = this.$store.subscribe((mutation, state) => {
-      if (socketNotifications[mutation.type]) {
-        socketNotifications[mutation.type](state)
-      }
-    })
-
-    function onNext (value) {
-      console.log('on next: ', value)
-      if (value.data.length) { // ToDo: what if length is 0
-        // response from serve sometimes have objects with the same creation date,
-        // highchart don't allowed to set points with the same creation date,
-        // need to add a 50 milliseconds to creation date so the created key become unique
-        // this issue should in the future fix on backend side
-        value.data.forEach((item, i, arr) => {
-          item.timestamp = new Date(item.created).getTime()
-
-          if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
-            arr[i].timestamp = lastHistoryPointTimestamp + 50
+            jobs.forEach(item => {
+              component.socketUpdatesCache[item].push([x, state.event[item] || 0])
+            })
           }
-
-          jobs.forEach(job => {
-            // server returns only jobs with a value
-            // {error: 7, pending: 1, created: "2019-05-21T20:24:05.180000", total: 8}
-            // need to add rest possible job type with 0 by our self
-            // {error: 7, pending: 1, running: 0, deferred: 0, failed: 0, inactive: 0, killed: 0}
-            component.history[job].push([item.timestamp, item[job] || 0])
-          })
-
-          lastHistoryPointTimestamp = arr[i].timestamp
-        })
-      }
-    }
-
-    function onError (err) {
-      // ToDo: cover this case
-      console.log('%c on error', 'color: red; font-weight: bold;', err.type)
-    }
-
-    function onCompleted () {
-      console.log('%c on completed fired function', 'color: green; font-weight: bold;')
-
-      const chartSeriesReference = chart.series.reduce((computedResult, series) => {
-        if (jobs.includes(series.name)) {
-          computedResult.push(series)
         }
+      }
 
-        return computedResult
-      }, [])
+      let lastHistoryPointTimestamp
 
-      socketUpdateUnsubscribe()
+      chart.showLoading('Loading data from server...')
+      component.$getChartHistory().subscribe(onNext, onError, onCompleted)
 
-      // add history chunk + queue cache to chart
-      chartSeriesReference.forEach(item => {
-        const history = component.history[item.name].concat(component.socketUpdatesCache[item.name])
-
-        item.setData(history, false, true, false)
+      // store actual queue updates while retrieving history
+      const socketUpdateUnsubscribe = this.$store.subscribe((mutation, state) => {
+        if (socketNotifications[mutation.type]) {
+          socketNotifications[mutation.type](state)
+        }
       })
 
-      chart.redraw()
-      chart.hideLoading()
+      function onNext (value) {
+        console.log('on next: ', value)
+        if (value.data.length) {
+          // response from serve sometimes have objects with the same creation date,
+          // highchart don't allowed to set points with the same creation date,
+          // need to add a 50 milliseconds to creation date so the created key become unique
+          // this issue should in the future fix on backend side
+          value.data.forEach((item, i, arr) => {
+            item.timestamp = new Date(item.created).getTime()
 
-      // recursive Timeout easier than Interval for system pressure
-      component.timerId = setTimeout(function update () {
-        if (!component.isStoreInInitialState) {
-          const x = (new Date()).getTime() // current time
-          const shift = chart.pointCount > 1750 // (250 points for each series)
-          const data = component.getChartData
+            if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
+              arr[i].timestamp = lastHistoryPointTimestamp + 50
+            }
 
-          chartSeriesReference.forEach(item => {
-            item.addPoint([x, data[item.name]], false, shift)
+            jobs.forEach(job => {
+              // server returns only jobs with a value
+              // {error: 7, pending: 1, created: "2019-05-21T20:24:05.180000", total: 8}
+              // need to add rest possible job type with 0 by our self
+              // {error: 7, pending: 1, running: 0, deferred: 0, failed: 0, inactive: 0, killed: 0}
+              component.history[job].push([item.timestamp, item[job] || 0])
+            })
+
+            lastHistoryPointTimestamp = arr[i].timestamp
           })
-
-          chart.redraw()
         }
+      }
 
-        component.timerId = setTimeout(update, component.timer)
-      }, component.timer)
-    }
+      function onError (err) {
+        // ToDo: cover this case
+        console.log('%c on error', 'color: red; font-weight: bold;', err.type)
+      }
+
+      function onCompleted () {
+        console.log('%c on completed fired function', 'color: green; font-weight: bold;')
+
+        const chartSeriesReference = chart.series.reduce((computedResult, series) => {
+          if (jobs.includes(series.name)) {
+            computedResult.push(series)
+          }
+
+          return computedResult
+        }, [])
+
+        socketUpdateUnsubscribe()
+
+        // add history chunk + queue cache to chart
+        chartSeriesReference.forEach(item => {
+          const history = component.history[item.name].concat(component.socketUpdatesCache[item.name])
+
+          item.setData(history, false, true, false)
+        })
+
+        chart.redraw()
+        chart.hideLoading()
+
+        // recursive Timeout easier than Interval for system pressure
+        component.timerId = setTimeout(function update () {
+          if (!component.stopChart) {
+            const data = component.getChartData
+            const x = (new Date(moment.utc().format('YYYY-MM-DDTHH:mm:ss'))).getTime() // current time
+            const shift = chart.pointCount > 1750 // (250 points for each series)
+
+            chartSeriesReference.forEach(item => {
+              item.addPoint([x, data[item.name]], false, shift)
+            })
+
+            chart.redraw()
+          }
+
+          component.timerId = setTimeout(update, component.timer)
+        }, component.timer)
+      }
+    })
   },
   computed: {
-    ...mapGetters(['isStoreInInitialState', 'getChartData']),
+    ...mapGetters(['stopChart', 'getChartData']),
     chartOptions () {
       return {
         chart: {
@@ -367,7 +376,7 @@ export default {
         },
 
         time: {
-          useUTC: true
+          useUTC: false
         },
 
         rangeSelector: {
@@ -514,6 +523,16 @@ function createSeriesData () {
 
   return arr
 }
+
+// function stopStartChart (chart, msg) {
+//   if (stop) {
+//     chart.showLoading(msg)
+//   } else {
+//     chart.hideLoading()
+//   }
+//
+//   stop = !stop
+// }
 
 </script>
 

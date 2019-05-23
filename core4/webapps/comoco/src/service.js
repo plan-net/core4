@@ -26,12 +26,12 @@ function * chartHistory () {
 
   try {
     start = yield getChartHistory(perPage)
+
+    for (let page of range(++start.page, --start.page_count)) {
+      yield api.getJobHistory(page, perPage, start.startDate)
+    }
   } catch (e) {
     console.log(e)
-  }
-
-  for (let page of range(++start.page, --start.page_count)) {
-    yield api.getJobHistory(page, perPage, start.startDate)
   }
 }
 

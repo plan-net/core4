@@ -14,7 +14,7 @@ Vue.use(Vuex)
 export default new Vuex.Store({
   plugins,
   state: {
-    initialState: true,
+    stopChart: true,
     queue: {
       stat: {},
       running: [],
@@ -61,11 +61,11 @@ export default new Vuex.Store({
         console.log('queue')
         state.queue = groupDataAndJobStat(message.created, message.data, 'state')
 
-        if (state.initialState) {
+        if (state.stopChart) {
           state.event = state.queue.stat
         }
 
-        state.initialState = false
+        state.stopChart = false
       }
 
       if (message.channel === 'event') {
@@ -84,20 +84,15 @@ export default new Vuex.Store({
       state.error.type = 'error'
       // state.error.message = 'Cannot connect to the serve.'
       state.error.slot = 'socketReconnectError'
+      state.stopChart = true
     }
   },
   getters: {
     ...mapGettersJobGroups(jobGroups), // getter for each job type (pending, deferred, ..., killed)
-    isStoreInInitialState: (state) => {
-      return state.initialState
-    },
-    getChartData: (state) => {
-      return state.event
-      // return state.queue.stat
-    },
-    getJobsByGroupName: (state, getters) => (groupName) => {
-      return getters[groupName]
-    },
+    stopChart: state => state.stopChart,
+    getChartData: state => state.event,
+    getJobsByGroupName: (state, getters) => (groupName) => getters[groupName],
+    getError: state => state.error,
     getStateCounter: (state) => (stateName) => {
       if (state.queue.stat === undefined) return 0
 
@@ -106,9 +101,6 @@ export default new Vuex.Store({
 
         return previousValue
       }, 0)
-    },
-    getError: (state) => {
-      return state.error
     }
   }
 })
@@ -160,7 +152,7 @@ function groupDataAndJobStat (created, arr, groupingKey) {
     (groupsDict[group] = groupsDict[group] || []).push(job)
 
     initialState[jobState] += job['n']
-    // initialState['created'] = created // moment(created).utc().valueOf()
+    initialState['created'] = (new Date(created)).getTime()
   })
 
   return { 'stat': initialState, ...groupsDict }
