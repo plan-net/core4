@@ -4,10 +4,11 @@ import createLogger from 'vuex/dist/logger'
 
 import { clone } from 'core4ui/core4/helper'
 import { createObjectWithDefaultValues } from './helper'
-import { jobStates, jobGroups, jobFlags } from './settings.js'
+import { jobStates, jobGroups, jobFlags, jobTypes } from './settings.js'
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
+const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 
 Vue.use(Vuex)
 
@@ -21,7 +22,16 @@ export default new Vuex.Store({
       stopped: [],
       waiting: []
     },
-    event: {},
+    event: {
+      // running: 0,
+      // pending: 0,
+      // deferred: 0,
+      // failed: 0,
+      // error: 0,
+      // inactive: 0,
+      // killed: 0,
+      // created: "2019-05-21T20:24:05.180000"
+    },
     socket: {
       isConnected: false,
       message: '',
@@ -31,7 +41,8 @@ export default new Vuex.Store({
       state: false,
       type: 'error',
       message: '',
-      slot: ''
+      slot: '',
+      inComponents: []
     }
   },
   actions: {},
@@ -70,7 +81,8 @@ export default new Vuex.Store({
 
       if (message.channel === 'event') {
         console.log('event', message.data.queue)
-        state.event = message.data.queue
+        state.event = { ...defaultEventObj, ...message.data.queue }
+        state.event['created'] = message.created
       }
     },
     // mutations for reconnect methods
@@ -89,8 +101,6 @@ export default new Vuex.Store({
   },
   getters: {
     ...mapGettersJobGroups(jobGroups), // getter for each job type (pending, deferred, ..., killed)
-    stopChart: state => state.stopChart,
-    getChartData: state => state.event,
     getJobsByGroupName: (state, getters) => (groupName) => getters[groupName],
     getError: state => state.error,
     getStateCounter: (state) => (stateName) => {

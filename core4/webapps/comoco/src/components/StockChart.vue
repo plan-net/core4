@@ -8,13 +8,13 @@
 
 <script>
 import moment from 'moment'
-import { mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
 
-import { jobs, jobColors } from '../settings'
+import { jobTypes, jobColors } from '../settings'
 import { createObjectWithDefaultValues } from '../helper'
 
 stockInit(Highcharts)
@@ -252,8 +252,8 @@ export default {
     return {
       timer: 1000,
       timerId: null,
-      history: createObjectWithDefaultValues(jobs, []),
-      socketUpdatesCache: createObjectWithDefaultValues(jobs, [])
+      history: createObjectWithDefaultValues(jobTypes, []),
+      socketUpdatesCache: createObjectWithDefaultValues(jobTypes, [])
     }
   },
   created () {},
@@ -274,7 +274,7 @@ export default {
             console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
             const x = (new Date()).getTime() // current time
 
-            jobs.forEach(item => {
+            jobTypes.forEach(item => {
               component.socketUpdatesCache[item].push([x, state.event[item] || 0])
             })
           }
@@ -307,7 +307,7 @@ export default {
               arr[i].timestamp = lastHistoryPointTimestamp + 50
             }
 
-            jobs.forEach(job => {
+            jobTypes.forEach(job => {
               // server returns only jobs with a value
               // {error: 7, pending: 1, created: "2019-05-21T20:24:05.180000", total: 8}
               // need to add rest possible job type with 0 by our self
@@ -329,7 +329,7 @@ export default {
         console.log('%c on completed fired function', 'color: green; font-weight: bold;')
 
         const chartSeriesReference = chart.series.reduce((computedResult, series) => {
-          if (jobs.includes(series.name)) {
+          if (jobTypes.includes(series.name)) {
             computedResult.push(series)
           }
 
@@ -368,7 +368,10 @@ export default {
     })
   },
   computed: {
-    ...mapGetters(['stopChart', 'getChartData']),
+    ...mapState({
+      stopChart: 'stopChart',
+      getChartData: (state) => state.event
+    }),
     chartOptions () {
       return {
         chart: {

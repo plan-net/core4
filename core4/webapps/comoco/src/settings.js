@@ -2,7 +2,8 @@
  * General jobs config. Existing job states, existing job flags, existing job groups
  */
 
-const jobs = ['running', 'pending', 'deferred', 'failed', 'error', 'inactive', 'killed']
+// ToDo: return clones
+const jobTypes = ['running', 'pending', 'deferred', 'failed', 'error', 'inactive', 'killed']
 
 const jobColors = {
   pending: '#ffc107',
@@ -57,7 +58,7 @@ const jobGroups = Object.keys(groupsJobsByStates)
 const defaultHistoryRange = [7, 'd'] // d - in days
 
 export {
-  jobs,
+  jobTypes,
   groupsJobsByStates,
   jobStates,
   jobGroups,
