@@ -1,5 +1,8 @@
 /**
- * General jobs config. Existing job states, existing job flags, existing job groups
+ * General COMOCO config.
+ *
+ * Existing: job states, job types, job flags, job groups, job colors.
+ * Default settings for api calls.
  */
 
 // ToDo: return clones

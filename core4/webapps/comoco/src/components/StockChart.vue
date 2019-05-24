@@ -14,6 +14,8 @@ import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
 
+import { SOCKET_ONMESSAGE } from '../store/comoco.mutationTypes'
+
 import { jobTypes, jobColors } from '../settings'
 import { createObjectWithDefaultValues } from '../helper'
 
@@ -269,7 +271,7 @@ export default {
       const component = this
       const chart = component.$refs.chart.chart
       const socketNotifications = {
-        SOCKET_ONMESSAGE (state) {
+        [SOCKET_ONMESSAGE] (state) {
           if (state.socket.message.channel === 'event') {
             console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
             const x = (new Date()).getTime() // current time

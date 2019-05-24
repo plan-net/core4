@@ -1,8 +1,8 @@
 import moment from 'moment'
 
-import api from './api/index.js'
-import { range, subscribeDecorator } from './helper'
-import { defaultHistoryRange } from './settings.js'
+import api from '../api'
+import { range, subscribeDecorator } from '../helper'
+import { defaultHistoryRange } from '../settings.js'
 
 export default {
   install (Vue, options) {

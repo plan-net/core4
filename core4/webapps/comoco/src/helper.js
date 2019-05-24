@@ -194,18 +194,6 @@ function subscribeDecorator (funcGenerator) {
   return gensync(funcGenerator)
 }
 
-// const isEmptyy = function (obj) {
-//   if (obj == null) return true
-//
-//   if (Array.isArray(obj) || obj instanceof String) return obj.length === 0
-//
-//   for (let key in obj) {
-//     return isEmptyy(obj[key])
-//   }
-//
-//   return !obj
-// }
-
 export {
   createObjectWithDefaultValues,
   getBasePath,

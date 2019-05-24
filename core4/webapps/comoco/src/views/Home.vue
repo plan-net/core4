@@ -1,10 +1,16 @@
 <template>
   <c4-page>
     <v-layout column>
-      <v-flex>
-       <notification :show="getError.state"  :type="getError.type" :message="getError.message">
-         <component :is="getError.slot"></component>
-       </notification>
+      <v-flex v-for="(notification, key) in notifications" :key="key">
+        <notification v-if="notification.inComponents.includes('stockChart')"
+                      :show="notification.state"
+                      :type="notification.type"
+                      :message="notification.message"
+                      :dismissible="notification.dismissible"
+                      :timeout="notification.timeout"
+                      :mutation="key">
+          <component :is="notification.slot"></component>
+        </notification>
       </v-flex>
       <v-flex>
         <v-layout row wrap xs12>
@@ -21,7 +27,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 
 import { groupsJobsByStates, jobFlags } from '../settings'
 
@@ -40,7 +46,9 @@ export default {
   },
   methods: {},
   computed: {
-    ...mapGetters(['getError'])
+    ...mapState({
+      'notifications': (state) => state.error
+    })
   },
   data () {
     return {
