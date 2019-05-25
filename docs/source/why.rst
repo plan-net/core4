@@ -159,7 +159,7 @@ Furthermore there is the widget manager as central go-to place to search,
 find, spawn, explore, understand and operate all automated jobs, application
 programming interfaces (API) and applications by itself.
 
-.. figure:: _static/widget_mgr.png
+.. figure:: _static/app_mgr.png
    :scale: 65%
    :alt: core4 widget manager
 
