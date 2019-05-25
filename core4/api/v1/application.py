@@ -309,7 +309,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
           first been published
         * started_at (str) - in iso format indicating when the resource has
           been started
-        * target (str) - indicating how the widget has to be spawned, defaults
+        * target (str) - indicating how the api has to be spawned, defaults
           to ``None`` for embedded mode, ``blank`` indicating standalone mode
         * endpoint (list) - of str representing all available endpoints for
           this handler

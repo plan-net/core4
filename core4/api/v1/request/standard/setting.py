@@ -62,7 +62,7 @@ class SettingHandler(CoreRequestHandler):
 
          ============== =======================================================
           **level 1** - this resource level holds the system in general related
-                        data (*favorite widgets, dashboards, the widgets in a
+                        data (*favorite apis, dashboards, the widgets in a
                         dashboard*) and project related data. System data is
                         stored in a reserved key named “_general”, project data
                         can be stored using any other key name. Data for

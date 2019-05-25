@@ -65,7 +65,7 @@ class CoreBaseHandler(CoreBase):
     template_path = None
     #: static file path, if not defined use relative path
     static_path = None
-    #: link to api/widget (can be overwritten)
+    #: link to api (can be overwritten)
     enter_url = None
     #: default material icon
     icon = "copyright"
@@ -402,7 +402,7 @@ class CoreBaseHandler(CoreBase):
     async def xcard(self, *args, **kwargs):
         """
         Prepares the ``card`` page and triggers :meth:`.card` which is to be
-        overwritten for custom widget card implementations.
+        overwritten for custom card implementations.
 
         :return: result of :meth:`.card`
         """
@@ -412,7 +412,7 @@ class CoreBaseHandler(CoreBase):
     def xenter(self, *args, **kwargs):
         """
         Prepares the ``enter`` page and triggers :meth:`.enter` which is to be
-        overwritten for custom widget landing page implementations.
+        overwritten for custom landing page implementations.
 
         :return: result of :meth:`.enter`
         """
@@ -421,7 +421,7 @@ class CoreBaseHandler(CoreBase):
     async def xhelp(self, *args, **kwargs):
         """
         Prepares the ``help`` page and triggers :meth:`.help` which is to be
-        overwritten for custom widget help page implementations.
+        overwritten for custom help page implementations.
 
         The method creates the following parameters to render:
 
@@ -763,7 +763,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         :meth:`.propagate_property`.
 
         * ``protected`` - authentication/authorization required
-        * ``title`` - api/widget title
+        * ``title`` - api title
         * ``author`` - author
         * ``tag`` - list of tags
         * ``template_path`` - absolte from project root, relative from request
