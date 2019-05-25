@@ -9,6 +9,7 @@ installation
    :maxdepth: 1
 
    quick
+   ubuntu
    prereq
    develop
    maintain
