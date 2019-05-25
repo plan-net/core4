@@ -92,7 +92,7 @@ versioning scheme
 The core system at Serviceplan/Plan.Net was first developed in 2014. Version 1
 was a prototype for data integration and automation. Version 2 was the first
 production version. Version 3 included the addition of a ReST API, front-end
-applications and mini application AKA widgets.
+applications and mini applications.
 
 Core version 4 is the Python 3 ported version.
 

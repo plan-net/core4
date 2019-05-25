@@ -238,8 +238,7 @@ Asynchronous versus synchronous database access
 core4 uses both the :mod:`pymongo` and the :mod:`motor` MongoDB database access
 driver. The synchronous :mod:`pymongo` driver is used by the core4 job
 execution framework. The asynchronous :mod:`motor` driver is used in
-conjunction with :mod:`tornado` ioloop in the core4 ReSR API and widget
-framework.
+conjunction with :mod:`tornado` ioloop in the core4 ReST API framework.
 
 To simplify MongoDB database connection all core4 classes derived from
 :class:`.CoreBase` automatically request synchronous connection. All core4
@@ -286,7 +285,7 @@ The following example demonstrates the default connection setting with
     7
 
 
-.. note:: There are certain connections within the core4 ReST API/widget
+.. note:: There are certain connections within the core4 ReST API
           framework which use synchronous database connectivity. These are
           connections to collection ``sys.log`` and ``sys.event`` where core4
           utilises special MongoDB features of *write concern* for performance

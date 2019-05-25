@@ -27,7 +27,7 @@ new version.
 * Core v1 was a prototype for a data integration and automation system.
 * Core v2 was the first production version with major improvements to the job
   distribution and worker model.
-* Core v3 included the addition of a REST Api and Widgets.
+* Core v3 included the addition of a REST Api and mini applications.
 * Core v4 is the Python 3 ported version that has been completely rebuilt.
 
 There has been some own research on existing projects. The spectrum on

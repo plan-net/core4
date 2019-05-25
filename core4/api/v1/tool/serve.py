@@ -24,7 +24,7 @@ import core4.service
 import core4.service.setup
 import core4.util.node
 from core4.api.v1.request.main import CoreBaseHandler
-from core4.api.v1.server import CoreApiServer, CoreWidgetServer
+from core4.api.v1.server import CoreApiServer, CoreAppManager
 from core4.base import CoreBase
 from core4.logger import CoreLoggerMixin
 from core4.service.introspect.command import SERVE
@@ -145,7 +145,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                       routing=None, core4api=False, reuse_port=True, **kwargs):
         """
         Instantiates the passed :class:`.CoreApiContainer`, adds the default
-        containers :class:`.CoreApiServer` and :class:`.CoreWidgetServer`
+        containers :class:`.CoreApiServer` and :class:`.CoreAppManager`
         (if ``core4api is True``, defaults to ``False``), registers all
         handlers and starts the HTTP server.
 
@@ -175,7 +175,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             container_list.append(container_cls)
         if core4api:
             qual_names = [a.qual_name() for a in container_list]
-            for addon in (CoreApiServer, CoreWidgetServer):
+            for addon in (CoreApiServer, CoreAppManager):
                 if addon.qual_name() not in qual_names:
                     container_list.append(addon)
         # fix routing order
