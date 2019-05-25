@@ -51,9 +51,10 @@ batch, distributed execution, intensive computations etc. is wide:
 * Gearman BSD
 * PyRes MIT
 * Amazon SQS
-* luigi APACHE LICENSE 2.0
+* luigi from Spotify APACHE LICENSE 2.0
 * Parallel python
 * Ipython take
+* Airflow from APACHE LICENSE
 
 The gist is, every company and team build its own. So did we but with the focus
 to provide one hub and to unify 3 communities: data engineers, scientists and
