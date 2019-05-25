@@ -372,19 +372,16 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         defaults to the protocol depending on SSL settings, the
                         node hostname or address and port
         """
-        if not project:
-            project = self.project
         if not filter:
             filter = [None]
         scope = []
         intro = CoreIntrospector()
         for f in filter:
             for pro in intro.introspect():
-                if project == pro["name"]:
-                    for container in pro["api_containers"]:
-                        if f is None or container["name"].startswith(f):
-                            if container["name"] not in scope:
-                                scope.append(container["name"])
+                for container in pro["api_containers"]:
+                    if f is None or container["name"].startswith(f):
+                        if container["name"] not in scope:
+                            scope.append(container["name"])
         if scope:
             args = dict(
                 port=port,
@@ -394,5 +391,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 routing=routing,
             )
             args.update(kwargs)
-            core4.service.introspect.main.exec_project(
-                project, SERVE, a=scope, kw=args, replace=True)
+            if project:
+                core4.service.introspect.main.exec_project(
+                    project, SERVE, a=scope, kw=args, replace=True)
+            else:
+                self.serve(*scope, core4api=False, **args, replace=False)
