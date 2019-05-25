@@ -155,17 +155,17 @@ As a logical connsequence some web applications are shipped with core4. This is
    :alt: core4 monitoring and controlling
 
 
-Furthermore there is the widget manager as central go-to place to search,
+Furthermore there is the app manager as central go-to place to search,
 find, spawn, explore, understand and operate all automated jobs, application
 programming interfaces (API) and applications by itself.
 
-.. figure:: _static/widget_mgr.png
+.. figure:: _static/app_mgr.png
    :scale: 65%
-   :alt: core4 widget manager
+   :alt: core4 app manager
 
 
-A widget is a relatively simple and easy-to-use software application or
-component in contrast with a more complex application. And the widget manager
+A core4 app is a relatively simple and easy-to-use software application or
+component in contrast with a more complex application. And the app manager
 supports all users interacting with core4 jobs, APIs and web applications to
 get things done.
 

@@ -62,7 +62,7 @@ class SettingHandler(CoreRequestHandler):
 
          ============== =======================================================
           **level 1** - this resource level holds the system in general related
-                        data (*favorite widgets, dashboards, the widgets in a
+                        data (*favorite apis, dashboards, the widgets in a
                         dashboard*) and project related data. System data is
                         stored in a reserved key named “_general”, project data
                         can be stored using any other key name. Data for
@@ -168,7 +168,7 @@ class SettingHandler(CoreRequestHandler):
 
     def _get_default_setting(self):
         if self.default_setting is None:
-            self.default_setting = self.config.raw_config("user_setting") or {}
+            self.default_setting = self.raw_config.get("user_setting", {})
 
         return self.default_setting
 

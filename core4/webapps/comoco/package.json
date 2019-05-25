@@ -4,6 +4,7 @@
   "private": true,
   "core4": {
     "build_command" : [
+      "rm yarn.lock",
       "yarn install",
       "yarn build --dest dist --modern"
     ],

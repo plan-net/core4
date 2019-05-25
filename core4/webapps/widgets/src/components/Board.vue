@@ -1,7 +1,6 @@
 <template>
   <!-- https://github.com/kutlugsahin/smooth-dnd -->
-  <!--  <div v-resize.quiet="onResize">-->
-  <div>
+  <div v-resize.quiet="onResize">
     <template v-if=noBoards>
       <div class="text-xs-center pt-5">
 
@@ -119,23 +118,19 @@
                 </v-btn>
                 <span>Remove widget from board</span>
               </v-tooltip>
-            </v-layout>
-            <template v-if="widget.endpoint">
-              <a
-                :href="widget.endpoint.enter_url"
-                @click.prevent="()=>{}"
+            </v-layout><!--
+               :href="widget.endpoint.enter_url" -->
+            <a v-if="widget.endpoint"
+            >
+              <v-card-text
+                @click="$router.push({ name: 'enter', params: { widgetId: widget.rsc_id } })"
+                :alt="widget.endpoint.enter_url"
               >
-                <v-card-text
-                  @click="$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })"
-                  :alt="widget.endpoint.enter_url"
-                >
-                  <iframe
-                    :src="`${widget.endpoint.card_url}&dark=${dark}`"
-                    frameborder="0"
-                  ></iframe>
-                </v-card-text>
-              </a>
-            </template>
+                <iframe :src="`${widget.endpoint.card_url}&dark=${dark}`"
+                        frameborder="0"
+                ></iframe>
+              </v-card-text>
+            </a>
             <v-card-title>
               <v-icon class="widget-drag-icon white--text">drag_indicator</v-icon>
             </v-card-title>
@@ -151,6 +146,8 @@ import { Box, Container } from '@dattn/dnd-grid'
 import '@dattn/dnd-grid/dist/dnd-grid.css'
 import Howto from '@/components/Howto.vue'
 
+const lodash = require('lodash')
+
 export default {
   name: 'board',
   components: {
@@ -159,8 +156,15 @@ export default {
     Howto
   },
   mounted () {
+    this.$nextTick(function () {
+      this.onResize()
+    })
   },
   methods: {
+    open (event, widget) {
+      event.preventDefault()
+      this.$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })
+    },
     openInNew (widget) {
       let path = null
       if (widget.target === 'blank') {
@@ -170,7 +174,12 @@ export default {
       }
       window.open(path, '_blank')
     },
-    ...mapActions(['addToBoard', 'removeFromBoard', 'nextBoard', 'prevBoard']),
+    onResize: lodash.debounce(function () {
+      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth - 15
+      // this.elWidth -= this.widgetListOpen - 15 // wide List document.querySelector('.widget-list')).offsetWidth
+    },
+    600),
+    ...mapActions(['addToBoard', 'removeFromBoard', 'prevBoard', 'nextBoard']),
     onOver () {
       this.over = true
     },
@@ -276,9 +285,20 @@ export default {
   /deep/ .v-card__text {
     padding: 0;
     height: calc(100%);
+    &:before {
+      cursor: pointer;
+      content: '';
+      display: block;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 38px;
+      top: 28px;
+      background-color: rgba(0, 0, 255, 0.0);
+      z-index: 1000;
+    }
 
     iframe {
-      background-color: #fff;
       width: 100%;
       height: 100%;
     }
@@ -345,9 +365,6 @@ export default {
 <style scoped lang="scss">
   .theme--dark {
     .over {
-    
-    
-    
       box-shadow: 0px 0px 4px 2px rgba(255, 255, 255, 0.45) !important;
     }
 

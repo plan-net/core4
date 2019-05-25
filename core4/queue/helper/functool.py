@@ -76,6 +76,7 @@ def execute(job, **kwargs):
     core4.logger.logon()
     queue = core4.queue.main.CoreQueue()
     job = queue.enqueue(name=name, **kwargs)
+    job.manual = True
     worker = DirectWorker(name="manual")
     worker.at = core4.util.node.mongo_now()
     worker.start_job(job.serialise(), run_async=False)

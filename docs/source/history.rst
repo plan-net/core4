@@ -5,7 +5,7 @@ release history
 core4-0.2.0
 ===========
 
-* front-end widget framework
+* front-end application framework
 
 
 core4-0.1.0
