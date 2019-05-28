@@ -11,9 +11,63 @@
     <!--<link rel="stylesheet" type="text/css" href="..\..\_static\widget.css">-->
 
     <style>
+        .theme-dark .widget-card {
+            background-color: #424242;
+        }
+
+        .theme-dark.wdg-help{
+            background-image: linear-gradient(120deg, rgb(35, 35, 35) 55%, rgb(32, 32, 32) 100%);
+            // z-index: 100;
+        }
+
+        .theme-dark .container-fluid::before {
+            content: '';
+            display: block;
+            position: absolute;
+            height: 240px;
+            left: 0;
+            right: 0;
+            top: 0;
+            background-image: linear-gradient(120deg, rgb(35, 35, 35) 55%, rgb(32, 32, 32) 100%);;
+            z-index: 0;
+            min-height: 120px;
+        }
+
+        .theme-light.wdg-help{
+            background-color: white;
+        }
+
+        .theme-dark{
+            color: #fff;
+        }
+
+        .theme-dark .card{
+            background: #424242;
+        }
+
+        .theme-dark .list-group-item{
+            background: #424242;
+            color: #fff;
+        }
+
+        .theme-dark .active{
+            background-color: var(--primary) !important;
+        }
+
+        .theme-dark .accordion-title{
+            color: #fff;
+        }
+
+        .theme-light {
+            color: #424242;
+        }
+
+        .theme-dark .doctest-block{
+            color:#fff
+        }
+
         .accordion-arrow {
             position: relative;
-            /* Adjust these values accordingly */
             top: 6px;
         }
 
@@ -74,202 +128,181 @@
         #accordion {
             max-width: 95%;
         }
+
     </style>
 </head>
 
-<body>
-    <!-- <h1>HELP of {{ handler.__class__.__name__ }}</h1> -->
-    <div class="container-fluid">
-        <div class="row mx-auto" style="max-width:1260px">
-            <div class="card left-card col-9 ">
-                <div class="card-body inner-card-body" style="position:relative">
-                    <div data-spy="scroll" data-target="#help-list" data-offset="0" class="scrollspy-help">
-                        <h3 id="list-item-1">{{ title }}</h3>
-                        <h5>{{ subtitle }}</h5>
-                        <div id="accordion">
-                            <div class="card inner-card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        QUAL_NAME : {{qual_name}} 
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        AUTHOR : {{author}}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        TAG : <span class="md-chips pt-0 pb-0 pl-1">
+<body class="wdg-help">
+<!-- <h1>HELP of {{ handler.__class__.__name__ }}</h1> -->
+<div class="container-fluid">
+    <div class="row mx-auto" style="max-width:1260px">
+        <div class="card left-card col-9 ">
+            <div class="card-body inner-card-body" style="position:relative">
+                <div data-spy="scroll" data-target="#help-list" data-offset="0" class="scrollspy-help">
+                    <h3 id="list-item-1">{{ title }}</h3>
+                    <h5>{{ subtitle }}</h5>
+                    <div id="accordion">
+                        <div class="card inner-card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    QUAL_NAME : {{qual_name}}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    AUTHOR : {{author}}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    TAG : <span class="md-chips pt-0 pb-0 pl-1">
                                                 {% for t in tag[:3] %}
                                                 <div class="md-chip">
                                                     {{t}}
                                                 </div>
                                                 {% end %}
                                             </span>
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        ICON : <i class="material-icons">{{ icon }}</i> - {{ icon }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        PROTECTED : {{ protected }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        RESOURCE ID : {{ rsc_id }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CONTAINER : {{ container }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CREATED AT : {{created_at.strftime("%d.%m.%Y %H:%M")}}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        THIS ENTER_URL : {{ enter_url }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CLASS ARGS : {{ args }}
-                                    </h6>
-                                </div>
+                                </h6>
                             </div>
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo"
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    ICON : <i class="material-icons">{{ icon }}</i> - {{ icon }}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    PROTECTED : {{ protected }}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    RESOURCE ID : {{ rsc_id }}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    CONTAINER : {{ container }}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    CREATED AT : {{created_at.strftime("%d.%m.%Y %H:%M")}}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    THIS ENTER_URL : {{ enter_url }}
+                                </h6>
+                            </div>
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    CLASS ARGS : {{ args }}
+                                </h6>
+                            </div>
+                        </div>
+                        <div class="card inner-card">
+                            <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo"
                                     aria-expanded="false" aria-controls="collapseTwo">
-                                    <div class="card-header" id="headingTwo">
-                                        <h6 class="mb-0 ">
-                                            THIS PATTERN <i
-                                                class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <ul>
-                                            {% for p in pattern %}
-                                            <li>
-                                                {% if p["name"] is not None %}
-                                                <b>{{ p["name"] }}:</b>
-                                                {% else %}
-                                                <b>no name:</b>
-                                                {% end if %}
-                                                {{ p["regex"] }}
-                                            </li>
-                                            {% end %}
-                                        </ul>
-                                    </div>
+                                <div class="card-header" id="headingTwo">
+                                    <h6 class="mb-0 accordion-title">
+                                        THIS PATTERN <i
+                                            class="material-icons accordion-arrow">keyboard_arrow_down</i>
+                                    </h6>
                                 </div>
-                            </div>
-                            <!--<div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                                    <div class="card-header" id="headingThree">
-                                        <h6 class="mb-0 ">
-                                            CONTAINER <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseThree" class="collapse" aria-labelledby="headingThree"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <div class="md-chips pt-0 pb-0">
-                                            {% for t in tag[:3] %}
-                                            <div class="md-chip">
-                                                {{t}}
-                                            </div>
-                                            {% end %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>-->
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                    <div class="card-header" id="headingFour">
-                                        <h6 class="mb-0 ">
-                                            ENDPOINTS <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-
-                                <div id="collapseFour" class="collapse" aria-labelledby="headingFour"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <ul>
-                                            {% for ep in endpoint %}
-                                            <li>
-                                                {{ ep }}
-                                                <ul>
-                                                    <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
-                                                    <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
-                                                    {% if enter_url != None %}
-                                                    <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-                                                    {% else %}
-                                                    <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
-                                                    {% end if %}
-                                                </ul>
-                                            </li>
-                                            {% end for %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                                    <div class="card-header" id="headingFive">
-                                        <h6 class="mb-0 ">
-                                            DESCRIPTION <i
-                                                class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseFive" class="collapse" aria-labelledby="headingFive"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <pre>{% raw description_html %}</pre>
-                                    </div>
+                            </button>
+                            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <ul>
+                                        {% for p in pattern %}
+                                        <li>
+                                            {% if p["name"] is not None %}
+                                            <b>{{ p["name"] }}:</b>
+                                            {% else %}
+                                            <b>no name:</b>
+                                            {% end if %}
+                                            {{ p["regex"] }}
+                                        </li>
+                                        {% end %}
+                                    </ul>
                                 </div>
                             </div>
                         </div>
-                        <hr />
-                        <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
 
-                        <span>{% raw description_html %}</span>
-                        <hr />
-                        {% for elem in method %}
-                        <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
-                        <h2></h2>
-                        {% raw elem["html"] %}
-                        <hr />
-                        {% end %}
+                        <div class="card inner-card">
+                            <button class="btn btn-link collapsed" data-toggle="collapse"
+                                    data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                <div class="card-header" id="headingFour">
+                                    <h6 class="mb-0 accordion-title">
+                                        ENDPOINTS <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
+                                    </h6>
+                                </div>
+                            </button>
+
+                            <div id="collapseFour" class="collapse" aria-labelledby="headingFour"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <ul>
+                                        {% for ep in endpoint %}
+                                        <li>
+                                            {{ ep }}
+                                            <ul>
+                                                <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
+                                                <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
+                                                {% if enter_url != None %}
+                                                <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
+                                                {% else %}
+                                                <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
+                                                {% end if %}
+                                            </ul>
+                                        </li>
+                                        {% end for %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card inner-card">
+                            <button class="btn btn-link collapsed" data-toggle="collapse"
+                                    data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                <div class="card-header" id="headingFive">
+                                    <h6 class="mb-0 accordion-title">
+                                        DESCRIPTION <i
+                                            class="material-icons accordion-arrow">keyboard_arrow_down</i>
+                                    </h6>
+                                </div>
+                            </button>
+                            <div id="collapseFive" class="collapse" aria-labelledby="headingFive"
+                                 data-parent="#accordion">
+                                <div class="card-body">
+                                    <pre class="description">{% raw description_html %}</pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-3">
-                <div id="help-list" class="list-group">
-                    <a class="list-group-item list-group-item-action active" href="#list-item-1">{{ title }}</a>
-                    <a class="list-group-item list-group-item-action" href="#list-item-2">Introduction</a>
-                    {% for elem in method %}
-                    <a class="list-group-item list-group-item-action"
-                        href="#{{elem['method'].upper()}}">{{elem['method'].upper()}}</a>
+                    <hr/>
+                    <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
+
+                    <span class="description">{% raw description_html %}</span>
+                    <hr/>
+                    <pre class="description">{% for elem in method %}</pre>
+                    <h4 class="description" id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
+                    <span class="description">{% raw elem["html"] %}</span>
+                    <hr/>
                     {% end %}
                 </div>
             </div>
         </div>
+        <div class="col-3">
+            <div id="help-list" class="list-group">
+                <a class="list-group-item list-group-item-action active" href="#list-item-1">{{ title }}</a>
+                <a class="list-group-item list-group-item-action" href="#list-item-2">Introduction</a>
+                {% for elem in method %}
+                <a class="list-group-item list-group-item-action"
+                   href="#{{elem['method'].upper()}}">{{elem['method'].upper()}}</a>
+                {% end %}
+            </div>
+        </div>
+    </div>
 </body>
 <script src="{{ default_static('widget.js') }}"></script>
 <script src="https://fezvrasta.github.io/bootstrap-material-design/assets/js/vendor/anchor.min.js"></script>
@@ -277,6 +310,7 @@
     $('body').scrollspy({
         target: '#help-list'
     })
+
 </script>
 </body>
 

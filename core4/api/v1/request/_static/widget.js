@@ -21,7 +21,6 @@ Distributed under the MIT License (license terms are at http://opensource.org/li
 
 
 /* theme color changer for widgets */
-console.log("hallo bin da")
 (function () {
   const urlParams = new URLSearchParams(window.location.search);
   const dark = urlParams.get('dark') === 'true';
