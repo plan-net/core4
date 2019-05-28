@@ -1110,3 +1110,9 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             return "{}://{}:{}{}".format(route["protocol"], route["hostname"],
                                          route["port"], url)
         raise KeyError("%s not found or not unique in named urls" % name)
+
+    def json(self):
+        """
+        Parses and returns the request body as json.
+        """
+        return json.loads(self.request.body.decode("utf-8"))
