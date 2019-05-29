@@ -14,6 +14,29 @@ import { createObjectWithDefaultValues } from '../helper'
 import { jobTypes, jobFlags, jobStates } from '../settings'
 
 const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
+const channelDict = {
+  'queue': {
+    // on_queue:
+    'summary': queue,
+    // on_event:
+    'enqueue_job': event,
+    'request_start_job': event,
+    'start_job': event,
+    'failed_start': event,
+    'defer_job': event,
+    'flag_nonstop': event,
+    'flag_zombie': event,
+    'failed_job': event,
+    'inactivate_job': event,
+    'complete_job': event,
+    'request_remove_job': event,
+    'restart_waiting': event,
+    'restart_stopped': event,
+    'request_kill_job': event,
+    'kill_job': event,
+    'remove_job': event
+  }
+}
 
 export default {
   [SOCKET_ONOPEN] (state, event) {
@@ -32,22 +55,8 @@ export default {
   [SOCKET_ONMESSAGE] (state, message) {
     state.socket.message = message
 
-    // summary - ws type notification (all jobs in queue)
-    if (message.channel === 'queue') {
-      console.log('queue')
-      state.queue = groupDataAndJobStat(message.created, message.data, 'state')
-
-      if (state.stopChart) {
-        state.event = state.queue.stat
-      }
-
-      state.stopChart = false
-    }
-
-    if (message.channel === 'event') {
-      console.log('event', message.data.queue)
-      state.event = { ...defaultEventObj, ...message.data.queue }
-      state.event['created'] = message.created
+    if (message.channel && message.name) {
+      channelDict[message.channel][message.name](state, message)
     }
   },
   // mutations for reconnect methods
@@ -71,6 +80,35 @@ export default {
 // ================================================================= //
 // Private methods
 // ================================================================= //
+/**
+ * Handler for queue notification
+ *
+ * @param state {object} - store state
+ * @param message {object} - ws notification
+ */
+function queue (state, message) {
+  // summary - ws type notification (all jobs in queue)
+  console.log('queue', message)
+  state.queue = groupDataAndJobStat(message.created, message.data, 'state')
+
+  if (state.stopChart) {
+    state.event = state.queue.stat
+  }
+
+  state.stopChart = false
+}
+
+/**
+ * Handler for event notification
+ *
+ * @param state {object} - store state
+ * @param message {object} - ws notification
+ */
+function event (state, message) {
+  console.log('event', message)
+  state.event = { ...defaultEventObj, ...message.data.queue }
+  state.event['created'] = message.created
+}
 
 /**
  * Assort array of all jobs in groups + get job statistic
