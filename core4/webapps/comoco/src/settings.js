@@ -6,6 +6,27 @@
  */
 
 // ToDo: return clones
+const defaultHistoryRange = [7, 'd'] // d - in days
+
+const eventChannelNames = [
+  'enqueue_job',
+  'request_start_job',
+  'start_job',
+  'failed_start',
+  'defer_job',
+  'flag_nonstop',
+  'flag_zombie',
+  'failed_job',
+  'inactivate_job',
+  'complete_job',
+  'request_remove_job',
+  'restart_waiting',
+  'restart_stopped',
+  'request_kill_job',
+  'kill_job',
+  'remove_job'
+]
+
 const jobTypes = ['running', 'pending', 'deferred', 'failed', 'error', 'inactive', 'killed']
 
 const jobColors = {
@@ -58,8 +79,6 @@ const groupsJobsByStates = (function (states) {
 // Array of all existing job groups ['waiting', 'running', 'stopped']
 const jobGroups = Object.keys(groupsJobsByStates)
 
-const defaultHistoryRange = [7, 'd'] // d - in days
-
 export {
   jobTypes,
   groupsJobsByStates,
@@ -67,5 +86,6 @@ export {
   jobGroups,
   jobFlags,
   jobColors,
-  defaultHistoryRange
+  defaultHistoryRange,
+  eventChannelNames
 }

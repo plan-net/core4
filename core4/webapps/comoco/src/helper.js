@@ -11,8 +11,17 @@ import { clone } from 'core4ui/core4/helper'
  */
 function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
   let iterator = Array.isArray(iterableObj) ? iterableObj : Object.keys(iterableObj)
+  let value = isFunction(defaultValue) ? defaultValue : clone(defaultValue)
 
-  return clone(Object.assign(...iterator.map(k => ({ [k]: clone(defaultValue) }))))
+  // !!! clone function returns an empty object in case of
+  // !!! cloning object where values are functions
+  return clone(iterator.reduce((computedResult, currentItem) => {
+    computedResult[currentItem] = value
+
+    return computedResult
+  }, {}))
+
+  // return clone(Object.assign(...iterator.map(k => ({ [k]: clone(defaultValue) }))))
 }
 
 /**
@@ -119,6 +128,16 @@ function isPromise (obj) {
  */
 function isGenerator (fn) {
   return fn.constructor.name === 'GeneratorFunction'
+}
+
+/**
+ * Check is value is a Function
+ *
+ * @param functionToCheck {any}
+ * @returns {boolean}
+ */
+function isFunction (functionToCheck) {
+  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]'
 }
 
 /**

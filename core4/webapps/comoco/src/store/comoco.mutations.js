@@ -11,7 +11,7 @@ import {
 } from './comoco.mutationTypes'
 
 import { createObjectWithDefaultValues } from '../helper'
-import { jobTypes, jobFlags, jobStates } from '../settings'
+import { jobTypes, jobFlags, jobStates, eventChannelNames } from '../settings'
 
 const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 const channelDict = {
@@ -19,24 +19,15 @@ const channelDict = {
     // on_queue:
     'summary': queueChannelHandler,
     // on_event:
-    'enqueue_job': eventChannelHandler,
-    'request_start_job': eventChannelHandler,
-    'start_job': eventChannelHandler,
-    'failed_start': eventChannelHandler,
-    'defer_job': eventChannelHandler,
-    'flag_nonstop': eventChannelHandler,
-    'flag_zombie': eventChannelHandler,
-    'failed_job': eventChannelHandler,
-    'inactivate_job': eventChannelHandler,
-    'complete_job': eventChannelHandler,
-    'request_remove_job': eventChannelHandler,
-    'restart_waiting': eventChannelHandler,
-    'restart_stopped': eventChannelHandler,
-    'request_kill_job': eventChannelHandler,
-    'kill_job': eventChannelHandler,
-    'remove_job': eventChannelHandler
+    ...eventChannelNames.reduce((computedResult, currentItem) => {
+      computedResult[currentItem] = eventChannelHandler
+
+      return computedResult
+    }, {})
   }
 }
+
+console.log(createObjectWithDefaultValues(eventChannelNames, eventChannelHandler))
 
 export default {
   [SOCKET_ONOPEN] (state, event) {
