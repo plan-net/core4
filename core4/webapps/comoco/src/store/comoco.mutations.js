@@ -17,24 +17,24 @@ const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 const channelDict = {
   'queue': {
     // on_queue:
-    'summary': queue,
+    'summary': queueChannelHandler,
     // on_event:
-    'enqueue_job': event,
-    'request_start_job': event,
-    'start_job': event,
-    'failed_start': event,
-    'defer_job': event,
-    'flag_nonstop': event,
-    'flag_zombie': event,
-    'failed_job': event,
-    'inactivate_job': event,
-    'complete_job': event,
-    'request_remove_job': event,
-    'restart_waiting': event,
-    'restart_stopped': event,
-    'request_kill_job': event,
-    'kill_job': event,
-    'remove_job': event
+    'enqueue_job': eventChannelHandler,
+    'request_start_job': eventChannelHandler,
+    'start_job': eventChannelHandler,
+    'failed_start': eventChannelHandler,
+    'defer_job': eventChannelHandler,
+    'flag_nonstop': eventChannelHandler,
+    'flag_zombie': eventChannelHandler,
+    'failed_job': eventChannelHandler,
+    'inactivate_job': eventChannelHandler,
+    'complete_job': eventChannelHandler,
+    'request_remove_job': eventChannelHandler,
+    'restart_waiting': eventChannelHandler,
+    'restart_stopped': eventChannelHandler,
+    'request_kill_job': eventChannelHandler,
+    'kill_job': eventChannelHandler,
+    'remove_job': eventChannelHandler
   }
 }
 
@@ -86,7 +86,7 @@ export default {
  * @param state {object} - store state
  * @param message {object} - ws notification
  */
-function queue (state, message) {
+function queueChannelHandler (state, message) {
   // summary - ws type notification (all jobs in queue)
   console.log('queue', message)
   state.queue = groupDataAndJobStat(message.created, message.data, 'state')
@@ -104,7 +104,7 @@ function queue (state, message) {
  * @param state {object} - store state
  * @param message {object} - ws notification
  */
-function event (state, message) {
+function eventChannelHandler (state, message) {
   console.log('event', message)
   state.event = { ...defaultEventObj, ...message.data.queue }
   state.event['created'] = message.created
