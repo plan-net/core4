@@ -6,8 +6,8 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 __project__ = 'core4'
-__version__ = "0.3.4"
-__built__ = "2019-05-20 06:54:14"
+__version__ = "0.3.5"
+__built__ = "2019-05-25 13:32:19"
 name = 'core4'
 title = 'core4 framework'
 description = 'core4 integration automation framework'

@@ -78,7 +78,6 @@ class CoreConfig(collections.MutableMapping):
     system_config = SYSTEM_CONFIG
 
     _config_cache = None
-    _raw_config_cache = None
     _file_cache = {}
     _db_cache = None
     db_info = None
@@ -173,16 +172,6 @@ class CoreConfig(collections.MutableMapping):
             self._config_cache = self._load()
         return self._config_cache
 
-    def raw_config(self, key):
-        """
-        Loads raw configuration data lazily and returns the value of the top level key
-
-        :return: :class:`.ConfigMap`
-        """
-        if self._raw_config_cache is None:
-            self._raw_config_cache = self._load(False)
-        return self._raw_config_cache.get(key)
-
     def _verify_dict(self, variable, message):
         """
         Verifies the passed variable is a Python dict. Raises
@@ -235,11 +224,17 @@ class CoreConfig(collections.MutableMapping):
             project_name = project[0]
             project_config = project[1].copy()
             # self._verify_dict(project_config, "project config")
-            project_default = project_config.pop(DEFAULT, {})
+            if apply_default_section:
+                project_default = project_config.pop(DEFAULT, {})
+            else:
+                project_default = {}
             self._verify_dict(project_default, "project DEFAULT")
             # collect local project DEFAULT
-            local_project_default = local_config.get(
-                project_name, {}).pop(DEFAULT, {})
+            if apply_default_section:
+                local_project_default = local_config.get(
+                    project_name, {}).pop(DEFAULT, {})
+            else:
+                local_project_default = {}
             self._verify_dict(local_project_default, "local project DEFAULT")
             # merge project DEFAULT and local project DEFAULT
             project_default = core4.util.tool.dict_merge(

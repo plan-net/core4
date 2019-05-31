@@ -9,12 +9,13 @@
 This module delivers the :class:`.CoreRole` to manage users and roles.
 """
 
+import json
+
 import core4.error
 import core4.util.crypt
 import core4.util.node
 from core4.api.v1.request.role.field import *
 from core4.base.main import CoreBase
-import json
 
 ALPHANUM = re.compile(r'^[a-zA-Z0-9_.-]+$')
 EMAIL = re.compile(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
@@ -310,13 +311,11 @@ class CoreRole(CoreBase):
         :param limit: number of records to be retrieved
         :return: :list: resulting documents
         """
-
-
         filter = await self.manage_filter(filter)
 
-        cur = self.role_collection.find(filter)\
-            .sort(*sort_by)\
-            .skip(skip)\
+        cur = self.role_collection.find(filter) \
+            .sort(*sort_by) \
+            .skip(skip) \
             .limit(limit)
 
         # None will exhaust the whole cursor. no buffering needed here.
@@ -518,10 +517,10 @@ class CoreRole(CoreBase):
 
     async def manage_filter(self, filter):
         """
-        If given a dict by backend, returns that dict.
-        If given a string:
-         * is the string a dict representation: try to convert
-         * if not, assume its full text search
+        If given a dict by backend, returns that dict. If given a string:
+        * is the string a dict representation: try to convert
+        * if not, assume its full text search
+
         Pass regex handling to :meth: `.manage_dict_filter`.
 
         :param filter: query string
@@ -560,7 +559,7 @@ class CoreRole(CoreBase):
         :param filter: query dict
         :return: mongodb query dict.
         """
-        for k,v in filter.items():
+        for k, v in filter.items():
             if isinstance(v, str):
                 if re.match("^[a-zA-Z0-9_/-]*$", v):
                     pass

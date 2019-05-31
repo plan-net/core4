@@ -118,7 +118,7 @@ class Cookie:
             upsert=True)
         return result.raw_result['n'] > 0
 
-    def get(self, key):
+    def get(self, key, default=None):
         """
         Get the value of the cookie key.
 
@@ -129,7 +129,7 @@ class Cookie:
             {'_id': self.cookie_name}, projection={key: 1, '_id': 0})
         if value and key in value:
             return value[key]
-        return None
+        return default
 
     def delete(self, key):
         """

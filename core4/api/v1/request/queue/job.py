@@ -591,7 +591,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         :param event: to log
         :param _id: job _id
         """
-        self.trigger(name=event, channel=core4.const.QUEUE_CHANNEL,
+        self.trigger(name=event, channel=core4.const.JOB_CHANNEL,
                      data={"_id": _id, "queue": await self.get_queue_count()})
 
 

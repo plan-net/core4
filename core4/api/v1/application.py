@@ -309,7 +309,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
           first been published
         * started_at (str) - in iso format indicating when the resource has
           been started
-        * target (str) - indicating how the widget has to be spawned, defaults
+        * target (str) - indicating how the api has to be spawned, defaults
           to ``None`` for embedded mode, ``blank`` indicating standalone mode
         * endpoint (list) - of str representing all available endpoints for
           this handler
@@ -376,7 +376,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
         :param timestamp: :class:`datetime.datetime`
         :return: str representation or ``None``
         """
-        config = self.config.raw_config("api").get("age_range", None)
+        config = self.raw_config["api"].get("age_range", None)
         if config:
             age = core4.util.node.mongo_now() - timestamp
             age = age.total_seconds() / 60. / 60. / 24.

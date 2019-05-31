@@ -16,7 +16,7 @@ With this use case you follow
   * the combined use of :mod:`Pandas` to wrangle data and :mod:`.Bokeh` to
     visualize the results
 
-With the forces of a regular job, an API endpoint and a widget this use case
+With the forces of a regular job, an API endpoint and an app this use case
 visualises the usage of your core system. As a simple performance metric the
 unique number of users who login has been chosen. This KPI can be aggregated by
 day, week, month, quarter and year.
@@ -284,7 +284,7 @@ or ``POST`` method. Both method handlers process arguments ``start``, ``end``,
 and ``aggregate`` (lines 19-23). Furthermore the URL path contains an optional
 mode operator1 ``plot`` and ``raw``, e.g.
 ``http://devops:5001/usage/login/raw``. Without any mode, the handler renders
-the widget template ``usage.html`` (line 38) and passes Bokeh prerequisites as
+the HTML template ``usage.html`` (line 38) and passes Bokeh prerequisites as
 well as the parsed parameters for further processing.
 
 With mode ``plot`` the handler method retrieves the data using method async
@@ -300,10 +300,10 @@ data to the front-end.
           the requested content type.
 
 
-Widget template
-===============
+HTML template
+=============
 
-The following HTML snippet is the widget template used by the API (line 38).
+The following HTML snippet is the template used by the API (line 38).
 
 .. code-block:: html
    :linenos:

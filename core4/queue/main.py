@@ -510,7 +510,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             "traceback": traceback.format_exception(*exc_info)
         }
 
-    def set_complete(self, job):
+    def set_complete(self, job, unlock=True):
         """
         Set the passed ``job`` to state ``complete`` and move the job from
         ``sys.queue`` to ``sys.journal``.
@@ -538,7 +538,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 raise RuntimeError(
                     "failed to remove job [{}] from queue".format(job._id))
             self.make_stat('complete_job', str(job._id))
-            self.unlock_job(job._id)
+            if unlock:
+                self.unlock_job(job._id)
             job.logger.info("done execution with [complete] "
                             "after [%d] sec.", runtime)
         else:
@@ -645,7 +646,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             core4.service.introspect.main.exec_project(
                 doc["name"], KILL, job_id=str(doc["_id"]))
         except Exception:
-            raise
+            self.logger.critical("failed to kill job [%s]", str(doc["_id"]))
 
     def _exec_kill(self, _id):
         # internal method used by virtual python interpreter to kill job
@@ -707,5 +708,5 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         * ``kill_job``
         * ``remove_job``
         """
-        self.trigger(name=event, channel=core4.const.QUEUE_CHANNEL,
+        self.trigger(name=event, channel=core4.const.JOB_CHANNEL,
                      data={"_id": _id, "queue": self.get_queue_count()})

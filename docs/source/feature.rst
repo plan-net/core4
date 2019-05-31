@@ -36,8 +36,8 @@ not weeks or months.
 * :ref:`ReST API <api>` - unified interface to access and distribute insights
   and data to exchange data with other systems inbound and outbount including
   web application frameworks
-* :ref:`widgets <widget>` as mini applications - extension to the ReST API to
-  deliver simple single-page applications
+* mini applications - extension to the ReST API to deliver simple applications
+  based on HTML5 and Jinja2
 * :ref:`unified authorisation and access management <access>` across
   :ref:`jobs <job>`, :ref:`ReST API <api>`, databases and applications
 * :ref:`configuration management <config>` - a flexible configuration system

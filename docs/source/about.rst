@@ -27,7 +27,7 @@ new version.
 * Core v1 was a prototype for a data integration and automation system.
 * Core v2 was the first production version with major improvements to the job
   distribution and worker model.
-* Core v3 included the addition of a REST Api and Widgets.
+* Core v3 included the addition of a REST Api and mini applications.
 * Core v4 is the Python 3 ported version that has been completely rebuilt.
 
 There has been some own research on existing projects. The spectrum on
@@ -51,9 +51,10 @@ batch, distributed execution, intensive computations etc. is wide:
 * Gearman BSD
 * PyRes MIT
 * Amazon SQS
-* luigi APACHE LICENSE 2.0
+* luigi from Spotify APACHE LICENSE 2.0
 * Parallel python
 * Ipython take
+* Airflow from APACHE LICENSE
 
 The gist is, every company and team build its own. So did we but with the focus
 to provide one hub and to unify 3 communities: data engineers, scientists and

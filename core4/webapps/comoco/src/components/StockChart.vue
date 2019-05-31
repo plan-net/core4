@@ -7,13 +7,17 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import moment from 'moment'
+import { mapState } from 'vuex'
 
 import { Chart } from 'highcharts-vue'
 import Highcharts from 'highcharts'
 import stockInit from 'highcharts/modules/stock'
 
-import { jobColors } from '../settings'
+import { SOCKET_ONMESSAGE } from '../store/comoco.mutationTypes'
+
+import { jobTypes, jobColors } from '../settings'
+import { createObjectWithDefaultValues } from '../helper'
 
 stockInit(Highcharts)
 
@@ -239,6 +243,8 @@ Highcharts.theme = {
 // Apply the theme
 Highcharts.setOptions(Highcharts.theme)
 
+// let stop = false
+
 export default {
   name: 'stockChart',
   components: {
@@ -247,43 +253,127 @@ export default {
   data () {
     return {
       timer: 1000,
-      timerId: undefined
+      timerId: null,
+      history: createObjectWithDefaultValues(jobTypes, []),
+      socketUpdatesCache: createObjectWithDefaultValues(jobTypes, [])
     }
   },
-  mounted () { // fired after the element has been created
-    if (!this.$refs.chart) return null
+  created () {},
+  mounted () {
+    // fired after the element has been created
+    // element might not have been added to the DOM
+    this.$nextTick(() => {
+      // element has definitely been added to the DOM
+      if (!this.$refs.chart) {
+        console.log('%c not ready: this.$refs.chart', 'color: red; font-weight: bold;', this.$refs.chart)
+      }
 
-    const component = this
-    const chart = component.$refs.chart.chart
+      const component = this
+      const chart = component.$refs.chart.chart
+      const socketNotifications = {
+        [SOCKET_ONMESSAGE] (state) {
+          if (state.socket.message.channel === 'event') {
+            console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
+            const x = (new Date()).getTime() // current time
 
-    // ToDo: write a comment why it should be like this
-    const running = chart.series[0]
-    const pending = chart.series[1]
-    const deferred = chart.series[2]
-    const failed = chart.series[3]
-    const error = chart.series[4]
-    const inactive = chart.series[5]
-    const killed = chart.series[6]
+            jobTypes.forEach(item => {
+              component.socketUpdatesCache[item].push([x, state.event[item] || 0])
+            })
+          }
+        }
+      }
 
-    const arr = [running, pending, deferred, failed, error, inactive, killed]
+      let lastHistoryPointTimestamp
 
-    component.timerId = setTimeout(function update () {
-      const x = (new Date()).getTime()// current time
-      const shift = running.data.length > 3600 // 1 hour
+      chart.showLoading('Loading data from server...')
+      component.$getChartHistory().subscribe(onNext, onError, onCompleted)
 
-      if (component.getChartData) {
-        arr.forEach(item => {
-          item.addPoint([x, component.getChartData[item.name]], false, shift)
+      // store actual queue updates while retrieving history
+      const socketUpdateUnsubscribe = this.$store.subscribe((mutation, state) => {
+        if (socketNotifications[mutation.type]) {
+          socketNotifications[mutation.type](state)
+        }
+      })
+
+      function onNext (value) {
+        console.log('on next: ', value)
+        if (value.data.length) {
+          // response from serve sometimes have objects with the same creation date,
+          // highchart don't allowed to set points with the same creation date,
+          // need to add a 50 milliseconds to creation date so the created key become unique
+          // this issue should in the future fix on backend side
+          value.data.forEach((item, i, arr) => {
+            item.timestamp = new Date(item.created).getTime()
+
+            if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
+              arr[i].timestamp = lastHistoryPointTimestamp + 50
+            }
+
+            jobTypes.forEach(job => {
+              // server returns only jobs with a value
+              // {error: 7, pending: 1, created: "2019-05-21T20:24:05.180000", total: 8}
+              // need to add rest possible job type with 0 by our self
+              // {error: 7, pending: 1, running: 0, deferred: 0, failed: 0, inactive: 0, killed: 0}
+              component.history[job].push([item.timestamp, item[job] || 0])
+            })
+
+            lastHistoryPointTimestamp = arr[i].timestamp
+          })
+        }
+      }
+
+      function onError (err) {
+        // ToDo: cover this case
+        console.log('%c on error', 'color: red; font-weight: bold;', err.type)
+      }
+
+      function onCompleted () {
+        console.log('%c on completed fired function', 'color: green; font-weight: bold;')
+
+        const chartSeriesReference = chart.series.reduce((computedResult, series) => {
+          if (jobTypes.includes(series.name)) {
+            computedResult.push(series)
+          }
+
+          return computedResult
+        }, [])
+
+        socketUpdateUnsubscribe()
+
+        // add history chunk + queue cache to chart
+        chartSeriesReference.forEach(item => {
+          const history = component.history[item.name].concat(component.socketUpdatesCache[item.name])
+
+          item.setData(history, false, true, false)
         })
 
         chart.redraw()
-      }
+        chart.hideLoading()
 
-      component.timerId = setTimeout(update, component.timer)
-    }, component.timer)
+        // recursive Timeout easier than Interval for system pressure
+        component.timerId = setTimeout(function update () {
+          if (!component.stopChart) {
+            const data = component.getChartData
+            const x = (new Date(moment.utc().format('YYYY-MM-DDTHH:mm:ss'))).getTime() // current time
+            const shift = chart.pointCount > 1750 // (250 points for each series)
+
+            chartSeriesReference.forEach(item => {
+              item.addPoint([x, data[item.name]], false, shift)
+            })
+
+            chart.redraw()
+          }
+
+          component.timerId = setTimeout(update, component.timer)
+        }, component.timer)
+      }
+    })
   },
   computed: {
-    ...mapGetters(['getChartData']),
+    ...mapState({
+      stopChart: 'stopChart',
+      getChartData: (state) => state.event
+    }),
     chartOptions () {
       return {
         chart: {
@@ -291,7 +381,7 @@ export default {
         },
 
         time: {
-          useUTC: true
+          useUTC: false
         },
 
         rangeSelector: {
@@ -315,17 +405,17 @@ export default {
             type: 'minute',
             text: '30m'
           },
-          // {
-          //   type: 'hour',
-          //   count: 1,
-          //   text: '1h'
-          // },
+          {
+            type: 'day',
+            count: 1,
+            text: '1d'
+          },
           {
             type: 'all',
             text: 'All'
           }],
           inputEnabled: false,
-          selected: 4
+          selected: 5
         },
 
         exporting: {
@@ -338,6 +428,14 @@ export default {
           split: false,
           enabled: true
         },
+
+        // navigator: {
+        //   adaptToUpdatedData: false
+        // },
+        //
+        // scrollbar: {
+        //   liveRedraw: false
+        // },
 
         legend: {
           enabled: true,
@@ -357,6 +455,17 @@ export default {
           }
         },
 
+        loading: {
+          // showDuration: 700,
+          hideDuration: 700,
+          labelStyle: {
+            color: 'white'
+          },
+          style: {
+            backgroundColor: 'gray'
+          }
+        },
+
         yAxis: {
           title: {
             text: 'Job count',
@@ -368,7 +477,11 @@ export default {
         xAxis: {
           title: {
             text: 'Time in UTC (Coordinated Universal Time)'
+          },
+          events: {
+            zoom: (e) => { console.log(`zoom, e = `, e) }
           }
+          // minRange: 3600 * 1000 // one hour
         },
 
         series: createSeriesData()
@@ -380,9 +493,9 @@ export default {
   }
 }
 
-// ================================================================= //
+// ======================================================================================= //
 // Private methods
-// ================================================================= //
+// ======================================================================================= //
 
 function createSeriesData () {
   let arr = []
@@ -395,6 +508,9 @@ function createSeriesData () {
       color: color,
       type: 'areaspline',
       data: [],
+      dataGrouping: {
+        enabled: true
+      },
       fillColor: {
         linearGradient: {
           x1: 0,
@@ -412,6 +528,17 @@ function createSeriesData () {
 
   return arr
 }
+
+// function stopStartChart (chart, msg) {
+//   if (stop) {
+//     chart.showLoading(msg)
+//   } else {
+//     chart.hideLoading()
+//   }
+//
+//   stop = !stop
+// }
+
 </script>
 
 <style scoped>

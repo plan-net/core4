@@ -75,7 +75,7 @@ class JobHistoryHandler(CoreRequestHandler):
         sort = self.get_argument("sort", as_type=int, default=-1)
         coll = self.config.sys.event
         query = {
-            "channel": core4.const.QUEUE_CHANNEL
+            "channel": core4.const.JOB_CHANNEL
         }
         if query_filter:
             query.update(query_filter)

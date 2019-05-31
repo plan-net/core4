@@ -178,15 +178,12 @@ class EventHandler(CoreWebSocketHandler):
     @classmethod
     def on_event(cls, change):
         doc = change["fullDocument"]
-        channel = 'event'
-        author = doc.get("author", None)
-        doc['channel'] = 'event'
+        channel = doc.get("channel", None)
         data = json_encode(doc)
         for waiter, interest in cls.waiters.items():
-            if ((channel == core4.const.EVENT_CHANNEL)
-                    or (author != waiter.current_user)):
-                if channel in interest:
-                    waiter.write_message(data)
+            if channel in interest:
+                waiter.write_message(data)
+
     @classmethod
     async def on_queue(cls, change):
         data = {

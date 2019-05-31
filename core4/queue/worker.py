@@ -198,7 +198,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 doc["name"], EXECUTE, wait=False, job_id=str(doc["_id"]))
         else:
             from core4.queue.process import CoreWorkerProcess
-            CoreWorkerProcess().start(doc["_id"], redirect=False)
+            CoreWorkerProcess().start(doc["_id"], redirect=False, manual=True)
 
     def get_next_job(self):
         """
@@ -516,8 +516,8 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                 proc = psutil.Process(doc["locked"]["pid"])
                 if proc.status() not in (psutil.STATUS_DEAD,
                                          psutil.STATUS_ZOMBIE):
-                    return (True, proc)
-        return (False, proc)
+                    return True, proc
+        return False, proc
 
     def collect_stats(self):
         """

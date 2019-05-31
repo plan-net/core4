@@ -329,6 +329,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
     schedule = None
     progress_interval = None
     zombie_time = None
+    manual = False
 
     _frozen_ = False
     upwind = ["log_level"] + list(CONFIG_ARGS)
