@@ -32,7 +32,7 @@ console.log(createObjectWithDefaultValues(eventChannelNames, eventChannelHandler
 export default {
   [SOCKET_ONOPEN] (state, event) {
     Vue.prototype.$socket = event.currentTarget
-    Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'event'] })
+    Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'job', 'event'] })
     state.socket.isConnected = true
     state.error.socket_reconnect_error.state = false
   },
