@@ -17,7 +17,9 @@ const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 const channelDict = {
   'queue': {
     // on_queue:
-    'summary': queueChannelHandler,
+    'summary': queueChannelHandler
+  },
+  'job': {
     // on_event:
     ...eventChannelNames.reduce((computedResult, currentItem) => {
       computedResult[currentItem] = eventChannelHandler
