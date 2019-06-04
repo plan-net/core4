@@ -17,7 +17,9 @@ const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 const channelDict = {
   'queue': {
     // on_queue:
-    'summary': queueChannelHandler,
+    'summary': queueChannelHandler
+  },
+  'job': {
     // on_event:
     ...eventChannelNames.reduce((computedResult, currentItem) => {
       computedResult[currentItem] = eventChannelHandler
@@ -32,7 +34,7 @@ console.log(createObjectWithDefaultValues(eventChannelNames, eventChannelHandler
 export default {
   [SOCKET_ONOPEN] (state, event) {
     Vue.prototype.$socket = event.currentTarget
-    Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'event'] })
+    Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'job', 'event'] })
     state.socket.isConnected = true
     state.error.socket_reconnect_error.state = false
   },
