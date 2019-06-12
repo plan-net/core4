@@ -82,7 +82,7 @@ class JobHistoryHandler(CoreRequestHandler):
         sort = self.get_argument("sort", as_type=int, default=-1)
         coll = self.config.sys.event
         query = {
-            "channel": core4.const.QUEUE_CHANNEL #core4.const.JOB_CHANNEL
+            "channel": core4.const.QUEUE_CHANNEL
         }
         if query_filter:
             query.update(query_filter)
@@ -227,7 +227,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
 
         coll = self.config.sys.event
         query = {
-            "channel": core4.const.QUEUE_CHANNEL  # ToDo: rename the channel
+            "channel": core4.const.QUEUE_CHANNEL
         }
 
         group_by_date_time_period = self._group_by(start_date, end_date)
@@ -444,7 +444,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
 
         period = precision[
             cls._get_period(start_date, end_date)["delta"]
-        ] # todo return one
+        ]
 
         for date in dates:
             needed_period = period["divisor"]
