@@ -387,24 +387,29 @@ class ComocoHistoryHandler(CoreRequestHandler):
             end (str| None): - end date
 
         Returns:
+            full mongoDB _id query for $group
+
+        Examples:
             {
                 'year':  {'$year': '$created'},
                 'month': {'$month': '$created'},
                 'day':   {'$dayOfMonth': '$created'},
                 'hour': {
-                '$subtract': [
-                    {'$hour': '$created'},
-                    {'$mod': [{'$hour': '$created'}, 1]}
-                ]
+                    '$subtract': [
+                        {'$hour': '$created'},
+                        {'$mod': [{'$hour': '$created'}, 1]}
+                    ]
             }
             --------------------------------------------------------
             {
                 'year':  {'$year': '$created'},
                 'month': {'$month': '$created'},
-                'day':   '$subtract': [
-                    {'$dayOfMonth': '$created'},
-                    {'$mod': [{'$dayOfMonth': '$created'}, 1]}
-                ]
+                'day':   {
+                    '$subtract': [
+                        {'$dayOfMonth': '$created'},
+                        {'$mod': [{'$dayOfMonth': '$created'}, 1]}
+                    ]
+                }
             }
         """
         grouping_id = {}
@@ -470,6 +475,9 @@ class ComocoHistoryHandler(CoreRequestHandler):
             end (datetime| None): - end date
 
         Returns:
+            info about the difference between start date and end date
+
+        Examples:
             {
                 "delta": "month",
                 "amount": 2
