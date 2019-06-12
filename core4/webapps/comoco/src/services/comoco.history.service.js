@@ -2,7 +2,6 @@ import moment from 'moment'
 
 import api from '../api'
 import { range, subscribeDecorator } from '../helper'
-import { defaultHistoryRange } from '../settings.js'
 
 export default {
   install (Vue, options) {
@@ -39,31 +38,6 @@ function * chartHistory (startDate, endDate) {
 // Private methods
 // ================================================================= //
 
-// async function getChartHistory (perPage, sort) {
-//   let setting
-//   let history
-//   let startDate = moment.utc().subtract(...defaultHistoryRange).format('YYYY-MM-DDTHH:mm:ss')
-//   let filter = { 'created': { '$gte': startDate } } // mongoDB filter
-//
-//   try {
-//     setting = await api.getSetting()
-//
-//     if (setting.comoco && setting.comoco.startDate) {
-//       filter['$gte'] = setting.comoco.startDate
-//     }
-//
-//     filter = JSON.stringify(filter)
-//
-//     history = await api.getJobHistory(null, perPage, filter, sort)
-//   } catch (err) {
-//     throw Error(err)
-//   }
-//
-//   history.startDate = filter
-//
-//   return history
-// }
-
 async function getChartHistory (perPage, sort, startDate, endDate) {
   let setting
   let history
@@ -75,9 +49,6 @@ async function getChartHistory (perPage, sort, startDate, endDate) {
       if (setting.comoco && setting.comoco.startDate) {
         startDate = moment(setting.comoco.startDate).format('YYYY-MM-DDTHH:mm:ss')
       }
-    // else {
-    //     startDate = moment.utc().subtract(...defaultHistoryRange).format('YYYY-MM-DDTHH:mm:ss') // mongoDB filter
-    //   }
     }
 
     if (endDate) {

@@ -291,8 +291,6 @@ export default {
         }
       }
 
-      // let lastHistoryPointTimestamp
-
       chart.showLoading('Loading data from server...')
       component.$getChartHistory().subscribe(onNext, onError, onCompleted)
 
@@ -313,10 +311,6 @@ export default {
           value.data.forEach((item, i, arr) => {
             item.timestamp = new Date(item.created).getTime()
 
-            // if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
-            //   arr[i].timestamp = lastHistoryPointTimestamp + 50
-            // }
-
             jobTypes.forEach(job => {
               // server returns only jobs with a value
               // {error: 7, pending: 1, created: "2019-05-21T20:24:05.180000", total: 8}
@@ -324,8 +318,6 @@ export default {
               // {error: 7, pending: 1, running: 0, deferred: 0, failed: 0, inactive: 0, killed: 0}
               component.history[job].push([item.timestamp, item[job] || 0])
             })
-
-            // lastHistoryPointTimestamp = arr[i].timestamp
           })
         }
       }
