@@ -1,5 +1,4 @@
 export default {
-  stopChart: true, // ToDo: need to be handle in chart component
   queue: {
     // queue object interface:
     //   stat: {

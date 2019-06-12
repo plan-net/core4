@@ -14,7 +14,7 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
   let value = isFunction(defaultValue) ? defaultValue : clone(defaultValue)
 
   // !!! clone function returns an empty object in case of
-  // !!! cloning object where values are functions
+  // !!! cloning object values are functions
   return clone(iterator.reduce((computedResult, currentItem) => {
     computedResult[currentItem] = value
 
@@ -140,6 +140,10 @@ function isFunction (functionToCheck) {
   return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]'
 }
 
+function isEmptyObject (objectToCheck) {
+  return Object.keys(objectToCheck).length === 0 && objectToCheck.constructor === Object
+}
+
 /**
  * Decorator for generator function, make subscribe flow aka Rx approach
  *
@@ -219,5 +223,6 @@ export {
   to,
   range,
   isPromise,
+  isEmptyObject,
   subscribeDecorator
 }

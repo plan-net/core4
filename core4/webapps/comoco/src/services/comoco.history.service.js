@@ -20,15 +20,15 @@ export default {
   }
 }
 
-function * chartHistory () {
+function * chartHistory (startDate, endDate) {
   let start
   let perPage = 1000
 
   try {
-    start = yield getChartHistory(perPage)
+    start = yield getChartHistory(perPage, 1, startDate, endDate)
 
     for (let page of range(++start.page, --start.page_count)) {
-      yield api.getJobHistory(page, perPage, start.startDate)
+      yield api.getJobHistory(page, perPage, start.startDate, start.endDate)
     }
   } catch (e) {
     console.log(e)
@@ -39,29 +39,58 @@ function * chartHistory () {
 // Private methods
 // ================================================================= //
 
-async function getChartHistory (perPage, sort) {
+// async function getChartHistory (perPage, sort) {
+//   let setting
+//   let history
+//   let startDate = moment.utc().subtract(...defaultHistoryRange).format('YYYY-MM-DDTHH:mm:ss')
+//   let filter = { 'created': { '$gte': startDate } } // mongoDB filter
+//
+//   try {
+//     setting = await api.getSetting()
+//
+//     if (setting.comoco && setting.comoco.startDate) {
+//       filter['$gte'] = setting.comoco.startDate
+//     }
+//
+//     filter = JSON.stringify(filter)
+//
+//     history = await api.getJobHistory(null, perPage, filter, sort)
+//   } catch (err) {
+//     throw Error(err)
+//   }
+//
+//   history.startDate = filter
+//
+//   return history
+// }
+
+async function getChartHistory (perPage, sort, startDate, endDate) {
   let setting
   let history
 
-  // ToDo: change to 7 days, check error flow
-  let startDate = moment.utc().subtract(...defaultHistoryRange).format('YYYY-MM-DDTHH:mm:ss')
-  let filter = { 'created': { '$gte': startDate } } // mongoDB filter
-
   try {
-    setting = await api.getSetting()
+    if (!startDate) {
+      setting = await api.getSetting()
 
-    if (setting.comoco && setting.comoco.startDate) {
-      filter['$gte'] = setting.comoco.startDate
+      if (setting.comoco && setting.comoco.startDate) {
+        startDate = moment(setting.comoco.startDate).format('YYYY-MM-DDTHH:mm:ss')
+      }
+    // else {
+    //     startDate = moment.utc().subtract(...defaultHistoryRange).format('YYYY-MM-DDTHH:mm:ss') // mongoDB filter
+    //   }
     }
 
-    filter = JSON.stringify(filter)
+    if (endDate) {
+      endDate = moment(endDate).format('YYYY-MM-DDTHH:mm:ss') // mongoDB filter
+    }
 
-    history = await api.getJobHistory(null, perPage, filter, sort)
+    history = await api.getJobHistory(null, perPage, startDate, endDate, sort)
   } catch (err) {
     throw Error(err)
   }
 
-  history.startDate = filter
+  history.startDate = startDate
+  history.endDate = endDate
 
   return history
 }

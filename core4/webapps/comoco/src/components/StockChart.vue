@@ -17,7 +17,7 @@ import stockInit from 'highcharts/modules/stock'
 import { SOCKET_ONMESSAGE } from '../store/comoco.mutationTypes'
 
 import { jobTypes, jobColors } from '../settings'
-import { createObjectWithDefaultValues } from '../helper'
+import { createObjectWithDefaultValues, isEmptyObject } from '../helper'
 
 stockInit(Highcharts)
 
@@ -243,7 +243,7 @@ Highcharts.theme = {
 // Apply the theme
 Highcharts.setOptions(Highcharts.theme)
 
-// let stop = false
+const data = createSeriesData()
 
 export default {
   name: 'stockChart',
@@ -252,10 +252,16 @@ export default {
   },
   data () {
     return {
+      stop: false,
       timer: 1000,
       timerId: null,
       history: createObjectWithDefaultValues(jobTypes, []),
       socketUpdatesCache: createObjectWithDefaultValues(jobTypes, [])
+    }
+  },
+  methods: {
+    startStopSwitch (/* status */) {
+      this.stop = !this.stop
     }
   },
   created () {},
@@ -272,9 +278,11 @@ export default {
       const chart = component.$refs.chart.chart
       const socketNotifications = {
         [SOCKET_ONMESSAGE] (state) {
-          if (state.socket.message.channel === 'event') {
+          let msg = state.socket.message
+
+          if (msg.channel === 'queue' && msg.name !== 'summary') {
             console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
-            const x = (new Date()).getTime() // current time
+            const x = (new Date(state.event.created)).getTime()
 
             jobTypes.forEach(item => {
               component.socketUpdatesCache[item].push([x, state.event[item] || 0])
@@ -283,7 +291,7 @@ export default {
         }
       }
 
-      let lastHistoryPointTimestamp
+      // let lastHistoryPointTimestamp
 
       chart.showLoading('Loading data from server...')
       component.$getChartHistory().subscribe(onNext, onError, onCompleted)
@@ -305,9 +313,9 @@ export default {
           value.data.forEach((item, i, arr) => {
             item.timestamp = new Date(item.created).getTime()
 
-            if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
-              arr[i].timestamp = lastHistoryPointTimestamp + 50
-            }
+            // if (item.timestamp === lastHistoryPointTimestamp || item.timestamp < lastHistoryPointTimestamp) {
+            //   arr[i].timestamp = lastHistoryPointTimestamp + 50
+            // }
 
             jobTypes.forEach(job => {
               // server returns only jobs with a value
@@ -317,7 +325,7 @@ export default {
               component.history[job].push([item.timestamp, item[job] || 0])
             })
 
-            lastHistoryPointTimestamp = arr[i].timestamp
+            // lastHistoryPointTimestamp = arr[i].timestamp
           })
         }
       }
@@ -352,7 +360,9 @@ export default {
 
         // recursive Timeout easier than Interval for system pressure
         component.timerId = setTimeout(function update () {
-          if (!component.stopChart) {
+          // move chart every second in case of chart not in stop mode and
+          // we already have received first chunk of data from server
+          if (!component.stop && !isEmptyObject(component.getChartData)) {
             const data = component.getChartData
             const x = (new Date(moment.utc().format('YYYY-MM-DDTHH:mm:ss'))).getTime() // current time
             const shift = chart.pointCount > 1750 // (250 points for each series)
@@ -371,8 +381,8 @@ export default {
   },
   computed: {
     ...mapState({
-      stopChart: 'stopChart',
-      getChartData: (state) => state.event
+      getChartData: (state) => state.event,
+      socketReconnectError: (state) => state.socket.reconnectError
     }),
     chartOptions () {
       return {
@@ -430,7 +440,10 @@ export default {
         },
 
         // navigator: {
-        //   adaptToUpdatedData: false
+        //   adaptToUpdatedData: false,
+        //   series: {
+        //     data: data
+        //   }
         // },
         //
         // scrollbar: {
@@ -479,14 +492,77 @@ export default {
             text: 'Time in UTC (Coordinated Universal Time)'
           },
           events: {
-            zoom: (e) => { console.log(`zoom, e = `, e) }
+            // zoom: (e) => {
+            //   console.log(`zoom, e = `, e)
+            //   const component = this
+            //   const chart = component.$refs.chart.chart
+            //
+            //   let startDate = moment(e.newMin).format('YYYY-MM-DDTHH:mm:ss')
+            //   let endDate = moment(e.newMax).format('YYYY-MM-DDTHH:mm:ss')
+            //   let history = createObjectWithDefaultValues(jobTypes, [])
+            //
+            //   component.$getChartHistory(startDate, endDate).subscribe(onNext, onError, onCompleted)
+            //
+            //   function onNext (value) {
+            //     console.log('on next: ', value)
+            //     if (value.data.length) {
+            //       // response from serve sometimes have objects with the same creation date,
+            //       // highchart don't allowed to set points with the same creation date,
+            //       // need to add a 50 milliseconds to creation date so the created key become unique
+            //       // this issue should in the future fix on backend side
+            //       value.data.forEach(item => {
+            //         item.timestamp = new Date(item.created).getTime()
+            //
+            //         jobTypes.forEach(job => {
+            //           // server returns only jobs with a value
+            //           // {error: 7, pending: 1, created: "2019-05-21T20:24:05.180000", total: 8}
+            //           // need to add rest possible job type with 0 by our self
+            //           // {error: 7, pending: 1, running: 0, deferred: 0, failed: 0, inactive: 0, killed: 0}
+            //           history[job].push([item.timestamp, item[job] || 0])
+            //         })
+            //       })
+            //     }
+            //   }
+            //
+            //   function onError (e) {
+            //     console.log(e)
+            //   }
+            //
+            //   function onCompleted () {
+            //     console.log('%c on completed fired function', 'color: green; font-weight: bold;')
+            //
+            //     const chartSeriesReference = chart.series.reduce((computedResult, series) => {
+            //       if (jobTypes.includes(series.name)) {
+            //         computedResult.push(series)
+            //       }
+            //
+            //       return computedResult
+            //     }, [])
+            //
+            //     component.startStopSwitch()
+            //
+            //     // add history chunk + queue cache to chart
+            //     chartSeriesReference.forEach(item => {
+            //       const zoomHistory = history[item.name]
+            //
+            //       item.setData(zoomHistory)
+            //     })
+            //
+            //     // chart.redraw()
+            //
+            //     // component.startStopSwitch()
+            //   }
+            // }
           }
           // minRange: 3600 * 1000 // one hour
         },
 
-        series: createSeriesData()
+        series: data
       }
     }
+  },
+  watch: {
+    socketReconnectError: 'startStopSwitch'
   },
   beforeDestroy () {
     clearTimeout(this.timerId)
@@ -528,16 +604,6 @@ function createSeriesData () {
 
   return arr
 }
-
-// function stopStartChart (chart, msg) {
-//   if (stop) {
-//     chart.showLoading(msg)
-//   } else {
-//     chart.hideLoading()
-//   }
-//
-//   stop = !stop
-// }
 
 </script>
 
