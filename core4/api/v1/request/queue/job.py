@@ -670,23 +670,26 @@ class JobPost(JobHandler):
                 }
             }
         """
-        job = await self.enqueue()
+        job = await self.enqueue_by_args()
         self.reply({
             "name": job.qual_name(),
             "_id": job._id
         })
 
-    async def enqueue(self):
-        """
-        Enqueue job with name from argument.
-
-        :return: enqueued :class:`core4.queue.job.CoreJob`` instance
-        """
+    async def enqueue_by_args(self):
         name = self.get_argument("name")
         args = dict([
             (k, v[0]) for k, v
             in self.request.arguments.items()
             if k != "name"])
+        return await self.enqueue(name, **args)
+
+    async def enqueue(self, name, **args):
+        """
+        Enqueue job with name from argument.
+
+        :return: enqueued :class:`core4.queue.job.CoreJob`` instance
+        """
         try:
             job = self.queue.job_factory(name, **args)
         except Exception:
@@ -723,6 +726,10 @@ class JobStream(JobPost):
     title = "job state stream"
     tag = ["job management"]
 
+    def initialise_object(self):
+        super().initialise_object()
+        self.last_log = None
+
     async def enter(self):
         raise HTTPError(400, "You cannot directly enter this endpoint. "
                              "You must provide a job ID")
@@ -733,13 +740,14 @@ class JobStream(JobPost):
         can be streamed.
 
         Methods:
-            GET /jobs/poll/<_id> - stream job attributes
+            GET /jobs/poll/<_id> - stream job attributes and logging
 
         Parameters:
             _id (str): job _id
 
         Returns:
-            JSON stream with job attributes
+            JSON stream with job attributes (event ``state``) and job logging
+                messages (event ``log``)
 
         Raises:
             401 Bad Request: failed to parse job _id
@@ -774,25 +782,43 @@ class JobStream(JobPost):
         exit = False
         while not exit:
             doc = await self.get_detail(oid)
+            exit = await self.get_log(oid)
             if doc["state"] in STATE_FINAL:
                 exit = True
-                self.finish(doc)
+                await self.sse("state", doc)
+                self.finish()
             elif last is None or doc != last:
                 last = doc
-                js = json_encode(doc, indent=None, separators=(',', ':'))
-                try:
-                    self.write(js + "\n\n")
-                    self.logger.info(
-                        "serving [%s] with [%d] byte",
-                        self.current_user, len(js))
-                    await self.flush()
-                except StreamClosedError:
-                    self.logger.info("stream closed")
-                    exit = True
-                except Exception:
-                    self.logger.error("stream error", exc_info=True)
-                    exit = True
+                exit = exit or await self.sse("state", doc)
             await gen.sleep(1.)
+        await self.get_log(oid)
+
+    async def sse(self, event, doc):
+        js = json_encode(doc, indent=None, separators=(',', ':'))
+        try:
+            self.write(event + ": " + js + "\n\n")
+            self.logger.info(
+                "serving [%s] with [%d] byte",
+                self.current_user, len(js))
+            await self.flush()
+        except StreamClosedError:
+            self.logger.info("stream closed")
+            return True
+        except Exception:
+            self.logger.error("stream error", exc_info=True)
+            return True
+        return False
+
+    async def get_log(self, _id):
+        query = {"identifier": str(_id)}
+        if self.last_log:
+            query["_id"] = {"$gt": self.last_log}
+        cur = self.collection("log").find(filter=query)
+        async for line in cur:
+            if await self.sse("log", line):
+                return True
+            self.last_log = line["_id"]
+        return False
 
     async def post(self, _id=None):
         """
@@ -859,5 +885,5 @@ class JobStream(JobPost):
              50.18% - running
              75.28% - running
         """
-        job = await self.enqueue()
+        job = await self.enqueue_by_args()
         await self.get(job._id)
