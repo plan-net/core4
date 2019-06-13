@@ -556,9 +556,9 @@ class ComocoHistoryHandler(CoreRequestHandler):
             special case "day" which should be represent like "dayOfMonth"
 
         Examples:
-            "year"
+            "$year"
             --------------------------------------------------------
-            "dayOfMonth"
+            "$dayOfMonth"
 
        """
         return '$dayOfMonth' if name == 'day' else ("$" + name)
