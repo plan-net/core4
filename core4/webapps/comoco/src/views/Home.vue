@@ -2,7 +2,7 @@
   <c4-page>
     <v-layout column>
       <v-flex v-for="(notification, key) in notifications" :key="key">
-        <notification v-if="notification.inComponents.includes('stockChart')"
+        <c4-notification v-if="notification.inComponents.includes('home')"
                       @timeout-handler="notificationUpdateHandler"
                       :show="notification.state"
                       :type="notification.type"
@@ -11,7 +11,7 @@
                       :timeout="notification.timeout"
                       :name="key">
           <component :is="notification.slot"></component>
-        </notification>
+        </c4-notification>
       </v-flex>
       <v-flex>
         <v-layout row wrap xs12>
@@ -36,14 +36,12 @@ import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
 import stockChart from '@/components/StockChart'
-import Notification from '@/components/Notification'
 import SocketReconnectError from '@/components/notifications/SocketReconnectError'
 
 export default {
   name: 'home',
   components: {
     SocketReconnectError,
-    Notification,
     Board,
     stockChart
   },

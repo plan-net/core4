@@ -39,7 +39,7 @@ export default {
       // timeout: 7000,
       message: '',
       slot: '',
-      inComponents: ['stockChart']
+      inComponents: ['home']
     }
   }
 }
