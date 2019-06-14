@@ -6,13 +6,13 @@
 </template>
 
 <script>
-import { mapMutations } from 'vuex'
-
-import { ERROR_CHANGE_STATE } from '../store/comoco.mutationTypes'
-
 export default {
   name: 'notification',
   props: {
+    method: {
+      // @timeout-handler
+      type: Function
+    },
     /**
      * Show/hide notification.
      */
@@ -73,8 +73,8 @@ export default {
     /**
      *  ToDo: add description
      */
-    mutation: {
-      type: [String],
+    name: {
+      type: [String], // socket_reconnect_error
       required: true
     }
   },
@@ -83,18 +83,13 @@ export default {
       timerId: null
     }
   },
-  methods: {
-    ...mapMutations({
-      'showHide': ERROR_CHANGE_STATE
-    })
-  },
   mounted () {
     this.$nextTick(() => {
       // element has definitely been added to the DOM
 
       if (this.timeout) {
         this.timerId = setTimeout(() => {
-          this.showHide({ errType: this.mutation, stateValue: false })
+          this.$emit('timeout-handler', this.name, { state: false })
         }, this.timeout)
       }
     })

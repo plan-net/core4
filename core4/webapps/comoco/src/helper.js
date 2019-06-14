@@ -111,40 +111,6 @@ function range (from, to, reverse) {
 }
 
 /**
- * Check is object is a Promise
- *
- * @param obj {object}
- * @returns {boolean}
- */
-function isPromise (obj) {
-  return Boolean(obj) && typeof obj.then === 'function'
-}
-
-/**
- * Check is function is Generator function
- *
- * @param fn {function}
- * @returns {boolean}
- */
-function isGenerator (fn) {
-  return fn.constructor.name === 'GeneratorFunction'
-}
-
-/**
- * Check is value is a Function
- *
- * @param functionToCheck {any}
- * @returns {boolean}
- */
-function isFunction (functionToCheck) {
-  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]'
-}
-
-function isEmptyObject (objectToCheck) {
-  return Object.keys(objectToCheck).length === 0 && objectToCheck.constructor === Object
-}
-
-/**
  * Decorator for generator function, make subscribe flow aka Rx approach
  *
  * @param funcGenerator {function}
@@ -217,6 +183,101 @@ function subscribeDecorator (funcGenerator) {
   return gensync(funcGenerator)
 }
 
+/**
+ * Deep merge obj
+ *
+ * @param target {object} - the object in which we merge
+ * @param sources {object} - objects for merge
+ *
+ * @returns {object} - updated target
+ */
+function deepMerge (target, ...sources) {
+  if (!sources.length) {
+    return target
+  }
+
+  const source = sources.shift()
+
+  if (source === undefined) {
+    return target
+  }
+
+  if (isMergebleObject(target) && isMergebleObject(source)) {
+    Object.keys(source).forEach(function (key) {
+      if (isMergebleObject(source[key])) {
+        if (!target[key]) {
+          target[key] = {}
+        }
+        deepMerge(target[key], source[key])
+      } else {
+        target[key] = source[key]
+      }
+    })
+  }
+
+  return deepMerge(target, ...sources)
+}
+
+/**
+ * Check is object is a Promise
+ *
+ * @param obj {object}
+ * @returns {boolean}
+ */
+function isPromise (obj) {
+  return Boolean(obj) && typeof obj.then === 'function'
+}
+
+/**
+ * Check is function is Generator function
+ *
+ * @param fn {function}
+ * @returns {boolean}
+ */
+function isGenerator (fn) {
+  return fn.constructor.name === 'GeneratorFunction'
+}
+
+/**
+ * Check is value is a Function
+ *
+ * @param functionToCheck {any}
+ * @returns {boolean}
+ */
+function isFunction (functionToCheck) {
+  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]'
+}
+
+/**
+ * Check is value is object
+ *
+ * @param item {any}
+ * @returns {boolean}
+ */
+function isObject (item) {
+  return item !== null && typeof item === 'object'
+}
+
+/**
+ * Check is value is an empty object
+ *
+ * @param objectToCheck
+ * @returns {boolean}
+ */
+function isEmptyObject (objectToCheck) {
+  return Object.keys(objectToCheck).length === 0 && objectToCheck.constructor === Object
+}
+
+/**
+ * Check is value is a mergeble object for deepMerge function
+ *
+ * @param item
+ * @returns {boolean}
+ */
+function isMergebleObject (item) {
+  return isObject(item) && !Array.isArray(item)
+}
+
 export {
   createObjectWithDefaultValues,
   getBasePath,
@@ -224,5 +285,6 @@ export {
   range,
   isPromise,
   isEmptyObject,
+  deepMerge,
   subscribeDecorator
 }

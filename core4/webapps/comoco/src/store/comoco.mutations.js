@@ -7,10 +7,10 @@ import {
   SOCKET_ONMESSAGE,
   SOCKET_RECONNECT,
   SOCKET_RECONNECT_ERROR,
-  ERROR_CHANGE_STATE
+  NOTIFICATION_CHANGE_STATE
 } from './comoco.mutationTypes'
 
-import { createObjectWithDefaultValues } from '../helper'
+import { deepMerge, createObjectWithDefaultValues } from '../helper'
 import { jobTypes, jobFlags, jobStates, eventChannelNames } from '../settings'
 
 const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
@@ -34,12 +34,12 @@ export default {
   [SOCKET_ONOPEN] (state, event) {
     Vue.prototype.$socket = event.currentTarget
     Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'event', 'job'] })
+
     state.socket.isConnected = true
     state.socket.reconnectError = false
-    state.error.socket_reconnect_error.state = false
   },
   [SOCKET_ONCLOSE] (state) {
-    state.socket.isConnected = false
+    // state.socket.isConnected = false
   },
   [SOCKET_ONERROR] (state, event) {
     console.error(state, event)
@@ -60,13 +60,9 @@ export default {
     // ToDo: add error flow (message, pop-up etc)
     state.socket.isConnected = false
     state.socket.reconnectError = true
-    state.error.socket_reconnect_error.state = true
-    state.error.socket_reconnect_error.type = 'error'
-    // state.error.message = 'Cannot connect to the serve.'
-    state.error.socket_reconnect_error.slot = 'socketReconnectError'
   },
-  [ERROR_CHANGE_STATE] (state, payload) {
-    state.error[payload.errType].state = payload.stateValue
+  [NOTIFICATION_CHANGE_STATE] (state, payload) {
+    deepMerge(state.notifications[payload.name], payload.data)
   }
 }
 
