@@ -1,8 +1,8 @@
 
 DEFAULT:
-   mongo_url: mongodb://core:654321@localhost:27017
+   mongo_url: mongodb://core:654321@testmongo:27017
 
 sys:
-  #mongo_url: mongodb://core:654321@localhost:27017
+  #mongo_url: mongodb://core:654321@testmongo:27017
   mongo_database: core4test
   cookie: !connect mongodb://sys.cookie

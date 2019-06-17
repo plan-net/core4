@@ -14,7 +14,7 @@ export default new Router({
       children: [
         { name: 'boards-home', path: '', component: BoardsHome },
         { name: 'help', path: 'help/:widgetId', component: Help },
-        { name: 'widget', path: 'widget/:widgetId', component: Help }
+        { name: 'enter', path: 'enter/:widgetId', component: Help }
       ],
       meta: {
         auth: true,

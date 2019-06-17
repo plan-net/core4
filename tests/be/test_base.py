@@ -16,7 +16,7 @@ import core4.service.setup
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 ASSET_FOLDER = '../asset'
-MONGO_URL = 'mongodb://core:654321@localhost:27017'
+MONGO_URL = 'mongodb://core:654321@testmongo:27017'
 MONGO_DATABASE = 'core4test'
 
 
@@ -107,6 +107,7 @@ def test_project():
 def test_project_conf():
     import project.test
     t = project.test.Test()
+    print(t.project_config())
     assert t.project_config().endswith("/core4/tests/project/project.yaml")
     assert t.config.mongo_database, "core4test"
     assert repr(t) == "project.test.Test()"
@@ -132,7 +133,7 @@ def test_main():
 def test_collection_scheme():
     coll1 = core4.base.collection.CoreCollection(
         scheme="mongodb",
-        hostname="localhost:27017",
+        hostname="testmongo:27017",
         database="core4test",
         collection="sys.log",
         username="core",
@@ -147,7 +148,7 @@ def test_collection_scheme():
     with pytest.raises(core4.error.Core4ConfigurationError):
         core4.base.collection.CoreCollection(
             scheme="mongoxxx",
-            hostname="localhost:27017",
+            hostname="testmongo:27017",
             database="core4test",
             collection="sys.log",
             username="core",
@@ -240,7 +241,7 @@ def test_unwind_config(mongodb):
                 },
                 "sys": {
                     "log": core4.config.tag.ConnectTag(
-                        "mongodb://core:654321@localhost:27017"
+                        "mongodb://core:654321@testmongo:27017"
                         "/core4test/sys.log")
                 },
                 "logging": {
@@ -263,7 +264,7 @@ def test_unwind_config(mongodb):
 
     coll1 = core4.base.collection.CoreCollection(
         scheme="mongodb",
-        hostname="localhost:27017",
+        hostname="testmongo:27017",
         database="core4test",
         collection="sys.log",
         username="core",

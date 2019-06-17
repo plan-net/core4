@@ -57,7 +57,6 @@ JOB_ARGS = {
     "error_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "finished_at": (SERIALISE,),
     "force": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
-    "hidden": (CONFIG, PROPERTY,),
     "inactive_at": (SERIALISE,),
     "killed_at": (SERIALISE,),
     "last_error": (SERIALISE,),
@@ -105,7 +104,6 @@ JOB_VALIDATION = {
     "dependency": is_job,
     "error_time": is_int_gt0,
     "force": is_bool_null,
-    "hidden": is_bool_null,
     "max_parallel": is_int_gt0_null,
     "priority": is_int,
     "progress_interval": is_int_gt0,
@@ -162,8 +160,6 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
       or deferral
     * ``force`` - if ``True`` then ignore worker resource limits and launch
       the job
-    * ``hidden`` - if ``True`` then hide the job from job listing (defaults to
-      ``False``)
     * ``inactive_at`` - datetime  when a deferring job turns inactive, derived
       from ``defer_max``
     * ``killed_at`` - datetime when the job has been requested to kill
@@ -236,7 +232,6 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
         error_time    True   True  True      True     10' int > 0
        finished_at   False  False False      True      na
              force    True   True  True      True   False is bool
-            hidden   False   True  True     False   False is bool
        inactive_at   False  False False      True      na
          killed_at   False  False False      True      na
         last_error   False  False False      True      na
@@ -309,10 +304,6 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
       ``sys.queue``
     * **killed** - if not *None* indicates that the job has been killed
 
-    .. note:: There might be even cases, where you might want to hide a job
-              from for these jobs. any job listing. Set the ``hidden`` class
-              variable to *True*
-
     **job schedules**
 
     The preferred job execution automation mechanic uses ``sys.queue``. Using
@@ -333,7 +324,6 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
     defer_max = None
     error_time = None
     force = None
-    hidden = None
     wall_time = None
     max_parallel = None
     schedule = None

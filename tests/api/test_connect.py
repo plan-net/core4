@@ -60,11 +60,11 @@ async def test_connect(core4_test):
     resp = await core4_test.get(
         '/test/sync')
     assert resp.code == 200
-    assert "async=\'False\'" in resp.json()["data"]["connect"]
+    assert "async_conn=\'False\'" in resp.json()["data"]["connect"]
     assert resp.json()["data"]["collection"].startswith("MongoClient")
 
     resp = await core4_test.get(
         '/test/async')
     assert resp.code == 200
-    assert "async=\'True\'" in resp.json()["data"]["connect"]
+    assert "async_conn=\'True\'" in resp.json()["data"]["connect"]
     assert resp.json()["data"]["collection"].startswith("MotorClient")
