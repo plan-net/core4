@@ -37,7 +37,7 @@ async def test_auth_delegation(core4api):
     data["name"] = "mkr"
     data["realname"] = "Markus Kral"
     data["email"] = "test@test.de"
-    data["password"] = "test"
+    data["passwd"] = "test"
     rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
     assert rv.json()["code"] == 200
 
@@ -124,7 +124,7 @@ async def test_role(core4api):
         name="test_role3",
         realname="test role 3",
         email="m.rau@plan-net.com",
-        password="hello world",
+        passwd="hello world",
         role=["test_role1", "test_role2"],
         perm=["app://3"]
     ))
@@ -182,7 +182,7 @@ async def test_server_test(core4api):
         name="test_role3",
         realname="test role 3",
         email="m.rau@plan-net.com",
-        password="hello world",
+        passwd="hello world",
         role=["test_role1", "test_role2"],
         perm=["app://3"]
     ))
@@ -201,7 +201,7 @@ async def test_init(core4api):
 
     data = {}
     data["name"] = "mra"
-    data["password"] = "123456"
+    data["passwd"] = "123456"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.json()["code"] == 400
     assert "requires email and password" in rv.json()["error"]
@@ -227,7 +227,7 @@ async def test_validate_name(core4api):
     data["name"] = "m r a"
     data["realname"] = "Michael Rau"
     data["email"] = "m.rau@plan-net.com"
-    data["password"] = "123456"
+    data["passwd"] = "123456"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.json()["code"] == 400
     assert "field [name] must match" in rv.json()["error"]
@@ -239,7 +239,7 @@ async def test_validate_perm(core4api):
     data["name"] = "mra"
     data["realname"] = "Michael Rau"
     data["email"] = "m.rau@plan-net.com"
-    data["password"] = "123456"
+    data["passwd"] = "123456"
 
     data["perm"] = "bla"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
@@ -277,7 +277,7 @@ async def test_type_error(core4api):
     data["name"] = "mra"
     data["realname"] = "Michael Rau"
     data["email"] = "m.rau@plan-net.com"
-    data["password"] = "123456"
+    data["passwd"] = "123456"
     data["is_active"] = "x"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.json()["code"] == 400
@@ -291,7 +291,7 @@ async def test_create(core4api, mongodb):
     data["name"] = "mra"
     data["realname"] = "Michael Rau"
     data["email"] = "m.rau@plan-net.com"
-    data["password"] = "123456"
+    data["passwd"] = "123456"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.json()["code"] == 200
     assert mongodb.sys.role.count_documents({}) == 3
@@ -305,7 +305,7 @@ async def test_duplicate_name(core4api):
     data["name"] = "mra"
     data["realname"] = "Michael Rau"
     data["email"] = "m.rau@plan-net.com"
-    data["password"] = "123456"
+    data["passwd"] = "123456"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.json()["code"] == 200
     rv = await core4api.post("/core4/api/v1/roles", body=data)
@@ -329,7 +329,7 @@ async def test_unknown_role(core4api):
     assert rv.json()["code"] == 200
     data = {
         "name": "mra",
-        "password": "123456",
+        "passwd": "123456",
         "email": "m.rau@plan-net.com",
         "role": ["test_role1", "test_role2", "test_role3"],
     }
@@ -491,7 +491,7 @@ async def test_access(core4api):
         "name": "user",
         "realname": "test role1",
         "email": "user@mail.com",
-        "password": "123456",
+        "passwd": "123456",
         "perm": ["api://core4.api.v1.request.standard"]
     }
     rv = await core4api.post("/core4/api/v1/roles", body=data)
@@ -526,7 +526,7 @@ async def test_access(core4api):
     assert etag1 != etag2
 
     data = {
-        "password": "hello",
+        "passwd": "hello",
         "etag": etag2
     }
     rv = await core4api.put("/core4/api/v1/profile", body=data)
@@ -548,7 +548,7 @@ async def test_access(core4api):
         "name": "user2",
         "realname": "test role1",
         "email": "user@mail.com",
-        "password": "123456",
+        "passwd": "123456",
     }
     core4api.token = admin_token
     rv = await core4api.post("/core4/api/v1/roles", body=data)
@@ -559,7 +559,7 @@ async def test_access(core4api):
         "name": "user2",
         "realname": "test role1",
         "email": "user2@mail.com",
-        "password": "123456",
+        "passwd": "123456",
     }
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.code == 200
@@ -635,13 +635,13 @@ async def test_update2(core4api):
         name="mra",
         realname="Michael Rau",
         email="m.rau@plan-net.com",
-        password="123456"
+        passwd="123456"
     ))
     assert rv.code == 200
     id = rv.json()["data"]["_id"]
     etag = rv.json()["data"]["etag"]
     rv = await core4api.put("/core4/api/v1/roles/" + id,
-                            body={"password": "654321", "etag": etag,
+                            body={"passwd": "654321", "etag": etag,
                                   "perm": ["api://core4.*"]})
     assert rv.code == 200
 
@@ -657,7 +657,7 @@ async def test_update2(core4api):
     rv = await core4api.put(
         "/core4/api/v1/roles/" + id,
         body={
-            "password": "666999666",
+            "passwd": "666999666",
             "etag": etag2, "perm": ["app://update"]
         }
     )
@@ -674,18 +674,18 @@ async def test_update_conflict(core4api):
         name="mra",
         realname="Michael Rau",
         email="m.rau@plan-net.com",
-        password="123456"
+        passwd="123456"
     ))
     assert rv.code == 200
     id = rv.json()["data"]["_id"]
     etag = rv.json()["data"]["etag"]
 
     rv = await core4api.put("/core4/api/v1/roles/" + id,
-                            body={"password": "654321", "etag": etag})
+                            body={"passwd": "654321", "etag": etag})
     assert rv.code == 200
 
     rv = await core4api.put("/core4/api/v1/roles/" + id,
-                            body={"password": "654321", "etag": etag})
+                            body={"passwd": "654321", "etag": etag})
     assert rv.code == 400
     assert "with etag" in rv.json()["error"]
 
@@ -696,14 +696,14 @@ async def test_delete2(core4api):
         name="mra",
         realname="Michael Rau",
         email="m.rau@plan-net.com",
-        password="123456"
+        passwd="123456"
     ))
     assert rv.code == 200
     id = rv.json()["data"]["_id"]
     etag = rv.json()["data"]["etag"]
 
     rv = await core4api.put("/core4/api/v1/roles/" + id,
-                            body={"password": "654321", "etag": etag})
+                            body={"passwd": "654321", "etag": etag})
     assert rv.code == 200
     etag2 = rv.json()["data"]["etag"]
 
@@ -737,7 +737,7 @@ async def test_recursive_delete(core4api):
         name="test_role3",
         realname="test role 3",
         email="m.rau@plan-net.com",
-        password="hello world",
+        passwd="hello world",
         role=["test_role1", "test_role2"],
         perm=["app://3"]
     ))
@@ -803,7 +803,7 @@ async def test_recursion(core4api):
         name="test_role3",
         realname="test role 3",
         email="m.rau@plan-net.com",
-        password="hello world",
+        passwd="hello world",
         role=["test_role1", "test_role2"],
         perm=["app://3"]
     ))
@@ -872,6 +872,6 @@ async def test_cookie_create(core4api):
     data["name"] = "mkr"
     data["realname"] = "Markus Kral"
     data["email"] = "test@test.de"
-    data["password"] = "test"
+    data["passwd"] = "test"
     rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
     assert rv.json()["code"] == 200

@@ -223,7 +223,7 @@ def build_query(args, clock=None, utc=True):
 
 def run(args, clock=None):
     query = build_query(args, clock)
-    print(query)
+    #print(query)
     base = CoreBase()
     data = list(base.config.sys.log.find(
         filter={"$and": query}, sort=[("_id", -1)]))

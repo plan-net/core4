@@ -46,7 +46,7 @@ from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 
 
-class CoreWidgetServer(CoreApiContainer):
+class CoreAppManager(CoreApiContainer):
     root = ""
     rules = [
         (r'/comoco', CoreStaticFileHandler, {
@@ -111,4 +111,4 @@ class CoreApiServer(CoreApiContainer):
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
 
-    serve(CoreApiServer, CoreWidgetServer)
+    serve(CoreApiServer, CoreAppManager)

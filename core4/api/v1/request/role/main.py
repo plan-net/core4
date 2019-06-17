@@ -11,8 +11,8 @@ from tornado.web import HTTPError
 
 import core4.error
 from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.request.role.model import CoreRole
 from core4.api.v1.request.role.access.manager import CoreAccessManager
+from core4.api.v1.request.role.model import CoreRole
 from core4.util.pager import CorePager
 
 
@@ -39,8 +39,8 @@ class RoleHandler(CoreRequestHandler):
             role (list): of role names assigned
             email (str): for actual users; for roles the email attribute is
                          expected to be undefined or ``None``
-            password (str): for actual users; for roles the password attribute
-                            is expected to be undefined or ``None``
+            passwd (str): for actual users; for roles the password attribute
+                          is expected to be undefined or ``None``
             perm (list): of permission protocols
 
         The following permission protocols exist:
@@ -75,7 +75,7 @@ class RoleHandler(CoreRequestHandler):
             >>> from pprint import pprint
             >>> import random
             >>> url = "http://localhost:5001/core4/api/v1"
-            >>> signin = get(url + "/login?username=admin&password=hans")
+            >>> signin = get(url + "/login?username=admin&passwd=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
             >>>
@@ -108,7 +108,7 @@ class RoleHandler(CoreRequestHandler):
             >>>               "realname": "Test User",
             >>>               "role": ["reporting"],
             >>>               "email": "test@plan-net.com",
-            >>>               "password": "tset resu",
+            >>>               "passwd": "tset resu",
             >>>               "perm": ["app://reporting/test"]
             >>>           })
             >>> rv
@@ -126,7 +126,7 @@ class RoleHandler(CoreRequestHandler):
             email=self.get_argument(
                 "email", as_type=str, default=None),
             password=self.get_argument(
-                "password", as_type=str, default=None),
+                "passwd", as_type=str, default=None),
             perm=self.get_argument(
                 "perm", as_type=list, default=[])
         )
@@ -263,8 +263,7 @@ class RoleHandler(CoreRequestHandler):
                 doc.pop("password", None)
 
             if self.wants_html():
-                return self.render("../standard/template/roles.js",
-                                   roles=ret.body)
+                return self.render("template/roles.html", roles=ret.body)
 
             self.reply(ret)
         else:
@@ -272,7 +271,6 @@ class RoleHandler(CoreRequestHandler):
             ret = await CoreRole().find_one(_id=oid)
             if ret is None:
                 raise HTTPError(404, "role [%s] not found", oid)
-            a = await ret.detail()
             self.reply(await ret.detail())
 
     async def put(self, _id):
@@ -292,7 +290,7 @@ class RoleHandler(CoreRequestHandler):
             role (list): of role names assigned
             email (str): for actual users; for roles the email attribute is
                 expected to be undefined or ``None``
-            password (str): for actual users; for roles the password attribute
+            passwd (str): for actual users; for roles the password attribute
                 is expected to be undefined or ``None``
             perm (list): of permission protocols. For valid permission
                 protocols see ``POST`` method.
@@ -375,7 +373,7 @@ class RoleHandler(CoreRequestHandler):
             email=self.get_argument(
                 "email", as_type=str, default=None),
             password=self.get_argument(
-                "password", as_type=str, default=None),
+                "passwd", as_type=str, default=None),
             perm=self.get_argument(
                 "perm", as_type=list, default=None)
         )
@@ -477,18 +475,16 @@ class RoleHandler(CoreRequestHandler):
             else:
                 self.reply(False)
 
-
     async def getRoles(self):
         rolemanager = CoreRole()
+
         async def _length(filter):
             return await rolemanager.count(
                 filter=filter
-                )
-
+            )
 
         async def _query(skip, limit, filter, sort_by):
             return await rolemanager.load(skip, limit, filter, sort_by)
-
 
         pager = CorePager(
             per_page=self.get_argument(

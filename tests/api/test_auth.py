@@ -135,7 +135,7 @@ async def test_restricted_user(core4api):
     rv = await core4api.post("/core4/api/v1/roles", json=dict(
         name="user",
         realname="test user",
-        password="password",
+        passwd="password",
         email="test@user.com",
         perm=["api://core4.api.v1"]
     ))
@@ -174,7 +174,7 @@ async def test_login_inactive(core4api):
     rv = await core4api.post("/core4/api/v1/roles", json=dict(
         name="user",
         realname="test user",
-        password="password",
+        passwd="password",
         email="test@user.com",
         perm=["api://core4.api.v1"]
     ))
@@ -225,7 +225,7 @@ async def test_password_reset(core4api):
     rv = await core4api.post("/core4/api/v1/roles", json=dict(
         name="user",
         realname="test user",
-        password="password",
+        passwd="password",
         email="test@user.com",
         perm=["api://core4.api.v1"]
     ))

@@ -49,7 +49,3 @@ class InfoHandler(CoreRequestHandler):
         if self.wants_html():
             return self.render(self.info_html_page, data=ret)
         self.reply(ret)
-
-    # async def get_card(self, rsc_id):
-    #     handler = self.application.lookup[rsc_id]["handler"]
-    #     return handler.__doc__

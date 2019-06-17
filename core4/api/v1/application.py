@@ -127,7 +127,8 @@ class CoreApiContainer(CoreBase, QueryMixin):
              handler.request.path, request_time, handler.current_user,
              self.identifier, extra={"identifier": identifier})
 
-    def get_root(self, path=None):
+    @classmethod
+    def get_root(cls, path=None):
         """
         Returns the container`s ``root`` URL prefix or prefixes the passed
         relative path with the prefix.
@@ -135,9 +136,9 @@ class CoreApiContainer(CoreBase, QueryMixin):
         :param path: relative path (optional)
         :return: ``root`` or absolute path below ``root``
         """
-        root = self.root
+        root = cls.root
         if root is None:
-            root = self.project
+            root = cls.get_project()
         if not root.startswith("/"):
             root = "/" + root
         if root.endswith("/"):
@@ -308,7 +309,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
           first been published
         * started_at (str) - in iso format indicating when the resource has
           been started
-        * target (str) - indicating how the widget has to be spawned, defaults
+        * target (str) - indicating how the api has to be spawned, defaults
           to ``None`` for embedded mode, ``blank`` indicating standalone mode
         * endpoint (list) - of str representing all available endpoints for
           this handler
@@ -361,7 +362,6 @@ class CoreApiContainer(CoreBase, QueryMixin):
             first["subtitle"] = first["subtitle"] or first["qual_name"]
             ret.append(first)
         ret.sort(key=lambda r: (str(r["title"]), r["qual_name"]))
-        print(ret)
         if rsc_id is not None:
             assert len(ret) == 1
             return ret[0]
@@ -376,7 +376,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
         :param timestamp: :class:`datetime.datetime`
         :return: str representation or ``None``
         """
-        config = self.config.raw_config("api").get("age_range", None)
+        config = self.raw_config["api"].get("age_range", None)
         if config:
             age = core4.util.node.mongo_now() - timestamp
             age = age.total_seconds() / 60. / 60. / 24.

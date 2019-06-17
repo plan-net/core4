@@ -64,7 +64,7 @@ def serve(*args, port=None, address=None, name=None, reuse_port=True,
     :param reuse_port: tells the kernel to reuse a local socket in
                        ``TIME_WAIT`` state, defaults to ``True``
     :param routing: URL including the protocol and hostname of the server,
-                    which will be used to link the APIs and widgets. The
+                    which will be used to link the apis. The
                     difference between ``address`` and ``routing`` are: address
                     is the listening device. Routing represents the URL under
                     which the server is to be contacted and might be used if a
@@ -107,5 +107,4 @@ def serve_all(project=None, filter=None, port=None, address=None, name=None,
     :param kwargs: passed to the :class:`tornado.web.Application` objects
     """
     CoreApiServerTool().serve_all(project, filter, port, address, name,
-                                  reuse_port,
-                                  routing, **kwargs)
+                                  reuse_port, routing, **kwargs)

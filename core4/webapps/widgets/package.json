@@ -2,7 +2,8 @@
   "name": "core-widgets",
   "version": "0.1.0",
   "core4": {
-    "build_command" : [
+    "build_command": [
+      "rm yarn.lock",
       "yarn install",
       "yarn build --dest dist --modern"
     ],
@@ -18,9 +19,6 @@
     "@dattn/dnd-grid": "^0.0.14",
     "core4ui": "https://github.com/plan-net/core4ui.git#develop",
     "vue-drag-drop": "^1.1.4"
-  },
-  "old": {
-    "core4ui": "https://github.com/plan-net/core4ui.git#develop"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.3.0",

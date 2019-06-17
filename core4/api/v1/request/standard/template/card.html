@@ -1,77 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- https://fezvrasta.github.io/bootstrap-material-design/docs/4.0/utilities/ -->
+
 <head>
     <meta charset="UTF-8">
     <title>CARD {{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        
+    </style>
+
 </head>
-<div class="container">
-    <h1>CARD of {{ handler.__class__.__name__ }}</h1>
- 
-    <hr/>
 
-    <h2>{{ title }}</h2>
-    <h4>{{ subtitle }}</h4>
+<body class="theme-dark widget-card-container">
+    <div class="container widget-card d-flex flex-row ">
+        <!--<div class="d-flex flex-row widget-card__inner">-->
+        <div class="pr-1">
+            <i class="material-icons widget-icon text-primary">{{ icon }}</i>
+        </div>
+        <div class="d-flex flex-column pl-1">
+            <h1 class="widget-title pt-1">{{ title }}</h1>
+            <h2 class="widget-subtitle text-muted">{{ qual_name.rsplit('.')[0]+'…'+qual_name.rsplit('.')[-1] }}
+            </h2>
 
-    <ul>
-        <li><b>AT:</b> {{ handler.started }}</li>
-        <li><b>QUAL_NAME:</b> {{ qual_name }}</li>
-        <li><b>AUTHOR:</b> {{ author }} </li>
-        <li><b>ICON: <i class="material-icons">{{ icon }}</i></b> - {{ icon }}</li>
-        <li><b>TAG:</b> {{ ", ".join(tag) }} </li>
-        <li><b>RESOURCE ID:</b> {{ rsc_id }} </li>
-        <li><b>PROJECT:</b> {{ project }} </li>
-        <li><b>THIS PATTERN:</b> {{ pattern }} </li>
-        <li><b>CONTAINER:</b> {{ container }} </li>
-        <li><b>PROTECTED:</b> {{ protected }} </li>
-        <li><b>CREATED AT:</b> {{ created_at }} </li>
-        <li><b>STARTED AT:</b> {{ started_at }} </li>
-        <li><b>TARGET:</b> {{ target }} </li>
-        <li><b>THIS CARD:</b> {{ card_url }} </li>
-        <li><b>THIS HELP:</b> {{ help_url }} </li>
-        <li><b>THIS ENTER_URL:</b> {{ enter_url }} </li>
-        <li><b>CLASS ARGS:</b> {{ args }} </li>
-        <li><b>ENDPOINTS:</b>
-            <ul>
-                {% for ep in endpoint %}
-                <li>
-                    {{ ep }}
-                    <ul>
-                        <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
-                        <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
-                        {% if enter_url != None %}
-                            <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-                        {% else %}
-                            <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
-                        {% end if %}
-                    </ul>
-                </li>
-                {% end for %}
-            </ul>
-        </li>
-        <li><b>DESCRIPTION:</b>
-            <ul>
-                <li>
-                    <b>PLAIN TEXT:</b>
-                    <pre>{{ description }}</pre>
-                </li>
-                <li>
-                    <b>HTML:</b>
-                    {% raw description_html %}
-                </li>
-                <li>
-                    <b>parsing error:</b>
-                    <pre>{{ "\n".join(description_error) }}</pre>
-                </li>
-            </ul>
-        </li>
-    </ul>
+            <div class="md-chips pt-0 pb-0">
+                {% for t in tag[:3] %}
+                <div class="md-chip">
+                    {{t}}
+                </div>
+                {% end %}
+            </div>
+            <p class="widget-description text-muted pt-1 mt-1">
+                {% if description != None %}
+                {{description[:115]}}{% if len(description) > 115 %}…{% end %}
+                {% end if %}
+            </p>
+            <div class="d-flex flex-row widget-footer">
+                <small class="d-flex flex-row mr-3">
+                    <i class="material-icons text-success">person</i>
+                    <span class="text-muted pl-1 pt-1">{{author}}</span>
+                </small>
+                <small class="d-flex flex-row">
+                    <i class="material-icons text-success">date_range</i>
+                    <span class="text-muted pl-1 pt-1">{{created_at.strftime("%d.%m.%Y %H:%M")}}</span>
+                </small>
+            </div>
 
-    <hr/>
 
-</div>
-<script src="{{ default_static('widget/jq.pop.bsmd.min.js') }}"></script>
+
+
+        </div>
+    </div>
+
+
 
 </body>
+<!--<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>-->
+<script>
+    (function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const dark = urlParams.get('dark') === 'true';
+        if (dark) {
+            document.querySelector('body').classList.add('theme-dark')
+        } else {
+            document.querySelector('body').classList.remove('theme-dark')
+            document.querySelector('body').classList.add('theme-light')
+        }
+
+    })();
+</script>
+
+</body>
+
 </html>

@@ -1,10 +1,10 @@
 .. _api:
 
-####################
-ReST API and widgets
-####################
+##############################
+ReST API and mini applications
+##############################
 
-core4 features an API and mini applications (AKA widgets). The implementation
+core4 features an API and mini applications. The implementation
 of an API endpoint starts with a :class:`.CoreRequestHandler`::
 
     from core4.api.v1.request.main import CoreRequestHandler

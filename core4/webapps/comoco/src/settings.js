@@ -1,6 +1,33 @@
 /**
- * General jobs config. Existing job states, existing job flags, existing job groups
+ * General COMOCO config.
+ *
+ * Existing: job states, job types, job flags, job groups, job colors.
+ * Default settings for api calls.
  */
+
+// ToDo: return clones
+const defaultHistoryRange = [7, 'd'] // d - in days
+
+const eventChannelNames = [
+  'enqueue_job',
+  'request_start_job',
+  'start_job',
+  'failed_start',
+  'defer_job',
+  'flag_nonstop',
+  'flag_zombie',
+  'failed_job',
+  'inactivate_job',
+  'complete_job',
+  'request_remove_job',
+  'restart_waiting',
+  'restart_stopped',
+  'request_kill_job',
+  'kill_job',
+  'remove_job'
+]
+
+const jobTypes = ['running', 'pending', 'deferred', 'failed', 'error', 'inactive', 'killed']
 
 const jobColors = {
   pending: '#ffc107',
@@ -53,9 +80,12 @@ const groupsJobsByStates = (function (states) {
 const jobGroups = Object.keys(groupsJobsByStates)
 
 export {
+  jobTypes,
   groupsJobsByStates,
   jobStates,
   jobGroups,
   jobFlags,
-  jobColors
+  jobColors,
+  defaultHistoryRange,
+  eventChannelNames
 }
