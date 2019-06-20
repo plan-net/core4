@@ -4,6 +4,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+import datetime
 
 import core4.const
 from core4.api.v1.request.main import CoreRequestHandler
@@ -31,6 +32,9 @@ class JobHistoryHandler(CoreRequestHandler):
             per_page (int): number of jobs per page
             page (int): requested page (starts counting with ``0``)
             filter (dict): optional mongodb filter
+            sort (str): 1 - for ascending sorting,
+                        -1 - for descending sorting
+                        by default -1 (desc) sorting
 
         Returns:
             data element with list of aggregated job counts For pagination the
@@ -57,14 +61,21 @@ class JobHistoryHandler(CoreRequestHandler):
             >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?page=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
+            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?sort=1&token=" + signin.json()["data"]["token"])
+            >>> rv
+            <Response [200]>
         """
 
         per_page = self.get_argument("per_page", as_type=int, default=10)
         current_page = self.get_argument("page", as_type=int, default=0)
-        query_filter = self.get_argument("filter", as_type=dict, default={})
+        query_filter = self.get_argument("filter",
+                                         as_type=dict,
+                                         default={},
+                                         dict_decode=self.dict_decode)
+        sort = self.get_argument("sort", as_type=int, default=-1)
         coll = self.config.sys.event
         query = {
-            "channel": core4.const.QUEUE_CHANNEL
+            "channel": core4.const.JOB_CHANNEL
         }
         if query_filter:
             query.update(query_filter)
@@ -77,7 +88,7 @@ class JobHistoryHandler(CoreRequestHandler):
                 filter,
                 projection={"created": 1, "data": 1, "_id": 0}
             ).sort(
-                [("$natural", -1)]
+                [("$natural", sort)]
             ).skip(
                 skip
             ).limit(
@@ -103,3 +114,29 @@ class JobHistoryHandler(CoreRequestHandler):
         Same as :meth:`get`.
         """
         return self.get()
+
+    def dict_decode(self, dct):
+        """
+        Hook for json_decode function for custom formatting dictionary
+
+        :param dct: dictionary for parse
+        :return: formatted dictionary
+        """
+        for k, v in dct.items():
+
+            # recursively check dict
+            if isinstance(v, dict):
+                try:
+                    dct[k] = self.dict_decode(dct[k])
+                except:
+                    pass
+
+            # if value is date string then convert this value
+            # into python datetime format for mongoDB querying
+            if isinstance(v, str):
+                try:
+                    dct[k] = datetime.datetime.strptime(v, "%Y-%m-%dT%H:%M:%S")
+                except:
+                    pass
+
+        return dct

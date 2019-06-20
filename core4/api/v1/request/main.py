@@ -425,7 +425,6 @@ class CoreBaseHandler(CoreBase):
 
         The method creates the following parameters to render:
 
-
         :return: result of :meth:`.help`
         """
         doc = await self.meta()
@@ -435,10 +434,6 @@ class CoreBaseHandler(CoreBase):
         """
         Renders the default card page. This method is to be overwritten for
         custom card page impelementation.
-
-        :param
-
-
         """
         return self.render(self.card_html_page, **data)
 
@@ -651,7 +646,13 @@ class CoreBaseHandler(CoreBase):
         return mimeparse.best_match(
             self.supported_types, self.request.headers.get("accept", ""))
 
-    def get_argument(self, name, as_type=None, remove=False, *args, **kwargs):
+    def get_argument(self,
+                     name,
+                     as_type=None,
+                     remove=False,
+                     dict_decode=None,
+                     *args,
+                     **kwargs):
         """
         Returns the value of the argument with the given name.
 
@@ -677,6 +678,8 @@ class CoreBaseHandler(CoreBase):
         :param as_type: Python variable type
         :param remove: remove parameter from request arguments, defaults to
             ``False``
+        :param dict_decode: custom function for dict decoding
+
         :return: value
         """
         kwargs["default"] = kwargs.get("default", ARG_DEFAULT)
@@ -692,7 +695,7 @@ class CoreBaseHandler(CoreBase):
                 if as_type == dict:
                     if isinstance(ret, dict):
                         return ret
-                    return json_decode(ret)
+                    return json_decode(ret, object_hook=dict_decode)
                 if as_type == list:
                     if isinstance(ret, list):
                         return ret
@@ -1110,3 +1113,9 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             return "{}://{}:{}{}".format(route["protocol"], route["hostname"],
                                          route["port"], url)
         raise KeyError("%s not found or not unique in named urls" % name)
+
+    def json(self):
+        """
+        Parses and returns the request body as json.
+        """
+        return json.loads(self.request.body.decode("utf-8"))

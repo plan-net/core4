@@ -27,7 +27,7 @@ REPOSITORY = ".repos"
 VENV_PYTHON = VENV + "/bin/python"
 VENV_PIP = VENV + "/bin/pip3"
 
+JOB_CHANNEL = "job"
 QUEUE_CHANNEL = "queue"
-EVENT_CHANNEL = "job"
 DEFAULT_CHANNEL = "system"
 MESSAGE_CHANNEL = "message"

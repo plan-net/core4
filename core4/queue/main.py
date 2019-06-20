@@ -708,5 +708,5 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         * ``kill_job``
         * ``remove_job``
         """
-        self.trigger(name=event, channel=core4.const.QUEUE_CHANNEL,
+        self.trigger(name=event, channel=core4.const.JOB_CHANNEL,
                      data={"_id": _id, "queue": self.get_queue_count()})
