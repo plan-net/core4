@@ -786,6 +786,7 @@ class JobStream(JobPost):
             if doc["state"] in STATE_FINAL:
                 exit = True
                 await self.sse("state", doc)
+                await self.sse("close", {})
                 self.finish()
             elif last is None or doc != last:
                 last = doc
@@ -796,7 +797,8 @@ class JobStream(JobPost):
     async def sse(self, event, doc):
         js = json_encode(doc, indent=None, separators=(',', ':'))
         try:
-            self.write(event + ": " + js + "\n\n")
+            self.write("event: " + event + "\n")
+            self.write("data: " + js + "\n\n")
             self.logger.info(
                 "serving [%s] with [%d] byte",
                 self.current_user, len(js))
