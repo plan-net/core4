@@ -1,0 +1,45 @@
+[
+  {
+    "created": {
+      "$date": "2018-03-01T00:00:00.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "event",
+    "data": {
+      "queue": {
+        "pending": 1,
+        "deferred": 1,
+        "failed": 1,
+        "running": 1,
+        "error": 1,
+        "inactive": 1,
+        "killed": 1
+      }
+    }
+  },
+  {
+    "created": {
+      "$date": "2018-03-01T00:00:00.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "queue",
+    "data": {
+      "queue": {
+        "pending": 1
+      }
+    }
+  },
+  {
+    "created": {
+      "$date": "2018-03-01T00:00:00.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "stat",
+    "data": {
+      "queue": {
+        "pending": 10,
+        "error": 5
+      }
+    }
+  }
+]

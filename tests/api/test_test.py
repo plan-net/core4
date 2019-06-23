@@ -17,10 +17,16 @@ import core4.logger.mixin
 from core4.api.v1.server import CoreApiServer
 from core4.api.v1.tool.serve import CoreApiServerTool
 
+import functools
+import codecs
+from bson import json_util
+import yaml
+
 MONGO_URL = 'mongodb://core:654321@testmongo:27017'
 MONGO_DATABASE = 'core4test'
 ASSET_FOLDER = '../asset'
 
+_cache = {}
 
 
 def asset(*filename, exists=True):
@@ -164,6 +170,39 @@ def core4api():
     yield from run(
         CoreApiServer
     )
+
+@pytest.fixture
+def load_db_data(mongodb):
+
+    def read_config(basedir, fixtures=None):
+        for file_name in os.listdir(basedir):
+            collection, ext = os.path.splitext(os.path.basename(file_name))
+            file_format = ext.strip('.')
+            supported = file_format in ('json', 'yaml')
+            selected = collection in fixtures if fixtures else True
+
+            if selected and supported:
+                path = os.path.join(basedir, file_name)
+                load_fixture(mongodb, collection, path, file_format)
+
+    return read_config
+
+
+def load_fixture(mongodb, collection, path, file_format):
+    if file_format == 'json':
+        loader = functools.partial(json.load, object_hook=json_util.object_hook)
+    elif file_format == 'yaml':
+        loader = yaml.load
+    else:
+        return
+    try:
+        docs = _cache[path]
+    except KeyError:
+        with codecs.open(path, encoding='utf-8') as fp:
+            _cache[path] = docs = loader(fp)
+
+    for document in docs:
+        mongodb[collection].insert(document)
 
 
 def run(*app):

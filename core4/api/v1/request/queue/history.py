@@ -6,6 +6,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import datetime
 from dateutil.relativedelta import *
+from tornado.web import HTTPError
 
 import core4.const
 import core4.util.tool
@@ -15,7 +16,6 @@ from core4.util.pager import CorePager
 
 dates = ['year', 'month', 'day', 'hour', 'minute', 'second']
 date_format = "%Y-%m-%dT%H:%M:%S"
-default_days = 7
 
 
 class JobHistoryHandler(CoreRequestHandler):
@@ -209,7 +209,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
                                  as_type=int,
                                  default=-1)
 
-        per_page = self.get_argument("per_page",
+        per_page = self.get_argument("perPage",
                                      as_type=int,
                                      default=10)
 
@@ -342,7 +342,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
                 }
             ]
 
-            cur = coll.aggregate(pipeline)
+            cur = coll.aggregate(pipeline, allowDiskUse=True)
 
             ret = []
 
@@ -378,8 +378,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
         """
         return self.get()
 
-    @classmethod
-    def _group_by(cls, start, end=None):
+    def _group_by(self, start, end=None):
         """
 
         Parameters:
@@ -413,6 +412,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
             }
         """
         grouping_id = {}
+        precision_config = self.raw_config.get("comoco", {})['precision']
         start_date = datetime.datetime.strptime(start, date_format)
 
         if end:
@@ -422,51 +422,50 @@ class ComocoHistoryHandler(CoreRequestHandler):
 
         precision = {
             "year": {
-                "divisor": "day", # day
+                "divisor": precision_config['year'], # day
                 "remainder": 1
             },
             "month": {
-                "divisor": "hour", # hour
+                "divisor": precision_config["month"], # hour
                 "remainder": 1
             },
             "day": {
-                "divisor": "minute", # minute
+                "divisor": precision_config["day"], # minute
                 "remainder": 1
             },
             "hour": {
-                "divisor": "second", # second
+                "divisor": precision_config["hour"], # second
                 "remainder": 1
             },
             "minute": {
-                "divisor": "second",
+                "divisor": precision_config["minute"], # second
                 "remainder": 1
             },
             "second": {
-                "divisor": "millisecond",
+                "divisor": precision_config["second"], # millisecond
                 "remainder": 1
             }
         }
 
         period = precision[
-            cls._get_period(start_date, end_date)["delta"]
+            self._get_period(start_date, end_date)["delta"]
         ]
 
         for date in dates:
             needed_period = period["divisor"]
             if date == needed_period:
-                grouping_id[needed_period] = cls._subtract_template(
+                grouping_id[needed_period] = self._subtract_template(
                     needed_period,
                     period["remainder"]
                 )
 
                 break
             else:
-                grouping_id[date] = {cls._adapt_day(date): "$created"}
+                grouping_id[date] = {self._adapt_day(date): "$created"}
 
         return grouping_id
 
-    @classmethod
-    def _get_period(cls, start, end):
+    def _get_period(self, start, end):
         """
         Calculate delta between 2 dates
 
@@ -501,10 +500,13 @@ class ComocoHistoryHandler(CoreRequestHandler):
                 period["amount"] = amount
                 break
 
+            if amount < 0:
+                raise HTTPError(status_code=400,
+                                reason="Invalid time period. Start date > End date")
+
         return period
 
-    @classmethod
-    def _subtract_template(cls, name, amount):
+    def _subtract_template(self, name, amount):
         """
         Build mongoDB subtract query depend on period
 
@@ -534,7 +536,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
             }
 
         """
-        period = cls._adapt_day(name)
+        period = self._adapt_day(name)
 
         return {
             "$subtract": [
@@ -543,8 +545,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
             ]
         }
 
-    @classmethod
-    def _adapt_day(cls, name):
+    def _adapt_day(self, name):
         """
         Get mongoDB operator for some period
 
@@ -563,8 +564,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
        """
         return '$dayOfMonth' if name == 'day' else ("$" + name)
 
-    @classmethod
-    def _between(cls, start_date, end_date=None):
+    def _between(self, start_date, end_date=None):
         """
         Build mongoDB query for getting documents for some datetime range
 
@@ -609,8 +609,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
 
         return match
 
-    @classmethod
-    def _default_start_date(cls):
+    def _default_start_date(self):
         """
         Get date (currently) for 7 days past
 
@@ -623,6 +622,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
             "2019-04-13T09:48:23"
 
         """
+        default_days = int(self.raw_config.get("comoco",{})['history_in_days'])
         today = datetime.date.today()
         week_ago = today - datetime.timedelta(days=default_days)
 

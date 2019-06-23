@@ -137,3 +137,13 @@ email:
 user_setting:
    _general:
      language: EN
+
+comoco:
+  history_in_days: 7
+  precision:
+    year: day
+    month: hour
+    day: minute
+    hour: second
+    minute: second
+    second: millisecond

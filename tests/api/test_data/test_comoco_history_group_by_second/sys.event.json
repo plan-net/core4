@@ -1,0 +1,26 @@
+[
+  {
+    "created": {
+      "$date": "2019-06-18T09:00:01.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "queue",
+    "data": {
+      "queue": {
+        "pending": 3
+      }
+    }
+  },
+  {
+    "created": {
+      "$date": "2019-06-18T09:00:05.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "queue",
+    "data": {
+      "queue": {
+        "error": 50
+      }
+    }
+  }
+]

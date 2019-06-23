@@ -1,0 +1,56 @@
+[
+  {
+    "created": {
+      "$date": "2019-06-18T00:00:00.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "queue",
+    "data": {
+      "queue": {
+        "pending": 3
+      }
+    }
+  },
+  {
+    "created": {
+      "$date": "2019-06-18T00:00:03.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "queue",
+    "data": {
+      "queue": {
+        "pending": 3,
+        "running": 5,
+        "inactive": 2
+      }
+    }
+  },
+  {
+    "created": {
+      "$date": "2019-06-18T00:00:10.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "queue",
+    "data": {
+      "queue": {
+        "pending": 1,
+        "running": 5,
+        "inactive": 2,
+        "error": 1
+      }
+    }
+  },
+  {
+    "created": {
+      "$date": "2019-06-18T00:05:20.000Z"
+    },
+    "name": "enqueue_job",
+    "channel": "queue",
+    "data": {
+      "queue": {
+        "inactive": 2,
+        "error": 1
+      }
+    }
+  }
+]
