@@ -58,7 +58,10 @@ def mongo_now():
     """
     :return: current core4 system time in MongoDB resolution (in UTC)
     """
-    return now().replace(microsecond=0)
+    current = now()
+    rounded_millis = round(current.microsecond / 1000) * 1000
+
+    return current.replace(microsecond=rounded_millis)
 
 
 def get_pid():
