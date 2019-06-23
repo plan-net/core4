@@ -22,7 +22,7 @@ export default {
   getJobHistory (page, perPage, startDate, endDate, sort) {
     let token = JSON.parse(localStorage.getItem('user'))['token']
     let pageArg = page ? `page=${page}` : ''
-    let perPageArg = perPage ? `&per_page=${perPage}` : ''
+    let perPageArg = perPage ? `&perPage=${perPage}` : ''
     let startDateArg = startDate ? `&startDate=${startDate}` : ''
     let endDateArg = endDate ? `&endDate=${endDate}` : ''
     let sortArg = sort || 1
