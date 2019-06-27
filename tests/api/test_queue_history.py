@@ -1,37 +1,77 @@
 import os
+import yaml
+import json
 import pytest
+import codecs
 import datetime
+import functools
+from bson import json_util
 from random import randint
 
-from tests.api.test_test import setup, mongodb, core4api, load_db_data
+from tests.api.test_test import setup, mongodb, core4api
 
 _ = setup
 _ = mongodb
 _ = core4api
-_ = load_db_data
+
+_cache = {}
 
 
 @pytest.fixture(autouse=True)
 def add_setup(tmpdir):
-    os.environ["CORE4_OPTION_comoco__history_in_days"] = "!!int 7"
-    os.environ["CORE4_OPTION_comoco__precision__year"] = "day"
-    os.environ["CORE4_OPTION_comoco__precision__month"] = "hour"
-    os.environ["CORE4_OPTION_comoco__precision__day"] = "minute"
-    os.environ["CORE4_OPTION_comoco__precision__hour"] = "second"
-    os.environ["CORE4_OPTION_comoco__precision__minute"] = "second"
-    os.environ["CORE4_OPTION_comoco__precision__second"] = "millisecond"
+    os.environ["CORE4_OPTION_queue__history_in_days"] = "!!int 7"
+    os.environ["CORE4_OPTION_queue__precision__year"] = "day"
+    os.environ["CORE4_OPTION_queue__precision__month"] = "hour"
+    os.environ["CORE4_OPTION_queue__precision__day"] = "minute"
+    os.environ["CORE4_OPTION_queue__precision__hour"] = "second"
+    os.environ["CORE4_OPTION_queue__precision__minute"] = "second"
+    os.environ["CORE4_OPTION_queue__precision__second"] = "millisecond"
 
+
+@pytest.fixture
+def load_db_data(mongodb):
+
+    def read_config(basedir, fixtures=None):
+        for file_name in os.listdir(basedir):
+            collection, ext = os.path.splitext(os.path.basename(file_name))
+            file_format = ext.strip('.')
+            supported = file_format in ('json', 'yaml')
+            selected = collection in fixtures if fixtures else True
+
+            if selected and supported:
+                path = os.path.join(basedir, file_name)
+                load_fixture(mongodb, collection, path, file_format)
+
+    return read_config
+
+
+def load_fixture(mongodb, collection, path, file_format):
+    if file_format == 'json':
+        loader = functools.partial(json.load, object_hook=json_util.object_hook)
+    elif file_format == 'yaml':
+        loader = yaml.load
+    else:
+        return
+    try:
+        docs = _cache[path]
+    except KeyError:
+        with codecs.open(path, encoding='utf-8') as fp:
+            _cache[path] = docs = loader(fp)
+
+    for document in docs:
+        mongodb[collection].insert(document)
 
 # =========================================================================== #
 # Success pass
 # =========================================================================== #
 
-async def test_comoco_history_group_by_day(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_group_by_day")
+
+async def test_queue_history_group_by_day(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_group_by_day")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2017-01-01T00:00:00&"
                                   "endDate=2019-06-18T10:00:00")
 
@@ -42,12 +82,12 @@ async def test_comoco_history_group_by_day(core4api, load_db_data):
     assert response.json()["data"][2]["total"] == 10
 
 
-async def test_comoco_history_group_by_hour(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_group_by_hour")
+async def test_queue_history_group_by_hour(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_group_by_hour")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2019-05-17T00:00:00&"
                                   "endDate=2019-06-18T10:00:00&"
                                   "sort=1")
@@ -57,12 +97,12 @@ async def test_comoco_history_group_by_hour(core4api, load_db_data):
     assert response.json()["data"][0]["total"] == 10
 
 
-async def test_comoco_history_group_by_minute(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_group_by_minute")
+async def test_queue_history_group_by_minute(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_group_by_minute")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2019-06-16T00:00:00&"
                                   "endDate=2019-06-18T10:00:00&"
                                   "sort=1")
@@ -73,12 +113,12 @@ async def test_comoco_history_group_by_minute(core4api, load_db_data):
     assert response.json()["data"][1]["total"] == 303
 
 
-async def test_comoco_history_group_by_second(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_group_by_second")
+async def test_queue_history_group_by_second(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_group_by_second")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2019-06-18T08:00:00&"
                                   "endDate=2019-06-18T10:00:00&"
                                   "sort=1")
@@ -89,13 +129,13 @@ async def test_comoco_history_group_by_second(core4api, load_db_data):
     assert response.json()["data"][1]["total"] == 50
 
 
-async def test_comoco_history_sort_order(core4api, load_db_data):
+async def test_queue_history_sort_order(core4api, load_db_data):
     # sort in ask order
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_sort_order")
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_sort_order")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2017-01-01T00:00:00&"
                                   "endDate=2019-06-18T10:00:00&"
                                   "sort=-1")
@@ -107,7 +147,7 @@ async def test_comoco_history_sort_order(core4api, load_db_data):
     assert response.json()["data"][2]["total"] == 10
 
     # sort in ask desk
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2017-01-01T00:00:00&"
                                   "endDate=2019-06-18T10:00:00&"
                                   "sort=1")
@@ -119,8 +159,7 @@ async def test_comoco_history_sort_order(core4api, load_db_data):
     assert response.json()["data"][2]["total"] == 4
 
 
-async def test_comoco_history_group_by_default_period(core4api, mongodb):
-    date_format = "%Y-%m-%dT%H:%M:%S"
+async def test_queue_history_group_by_default_period(core4api, mongodb):
     coll = mongodb.sys.event
 
     nine_days_ago = datetime.datetime.now() - datetime.timedelta(days=9)
@@ -184,7 +223,7 @@ async def test_comoco_history_group_by_default_period(core4api, mongodb):
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?sort=1")
+    response = await core4api.get("/core4/api/v1/queue/history?sort=1")
 
     response_json = response.json()
 
@@ -195,12 +234,12 @@ async def test_comoco_history_group_by_default_period(core4api, mongodb):
     assert response_json["data"][2]["total"] == 1
 
 
-async def test_comoco_history_get_some_page(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_get_some_page")
+async def test_queue_history_get_some_page(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_get_some_page")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2017-01-01T00:00:00&"
                                   "perPage=1&"
                                   "page=1&"
@@ -220,12 +259,12 @@ async def test_comoco_history_get_some_page(core4api, load_db_data):
     assert response_json["data"][0]["total"] == 2
 
 
-async def test_comoco_history_response_structure(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_response_structure")
+async def test_queue_history_response_structure(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_response_structure")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2017-01-01T00:00:00&"
                                   "sort=1")
 
@@ -245,12 +284,12 @@ async def test_comoco_history_response_structure(core4api, load_db_data):
     assert response_json["data"][2]["total"] == 15
 
 
-async def test_comoco_history_different_channel(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_comoco_history_different_channel")
+async def test_queue_history_different_channel(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_different_channel")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2017-01-01T00:00:00&"
                                   "sort=1")
 
@@ -267,24 +306,24 @@ async def test_comoco_history_different_channel(core4api, load_db_data):
 # =========================================================================== #
 
 
-async def test_comoco_history_end_date_lower_then_start_date(core4api, load_db_data):
-    load_db_data(os.path.dirname(os.path.abspath(
-        __file__)) + "/test_data/test_comoco_history_group_by_day")
+async def test_queue_history_end_date_lower_then_start_date(core4api, load_db_data):
+    load_db_data(os.path.dirname(os.path.abspath(__file__)) + "/test_data/test_queue_history_group_by_day")
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2019-06-18T00:00:00&"
                                   "endDate=2017-01-01T10:00:00")
 
     assert response.code == 400
+
 
 # =========================================================================== #
 # Performance pass
 # =========================================================================== #
 
 
-async def test_comoco_group_on_a_lot_of_data(core4api, mongodb):
+async def test_queue_group_on_a_lot_of_data(core4api, mongodb):
     coll = mongodb.sys.event
 
     for i in range(100000):
@@ -362,7 +401,7 @@ async def test_comoco_group_on_a_lot_of_data(core4api, mongodb):
 
     await core4api.login()
 
-    response = await core4api.get("/core4/api/v1/comoco/history?"
+    response = await core4api.get("/core4/api/v1/queue/history?"
                                   "startDate=2017-01-01T00:00:00&"
                                   "endDate=2019-01-01T00:00:00&"
                                   "sort=1")

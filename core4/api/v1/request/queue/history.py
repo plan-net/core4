@@ -15,7 +15,6 @@ from core4.api.v1.request.main import CoreRequestHandler
 from core4.util.pager import CorePager
 
 dates = ['year', 'month', 'day', 'hour', 'minute', 'second']
-date_format = "%Y-%m-%dT%H:%M:%S"
 
 
 class JobHistoryHandler(CoreRequestHandler):
@@ -149,7 +148,7 @@ class JobHistoryHandler(CoreRequestHandler):
         return dct
 
 
-class ComocoHistoryHandler(CoreRequestHandler):
+class QueueHistoryHandler(CoreRequestHandler):
     """
     Retrieves the paginated job state history from ``sys.event``. This provides
     total and aggregated job counts with the following dimensions:
@@ -158,12 +157,12 @@ class ComocoHistoryHandler(CoreRequestHandler):
     * job flags non-stopper, zombie, killed and removed
     """
     author = "oto"
-    title = "comoco history"
+    title = "queue history"
 
     async def get(self):
         """
         Methods:
-            GET /comoco/history
+            GET /queue/history
 
 
         Parameters:
@@ -194,13 +193,13 @@ class ComocoHistoryHandler(CoreRequestHandler):
             >>> signin = get("http://devops:5001/core4/api/v1/login?username=admin&password=hans")
             >>> signin
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/comoco/history?token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://devops:5001/core4/api/v1/queue/history?token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/comoco/history?page=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://devops:5001/core4/api/v1/queue/history?page=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/comoco/history?sort=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://devops:5001/core4/api/v1/queue/history?sort=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
 
@@ -218,11 +217,11 @@ class ComocoHistoryHandler(CoreRequestHandler):
                                          default=0)
 
         start_date = self.get_argument("startDate",
-                                       as_type=str,
+                                       as_type=datetime.datetime,
                                        default=self._default_start_date())
 
         end_date = self.get_argument("endDate",
-                                     as_type=str,
+                                     as_type=datetime.datetime,
                                      default=None)
 
         coll = self.config.sys.event
@@ -378,7 +377,7 @@ class ComocoHistoryHandler(CoreRequestHandler):
         """
         return self.get()
 
-    def _group_by(self, start, end=None):
+    def _group_by(self, start_date, end_date=None):
         """
 
         Parameters:
@@ -412,12 +411,9 @@ class ComocoHistoryHandler(CoreRequestHandler):
             }
         """
         grouping_id = {}
-        precision_config = self.raw_config.get("comoco", {})['precision']
-        start_date = datetime.datetime.strptime(start, date_format)
+        precision_config = self.raw_config.get("queue", {})['precision']
 
-        if end:
-            end_date = datetime.datetime.strptime(end, date_format)
-        else:
+        if not end_date:
             end_date = datetime.datetime.now()
 
         precision = {
@@ -598,13 +594,13 @@ class ComocoHistoryHandler(CoreRequestHandler):
         """
         match = {
             "created": {
-                "$gte": datetime.datetime.strptime(start_date, date_format)
+                "$gte": start_date
             }
         }
 
         if end_date:
             match["created"].update({
-                "$lte": datetime.datetime.strptime(end_date, date_format)
+                "$lte": end_date
             })
 
         return match
@@ -622,7 +618,8 @@ class ComocoHistoryHandler(CoreRequestHandler):
             "2019-04-13T09:48:23"
 
         """
-        default_days = int(self.raw_config.get("comoco",{})['history_in_days'])
+        date_format = "%Y-%m-%dT%H:%M:%S"
+        default_days = int(self.raw_config.get("queue", {})['history_in_days'])
         today = datetime.date.today()
         week_ago = today - datetime.timedelta(days=default_days)
 
