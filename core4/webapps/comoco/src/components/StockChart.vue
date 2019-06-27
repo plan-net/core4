@@ -484,6 +484,7 @@ export default {
             text: 'Time in UTC (Coordinated Universal Time)'
           },
           events: {
+            // ToDo: implement call queue history when zoom
             // zoom: (e) => {
             //   console.log(`zoom, e = `, e)
             //   const component = this

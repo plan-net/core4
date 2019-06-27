@@ -19,16 +19,16 @@ export default {
       .catch(error => Promise.reject(error))
   },
 
-  getJobHistory (page, perPage, startDate, endDate, sort) {
+  getQueueHistory (page, perPage, startDate, endDate, sort) {
     let token = JSON.parse(localStorage.getItem('user'))['token']
     let pageArg = page ? `page=${page}` : ''
     let perPageArg = perPage ? `&perPage=${perPage}` : ''
     let startDateArg = startDate ? `&startDate=${startDate}` : ''
     let endDateArg = endDate ? `&endDate=${endDate}` : ''
-    let sortArg = sort || 1
+    let sortArg = sort ? `&sort=${sort}` : `&sort=1`
 
     return axiosInternal
-      .get(`/comoco/history?${pageArg}${perPageArg}${startDateArg}${endDateArg}&sort=${sortArg}&token=${token}`)
+      .get(`/queue/history?${pageArg}${perPageArg}${startDateArg}${endDateArg}${sortArg}&token=${token}`)
       .then(res => {
         return {
           total_count: res.total_count,

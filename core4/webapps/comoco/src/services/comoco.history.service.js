@@ -27,7 +27,7 @@ function * chartHistory (startDate, endDate) {
     start = yield getChartHistory(perPage, 1, startDate, endDate)
 
     for (let page of range(++start.page, --start.page_count)) {
-      yield api.getJobHistory(page, perPage, start.startDate, start.endDate)
+      yield api.getQueueHistory(page, perPage, start.startDate, start.endDate)
     }
   } catch (e) {
     console.log(e)
@@ -55,7 +55,7 @@ async function getChartHistory (perPage, sort, startDate, endDate) {
       endDate = moment(endDate).format('YYYY-MM-DDTHH:mm:ss') // mongoDB filter
     }
 
-    history = await api.getJobHistory(null, perPage, startDate, endDate, sort)
+    history = await api.getQueueHistory(null, perPage, startDate, endDate, sort)
   } catch (err) {
     throw Error(err)
   }
