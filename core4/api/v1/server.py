@@ -29,6 +29,7 @@ from tornado.ioloop import IOLoop
 
 from core4.api.v1.application import CoreApiContainer
 from core4.api.v1.request.queue.history import JobHistoryHandler
+from core4.api.v1.request.queue.history import QueueHistoryHandler
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.queue.job import JobStream
@@ -76,6 +77,9 @@ class CoreApiServer(CoreApiContainer):
         (r'/jobs/enqueue/?', JobPost),
         (r'/jobs', JobHandler),
         (r'/jobs/(.*)', JobHandler, None, "JobHandler"),
+
+        (r'/queue/history', QueueHistoryHandler),
+        (r'/queue/history(.*)', QueueHistoryHandler, None, "QueueHistory"),
 
         (r'/system/?', SystemHandler),
 
