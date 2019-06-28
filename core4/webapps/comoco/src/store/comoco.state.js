@@ -1,5 +1,4 @@
 export default {
-  stopChart: true, // ToDo: need to be handle in chart component
   queue: {
     // queue object interface:
     //   stat: {
@@ -32,23 +31,15 @@ export default {
     message: '',
     reconnectError: false
   },
-  error: {
+  notifications: {
     socket_reconnect_error: {
-      state: false,
+      state: false, // false = hide, true = show
       type: 'error',
-      dismissible: false,
+      dismissible: false, // show "close button" parameter
+      // timeout: 7000,
       message: '',
       slot: '',
-      inComponents: ['stockChart']
+      inComponents: ['home']
     }
-    // test: {
-    //   state: true,
-    //   type: 'success',
-    //   message: 'test test test',
-    //   timeout: 7000,
-    //   slot: '',
-    //   dismissible: false,
-    //   inComponents: ['stockChart']
-    // }
   }
 }

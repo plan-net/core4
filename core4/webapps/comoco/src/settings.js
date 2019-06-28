@@ -6,8 +6,6 @@
  */
 
 // ToDo: return clones
-const defaultHistoryRange = [7, 'd'] // d - in days
-
 const eventChannelNames = [
   'enqueue_job',
   'request_start_job',
@@ -86,6 +84,5 @@ export {
   jobGroups,
   jobFlags,
   jobColors,
-  defaultHistoryRange,
   eventChannelNames
 }
