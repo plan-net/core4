@@ -35,11 +35,11 @@
     </div>
 
     <!-- Job progress bar in %, available only for running jobs -->
-<!--    <v-progress-linear v-if="job.state === 'running'"-->
-<!--                       color="#64a505"-->
-<!--                       height="2"-->
-<!--                       :value="job.progress * 100">-->
-<!--    </v-progress-linear>-->
+    <v-progress-linear v-if="job.state === 'running'"
+                       color="#64a505"
+                       height="2"
+                       :value="job.progress * 100">
+    </v-progress-linear>
   </div>
 </template>
 
