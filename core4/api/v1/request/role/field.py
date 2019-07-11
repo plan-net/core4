@@ -142,9 +142,8 @@ class StringField(Field):
 
 class BoolField(Field):
     """
-    Handles bool attributes with default value ``True``.
+    Handles bool attributes.
     """
-    default = True
     field_type = bool
 
 
