@@ -147,9 +147,12 @@ class CoreRole(CoreBase):
                 return core4.util.crypt.pwd_context.verify(
                     plain, self.password)
             except ValueError:
+                self.logger.warning("user [%s] authentication failure",
+                                    self.username)
                 return False
             except:
                 raise
+        self.logger.warning("user [%s] not active", self.username)
         return False
 
     @property
