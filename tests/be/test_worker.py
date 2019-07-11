@@ -372,7 +372,6 @@ def test_start_job():
     print(job.finished_at - job.started_at)
     print(job.runtime)
 
-@pytest.mark.timeout(30)
 def test_start_job2(queue):
     threads = 3
     pool = []

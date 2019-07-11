@@ -425,7 +425,6 @@ class CoreBaseHandler(CoreBase):
 
         The method creates the following parameters to render:
 
-
         :return: result of :meth:`.help`
         """
         doc = await self.meta()
@@ -435,10 +434,6 @@ class CoreBaseHandler(CoreBase):
         """
         Renders the default card page. This method is to be overwritten for
         custom card page impelementation.
-
-        :param
-
-
         """
         return self.render(self.card_html_page, **data)
 

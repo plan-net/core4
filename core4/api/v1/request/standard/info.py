@@ -45,7 +45,10 @@ class InfoHandler(CoreRequestHandler):
             cookies=signin.cookies)
             >>> rv.json()
         """
-        ret = await self.application.container.get_handler()
+        result = []
+        for handler in await self.application.container.get_handler():
+            if await self.user.has_api_access(handler["qual_name"]):
+                result.append(handler)
         if self.wants_html():
-            return self.render(self.info_html_page, data=ret)
-        self.reply(ret)
+            return self.render(self.info_html_page, data=result)
+        self.reply(result)

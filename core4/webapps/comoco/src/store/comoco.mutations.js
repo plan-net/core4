@@ -7,19 +7,18 @@ import {
   SOCKET_ONMESSAGE,
   SOCKET_RECONNECT,
   SOCKET_RECONNECT_ERROR,
-  ERROR_CHANGE_STATE
+  NOTIFICATION_CHANGE_STATE
 } from './comoco.mutationTypes'
 
-import { createObjectWithDefaultValues } from '../helper'
+import { deepMerge, createObjectWithDefaultValues } from '../helper'
 import { jobTypes, jobFlags, jobStates, eventChannelNames } from '../settings'
 
 const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 const channelDict = {
   'queue': {
     // on_queue:
-    'summary': queueChannelHandler
-  },
-  'job': {
+    'summary': queueChannelHandler,
+
     // on_event:
     ...eventChannelNames.reduce((computedResult, currentItem) => {
       computedResult[currentItem] = eventChannelHandler
@@ -34,12 +33,13 @@ console.log(createObjectWithDefaultValues(eventChannelNames, eventChannelHandler
 export default {
   [SOCKET_ONOPEN] (state, event) {
     Vue.prototype.$socket = event.currentTarget
-    Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'job', 'event'] })
+    Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'event', 'job'] })
+
     state.socket.isConnected = true
-    state.error.socket_reconnect_error.state = false
+    state.socket.reconnectError = false
   },
   [SOCKET_ONCLOSE] (state) {
-    state.socket.isConnected = false
+    // state.socket.isConnected = false
   },
   [SOCKET_ONERROR] (state, event) {
     console.error(state, event)
@@ -58,15 +58,11 @@ export default {
   },
   [SOCKET_RECONNECT_ERROR] (state) {
     // ToDo: add error flow (message, pop-up etc)
+    state.socket.isConnected = false
     state.socket.reconnectError = true
-    state.error.socket_reconnect_error.state = true
-    state.error.socket_reconnect_error.type = 'error'
-    // state.error.message = 'Cannot connect to the serve.'
-    state.error.socket_reconnect_error.slot = 'socketReconnectError'
-    state.stopChart = true
   },
-  [ERROR_CHANGE_STATE] (state, payload) {
-    state.error[payload.errType].state = payload.stateValue
+  [NOTIFICATION_CHANGE_STATE] (state, payload) {
+    deepMerge(state.notifications[payload.name], payload.data)
   }
 }
 
@@ -84,11 +80,10 @@ function queueChannelHandler (state, message) {
   console.log('queue', message)
   state.queue = groupDataAndJobStat(message.created, message.data, 'state')
 
-  if (state.stopChart) {
+  if (!state.socket.reconnectError) { // ToDo: check on prod
+    console.log('event = queue.stat')
     state.event = state.queue.stat
   }
-
-  state.stopChart = false
 }
 
 /**
