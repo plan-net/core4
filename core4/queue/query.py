@@ -171,6 +171,7 @@ class QueryMixin:
                 '$project': {
                     "name": 1,
                     "state": 1,
+                    "prog": "$prog.value",
                     "zombie": {"$ne": ["$zombie_at", None]},
                     "wall": {"$ne": ["$wall_at", None]},
                     "removed": {"$ne": ["$removed_at", None]},
@@ -187,6 +188,7 @@ class QueryMixin:
                         'removed': '$removed',
                         'killed': '$killed',
                     },
+                    'prog': {'$push': "$prog"},
                     'n': {'$sum': 1}
                 }
             },
@@ -199,7 +201,15 @@ class QueryMixin:
                     "removed": "$_id.removed",
                     "killed": "$_id.killed",
                     "n": "$n",
-                    "_id": 0,
+                    "progress": {
+                        "$avg": {
+                            "$setDifference": [
+                                "$prog",
+                                [None]
+                            ]
+                        }
+                    },
+                    "_id": 0
                 },
             },
             {

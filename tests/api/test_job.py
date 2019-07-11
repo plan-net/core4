@@ -87,13 +87,15 @@ async def test_poll(core4api, worker):
     resp = await core4api.post('/core4/api/v1/jobs/poll', json=data)
     assert resp.code == 200
     worker.wait_queue()
-    messages = resp.body.decode("utf-8").split("\n\n")
-    logs = [json.loads(i[5:]) for i in messages if i.startswith("log: ")]
+    event = []
+    for ev in resp.body.decode("utf-8").split("\n\n"):
+        typ, *data = ev.split("\n")
+        if typ:
+            event.append({"type": typ, "data": json.loads("\n".join(data)[6:])})
+    logs = [i["data"] for i in event if i["type"] == "event: log"]
     tests = [i for i in logs if i["message"].startswith("message")]
     assert len(tests) == 50
-    states = [json.loads(i[7:]) for i in messages if i.startswith("state: ")]
-    from pprint import pprint
-    pprint(states)
-    for line in messages:
-        print(line)
-
+    states = [i["data"] for i in event if i["type"] == "event: state"]
+    assert states[-1]["state"] == "complete"
+    assert event[-1]["type"] == "event: close"
+    assert event[-1]["data"] == {}
