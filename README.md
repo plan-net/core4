@@ -6,21 +6,10 @@ Develop, Operate and Collaborate on Data and Analytics
 Automated - Flexible - Secure - Scalable
 
 
-As of today, modern Data-Scientists use a variety of python- and R-modules both 
-Open- and Closed-Source to create relevant insights based on multiple sets of 
-data from many different sources.
+Data scientists use a variety of both open and closed source Python and R modules to create relevant insights based on multiple sets of data from many different sources. core4os enables data scientists and business users to integrate an 
+existing insight-generation processing chain into a fault-tolerant, distributed system, thereby automating the whole data analytics process from data transformation to insight generation without the usual need to worry about the underlying software or hardware requirements. 
 
-core4os enables these Data-Scientists and other users to easily integrate their 
-processing chain of creating such insights into a fault-tolerant distributed 
-system and thereby automating the whole process without having to think about 
-underlying software or hardware.
-
-core4os takes care of everything that is essential to using and operating such a 
-distributed system, from central logging and configuration to deployment, all 
-this while scaling to the 100ths of servers. This allows for rapid progress 
-from development to production deployment and even enables the developer to 
-quickly deploy a REST API based on the output of his data-processing and 
-therefore provides a shortcut for creating beautiful frontend applications.
+core4os takes care of everything that is essential to using and operating such a distributed system, from central logging and configuration to deployment, all while scaling to hundreds of servers, allowing for rapid progress from development to production deployment and even enabling the developer to deploy a REST API quickly based on the output of the data-processing, which provides a shortcut for creating beautiful, frontend applications.
 
 
 prerequisite installation guide
@@ -28,7 +17,7 @@ prerequisite installation guide
 
 core4os has on the following prerequisites:
 
-* Linux flavour operating system, preferred Debian 9 or Ubuntu 18.04
+* Linux flavor operating system, preferably Debian 9 or Ubuntu 18.04
 * Python 3.5 or higher
 * MongoDB database instance version 3.6 or higher up-and-running,
   see https://www.mongodb.com/download-center#community
@@ -91,28 +80,20 @@ Clone and install core4os framework in a Python virtual environment:
 MongoDB setup
 -------------
 
-MongoDB requires further configuration to setup a replica set. core4os uses
-some special features of MongoDB which are only available with replica set.
+MongoDB requires further configuration to setup a replica set. core4os uses some special features of MongoDB which are only available with replica set.
 
-The interactive script ``local_setup.py`` simplifies this configuration.
-Start the script with ``python local_setup.py`` in your Python virtual
-environment created above. 
+The interactive script ``local_setup.py`` simplifies this configuration. Start the script with ``python local_setup.py`` in the Python virtual environment created above. 
 
 
 MongoDB protection
 ------------------
 
-Please note that running the core4os regression tests has two additional
-requirements. First, the user ``core`` must exists as a MongoDB user with
-password ``654321``. Second, your MongoDB hostname must have an additional
-domain name ``testmongo``.
+Please note that running the core4os regression tests requires two additional steps. First, the user ``core`` must exists as a MongoDB user with password ``654321``. Second, the MongoDB hostname must have an additional domain name ``testmongo``.
 
 
-Ensure your setup is reflected with your core4 ``local.yaml`` configuration 
-file.
+Ensure the setup is reflected with your core4os ``local.yaml`` configuration file.
 
-Pass the following javascript to the mongo shell to create user ``core`` with
-password ``654321``:
+Pass the following JavaScript to the mongo shell to create user ``core`` with password ``654321``:
 
     mongo <<- EOF
     use admin
@@ -126,26 +107,25 @@ password ``654321``:
     EOF
 
 
-Edit MongoDB configuration file ``/etc/mongod.conf`` and add the following
-lines:
+Edit the MongoDB configuration file ``/etc/mongod.conf`` and add the following lines:
 
     security:
       authorization: enabled
 
 
-Add hostname ``testmongo`` to your ``/etc/hosts`` file:
+Add hostname ``testmongo`` to the ``/etc/hosts`` file:
 
     127.0.0.1   localhost
     127.0.0.1   devops
     127.0.0.1   testmongo
 
 
-Finally restart mongod with:
+Finally, restart mongod with:
 
     service mongod restart
 
 
-Test settings and MongoDB connection now with:
+Test the settings and MongoDB connection with:
 
     mongo --username=core --password=654321 --authenticationDatabase admin
 
@@ -153,8 +133,7 @@ Test settings and MongoDB connection now with:
 build web tools
 ---------------
 
-Use core4os tool ``cadmin`` to build all web tools inside the Python virtual
-environment created above:
+Use core4os tool ``cadmin`` to build all web tools inside the Python virtual environment created above:
 
     # build core4 web apps
     cadmin build
@@ -163,8 +142,7 @@ environment created above:
 further reads
 -------------
 
-Find latest core4 documentation at https://core4os.readthedocs.io/en/latest/ 
-or build the sphinx documentation yourself with
+Find the latest core4os documentation at https://core4os.readthedocs.io/en/latest/ or build the sphinx documentation with
 
     cd core4
     pip install -e ".[tests]" 
@@ -172,12 +150,11 @@ or build the sphinx documentation yourself with
     make html
     
 
-There you will find further installation instructions and an Ubuntu 18.04 
-step-by-step installation guide.
+Both methods of accessing the documentation provide further installation instructions and an Ubuntu 18.04 step-by-step installation guide.
 
 
 3rd party systems and licenses
 ------------------------------
 
-All external packages used within core4 have their license placed within the 
+All external packages used within core4os have the associated license placed within the 
 ``LICENSES`` directory.
