@@ -483,7 +483,12 @@ class CoreRole(CoreBase):
             (*proto, qn) = p.split("/")
             if proto[0] == "api:":
                 if re.match(qn, qual_name):
+                    self.logger.debug(
+                        "approved api permission [%s] for user [%s]",
+                        self.username, qn)
                     return True
+        self.logger.debug("no appropriate api permission found for user [%s]",
+                          self.username)
         return False
 
     async def login(self):

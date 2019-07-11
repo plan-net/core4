@@ -453,8 +453,8 @@ def run(args):
 
 def main():
     args = docopt(__doc__, help=True)
-    print(args)
-    #run(args)
+    #print(args)
+    run(args)
 
 
 if __name__ == '__main__':
