@@ -485,10 +485,10 @@ class CoreRole(CoreBase):
                 if re.match(qn, qual_name):
                     self.logger.debug(
                         "approved api permission [%s] for user [%s]",
-                        self.username, qn)
+                        self.name, qn)
                     return True
         self.logger.debug("no appropriate api permission found for user [%s]",
-                          self.username)
+                          self.name)
         return False
 
     async def login(self):
