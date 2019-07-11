@@ -102,7 +102,8 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 self.config.api.admin_password),
             email=self.config.api.contact,
             etag=ObjectId(),
-            perm=[core4.const.COP]
+            perm=[core4.const.COP],
+            is_active=True
         )
         try:
             self.config.sys.role.insert_one(data)
@@ -115,7 +116,8 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 name=self.config.api.user_rolename,
                 realname=self.config.api.user_realname,
                 etag=ObjectId(),
-                perm=self.config.api.user_permission
+                perm=self.config.api.user_permission,
+                is_active=True
             ))
             self.logger.info("created user [%s]",
                              self.config.api.user_rolename)
