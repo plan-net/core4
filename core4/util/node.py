@@ -59,8 +59,7 @@ def mongo_now():
     :return: current core4 system time in MongoDB resolution (in UTC)
     """
     current = now()
-    rounded_millis = round(current.microsecond / 1000) * 1000
-
+    rounded_millis = int(current.microsecond / 1000) * 1000
     return current.replace(microsecond=rounded_millis)
 
 
