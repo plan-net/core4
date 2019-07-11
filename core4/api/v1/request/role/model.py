@@ -148,11 +148,11 @@ class CoreRole(CoreBase):
                     plain, self.password)
             except ValueError:
                 self.logger.warning("user [%s] authentication failure",
-                                    self.username)
+                                    self.name)
                 return False
             except:
                 raise
-        self.logger.warning("user [%s] not active", self.username)
+        self.logger.warning("user [%s] not active", self.name)
         return False
 
     @property
