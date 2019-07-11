@@ -10,7 +10,7 @@ cadmin - core-4 build and deployment utililty.
 
 Usage:
   cadmin install [--reset] [--web] [--home=HOME] [--build=APP...] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--force] [--reset] [--core4] [--home=HOME] [PROJECT...]
+  cadmin upgrade [--test] [--force] [--reset] [--core4] [--be] [--home=HOME] [PROJECT...]
   cadmin uninstall [--home=HOME] PROJECT...
   cadmin version [--home=HOME] [PROJECT...]
   cadmin build [--build=APP...]
@@ -25,6 +25,7 @@ Options:
   -f --force      force build and installation even if no changes
   -w --web        build and install web apps
   -b --build=APP  build and install web apps
+  -e --be         build and install backend apps only
   -t --test       dry-run
   -h --help       show this screen
   -v --version    show version
@@ -298,7 +299,7 @@ class CoreInstaller(WebBuilder):
         assert ret == 0
         return "\n".join(stdout)
 
-    def upgrade(self, test=False, force=False, core4=False):
+    def upgrade(self, test=False, force=False, core4=False, be=False):
         if self.project == "core4" and core4:
             return
         self.check_for_upgrade()
@@ -313,7 +314,7 @@ class CoreInstaller(WebBuilder):
         else:
             self.checkout()
         latest = self.get_local_commit()
-        if self.web:
+        if self.web and not be:
             self.print("  will build web apps")
         if latest == current:
             self.print("  latest [{}] == current commit".format(latest))
@@ -336,7 +337,7 @@ class CoreInstaller(WebBuilder):
             else:
                 self.install_project()
                 self.write_config()
-                if self.web and (not core4 or force):
+                if not be and self.web and (not core4 or force):
                     self.build([])
 
     def build(self, filter):
@@ -418,7 +419,8 @@ def run(args):
         for p in project:
             installer = CoreInstaller(
                 p, reset=args["--reset"], home=args["--home"])
-            installer.upgrade(args["--test"], args["--force"], args["--core4"])
+            installer.upgrade(test=args["--test"], force=args["--force"],
+                              core4=args["--core4"], be=args["--be"])
     elif args["uninstall"]:
         for p in project:
             installer = CoreInstaller(p, home=args["--home"])
@@ -451,8 +453,8 @@ def run(args):
 
 def main():
     args = docopt(__doc__, help=True)
-    # print(args)
-    run(args)
+    print(args)
+    #run(args)
 
 
 if __name__ == '__main__':
