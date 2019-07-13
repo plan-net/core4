@@ -777,6 +777,7 @@ class JobStream(JobPost):
             raise HTTPError(400, "failed to parse job _id: [{}]".format(_id))
         self.set_header('content-type', 'text/event-stream')
         self.set_header('cache-control', 'no-cache')
+        self.set_header('X-Accel-Buffering', 'no')
         oid = self.parse_id(_id)
         last = None
         exit = False
