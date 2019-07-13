@@ -156,7 +156,7 @@ CoreJobs can also be enqueued using the `coco` script::
    coco --enqueue core4.queue.helper.job.DummyJob sleep=120
 
 Arguments given via commandline will be parsed to json and passed to the
-CoreJob as **kwargs.
+CoreJob as ``kwargs``.
 
 For further information please visit the
 :ref:`commandline tools <tools>` section.
