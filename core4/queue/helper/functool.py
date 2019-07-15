@@ -17,6 +17,7 @@ import core4.service.introspect.main
 import core4.service.setup
 import core4.util.node
 from core4.service.introspect.command import ENQUEUE_ARG
+from bson.objectid import ObjectId
 
 
 def enqueue(job, **kwargs):
@@ -45,7 +46,7 @@ def enqueue(job, **kwargs):
             stdout = core4.service.introspect.main.exec_project(
                 found[0], ENQUEUE_ARG, qual_name=name,
                 args="**%s" % (str(kwargs)), comm=True)
-            return stdout
+            return ObjectId(stdout)
     return queue.enqueue(name=name, **kwargs)._id
 
 
@@ -97,3 +98,16 @@ def find_job(filter=None, **kwargs):
     if filter:
         return list(queue.config.sys.queue.find(filter=filter))
     return list(queue.config.sys.queue.find(filter=kwargs))
+
+
+def remove_job(_id):
+    """
+    Finds the job using the passed ``kwargs`` as filter arguments.
+
+    :param kwargs: MongoDB filter arguments
+    :return: list of jobs matching the filter criteria
+    """
+    queue = core4.queue.main.CoreQueue()
+    return queue.remove_job(ObjectId(_id))
+
+
