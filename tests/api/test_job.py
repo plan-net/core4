@@ -1,13 +1,18 @@
+import json
 import threading
 
 import pytest
-import core4.queue.helper.job.example
-import core4.api.v1.request.role.field
-import core4.queue.main
-from tests.api.test_test import setup, mongodb, core4api
 import time
-import json
+from bson.objectid import ObjectId
 
+import core4.api.v1.request.role.field
+import core4.queue.helper.job.example
+import core4.queue.main
+import core4.util.crypt
+from core4.api.v1.request.queue.job import JobStream
+from core4.api.v1.request.role.main import CoreRole
+from core4.api.v1.server import CoreApiServer, CoreApiContainer
+from tests.api.test_test import setup, mongodb, core4api, run
 
 _ = setup
 _ = mongodb
@@ -64,24 +69,28 @@ async def test_post(core4api, worker):
     resp = await core4api.post('/core4/api/v1/jobs/enqueue', json=data)
     assert resp.code == 200
     worker.wait_queue()
-    assert resp.json()["data"]["name"] == "core4.queue.helper.job.example.DummyJob"
+    assert resp.json()["data"][
+               "name"] == "core4.queue.helper.job.example.DummyJob"
+
 
 class MyJob(core4.queue.helper.job.example.DummyJob):
-
     author = "mra"
+
     def execute(self):
         for i in range(50):
-            self.logger.info("message {}".format(i+1))
+            self.logger.info("message {}".format(i + 1))
             time.sleep(0.1)
+
 
 def test_find_job():
     print(MyJob.qual_name())
+
 
 async def test_poll(core4api, worker):
     worker.start()
     await core4api.login()
     data = {
-        #"name": "core4.queue.helper.job.example.DummyJob"
+        # "name": "core4.queue.helper.job.example.DummyJob"
         "name": "tests.api.test_job.MyJob"
     }
     resp = await core4api.post('/core4/api/v1/jobs/poll', json=data)
@@ -99,3 +108,100 @@ async def test_poll(core4api, worker):
     assert states[-1]["state"] == "complete"
     assert event[-1]["type"] == "event: close"
     assert event[-1]["data"] == {}
+
+
+class MyJobHandler(JobStream):
+    author = "mra"
+    title = "job enqueue"
+
+    async def post(self):
+        ret = await self.enqueue(core4.queue.helper.job.example.DummyJob)
+        self.reply(ret._id)
+
+
+async def test_enqueue_permission(core4api, worker):
+    role = CoreRole(
+        name="job_access",
+        realname="Michael Rau",
+        is_active=True,
+        perm=[
+            "job://core4.queue.helper.job.example.DummyJob/x",
+            "api://core4.api.v1.request.queue.*",
+        ]
+    )
+    await role.save()
+    role._check_user()
+    assert not role.is_user
+    user = CoreRole(
+        name="mra",
+        realname="Michael Rau",
+        is_active=True,
+        email="m.rau@plan-net.com",
+        password="hello world",
+        role=["job_access"]
+    )
+    await user.save()
+    user._check_user()
+    assert user.is_user
+    core4.util.crypt.pwd_context.verify("hello world", role.password)
+    role.password = "very secret"
+
+    # worker.start()
+    #
+    await core4api.login("mra", "hello world")
+    data = {
+        "name": "core4.queue.helper.job.example.DummyJob"
+    }
+    resp = await core4api.post('/core4/api/v1/jobs/enqueue', json=data)
+    assert resp.code == 200
+
+
+class MyCoreApiServer(CoreApiContainer):
+    root = "/another"
+    rules = [
+        (r'/test', MyJobHandler),
+    ]
+
+
+@pytest.yield_fixture
+def mycore4api():
+    yield from run(
+        CoreApiServer,
+        MyCoreApiServer
+    )
+
+
+async def test_enqueue_by_api_permission(mycore4api, worker):
+    role = CoreRole(
+        name="job_access",
+        realname="Michael Rau",
+        is_active=True,
+        perm=[
+            "job://core4.queue.helper.job.example.DummyJob/x",
+            "api://core4.api.v1.request.queue.*",
+            "api://tests.api.test_job.*",
+        ]
+    )
+    await role.save()
+    role._check_user()
+    assert not role.is_user
+    user = CoreRole(
+        name="mra",
+        realname="Michael Rau",
+        is_active=True,
+        email="m.rau@plan-net.com",
+        password="hello world",
+        role=["job_access"]
+    )
+    await user.save()
+    user._check_user()
+    assert user.is_user
+    core4.util.crypt.pwd_context.verify("hello world", role.password)
+    role.password = "very secret"
+
+    # worker.start()
+    #
+    await mycore4api.login("mra", "hello world")
+    resp = await mycore4api.post('/another/test')
+    assert resp.code == 200
+    oid = ObjectId(resp.json()["data"])
