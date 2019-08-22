@@ -552,7 +552,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
                 }
             )
 
-    def defer(self, *args):
+    def defer(self, *args, **kwargs):
         """
         defer the job, this will result in the job being returned to the queue
         and be queried again after ``defer_time``
@@ -560,7 +560,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
         :param message: defer message
         :raises: :class:`.CoreJobDeferred`
         """
-        message = self.format_args(*args)
+        message = self.format_args(*args, **kwargs)
         raise core4.error.CoreJobDeferred(message)
 
     def serialise(self):
