@@ -6,7 +6,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
-This module implement :class:`.CoreCollection`, featuring database
+This module implements :class:`.CoreCollection`, featuring database
 access and :class:`.CoreJobCollection` derived from
 :class:`.CoreCollection` with extended features for MongoDB collection
 access for :class:`.CoreJob`.
@@ -29,7 +29,18 @@ SCHEME = {
 
 class CoreCollection:
     """
-    Encapsulates data access.
+    Encapsulates data access. This class delegates all attributes and methods
+    to :class:`pymongo.collection.Collection`. Additional attributes are
+
+    * ``scheme``
+    * ``hostname``
+    * ``database``
+    * ``collection``
+    * ``username``
+    * ``password``
+    * ``async_conn``
+    * :meth:`connection`
+    * :meth:`info_url`
     """
     _cache = {}
 
