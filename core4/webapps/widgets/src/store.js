@@ -157,7 +157,7 @@ export default new Vuex.Store({
         const currBoardName = getters.activeBoard.name
         const index = (state.boardsList.indexOf(currBoardName) + 1) % state.boardsList.length
         commit('set_active_board', state.boardsList[index])
-      } catch () {
+      } catch (err) {
         // console.warn(error)
       }
     },
@@ -170,7 +170,7 @@ export default new Vuex.Store({
         const prev = (state.boardsList.indexOf(currBoardName) - 1)
         const index = (prev < 0) ? state.boardsList.length - 1 : prev
         commit('set_active_board', state.boardsList[index])
-      } catch () {
+      } catch (err) {
         // console.warn(error)
       }
     },
