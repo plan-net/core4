@@ -394,6 +394,28 @@ providing a blue print for other concrete CoreJob implementations
             self.logger.info("Got result within the multiplication: [%d]", result)
 
 
+Job Execution without Worker Daemon
+-----------------------------------
+
+For development and debugging purposes you want to directly execute a job
+without the prerequisite to enqueue the job and to run a worker daemon.
+
+Use method ``.execute`` from the ``core4.queue.helper.functool`` module as
+described in the following example.
+
+.. code-block:: python
+
+    from core4.queue.job import CoreJob
+    from core4.queue.helper.functool import execute
+
+    class JobExample(CoreJob, you="world"):
+        def __init__(self):
+            self.logger.info("hello %s", you)
+
+    if __name__ == '__main__':
+        execute(JobExample, you="people")
+
+
 Access Permissions
 ------------------
 job://.../x|r
@@ -407,6 +429,7 @@ There are two flags who determine the permission of a Job:
 - **r**
    Read Flag, this only allows for basic job info to be read, it prevents the job
    from being changed and executed and only allows for the job info to be read.
+
 
 Best practices
 --------------
