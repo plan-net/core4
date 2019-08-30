@@ -223,7 +223,6 @@ export default {
           let ret = false
           for (let index = 0; index < this.tags.length; index++) {
             const tag = this.tags[index]
-            // if()
             if (searchString.toLowerCase().includes(tag.toLowerCase())) {
               ret = true
               break

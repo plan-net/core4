@@ -25,7 +25,6 @@ const api = {
         return result.data.boards
       })
       .catch(error => {
-        console.log(error)
         return Promise.reject(error)
       })
   },
