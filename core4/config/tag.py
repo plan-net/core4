@@ -212,6 +212,8 @@ class JobConnectTag(ConnectTag):
         """
         coll = core4.base.collection.CoreJobCollection(**kwargs)
         coll.set_job(self.job)
+        self.jog.logger.debug("set job to [%s] at [%s]",
+                              self.__class__.__name__, coll.info_url)
         return coll
 
     def set_job(self, job):
@@ -220,8 +222,6 @@ class JobConnectTag(ConnectTag):
 
         :param job: :class:`.CoreJob` object
         """
-        job.logger.debug("set job to [%s] at [%s]", self.__class__.__name__,
-                         self.conn_str)
         self.job = job
         if self._mongo is not None:
             self._mongo.set_job(job)
