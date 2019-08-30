@@ -697,7 +697,7 @@ class JobPost(JobHandler):
             raise HTTPError(404, "cannot instantiate job [%s]: %s:\n%s",
                             name, repr(exc_info[1]),
                             traceback.format_exception(*exc_info))
-        if not await self.user.has_job_exec_access(name):
+        if not await self.user.has_job_exec_access(job.qual_name()):
             raise HTTPError(403)
         job.__dict__["attempts_left"] = job.__dict__["attempts"]
         job.__dict__["state"] = core4.queue.job.STATE_PENDING

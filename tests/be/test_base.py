@@ -291,3 +291,15 @@ def test_message_format():
 def test_version():
     base = core4.base.main.CoreBase()
     assert base.version() == core4.__version__
+
+def test_base_format_logging():
+    b = core4.base.main.CoreBase()
+    b.logger.info("hello %s", "world")
+    b.logger.info("how are %(who)s", dict(who="you"))
+    b.progress(0.07, "hello %s", "world")
+    b.progress(0.15)
+    b.progress(0.25, "guten tag")
+    message = b.format_args("mein Name %(name)s", name="michael")
+    assert message == "mein Name michael"
+    message = b.format_args("mein Name %s", "michael")
+    assert message == "mein Name michael"

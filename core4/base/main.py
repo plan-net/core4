@@ -6,9 +6,9 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """
-This module features :class:`.CoreBase`, the base class to all core4 classes.
+This module features :class:`.CoreBase`, the base class to all core4os classes.
 All classes inheriting from :class:`.CoreBase` provide the standard features of
-core4 classes.
+core4os classes.
 """
 
 import importlib
@@ -32,27 +32,43 @@ _except_hook = None
 
 
 def is_core4_project(body):
+    """
+    returns ``True`` if the passed string is considered the file content of an
+    ``__init__.py`` file of a core4os project.
+
+    core4os projects identify with the following minimal variables::
+
+        __project__ = 'core4'
+        __version__ = "1.2.3"
+        __built__ = "2019-07-13 10:34:58.963000"
+        name = 'foo'
+        title = 'bar'
+        description = 'foo bar'
+    """
     return re.match(r'.*\_\_project\_\_\s*\=\s*[\"\']{1,3}'
                     + CORE4 + r'[\"\']{1,3}.*', body, re.DOTALL)
 
 
 class CoreBase:
     """
-    This is the base class to all core4 classes. :class:`CoreBase` ships with
+    This is the base class to all core4os classes. :class:`CoreBase` ships with
 
     * access to configuration keys/values including project based extra
-      configuration settings, use :attr:`.config`
-    * standard logging facilities, use :attr:`.logger`
-    * a distinct :meth:`.qual_name` based on module path and class name
-    * a unique object :meth:`.identifier`, i.e. the job id, the request id or
+      configuration settings, use ``.config`` propertey to access
+      :class:`.CoreConfig`, see documentation of :ref:`config`
+    * standard logging facilities, use ``.logger`` property to access
+      the logger based on Python standard logging facility, see documentation
+      :ref:`logging`
+    * a distinct ``qual_name`` based on module path and class name, see method
+      :meth:`.qual_name`
+    * a unique object ``.identifier``, i.e. the job id, the request id or
       the name of the worker
-    * helper methods, see :meth:`.progress`
 
     .. note:: Please note that :class:`.CoreBase` replicates the identifier of
-              the class in which scope the object is created. If an object _A_
-              derived from  :class:`.CoreBase` has an :attr:`.identifer` not
-              ``None`` and creates another object _B_ which inherits from
-              :class:`.CoreBase`, too, then the :attr:`.identifier` is passed
+              the class in which scope the object is created. If an object *A*
+              derived from  :class:`.CoreBase` has an ``.identifer`` not
+              ``None`` and creates another object *B* which inherits from
+              :class:`.CoreBase`, too, then the ``.identifier`` is passed
               from object *A* to object *B*.
     """
     # used to hack
@@ -102,7 +118,7 @@ class CoreBase:
     @classmethod
     def get_project(cls):
         """
-        Identifies the class project.
+        Identifies the project.
 
         :return: project (str)
         """
@@ -139,6 +155,7 @@ class CoreBase:
     def project_path(cls):
         """
         Identifies the project path
+
         :return: str representing  the absolute path name of the project
         """
         project = cls.get_project()
@@ -192,13 +209,11 @@ class CoreBase:
         return None
 
     def _make_config(self, *args, **kwargs):
-        """
-        :return: :class:`.CoreConfig` class to be attached to this class
-        """
+        # creates the CoreConfig object attached to this class
         return core4.config.main.CoreConfig(*args, **kwargs)
 
     def _open_config(self):
-        # internal method to open and attach core4 cascading configuration
+        # open and attach core4os cascading configuration
         kwargs = {}
         project_config = self.project_config()
         if project_config and os.path.exists(project_config):
@@ -213,8 +228,7 @@ class CoreBase:
         self._upwind_config()
 
     def _build_extra_config(self):
-        # internal method to create the configuration option reflecting
-        # the qual_name
+        # create the configuration option reflecting the qual_name
         extra_config = {}
         pos = extra_config
         for p in self.qual_name(short=True).split("."):
@@ -225,6 +239,7 @@ class CoreBase:
         return extra_config
 
     def _upwind_config(self):
+        # forward configuration items to object properties as defined by upwind
         for k in self.config.base:
             if k in self.upwind:
                 if k in self.class_config:
@@ -234,8 +249,8 @@ class CoreBase:
                     self.__dict__[k] = self.config.base[k]
 
     def _open_logging(self):
+        # open and attach logging
         global _except_hook
-        # internal method to open and attach logging
         self.logger_name = self.qual_name(short=False)
         logger = logging.getLogger(self.logger_name)
         level = self.log_level
@@ -252,33 +267,12 @@ class CoreBase:
             _except_hook = sys.excepthook
             sys.excepthook = self.excepthook
 
-    def _log_progress(self, p, *args):
+    def progress(self, p, *args, inc=0.05, **kwargs):
         """
-        Internal method used to log progress. Overwrite this method to
-        implement custom progress logging.
-
-        :param p: current progress value (0.0 - 1.0)
-        :param args: message and optional variables using Python format
-                     operator
-        """
-        if args:
-            args = list(args)
-            fmt = " - {}".format(args.pop(0))
-        else:
-            fmt = ""
-        self.logger.debug('progress at %.0f%%' + fmt, p, *args)
-
-    def progress(self, p, *args, inc=0.05):
-        """
-        Progress counter calling :meth:`._log_progress` to handle progress and
-        message output. All progress outside bins defined by ``inc`` are
-        reported only once and otherwise suppressed. This method reliable
-        reports progress without creating too much noise in core4 logging
-        targets.
-
-        .. note:: Still you can reuse progress reporting. If the current
-                  progress is below the last reported progress, then reporting
-                  restarts.
+        Progress counter to handle progress and message output. All progress
+        outside bins defined by ``inc`` are reported only once and otherwise
+        suppressed. This method reliable reports progress without creating too
+        much noise in core4 logging targets.
 
         :param p: current progress value (0.0 - 1.0)
         :param args: message and optional variables using Python format
@@ -287,34 +281,34 @@ class CoreBase:
         """
         p_round = round(p / inc) * inc
         if self._progress is None or p_round != self._progress:
-            self._log_progress(p_round * 100., *args)
             self._progress = p_round
+            msg = self.format_args(*args, **kwargs)
+            if msg:
+                msg = " - " + msg
+            self.logger.debug('progress at %.0f%%' + msg, p_round * 100.)
 
     @staticmethod
     def format_args(*args, **kwargs):
         """
-        format a message given only by args.
-        message hast to be the first parameter, formatting second.
+        format a message with Python old style formatting by ``args`` or
+        ``kwargs``.
 
-        :param args: args
         :return: formatted message.
         """
         if args:
             args = list(args)
             m = args.pop(0)
             if kwargs:
-                message = m % kwargs
+                return m % kwargs
             elif args:
-                message = m % tuple(args)
+                return m % tuple(args)
             else:
                 return m
-        else:
-            message = ""
-        return message
+        return ""
 
     def excepthook(self, *args):
         """
-        Internal exception hook to forward unhandled exceptions to core4
+        Internal exception hook to forward unhandled exceptions to core4os
         logger with logging level ``CRITICAL``.
         """
         self.logger.critical("unhandled exception", exc_info=args)
@@ -401,7 +395,7 @@ class CoreBase:
     @property
     def raw_config(self):
         """
-        raw configuration data
+        raw configuration data access
 
         :return: :class:`.ConfigMap`
         """
