@@ -54,7 +54,7 @@ const api = {
     const fields = {
       title: 'String',
       qual_name: 'DotSeperated',
-      tags: 'Array',
+      tag: 'Array',
       decription: 'String',
       author: 'String'
     }
@@ -75,7 +75,8 @@ const api = {
         }
       })
       /* replace words and whitespace */
-      $search = $search.replace(/ for| and| v1| api| request| core4/gi, '').replace(/\s+/g, ' ').trim()
+      // $search = $search.replace(/ for| and| v1| api| request| core4/gi, '').replace(/\s+/g, ' ').trim()
+      $search = $search.replace(/ for| and| v1| request| core4/gi, '').replace(/\s+/g, ' ').trim()
       return Object.assign(widget, { $search: $search.split(' ') })
     }
     return axiosInternal

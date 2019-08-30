@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@dattn/dnd-grid": "^0.0.14",
-    "core4ui": "https://github.com/plan-net/core4ui.git#develop",
+    "core4ui": "https://github.com/plan-net/core4ui.git#develop.test",
     "vue-drag-drop": "^1.1.4"
   },
   "devDependencies": {
