@@ -262,9 +262,6 @@ export default new Vuex.Store({
     widgetSet (state) {
       return clone(state.widgetsList.map(id => state.widgetsObj[id]))
     },
-    /*    widgetListOpen (state) {
-      return state.widgetListOpen
-    }, */
     boardsSet (state) {
       return clone(state.boardsList.map(name => state.boardsObj[name]))
     },
