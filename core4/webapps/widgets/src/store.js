@@ -4,6 +4,19 @@ import createLogger from 'vuex/dist/logger'
 import api from '@/api'
 import { clone } from 'core4ui/core4/helper'
 import router from '@/router'
+export function notify (dispatch, message) {
+  if (typeof message === 'string') {
+    message = {
+      text: message,
+      type: 'success'
+    }
+  }
+  if (message.text == null) {
+    return
+  }
+  message.timeout = message.timeout || 5000
+  dispatch('showNotification', message)
+}
 
 const debug = process.env.NODE_ENV !== 'production'
 const plugins = debug ? [createLogger({})] : []
@@ -14,6 +27,8 @@ export default new Vuex.Store({
   plugins,
   state: {
     scales: [60, 0.3, 0.6, 0.9],
+    currScale: 0.3,
+    currScaleAbs: 400,
     widgetsObj: {},
     widgetsList: [],
 
@@ -27,61 +42,72 @@ export default new Vuex.Store({
     }
   },
   actions: {
-    async getWidgets ({
-      commit,
-      dispatch
-    }) {
+    async getWidgets ({ commit, dispatch }) {
       dispatch('setLoading', true)
       const widgets = await api.getWidgets()
       commit('set_widgets', widgets)
       dispatch('setLoading', false)
     },
-    /*    toggleWidgetListOpen ({
-      commit, state
-    }, payload) {
-      commit('set_widgetlist_open', payload)
-    }, */
-    updateWidgets ({
-      commit
-    }, payload) {
+    updateWidgets ({ commit }, payload) {
       commit('update_widgets', payload)
     },
+    setCurrScale ({ commit, state }, dto = { index: 1, persist: true }) {
+      if (dto.index == null) {
+        dto.index = 1
+      }
+      if (dto.index > 0) {
+        const bodyW = document.querySelector('body').offsetWidth
+        const scaleAbs = bodyW * state.scales[dto.index]
+        commit('set_curr_scale_abs', scaleAbs)
+      }
+      commit('set_curr_scale', state.scales[dto.index])
 
-    async getBoards ({
-      dispatch
-    }) {
+      if (dto.persist === true) {
+        try {
+          api.persistOptions({ sidebar: dto.index })
+        } catch (err) {}
+      }
+    },
+    async getBoards ({ dispatch }) {
       try {
         const boards = await api.getBoards()
-        dispatch('setBoards', boards)
-      } catch (err) {
-
-      }
+        dispatch(
+          'setOptions',
+          boards
+        ) /* { boards: [], board: 'name', sidebar: 1 } */
+      } catch (err) {}
     },
-    async setBoards ({
-      commit
-    }, boards) {
-      if (boards.length) {
-        commit('set_boards', boards)
-        commit('set_active_board', boards[0].name)
+    async setOptions ( // setConfig
+      { commit, dispatch },
+      dto = {
+        boards: [],
+        board: '',
+        sidebar: 0
       }
+    ) {
+      if (dto.boards.length) {
+        commit('set_boards', dto.boards)
+        const boardExists =
+          (dto.boards.find(val => val.name === dto.board) || {}).name ||
+          dto.boards[0].name
+        commit('set_active_board', boardExists)
+      }
+      dispatch('setCurrScale', { index: (dto.sidebar), persist: false })
       commit('set_ready', true)
     },
-    setActiveBoard ({
-      commit,
-      getters
-    }, name) {
-      if (name) {
-        commit('set_active_board', name)
-      } else {
+
+    setActiveBoard ({ commit, dispatch, getters }, name) {
+      if (name == null) {
         const boards = getters.boardsSet
-        commit('set_active_board', boards[0].name)
+        name = boards[0].name
       }
+      commit('set_active_board', name)
+      try {
+        api.persistOptions({ board: name })
+      } catch (err) {}
       router.push('/')
     },
-    async createBoard ({
-      commit,
-      getters
-    }, board) {
+    async createBoard ({ commit, getters }, board) {
       try {
         await api.createBoard({
           board,
@@ -91,44 +117,28 @@ export default new Vuex.Store({
         window.setTimeout(function () {
           commit('set_active_board', board.name)
         }, 500)
-      } catch (err) {
-      }
+      } catch (err) {}
     },
-    async updateBoard ({
-      commit,
-      dispatch,
-      getters
-    }, name) {
+    async updateBoard ({ commit, dispatch, getters }, name) {
       commit('update_board_name', name)
       api.updateBoard({
         boards: getters.boardsSet
       })
     },
-    updateBoardWidgets ({
-      commit,
-      getters
-    }, widgets) {
+    updateBoardWidgets ({ commit, getters }, widgets) {
       commit('update_board_widgets', widgets)
       api.updateBoard({
         boards: getters.boardsSet
       })
     },
-    deleteBoard ({
-      commit,
-      dispatch,
-      getters,
-      state
-    }, board) {
+    deleteBoard ({ commit, dispatch, getters, state }, board) {
       commit('delete_board', board)
       commit('set_active_board', state.boardsList[0])
       api.updateBoard({
         boards: getters.boardsSet
       })
     },
-    addToBoard ({
-      commit,
-      getters
-    }, widgetId) {
+    addToBoard ({ commit, getters }, widgetId) {
       const board = getters.activeBoard
       if (board.widgets.includes(widgetId)) {
         return
@@ -139,45 +149,39 @@ export default new Vuex.Store({
         boards
       })
     },
-    removeFromBoard ({
-      commit,
-      getters
-    }, widgetId) {
+    removeFromBoard ({ commit, getters }, widgetId) {
       commit('remove_from_board', widgetId)
       const boards = getters.boardsSet
       api.updateBoard({
         boards
       })
     },
-    nextBoard ({
-      commit,
-      getters, state
-    }) {
+    nextBoard ({ commit, getters, state }) {
       try {
         const currBoardName = getters.activeBoard.name
-        const index = (state.boardsList.indexOf(currBoardName) + 1) % state.boardsList.length
-        commit('set_active_board', state.boardsList[index])
+        const index =
+          (state.boardsList.indexOf(currBoardName) + 1) %
+          state.boardsList.length
+        const name = state.boardsList[index]
+        commit('set_active_board', name)
+        api.persistOptions({ board: name })
       } catch (err) {
         // console.warn(error)
       }
     },
-    prevBoard ({
-      commit,
-      getters, state
-    }) {
+    prevBoard ({ commit, getters, state }) {
       try {
         const currBoardName = getters.activeBoard.name
-        const prev = (state.boardsList.indexOf(currBoardName) - 1)
-        const index = (prev < 0) ? state.boardsList.length - 1 : prev
-        commit('set_active_board', state.boardsList[index])
+        const prev = state.boardsList.indexOf(currBoardName) - 1
+        const index = prev < 0 ? state.boardsList.length - 1 : prev
+        const name = state.boardsList[index]
+        commit('set_active_board', name)
+        api.persistOptions({ board: name })
       } catch (err) {
         // console.warn(error)
       }
     },
-    setWidgetOver ({
-      commit,
-      getters
-    }, payload) {
+    setWidgetOver ({ commit, getters }, payload) {
       commit('set_widget_over', payload)
     }
   },
@@ -217,6 +221,12 @@ export default new Vuex.Store({
     update_board_name (state, name) {
       const board = state.boardsObj[state.activeBoard.name]
       board.name = name
+    },
+    set_curr_scale (state, scale) {
+      state.currScale = scale
+    },
+    set_curr_scale_abs (state, scale) {
+      state.currScaleAbs = scale
     },
     add_to_board (state, widgetId) {
       const elem = clone(state.activeBoard)
@@ -285,6 +295,12 @@ export default new Vuex.Store({
     },
     ready (state) {
       return state.ready
+    },
+    currScalePerc (state) {
+      return state.currScale
+    },
+    currScaleAbs (state) {
+      return state.currScaleAbs
     }
   }
 })
