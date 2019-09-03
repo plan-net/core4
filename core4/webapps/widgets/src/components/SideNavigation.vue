@@ -163,11 +163,6 @@ export default {
       pointer-events: none;
     }
   }
-
-/*  .active .v-list__tile__title {
-    font-weight: 600;
-  }*/
-
   .active .v-icon {
     color: inherit;
   }

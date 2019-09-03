@@ -14,7 +14,7 @@
       hide-details
       :open-on-clear="false"
       :menu-props="{auto: true, closeOnContentClick:true}"
-      label="Search"
+      label=""
       item-text="text"
       item-value="text"
       :search-input.sync="searchInput"
@@ -29,24 +29,35 @@
         >
           {{ data.item.text }}
         </v-chip>
-      </template>
-      <template v-slot:item="data">
 
+      </template>
+
+      <template v-slot:item="data">
         <v-list-tile-content>
           <v-list-tile-title v-html="data.item.text"></v-list-tile-title>
         </v-list-tile-content>
       </template>
-    </v-autocomplete>
 
+      <template v-slot:prepend-inner>
+        <v-icon>search</v-icon>
+      </template>
+      <template v-slot:append-outer>
+        <search-options-menu />
+
+      </template>
+    </v-autocomplete>
     <v-slide-y-transition
       class="pl-2 pr-3 pt-0 layout row wrap"
       group
       tag="v-list"
     >
-      <v-flex :class="widgetClass"
-              v-for="item in widgets"
-              :key="item.rsc_id"
-              @mouseover="onMouseOver(item)" @mouseleave="onMouseLeave(item)">
+      <v-flex
+        :class="widgetClass"
+        v-for="item in widgets"
+        :key="item.rsc_id"
+        @mouseover="onMouseOver(item)"
+        @mouseleave="onMouseLeave(item)"
+      >
         <drag
           class="drag"
           :class="{'is-not-draggable': item.effectAllowed[0] === 'none'}"
@@ -60,19 +71,19 @@
           >
             <v-list-tile-action class="with-hover right">
               <v-tooltip left>
-                <v-icon @click="openInNew(item)"
-                        slot="activator"
-
-                        small
+                <v-icon
+                  @click="openInNew(item)"
+                  slot="activator"
+                  small
                 >open_in_new
                 </v-icon>
                 <span>Open widget in new tab</span>
               </v-tooltip>
               <v-tooltip left>
-                <v-icon @click="$router.push({ name: 'enter', params: { widgetId: item.rsc_id } })"
-                        slot="activator"
-
-                        small
+                <v-icon
+                  @click="$router.push({ name: 'enter', params: { widgetId: item.rsc_id } })"
+                  slot="activator"
+                  small
                 >open_in_browser
                 </v-icon>
                 <span>Open widget</span>
@@ -81,7 +92,6 @@
                 <v-icon
                   @click="$router.push({ name: 'help', params: { widgetId: item.rsc_id } })"
                   slot="activator"
-
                   small
                 >help
                 </v-icon>
@@ -91,11 +101,12 @@
 
             <v-list-tile-content>
               <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-              <v-tooltip
-                top
-              >
+              <v-tooltip top>
                 <template v-slot:activator="{ on }">
-                  <v-list-tile-sub-title v-on="on" v-text="item.$qual_name"></v-list-tile-sub-title>
+                  <v-list-tile-sub-title
+                    v-on="on"
+                    v-text="item.$qual_name"
+                  ></v-list-tile-sub-title>
                 </template>
                 <span>{{item.qual_name}}</span>
               </v-tooltip>
@@ -106,7 +117,10 @@
                 v-if="item.effectAllowed[0] !== 'none'"
               >
                 <template v-slot:activator="{ on }">
-                  <v-icon v-on="on" @click="addToBoard(item.rsc_id)">
+                  <v-icon
+                    v-on="on"
+                    @click="addToBoard(item.rsc_id)"
+                  >
                     add_circle_outline
                   </v-icon>
                 </template>
@@ -117,7 +131,10 @@
                 v-else
               >
                 <template v-slot:activator="{ on }">
-                  <v-icon @click="removeFromBoard(item.rsc_id)" v-on="on">
+                  <v-icon
+                    @click="removeFromBoard(item.rsc_id)"
+                    v-on="on"
+                  >
                     remove_circle_outline
                   </v-icon>
                 </template>
@@ -132,11 +149,15 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapGetters, mapState } from 'vuex'
+import SearchOptionsMenu from '@/components/sub/SearchOptionsMenu'
 import _ from 'lodash'
 
 export default {
   name: 'widget-list',
+  components: {
+    SearchOptionsMenu
+  },
   data () {
     this.ti = 0
     return {
@@ -210,11 +231,15 @@ export default {
   },
 
   computed: {
-    ...mapGetters(['widgetSet', 'scales']),
+    ...mapState([
+      'searchOptions', 'scales'
+    ]),
+    ...mapGetters(['widgetSet']),
     widgets () {
       const activeBoard = this.$store.getters.activeBoard
       const activeBoardWidgets = ((activeBoard || {}).widgets) || []
-      return this.$store.getters.widgetSet.filter(val => {
+
+      return this.widgetSet.filter(val => {
         const searchString = val.$search.join(' ')
         if (this.searchInput && this.searchInput.length > 2) {
           return searchString.toLowerCase().includes(this.searchInput)
@@ -269,29 +294,30 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  /deep/ .v-icon {
-    color: grey !important;
+/deep/ .v-icon {
+  color: grey !important;
+}
+
+.v-list > .xs6,
+.v-list > .xs4 {
+  padding-right: 6px;
+}
+
+.drag {
+  cursor: grab;
+
+  &.is-not-draggable {
+    cursor: unset !important;
+  }
+}
+
+.theme--dark {
+  /deep/ .dnd-grid-box.placeholder {
+    border: 1px dashed #fff !important;
   }
 
-  .v-list > .xs6, .v-list > .xs4 {
-    padding-right: 6px;
+  /deep/ .dnd-grid-box.dragging {
+    opacity: 0.5 !important;
   }
-
-  .drag {
-    cursor: grab;
-
-    &.is-not-draggable {
-      cursor: unset !important;
-    }
-  }
-
-  .theme--dark {
-    /deep/ .dnd-grid-box.placeholder {
-      border: 1px dashed #fff !important;
-    }
-
-    /deep/ .dnd-grid-box.dragging {
-      opacity: 0.5 !important;
-    }
-  }
+}
 </style>
