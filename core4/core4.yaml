@@ -126,6 +126,7 @@ api:
     30: this month
     180: this half-year
     360: this year
+
 email:
   username: ~
   password: ~
@@ -133,6 +134,12 @@ email:
   host: ~
   port: ~
   ssl: ~
+  template:
+    base_dir: email_templates/
+    en:
+      domain: ~
+      password_reset: en/password_reset.txt
+      user_creation: en/user_creation.txt
 
 user_setting:
    _general:

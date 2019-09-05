@@ -14,7 +14,7 @@ import core4.queue.helper.functool
 import core4.queue.helper.job
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
-
+from core4.util.email import RoleEmail
 
 class LoginHandler(CoreRequestHandler):
     title = "login and password reset"
@@ -31,7 +31,7 @@ class LoginHandler(CoreRequestHandler):
                 "token": token
             })
         self.set_header('WWW-Authenticate', 'Basic realm=Restricted')
-        #raise HTTPError(401)
+        # raise HTTPError(401)
         self.set_status(401)
         self.write_error(401)
 
@@ -99,14 +99,14 @@ class LoginHandler(CoreRequestHandler):
             })
         self.set_status(401)
         self.write_error(401)
-        #raise HTTPError(401)
+        # raise HTTPError(401)
 
     async def _login(self):
         user = await self.verify_user()
         if user:
             token = self.create_token(user.name)
             self.current_user = user.name
-            #await user.login()
+            # await user.login()
             return token
         return None
 
@@ -185,7 +185,16 @@ class LoginHandler(CoreRequestHandler):
                 'name': username,
             }
             token = self.create_jwt(secs, payload)
-            self._send_mail(email, user.realname, token)
+            # self._send_mail(email, user.realname, token)
+            core4.queue.helper.functool.enqueue(
+                RoleEmail,
+                template=self.config.email.template.en.password_reset,
+                recipients=email,
+                subject="core4: your password reset request",
+                realname=user.realname,
+                token=token,
+                username=user.name
+            )
             self.logger.info("send token [%s] to user [%s] at [%s]",
                              token, username, email)
         self.reply(None)
@@ -203,13 +212,15 @@ class LoginHandler(CoreRequestHandler):
             "finish password reset for user [%s]", payload["name"])
         self.reply("OK")
 
-    def _send_mail(self, email, realname, token):
-        # internal method to send the password reset token
-        core4.queue.helper.functool.enqueue(
-            core4.queue.helper.job.MailerJob,
-            template="",
-            recipients=email,
-            subject="core4: your password reset request",
-            realname=realname,
-            token=token
-        )
+    # def _send_mail(self, email, realname, token):
+    #     # internal method to send the password reset token
+    #     core4.queue.helper.functool.enqueue(
+    #         PasswordEmailJob,
+    #         template="",
+    #         recipients=email,
+    #         subject="core4: your password reset request",
+    #         realname=realname,
+    #         token=token,
+    #         username=username
+    #     )
+

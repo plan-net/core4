@@ -239,7 +239,7 @@ async def test_password_reset(core4api):
 
     q = core4.queue.main.CoreQueue()
     data = list(q.config.sys.log.find())
-    msg = [d for d in data if "send token" in d["message"]][0]
+    msg = [d for d in data if "send token [" in d["message"]][0]
     token = re.search(r"token \[(.+?)\]", msg["message"]).groups()[0]
     rv = await core4api.put("/core4/api/v1/login?token=" + token + "&password=world")
     assert rv.code == 200
@@ -247,6 +247,37 @@ async def test_password_reset(core4api):
     core4api.token = None
     rv = await core4api.get("/core4/api/v1/login?username=user&password=password")
     assert rv.code == 401
+
+    rv = await core4api.get("/core4/api/v1/login?username=user&password=world")
+    assert rv.code == 200
+
+
+async def test_user_creation_chain(core4api):
+    await core4api.login()
+
+    q = core4.queue.main.CoreQueue()
+
+    rv = await core4api.post("/core4/api/v1/roles", json=dict(
+        name="user",
+        realname="test user",
+        email="test@user.com",
+        perm=["api://core4.api.v1"]
+    ))
+
+    user_id = rv.json()["data"]["_id"]
+    etag = rv.json()["data"]["etag"]
+    assert rv.code == 200
+
+    data = list(q.config.sys.log.find())
+    msg = [d for d in data if "sent initial token [" in d["message"]][0]
+    token = re.search(r"initial token \[(.+?)\]", msg["message"]).groups()[0]
+
+    core4api.token = None
+    rv = await core4api.get("/core4/api/v1/login?username=user&password=world")
+    assert rv.code == 401
+
+    rv = await core4api.put("/core4/api/v1/login?token=" + token + "&password=world")
+    assert rv.code == 200
 
     rv = await core4api.get("/core4/api/v1/login?username=user&password=world")
     assert rv.code == 200
