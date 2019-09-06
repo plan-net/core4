@@ -58,14 +58,14 @@ export default {
     position: absolute;
     left: 0;
     right: 0;
-    top: 55px;
+    top: 48px;
     bottom: 0;
     background-color: #fff;
     padding: 0 0 0 0;
 
     iframe {
       width: 100%;
-      height: 100%;
+      height: calc(100% - 4px);
     }
   }
 </style>

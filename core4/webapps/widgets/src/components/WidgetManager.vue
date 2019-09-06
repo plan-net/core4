@@ -2,7 +2,7 @@
   <v-layout>
     <v-navigation-drawer
       v-model="open"
-      :width="scaleAbs"
+      :width="currScaleAbs"
       mini-variant-width="40"
       :mini-variant="miniVariant"
       fixed
@@ -12,11 +12,7 @@
       hide-overlay
       class="widget-manager"
     >
-      <!-- <div class="wdt-sizes-menu-container" @click="setWidgetSidebarScale(1, true)">-->
-      <!--</div>-->
       <v-layout row>
-
-        <!--        <div style="margin: 0 auto; position: relative; left: 20px;">-->
 
         <v-tabs
           v-show="!miniVariant"
@@ -87,38 +83,38 @@
           class="size-toggler"
         >
           <v-btn
-            @click="setWidgetSidebarScale(3)"
+            @click="setCurrScale({index: 3, persist: true})"
             small
             icon
             class="scaler-container"
-            :disabled="this.scalePerc===this.scales[3]"
+            :disabled="currScalePerc===scales[3]"
           >
             <div class="scaler dreiviertel"></div>
           </v-btn>
           <v-btn
-            @click="setWidgetSidebarScale(2)"
+            @click="setCurrScale({index: 2, persist: true})"
             small
             icon
             class="scaler-container"
-            :disabled="this.scalePerc===this.scales[2]"
+            :disabled="currScalePerc===scales[2]"
           >
             <div class="scaler halb"></div>
           </v-btn>
           <v-btn
-            @click="setWidgetSidebarScale(1)"
+            @click="setCurrScale({index: 1, persist: true})"
             icon
             small
             class="scaler-container"
-            :disabled="this.scalePerc===this.scales[1]"
+            :disabled="currScalePerc===scales[1]"
           >
             <div class="scaler viertel"></div>
           </v-btn>
           <v-btn
-            @click="setWidgetSidebarScale(0)"
+            @click="setCurrScale({index: 0, persist: true})"
             small
             icon
             class="scaler-container"
-            :disabled="this.scalePerc===this.scales[0]"
+            :disabled="currScalePerc===scales[0]"
           >
             <div class="scaler leer"></div>
           </v-btn>
@@ -129,7 +125,7 @@
         v-show="!miniVariant"
       >
         <v-tab-item>
-          <widgets-list :scale="scalePerc" />
+          <widgets-list :scale="currScalePerc" />
         </v-tab-item>
         <v-tab-item>
           <side-navigation
@@ -156,43 +152,18 @@ export default {
     SideNavigation
   },
   mounted () {
-    const bodyW = document.querySelector('body').offsetWidth
-    this.scaleAbs = bodyW * this.scales[1]
-    this.scalePerc = this.scales[1]
   },
   computed: {
-    ...mapGetters(['dark', 'scales']),
+    ...mapGetters(['dark', 'scales', 'currScalePerc', 'currScaleAbs']),
     miniVariant () {
-      return this.scalePerc === this.scales[0]
+      return this.currScalePerc === this.scales[0]
     }
   },
   methods: {
-    ...mapActions([]),
-    setWidgetSidebarScale (index, reset) {
-      if (reset) {
-        if (this.scale > 70) {
-          this.scale = this.scales[0]
-          this.scalePerc = this.scales[0]
-        } else {
-          this.scale = this.scales[1]
-          this.scalePerc = this.scales[1]
-        }
-      } else {
-        if (index === 0) {
-          this.scale = this.scales[index]
-        } else {
-          const bodyW = document.querySelector('body').offsetWidth
-          this.scaleAbs = bodyW * this.scales[index]
-        }
-        this.scalePerc = this.scales[index]
-      }
-    }
+    ...mapActions(['setCurrScale'])
   },
   data () {
     return {
-
-      scalePerc: 0,
-      scaleAbs: 0,
       tabs: null,
       open: true,
       helpDialogOpen: false,

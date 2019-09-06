@@ -111,3 +111,21 @@
 .theme-light .widget-title {
   color: #424242;
 }
+/*  background image for pages */
+.with-header-background {
+  padding-top: 40px;
+}
+.with-header-background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 180px;
+  background: #283a45;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  background-size: cover;
+  background-image: url("//bi.plan-net.com/cdn/assets/images/serviceplan-muenchen-blau.jpg")
+
+}

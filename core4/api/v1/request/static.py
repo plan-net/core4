@@ -46,8 +46,7 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
         self._enter = kwargs.pop("enter", None)
         StaticFileHandler.__init__(self, *args, **kwargs)
 
-    def initialize(self, path=None, default_filename=None, *args,
-                   **kwargs):
+    def initialize(self, path=None, default_filename=None, *args, **kwargs):
         path = path or self.path or ""
         default_filename = default_filename or self.default_filename
         StaticFileHandler.initialize(self, path, default_filename)
@@ -90,4 +89,4 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
     ) -> Generator[bytes, None, None]:
         if abspath != "":
             return StaticFileHandler.get_content(abspath, start, end)
-        return []
+        return

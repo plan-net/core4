@@ -123,7 +123,7 @@
             <a v-if="widget.endpoint"
             >
               <v-card-text
-                @click="$router.push({ name: 'enter', params: { widgetId: widget.rsc_id } })"
+                @click="open(widget)"
                 :alt="widget.endpoint.enter_url"
               >
                 <iframe :src="`${widget.endpoint.card_url}&dark=${dark}`"
@@ -161,9 +161,12 @@ export default {
     })
   },
   methods: {
-    open (event, widget) {
-      event.preventDefault()
-      this.$router.push({ name: 'help', params: { widgetId: widget.rsc_id } })
+    open (widget) {
+      if (widget.target === 'blank') {
+        window.open(widget.enter_url || widget.endpoint.enter_url, '_blank')
+      } else {
+        this.$router.push({ name: 'enter', params: { widgetId: widget.rsc_id } })
+      }
     },
     openInNew (widget) {
       let path = null
