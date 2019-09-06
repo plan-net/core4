@@ -9,6 +9,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import { config } from '@/main'
 
 export default {
@@ -33,20 +34,22 @@ export default {
     this.$bus.$off('c4-application-close')
   },
   computed: {
+    ...mapGetters(['dark']),
     widget () {
       const data = this.$store.getters.widgetById(this.$route.params.widgetId)
       return data
     },
 
     path () {
+      let path
       switch (this.$route.name) {
         case 'help':
-          return this.widget.endpoint.help_url
-          // case 'widget':
-          // case 'enter':
+          path = this.widget.endpoint.help_url
+          break
         default:
-          return this.widget.endpoint.enter_url
+          path = this.widget.endpoint.enter_url
       }
+      return `${path}&dark=${this.dark}`
     }
   }
 
@@ -54,18 +57,18 @@ export default {
 </script>
 
 <style scoped lang="scss">
-  div {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 48px;
-    bottom: 0;
-    background-color: #fff;
-    padding: 0 0 0 0;
+div {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48px;
+  bottom: 0;
+  background-color: #fff;
+  padding: 0 0 0 0;
 
-    iframe {
-      width: 100%;
-      height: calc(100% - 4px);
-    }
+  iframe {
+    width: 100%;
+    height: calc(100% - 4px);
   }
+}
 </style>

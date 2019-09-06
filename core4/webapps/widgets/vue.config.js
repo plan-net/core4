@@ -4,12 +4,12 @@ module.exports = {
   lintOnSave: true,
   publicPath: './',
   devServer: {
-    port: 8081
+    port: 8084
   },
   configureWebpack: {
     resolve: {
       alias: {
-        'vue$': 'vue/dist/vue.js'
+        'vue$': 'vue/dist/vue.esm.js'
       }
     }
   }
