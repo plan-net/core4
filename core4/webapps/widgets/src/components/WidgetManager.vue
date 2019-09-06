@@ -234,17 +234,18 @@ div.dreiviertel {
 /deep/ .v-autocomplete {
   position: relative;
   margin: 6px 18px 6px 8px !important;
-
-  &:after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 0 12px 12px 0;
-    z-index: 100;
+  &.ecke {
+    &:after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 0 12px 12px 0;
+      z-index: 100;
+    }
   }
 }
 
@@ -362,12 +363,22 @@ div >>> .v-subheader {
 /deep/ .v-list__tile__title {
   font-weight: 700;
 }
-
 /deep/ .mini-widget {
   min-height: 58px;
   margin-bottom: 6px;
-  position: relative;
+}
+// TODO: SearchOptionsMenu.vue
+/deep/ .v-input__append-outer {
+  margin-top: 0 !important;
+  margin-left: 0 !important;
+  .append-to-search {
+    height: 56px;
+  }
+}
 
+/deep/ .mini-widget,
+/deep/ .append-to-search {
+  position: relative;
   &:after {
     content: "";
     position: absolute;
@@ -381,7 +392,6 @@ div >>> .v-subheader {
     z-index: 100;
   }
 }
-
 .theme--dark {
   /deep/ .v-list__tile__action.with-hover {
     background-color: var(--v-secondary-lighten3);
@@ -391,7 +401,8 @@ div >>> .v-subheader {
     background-color: var(--v-secondary-lighten4);
   }
 
-  /deep/ .mini-widget {
+  /deep/ .mini-widget,
+  /deep/ .append-to-search {
     background-color: var(--v-secondary-lighten2);
 
     &:after {
@@ -413,7 +424,8 @@ div >>> .v-subheader {
     background-color: rgba(0, 0, 0, 0.1);
   }
 
-  /deep/ .mini-widget {
+  /deep/ .mini-widget,
+  /deep/ .append-to-search {
     background-color: darken(#fff, 5);
 
     &:after {

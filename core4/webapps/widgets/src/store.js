@@ -29,6 +29,9 @@ export default new Vuex.Store({
     scales: [60, 0.3, 0.6, 0.9],
     currScale: 0.3,
     currScaleAbs: 400,
+    searchOptions: {
+      technical: false
+    },
     widgetsObj: {},
     widgetsList: [],
 
@@ -76,6 +79,16 @@ export default new Vuex.Store({
           boards
         ) /* { boards: [], board: 'name', sidebar: 1 } */
       } catch (err) {}
+    },
+    async enableTechnicalSearch ({
+      commit
+    }) {
+      commit('set_technical_search', true)
+    },
+    async disableTechnicalSearch ({
+      commit
+    }) {
+      commit('set_technical_search', false)
     },
     async setOptions ( // setConfig
       { commit, dispatch },
@@ -181,7 +194,7 @@ export default new Vuex.Store({
         // console.warn(error)
       }
     },
-    setWidgetOver ({ commit, getters }, payload) {
+    setWidgetOver ({ commit }, payload) {
       commit('set_widget_over', payload)
     }
   },
@@ -244,6 +257,9 @@ export default new Vuex.Store({
       state.boardsObj[state.activeBoard.name] = elem
       state.activeBoard = elem
     },
+    set_technical_search (state, value) {
+      state.searchOptions.technical = value
+    },
     delete_board (state, payload) {
       // Vue.delete(state.boardsObj[payload.name])
       state.boardsList = state.boardsList.filter(val => val !== payload.name)
@@ -270,7 +286,14 @@ export default new Vuex.Store({
       return state.widgetsList
     },
     widgetSet (state) {
-      return clone(state.widgetsList.map(id => state.widgetsObj[id]))
+      // return clone(state.widgetsList.map(id => state.widgetsObj[id]))
+      const p1 = state.widgetsList.map(id => state.widgetsObj[id])
+      if (state.searchOptions.technical === false) {
+        return p1.filter(val => {
+          return (val.tag || []).includes('api') === false
+        })
+      }
+      return p1
     },
     boardsSet (state) {
       return clone(state.boardsList.map(name => state.boardsObj[name]))
