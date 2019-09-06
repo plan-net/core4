@@ -15,14 +15,12 @@ const api = {
       .get(`/setting/core_widgets`)
       .then(result => {
         if (result.data.boards == null) {
-          // initialize, so we can use put
-          /*           axiosInternal
-            .post('/setting/core_widgets', { data: { boards: [] } })
-            .then(result => {})
-            .catch(error => Promise.reject(error)) */
-          return []
+          return {
+            boards: [],
+            board: ''
+          }
         }
-        return result.data.boards
+        return result.data
       })
       .catch(error => {
         return Promise.reject(error)
@@ -42,13 +40,30 @@ const api = {
   deleteBoard (dto) {
     const board = dto.board
     const allBoards = dto.boards
-    return this._putBoards({ boards: allBoards.filter(val => val.name !== board.name) })
+    return this._putBoards({
+      boards: allBoards.filter(val => val.name !== board.name)
+    })
   },
   addToBoard (dto) {
     const { board, widgetId, boards } = dto
     boards.find(val => val.name === board.name).widgets.push(widgetId)
     return this._putBoards({ boards })
   },
+
+  async persistOptions (
+    data = {
+      boards: [],
+      board: null,
+      sidebar: 1
+    }
+  ) {
+    console.log(data)
+    return axiosInternal
+      .post('/setting/core_widgets', { data })
+      .then(result => result)
+      .catch(error => Promise.reject(error))
+  },
+
   getWidgets () {
     const fields = {
       title: 'String',
@@ -75,13 +90,18 @@ const api = {
       })
       /* replace words and whitespace */
       // $search = $search.replace(/ for| and| v1| api| request| core4/gi, '').replace(/\s+/g, ' ').trim()
-      $search = $search.replace(/ for| and| v1| request| core4/gi, '').replace(/\s+/g, ' ').trim()
+      $search = $search
+        .replace(/ for| and| v1| request| core4/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
       return Object.assign(widget, { $search: $search.split(' ') })
     }
     return axiosInternal
       .get(`/_info`, { params: { per_page: 1000, page: 0 } })
       .then(result => {
-        const token = `?token=${JSON.parse(window.localStorage.getItem('user')).token}`
+        const token = `?token=${
+          JSON.parse(window.localStorage.getItem('user')).token
+        }`
         const widgets = result.data
         let endpoint
         let pathEnd
@@ -93,7 +113,10 @@ const api = {
           endpoint.help_url = `${val.endpoint[0]}/_info/help/${pathEnd}`
           val.endpoint = endpoint
           const vq = val.qual_name
-          val.$qual_name = vq.substring(0, vq.indexOf('.')) + '...' + vq.substring(vq.lastIndexOf('.') + 1)
+          val.$qual_name =
+            vq.substring(0, vq.indexOf('.')) +
+            '...' +
+            vq.substring(vq.lastIndexOf('.') + 1)
           delete val.project
           delete val.started_at
           delete val.created_at
@@ -108,7 +131,8 @@ const api = {
 axiosInternal.interceptors.response.use(
   response => {
     return response
-  }, error => {
+  },
+  async error => {
     // First load of the widget app
     if (
       error.config.url.includes(`${window.APIBASE_CORE}/setting`) &&
@@ -117,12 +141,19 @@ axiosInternal.interceptors.response.use(
       error.response.status === 400
     ) {
       const boards = [{ name: 'First board', widgets: [] }]
-      axiosInternal
-        .post('/setting/core_widgets', { data: { boards } })
+      const data = {
+        boards,
+        board: boards[0].name,
+        sidebar: 1
+      }
+      await api.persistOptions(data)
+      store.dispatch('setOptions', data)
+      /*       axiosInternal
+        .post('/setting/core_widgets', { data })
         .then(result => {
-          store.dispatch('setBoards', boards)
+          store.dispatch('setOptions', data)
         })
-        .catch(error => Promise.reject(error))
+        .catch(error => Promise.reject(error)) */
     } else {
       return Promise.reject(error)
     }
