@@ -204,12 +204,12 @@ async def test_init(core4api):
     data["passwd"] = "123456"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.json()["code"] == 400
-    assert "requires email and password" in rv.json()["error"]
+    assert "requires email on creation" in rv.json()["error"]
 
     data["realname"] = "Michael Rau"
     rv = await core4api.post("/core4/api/v1/roles", body=data)
     assert rv.json()["code"] == 400
-    assert "requires email and password" in rv.json()["error"]
+    assert "requires email on creation" in rv.json()["error"]
 
     data["email"] = "m.rau-plan-net.com"
     rv = await core4api.post("/core4/api/v1/roles", body=data)

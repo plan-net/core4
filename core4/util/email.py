@@ -1,6 +1,9 @@
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from core4.queue.job import CoreJob
+import jinja2
+import os
 
 
 class MailMixin(object):
@@ -91,3 +94,27 @@ class MailMixin(object):
 
         server.close()
         return True
+
+
+class RoleEmail(MailMixin, CoreJob):
+    author = "mkr"
+
+    def execute(self, recipients=None, subject=None, token=None, template=None,
+                realname=None, username=None, language="EN"):
+        def rel(path):
+            return os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                                path))
+        template_loader = jinja2.FileSystemLoader(
+            rel(self.config.email.template.base_dir)
+        )
+        template_env = jinja2.Environment(loader=template_loader)
+        template = template_env.\
+            get_template(template)
+
+        message = template.render(realname=realname, username=username,
+                                  domain=self.config.email.template[
+                                      language.lower()]['domain'],
+                                  token=token,
+                                  contact_email=self.config.api.contact)
+
+        self.send_mail(to=recipients, subject=subject, message=message)

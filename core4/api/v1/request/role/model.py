@@ -127,12 +127,12 @@ class CoreRole(CoreBase):
         """
         return self.name.lower() < other.name.lower()
 
-    def validate(self):
+    def validate(self, initial=False):
         """
         Ensures users have email *and* password, and all field have the
         expected types and value constraints.
         """
-        self._check_user()
+        self._check_user(initial)
         for field in self.data.values():
             field.validate_type()
             field.validate_value()
@@ -140,15 +140,18 @@ class CoreRole(CoreBase):
     def verify_password(self, plain):
         """
         :param plain: clear text password
-        :return: ``True`` if the role is active and the password matches
+        :return: ``True`` if the role is active , and the password matches
         """
         if self.is_active:
             try:
+                self._check_user()
                 return core4.util.crypt.pwd_context.verify(
                     plain, self.password)
             except ValueError:
                 self.logger.warning("user [%s] authentication failure",
                                     self.name)
+                return False
+            except AttributeError:
                 return False
             except:
                 raise
@@ -164,18 +167,24 @@ class CoreRole(CoreBase):
         has_email = self.email is not None
         return has_email and has_password
 
-    def _check_user(self):
+    def _check_user(self, initial=False):
         """
         :return: verify a valid role (no email and password) or a valid
-                 user role (email and password)
+                 user role (email and password).
+                 When the user is initialy created, he does not need a password
+                 yet. It will be set prior to logging in via a token provided
+                 by email.
         """
         has_password = self.password is not None
         has_email = self.email is not None
-        if ((not (has_password and has_email))
+        if initial:
+            if not (has_email == has_password or has_email):
+                raise AttributeError("user role requires email on creation")
+        elif ((not (has_password and has_email))
                 and (has_password or has_email)):
             raise AttributeError("user role requires email and password")
 
-    async def save(self):
+    async def save(self, initial=False):
         """
         Create or update the role. Please note that a role is only
         materialised, if one or more attributes have changed.
@@ -184,7 +193,7 @@ class CoreRole(CoreBase):
         """
         # await self.create_index()
         await self.resolve_roles()
-        self.validate()
+        self.validate(initial)
         if self._id is None:
             saved = await self._create()
         else:

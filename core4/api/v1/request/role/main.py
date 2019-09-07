@@ -14,6 +14,7 @@ from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.access.manager import CoreAccessManager
 from core4.api.v1.request.role.model import CoreRole
 from core4.util.pager import CorePager
+from core4.util.email import RoleEmail
 
 
 class RoleHandler(CoreRequestHandler):
@@ -133,7 +134,28 @@ class RoleHandler(CoreRequestHandler):
         self.logger.info("perm: " + str(kwargs['perm']))
         try:
             role = CoreRole(**kwargs)
-            await role.save()
+            await role.save(initial=True)
+            # send password email here
+            username = kwargs['name']
+            email = kwargs['email']
+            secs = self.config.api.reset_password.expiration
+            payload = {
+                'email': email,
+                'name': username,
+            }
+            token = self.create_jwt(secs, payload)
+            core4.queue.helper.functool.enqueue(
+                RoleEmail,
+                template=self.config.email.template.en.user_creation,
+                recipients=kwargs['email'],
+                subject="core4: created user",
+                realname=kwargs['realname'],
+                token=token,
+                username=kwargs['name']
+            )
+            self.logger.info("sent initial token [%s] to user [%s] at [%s]",
+                             token, kwargs['name'], kwargs['email'])
+
         except (AttributeError, TypeError, core4.error.Core4ConflictError,
                 core4.error.ArgumentParsingError) as exc:
             raise HTTPError(400, exc.args[0])
