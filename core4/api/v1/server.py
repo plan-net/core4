@@ -46,6 +46,8 @@ from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 
+from core4.api.v1.request.standard.menu import AboutHandler
+
 
 class CoreAppManager(CoreApiContainer):
     root = ""
@@ -62,6 +64,12 @@ class CoreAppManager(CoreApiContainer):
         })
     ]
 
+class MenuServer(CoreApiContainer):
+    root = "/core4"
+    rules = [
+        (r'/about', AboutHandler)
+
+    ]
 
 class CoreApiServer(CoreApiContainer):
     """
@@ -115,4 +123,4 @@ class CoreApiServer(CoreApiContainer):
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
 
-    serve(CoreApiServer, CoreAppManager)
+    serve(CoreApiServer, CoreAppManager, MenuServer)

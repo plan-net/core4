@@ -144,6 +144,8 @@ email:
 user_setting:
    _general:
      language: EN
+     menu:
+       About: /core4/about
 
 queue:
   history_in_days: 7
