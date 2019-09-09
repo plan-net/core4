@@ -232,7 +232,7 @@ export default {
 
   computed: {
     ...mapState([
-      'searchOptions', 'scales'
+      'scales'
     ]),
     ...mapGetters(['widgetSet']),
     widgets () {

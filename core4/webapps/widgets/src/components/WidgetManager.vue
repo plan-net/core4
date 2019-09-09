@@ -314,10 +314,13 @@ div >>> .with-hover.right {
 }
 
 div >>> .with-hover.right .v-icon {
-  margin-right: 6px !important;
+  margin-right: 4px !important;
   margin-bottom: 1px !important;
   margin-top: 0 !important;
-  font-size: 14px !important;
+  font-size: 17px !important;
+}
+div >>> .with-hover.right .v-icon:hover{
+  color: var(--v-primary-base) !important
 }
 
 div >>> .with-hover.right .v-tooltip {

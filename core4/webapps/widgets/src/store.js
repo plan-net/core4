@@ -83,11 +83,15 @@ export default new Vuex.Store({
     async enableTechnicalSearch ({
       commit
     }) {
+      try {
+        api.persistOptions({ technical: true })
+      } catch (err) {}
       commit('set_technical_search', true)
     },
     async disableTechnicalSearch ({
       commit
     }) {
+      api.persistOptions({ technical: false })
       commit('set_technical_search', false)
     },
     async setOptions ( // setConfig
@@ -95,15 +99,22 @@ export default new Vuex.Store({
       dto = {
         boards: [],
         board: '',
-        sidebar: 0
+        sidebar: 0,
+        technical: false
       }
     ) {
+      console.log(dto)
       if (dto.boards.length) {
         commit('set_boards', dto.boards)
         const boardExists =
           (dto.boards.find(val => val.name === dto.board) || {}).name ||
           dto.boards[0].name
         commit('set_active_board', boardExists)
+      }
+      if (dto.technical === true) {
+        dispatch('enableTechnicalSearch')
+      } else {
+        dispatch('disableTechnicalSearch')
       }
       dispatch('setCurrScale', { index: (dto.sidebar), persist: false })
       commit('set_ready', true)
@@ -321,6 +332,9 @@ export default new Vuex.Store({
     },
     currScaleAbs (state) {
       return state.currScaleAbs
+    },
+    searchOptions (state) {
+      return state.searchOptions
     }
   }
 })
