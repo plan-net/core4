@@ -602,6 +602,7 @@ static folder:
              nginx or apache and should be used only to serve low-traffic
              static sites.
 
+
 extra endpoints of each handler
 ###############################
 
@@ -640,6 +641,7 @@ when the user enters the API's landing page::
 
 
 .. _rule_arguments:
+
 
 handler arguments at rules
 ##########################
@@ -721,18 +723,6 @@ provides additional handler properties available as properties and methods:
   the container object of the application and handler
 * ``_flash``:
 
-single page applications (SPA)
-##############################
-
-tbd.
-
-
-example vue rendering
-#####################
-
-core4 static file with global variable injection
-static file with single endpoint to js rendered page
-
 
 config overwrite
 ################
@@ -811,6 +801,79 @@ For uploading files and especially large files see for example
 
 * `Server does not receive big files`_
 * `Mime-type of the stream request body output`_
+
+
+multi-client aware handlers
+###########################
+
+core4os provides a request handler class
+:class:`core4.api.v1.request.tenant.CoreTenantHandler` which supports client
+specific request handling. This class is derived from
+:class:`core4.api.v1.request.main.CoreRequestHandler` and verifies users'
+access permissions to client specific API requests.
+
+The access permission scheme is based on the permission protocol ``app://`` and
+ensures that for example ``http://localhost:5001/my/api/lufthansa/0815`` is only
+served for users with access permissions to the handler itself (``/my/api``) and
+access permissions to the client (``lufthansa``) for a parameterised URL
+processing an integer as the last part of the URL (``0815``).
+
+The following example setup and implementation realises this scenario. The
+request handler is to be derived from :class:`.CoreTenantHandler`::
+
+    from core4.api.v1.request.tenant import CoreTenantHandler
+
+    class MyHandler(CoreTenantHandler):
+
+        async def get(self, _id):
+            self.reply({
+                "_id": _id,
+                "client": self.client
+            })
+
+
+The request handler ``MyHandler`` returns the passed ``_id`` and ``client`` name
+only, if the user has access permissions to the API and the client. With the
+assumption that this request handler resides in a project ``myproject`` with the
+``qual_name`` ``myproject.api.handler.MyHandler``, then the user requires the
+following access permissions for a client ``lufthansa``:
+
+    api://myproject.api.handler.MyHandler
+    app://client/lufthansa
+
+Put the handler into an API container::
+
+    class TenantServer(CoreApiContainer):
+        root = "/my"
+        rules = [
+            (r"/api/(?P<client>.+)/(?P<_id>.*)", MyHandler),
+        ]
+
+
+This endpoint will deliver the output below at URL
+``http://localhost:5001/test/api/lufthansa/0815``::
+
+    {
+        "_id": "0815",
+        "client": "lufthansa
+    }
+
+
+As you can see above the handler routing pattern needs to locate the client.
+This can either be done with named groups as in::
+
+    (r"/api/(?P<client>.+)/(?P<_id>.*)", MyHandler)
+
+
+As an alternative you can use ordered groups. This limits the location of the
+client group, since with ordered groups the client must be the very first
+URL path argument as in the following example::
+
+    (r"/api/(.+)/(.*)", MyHandler)
+
+
+The request handler itself can use ``self.client`` to control client specific
+API processing.
 
 
 .. _Tornado - Flexible Output Generation: https://www.tornadoweb.org/en/stable/template.html

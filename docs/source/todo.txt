@@ -1,0 +1,7 @@
+write some documentation about
+
+* property .identifier
+* the qual_name
+* qual_name based configuration
+* raw configuration access
+* when to use .initialise_object
