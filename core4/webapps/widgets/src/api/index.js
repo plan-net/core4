@@ -57,7 +57,6 @@ const api = {
       sidebar: 1
     }
   ) {
-    console.log(data)
     return axiosInternal
       .post('/setting/core_widgets', { data })
       .then(result => result)
@@ -115,7 +114,7 @@ const api = {
           const vq = val.qual_name
           val.$qual_name =
             vq.substring(0, vq.indexOf('.')) +
-            '...' +
+            '…' +
             vq.substring(vq.lastIndexOf('.') + 1)
           delete val.project
           delete val.started_at
@@ -144,7 +143,8 @@ axiosInternal.interceptors.response.use(
       const data = {
         boards,
         board: boards[0].name,
-        sidebar: 1
+        sidebar: 1,
+        technical: false
       }
       await api.persistOptions(data)
       store.dispatch('setOptions', data)

@@ -24,12 +24,14 @@
         <v-list-tile>
           <v-list-tile-action>
             <v-switch
-              :value="searchOptions.technical"
-              @change="toggle"
+              v-model="technical"
               color="primary"
             ></v-switch>
           </v-list-tile-action>
-          <v-list-tile-title style="cursor: pointer;" @click="toggle">Show technical widgets</v-list-tile-title>
+          <v-list-tile-title
+            style="cursor: pointer;"
+            @click="toggle"
+          >Show technical widgets</v-list-tile-title>
         </v-list-tile>
       </v-list>
     </v-menu>
@@ -38,7 +40,6 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
 export default {
   data () {
     return {
@@ -47,16 +48,23 @@ export default {
   },
   methods: {
     toggle () {
-      if (this.searchOptions.technical === true) {
+      if (this.$store.getters.searchOptions.technical === true) {
         this.$store.dispatch('disableTechnicalSearch')
       } else {
         this.$store.dispatch('enableTechnicalSearch')
       }
     }
   },
-  computed: mapState([
-    'searchOptions'
-  ])
+  computed: {
+    technical: {
+      get: function () {
+        return this.$store.getters.searchOptions.technical
+      },
+      set: function () {
+        this.toggle()
+      }
+    }
+  }
 }
 </script>
 

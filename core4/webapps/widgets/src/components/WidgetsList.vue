@@ -79,7 +79,7 @@
                 </v-icon>
                 <span>Open widget in new tab</span>
               </v-tooltip>
-              <v-tooltip left>
+              <v-tooltip left v-if="item.target == null"> <!-- Only for in browser widgets, note jira etc. -->
                 <v-icon
                   @click="$router.push({ name: 'enter', params: { widgetId: item.rsc_id } })"
                   slot="activator"
@@ -232,7 +232,7 @@ export default {
 
   computed: {
     ...mapState([
-      'searchOptions', 'scales'
+      'scales'
     ]),
     ...mapGetters(['widgetSet']),
     widgets () {
