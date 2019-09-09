@@ -145,7 +145,7 @@ user_setting:
    _general:
      language: EN
      menu:
-       About: /core4/about
+       About: /about
 
 queue:
   history_in_days: 7

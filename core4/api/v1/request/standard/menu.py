@@ -3,7 +3,7 @@ class AboutHandler(CoreRequestHandler):
     author = "mmr"
     title = "About Core4"
     icon = "more"
-    tag = ["Example", "cre4ui", "Menu"]
+    tag = ["Example", "core4ui", "Menu"]
 
     async def get(self):
         self.render("template/about.html")

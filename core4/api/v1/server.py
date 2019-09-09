@@ -57,6 +57,8 @@ class CoreAppManager(CoreApiContainer):
             "static_path": "/webapps/comoco/dist",
             "title": "core4 monitoring and control", "protected": False
         }),
+        (r'/about', AboutHandler),
+        # the following static file handler must be the last handler
         (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
             "static_path": "/webapps/widgets/dist",
@@ -64,12 +66,6 @@ class CoreAppManager(CoreApiContainer):
         })
     ]
 
-class MenuServer(CoreApiContainer):
-    root = "/core4"
-    rules = [
-        (r'/about', AboutHandler)
-
-    ]
 
 class CoreApiServer(CoreApiContainer):
     """
@@ -107,6 +103,7 @@ class CoreApiServer(CoreApiContainer):
 
         (r'/setting', SettingHandler),
         (r'/setting/(.*)', SettingHandler),
+
     ]
 
     def on_enter(self):
@@ -123,4 +120,4 @@ class CoreApiServer(CoreApiContainer):
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
 
-    serve(CoreApiServer, CoreAppManager, MenuServer)
+    serve(CoreAppManager, CoreApiServer)
