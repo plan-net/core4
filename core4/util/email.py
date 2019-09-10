@@ -22,6 +22,7 @@ class MailMixin(object):
       host: ~
       port: ~
       ssl: ~
+      starttls: ~
 
     If neither a username, nor a password is set, logging in into the mailserver
     is skipped.
@@ -41,6 +42,7 @@ class MailMixin(object):
 
         try:
             ssl = self.config.email.ssl
+            starttls = self.config.email.starttls
             host = self.config.email.host
             email_user = self.config.email.username
             email_password = self.config.email.password
@@ -65,7 +67,11 @@ class MailMixin(object):
             msg.attach(MIMEText(message, 'plain'))
 
         try:
-            if ssl:
+            if starttls:
+                server = smtplib.SMTP(host, port)
+                server.starttls()
+                server.ehlo()
+            elif ssl:
                 server = smtplib.SMTP_SSL(host, port)
                 server.ehlo()
             else:
