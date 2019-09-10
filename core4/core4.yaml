@@ -133,6 +133,7 @@ email:
   sent_from: ~
   host: ~
   port: ~
+  starttls: ~
   ssl: ~
   template:
     base_dir: email_templates/
