@@ -345,15 +345,19 @@ class CoreApiContainer(CoreBase, QueryMixin):
             for attr in detail:
                 del first[attr]
             first["endpoint"] = []
+            first["container"] = []
             info = set()
+            container = set()
             for d in data:
                 for c in d["container"]:
                     url = "{}{}".format(
                         d["routing"], c[2])
+                    container.add(c[0])
                     info.add(url)
                 for k in ("started_at", "created_at"):
                     first[k] = min(first[k], d[k])
             first["endpoint"] += sorted(list(info))
+            first["container"] += sorted(list(container))
             date_range = self.get_date_range(first["created_at"])
             if first["tag"] is None:
                 first["tag"] = []
