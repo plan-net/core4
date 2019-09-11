@@ -357,6 +357,8 @@ class CoreApiContainer(CoreBase, QueryMixin):
             date_range = self.get_date_range(first["created_at"])
             if first["tag"] is None:
                 first["tag"] = []
+            elif isinstance(first["tag"], str):
+                first["tag"] = first["tag"].split()
             if date_range:
                 first["tag"].append(date_range)
             first["subtitle"] = first["subtitle"] or first["qual_name"]

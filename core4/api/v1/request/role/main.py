@@ -20,7 +20,7 @@ from core4.util.email import RoleEmail
 class RoleHandler(CoreRequestHandler):
     title = "role and user management"
     author = "mra"
-    tag = ["role management"]
+    tag = "roles"
 
     async def post(self, _id=None):
         """
@@ -30,7 +30,7 @@ class RoleHandler(CoreRequestHandler):
         ``None``.
 
         Methods:
-            POST /roles - user/role creation
+            POST /core4/api/v1/roles - user/role creation
 
         Parameters:
             name (str): unique name of the user or role.
@@ -76,7 +76,7 @@ class RoleHandler(CoreRequestHandler):
             >>> from pprint import pprint
             >>> import random
             >>> url = "http://localhost:5001/core4/api/v1"
-            >>> signin = get(url + "/login?username=admin&passwd=hans")
+            >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
             >>>
@@ -173,7 +173,7 @@ class RoleHandler(CoreRequestHandler):
         Get users/roles listing and details.
 
         Methods:
-            GET /roles - user/role listing
+            GET /core4/api/v1/roles - user/role listing
 
         Arguments:
             per_page (int): number of jobs per page
@@ -181,7 +181,6 @@ class RoleHandler(CoreRequestHandler):
             sort (str): sort field
             order (int): sort direction (``1`` for ascending, ``-1`` for
                 descending)
-
 
         Returns:
             data element with list of job attributes as dictionaries. See below
@@ -233,7 +232,7 @@ class RoleHandler(CoreRequestHandler):
             }
 
         Methods:
-            GET /roles/<_id> - user/role detail
+            GET /core4/api/v1/roles/<_id> - user/role detail
 
         Parameters:
             _id (str): of the user/role
@@ -300,7 +299,7 @@ class RoleHandler(CoreRequestHandler):
         Update user/role attributes.
 
         Methods:
-            PUT /roles/<_id> - user/role update
+            PUT /core4/api/v1/roles/<_id> - user/role update
 
         Parameters:
             _id (str): of the user/role to update
@@ -431,8 +430,8 @@ class RoleHandler(CoreRequestHandler):
         Deletes an existing user or role.
 
         Methods:
-            DELETE /roles/<_id>?etag=<etag>
-            DELETE /roles/<_id>/<etag>
+            DELETE /core4/api/v1/roles/<_id>?etag=<etag>
+            DELETE /core4/api/v1/roles/<_id>/<etag>
 
         Parameters:
             _id (str): of the user/role to delete

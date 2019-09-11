@@ -47,6 +47,7 @@ from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.static import CoreStaticFileHandler
 
 from core4.api.v1.request.standard.menu import AboutHandler
+from core4.api.v1.request.link import CoreLinkHandler
 
 
 class CoreAppManager(CoreApiContainer):
@@ -55,14 +56,23 @@ class CoreAppManager(CoreApiContainer):
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",
             "static_path": "/webapps/comoco/dist",
-            "title": "core4 monitoring and control", "protected": False
+            "title": "monitoring and control (comoco)",
+            "tag": "jobs app",
+            "protected": False
         }),
-        (r'/about', AboutHandler),
+        (r'/about', CoreLinkHandler, {
+            "enter_url": "https://core4os.readthedocs.io/en/latest/about.html",
+            "doc":  "About core4os at readthedocs",
+            "author": "mra",
+            "tag": ["info"],
+            "title": "about core4os"
+        }),
         # the following static file handler must be the last handler
         (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
             "static_path": "/webapps/widgets/dist",
-            "title": "core4 home", "protected": False
+            "title": "root",
+            "protected": False
         })
     ]
 
