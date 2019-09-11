@@ -74,11 +74,12 @@ class CoreBaseHandler(CoreBase):
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon")
+                 "static_path", "enter_url", "icon", "doc")
     supported_types = [
         "text/html",
     ]
     concurr = True
+    doc = None
 
     def __init__(self, *args, **kwargs):
         """
@@ -383,12 +384,10 @@ class CoreBaseHandler(CoreBase):
         handler = self.application.lookup[self.rsc_id]["handler"]
         pattern = self.application.lookup[self.rsc_id]["pattern"]
         doc = await self.application.container.get_handler(rsc_id)
-        rst = rst2html(str(self.__doc__))
+        description = str(self.doc or self.__doc__)
         doc.update(dict(
             args=handler.target_kwargs,
-            description=self.__doc__,
-            description_html=rst["body"],
-            description_error=rst["error"],
+            description=description,
             icon=self.icon,
             pattern=pattern,
             container=self.application.container.qual_name(),
@@ -397,6 +396,11 @@ class CoreBaseHandler(CoreBase):
             help_url=self.help_url,
             method=self.application.handler_help(self.__class__)
         ))
+        from jinja2 import Template
+        t = Template(description)
+        rst = rst2html(t.render(**doc))
+        doc["description_html"] = rst["body"]
+        doc["description_error"] = rst["error"]
         return doc
 
     async def xcard(self, *args, **kwargs):
