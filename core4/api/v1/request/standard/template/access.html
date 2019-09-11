@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>core4os DB access</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify.css" rel="stylesheet">
+    <style>
+        .monospace {
+            font-family: monospace;
+            background-color: #dddddd;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <v-app class="ma-2">
+        <v-container>
+            <v-layout column>
+                <h1 class="headline mb-3">Create your personal MongoDB Access Token</h1>
+                <p>
+                    core4os supports read-only access to MongoDB databases and
+                    read/write  access to your personal database
+                    <span class="monospace">user!{{ current_user }}</span>.
+                    <br/>
+                    With your current personal <a href="/core4/api/v1/profile">
+                    profile</a> you have access to the following database:
+                </p>
+                <p>
+                    <v-chip color="accent" text-color="white">user!{{ current_user }}</v-chip>
+                    {% for db in access %}
+                    <v-chip color="accent" text-color="white">{{ db }}</v-chip>
+                    {% end for %}
+                </p>
+                <p>
+                    To access the MongoDB database you need to create a token.
+                    Use this token as your password together with your username
+                    (<span class="monospace">{{ current_user }}</span>). For your
+                    convenience the full MongoDB connection URL is available
+                    below once you have created a new token. Use the <i>copy</i>
+                    button to put this URL into your clipboard.
+                    <br/>
+                    Take care and remember your token. Your token will be lost
+                    when you  leave this page. However you can recreate a new
+                    token at any time with this access manager.
+                </p>
+                <p>
+                    <v-layout row>
+                        <v-btn class="mx-10" color="primary" @click="onclick">Refresh</v-btn>
+                    </v-layout>
+                </p>
+                <v-text-field class="mx-10" v-model="token" label="MongoDB Access Token" readonly box></v-text-field>
+                <v-layout row>
+                    <v-flex xs11>
+                        <v-text-field id="url" class="mx-10" v-model="url" label="MongoDB Connection URL" readonly box></v-text-field>
+                    </v-flex>
+                    <v-flex xs1 class="text-xs-center">
+                        <v-btn class="mx-2" fab small color="accent" @click="oncopy"><v-icon>file_copy</v-icon></v-btn>
+                    </v-flex>
+                </v-layout>
+            </v-layout>
+            <v-snackbar v-model="snackbar" :bottom="true"
+                        :multi-line="false"
+                        :timeout=3000
+                        :vertical=true>
+                [[ snackbar_text ]]
+                <v-btn color="primary" flat @click="snackbar = false">
+                    Close
+                </v-btn>
+            </v-snackbar>
+        </v-container>
+    </v-app>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
+
+<script>
+
+var app = new Vue({
+
+    el: '#app',
+
+    data() {
+        return {
+            token: null,
+            current_user: "{{ current_user }}",
+            mongodb: "{{ mongodb }}",
+            snackbar: false,
+            snackbar_text: "",
+        }
+    },
+
+    created() {
+        this.$vuetify.theme = window.PNBI_THEME;
+
+        axios.interceptors.request.use(
+            request => {
+                request.headers['Accept'] = 'application/json'
+                request.withCredentials = true
+                return request
+            },
+            error => {
+                return Promise.reject(error)
+        })
+    },
+
+    computed: {
+        url: function() {
+            if (this.token != null) {
+                return "mongodb://" + this.current_user + ":" + this.token + "@" + this.mongodb;
+            }
+        }
+    },
+
+    delimiters: ['[[', ']]'],
+
+    mounted(){
+    },
+
+    methods:{
+        onclick: function() {
+            axios.post('/core4/api/v1/access')
+                .then(function (response) {
+                    this.token = response.data.data.mongodb
+              }.bind(this))
+              .catch(function (error) {
+                    console.log(error);
+              });
+        },
+        oncopy: function() {
+            if (this.token != null) {
+                var toCopy = document.querySelector('#url')
+                toCopy.select()
+                try {
+                    var successful = document.execCommand('copy');
+                    this.snackbar_text = "MongoDB URL copied to your clipboard";
+                }
+                catch (err) {
+                    this.snackbar_text = "Failed to copy MongoDB URL to your clipboard";
+                }
+                this.snackbar = true;
+                window.getSelection().removeAllRanges()
+            }
+        }
+    }
+})
+</script>
+</body>
+
+</script>
+</html>

@@ -75,3 +75,13 @@ class AccessHandler(CoreRequestHandler):
         else:
             body = await manager.synchronise(protocol)
         return self.reply(body)
+
+    async def get(self):
+        access = []
+        for a in await self.user.casc_perm():
+            (*proto, db) = a.split("/")
+            if proto and proto[0] == "mongodb:":
+                access.append(db)
+        return self.render("template/access.html",
+                           mongodb=self.config.sys.role.hostname,
+                           access=sorted(access))
