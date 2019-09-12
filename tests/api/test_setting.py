@@ -100,7 +100,8 @@ async def test_default_settings_override(core4api):
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
-    assert response.json()["data"] == to_send
+    expect = {"_general": {"language": "UA", 'menu': {'About': '/about'}}}
+    assert response.json()["data"] == expect
 
 
 async def test_delete_settings(core4api):
@@ -111,7 +112,8 @@ async def test_delete_settings(core4api):
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
-    assert response.json()["data"] == to_send
+    expect = {"_general": {"language": "UA", 'menu': {'About': '/about'}}}
+    assert response.json()["data"] == expect
 
     response = await core4api.delete("/core4/api/v1/setting")
     assert response.ok
@@ -130,7 +132,8 @@ async def test_delete_nested_settings(core4api):
 
     response = await core4api.get("/core4/api/v1/setting")
     assert response.json()["data"] == {"_general": {
-        "language": "FR"},
+        "language": "FR",
+        'menu': {'About': '/about'}},
         "project": {"setting1": 57,
                     "setting2": 111}}
 
@@ -139,15 +142,22 @@ async def test_delete_nested_settings(core4api):
 
     response = await core4api.get("/core4/api/v1/setting")
     assert response.ok
-    assert response.json()["data"] == {"_general": {"language": "FR"},
-                                       "project": {"setting2": 111}}
+    assert response.json()["data"] == {
+        "_general": {
+            "language": "FR",
+            'menu': {'About': '/about'}
+        },
+    "project": {"setting2": 111}}
 
     response = await core4api.delete("/core4/api/v1/setting/project")
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
     assert response.ok
-    assert response.json()["data"] == {"_general": {"language": "FR"}}
+    assert response.json()["data"] == {"_general": {"language": "FR",
+                                                    'menu': {'About': '/about'}
+                                                    }
+                                       }
 
 
 async def test_user_override(core4api):
