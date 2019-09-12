@@ -20,8 +20,9 @@ from core4.error import Core4RoleNotFound
 
 
 class ProfileHandler(CoreRequestHandler):
-    title = "details for the logged in user"
+    title = "user profile"
     author = "mra"
+    tag = ["roles"]
 
     async def get(self):
         """

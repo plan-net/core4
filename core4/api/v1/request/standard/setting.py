@@ -81,16 +81,15 @@ class SettingHandler(CoreRequestHandler):
 
 
     Endpoint structure example
-        *core4/api/v1/setting/_general/language?username=jdo*
+        * /core4/api/v1/setting/_general/language?username=jdo*
 
         * **setting** - service endpoint
         * **_general** - level 1
         * **language** - level 2
     """
-    title = "user setting"
+    title = "user settings"
     author = "oto"
-    protected = True
-
+    tag = "roles"
     default_setting = None
 
     # ###################################################################### #
@@ -244,7 +243,7 @@ class SettingHandler(CoreRequestHandler):
         data from core4.yaml file
 
         Methods:
-            GET /
+            GET /core4/api/v1/setting
 
         Parameters:
             username (str): parameter which specifies the user for which the
@@ -261,11 +260,11 @@ class SettingHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get
-            >>> url = "http://localhost:5001/core4/api"
+            >>> url = "http://localhost:5001/core4/api/v1"
             >>> setting = get(url + "/setting")
             >>> setting.status_code
             200
-            >>> rv = get("http://localhost:5001/core4/api/setting")
+            >>> rv = get("http://localhost:5001/core4/api/v1/setting")
             >>> rv
             {
                 “_id”: “5bd94d9bde8b6939aa31ad88”,
@@ -308,7 +307,7 @@ class SettingHandler(CoreRequestHandler):
         Delete user setting from database
 
         Methods:
-            DELETE /
+            DELETE /core4/api/v1/setting
 
         Parameters:
             username (str): parameter which specifies the user for which the
@@ -356,7 +355,7 @@ class SettingHandler(CoreRequestHandler):
         Create/update user settings in database
 
         Methods:
-            POST /
+            POST /core4/api/v1/setting
 
         Parameters:
             username (str): parameter which specifies the user for which the

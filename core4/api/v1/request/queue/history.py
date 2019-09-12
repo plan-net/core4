@@ -27,12 +27,13 @@ class JobHistoryHandler(CoreRequestHandler):
     * job flags non-stopper, zombie, killed and removed
     """
     author = "mra"
-    title = "job queue history"
+    title = "job history"
+    tag = "api jobs"
 
     async def get(self):
         """
         Methods:
-            GET /jobs/history
+            GET /core4/api/v1/jobs/history
 
         Parameters:
             per_page (int): number of jobs per page
@@ -58,16 +59,16 @@ class JobHistoryHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get
-            >>> signin = get("http://devops:5001/core4/api/v1/login?username=admin&password=hans")
+            >>> signin = get("http://localhost:5001/core4/api/v1/login?username=admin&password=hans")
             >>> signin
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?page=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?page=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/jobs/history?sort=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?sort=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
         """
@@ -158,12 +159,12 @@ class QueueHistoryHandler(CoreRequestHandler):
     """
     author = "oto"
     title = "queue history"
+    tag = "api jobs"
 
     async def get(self):
         """
         Methods:
-            GET /queue/history
-
+            GET /core4/api/v1/queue/history
 
         Parameters:
             per_page (int): number of jobs per page
@@ -190,16 +191,16 @@ class QueueHistoryHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get
-            >>> signin = get("http://devops:5001/core4/api/v1/login?username=admin&password=hans")
+            >>> signin = get("http://localhost:5001/core4/api/v1/login?username=admin&password=hans")
             >>> signin
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/queue/history?token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/queue/history?page=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?page=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
-            >>> rv = get("http://devops:5001/core4/api/v1/queue/history?sort=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?sort=1&token=" + signin.json()["data"]["token"])
             >>> rv
             <Response [200]>
 
@@ -624,5 +625,3 @@ class QueueHistoryHandler(CoreRequestHandler):
         week_ago = today - datetime.timedelta(days=default_days)
 
         return week_ago.strftime(date_format)
-
-

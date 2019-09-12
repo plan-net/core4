@@ -62,12 +62,12 @@ class EventHandler(CoreWebSocketHandler):
     """
     Web socket handler to process channel interests and to deliver
 
-    #. chat messages on channel _message_
-    #. job events from ``sys.event`` on channel _queue_
-    #. aggregated job states from ``sys.queue`` on channel _queue_
+    #. chat messages on channel *message*
+    #. job events from ``sys.event`` on channel *queue*
+    #. aggregated job states from ``sys.queue`` on channel *queue*
 
-    See :doc:`/example/index` for an example about _events_ and an example
-    about _messages_.
+    See :doc:`/example/index` for an example about *events* and an example
+    about *messages*.
     """
     author = "mra"
     title = "event web socket"
@@ -210,13 +210,13 @@ class EventHistoryHandler(CoreRequestHandler):
     """
     """
     author = "mra"
-    title = "event history handler"
+    title = "event history"
 
     # todo: write documentation
     async def get(self):
         """
         Methods:
-            GET /event/history
+            GET /core4/api/v1/event/history
 
         Parameters:
             per_page (int): number of events per page
@@ -246,9 +246,9 @@ class EventHistoryHandler(CoreRequestHandler):
         Examples:
             >>> from requests import post, get, put
             >>>
-            >>> login = get("http://devops:5001/core4/api/login?username=admin&password=hans")
+            >>> login = get("http://localhost:5001/core4/api/v1/login?username=admin&password=hans")
             >>> token = login.json()["data"]["token"]
-            >>> rv = post("http://devops:5001/core4/api/v1/roles",
+            >>> rv = post("http://localhost:5001/core4/api/v1/roles",
             ...           headers={"Authorization": "Bearer " + token},
             ...           json={
             ...               "name": "test",
@@ -260,20 +260,20 @@ class EventHistoryHandler(CoreRequestHandler):
             ...           })
             >>> rv
             <Response [200]>
-            >>> user_login = get("http://devops:5001/core4/api/login?username=test&password=very secret")
+            >>> user_login = get("http://localhost:5001/core4/api/v1/login?username=test&password=very secret")
             >>> user_token = user_login.json()["data"]["token"]
             >>>
             >>> from websocket import create_connection
             >>> import json
             >>>
-            >>> ws = create_connection("ws://devops:5001/core4/api/v1/event?token=" + user_token)
+            >>> ws = create_connection("ws://localhost:5001/core4/api/v1/event?token=" + user_token)
             >>> ws.send(json.dumps({"type": "interest", "data": ["message"]}))
             >>> ws.recv()
             '{"message": "processed interest in [\'message\']", "data": ["message"], "type": "interest"}'
             >>> for i in range(0, 100):
             ...     ws.send(json.dumps({"type": "message", "channel": "message", "text": "hello, this is message no. %d" %(i+1)}))
             >>>
-            >>> rv = get("http://devops:5001/core4/api/v1/event/history?page=1&per_page=5&token=" + user_token)
+            >>> rv = get("http://localhost:5001/core4/api/v1/event/history?page=1&per_page=5&token=" + user_token)
             >>> rv.json()
             {'_id': '5c8560b4ad7071213033a3d7',
              'code': 200,

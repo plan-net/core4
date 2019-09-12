@@ -13,15 +13,16 @@ from core4.api.v1.request.main import CoreRequestHandler
 
 
 class InfoHandler(CoreRequestHandler):
-    title = "server endpoint information"
+    """
+    Retrieve API endpoint details/help.
+    """
+    title = "endpoint information"
     author = "mra"
 
     async def get(self):
         """
-        Retrieve API endpoint details/help.
-
         Methods:
-            GET /info/<rsc_id> - endpoint details
+            GET /core4/api/v1/_info - list of endpoints
 
         Parameters:
             content_type (str): force json, html, text
@@ -41,8 +42,7 @@ class InfoHandler(CoreRequestHandler):
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
-            >>> rv = get("http://localhost:5001/core4/api/info/8ff1580edf27b12d4231567be936a0d6",
-            cookies=signin.cookies)
+            >>> rv = get(url  +  "/_info", cookies=signin.cookies)
             >>> rv.json()
         """
         result = []
