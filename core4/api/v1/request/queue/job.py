@@ -45,7 +45,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     author = "mra"
     title = "job manager"
-    tag = ["job management"]
+    tag = "jobs"
 
     def initialize(self):
         self.queue = CoreQueue()
@@ -69,7 +69,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         to the current user are returned.
 
         Methods:
-            GET /jobs - jobs listing
+            GET /core4/api/v1/jobs - jobs listing
 
         Parameters:
             per_page (int): number of jobs per page
@@ -124,7 +124,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             }
 
         Methods:
-            GET /jobs/<_id> - job details
+            GET /core4/api/v1/jobs/<_id> - job details
 
         Parameters:
             _id (str): job _id to get details
@@ -192,7 +192,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         ``filter`` attribute to filter jobs.
 
         Methods:
-            POST /jobs - jobs listing
+            POST /core4/api/v1/jobs - jobs listing
 
         Parameters:
             per_page (int): number of jobs per page
@@ -296,7 +296,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         can be deleted.
 
         Methods:
-            DELETE /jobs/<_id> - delete job from ``sys.queue``
+            DELETE /core4/api/v1/jobs/<_id> - delete job from ``sys.queue``
 
         Parameters:
             _id (str): job _id to delete
@@ -338,7 +338,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         can be updated.
 
         Methods:
-            PUT /jobs/<action>/<_id> - manage job in ``sys.queue``
+            PUT /core4/api/v1/jobs/<action>/<_id> - manage job in ``sys.queue``
 
         Parameters:
             action(str): ``delete``, ``kill`` or ``restart``
@@ -602,7 +602,7 @@ class JobPost(JobHandler):
 
     author = "mra"
     title = "enqueue job"
-    tag = ["job management"]
+    tag = "api jobs"
 
     async def post(self, _id=None):
         """
@@ -610,7 +610,7 @@ class JobPost(JobHandler):
         can be posted.
 
         Methods:
-            POST /enqueue - enqueue job
+            POST /core4/api/v1/enqueue - enqueue job
 
         Parameters:
             args (dict): arguments to be passed to the job
@@ -653,11 +653,12 @@ class JobPost(JobHandler):
 
         Examples:
             >>> from requests import post, get
+            >>> url = "http://localhost:5001/core4/api/v1"
             >>> signin = get(url + "/login?username=admin&password=hans")
             >>> token = signin.json()["data"]["token"]
             >>> h = {"Authorization": "Bearer " + token}
             >>> name = "core4.queue.helper.job.example.DummyJob"
-            >>> rv = post(url + "/enqueue?name=" + name, headers=h)
+            >>> rv = post(url + "/jobs/enqueue?name=" + name, headers=h)
             >>> rv.json()
             {
                 '_id': '5bdb554fde8b6925830b8b39',
@@ -724,7 +725,7 @@ class JobStream(JobPost):
 
     author = "mra"
     title = "job state stream"
-    tag = ["job management"]
+    tag = "jobs"
 
     def initialise_object(self):
         super().initialise_object()

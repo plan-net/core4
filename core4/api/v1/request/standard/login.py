@@ -17,8 +17,9 @@ from core4.api.v1.request.role.model import CoreRole
 from core4.util.email import RoleEmail
 
 class LoginHandler(CoreRequestHandler):
-    title = "login and password reset"
+    title = "authentication"
     author = "mra"
+    tag = "roles"
     protected = False
 
     async def get(self):

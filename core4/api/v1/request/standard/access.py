@@ -18,6 +18,7 @@ class AccessHandler(CoreRequestHandler):
     core4 database access handler.
     """
     title = "database access manager"
+    tag = "data"
     author = "mra"
 
     async def post(self, protocol=None):
@@ -27,7 +28,7 @@ class AccessHandler(CoreRequestHandler):
         implemented.
 
         Methods:
-            POST /
+            POST /core4/api/v1/access
 
         Parameters:
             protocol (str): access protocol
@@ -42,10 +43,10 @@ class AccessHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get, post
-            >>> url = "http://localhost:5001/core4/api/login"
+            >>> url = "http://localhost:5001/core4/api/v1/login"
             >>> rv = get(url + "?username=admin&password=hans")
             >>> token = rv.json()["data"]["token"]
-            >>> rv = post("http://localhost:5001/core4/api/access",
+            >>> rv = post("http://localhost:5001/core4/api/v1/access",
             >>>           headers={"Authorization": "Bearer " + token})
             >>> rv.json()
             {
@@ -57,7 +58,7 @@ class AccessHandler(CoreRequestHandler):
                 'message': 'OK',
                 'timestamp': '2019-02-15T06:02:24.884558'
             }
-            >>> rv = post("http://devops:5005/core4/api/access/mongodb",
+            >>> rv = post("http://localhost:5001/core4/api/v1/access/mongodb",
             >>>           headers={"Authorization": "Bearer " + token})
             >>> rv.json()
             {
@@ -74,3 +75,13 @@ class AccessHandler(CoreRequestHandler):
         else:
             body = await manager.synchronise(protocol)
         return self.reply(body)
+
+    async def get(self):
+        access = []
+        for a in await self.user.casc_perm():
+            (*proto, db) = a.split("/")
+            if proto and proto[0] == "mongodb:":
+                access.append(db)
+        return self.render("template/access.html",
+                           mongodb=self.config.sys.role.hostname,
+                           access=sorted(access))

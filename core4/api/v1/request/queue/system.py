@@ -18,6 +18,7 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
     """
     author = "mra"
     title = "system information"
+    tag = "info"
 
     async def get(self):
         """

@@ -5,17 +5,19 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import json
 import re
-from tornado.web import HTTPError
 from functools import wraps
+
+from tornado.web import HTTPError
 
 import core4
 import core4.const
 import core4.util
 import core4.util.tool
-from core4.base.main import CoreBase
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
+from core4.base.main import CoreBase
 
 # ToDo: tornado best approach for path handling
 
@@ -25,7 +27,6 @@ sys_name_restrictions = re.compile('(^[_])')
 
 # error handler interceptor
 def handle_errors(func):
-
     # core4 specific http error handler
     def write_error(self, status_code, error_reason):
         if isinstance(self, CoreRequestHandler):
@@ -49,6 +50,7 @@ def handle_errors(func):
 
             raise HTTPError(status_code=error.status_code,
                             reason=error.reason)
+
     return call
 
 
@@ -81,16 +83,15 @@ class SettingHandler(CoreRequestHandler):
 
 
     Endpoint structure example
-        *core4/api/v1/setting/_general/language?username=jdo*
+        * /core4/api/v1/setting/_general/language?username=jdo*
 
         * **setting** - service endpoint
         * **_general** - level 1
         * **language** - level 2
     """
-    title = "user setting"
+    title = "user settings"
     author = "oto"
-    protected = True
-
+    tag = "roles"
     default_setting = None
 
     # ###################################################################### #
@@ -194,7 +195,7 @@ class SettingHandler(CoreRequestHandler):
             return user_details['_id']
 
     async def _get_request_info(self, path):
-        #path = self.request.path[len(core4.const.SETTING_URL) + 1:]
+        # path = self.request.path[len(core4.const.SETTING_URL) + 1:]
         resources = path.split("/") if path else []
         user_id = await self._get_user_id()
 
@@ -244,7 +245,7 @@ class SettingHandler(CoreRequestHandler):
         data from core4.yaml file
 
         Methods:
-            GET /
+            GET /core4/api/v1/setting
 
         Parameters:
             username (str): parameter which specifies the user for which the
@@ -261,11 +262,11 @@ class SettingHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get
-            >>> url = "http://localhost:5001/core4/api"
+            >>> url = "http://localhost:5001/core4/api/v1"
             >>> setting = get(url + "/setting")
             >>> setting.status_code
             200
-            >>> rv = get("http://localhost:5001/core4/api/setting")
+            >>> rv = get("http://localhost:5001/core4/api/v1/setting")
             >>> rv
             {
                 “_id”: “5bd94d9bde8b6939aa31ad88”,
@@ -299,8 +300,13 @@ class SettingHandler(CoreRequestHandler):
         """
         (path, resources, user_id) = await self._get_request_info(path)
         document = await self._get_db_document(user_id, True)
-
-        self.reply(self._data_extractor(resources, document))
+        data = self._data_extractor(resources, document)
+        if self.wants_html():
+            out = json.dumps(data, sort_keys=True, indent=4)
+            self.render("template/setting.html",
+                        data=out)
+        else:
+            self.reply(data)
 
     @handle_errors
     async def delete(self, path=None):
@@ -308,7 +314,7 @@ class SettingHandler(CoreRequestHandler):
         Delete user setting from database
 
         Methods:
-            DELETE /
+            DELETE /core4/api/v1/setting
 
         Parameters:
             username (str): parameter which specifies the user for which the
@@ -356,7 +362,7 @@ class SettingHandler(CoreRequestHandler):
         Create/update user settings in database
 
         Methods:
-            POST /
+            POST /core4/api/v1/setting
 
         Parameters:
             username (str): parameter which specifies the user for which the
@@ -444,6 +450,7 @@ class CoreSettingDataAccess(CoreBase):
     Encapsulates database access for main http methods: GET, POST, PUT, DELETE
     This class should be used only inside SettingHandler class
     """
+
     # FIXME: avoid using HTTPError in the database layer
 
     def initialise_object(self):
