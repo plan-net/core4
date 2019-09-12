@@ -22,7 +22,7 @@ from core4.error import Core4RoleNotFound
 class ProfileHandler(CoreRequestHandler):
     title = "user profile"
     author = "mra"
-    tag = ["roles"]
+    tag = ["api", "roles"]  # idea is to have a profile app, remove api by then
 
     async def get(self):
         """

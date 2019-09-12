@@ -18,7 +18,7 @@ class AccessHandler(CoreRequestHandler):
     core4 database access handler.
     """
     title = "database access manager"
-    tag = "data"
+    tag = "data app"
     author = "mra"
 
     async def post(self, protocol=None):

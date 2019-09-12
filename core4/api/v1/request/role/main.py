@@ -20,7 +20,7 @@ from core4.util.email import RoleEmail
 class RoleHandler(CoreRequestHandler):
     title = "role and user management"
     author = "mra"
-    tag = "roles"
+    tag = "roles app"
 
     async def post(self, _id=None):
         """

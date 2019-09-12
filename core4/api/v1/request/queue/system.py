@@ -18,7 +18,7 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
     """
     author = "mra"
     title = "system information"
-    tag = "info"
+    tag = "api info"  # idea is to have a system info app, remove api by then
 
     async def get(self):
         """

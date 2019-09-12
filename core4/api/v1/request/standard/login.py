@@ -19,7 +19,8 @@ from core4.util.email import RoleEmail
 class LoginHandler(CoreRequestHandler):
     title = "authentication"
     author = "mra"
-    tag = "roles"
+    tag = "api roles"  # idea is to have a login, password, logout page
+                       # remove api by then
     protected = False
 
     async def get(self):

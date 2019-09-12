@@ -42,7 +42,6 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
     title = "asset handler"
     default_filename = "index.html"
     icon = "memory"
-    tag = None
 
     def __init__(self, *args, **kwargs):
         CoreRequestHandler.__init__(self, *args, **kwargs)

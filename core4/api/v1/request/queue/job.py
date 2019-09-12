@@ -45,7 +45,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     author = "mra"
     title = "job manager"
-    tag = "jobs"
+    tag = "api jobs"  # idea is to have a FE app; remove api by then
 
     def initialize(self):
         self.queue = CoreQueue()
@@ -725,7 +725,7 @@ class JobStream(JobPost):
 
     author = "mra"
     title = "job state stream"
-    tag = "jobs"
+    tag = "api jobs"
 
     def initialise_object(self):
         super().initialise_object()
