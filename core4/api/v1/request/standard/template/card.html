@@ -34,7 +34,7 @@
                 {% end %}
             </div>
             <p class="widget-description text-muted pt-1 mt-1">
-                {% if description != None %}
+                {% if description != "None" %}
                 {{description[:115]}}{% if len(description) > 115 %}…{% end %}
                 {% end if %}
             </p>
