@@ -101,8 +101,8 @@ class TestLogging(unittest.TestCase):
         data = list(self.mongo.core4test.sys.log.find(
             {"exception": {"$ne": None}}))
         self.assertEqual(1, len(data))
-        self.assertEqual(data[0]["exception"]["info"],
-                         "RuntimeError('this is a manual runtime error',)")
+        self.assertIn("RuntimeError('this is a manual runtime error'",
+                      data[0]["exception"]["info"])
         out = "\n".join(data[0]["exception"]["text"])
         self.assertIn("RuntimeError: this is a manual runtime error", out)
 
