@@ -1,12 +1,15 @@
-import pytest
-from tests.api.test_test import setup, mongodb, core4api
 import os
+
+import pytest
+
+from tests.api.test_test import setup, mongodb, core4api
 
 _ = setup
 _ = mongodb
 _ = core4api
 
 import random
+
 
 @pytest.fixture(autouse=True)
 def add_setup(tmpdir):
@@ -100,7 +103,15 @@ async def test_default_settings_override(core4api):
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
-    expect = {"_general": {"language": "UA", 'menu': {'About': '/about'}}}
+    expect = {
+        "_general": {
+            "language": "UA",
+            'menu': [
+                {'About': '/about'},
+                {'Profile': '/core4/api/v1/profile'}
+            ]
+        }
+    }
     assert response.json()["data"] == expect
 
 
@@ -112,7 +123,15 @@ async def test_delete_settings(core4api):
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
-    expect = {"_general": {"language": "UA", 'menu': {'About': '/about'}}}
+    expect = {
+        "_general": {
+            "language": "UA",
+            'menu': [
+                {'About': '/about'},
+                {'Profile': '/core4/api/v1/profile'}
+            ]
+        }
+    }
     assert response.json()["data"] == expect
 
     response = await core4api.delete("/core4/api/v1/setting")
@@ -133,10 +152,12 @@ async def test_delete_nested_settings(core4api):
     response = await core4api.get("/core4/api/v1/setting")
     assert response.json()["data"] == {"_general": {
         "language": "FR",
-        'menu': {'About': '/about'}},
+        'menu': [
+            {'About': '/about'},
+            {'Profile': '/core4/api/v1/profile'}
+        ]},
         "project": {"setting1": 57,
                     "setting2": 111}}
-
     response = await core4api.delete("/core4/api/v1/setting/project/setting1")
     assert response.ok
 
@@ -145,19 +166,27 @@ async def test_delete_nested_settings(core4api):
     assert response.json()["data"] == {
         "_general": {
             "language": "FR",
-            'menu': {'About': '/about'}
+            'menu': [
+                {'About': '/about'},
+                {'Profile': '/core4/api/v1/profile'}
+            ]
         },
-    "project": {"setting2": 111}}
+        "project": {"setting2": 111}}
 
     response = await core4api.delete("/core4/api/v1/setting/project")
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
     assert response.ok
-    assert response.json()["data"] == {"_general": {"language": "FR",
-                                                    'menu': {'About': '/about'}
-                                                    }
-                                       }
+    assert response.json()["data"] == {
+        "_general": {
+            "language": "FR",
+            'menu': [
+                {'About': '/about'},
+                {'Profile': '/core4/api/v1/profile'}
+            ]
+        }
+    }
 
 
 async def test_user_override(core4api):
@@ -276,7 +305,8 @@ async def test_get_nested_settings(core4api):
                                    json={"data": to_send})
     assert response.ok
 
-    response = await core4api.get("/core4/api/v1/setting/_general/language/code")
+    response = await core4api.get(
+        "/core4/api/v1/setting/_general/language/code")
     assert response.ok
     assert response.json()["data"] == "LT"
 
@@ -296,16 +326,18 @@ async def test_update_nested_settings(core4api):
     assert response.ok
     assert response.json()["data"] == {"code": "LT", "name": "Ukraine"}
 
-    response = await core4api.put("/core4/api/v1/setting/_general/language/code",
-                                  json={"data": "RU"})
+    response = await core4api.put(
+        "/core4/api/v1/setting/_general/language/code",
+        json={"data": "RU"})
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting/_general/language")
     assert response.ok
     assert response.json()["data"] == {"code": "RU", "name": "Ukraine"}
 
-    response = await core4api.put("/core4/api/v1/setting/_general/language/name",
-                                  json={"data": "Russia"})
+    response = await core4api.put(
+        "/core4/api/v1/setting/_general/language/name",
+        json={"data": "Russia"})
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting/_general/language")
