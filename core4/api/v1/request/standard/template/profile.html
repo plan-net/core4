@@ -274,13 +274,13 @@ var app = new Vue({
             username: "{{ handler.user.name }}",
             password: "",
             password2: "",
-            created: "{{ created }}",
+            created: "{{ created.strftime("%d.%m.%Y %H:%M") }}",
             rules: {
                 required: value => !!value || 'Required.',
                 email: value => checkMail(value)
             },
             etag: "{{ etag }}",
-            dialog_message: "hello world"
+            dialog_message: ""
         }
     },
 
