@@ -146,7 +146,8 @@ user_setting:
    _general:
      language: EN
      menu:
-       About: /about
+       - About: /about
+       - Profile: /core4/api/v1/profile
 
 queue:
   history_in_days: 7
