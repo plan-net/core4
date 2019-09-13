@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>user settings</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify.css"
+          rel="stylesheet">
+    <style>
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <v-app class="ma-2">
+        <v-container>
+            <v-layout align-start justify-start row/>
+            <v-avatar>
+                <v-icon x-large color="accent">account_circle</v-icon>
+            </v-avatar>
+            <v-layout class="ml-2" column>
+                <h1 class="headline">{{ handler.user.name }}</h1>
+                <h2 class="title">{{ handler.user.realname }}</h2>
+            </v-layout>
+            </v-layout>
+            <v-layout class="mt-4" align-start justify-start row/>
+            <v-divider></v-divider>
+            </v-layout>
+            <v-layout class="mt-4" align-start row/>
+            <v-text-field v-model="username" label="Username" box
+                          readonly></v-text-field>
+            </v-layout>
+            <v-layout align-start row/>
+            <v-text-field v-model="realname" :rules="[rules.required]"
+                          label="Real Name" box></v-text-field>
+            </v-layout>
+            <v-layout align-start row/>
+            <v-text-field v-model="email" :rules="[rules.required, rules.email]"
+                          label="E-Mail" box></v-text-field>
+            </v-layout>
+            <v-layout align-start row/>
+            <v-text-field v-model="created" label="Created" box readonly></v-text-field>
+            </v-layout>
+            <v-layout align-start row/>
+            <v-text-field :type="'password'" v-model="password"
+                          label="New Password" box></v-text-field>
+            </v-layout>
+            <v-layout align-start row/>
+            <v-text-field :type="'password'" :error-messages='passwordMatch()'
+                          v-model="password2" label="Confirm Password" box
+                          v-show="password != ''"></v-text-field>
+            </v-layout>
+            <v-layout align-start row/>
+            <v-btn color="primary" :disabled="!this.valid" @click="send">Save
+                Changes
+            </v-btn>
+            </v-layout>
+            <v-layout class="mt-4" align-start justify-start row/>
+            <v-divider></v-divider>
+            </v-layout>
+            <v-layout class="mt-4" align-start justify-start row/>
+            <h1 class="headline">Roles</h1>
+            </v-layout>
+            <v-layout class="mt-4" align-start justify-start row/>
+            {% if "cop" in perm %}
+            <v-chip color="primary" text-color="white">cop</v-chip>
+            {% end if %}
+            {% for p in role %}
+            <v-chip color="accent" text-color="white">{{ p }}</v-chip>
+            {% end for %}
+            </v-layout>
+            <v-layout class="mt-4" align-start justify-start row/>
+            <v-divider></v-divider>
+            </v-layout>
+            <v-layout class="mt-4" align-start justify-start row/>
+            <h1 class="headline">Access Permissions</h1>
+            </v-layout>
+            <v-layout class="mt-4" align-start row>
+                <v-flex>
+                    <v-card>
+                        <v-toolbar>
+                            <v-toolbar-title>Job Access</v-toolbar-title>
+                            <v-spacer></v-spacer>
+                        </v-toolbar>
+                        <v-list>
+                            {% set missing = True %}
+                            {% for p in perm %}
+                                {% if p.startswith("job://") %}
+                                    {% set missing = False %}
+                                    {% set part = p.split("/") %}
+                            <v-list-tile>
+                                <v-list-tile-action>
+                                        {% if part[3] == "x" %}
+                                    <v-icon color="accent">remove_red_eye
+                                    </v-icon>
+                                        {% else %}
+                                    <v-icon color="primary">edit</v-icon>
+                                        {% end if %}
+                                </v-list-tile-action>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>{{ part[2] }}
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                                {% end if %}
+                            {% end for %}
+                            {% if missing %}
+                            <v-list-tile>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>None
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                            {% end if %}
+                        </v-list>
+                    </v-card>
+                </v-flex>
+            </v-layout>
+            <v-layout class="mt-4" align-start row>
+                <v-flex>
+                    <v-card>
+                        <v-toolbar>
+                            <v-toolbar-title>HTTP API Access</v-toolbar-title>
+                            <v-spacer></v-spacer>
+                        </v-toolbar>
+                        <v-list>
+                            {% set missing = True %}
+                            {% for p in perm %}
+                                {% if p.startswith("api://") %}
+                                    {% set missing = False %}
+                            <v-list-tile>
+                                <v-list-tile-action>
+                                    <v-icon>launch</v-icon>
+                                </v-list-tile-action>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>{{ p[6:] }}
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                                {% end if %}
+                            {% end for %}
+                            {% if missing %}
+                            <v-list-tile>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>None
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                            {% end if %}
+                        </v-list>
+                    </v-card>
+                </v-flex>
+            </v-layout>
+            <v-layout class="mt-4" align-start row fill-height>
+                <v-flex xs6>
+                    <v-card>
+                        <v-toolbar>
+                            <v-toolbar-title>Database Access</v-toolbar-title>
+                            <v-spacer></v-spacer>
+                            <v-btn icon>
+                                <v-icon @click="db_access">arrow_forward</v-icon>
+                            </v-btn>
+                        </v-toolbar>
+                        <v-list>
+                            {% for p in perm %}
+                                {% if p.startswith("mongodb://") %}
+                            <v-list-tile>
+                                <v-list-tile-action>
+                                    <v-icon>album</v-icon>
+                                </v-list-tile-action>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>{{ p[10:] }}
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                                {% end if %}
+                            {% end for %}
+                            <v-list-tile>
+                                <v-list-tile-action>
+                                    <v-icon color="red">album</v-icon>
+                                </v-list-tile-action>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>user!{{ current_user }}
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                        </v-list>
+                    </v-card>
+                </v-flex>
+                <v-flex class="ml-2" xs6>
+                    <v-card>
+                        <v-toolbar>
+                            <v-toolbar-title>Application Specials
+                            </v-toolbar-title>
+                            <v-spacer></v-spacer>
+                        </v-toolbar>
+                        <v-list>
+                            {% set missing = True %}
+                            {% for p in perm %}
+                                {% if p.startswith("app://") %}
+                                    {% set missing = False %}
+                            <v-list-tile>
+                                <v-list-tile-action>
+                                    <v-icon>apps</v-icon>
+                                </v-list-tile-action>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>{{ p[5:] }}
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                                {% end if %}
+                            {% end for %}
+                            {% if missing %}
+                            <v-list-tile>
+                                <v-list-tile-content>
+                                    <v-list-tile-title>None
+                                    </v-list-tile-title>
+                                </v-list-tile-content>
+                            </v-list-tile>
+                            {% end if %}
+                        </v-list>
+                    </v-card>
+                </v-flex>
+            </v-layout>
+            <v-snackbar v-model="snackbar" :bottom="true" :multi-line="false" :timeout=3000 :vertical=true>
+                Your profile has been saved.
+                <v-btn color="primary" flat @click="snackbar = false">Close</v-btn>
+            </v-snackbar>
+            <v-dialog v-model="dialog" persistent max-width="290">
+                <v-card>
+                    <v-card-title class="title">ERROR</v-card-title>
+                    <v-card-text v-html="dialog_message"></v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="green darken-1" flat @click="dialog = false">CLOSE</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+        </v-container>
+    </v-app>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
+
+</body>
+<script>
+
+function checkMail(value) {
+    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    return pattern.test(value) || 'Invalid e-mail.'
+}
+
+
+var ERROR = {
+    'HTTPError(400, "name or email exists")': "This E-Mail already exists!"
+}
+
+
+var app = new Vue({
+
+    el: '#app',
+
+    data() {
+        return {
+            snackbar: false,
+            dialog: false,
+            email: "{{ handler.user.email }}",
+            realname: "{{ handler.user.realname }}",
+            username: "{{ handler.user.name }}",
+            password: "",
+            password2: "",
+            created: "{{ created }}",
+            rules: {
+                required: value => !!value || 'Required.',
+                email: value => checkMail(value)
+            },
+            etag: "{{ etag }}",
+            dialog_message: "hello world"
+        }
+    },
+
+    created() {
+        this.$vuetify.theme = window.PNBI_THEME;
+        axios.interceptors.request.use(
+            request => {
+                request.headers['Accept'] = 'application/json'
+                request.withCredentials = true
+                return request
+            },
+            error => {
+                return Promise.reject(error)
+        })
+    },
+
+    computed: {
+        valid: function() {
+            if (this.realname == "") {
+                return false;
+            }
+            if ((this.password != "") && (this.password != this.password2)) {
+                return false;
+            }
+            if (checkMail(this.email) != true) {
+                return false;
+            }
+            return true;
+        }
+    },
+
+    delimiters: ['[[', ']]'],
+
+    mounted(){
+    },
+
+    methods:{
+        passwordMatch: function() {
+            return (this.password == this.password2) ? '' : "Passwords do not match"
+        },
+        db_access: function() {
+            location.href = "/core4/api/v1/access";
+        },
+        send: function() {
+            var data = {
+                email: this.email,
+                realname: this.realname,
+                etag: this.etag
+            };
+            if (this.password != "") {
+                data["passwd"] = this.password;
+            }
+            axios.put('/core4/api/v1/profile', data).then(
+                function (response) {
+                    if (response.data.data == "no changes") {
+                    }
+                    else {
+                        this.password = "";
+                        this.password2 = "";
+                        this.realname = response.data.data.realname;
+                        this.email = response.data.data.email;
+                        this.etag = response.data.data.etag;
+                        // location.href = "/core4/api/v1/profile";
+                        this.snackbar = true;
+                    }
+                }.bind(this))
+                    .catch(function (error) {
+                        if (error.response.status == 400) {
+                            for (var e in ERROR) {
+                                if (error.response.data.error.includes(e)) {
+                                    this.dialog_message = ERROR[e];
+                                    this.dialog = true;
+                                }
+                            }
+                        }
+                        else {
+                            console.log(error);
+                        }
+                    }.bind(this)
+                );
+        }
+    }
+})
+
+</script>
+
+</script>
+</html>

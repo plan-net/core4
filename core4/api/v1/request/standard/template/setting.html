@@ -20,7 +20,8 @@
     <v-app class="ma-2">
         <v-container>
             <v-layout column>
-                <h1 class="headline mb-3">{{ current_user }}</h1>
+                <h1 class="headline mb-3">{{ handler.user.realname }}
+                    ({{ handler.user.name }})</h1>
                 <p>
                     The following json structure represents your personal
                     user settings.
