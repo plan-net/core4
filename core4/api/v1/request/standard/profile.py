@@ -20,12 +20,13 @@ from core4.error import Core4RoleNotFound
 
 
 class ProfileHandler(CoreRequestHandler):
-    title = "user profile"
-    author = "mra"
-    tag = "roles"
     """
     View and edit your profile.
     """
+
+    title = "user profile"
+    author = "mra"
+    tag = "roles"
 
     async def get(self):
         """
