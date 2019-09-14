@@ -411,7 +411,7 @@ class CoreBaseHandler(CoreBase):
         :return: result of :meth:`.card`
         """
         doc = await self.meta()
-        return self.card(**doc)
+        return await self.card(**doc)
 
     def xenter(self, *args, **kwargs):
         """
@@ -434,7 +434,7 @@ class CoreBaseHandler(CoreBase):
         doc = await self.meta()
         return self.help(**doc)
 
-    def card(self, **data):
+    async def card(self, **data):
         """
         Renders the default card page. This method is to be overwritten for
         custom card page impelementation.

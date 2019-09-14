@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>core4os system info</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="app">
+    <v-app class="ma-2">
+        <v-container>
+            <v-layout column>
+
+                <h1 class="headline">Details</h1>
+
+                {% if maintenance["project"] %}
+                <v-flex class="mt-2 mb-2">
+                  <v-card>
+                    <v-toolbar>
+                      <v-toolbar-title>Project Maintenance</v-toolbar-title>
+                    </v-toolbar>
+                    <v-list one-line>
+                        <v-list-tile>
+                        {% for p in maintenance["project"] %}
+                            <v-chip color="accent" text-color="white">{{ p }}</v-chip>
+                        {% end for %}
+                        </v-list-tile>
+                    </v-list>
+                  </v-card>
+                </v-flex>
+                {% end if %}
+
+                <v-flex class="mt-2">
+                  <v-card>
+                    <v-toolbar>
+                      <v-toolbar-title>Daemons</v-toolbar-title>
+                        <v-spacer></v-spacer>
+                          {% if maintenance["system"] %}
+                            <v-btn fab dark small color="primary">
+                              <v-icon color="white">pause</v-icon>
+                            </v-btn>
+                          {% else %}
+                            <v-btn fab dark small color="accent">
+                              <v-icon color="white">play_arrow</v-icon>
+                            </v-btn>
+                          {% end if %}
+                    </v-toolbar>
+                    {% for worker in alive %}
+                    <v-list one-line>
+                        <v-list-tile>
+                          <v-list-tile-avatar>
+                              {% if worker["kind"] == "app" %}
+                                  <v-icon>apps</v-icon>
+                              {% elif worker["kind"] == "worker" %}
+                                  <v-icon>gavel</v-icon>
+                              {% elif worker["kind"] == "scheduler" %}
+                                  <v-icon>access_time</v-icon>
+                              {% end if %}
+                          </v-list-tile-avatar>
+                          <v-list-tile-content>
+                            <v-list-tile-title>{{ worker["_id"] }}</v-list-tile-title>
+                            <v-list-tile-sub-title>{{ worker.get("loop", "") }}</v-list-tile-sub-title>
+                          </v-list-tile-content>
+                        </v-list-tile>
+                    </v-list>
+                    {% end for %}
+                  </v-card>
+                </v-flex>
+
+            </v-layout>
+        </v-container>
+    </v-app>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
+
+<script>
+
+var app = new Vue({
+
+    el: '#app',
+
+    data() {
+        return {
+        }
+    },
+
+    created() {
+        this.$vuetify.theme = window.PNBI_THEME;
+        axios.interceptors.request.use(
+            request => {
+                request.headers['Accept'] = 'application/json'
+                request.withCredentials = true
+                return request
+            },
+            error => {
+                return Promise.reject(error)
+        })
+    },
+
+    computed: {
+    },
+
+    delimiters: ['[[', ']]'],
+
+    mounted(){
+    },
+
+    methods:{
+    }
+})
+</script>
+</body>
+
+</script>
+</html>
