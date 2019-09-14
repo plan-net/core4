@@ -119,6 +119,9 @@ def alive():
     cols = ["loop", "loop_time", "heartbeat", "kind", "_id"]
     for doc in QUEUE.get_daemon():
         mx = max(0, len(doc["_id"]))
+        doc["loop"] = doc["loop"].replace(microsecond=0)
+        for t in ("loop_time", "heartbeat"):
+            doc[t] = datetime.timedelta(seconds=int(doc[t].total_seconds()))
         rec.append([str(doc[k]) for k in cols])
     if rec:
         print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*cols))
@@ -212,7 +215,11 @@ def listing(*state):
             runtime = addon.total_seconds()
         else:
             runtime = job["runtime"] or 0
-        runtime = datetime.timedelta(seconds=runtime)
+        runtime = datetime.timedelta(seconds=int(runtime))
+        age = core4.util.node.mongo_now() - (
+                job["enqueued"]["at"] or core4.util.node.mongo_now()
+        )
+        age = datetime.timedelta(seconds=int(age.total_seconds()))
         print(
             job["_id"],
             "{:8.8s}".format(job["state"]),
@@ -223,10 +230,9 @@ def listing(*state):
             "{:3d}/{:3d}".format(
                 job["attempts"] - job["attempts_left"], job["attempts"]),
             "{:<6.6s}".format(job.get("enqueued", {}).get("username", None)),
-            "{:19s}".format(str(
-                core4.util.data.utc2local(job["enqueued"]["at"]))),
-            "{:19s}".format(str(core4.util.node.mongo_now() - (
-                    job["enqueued"]["at"] or core4.util.node.mongo_now()))),
+            "{:19s}".format(core4.util.data.utc2local(
+                job["enqueued"]["at"]).strftime("%Y-%m-%d %H:%M:%S")),
+            "{:19s}".format(str(age)),
             "{:11s}".format(str(runtime)),
             fmtworker.format(worker),
             job["name"]
