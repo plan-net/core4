@@ -14,7 +14,7 @@ import os
 import pymongo
 import pymongo.errors
 from bson.objectid import ObjectId
-
+import core4.util.node
 import core4.const
 import core4.util.crypt
 from core4.base import CoreBase
@@ -98,13 +98,16 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         data = dict(
             name=self.config.api.admin_username,
             realname=self.config.api.admin_realname,
+            is_active=True,
+            created=core4.util.node.mongo_now(),
+            updated=None,
             password=core4.util.crypt.pwd_context.hash(
                 self.config.api.admin_password),
             email=self.config.api.contact,
             etag=ObjectId(),
             perm=[core4.const.COP],
-            is_active=True
         )
+
         try:
             self.config.sys.role.insert_one(data)
             self.logger.info("created user [%s]",
@@ -117,7 +120,9 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 realname=self.config.api.user_realname,
                 etag=ObjectId(),
                 perm=self.config.api.user_permission,
-                is_active=True
+                is_active=True,
+                created=core4.util.node.mongo_now(),
+                updated=None
             ))
             self.logger.info("created user [%s]",
                              self.config.api.user_rolename)

@@ -20,9 +20,13 @@ from core4.error import Core4RoleNotFound
 
 
 class ProfileHandler(CoreRequestHandler):
+    """
+    View and edit your profile.
+    """
+
     title = "user profile"
     author = "mra"
-    tag = ["api", "roles"]  # idea is to have a profile app, remove api by then
+    tag = "roles"
 
     async def get(self):
         """
@@ -92,7 +96,10 @@ class ProfileHandler(CoreRequestHandler):
             ))
         doc = await user.detail()
         doc["token_expires"] = self.token_exp
-        self.reply(doc)
+        if self.wants_html():
+            self.render("template/profile.html", **doc)
+        else:
+            self.reply(doc)
 
     async def put(self):
         """

@@ -10,9 +10,41 @@
     <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        
+        .offline {
+            color: #d70f14;
+            font-size: 28pt;
+        }
+        .online {
+            font-size: 28pt;
+        }
     </style>
+    <script type="text/javascript" src="{{ default_static('assets/jquery-3.4.0.min.js') }}"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            update();
+        });
 
+        function update() {
+            var d = new Date();
+            $.ajax({
+                url: '/core4/api/v1/system',
+                type: 'GET',
+                success: function(data) {
+                    if (data["data"]["maintenance"]["system"]) {
+                        $("#system_text").text("OFFLINE at " + d.toLocaleTimeString());
+                        $("#system_state").text("pause_circle_filled");
+                        $("#system_state").removeClass("text-success");
+                    }
+                    else {
+                        $("#system_text").text("ONLINE at " + d.toLocaleTimeString());
+                        $("#system_state").text("play_circle_filled");
+                        $("#system_state").addClass("text-success");
+                    }
+                    setTimeout(update, 1000);
+                }
+            })
+        }
+    </script>
 </head>
 
 <body class="theme-dark widget-card-container">
@@ -33,10 +65,14 @@
                 </div>
                 {% end %}
             </div>
-            <p class="widget-description text-muted pt-1 mt-1">
-                {% if description != "None" %}
-                {{description[:115]}}{% if len(description) > 115 %}…{% end %}
-                {% end if %}
+            <p class="widget-description text-muted">
+                <div class="d-flex flex-row">
+                    <small class="d-flex flex-row">
+                        <i id="system_state" class="material-icons offline"></i>
+                        <span id="system_text" style="font-size: 12pt;" class="text-muted pl-1 pt-2"></span>
+                    </small>
+                </div>
+
             </p>
             <div class="d-flex flex-row widget-footer">
                 <small class="d-flex flex-row mr-3">
@@ -49,16 +85,12 @@
                 </small>
             </div>
 
-
-
-
         </div>
     </div>
 
 
 
 </body>
-<!--<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>-->
 <script>
     (function () {
         const urlParams = new URLSearchParams(window.location.search);

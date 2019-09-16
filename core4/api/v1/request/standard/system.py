@@ -18,7 +18,8 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
     """
     author = "mra"
     title = "system information"
-    tag = "api info"  # idea is to have a system info app, remove api by then
+    tag = "info"  # idea is to have a system info app, remove api by then
+    icon = "settings_applications"
 
     async def get(self):
         """
@@ -70,14 +71,16 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
              'message': 'OK',
              'timestamp': '2019-03-10T17:23:31.576754'}
         """
-
-        return self.reply({
+        doc = {
             "alive": await self.get_daemon_async(),
             "maintenance": {
                 "system": await self._maintenance(),
                 "project": await self._project_maintenance()
             }
-        })
+        }
+        if self.wants_html():
+            return self.render("template/system.html", **doc)
+        return self.reply(doc)
 
     async def _maintenance(self):
         return await self.config.sys.worker.count_documents(
@@ -88,3 +91,8 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
         if doc:
             return doc["maintenance"]
         return []
+
+    async def card(self, *args, **kwargs):
+        kwargs["maintenance"] = await self._maintenance()
+        kwargs["project"] = await self._project_maintenance()
+        return self.render("template/system.card.html", **kwargs)
