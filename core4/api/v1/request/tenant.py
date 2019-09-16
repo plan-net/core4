@@ -47,25 +47,14 @@ class CoreTenantHandler(CoreRequestHandler):
             else:
                 client = self.path_args.pop(0)
             self.client = client
-            return await self.has_client_access(client)
+            return await self.user.has_client_access(client)
         return False
 
-    async def has_client_access(self, client):
-        """
-        Verifies the user has a valid permission ``app://client/[client-name]``.
-
-        :param client: client (str) extracted from the URL
-        :return: ``True`` for success, else ``False``
-        """
-        if await self.user.is_admin():
-            return True
-        for p in await self.user.casc_perm():
-            parts = p.split("/")
-            if len(parts) > 3:
-                if parts[0] == "app:":
-                    if parts[2] == "client":
-                        if "/".join(parts[3:]) == client:
-                            self.logger.debug("grant access to client [%s]",
-                                              client)
-                            return True
-        return False
+    # async def has_client_access(self, client):
+    #     """
+    #     Verifies the user has a valid permission ``app://client/[client-name]``.
+    #
+    #     :param client: client (str) extracted from the URL
+    #     :return: ``True`` for success, else ``False``
+    #     """
+    #     return self.user.has_client_access(client)
