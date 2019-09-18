@@ -1,51 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <title>HELP {{ handler.__class__.__name__ }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
-    <!-- <link rel="stylesheet" type="text/css" href="..\..\_static\bootstrap-material-design.custom.css"> -->
-    <!--<link rel="stylesheet" type="text/css" href="..\..\_static\widget.css">-->
-
-    <style>
-        .accordion-arrow {
-            position: relative;
-            /* Adjust these values accordingly */
-            top: 6px;
-        }
-
-        .inner-card {
-            box-shadow: none;
-        }
-
-        .scrollspy-help {
-            position: relative;
-            height: 100%;
-            margin-top: .5rem;
-            overflow: auto;
-        }
-
-        .list-group {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            padding: .5rem 0;
-        }
-
-        .left-card {
-            min-height: 48px;
-            height: 80vh;
-        }
-
-        .inner-card-body {
-            height: 100%
-        }
+   <meta charset="UTF-8">
+   <title>Download</title>
+   <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+   <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+   <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
+   <style>
+       pre.doctest-block {
+            border: 1px dashed #fff;
+            margin: 10px;
+            font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+            background-color: gray;
+            color: #fff;
+            font-size: 1em;
+            border-radius: 5px;
+            padding: 10px;
+       }
 
         .row {
             margin-top: 64px;
+        }
+
+        .card {
+            max-height: calc(100vh - 1000px);
+            padding: 12px 0;
+            border: 0;
+            box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+        }
+
+        .tab-item {
+            overflow-y: scroll;
         }
 
         .container-fluid::before {
@@ -61,104 +47,59 @@
             min-height: 120px;
         }
 
-        .list-group {
-            padding-top: 0px;
-        }
-
-        .btn-link {
-            padding: 0px;
-            margin: 0px;
-            text-align: left;
-        }
-
-        #accordion {
-            max-width: 95%;
-        }
-    </style>
+   </style>
 </head>
-
 <body>
-    <!-- <h1>HELP of {{ handler.__class__.__name__ }}</h1> -->
-    <div class="container-fluid">
-        <div class="row mx-auto" style="max-width:1260px">
-            <div class="card left-card col-9 ">
-                <div class="card-body inner-card-body" style="position:relative">
-                    <div data-spy="scroll" data-target="#help-list" data-offset="0" class="scrollspy-help">
-                        <h3 id="list-item-1">{{ title }}</h3>
-                        <h5>{{ subtitle }}</h5>
-                        <div id="accordion">
-                            <div class="card inner-card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        QUAL_NAME : {{qual_name}} 
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        AUTHOR : {{author}}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        TAG : <span class="md-chips pt-0 pb-0 pl-1">
-                                                {% for t in tag[:3] %}
-                                                <div class="md-chip">
-                                                    {{t}}
-                                                </div>
-                                                {% end %}
-                                            </span>
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        ICON : <i class="material-icons">{{ icon }}</i> - {{ icon }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        PROTECTED : {{ protected }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
+<div id="app">
+   <v-app>
+        <div class="container-fluid">
+            <div class="row mx-auto" style="max-width:1260px">
+                <div class="card col-12 ">
+                    <div class="card-body inner-card-body" style="position:relative">
+                        <header class="px-7">
+                            <h2 class="mb-0">
+                                {{ title }}
+                           </h2>
+                            <h3>
+                                {{ subtitle }}
+                                <!--{{ qual_name}}-->
+                            </h3>
+                        </header>
+                       <div>
+                           <v-tabs v-model="tabs" background-color="#d70f14" slider-color="white" :centered="true" :grow="true" dark>
+                               <v-tab>
+                                   Description
+                              </v-tab>
+                               <v-tab>
+                                   Details
+                              </v-tab>
+                           </v-tabs>
+                           <v-tabs-items v-model="tabs" class="px-7" style="overflow-y: scroll">
+                               <v-tab-item style="overflow-y: scroll">
+                                        <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
+
+                                        <span>{% raw description_html %}</span>
+                                        <!--<hr />-->
+                                        {% for elem in method %}
+                                        <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
+                                        <h2></h2>
+                                        {% raw elem["html"] %}
+                                        <!--<hr />-->
+                                        {% end %}
+                                </v-tab-item>
+                               <v-tab-item>
+                                    <h4 class="mb-0">-->
                                         RESOURCE ID : {{ rsc_id }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CONTAINER : {{ container }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CREATED AT : {{created_at.strftime("%d.%m.%Y %H:%M")}}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        THIS ENTER_URL : {{ enter_url }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CLASS ARGS : {{ args }}
-                                    </h6>
-                                </div>
-                            </div>
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo"
-                                    aria-expanded="false" aria-controls="collapseTwo">
-                                    <div class="card-header" id="headingTwo">
-                                        <h6 class="mb-0 ">
-                                            THIS PATTERN <i
-                                                class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <ul>
+                                    </h4>
+                                   <h4>
+                                       CONTAINER : {{ container }}
+                                   </h4>
+                                   <h4>
+                                       CLASS ARGS : {{ args }}
+                                   </h4>
+                                   <h4>
+                                       PATTERN:
+                                       <ul>
                                             {% for p in pattern %}
                                             <li>
                                                 {% if p["name"] is not None %}
@@ -170,45 +111,10 @@
                                             </li>
                                             {% end %}
                                         </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--<div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                                    <div class="card-header" id="headingThree">
-                                        <h6 class="mb-0 ">
-                                            CONTAINER <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseThree" class="collapse" aria-labelledby="headingThree"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <div class="md-chips pt-0 pb-0">
-                                            {% for t in tag[:3] %}
-                                            <div class="md-chip">
-                                                {{t}}
-                                            </div>
-                                            {% end %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>-->
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                    <div class="card-header" id="headingFour">
-                                        <h6 class="mb-0 ">
-                                            ENDPOINTS <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-
-                                <div id="collapseFour" class="collapse" aria-labelledby="headingFour"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <ul>
+                                   </h4>
+                                   <h4>
+                                      ENDPOINTS:
+                                       <ul>
                                             {% for ep in endpoint %}
                                             <li>
                                                 {{ ep }}
@@ -224,60 +130,324 @@
                                             </li>
                                             {% end for %}
                                         </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                                    <div class="card-header" id="headingFive">
-                                        <h6 class="mb-0 ">
-                                            DESCRIPTION <i
-                                                class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseFive" class="collapse" aria-labelledby="headingFive"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <pre>{% raw description_html %}</pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <hr />
-                        <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
-
-                        <span>{% raw description_html %}</span>
-                        <hr />
-                        {% for elem in method %}
-                        <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
-                        <h2></h2>
-                        {% raw elem["html"] %}
-                        <hr />
-                        {% end %}
+                                   </h4>
+                                </v-tab-item>
+                           </v-tabs-items>
+                       </div>
                     </div>
                 </div>
             </div>
-            <div class="col-3">
-                <div id="help-list" class="list-group">
-                    <a class="list-group-item list-group-item-action active" href="#list-item-1">{{ title }}</a>
-                    <a class="list-group-item list-group-item-action" href="#list-item-2">Introduction</a>
-                    {% for elem in method %}
-                    <a class="list-group-item list-group-item-action"
-                        href="#{{elem['method'].upper()}}">{{elem['method'].upper()}}</a>
-                    {% end %}
-                </div>
-            </div>
         </div>
-</body>
-<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>
-<script src="https://fezvrasta.github.io/bootstrap-material-design/assets/js/vendor/anchor.min.js"></script>
-<script type="text/javascript">
-    $('body').scrollspy({
-        target: '#help-list'
-    })
+   </v-app>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script>
+ new Vue({
+   delimiters: ['[[', ']]'],
+   el: '#app',
+   vuetify: new Vuetify(),
+   data() {
+    return {
+       tabs: null
+    }
+   },
+   filters: {
+   },
+   mounted(){
+   },
+   methods: {
+   }
+ })
 </script>
 </body>
-
 </html>
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+
+<!--<head>-->
+    <!--<meta charset="UTF-8">-->
+    <!--<title>HELP {{ handler.__class__.__name__ }}</title>-->
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">-->
+    <!--<link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">-->
+    <!--<link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">-->
+    <!--&lt;!&ndash; <link rel="stylesheet" type="text/css" href="..\..\_static\bootstrap-material-design.custom.css"> &ndash;&gt;-->
+    <!--&lt;!&ndash;<link rel="stylesheet" type="text/css" href="..\..\_static\widget.css">&ndash;&gt;-->
+
+    <!--<style>-->
+        <!--.accordion-arrow {-->
+            <!--position: relative;-->
+            <!--/* Adjust these values accordingly */-->
+            <!--top: 6px;-->
+        <!--}-->
+
+        <!--.inner-card {-->
+            <!--box-shadow: none;-->
+        <!--}-->
+
+        <!--.scrollspy-help {-->
+            <!--position: relative;-->
+            <!--height: 100%;-->
+            <!--margin-top: .5rem;-->
+            <!--overflow: auto;-->
+        <!--}-->
+
+        <!--.list-group {-->
+            <!--display: flex;-->
+            <!--flex-direction: column;-->
+            <!--flex-grow: 1;-->
+            <!--padding: .5rem 0;-->
+        <!--}-->
+
+        <!--.left-card {-->
+            <!--min-height: 48px;-->
+            <!--height: 80vh;-->
+        <!--}-->
+
+        <!--.inner-card-body {-->
+            <!--height: 100%-->
+        <!--}-->
+
+        <!--.row {-->
+            <!--margin-top: 64px;-->
+        <!--}-->
+
+        <!--.container-fluid::before {-->
+            <!--content: '';-->
+            <!--display: block;-->
+            <!--position: absolute;-->
+            <!--height: 240px;-->
+            <!--left: 0;-->
+            <!--right: 0;-->
+            <!--top: 0;-->
+            <!--background-color: var(&#45;&#45;accent);-->
+            <!--z-index: 0;-->
+            <!--min-height: 120px;-->
+        <!--}-->
+
+        <!--.list-group {-->
+            <!--padding-top: 0px;-->
+        <!--}-->
+
+        <!--.btn-link {-->
+            <!--padding: 0px;-->
+            <!--margin: 0px;-->
+            <!--text-align: left;-->
+        <!--}-->
+
+        <!--#accordion {-->
+            <!--max-width: 95%;-->
+        <!--}-->
+    <!--</style>-->
+<!--</head>-->
+
+<!--<body>-->
+    <!--&lt;!&ndash; <h1>HELP of {{ handler.__class__.__name__ }}</h1> &ndash;&gt;-->
+    <!--<div class="container-fluid">-->
+        <!--<div class="row mx-auto" style="max-width:1260px">-->
+            <!--<div class="card left-card col-9 ">-->
+                <!--<div class="card-body inner-card-body" style="position:relative">-->
+                    <!--<div data-spy="scroll" data-target="#help-list" data-offset="0" class="scrollspy-help">-->
+                        <!--<h3 id="list-item-1">{{ title }}</h3>-->
+                        <!--<h5>{{ subtitle }}</h5>-->
+                        <!--<div id="accordion">-->
+                            <!--<div class="card inner-card">-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--QUAL_NAME : {{qual_name}} -->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--AUTHOR : {{author}}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--TAG : <span class="md-chips pt-0 pb-0 pl-1">-->
+                                                <!--{% for t in tag[:3] %}-->
+                                                <!--<div class="md-chip">-->
+                                                    <!--{{t}}-->
+                                                <!--</div>-->
+                                                <!--{% end %}-->
+                                            <!--</span>-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--ICON : <i class="material-icons">{{ icon }}</i> - {{ icon }}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--PROTECTED : {{ protected }}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--RESOURCE ID : {{ rsc_id }}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--CONTAINER : {{ container }}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--CREATED AT : {{created_at.strftime("%d.%m.%Y %H:%M")}}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--THIS ENTER_URL : {{ enter_url }}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                                <!--<div class="card-header">-->
+                                    <!--<h6 class="mb-0">-->
+                                        <!--CLASS ARGS : {{ args }}-->
+                                    <!--</h6>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <!--<div class="card inner-card">-->
+                                <!--<button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo"-->
+                                    <!--aria-expanded="false" aria-controls="collapseTwo">-->
+                                    <!--<div class="card-header" id="headingTwo">-->
+                                        <!--<h6 class="mb-0 ">-->
+                                            <!--THIS PATTERN <i-->
+                                                <!--class="material-icons accordion-arrow">keyboard_arrow_down</i>-->
+                                        <!--</h6>-->
+                                    <!--</div>-->
+                                <!--</button>-->
+                                <!--<div id="collapseTwo" class="collapse" aria-labelledby="headingTwo"-->
+                                    <!--data-parent="#accordion">-->
+                                    <!--<div class="card-body">-->
+                                        <!--<ul>-->
+                                            <!--{% for p in pattern %}-->
+                                            <!--<li>-->
+                                                <!--{% if p["name"] is not None %}-->
+                                                <!--<b>{{ p["name"] }}:</b>-->
+                                                <!--{% else %}-->
+                                                <!--<b>no name:</b>-->
+                                                <!--{% end if %}-->
+                                                <!--{{ p["regex"] }}-->
+                                            <!--</li>-->
+                                            <!--{% end %}-->
+                                        <!--</ul>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <!--&lt;!&ndash;<div class="card inner-card">-->
+                                <!--<button class="btn btn-link collapsed" data-toggle="collapse"-->
+                                    <!--data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">-->
+                                    <!--<div class="card-header" id="headingThree">-->
+                                        <!--<h6 class="mb-0 ">-->
+                                            <!--CONTAINER <i class="material-icons accordion-arrow">keyboard_arrow_down</i>-->
+                                        <!--</h6>-->
+                                    <!--</div>-->
+                                <!--</button>-->
+                                <!--<div id="collapseThree" class="collapse" aria-labelledby="headingThree"-->
+                                    <!--data-parent="#accordion">-->
+                                    <!--<div class="card-body">-->
+                                        <!--<div class="md-chips pt-0 pb-0">-->
+                                            <!--{% for t in tag[:3] %}-->
+                                            <!--<div class="md-chip">-->
+                                                <!--{{t}}-->
+                                            <!--</div>-->
+                                            <!--{% end %}-->
+                                        <!--</div>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                            <!--</div>&ndash;&gt;-->
+                            <!--<div class="card inner-card">-->
+                                <!--<button class="btn btn-link collapsed" data-toggle="collapse"-->
+                                    <!--data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">-->
+                                    <!--<div class="card-header" id="headingFour">-->
+                                        <!--<h6 class="mb-0 ">-->
+                                            <!--ENDPOINTS <i class="material-icons accordion-arrow">keyboard_arrow_down</i>-->
+                                        <!--</h6>-->
+                                    <!--</div>-->
+                                <!--</button>-->
+
+                                <!--<div id="collapseFour" class="collapse" aria-labelledby="headingFour"-->
+                                    <!--data-parent="#accordion">-->
+                                    <!--<div class="card-body">-->
+                                        <!--<ul>-->
+                                            <!--{% for ep in endpoint %}-->
+                                            <!--<li>-->
+                                                <!--{{ ep }}-->
+                                                <!--<ul>-->
+                                                    <!--<li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>-->
+                                                    <!--<li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>-->
+                                                    <!--{% if enter_url != None %}-->
+                                                    <!--<li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>-->
+                                                    <!--{% else %}-->
+                                                    <!--<li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>-->
+                                                    <!--{% end if %}-->
+                                                <!--</ul>-->
+                                            <!--</li>-->
+                                            <!--{% end for %}-->
+                                        <!--</ul>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                            <!--<div class="card inner-card">-->
+                                <!--<button class="btn btn-link collapsed" data-toggle="collapse"-->
+                                    <!--data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">-->
+                                    <!--<div class="card-header" id="headingFive">-->
+                                        <!--<h6 class="mb-0 ">-->
+                                            <!--DESCRIPTION <i-->
+                                                <!--class="material-icons accordion-arrow">keyboard_arrow_down</i>-->
+                                        <!--</h6>-->
+                                    <!--</div>-->
+                                <!--</button>-->
+                                <!--<div id="collapseFive" class="collapse" aria-labelledby="headingFive"-->
+                                    <!--data-parent="#accordion">-->
+                                    <!--<div class="card-body">-->
+                                        <!--<pre>{% raw description_html %}</pre>-->
+                                    <!--</div>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                        <!--<hr />-->
+                        <!--<h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>-->
+
+                        <!--<span>{% raw description_html %}</span>-->
+                        <!--<hr />-->
+                        <!--{% for elem in method %}-->
+                        <!--<h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>-->
+                        <!--<h2></h2>-->
+                        <!--{% raw elem["html"] %}-->
+                        <!--<hr />-->
+                        <!--{% end %}-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
+            <!--<div class="col-3">-->
+                <!--<div id="help-list" class="list-group">-->
+                    <!--<a class="list-group-item list-group-item-action active" href="#list-item-1">{{ title }}</a>-->
+                    <!--<a class="list-group-item list-group-item-action" href="#list-item-2">Introduction</a>-->
+                    <!--{% for elem in method %}-->
+                    <!--<a class="list-group-item list-group-item-action"-->
+                        <!--href="#{{elem['method'].upper()}}">{{elem['method'].upper()}}</a>-->
+                    <!--{% end %}-->
+                <!--</div>-->
+            <!--</div>-->
+        <!--</div>-->
+    <!--</div>-->
+<!--</body>-->
+<!--<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>-->
+<!--<script src="https://fezvrasta.github.io/bootstrap-material-design/assets/js/vendor/anchor.min.js"></script>-->
+<!--<script type="text/javascript">-->
+    <!--$('body').scrollspy({-->
+        <!--target: '#help-list'-->
+    <!--})-->
+<!--</script>-->
+<!--</body>-->
+
+<!--</html>-->
