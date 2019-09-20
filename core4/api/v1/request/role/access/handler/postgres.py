@@ -5,8 +5,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from core4.api.v1.request.role.access.handler import BaseHandler
 import momoko
+
+from core4.api.v1.request.role.access.handler import BaseHandler
 
 PREP_DATABASE = """
 REVOKE ALL ON SCHEMA public FROM public;
@@ -31,36 +32,36 @@ SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '{dbname:
 """
 
 
+def dsn(database, username, password, hostname, port=5432):
+    return 'dbname=%s user=%s password=%s host=%s port=%d' % (
+        database, username, password, hostname, port)
+
+
 class PostgresHandler(BaseHandler):
     """
     """
 
     def __init__(self, role=None, token=None, *args, **kwargs):
         super().__init__(role, token, *args, **kwargs)
-        self.dsn = 'dbname=%s user=%s password=%s host=%s port=%d' %(
-            self.config.rdbms.database,
-            self.config.rdbms.username,
-            self.config.rdbms.password,
-            self.config.rdbms.hostname,
-            self.config.rdbms.port
-        )
         self._connection = None
 
     @property
     async def connection(self):
         if self._connection is None:
-            #self.logger.info("connecting to [%s]", self.dsn)
-            conn = momoko.Connection(dsn=self.dsn)
+            conn = momoko.Connection(dsn=dsn(
+                self.config.rdbms.database, self.config.rdbms.username,
+                self.config.rdbms.password, self.config.rdbms.hostname,
+                self.config.rdbms.port))
             self._connection = await conn.connect()
         return self._connection
 
-    async def role_exists(self,  name):
+    async def role_exists(self, name):
         sql = "SELECT 1 FROM pg_roles WHERE rolname='%s'" % name
         cursor = await self.connection
         rows = await cursor.execute(sql)
         return rows.fetchall() != []
 
-    async def database_exists(self,  name):
+    async def database_exists(self, name):
         sql = "SELECT 1 FROM pg_database WHERE datname='%s'" % name
         cursor = await self.connection
         rows = await cursor.execute(sql)
@@ -108,20 +109,14 @@ class PostgresHandler(BaseHandler):
         await cursor.execute('CREATE ROLE "%s"' % db_role)
         self.logger.info(
             'created postgres role [%s]', db_role)
-        dsn = 'dbname=%s user=%s password=%s host=%s port=%d' %(
-            name,
-            self.config.rdbms.username,
-            self.config.rdbms.password,
-            self.config.rdbms.hostname,
-            self.config.rdbms.port
-        )
-        conn = momoko.Connection(dsn=dsn)
+        conn = momoko.Connection(dsn=dsn(
+            name, self.config.rdbms.username, self.config.rdbms.password,
+            self.config.rdbms.hostname, self.config.rdbms.port))
         cursor = await conn.connect()
         sql = PREP_DATABASE.format(
             dbname=name, dbrole=db_role, superuser=self.config.rdbms.username
         )
         return await cursor.execute(sql)
-
 
     async def del_database(self, name):
         db_role = "ro_" + name
@@ -146,6 +141,6 @@ class PostgresHandler(BaseHandler):
         db_role = "ro_" + database
         cursor = await self.connection
         await cursor.execute('GRANT "%s" TO "%s"' % (db_role,
-                                                  self.role.name))
+                                                     self.role.name))
         self.logger.info(
             'grant postgres database [%s] to [%s]', database, self.role.name)
