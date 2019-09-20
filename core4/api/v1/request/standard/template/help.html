@@ -239,16 +239,19 @@
         computed: {
             args: function () {
                 var result = {
-                    data: {},
-                    template: '{{args}}'
-                }
+                        data: {},
+                        template: '{{args}}'
+                    },
+                    regDict= {
+                        "&#39;": `"`,
+                        "True": true,
+                        "False": false,
+                        "None": null
+                    }
 
                 try {
-                    var clean_str = result.template.replace(/&#39;/gi, `"`)
-
-                    clean_str = clean_str.replace(/None/gi, `null`)
-                    clean_str = clean_str.replace(/True/gi, `true`)
-                    clean_str = clean_str.replace(/False/gi, `false`)
+                    const re = new RegExp(`(${ Object.keys(regDict).join('|') })`,'gi')
+                    const clean_str = result.template.replace(re, m => regDict[m])
 
                     result.data = JSON.parse(clean_str)
                     result.template =  JSON.stringify(result.data, undefined, 4)
