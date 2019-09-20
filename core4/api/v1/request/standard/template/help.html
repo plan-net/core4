@@ -1,40 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <title>Download</title>
-   <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-   <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
-   <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
-   <style>
-       pre.doctest-block {
-            border: 1px dashed #fff;
-            margin: 10px;
-            font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
-            background-color: gray;
-            color: #fff;
-            font-size: 1em;
-            border-radius: 5px;
-            padding: 10px;
-       }
-
-        .row {
-            margin-top: 64px;
-        }
-
-        .card {
-            max-height: calc(100vh - 1000px);
-            padding: 12px 0;
-            border: 0;
-            box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
-        }
-
-        .tab-item {
-            overflow-y: scroll;
-        }
-
-        .container-fluid::before {
+    <meta charset="UTF-8">
+    <title>Download</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css" rel="stylesheet">
+    <!--<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">-->
+    <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+    <!--<link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">-->
+    <!--<link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@3.x/css/materialdesignicons.min.css">
+    <style>
+        .wrapper::before {
             content: '';
             display: block;
             position: absolute;
@@ -42,128 +19,357 @@
             left: 0;
             right: 0;
             top: 0;
-            background-color: var(--accent);
+            background-color: rgb(63, 81, 93);
             z-index: 0;
             min-height: 120px;
         }
 
-   </style>
+        .wrapper {
+            max-height: calc(100vh - 1000px);
+            margin-top: 62px;
+            display: flex;
+            flex-flow: row wrap;
+            font-weight: bold;
+            /*align-items: center;*/
+            justify-content: center;
+        }
+
+        .wrapper > * {
+            margin: 10px;
+            flex: 1 100%;
+            max-width:1260px;
+        }
+
+        pre.doctest-block {
+            width: 100%;
+            border: 1px dashed #fff;
+            margin: 10px;
+            font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+            background-color: gray;
+            color: #fff;
+            font-size: 0.83em;
+            border-radius: 5px;
+            padding: 10px;
+            overflow: scroll;
+        }
+
+        p.rubric {
+            display: block;
+            font-size: 0.83em;
+            margin-block-start: 1.67em;
+            margin-block-end: 1.67em;
+            margin-inline-start: 0px;
+            margin-inline-end: 0px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 <div id="app">
-   <v-app>
-        <div class="container-fluid">
-            <div class="row mx-auto" style="max-width:1260px">
-                <div class="card col-12 ">
-                    <div class="card-body inner-card-body" style="position:relative">
-                        <header class="px-7">
-                            <h2 class="mb-0">
-                                {{ title }}
-                           </h2>
-                            <h3>
-                                {{ subtitle }}
-                                <!--{{ qual_name}}-->
-                            </h3>
-                        </header>
-                       <div>
-                           <v-tabs v-model="tabs" background-color="#d70f14" slider-color="white" :centered="true" :grow="true" dark>
-                               <v-tab>
-                                   Description
-                              </v-tab>
-                               <v-tab>
-                                   Details
-                              </v-tab>
-                           </v-tabs>
-                           <v-tabs-items v-model="tabs" class="px-7" style="overflow-y: scroll">
-                               <v-tab-item style="overflow-y: scroll">
-                                        <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
-
-                                        <span>{% raw description_html %}</span>
-                                        <!--<hr />-->
-                                        {% for elem in method %}
-                                        <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
-                                        <h2></h2>
-                                        {% raw elem["html"] %}
-                                        <!--<hr />-->
-                                        {% end %}
-                                </v-tab-item>
-                               <v-tab-item>
-                                    <h4 class="mb-0">-->
-                                        RESOURCE ID : {{ rsc_id }}
-                                    </h4>
-                                   <h4>
-                                       CONTAINER : {{ container }}
-                                   </h4>
-                                   <h4>
-                                       CLASS ARGS : {{ args }}
-                                   </h4>
-                                   <h4>
-                                       PATTERN:
-                                       <ul>
-                                            {% for p in pattern %}
-                                            <li>
-                                                {% if p["name"] is not None %}
-                                                <b>{{ p["name"] }}:</b>
-                                                {% else %}
-                                                <b>no name:</b>
-                                                {% end if %}
-                                                {{ p["regex"] }}
-                                            </li>
-                                            {% end %}
+    <v-app>
+        <div class="wrapper">
+            <v-card>
+                <header class="px-7 pt-7 pb-2">
+                    <h1 class="mb-0">{{ title }}</h1>
+                    <h2 class="font-weight-regular">{{ subtitle }}</h2>
+                    <section class="grey--text">
+                        <span class="mr-2 caption font-weight-bold py-1 pr-1">
+                            <v-icon class="mr-1" small>mdi-account</v-icon>{{author}}
+                        </span>
+                        <span class="mr-2 caption font-weight-bold pa-1">
+                            <v-icon class="mr-1" small>mdi-calendar-check</v-icon>{{created_at.strftime("%d.%m.%Y %H:%M")}}
+                        </span>
+                        <span class="mr-2 caption font-weight-bold red darken-2 white--text pa-1">
+                            <v-icon class="white--text mr-1" small>mdi-tag-multiple</v-icon>
+                                 {% for t in tag[:3] %}
+                                    <span>
+                                        {{t}} &nbsp;
+                                    </span>
+                                {% end %}
+                        </span>
+                        <span class="mr-2 caption font-weight-bold pa-1">
+                            <v-icon class="mr-1" small>mdi-lock</v-icon>
+                        </span>
+                    </section>
+                </header>
+                <main>
+                    <v-tabs v-model="tabs" class="font-weight-bold" background-color="primary" slider-color="white" :centered="true" :grow="true" dark>
+                    <!--<v-tabs v-model="tabs" background-color="white" slider-color="primary" :centered="true" :grow="true">-->
+                        <v-tab>Description</v-tab>
+                        <v-tab>Details</v-tab>
+                    </v-tabs>
+                    <v-tabs-items v-model="tabs" class="tabs-items px-7">
+                        <v-tab-item class="tab-item py-2">
+                             <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
+                            <span>{% raw description_html %}</span>
+                            <v-divider class="my-3"></v-divider>
+                            {% for elem in method %}
+                            <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
+                            <h2></h2>
+                            {% raw elem["html"] %}
+                            <v-divider class="my-3"></v-divider>
+                            {% end %}
+                        </v-tab-item>
+                        <v-tab-item class="tab-item py-2">
+                            <div class="py-3">
+                                <span class="text-uppercase">Resource ID:</span>
+                                <span class="font-weight-regular">{{ rsc_id }}</span>
+                            </div>
+                            <div class="py-3">
+                                <span class="text-uppercase">Container:</span>
+                                <span class="font-weight-regular">{{ container }}</span>
+                            </div>
+                            <div class="py-3">
+                                <span class="text-uppercase"> Class args:</span>
+                                <span class="font-weight-regular">{{ args }}</span>
+                            </div>
+                            <div class="py-3">
+                                <span class="text-uppercase"> Icon:</span>
+                                <span class="font-weight-regular"><i class="material-icons">{{ icon }}</i> - {{ icon }}</span>
+                            </div>
+                            <div class="py-3">
+                                <span class="text-uppercase">Pattern:</span>
+                                <ul class="font-weight-regular">
+                                    {% for p in pattern %}
+                                    <li>
+                                        {% if p["name"] is not None %}
+                                        <b>{{ p["name"] }}:</b>
+                                        {% else %}
+                                        <b>no name:</b>
+                                        {% end if %}
+                                        {{ p["regex"] }}
+                                    </li>
+                                    {% end %}
+                                </ul>
+                            </div>
+                            <div class="py-3">
+                                <span class="text-uppercase">Endpoints:</span>
+                                <ul class="font-weight-regular">
+                                    {% for ep in endpoint %}
+                                    <li>
+                                        {{ ep }}
+                                        <ul>
+                                            <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
+                                            <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
+                                            {% if enter_url != None %}
+                                            <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
+                                            {% else %}
+                                            <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
+                                            {% end if %}
                                         </ul>
-                                   </h4>
-                                   <h4>
-                                      ENDPOINTS:
-                                       <ul>
-                                            {% for ep in endpoint %}
-                                            <li>
-                                                {{ ep }}
-                                                <ul>
-                                                    <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
-                                                    <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
-                                                    {% if enter_url != None %}
-                                                    <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-                                                    {% else %}
-                                                    <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
-                                                    {% end if %}
-                                                </ul>
-                                            </li>
-                                            {% end for %}
-                                        </ul>
-                                   </h4>
-                                </v-tab-item>
-                           </v-tabs-items>
-                       </div>
-                    </div>
-                </div>
-            </div>
+                                    </li>
+                                    {% end for %}
+                                </ul>
+                            </div>
+                        </v-tab-item>
+                    </v-tabs-items>
+                </main>
+            </v-card>
         </div>
-   </v-app>
+    </v-app>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>-->
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>-->
 <script>
- new Vue({
-   delimiters: ['[[', ']]'],
-   el: '#app',
-   vuetify: new Vuetify(),
-   data() {
-    return {
-       tabs: null
-    }
-   },
-   filters: {
-   },
-   mounted(){
-   },
-   methods: {
-   }
- })
+    new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#app',
+        vuetify: new Vuetify({
+             theme: {
+               themes: {
+                 light: window.PNBI_THEME,
+                 dark: window.PNBI_THEME
+               },
+             },
+        }),
+        data() {
+            return {
+                tabs: null
+            }
+        },
+        filters: {},
+        mounted() {
+        },
+        methods: {}
+    })
 </script>
 </body>
 </html>
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+   <!--<meta charset="UTF-8">-->
+   <!--<title>Download</title>-->
+   <!--<link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">-->
+   <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+   <!--<link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">-->
+   <!--<link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">-->
+   <!--<style>-->
+       <!--pre.doctest-block {-->
+            <!--border: 1px dashed #fff;-->
+            <!--margin: 10px;-->
+            <!--font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;-->
+            <!--background-color: gray;-->
+            <!--color: #fff;-->
+            <!--font-size: 1em;-->
+            <!--border-radius: 5px;-->
+            <!--padding: 10px;-->
+       <!--}-->
+
+        <!--.row {-->
+            <!--margin-top: 64px;-->
+        <!--}-->
+
+        <!--.card {-->
+            <!--max-height: calc(100vh - 1000px);-->
+            <!--padding: 12px 0;-->
+            <!--border: 0;-->
+            <!--box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);-->
+        <!--}-->
+
+        <!--.tabs-items {-->
+             <!--display: table;-->
+             <!--width: 100%;-->
+        <!--}-->
+
+        <!--.tab-item {-->
+            <!--display: table-cell;-->
+            <!--padding: 16px;-->
+        <!--}-->
+
+        <!--.container-fluid::before {-->
+            <!--content: '';-->
+            <!--display: block;-->
+            <!--position: absolute;-->
+            <!--height: 240px;-->
+            <!--left: 0;-->
+            <!--right: 0;-->
+            <!--top: 0;-->
+            <!--background-color: var(&#45;&#45;accent);-->
+            <!--z-index: 0;-->
+            <!--min-height: 120px;-->
+        <!--}-->
+
+   <!--</style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<div id="app">-->
+   <!--<v-app>-->
+        <!--<div class="container-fluid">-->
+            <!--<div class="row mx-auto" style="max-width:1260px">-->
+                <!--<div class="card col-12 ">-->
+                    <!--<div class="card-body inner-card-body" style="position:relative">-->
+                        <!--<header class="px-7">-->
+                            <!--<h2 class="mb-0">-->
+                                <!--{{ title }}-->
+                           <!--</h2>-->
+                            <!--<h3>-->
+                                <!--{{ subtitle }}-->
+                                <!--&lt;!&ndash;{{ qual_name}}&ndash;&gt;-->
+                            <!--</h3>-->
+                        <!--</header>-->
+                       <!--<div>-->
+                           <!--<v-tabs v-model="tabs" background-color="#d70f14" slider-color="white" :centered="true" :grow="true" dark>-->
+                               <!--<v-tab>-->
+                                   <!--Description-->
+                              <!--</v-tab>-->
+                               <!--<v-tab>-->
+                                   <!--Details-->
+                              <!--</v-tab>-->
+                           <!--</v-tabs>-->
+                           <!--<v-tabs-items v-model="tabs" class="tabs-items px-7">-->
+                               <!--<v-tab-item class="tab-item">-->
+                                        <!--<h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>-->
+
+                                        <!--<span>{% raw description_html %}</span>-->
+                                        <!--<v-divider class="my-2"></v-divider>-->
+                                        <!--{% for elem in method %}-->
+                                        <!--<h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>-->
+                                        <!--<h2></h2>-->
+                                        <!--{% raw elem["html"] %}-->
+                                        <!--&lt;!&ndash;<hr />&ndash;&gt;-->
+                                        <!--{% end %}-->
+                                <!--</v-tab-item>-->
+                               <!--<v-tab-item class="tab-item">-->
+                                    <!--<h4 class="mb-0">&ndash;&gt;-->
+                                        <!--RESOURCE ID : {{ rsc_id }}-->
+                                    <!--</h4>-->
+                                   <!--<h4>-->
+                                       <!--CONTAINER : {{ container }}-->
+                                   <!--</h4>-->
+                                   <!--<h4>-->
+                                       <!--CLASS ARGS : {{ args }}-->
+                                   <!--</h4>-->
+                                   <!--<h4>-->
+                                       <!--PATTERN:-->
+                                       <!--<ul>-->
+                                            <!--{% for p in pattern %}-->
+                                            <!--<li>-->
+                                                <!--{% if p["name"] is not None %}-->
+                                                <!--<b>{{ p["name"] }}:</b>-->
+                                                <!--{% else %}-->
+                                                <!--<b>no name:</b>-->
+                                                <!--{% end if %}-->
+                                                <!--{{ p["regex"] }}-->
+                                            <!--</li>-->
+                                            <!--{% end %}-->
+                                        <!--</ul>-->
+                                   <!--</h4>-->
+                                   <!--<h4>-->
+                                      <!--ENDPOINTS:-->
+                                       <!--<ul>-->
+                                            <!--{% for ep in endpoint %}-->
+                                            <!--<li>-->
+                                                <!--{{ ep }}-->
+                                                <!--<ul>-->
+                                                    <!--<li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>-->
+                                                    <!--<li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>-->
+                                                    <!--{% if enter_url != None %}-->
+                                                    <!--<li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>-->
+                                                    <!--{% else %}-->
+                                                    <!--<li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>-->
+                                                    <!--{% end if %}-->
+                                                <!--</ul>-->
+                                            <!--</li>-->
+                                            <!--{% end for %}-->
+                                        <!--</ul>-->
+                                   <!--</h4>-->
+                                <!--</v-tab-item>-->
+                           <!--</v-tabs-items>-->
+                       <!--</div>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
+        <!--</div>-->
+   <!--</v-app>-->
+<!--</div>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>-->
+<!--<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>-->
+<!--<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>-->
+<!--<script>-->
+ <!--new Vue({-->
+   <!--delimiters: ['[[', ']]'],-->
+   <!--el: '#app',-->
+   <!--vuetify: new Vuetify(),-->
+   <!--data() {-->
+    <!--return {-->
+       <!--tabs: null-->
+    <!--}-->
+   <!--},-->
+   <!--filters: {-->
+   <!--},-->
+   <!--mounted(){-->
+   <!--},-->
+   <!--methods: {-->
+   <!--}-->
+ <!--})-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
 
 
 
