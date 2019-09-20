@@ -84,4 +84,6 @@ class AccessHandler(CoreRequestHandler):
                 access.append(db)
         return self.render("template/access.html",
                            mongodb=self.config.sys.role.hostname,
+                           postgres_hostname=self.config.rdbms.hostname,
+                           postgres_port = self.config.rdbms.port,
                            access=sorted(access))

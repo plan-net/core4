@@ -7,6 +7,7 @@
 
 import core4.base
 
+
 # todo: use other name
 class BaseHandler(core4.base.CoreBase):
     """
@@ -16,21 +17,10 @@ class BaseHandler(core4.base.CoreBase):
     All handlers have to implement all methods of this abstract base class.
     """
 
-    def __init__(self, role, *args, **kwargs):
+    def __init__(self, role, token, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.token  = token
         self.role = role
-
-    def create_token(self):
-        """
-        This method creates a random access token, e.g. a password for the
-        user to access the database
-
-        .. note:: The token is to be created only once during the handler
-                  workflow and lifecycle of the :class:`.BaseHandler` class.
-
-        :return: token/password (str)
-        """
-        raise NotImplementedError()  # pragma: no cover
 
     async def del_role(self):
         """
