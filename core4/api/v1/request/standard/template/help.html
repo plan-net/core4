@@ -244,10 +244,11 @@
                 }
 
                 try {
-                    var clean_str = result.template.replace(/&#39;/gi, `"`),
-                        clean_str = clean_str.replace(/None/gi, `null`),
-                        clean_str = clean_str.replace(/True/gi, `true`),
-                        clean_str = clean_str.replace(/False/gi, `false`)
+                    var clean_str = result.template.replace(/&#39;/gi, `"`)
+
+                    clean_str = clean_str.replace(/None/gi, `null`)
+                    clean_str = clean_str.replace(/True/gi, `true`)
+                    clean_str = clean_str.replace(/False/gi, `false`)
 
                     result.data = JSON.parse(clean_str)
                     result.template =  JSON.stringify(result.data, undefined, 4)
