@@ -9,7 +9,6 @@
  */
 :root {
     --jexcel-border-color:#000;
-    font: 14pt Arial;
 }
 
 .jexcel_container {
@@ -17,6 +16,7 @@
     padding-right:2px;
     box-sizing: border-box;
     overscroll-behavior: contain;
+    font: 14pt Arial;
 }
 
 .jexcel_container.fullscreen {

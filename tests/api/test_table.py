@@ -68,11 +68,11 @@ class TableHandler1(CoreRequestHandler):
             "table1/data",
             height="320px",
             column=[
-                ("_id", True),
-                ("idx", True),
-                ("segment", True),
-                ("real", True),
-                ("value", True),
+                {"name": "_id", "title": "ID", "format": "%s", "visible": True, "align": "left"},
+                {"name": "idx", "title": "INDEX", "format": "- %d -", "visible": True, "align": "center"},
+                {"name": "segment", "title": "GRUPPE", "format": "%s", "visible": True, "align": "right"},
+                {"name": "real", "title": "FLIESSKOMMAZAHL", "format": "%1.2f €", "visible": True, "align": "right"},
+                {"name": "value", "title": "GANZZAHL", "format": "%012d", "visible": True, "align": "left"}
             ],
             per_page=per_page,
             current_page=current_page,

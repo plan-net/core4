@@ -1,17 +1,17 @@
 """
 - OK:  rows and columns
 - OK: row header
-- OK: sort by column
-- columns ordering
 - OK: rows filtering in selected columns
 - OK: column header
 - OK: pagination
 - OK: fixed columns
-- select columns
+- OK: select columns
+- OK: formatting (number, text, alignment, dates)
+- columns ordering
+- sort by column
 
 row filtering featuring drop-down menus, freetext search, number filters, date filters
 user interaction: selection hook
-formatting (number, text, alignment, dates)
 fixed rows
 
 
@@ -23,11 +23,13 @@ from core4.base.main import CoreBase
 from core4.util.pager import CorePager
 
 CONST_SCRIPT = """
-    var table;
-    $(document).ready(function() { 
-        table = new DataTable(%(options)s);
-        table.run();
-    });
+    <script>
+        var table;
+        $(document).ready(function() { 
+            table = new DataTable(%(options)s);
+            table.update();
+        });
+    </script>
 """
 
 CONST_CSS = """
@@ -39,7 +41,7 @@ CONST_JS = """
     <script src="/_asset/default/table/assets/jquery-3.4.0.min.js"></script>
     <script src="/_asset/default/table/jexcel/jexcel.js"></script>
     <script src="/_asset/default/table/jexcel/jsuites.js"></script>
-    <script src="/_asset/default/table/jexcel/table.js"></script>
+    <script src="/_asset/default/table/jexcel/datatable.js"></script>
 """
 
 CONST_DIV = """
@@ -52,50 +54,59 @@ class CoreDataTable(CoreBase):
     css = CONST_CSS
     js = CONST_JS
 
-    def __init__(self, url, length, query, _id="data-table", **kwargs):
+    def __init__(self, url, length, query, column, _id="data-table",
+                 method="GET",per_page=20, current_page=0, width="1000px",
+                 height="400px",sort_by=None, filter=None):
         super().__init__()
-        per_page = kwargs.get("per_page", 20)
         self._option = dict(
             _id=_id,
             url=url,
-            method=kwargs.get("method", "GET"),
-            current_page=kwargs.get("current_page", 0),
-            filter=kwargs.get("filter", None),
+            method=method,
+            current_page=current_page,
             per_page=per_page,
-            width=kwargs.get("width", "1000px"),
-            height=kwargs.get("height", "400px"),
-            column=kwargs.get("column", None)
+            filter=filter,
+            width=width,
+            height=height,
+            column=column
         )
         self._pager = CorePager(
-            current_page=kwargs.get("current_page", 0),
-            per_page=per_page,
             length=length,
             query=self.query,
-            sort_by=kwargs.get("sort_by", None),
-            filter=kwargs.get("filter", None)
+            current_page=current_page,
+            per_page=per_page,
+            filter=filter,
+            sort_by=sort_by
         )
         self._query = query
+        self._format = {}
+        for column in self._option["column"]:
+            self._format[column["name"]] = column["format"]
 
     async def page(self, *args, **kwargs):
         return await self._pager.page(*args, **kwargs)
 
     async def query(self, *args, **kwargs):
-        return await self._query(*args, **kwargs)
+        data = []
+        print(self._format)
+        for record in await self._query(*args, **kwargs):
+            upd = {}
+            for field, value in record.items():
+                upd[field] = self._format[field] % value
+            data.append(upd)
+        return data
 
     @property
     def div(self):
         return CONST_DIV % dict(_id=self.option("_id"))
+
+    @property
+    def script(self):
+        return CONST_SCRIPT % dict(
+            options=json.dumps(self._option)
+        )
 
     def option(self, key, value=None):
         if value is not None and key in self._option:
             self._option[key] = value
         return self._option[key]
 
-    @property
-    def script(self, script_tag=True):
-        html = CONST_SCRIPT % dict(
-            options=json.dumps(self._option)
-        )
-        if script_tag:
-            html = "<script>" + html + "</script>"
-        return html
