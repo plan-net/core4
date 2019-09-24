@@ -7,7 +7,7 @@
     <link href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@3.x/css/materialdesignicons.min.css">
     <style>
-        .wrapper::before {
+        body.theme--light .wrapper::before {
             content: '';
             display: block;
             position: absolute;
@@ -21,12 +21,9 @@
         }
 
         .wrapper {
-            /*max-height: calc(100vh - 1000px);*/
             margin-top: 62px;
             display: flex;
             flex-flow: row wrap;
-            /*font-weight: bold;*/
-            /*align-items: center;*/
             justify-content: center;
         }
 
@@ -37,9 +34,6 @@
         }
 
         pre.doctest-block {
-            /*-moz-box-shadow:    inset 0 0 7px #474747;
-            -webkit-box-shadow: inset 0 0 7px #474747;
-            box-shadow:         inset 0 0 7px #474747;*/
             width: 100%;
             border: 1px dashed #fff;
             font-weight: bold;
@@ -62,6 +56,14 @@
         div.tab-item hr:last-child {
             display:none;
         }
+
+        .theme--light header a.display-2 {
+            color: rgba(0, 0, 0, 0.87);
+        }
+
+        .theme--dark header a.display-2 {
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -72,7 +74,7 @@
         <div class="wrapper">
             <v-card>
                 <header class="px-7 pt-7 pb-2">
-                    <a class="display-2 font-weight-bold black--text mb-0" href="{{enter_url}}" style="text-decoration: none;">[[ title ]]</a>
+                    <a class="display-2 font-weight-bold mb-0" href="{{enter_url}}" style="text-decoration: none;">[[ title ]]</a>
                     <h2 class="font-weight-regular" v-text="subtitle || qual_name"></h2>
                     <section class="grey--text">
                         <v-tooltip left>
@@ -127,7 +129,7 @@
                 </header>
                 <main>
                     <!--<v-tabs v-model="tabs" background-color="white" slider-color="primary" :centered="true" :grow="true">-->
-                    <v-tabs v-model="tabs" background-color="primary accent-4" slider-color="red lighten-4" :centered="true" :grow="true" dark>
+                    <v-tabs v-model="tabs" background-color="primary" slider-color="primary lighten-4" :centered="true" :grow="true" class="mt-2" dark>
                         <v-tab class="font-weight-bold">Description</v-tab>
                         <v-tab class="font-weight-bold">Details</v-tab>
                     </v-tabs>
@@ -214,12 +216,7 @@
         delimiters: ['[[', ']]'],
         el: '#app',
         vuetify: new Vuetify({
-             theme: {
-               themes: {
-                 light: window.PNBI_THEME,
-                 dark: window.PNBI_THEME
-               },
-             },
+             theme: window.VUETIFY_THEME
         }),
         data() {
             return {
@@ -232,8 +229,7 @@
                 rsc_id: '{{rsc_id}}',
                 container: '{{container}}',
                 icon: '{{icon}}',
-                enter_url: '{{enter_url}}',
-                <!--isMethodsExist: '{{method}}'.length > 2-->
+                enter_url: '{{enter_url}}'
             }
         },
         computed: {
