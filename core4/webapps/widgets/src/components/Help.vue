@@ -61,14 +61,14 @@ div {
   position: absolute;
   left: 0;
   right: 0;
-  top: 48px;
+  top:0;
   bottom: 0;
   background-color: #fff;
   padding: 0 0 0 0;
 
   iframe {
     width: 100%;
-    height: calc(100% - 4px);
+    height: 100%;
   }
 }
 </style>
