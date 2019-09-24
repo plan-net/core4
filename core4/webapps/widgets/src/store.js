@@ -103,7 +103,6 @@ export default new Vuex.Store({
         technical: false
       }
     ) {
-      console.log(dto)
       if (dto.boards.length) {
         commit('set_boards', dto.boards)
         const boardExists =
