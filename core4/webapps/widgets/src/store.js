@@ -101,6 +101,7 @@ export default new Vuex.Store({
         board: '',
         sidebar: 0,
         technical: false
+
       }
     ) {
       if (dto.boards.length) {
