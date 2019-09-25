@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@dattn/dnd-grid": "^0.0.14",
-    "core4ui": "^0.8.1",
+    "core4ui": "^0.8.2",
     "vue-drag-drop": "^1.1.4"
   },
   "devDependencies": {
