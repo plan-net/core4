@@ -1,3 +1,5 @@
+const LOG = true;
+
 class DataTable {
     constructor(option) {
         // option:
@@ -11,9 +13,10 @@ class DataTable {
             tableWidth: this.option.width,
             tableHeight: this.option.height,
             tableOverflow: true,
-            columnDrag: true,
+            columnDrag: false,
             rowDrag: false,
             editable: false,
+            onselection: this.select.bind(this)
         });
         this.orderStack = new Array();
         this.table.orderBy = this.orderBy.bind(this);
@@ -24,7 +27,14 @@ class DataTable {
         this.log("init with " + JSON.stringify(this.option));
     }
     log(s){
-        console.log(s);
+        if (LOG) {
+            console.log(s);
+        }
+    }
+    select(instance, x1, y1, x2, y2, origin){
+        var cellName1 = jexcel.getColumnNameFromId([x1, y1]);
+        var cellName2 = jexcel.getColumnNameFromId([x2, y2]);
+        this.log('The selection from ' + cellName1 + ' to ' + cellName2);
     }
     orderBy(column, order) {
         if (order == null) {
@@ -32,13 +42,15 @@ class DataTable {
         } else {
             order = order ? 1 : 0;
         }
+        var lookup = this.lookup();
+        var colName = lookup[column]["name"];
         var pos = this.orderStack.map(function(e) {
-            return e.num;
-        }).indexOf(column);
+            return e.name;
+        }).indexOf(colName);
         if (pos >= 0) {
-            this.orderStack = this.orderStack.slice(0, pos);
+            this.orderStack.splice(pos, 1);
         }
-        this.orderStack = [{"num": column, "by": order}].concat(
+        this.orderStack = [{"name": colName, "by": order}].concat(
             this.orderStack);
         this.table.updateOrderArrow(column, order);
         this.set_current_page(0);
@@ -88,6 +100,11 @@ class DataTable {
     set_total_count(p) {
         $("." + this.get_name("total_count")).text(p);
     }
+    resetData(){
+        while (this.table.headers.length > 1) {
+            this.table.deleteColumn(0);
+        }
+    }
     update() {
         var url = this.build_url();
         this.log(this.option.method + ": " + url);
@@ -108,6 +125,11 @@ class DataTable {
                     this.set_current_page(0);
                     if (this.page_count > 0) {
                         this.update();
+                    }
+                    else {
+                        this.resetData();
+                        this.table.setData([["no data"]]);
+                        this.table.setHeader(0, " ");
                     }
                 }
                 else {
@@ -134,9 +156,7 @@ class DataTable {
     }
     load_data(data) {
         var lookup = this.lookup();
-        while (this.table.headers.length > 1) {
-            this.table.deleteColumn(0);
-        }
+        this.resetData();
         var insert = new Array();
         for (var row in data) {
             var rec = new Array();
@@ -178,9 +198,10 @@ class DataTable {
         }
         this.table.resetSelection();
         if (this.orderStack.length > 0){
-            var col = this.orderStack[0]["num"];
+            var colname = this.orderStack[0]["name"];
             var by = this.orderStack[0]["by"];
-            this.table.updateOrderArrow(col, by);
+            var pos = lookup.map(function(e) {return e.name;}).indexOf(colname);
+            this.table.updateOrderArrow(pos, by);
         }
     }
     build_url() {
@@ -192,9 +213,9 @@ class DataTable {
             var lookup = this.lookup();
             var sort = new Array();
             for (var i=0; i<this.orderStack.length; i++) {
-                var col = lookup[this.orderStack[i]["num"]];
+                var colname = this.orderStack[i]["name"];
                 var by = this.orderStack[i]["by"] ? 1 : -1;
-                sort.push([col["name"], by]);
+                sort.push([colname, by]);
             }
             url += "&sort=" + JSON.stringify(sort);
         }

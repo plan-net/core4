@@ -7,9 +7,8 @@
 - OK: fixed columns
 - OK: select columns
 - OK: formatting (number, text, alignment, dates)
-- columns ordering
-- sort by column
-
+- OK: columns ordering
+- OK: sort by column
 row filtering featuring drop-down menus, freetext search, number filters, date filters
 user interaction: selection hook
 fixed rows
@@ -87,11 +86,10 @@ class CoreDataTable(CoreBase):
 
     async def query(self, *args, **kwargs):
         data = []
-        print(self._format)
         for record in await self._query(*args, **kwargs):
             upd = {}
             for field, value in record.items():
-                upd[field] = self._format[field] % value
+                upd[field] = self._format[field].format(value)
             data.append(upd)
         return data
 
@@ -101,8 +99,12 @@ class CoreDataTable(CoreBase):
 
     @property
     def script(self):
+        option = self._option.copy()
+        for col in option.get("column", []):
+            if "format" in col:
+                del col["format"]
         return CONST_SCRIPT % dict(
-            options=json.dumps(self._option)
+            options=json.dumps(option)
         )
 
     def option(self, key, value=None):
