@@ -6,44 +6,26 @@ from core4.api.v1.server import CoreApiServer
 from tests.api.test_test import setup, mongodb, run
 from core4.data.table import CoreDataTable
 from  core4.util.pager import CorePager
+import datetime
+import bson.objectid
 
 import random
-
-_ = setup
-_ = mongodb
-
 
 def make_data(coll, count=60):
     segment = ["segment A", "segment B", "segment C", "segment D",
                "segment E"]
     coll.delete_many({})
+    t0 = datetime.datetime(2014, 1, 1)
     for i in range(count):
+        t0 += datetime.timedelta(hours=4)
         coll.insert_one({
+            "timestamp": t0,
             "idx": i + 1,
             "real": random.random() * 100.,
             "value": random.randint(1, 20),
             "segment": segment[random.randint(0, 4)]
         })
     return coll
-
-
-@pytest.fixture()
-def data(mongodb):
-    coll = mongodb.data1
-    make_data(coll)
-
-@pytest.fixture()
-def table_server():
-    yield from run(
-        TableServer1,
-        CoreApiServer
-    )
-
-
-class SimpleHandler(CoreRequestHandler):
-
-    async def get(self):
-        self.reply("OK")
 
 
 class TableHandler1(CoreRequestHandler):
@@ -59,20 +41,35 @@ class TableHandler1(CoreRequestHandler):
             return await coll.find(filter).sort(sort_by).skip(skip).limit(
                 limit).to_list(limit)
 
+        def _hook(obj):
+            for key, value in obj.items():
+                if isinstance(key, str):
+                    if key == "$datetime":
+                        try:
+                            obj = datetime.datetime.strptime(
+                                value, "%Y-%m-%dT%H:%M:%S.%f")
+                        except:
+                            obj = datetime.datetime.strptime(
+                                value, "%Y-%m-%dT%H:%M:%S")
+                    elif key == "$objectid":
+                        obj = bson.objectid.ObjectId(value)
+            return obj
+
         per_page = int(self.get_argument("per_page", default=10))
         current_page = int(self.get_argument("page", default=0))
         sort_by = self.get_argument("sort", as_type=list, default=[['segment', 1]])
-        filter = self.get_argument("filter", as_type=dict, default={})
+        filter = self.get_argument("filter", as_type=dict, default={}, dict_decode=_hook)
 
         table = CoreDataTable(
             "table1/data",
             height="320px",
             column=[
-                {"name": "_id", "title": "ID", "format": "%s", "visible": True, "align": "left"},
-                {"name": "idx", "title": "INDEX", "format": "- %d -", "visible": True, "align": "center"},
-                {"name": "segment", "title": "GRUPPE", "format": "%s", "visible": True, "align": "right"},
-                {"name": "real", "title": "FLIESSKOMMAZAHL", "format": "%1.2f €", "visible": True, "align": "right"},
-                {"name": "value", "title": "GANZZAHL", "format": "%012d", "visible": True, "align": "left"}
+                {"name": "timestamp", "title": "Timestamp", "format": "{:%d.%m.%Y %H:%M:%S}", "visible": True, "align": "center"},
+                {"name": "_id", "title": "ID", "format": "{:}", "visible": True, "align": "left"},
+                {"name": "idx", "title": "INDEX", "format": "- {:d} -", "visible": True, "align": "center"},
+                {"name": "segment", "title": "GRUPPE", "format": "{:s}", "visible": True, "align": "right"},
+                {"name": "real", "title": "ZAHL", "format": "{:1.4f} €", "visible": True, "align": "right"},
+                {"name": "value", "title": "GANZZAHL", "format": "{:012d}", "visible": True, "align": "left"}
             ],
             per_page=per_page,
             current_page=current_page,
@@ -94,28 +91,14 @@ class TableHandler1(CoreRequestHandler):
 class TableServer1(CoreApiContainer):
     root = "/test"
     rules = [
-        (r"/simple", SimpleHandler),
-        (r"/table1(.*)", TableHandler1),
-        # (r"/data1", TableData1),
+        (r"/table1(.*)", TableHandler1)
     ]
 
 
-async def test_simple(table_server):
-    await table_server.login()
-    rv = await table_server.get("/test/simple")
-    assert rv.code == 200
-
-
-async def test_table1(table_server, data):
-    await table_server.login()
-    rv = await table_server.get("/test/table1")
-    assert rv.code == 200
-    open("/tmp/table1.html", "wb").write(rv.body)
-
 if __name__ == '__main__':
-    # import pymongo
-    # mongo = pymongo.MongoClient("mongodb://core:654321@localhost:27017")
-    # make_data(mongo.core4test.data1, 1000)
+    import pymongo
+    mongo = pymongo.MongoClient("mongodb://core:654321@localhost:27017")
+    make_data(mongo.core4test.data1, 1000)
 
     import os
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = "core4test"
