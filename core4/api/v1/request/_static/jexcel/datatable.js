@@ -2,8 +2,15 @@ const LOG = true;
 
 class DataTable {
     constructor(option) {
-        // option:
-        //   _id, url, method, current_page, per_page, filter, width, height
+        // object construction with the following options:
+        //   _id ... tag id of the table
+        //   url ... data provider URL
+        //   method ... data provider method
+        //   current_page ... default start page (0)
+        //   per_page ... default number of records per page
+        //   filter ... default query filter
+        //   width ... table width
+        //   height ... table height
         this.option = option;
         this.page_count = null;
         this.total_count = 0;
@@ -16,9 +23,12 @@ class DataTable {
             columnDrag: false,
             rowDrag: false,
             editable: false,
+            // selection hook
             onselection: this.select.bind(this)
         });
+        // sorting stack
         this.orderStack = new Array();
+        // sorting hook
         this.table.orderBy = this.orderBy.bind(this);
         this.set_current_page(this.option.current_page);
         this.set_per_page(this.option.per_page);
@@ -32,11 +42,13 @@ class DataTable {
         }
     }
     select(instance, x1, y1, x2, y2, origin){
+        // selection hook
         var cellName1 = jexcel.getColumnNameFromId([x1, y1]);
         var cellName2 = jexcel.getColumnNameFromId([x2, y2]);
         this.log('The selection from ' + cellName1 + ' to ' + cellName2);
     }
     orderBy(column, order) {
+        // sorting hook requesting data from the server, no local sort
         if (order == null) {
             order = this.table.headers[column].classList.contains('arrow-down') ? 1 : 0;
         } else {
@@ -101,11 +113,13 @@ class DataTable {
         $("." + this.get_name("total_count")).text(p);
     }
     resetData(){
+        // remove all columns
         while (this.table.headers.length > 1) {
             this.table.deleteColumn(0);
         }
     }
     update() {
+        // request data from the server
         var url = this.build_url();
         this.log(this.option.method + ": " + url);
         $.ajax({
@@ -121,6 +135,7 @@ class DataTable {
                 this.set_per_page(data.per_page);
                 this.set_page_count(data.page_count);
                 this.set_total_count(data.total_count);
+                // handle page overflow/underflow
                 if (data.page >= this.page_count) {
                     this.set_current_page(0);
                     if (this.page_count > 0) {
@@ -140,6 +155,7 @@ class DataTable {
         });
     }
     lookup() {
+        // build internal data structure from column parameter
         var lookup = new Array();
         var cols = JSON.parse(this.get_column());
         for (var i=0; i<cols.length; i++) {
@@ -155,10 +171,12 @@ class DataTable {
         return lookup;
     }
     load_data(data) {
+        // update table with data
         var lookup = this.lookup();
         this.resetData();
         var insert = new Array();
         for (var row in data) {
+            // create column order
             var rec = new Array();
             for (var fld in data[row]) {
                 var pos = lookup.map(function(e) { return e.name; }).indexOf(fld);
@@ -166,9 +184,11 @@ class DataTable {
             }
             insert.push(rec);
         }
+        // recreate columns
         while (this.table.headers.length < lookup.length) {
             this.table.insertColumn([], 0, 0);
         }
+        // set header titles
         for (var col in lookup) {
             this.table.setHeader(col, lookup[col].title);
         }
@@ -176,6 +196,7 @@ class DataTable {
         this.redraw(lookup);
     }
     redraw(lookup) {
+        // calculate the column widths and set cell alignment (hack)
         var canvas = document.createElement("canvas");
         var ctx = canvas.getContext("2d");
         var fontfamily = $("#" + this.option._id + " td").css("font-family");
@@ -198,6 +219,7 @@ class DataTable {
         }
         this.table.resetSelection();
         if (this.orderStack.length > 0){
+            // set order arrows in column headers
             var colname = this.orderStack[0]["name"];
             var by = this.orderStack[0]["by"];
             var pos = lookup.map(function(e) {return e.name;}).indexOf(colname);
@@ -205,6 +227,7 @@ class DataTable {
         }
     }
     build_url() {
+        // build URL for data provider including page, per_page, filter and sort
         var url = this.option.url;
         url += '?page=' + this.get_current_page();
         url += "&per_page=" + this.get_per_page();

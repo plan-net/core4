@@ -9,18 +9,17 @@
 - OK: formatting (number, text, alignment, dates)
 - OK: columns ordering
 - OK: sort by column
+- OK: user interaction: selection hook
+
 row filtering featuring drop-down menus, freetext search, number filters, date filters
-user interaction: selection hook
 fixed rows
-
-
-
 """
 import json
 
 from core4.base.main import CoreBase
 from core4.util.pager import CorePager
 
+# javascript instantiation
 CONST_SCRIPT = """
     <script>
         var table;
@@ -31,11 +30,11 @@ CONST_SCRIPT = """
     </script>
 """
 
+# jexcel and jquery css/js libraries
 CONST_CSS = """
     <link rel="stylesheet" href="/_asset/default/table/jexcel/jexcel.css" type="text/css" />
     <link rel="stylesheet" href="/_asset/default/table/jexcel/jsuites.css" type="text/css" />
 """
-
 CONST_JS = """
     <script src="/_asset/default/table/assets/jquery-3.4.0.min.js"></script>
     <script src="/_asset/default/table/jexcel/jexcel.js"></script>
@@ -43,6 +42,7 @@ CONST_JS = """
     <script src="/_asset/default/table/jexcel/datatable.js"></script>
 """
 
+# the datatables containner
 CONST_DIV = """
     <div id="%(_id)s"></div>
 """
@@ -82,9 +82,11 @@ class CoreDataTable(CoreBase):
             self._format[column["name"]] = column["format"]
 
     async def page(self, *args, **kwargs):
+        # deliver page data
         return await self._pager.page(*args, **kwargs)
 
     async def query(self, *args, **kwargs):
+        # query data
         data = []
         for record in await self._query(*args, **kwargs):
             upd = {}
@@ -95,10 +97,12 @@ class CoreDataTable(CoreBase):
 
     @property
     def div(self):
+        # deliver the DIV tag
         return CONST_DIV % dict(_id=self.option("_id"))
 
     @property
     def script(self):
+        # deliver the javascript instantiation of the
         option = self._option.copy()
         for col in option.get("column", []):
             if "format" in col:
