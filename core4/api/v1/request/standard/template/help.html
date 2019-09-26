@@ -39,18 +39,38 @@
         pre.doctest-block {
             margin-left: 16px;
             width: 75%;
-            min-width: 720px;   
+            min-width: 920px;   
             max-width: 1280px;             
-            border: 1px solid rgba(63,81,93,.45);
+            
             font-weight: bold;
             font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
-            background-color: #3f515d;
-            color: #fff;
             font-size: 0.83em;
             border-radius: 4px;
             padding: 16px 10px 16px 10px;
             overflow: scroll;
         }
+        .theme--light  pre.doctest-block {
+            border: 1px solid rgba(63,81,93,.25);
+            background-color: #fff;
+            color: #3f515d;
+        }
+        .theme--dark  pre.doctest-block {
+            border: 1px solid rgba(63,81,93,.45);
+            background-color: #3f515d;
+            color: #fff;
+        }
+/*         pre.doctest-block {
+            width: 100%;
+            border: 1px dashed #fff;
+            font-weight: bold;
+            font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+            background-color: gray;
+            color: #fff;
+            font-size: 0.83em;
+            border-radius: 5px;
+            padding: 10px;
+            overflow: scroll;
+        } */
 
         p.rubric {
             display: block;
