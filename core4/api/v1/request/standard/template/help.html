@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Download</title>
+    <title>Help</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@3.x/css/materialdesignicons.min.css">
     <style>
         body{
             opacity: 0;
@@ -38,7 +39,6 @@
         pre.doctest-block {
             margin-left: 32px;
             width: 85%;
-      
             border: 1px solid rgba(63,81,93,.45);
             font-weight: bold;
             font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
@@ -71,7 +71,7 @@
         p{
             max-width: 640px;
         }
-        .introduction-desc .simple{
+        .introduction-desc .simple__{
             padding-left: 4px;
             list-style-type: none;
             display: flex;
@@ -82,35 +82,34 @@
             align-content: flex-start;
         }
 
-        .introduction-desc .simple li,
+    
         .code{
             color: #f44336;
             padding: 1px 4px;
             margin: 3px 3px;
             border-radius: 4px;
-            
             font-weight: 500;
             font-size: .9em;
         }
-        .theme--light .introduction-desc .simple li,
         .theme--light .code {
             background: rgba(0,0,0,.1);
             border: 1px solid rgba(0,0,0,.15);
         }
-        .theme--dark .introduction-desc .simple li,
         .theme--dark .code {
             background: #283a45;
             border: 1px solid rgba(0,0,0,.1);
         }
+
         .method-table{
-            background-color: rgba(63,81,93,.25);
             margin-bottom: 32px;
         }
         .theme--dark .method-table {
+            background-color: rgba(63,81,93,.25);
             border: 1px solid rgba(63,81,93,.45);
         }
         .theme--light .method-table {
-            border: 1px solid rgba(63,81,93,.1);
+            background-color: rgba(63,81,93,.05);
+            border: 1px solid rgba(63,81,93,.2);
         }
         .method-table .method-name{
             padding-left: 12px;
@@ -137,8 +136,8 @@
         }
         table .field-body ul.last.simple span,
         table .field-body ul strong{
-            min-width: 100px;
-            width: 100px;
+            min-width: 110px;
+            width: 110px;
             display: inline-block;
         }
         table .field-body ul.last.simple span{
@@ -171,7 +170,7 @@
                         <v-tooltip left>
                              <template v-slot:activator="{ on }">
                                   <span class="mr-2 caption py-1 pr-1" v-on="on">
-                                        <v-icon class="mr-1" small>mdi-account</v-icon>[[ author ]]
+                                        <v-icon class="mr-1" small>account_box</v-icon>[[ author ]]
                                   </span>
                              </template>
                             <span>Author</span>
@@ -179,7 +178,7 @@
                         <v-tooltip bottom>
                              <template v-slot:activator="{ on }">
                                   <span class="mr-2 caption pa-1" v-on="on">
-                                        <v-icon class="mr-1" small>mdi-calendar</v-icon>{{created_at.strftime("%d.%m.%Y %H:%M")}}
+                                        <v-icon class="mr-1" small>date_range</v-icon>{{created_at.strftime("%d.%m.%Y %H:%M")}}
                                   </span>
                              </template>
                             <span>Created at</span>
@@ -187,9 +186,7 @@
                         <v-tooltip top>
                              <template v-slot:activator="{ on }">
                                   <span class="mr-2 caption darken-2 pa-1" v-on="on">
-                                    <!--<span class="mr-2 caption red darken-2 white&#45;&#45;text pa-1">-->
-                                        <v-icon class="mr-1" small>mdi-tag-multiple</v-icon>
-                                        <!--<v-icon class="white&#45;&#45;text mr-1" small>mdi-tag-multiple</v-icon>-->
+                                        <v-icon class="mr-1" small>description</v-icon>
                                              {% for t in tag[:3] %}
                                                 <span class="chip accent">
                                                     {{t}}
@@ -202,7 +199,7 @@
                         <v-tooltip bottom>
                              <template v-slot:activator="{ on }">
                                    <span class="mr-2 caption pa-1" v-on="on">
-                                        <v-icon class="mr-1" small>mdi-[[icon]]</v-icon>[[icon]]
+                                        <v-icon class="mr-1" small>[[icon]]</v-icon>[[icon]]
                                     </span>
                              </template>
                             <span>Icon</span>
@@ -312,7 +309,10 @@
         delimiters: ['[[', ']]'],
         el: '#app',
         vuetify: new Vuetify({
-             theme: window.VUETIFY_THEME
+            icons: {
+                iconfont: 'mdiSvg', // 'mdi' || 'mdiSvg' || 'md' || 'fa' || 'fa4'
+            },
+            theme: window.VUETIFY_THEME
         }),
         data() {
             return {
@@ -356,7 +356,6 @@
             },
             isCoreStaticFileHandler: function () {
                 const qual_name = '{{qual_name}}'
-
                 return qual_name.split(".").slice(-1)[0] === 'CoreStaticFileHandler'
             }
         },
