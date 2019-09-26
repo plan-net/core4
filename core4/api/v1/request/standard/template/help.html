@@ -378,16 +378,15 @@
             document.querySelector('body').style.opacity = 1;
             window.setTimeout(function(){
                 // special styling for elments with http methods
+                // wraps elments that include a methodname in the first position with a class
                 const rubric = document.querySelectorAll('.rubric');
-
                 const methods =  ["GET", "POST", "DELETE", "PUT"];
-                for (var i = 0; i < rubric.length; i++) {
-                    var item = rubric[i];
+                rubric.forEach( (item, i, arr) => {
                     const text = item.textContent.split(' ')[0]
                     if(methods.indexOf(text) > -1){
                         item.innerHTML = text + ' <span class="code" style="margin-left: 90px;">' + item.textContent.replace(text, '') + '</span>' 
                     }
-                }
+                } )
                 // special styling for code elements
                 document.querySelectorAll('.introduction-desc pre.literal-block').forEach((element)=> {element.classList.add('doctest-block');})
             }, 300)
