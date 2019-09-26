@@ -37,8 +37,10 @@
         }
 
         pre.doctest-block {
-            margin-left: 32px;
-            width: 85%;
+            margin-left: 16px;
+            width: 75%;
+            min-width: 720px;   
+            max-width: 1280px;             
             border: 1px solid rgba(63,81,93,.45);
             font-weight: bold;
             font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
@@ -46,7 +48,7 @@
             color: #fff;
             font-size: 0.83em;
             border-radius: 4px;
-            padding: 10px;
+            padding: 16px 10px 16px 10px;
             overflow: scroll;
         }
 
@@ -71,18 +73,11 @@
         p{
             max-width: 640px;
         }
-        .introduction-desc .simple__{
-            padding-left: 4px;
-            list-style-type: none;
-            display: flex;
-            flex-direction: column;
-            flex-wrap: nowrap;
-            justify-content: flex-start;
-            align-items: flex-start;
-            align-content: flex-start;
+        .introduction-desc p{
+            margin-top: 10px;
+            margin-bottom: 12px;
         }
 
-    
         .code{
             color: #f44336;
             padding: 1px 4px;
@@ -371,6 +366,9 @@
                         item.innerHTML = text + ' <span class="code" style="margin-left: 90px;">' + item.textContent.replace(text, '') + '</span>' 
                     }
                 }
+                [].map.call(document.querySelectorAll('.introduction-desc pre.literal-block'), function(element) {
+                    element.classList.add('doctest-block');
+                });
             }, 300)
         },
         filters: {},
