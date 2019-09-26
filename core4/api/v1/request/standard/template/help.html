@@ -325,7 +325,7 @@
         el: '#app',
         vuetify: new Vuetify({
             icons: {
-                iconfont: 'mdiSvg', // 'mdi' || 'mdiSvg' || 'md' || 'fa' || 'fa4'
+                iconfont: 'md', // 'mdi' || 'mdiSvg' || 'md' || 'fa' || 'fa4'
             },
             theme: window.VUETIFY_THEME
         }),
@@ -377,7 +377,9 @@
         mounted() {
             document.querySelector('body').style.opacity = 1;
             window.setTimeout(function(){
+                // special styling for elments with http methods
                 const rubric = document.querySelectorAll('.rubric');
+
                 const methods =  ["GET", "POST", "DELETE", "PUT"];
                 for (var i = 0; i < rubric.length; i++) {
                     var item = rubric[i];
@@ -386,13 +388,10 @@
                         item.innerHTML = text + ' <span class="code" style="margin-left: 90px;">' + item.textContent.replace(text, '') + '</span>' 
                     }
                 }
-                [].map.call(document.querySelectorAll('.introduction-desc pre.literal-block'), function(element) {
-                    element.classList.add('doctest-block');
-                });
+                // special styling for code elements
+                document.querySelectorAll('.introduction-desc pre.literal-block').forEach((element)=> {element.classList.add('doctest-block');})
             }, 300)
-        },
-        filters: {},
-        methods: {}
+        }
     })
 </script>
 </body>
