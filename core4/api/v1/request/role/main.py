@@ -177,7 +177,7 @@ class RoleHandler(CoreRequestHandler):
         capable of creating/deleting/editing roles.
 
         Methods:
-            GET /core4/api/v1/roles/distinct/<_id> - user/role listing
+            GET /core4/api/v1/roles/<_id> - user/role listing
 
         Arguments:
             per_page (int): number of jobs per page
