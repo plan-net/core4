@@ -26,6 +26,8 @@ In addition the following JavaScript Librairies are used by default:
 Prerequisites
 #############
 
+An installation of Nodejs including npm is necessary. Yarn is recommended as package manager.
+
 * `Nodejs <https://nodejs.org/en/download/>`_ >= 10
 * yarn
  ::
