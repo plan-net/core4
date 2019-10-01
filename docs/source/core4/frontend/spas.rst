@@ -30,6 +30,7 @@ An installation of Nodejs including npm is necessary. Yarn is recommended as pac
 
 * `Nodejs <https://nodejs.org/en/download/>`_ >= 10
 * yarn
+
  ::
 
     # install yarn after a succesfull nodejs installation using npm
@@ -56,6 +57,7 @@ There's everything set up to start developing.
 
     # start a development server
     yarn serve
+
  ::
 
 Now you can open your browser to ``http://localhost:808{0-9}``   and start developing.
@@ -112,6 +114,7 @@ Anatomy of a CORE4os Frontend
     ├── package.json                # build scripts and dependencies
     ├── README.md                   # Default README file
     └── vue.config.js               # Configuration of devserver port, Vue version for development, public path on the server etc.
+
  ::
 
 Configuration  of a CORE4os Frontend
@@ -122,6 +125,6 @@ Api Basepath
 
 There are two different paths which are used in core4os. Please open ``project/public/index.html`` to change these paths.
 
-``window.APIBASE_CORE`` is the path to all CORE4os resources. This path usually does not need to be changed. These ressources are ``/login``, ``/logout``, ``/profile``, ``/settings``, etc.
+``window.APIBASE_CORE`` is the path to all CORE4os ressources. This path usually does not need to be changed. These ressources are ``/login``, ``/logout``, ``/profile``, ``/settings``, etc.
 
-``window.APIBASE_APP`` is app specific and usually corresponds to the root variable in the server. //TODO server doc root var
+``window.APIBASE_APP`` is app specific and usually corresponds to the root variable in the server. See also (see :ref:`api`)
