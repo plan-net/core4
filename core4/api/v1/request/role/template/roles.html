@@ -154,19 +154,10 @@
                                         deletable-chips
                                         small-chips
                                         hide-selected
-                                        :search-input.sync="search2"
+                                        :search-input.sync="search1"
                                         v-model="currentRole.perm"
                                         label="Permissions"
                                         @change="search1 = null">
-                                        <template v-slot:no-data>
-                                                <v-list-item>
-                                                    <v-list-item-content>
-                                                    <v-list-item-title>
-                                                         No results matching "<strong>[[ search2 ]]</strong>".
-                                                    </v-list-item-title>
-                                                    </v-list-item-content>
-                                                </v-list-item>
-                                            </template>
                                     </v-combobox>
                                     <v-combobox
                                         clearable
