@@ -8,15 +8,16 @@
         class="mt-2"
         :disabled="false"
         :items="autocompleteItems.all"
-        chips
         filled
         solo
         flat
         clearable
+        chips
         deletable-chips
         auto-select-first
         hide-details
         :open-on-clear="false"
+
         :menu-props="{auto: true, closeOnContentClick:true}"
         label=""
         item-text="text"
@@ -24,7 +25,7 @@
         :search-input.sync="searchInput"
         multiple
       >
-        <template v-slot:selection="data">
+<!--         <template v-slot:selection="data">
           <v-chip
             :selected="data.selected"
             close
@@ -34,9 +35,10 @@
             {{ data.item.text }}
           </v-chip>
 
-        </template>
+        </template> -->
 
         <template v-slot:item="data">
+
           <v-list-item-content>
             <v-list-item-title v-html="data.item.text"></v-list-item-title>
           </v-list-item-content>

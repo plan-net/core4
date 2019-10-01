@@ -19,6 +19,7 @@ export default {
     })
     if (this.widget != null) {
       this.$store.dispatch('setWidgetTitle', this.widget.title)
+      this.checkAppbarVis(this.widget.qual_name)
     }
   },
   watch: {
@@ -26,15 +27,28 @@ export default {
       if (newValue != null) {
         this.$store.dispatch('setWidgetTitle', newValue.title)
       }
+    },
+    qualName (newValue) {
+      this.checkAppbarVis(newValue)
     }
   },
-  methods: {},
+  methods: {
+    checkAppbarVis (val) {
+      if ((val || '').includes('CoreStaticFileHandler')) {
+        this.$store.dispatch('hideAppbar')
+      }
+    }
+  },
   beforeDestroy () {
     this.$store.dispatch('resetWidgetTitle', config.TITLE)
+    this.$store.dispatch('showAppbar')
     this.$bus.$off('c4-application-close')
   },
   computed: {
     ...mapGetters(['dark']),
+    qualName () {
+      return (this.widget || {}).qual_name
+    },
     widget () {
       const data = this.$store.getters.widgetById(this.$route.params.widgetId)
       return data
