@@ -128,3 +128,10 @@ There are two different paths which are used in core4os. Please open ``project/p
 ``window.APIBASE_CORE`` is the path to all CORE4os ressources. This path usually does not need to be changed. These ressources are ``/login``, ``/logout``, ``/profile``, ``/settings``, etc.
 
 ``window.APIBASE_APP`` is app specific and usually corresponds to the root variable in the server. See also (see :ref:`api`)
+
+package.json
+------------
+The following settings can be made in the package.json:
+
+* ``"name": "app-name"`` should be updated according to the application that is beeing developed
+* the field ``"core4ui": "^1.0.0"`` can be updated to the latest version of core4ui. Currently it is version 1.0.6.
