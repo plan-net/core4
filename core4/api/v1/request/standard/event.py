@@ -66,8 +66,8 @@ class EventHandler(CoreWebSocketHandler):
     #. job events from ``sys.event`` on channel *queue*
     #. aggregated job states from ``sys.queue`` on channel *queue*
 
-    See :doc:`/example/index` for an example about *events* and an example
-    about *messages*.
+    See :doc:`/example/index` within the documentation for an example about
+    *events* and an example about *messages*.
     """
     author = "mra"
     title = "event web socket"

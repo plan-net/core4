@@ -5,12 +5,20 @@
     <meta charset="UTF-8">
     <title>user settings</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify.css" rel="stylesheet">
+    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css" rel="stylesheet">
+
     <style>
         .monospace {
-            background-color: #dddddd;
             padding: 6px;
+        }
+        body.theme--light .monospace {
+            background-color: #dddddd;
+        }
+        body.theme--dark .monospace {
+            background-color: #eee;
+            color: rgba(0,0,0,0.87)
         }
     </style>
 </head>
@@ -33,32 +41,26 @@
     </v-app>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
-<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
 
 <script>
 
 var app = new Vue({
-
     el: '#app',
-
+    vuetify: new Vuetify({
+      theme: window.VUETIFY_THEME,
+    }),
+    delimiters: ['[[', ']]'],
     data() {
         return {
         }
     },
-
     created() {
-        this.$vuetify.theme = window.PNBI_THEME;
     },
-
     computed: {
     },
-
-    delimiters: ['[[', ']]'],
-
     mounted(){
     },
-
     methods:{
     }
 })
