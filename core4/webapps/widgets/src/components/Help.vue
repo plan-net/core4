@@ -55,6 +55,7 @@ export default {
     },
 
     path () {
+      // return 'http://localhost:8084/#/'
       let path
       switch (this.$route.name) {
         case 'help':
