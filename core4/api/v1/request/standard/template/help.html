@@ -222,8 +222,8 @@
                         <v-tooltip right>
                              <template v-slot:activator="{ on }">
                                   <span class="mr-2 caption pa-1" v-on="on">
-                                        <v-icon v-if="protected" class="mr-1" small>mdi-lock</v-icon>
-                                        <v-icon v-else class="mr-1" small>mdi-lock-open</v-icon>
+                                        <v-icon v-if="protected" class="mr-1" small>lock</v-icon>
+                                        <v-icon v-else class="mr-1" small>lock_open</v-icon>
                                   </span>
                              </template>
                             <span>Protected</span>
@@ -242,16 +242,17 @@
                             <h4 id="list-item-2" class="headline pt-2 pb-3">Introduction</h4>
                             <span class="introduction-desc">{% raw description_html %}</span>
                             <!--v-divider class="pb-5 mt-5"></v-divider-->
+                            {% if method %}
                             <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
-                            {% for elem in method %}
-                            <v-row >
-                                <v-col class="method-table">
-                                    <span id="{{elem['method'].upper()}}" class="method-name title pb-2">{{ elem['method'].upper() }}</span>
-                                    {% raw elem["html"] %}
-                                </v-col>
-                            </v-row>
-                            {% end %}
-                                
+                                {% for elem in method %}
+                                <v-row >
+                                    <v-col class="method-table">
+                                        <span id="{{elem['method'].upper()}}" class="method-name title pb-2">{{ elem['method'].upper() }}</span>
+                                        {% raw elem["html"] %}
+                                    </v-col>
+                                </v-row>
+                                {% end %}
+                            {% end if %}
                             <div v-if="isCoreStaticFileHandler">
                                 <span class="text-uppercase">Path:</span> [[args.data.path]]
                                 <br>
