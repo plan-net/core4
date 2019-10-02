@@ -1,6 +1,7 @@
 <template>
   <div>
     <iframe
+      style="border: 1px dashed red;"
       v-if="widget"
       :src="path"
       frameborder="0"
@@ -11,6 +12,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import { config } from '@/main'
+/* export function inIframe () {
+  try {
+    return window.self !== window.top
+  } catch (e) {
+    return true
+  }
+} */
 
 export default {
   mounted: function () {
@@ -19,33 +27,45 @@ export default {
     })
     if (this.widget != null) {
       this.$store.dispatch('setWidgetTitle', this.widget.title)
-      this.checkAppbarVis(this.widget.qual_name)
+      this.$store.dispatch('setInWidget', true)
+      this.checkAppbarVis()
     }
   },
   watch: {
     widget (newValue) {
       if (newValue != null) {
         this.$store.dispatch('setWidgetTitle', newValue.title)
+        this.$store.dispatch('setInWidget', true)
+        /*         console.log('this.isSpa && inIframe()', window.location, this.isSpa, inIframe())
+        if (this.isSpa && inIframe()) {
+          this.$store.dispatch('setInWidget', true)
+        } else {
+          this.$store.dispatch('setInWidget', false)
+        } */
       }
     },
     qualName (newValue) {
-      this.checkAppbarVis(newValue)
+      this.checkAppbarVis()
     }
   },
   methods: {
-    checkAppbarVis (val) {
-      if ((val || '').includes('CoreStaticFileHandler')) {
+    checkAppbarVis () {
+      if (this.isWidgetSpa) {
         this.$store.dispatch('hideAppbar')
       }
     }
   },
   beforeDestroy () {
     this.$store.dispatch('resetWidgetTitle', config.TITLE)
+    this.$store.dispatch('resetInWidget')
     this.$store.dispatch('showAppbar')
     this.$bus.$off('c4-application-close')
   },
   computed: {
     ...mapGetters(['dark']),
+    isWidgetSpa () {
+      return this.qualName.includes('CoreStaticFileHandler')
+    },
     qualName () {
       return (this.widget || {}).qual_name
     },
@@ -55,16 +75,19 @@ export default {
     },
 
     path () {
-      // return 'http://localhost:8084/#/'
-      let path
-      switch (this.$route.name) {
-        case 'help':
-          path = this.widget.endpoint.help_url
-          break
-        default:
-          path = this.widget.endpoint.enter_url
+      if ((this.widget || {}).qual_name.includes('JobHistoryHandler') ||
+      (this.widget || {}).title === 'about core4os') {
+        let path
+        switch (this.$route.name) {
+          case 'help':
+            path = this.widget.endpoint.help_url
+            break
+          default:
+            path = this.widget.endpoint.enter_url
+        }
+        return `${path}&dark=${this.dark}`
       }
-      return `${path}&dark=${this.dark}`
+      return 'http://localhost:8085/#/'
     }
   }
 
@@ -76,7 +99,7 @@ div {
   position: absolute;
   left: 0;
   right: 0;
-  top:0;
+  top: 0;
   bottom: 0;
   background-color: #fff;
   padding: 0 0 0 0;
