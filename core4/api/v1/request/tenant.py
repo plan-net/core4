@@ -49,12 +49,3 @@ class CoreTenantHandler(CoreRequestHandler):
             self.client = client
             return await self.user.has_client_access(client)
         return False
-
-    # async def has_client_access(self, client):
-    #     """
-    #     Verifies the user has a valid permission ``app://client/[client-name]``.
-    #
-    #     :param client: client (str) extracted from the URL
-    #     :return: ``True`` for success, else ``False``
-    #     """
-    #     return self.user.has_client_access(client)
