@@ -1,12 +1,12 @@
-.. _core_config:
+.. _widgets:
 
 #######
 Widgets
 #######
 
-Widgets are small applications with a very low complexity. They consist of an API and a frontend. In this section, however, we will only deal with the frontend. Information about creating a suitable API can be found here :ref:`api`
+Widgets are small applications with usually low complexity. They consist of an API and a frontend. In this section, however, we will only deal with the user interface / frontend. Information about creating a suitable API can be found here :ref:`api`
 
-Basically you can use any technology to create a widget. But we recommend Vue.js/Vuetify or Jquery/Material design bootstrap.
+Any frontend technology can be used to create widgets. There is no limitation within CORE4os. In CORE4os we rely on Vue.js/vuetify 2.0 or Jquery/Material design bootstrap.
 
 No matter what technology you use the file structure should be like this.
 
@@ -55,12 +55,12 @@ First you create the following HTML file:
     </body>
     </html>
 
-For widgets created with Vue.js, we provide the files "vue-assets_2.0.js" and "vuetify_2.0.css" on our CDN "https://bi.plan-net.com/cdn" to provide a standardized representation of all widgets. These files are essential for creating a Vue.js widget
+Currently - in 2019 - we are using the following assets, which are hosted at "https://bi.plan-net.com/cdn":
 
 vuetify_2.0.css:
-    * In order to achieve the same Vuetify status as possible, this file contains a copy of the Vuetify.css file (v2.0.17).
+    * This file contains a copy of the Vuetify.css file (v2.0.17).
 Vue-assets_2.0.js:
-    * The Js portion belonging to the version of the Vuetify.css file (v2.0.17)
+    * Vuetify (v2.0.17)
     * Axios 0.18
     * Vue.js (v2.6.10)
     * Custom JavaScript Snippets for different purposes
@@ -93,7 +93,8 @@ The HTML file will look like this.
     </body>
     </html>
 
-The next step is to initialize a Vue instance. You can read more about Vuetify and its HTML Setup here https://vuetifyjs.com/en/getting-started/quick-start. Since Core4OS uses Jinja2 you have to adjust the Vue delimeter now (see :ref:`Jinja2 <jinja>`).
+The next step is to initialize a Vue instance. You can read more about Vuetify and its HTML Setup here https://vuetifyjs.com/en/getting-started/quick-start.
+Since Core4OS uses Jinja2 you have to adjust the Vue delimeter now (see :ref:`Jinja2 <jinja>`).
 
 .. code-block:: html
 
@@ -127,7 +128,7 @@ The next step is to initialize a Vue instance. You can read more about Vuetify a
     </body>
     </html>
 
-The last step is to create a vuetify instance and set the theme. From this point on you can start developing the widget with Vuetify (https://vuetifyjs.com/en/).‪
+The last step is to create a Vuetify instance and to set the theme. From this point on you can start developing the widget with Vuetify Components (https://vuetifyjs.com/en/).‪
 
 .. code-block:: html
 
@@ -173,7 +174,7 @@ The last step is to create a vuetify instance and set the theme. From this point
     </body>
     </html>
 
-Vuetify offers the possibility to use a different icon library than the material design we use, only the integration of the css file in the head and the "iconfont" parameter have to be changed. More detailed information can be found here https://vuetifyjs.com/en/customization/icons
+Vuetify offers the possibility to use a different icon libraries. In this example 'md' icon font is used. A More detailed information can be found here https://vuetifyjs.com/en/customization/icons
 
 
 Jquery/Bootstrap Materiel Design
@@ -181,7 +182,7 @@ Jquery/Bootstrap Materiel Design
 
 If the variant with Vue.js/Vuetify is too high an entry hurdle, you can also develop material design with Jquery/Bootstrap. For a first insight please visit https://fezvrasta.github.io/bootstrap-material-design/docs/4.0/getting-started/introduction/
 
-To get a standardized version of the Js-, JQuerycodes as well as Popper and CSS files, core4os has the files "widget.js" and "widget.css".
+To get a standardized version of the Js-, jQuery codes and CSS files, core4os has the files "widget.js" and "widget.css".
 
 widget.js includes:
     * JQuery v3.4.0
