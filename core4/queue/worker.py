@@ -540,3 +540,10 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         mem = sum(m for c, m in self.stats_collector)
         div = len(self.stats_collector)
         return cpu / div, mem / div
+
+if __name__ == '__main__':
+    import core4.logger.mixin
+    core4.logger.mixin.logon()
+    w = CoreWorker()
+    print("start worker [%s]" % (w.identifier))
+    w.start()
