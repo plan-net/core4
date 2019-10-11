@@ -33,13 +33,13 @@ not weeks or months.
   from multi-core laptop environments to a multi-node cluster setup
 * :ref:`project architecture <project>` - a unified scheme to package and manage
   multiple projects, accounts, business domains, or tenants
-* :ref:`ReST API <api>` - unified interface to access and distribute insights
-  and data to exchange data with other systems inbound and outbount including
-  web application frameworks
-* mini applications - extension to the ReST API to deliver simple applications
-  based on HTML5 and Jinja2
+* :ref:`web service API <api>` - unified interface to access and distribute
+  insights and data to exchange data with other systems inbound and outbount
+  including web application frameworks
+* mini applications - extension to the web service API to deliver simple
+  applications based on HTML5 and Jinja2
 * :ref:`unified authorisation and access management <access>` across
-  :ref:`jobs <job>`, :ref:`ReST API <api>`, databases and applications
+  :ref:`jobs <job>`, :ref:`web service API <api>`, databases and applications
 * :ref:`configuration management <config>` - a flexible configuration system
   which allows an effective transition from analysis and development, through
   testing and staging into production environments; furthermore core4
