@@ -11,9 +11,9 @@ import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
 export const config = {
   THEME,
   TITLE: 'CORE4OS',
-  // IGNORED_ERRORS: [],
   APP_IDENTIFIER: 'core'
 }
+Vue.use(VueDragDrop)
 Vue.use(Core4ui, {
   App,
   router,
@@ -21,7 +21,6 @@ Vue.use(Core4ui, {
   config
 })
 
-Vue.use(VueDragDrop)
 /* Vue.config.productionTip = false
 
 new Vue({

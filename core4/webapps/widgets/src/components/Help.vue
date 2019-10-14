@@ -12,13 +12,6 @@
 <script>
 import { mapGetters } from 'vuex'
 import { config } from '@/main'
-/* export function inIframe () {
-  try {
-    return window.self !== window.top
-  } catch (e) {
-    return true
-  }
-} */
 
 export default {
   mounted: function () {
@@ -36,12 +29,6 @@ export default {
       if (newValue != null) {
         this.$store.dispatch('setWidgetTitle', newValue.title)
         this.$store.dispatch('setInWidget', true)
-        /*         console.log('this.isSpa && inIframe()', window.location, this.isSpa, inIframe())
-        if (this.isSpa && inIframe()) {
-          this.$store.dispatch('setInWidget', true)
-        } else {
-          this.$store.dispatch('setInWidget', false)
-        } */
       }
     },
     qualName (newValue) {
