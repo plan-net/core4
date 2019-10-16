@@ -763,8 +763,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         RequestHandler.__init__(self, *args, **kwargs)
 
     def initialize(self, *args, **kwargs):
-        """Hook for subclass initialization called for each request.
-
+        """
         The following keywords represent special ``**kwargs`` and overwrite
         :class:`.CoreRequestHandler` class properties. See
         :meth:`.propagate_property`.
@@ -777,9 +776,17 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         * ``static_path`` - absolute from project root, relative from request
         * ``enter_url`` - custom target url
         * ``icon`` - material icon
+        * ``doc`` - handler docstring (introduction)
         """
         for attr, value in self.propagate_property(self, kwargs):
             self.__dict__[attr] = value
+        self.initialize_request(*args, **kwargs)
+
+    def initialize_request(self, *args, **kwargs):
+        """
+        Hook for subclass initialization called for each request.
+        """
+        pass
 
     @classmethod
     def set_path(cls, key, container, **kwargs):
