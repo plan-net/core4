@@ -245,4 +245,3 @@ async def test_page(table_server, make_data):
     body = resp.json()["data"]["body"]
     data = [datetime.datetime.strptime(i["timestamp"], "%Y-%m-%d ... %H:%M:%S") for i in body]
     assert 31 == sum([1 for i in data if i >= middle])
-

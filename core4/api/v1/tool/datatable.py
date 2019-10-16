@@ -1,7 +1,142 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""
+Data Table support providing :class:`.CoreDataTable`.
+
+The following example demonstrates the class in action::
+
+    COLS = [
+        {
+            "name": "_id",
+            "label": None,
+            "key": True,
+            "hide": True,
+            "sortable": False,
+            "click": None,
+            "align": None,
+            "format": "{}",
+            "editable": False
+        }
+    ]
+
+    class TableHandler(CoreRequestHandler):
+        author = "mra"
+        title = "CoreDataTable example"
+
+        async def _length(self, filter):
+            return await self.collection.count_documents(filter)
+
+        async def _query(self, skip, limit, filter, sort_by):
+            return await self.collection.find(filter).sort(
+                sort_by).skip(skip).limit(limit).to_list(limit)
+
+        def initialize_request(self, *args, **kwargs):
+            self.collection = self.config.tests.data1_collection
+            args = dict(
+                length=self._length,
+                query=self._query,
+                column=COLS,
+                fixed_header=self.get_argument("fixed_header", bool, default=True),
+                hide_header=self.get_argument("hide_header", bool, default=False),
+                multi_sort=True,
+                height=None,
+                dense=self.get_argument("dense", bool, default=True),
+                select=False,
+                multi_select=False,
+                search=True,
+                per_page=self.get_argument("per_page", int, default=10),
+                page=self.get_argument("page", int, default=0),
+                filter=self.get_argument("filter", dict, default=None,
+                                         dict_decode=convert),
+                sort_by=self.get_argument("sort", list, default=None)
+            )
+            self.datatable = CoreDataTable(**args)
+
+        async def post(self):
+            self.reply(
+                await self.datatable.post()
+            )
+
+        async def get(self):
+            self.reply(
+                await self.datatable.get()
+            )
+
+Given that the collection ``data1_collection`` contains multiple documents,
+this handler initialises the data table and passes the ``POST`` and ``GET``
+request to the appropriate data table methods.
+
+The Python class manages pagination, filtering and sorting and specifies the
+following attributes of the HTML component:
+
+fixed-header
+    fixed header to top of table
+hide-header
+    hide the row header
+multi-sort
+    If ``True`` then one can sort on multiple properties. The actual sort
+    behavior is controlled with the ``sort`` property, see below
+height
+    set an explicit height of table
+dense
+    decreases the height of rows
+select
+    shows the select checkboxes in both the header and row.
+multi-select
+    changes selection mode to multi select
+search
+    displays the search bar
+per_page
+    changes how many items per page should be visible
+page
+    changes which page of items is displayed
+filter
+    query json using MongoDB extended query syntax
+data
+    list of dictionary representing column names (keys) and values
+
+The ``column`` property is a list of dict with the following column
+specification:
+
+hide
+    indicates that the column is hidden
+sortable
+    indicates that the table can be sorted by the column
+key
+    indicates that the column represents the row index. There can be only one
+    column where ``.key is True``
+name
+    technical column name
+label
+    column name
+align
+    aligns the column data (left, right, center)
+clickable
+    backend endpoint if the user clicks the cell (column and row)
+format
+    column cell format definition  using Python format strings
+editable
+    indicates that the user can move the column (column sort order)
+
+The ``sort`` property specifies the sort order which is implemented by the
+backend.
+
+name
+    technical column name
+ascending
+    indicates sort order
+"""
+
 from core4.util.pager import CorePager
 import datetime
 import bson
 from core4.base.main import CoreBase
+
 
 def convert(obj):
     # special json hook to parse typed mongodb query
@@ -28,33 +163,6 @@ def convert(obj):
             elif key == "$objectid":
                 return bson.objectid.ObjectId(value)
         return obj
-
-
-class CoreDataTableMixin:
-
-    def init_datatable(self, length, query, fixed_header=True,
-                       hide_header=False, multi_sort=True, height=None,
-                       dense=False, select=True, multi_select=True, search=True,
-                       per_page=10, page=0, filter=None):
-        args = dict(
-            length=length,
-            query=query,
-            fixed_header=self.get_argument("fixed_header", bool,
-                                           default=fixed_header),
-            hide_header=self.get_argument("hide_header", bool,
-                                          default=hide_header),
-            multi_sort=multi_sort,
-            height=height,
-            dense=self.get_argument("dense", bool, default=dense),
-            select=select,
-            multi_select=multi_select,
-            search=search,
-            per_page=self.get_argument("per_page", int, default=per_page),
-            page=self.get_argument("page", int, default=page),
-            filter=self.get_argument("filter", dict, default=filter or {},
-                                     dict_decode=convert),
-        )
-        return CoreDataTable(**args)
 
 
 class CoreDataTable(CoreBase):
@@ -95,9 +203,12 @@ class CoreDataTable(CoreBase):
         self.sort_by = sort_by
 
     async def _length(self, filter):
+        # wrapper method around pager, see core4.util.pager
         return await self.length(filter)
 
     async def _query(self, skip, limit, filter, sort_by):
+        # wrapper method around pager, see core4.util.pager
+        # this method delivers cell formatting according to the cols definition
         ret = []
         for doc in await self.query(skip, limit, filter, sort_by):
             ndoc = {}
@@ -112,6 +223,17 @@ class CoreDataTable(CoreBase):
         return ret
 
     async def post(self):
+        """
+        Delivers the requested page with
+
+        * ``paging`` - pagination information, see core4.tool.pager
+        * ``option`` - data table options
+        * ``column`` - data table column definition
+        * ``sort`` - data table sort specification
+        * ``body`` - list of data table rows (dicts)
+
+        :return: dict
+        """
         page = await self.pager.page()
         sort_by = [{"name": n, "ascending": a == 1} for n, a in self.sort_by]
         return dict(
@@ -132,7 +254,6 @@ class CoreDataTable(CoreBase):
                 total_count=page.total_count,
                 count=page.count
             ),
-            filter=self.pager.filter,
             column=self.column,
             sort=sort_by,
             body=page.body
@@ -140,4 +261,3 @@ class CoreDataTable(CoreBase):
 
     async def get(self):
         return await self.post()
-
