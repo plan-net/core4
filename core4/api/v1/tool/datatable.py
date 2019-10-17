@@ -136,7 +136,7 @@ from core4.util.pager import CorePager
 import datetime
 import bson
 from core4.base.main import CoreBase
-
+from pandas import isnull
 
 def convert(obj):
     # special json hook to parse typed mongodb query
@@ -214,11 +214,14 @@ class CoreDataTable(CoreBase):
             ndoc = {}
             for k, v in doc.items():
                 if k in self.lookup:
-                    try:
-                        ndoc[k] = self.lookup[k].format(v)
-                    except TypeError:
-                        self.logger.error("unsupported format string [%s] "
-                                          "at [%s]", self.lookup[k], k)
+                    if isnull(v):
+                        ndoc[k] = "."
+                    else:
+                        try:
+                            ndoc[k] = self.lookup[k].format(v)
+                        except TypeError:
+                            self.logger.error("unsupported format string [%s] "
+                                              "at [%s]", self.lookup[k], k)
             ret.append(ndoc)
         return ret
 
