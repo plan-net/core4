@@ -15,7 +15,7 @@
           class="title"
         >New board</span>
       </v-card-title>
-      <v-card-text>
+      <v-card-text class="pa-0">
         <v-form ref="form">
           <v-container>
             <v-layout wrap>

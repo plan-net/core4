@@ -3,7 +3,7 @@
     <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
       <board v-if="ready"/>
     </transition>
-    <widget-manager/>
+    <widget-manager></widget-manager>
   </div>
 </template>
 

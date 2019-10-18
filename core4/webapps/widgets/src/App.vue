@@ -1,6 +1,5 @@
 <template>
   <c4-webapp :full-width="true" :nav-button-visible="false">
-    <!--<side-navigation slot="navigation-slot"></side-navigation>-->
     <div slot="router">
       <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
         <router-view/>
@@ -9,15 +8,27 @@
   </c4-webapp>
 </template>
 <script>
-/* import SideNavigation from '@/components/SideNavigation' */
-
+import { inIframe } from 'core4ui/core4/store/state'
 export default {
   name: 'CORE4OS',
-  components: {
-    /* SideNavigation */
-  },
-  computed: {},
   mounted () {
+    function bindEvent (element, eventName, eventHandler) {
+      if (element.addEventListener) {
+        element.addEventListener(eventName, eventHandler, false)
+      } else if (element.attachEvent) {
+        element.attachEvent('on' + eventName, eventHandler)
+      }
+    }
+    if (inIframe() === false) {
+      // this is coming from the iframe application!!!
+      bindEvent(window, 'message', function (e) {
+        if (e.data === 'c4-application-close') {
+          this.$router.push('/')
+        }
+      }.bind(this))
+    } else {
+      this.$store.dispatch('setInWidget', true)
+    };
   }
 }
 </script>

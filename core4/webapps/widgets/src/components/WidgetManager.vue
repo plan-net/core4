@@ -1,31 +1,32 @@
 <template>
-  <v-layout>
-    <v-navigation-drawer
-      v-model="open"
-      :width="currScaleAbs"
-      mini-variant-width="40"
-      :mini-variant="miniVariant"
-      fixed
-      floating
-      right
-      stateless
-      hide-overlay
-      class="widget-manager"
+  <v-navigation-drawer
+    v-model="open"
+    :width="currScaleAbs"
+    mini-variant-width="40"
+    :mini-variant="miniVariant"
+    fixed
+    floating
+    right
+    stateless
+    hide-overlay
+    class="widget-manager"
+  >
+    <v-row
+      no-gutters
+      class=""
     >
-      <v-layout row>
-
+      <v-col>
         <v-tabs
           v-show="!miniVariant"
           v-model="tabs"
-          color="transparent"
-          slider-color="primary"
         >
+
           <v-tab>
             Widgets
             <v-btn
               icon
               small
-              class="mx-0"
+              class="mr-0 ml-2"
               @click.stop="helpDialogOpen = true"
             >
               <v-icon
@@ -62,11 +63,13 @@
             </v-btn>
           </v-tab>
           <v-tab>
-            Boards
+
+            <span>Boards</span>
+            <v-spacer></v-spacer>
             <v-btn
               icon
               small
-              class="mx-0"
+              class="mr-0 ml-2"
               @click.stop="boardHelpDialogOpen = true"
             >
               <v-icon
@@ -74,13 +77,17 @@
                 color="grey"
               >help</v-icon>
             </v-btn>
+
           </v-tab>
         </v-tabs>
-        <v-layout
-          align-center
-          justify-end
-          :class="{'row pr-3': !miniVariant, 'column reverse': miniVariant}"
-          class="size-toggler"
+      </v-col>
+      <v-col>
+        <v-row
+          no-gutters
+          align="center"
+          justify="end"
+          :class="{'pt-2': !miniVariant}"
+          class="size-toggler pr-3"
         >
           <v-btn
             @click="setCurrScale({index: 3, persist: true})"
@@ -118,25 +125,25 @@
           >
             <div class="scaler leer"></div>
           </v-btn>
-        </v-layout>
-      </v-layout>
-      <v-tabs-items
-        v-model="tabs"
-        v-show="!miniVariant"
-      >
-        <v-tab-item>
-          <widgets-list :scale="currScalePerc" />
-        </v-tab-item>
-        <v-tab-item>
-          <side-navigation
-            :help-dialog-open="boardHelpDialogOpen"
-            @close="boardHelpDialogOpen = false"
-          />
-        </v-tab-item>
-      </v-tabs-items>
+        </v-row>
+      </v-col>
+    </v-row>
 
-    </v-navigation-drawer>
-  </v-layout>
+    <v-tabs-items
+      v-model="tabs"
+      v-show="!miniVariant"
+    >
+      <v-tab-item>
+        <widgets-list :scale="currScalePerc" />
+      </v-tab-item>
+      <v-tab-item>
+        <side-navigation
+          :help-dialog-open="boardHelpDialogOpen"
+          @close="boardHelpDialogOpen = false"
+        />
+      </v-tab-item>
+    </v-tabs-items>
+  </v-navigation-drawer>
 </template>
 
 <script>
@@ -183,7 +190,6 @@ div.scaler {
   height: 11px;
   position: relative;
   border: 2px solid;
-
   &:after {
     position: absolute;
     content: "";
@@ -228,12 +234,13 @@ div.dreiviertel {
 }
 
 .widget-manager {
-  padding-top: 65px;
+  padding-top: 60px;
 }
 
 /deep/ .v-autocomplete {
   position: relative;
-  margin: 6px 18px 6px 8px !important;
+  margin-left: -12px !important;
+  max-width: none !important;
   &.ecke {
     &:after {
       content: "";
@@ -263,8 +270,13 @@ div.dreiviertel {
     }
   }
 
-  &.v-navigation-drawer {
+  &.v-navigation-drawer, &.v-tabs-items {
     background-color: darken(#202020, 1);
+    background: darken(#202020, 1);
+  }
+  /deep/ &.v-tabs-bar {
+    background-color: darken(#202020, 1) !important;
+    background: darken(#202020, 1);
   }
 
   /deep/ &.v-autocomplete {
@@ -307,6 +319,9 @@ div.dreiviertel {
 <style scoped lang="css">
 div >>> .with-hover {
   height: 56px !important;
+  width: 32px;
+  padding-left: 4px;
+  flex: none;
 }
 
 div >>> .with-hover.right {
@@ -319,8 +334,8 @@ div >>> .with-hover.right .v-icon {
   margin-top: 0 !important;
   font-size: 17px !important;
 }
-div >>> .with-hover.right .v-icon:hover{
-  color: var(--v-primary-base) !important
+div >>> .with-hover.right .v-icon:hover {
+  color: var(--v-primary-base) !important;
 }
 
 div >>> .with-hover.right .v-tooltip {
@@ -331,42 +346,44 @@ div >>> .v-chip__content {
   cursor: pointer !important;
 }
 
-div >>> .v-list__tile {
+div >>> .v-list-item {
   padding-left: 0;
   padding-right: 0;
 }
 
-div >>> .v-list__tile__content {
+div >>> .v-list-item__content {
   padding-left: 6px;
   padding-right: 3px;
 }
 
-div >>> .v-list__tile__action {
-  padding-right: 4px;
-  min-width: 32px;
+div >>> .v-list-item__action {
+  /*   padding-right: 4px;
+  margin-right: 2px;
+  min-width: 32px; */
   cursor: grab !important;
 }
 
-div >>> .v-list__tile__action.with-hover {
+div >>> .v-list-item__action.with-hover {
   transition: background-color 0.25s ease-in;
 }
 
-div >>> .v-list__tile__action.with-hover:hover {
+div >>> .v-list-item__action.with-hover:hover {
   cursor: grab;
 }
 
-div >>> .v-subheader {
+/* div >>> .v-subheader {
   font-weight: 600;
   padding-left: 12px;
   padding-right: 3px;
-}
+} */
 </style>
 
 <style scoped lang="scss">
-/deep/ .v-list__tile__title {
+/deep/ .v-list-item__title {
   font-weight: 700;
 }
-/deep/ .mini-widget {
+/deep/ .v-list-item.mini-widget {
+  height: 58px;
   min-height: 58px;
   margin-bottom: 6px;
 }
@@ -396,11 +413,11 @@ div >>> .v-subheader {
   }
 }
 .theme--dark {
-  /deep/ .v-list__tile__action.with-hover {
+  /deep/ .v-list-item__action.with-hover {
     background-color: var(--v-secondary-lighten3);
   }
 
-  /deep/ .v-list__tile__action.with-hover:hover {
+  /deep/ .v-list-item__action.with-hover:hover {
     background-color: var(--v-secondary-lighten4);
   }
 
@@ -419,11 +436,11 @@ div >>> .v-subheader {
     color: #fff;
   }
 
-  /deep/ .v-list__tile__action.with-hover {
+  /deep/ .v-list-item__action.with-hover {
     background-color: rgba(0, 0, 0, 0.15);
   }
 
-  /deep/ .v-list__tile__action.with-hover:hover {
+  /deep/ .v-list-item__action.with-hover:hover {
     background-color: rgba(0, 0, 0, 0.1);
   }
 
