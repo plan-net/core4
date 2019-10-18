@@ -62,19 +62,19 @@ export default {
     },
 
     path () {
-      if ((this.widget || {}).qual_name.includes('JobHistoryHandler') ||
-      (this.widget || {}).title === 'about core4os') {
-        let path
-        switch (this.$route.name) {
-          case 'help':
-            path = this.widget.endpoint.help_url
-            break
-          default:
-            path = this.widget.endpoint.enter_url
-        }
-        return `${path}&dark=${this.dark}`
+      /*       if ((this.widget || {}).qual_name.includes('JobHistoryHandler') ||
+      (this.widget || {}).title === 'about core4os') { */
+      let path
+      switch (this.$route.name) {
+        case 'help':
+          path = this.widget.endpoint.help_url
+          break
+        default:
+          path = this.widget.endpoint.enter_url
       }
-      return 'http://localhost:8085/#/'
+      return `${path}&dark=${this.dark}`
+      /*       }
+      return 'http://localhost:8085/#/' */
     }
   }
 
