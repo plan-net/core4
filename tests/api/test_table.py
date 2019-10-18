@@ -141,9 +141,7 @@ def table_server():
     )
 
 
-@pytest.yield_fixture
-def make_data(mongodb, count=60):
-    coll = mongodb.data1
+def _make_data(coll, count=60):
     segment = ["segment A", "segment B", "segment C", "segment D",
                "segment E"]
     coll.delete_many({})
@@ -159,6 +157,10 @@ def make_data(mongodb, count=60):
             "segment": segment[random.randint(0, 4)]
         })
     return coll
+
+@pytest.yield_fixture
+def make_data(mongodb, count=60):
+    _make_data(mongodb.data1, count)
 
 
 async def test_login(table_server):
@@ -245,3 +247,13 @@ async def test_page(table_server, make_data):
     body = resp.json()["data"]["body"]
     data = [datetime.datetime.strptime(i["timestamp"], "%Y-%m-%d ... %H:%M:%S") for i in body]
     assert 31 == sum([1 for i in data if i >= middle])
+
+
+if __name__ == '__main__':
+    from core4.api.v1.tool.functool import serve
+    from core4.base.main import CoreBase
+    class T(CoreBase):
+        def get_db(self):
+            return self.config.tests.data1_collection
+    _make_data(T().get_db())
+    serve(TableServer)
