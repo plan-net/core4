@@ -780,13 +780,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         """
         for attr, value in self.propagate_property(self, kwargs):
             self.__dict__[attr] = value
-        self.initialize_request(*args, **kwargs)
-
-    def initialize_request(self, *args, **kwargs):
-        """
-        Hook for subclass initialization called for each request.
-        """
-        pass
 
     @classmethod
     def set_path(cls, key, container, **kwargs):
