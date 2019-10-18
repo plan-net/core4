@@ -19,7 +19,7 @@ from core4.util.email import RoleEmail
 class LoginHandler(CoreRequestHandler):
     title = "authentication"
     author = "mra"
-    tag = "api roles"  # idea is to have a login, password, logout page
+    tag = "roles"  # idea is to have a login, password, logout page
                        # remove api by then
     protected = False
 

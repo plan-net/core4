@@ -1,54 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>HELP {{ handler.__class__.__name__ }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
-    <!-- <link rel="stylesheet" type="text/css" href="..\..\_static\bootstrap-material-design.custom.css"> -->
-    <!--<link rel="stylesheet" type="text/css" href="..\..\_static\widget.css">-->
-
+    <title>Help</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css" rel="stylesheet">
     <style>
-        .accordion-arrow {
-            position: relative;
-            /* Adjust these values accordingly */
-            top: 6px;
+        body{
+            opacity: 0;
         }
-
-        .inner-card {
-            box-shadow: none;
-        }
-
-        .scrollspy-help {
-            position: relative;
-            height: 100%;
-            margin-top: .5rem;
-            overflow: auto;
-        }
-
-        .list-group {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            padding: .5rem 0;
-        }
-
-        .left-card {
-            min-height: 48px;
-            height: 80vh;
-        }
-
-        .inner-card-body {
-            height: 100%
-        }
-
-        .row {
-            margin-top: 64px;
-        }
-
-        .container-fluid::before {
+        body.theme--light .wrapper::before {
             content: '';
             display: block;
             position: absolute;
@@ -56,228 +18,381 @@
             left: 0;
             right: 0;
             top: 0;
-            background-color: var(--accent);
+            background-color: #283a45;
             z-index: 0;
             min-height: 120px;
         }
 
-        .list-group {
-            padding-top: 0px;
+        .wrapper {
+            margin-top: 62px;
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: center;
         }
 
-        .btn-link {
-            padding: 0px;
-            margin: 0px;
+        .wrapper > * {
+            margin: 10px;
+            flex: 1 100%;
+            max-width:1260px;
+        }
+
+        pre.doctest-block {
+            margin-left: 16px;
+            width: 75%;
+            min-width: 920px;   
+            max-width: 1280px;             
+            
+            font-weight: bold;
+            font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+            font-size: 0.83em;
+            border-radius: 4px;
+            padding: 16px 10px 16px 10px;
+            overflow: scroll;
+        }
+        .theme--light  pre.doctest-block {
+            border: 1px solid rgba(63,81,93,.25);
+            background-color: #fff;
+            color: #3f515d;
+        }
+        .theme--dark  pre.doctest-block {
+            border: 1px solid rgba(63,81,93,.45);
+            background-color: #3f515d;
+            color: #fff;
+        }
+/*         pre.doctest-block {
+            width: 100%;
+            border: 1px dashed #fff;
+            font-weight: bold;
+            font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
+            background-color: gray;
+            color: #fff;
+            font-size: 0.83em;
+            border-radius: 5px;
+            padding: 10px;
+            overflow: scroll;
+        } */
+
+        p.rubric {
+            display: block;
+            font-size: 1em;
+            margin: 1em 0 1em 0;
+            font-weight: bold;
+        }
+
+        div.tab-item hr:last-child {
+            display:none;
+        }
+
+        .theme--light header a.display-2 {
+            color: rgba(0, 0, 0, 0.87);
+        }
+        .theme--dark header a.display-2 {
+            color: white;
+        }
+
+        p{
+            max-width: 640px;
+        }
+        .introduction-desc p{
+            margin-top: 10px;
+            margin-bottom: 12px;
+        }
+
+        .code{
+            color: #f44336;
+            padding: 1px 4px;
+            margin: 3px 3px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: .9em;
+        }
+        .theme--light .code {
+            background: rgba(0,0,0,.1);
+            border: 1px solid rgba(0,0,0,.15);
+        }
+        .theme--dark .code {
+            background: #283a45;
+            border: 1px solid rgba(0,0,0,.1);
+        }
+
+        .method-table{
+            margin-bottom: 32px;
+        }
+        .theme--dark .method-table {
+            background-color: rgba(63,81,93,.25);
+            border: 1px solid rgba(63,81,93,.45);
+        }
+        .theme--light .method-table {
+            background-color: rgba(63,81,93,.05);
+            border: 1px solid rgba(63,81,93,.2);
+        }
+        .method-table .method-name{
+            padding-left: 12px;
+            padding-top: 6px;
+            padding-bottom: 16px;
+            background-color:rgba(63,81,93,.1);
+            display: block;
+            margin-left: -12px; 
+            margin-right: -12px;
+            margin-top: -12px;
+
+        }
+        table.field-list th, table.field-list td{
+            padding-bottom: 18px;
+        }
+        table.field-list th{
+            display:block;
             text-align: left;
+            width: 120px;
         }
-
-        #accordion {
-            max-width: 95%;
+        table .field-body ul, ul.no{
+            list-style-type: none;
+            padding-left: 0;
+        }
+        table .field-body ul.last.simple span,
+        table .field-body ul strong{
+            min-width: 110px;
+            width: 110px;
+            display: inline-block;
+        }
+        table .field-body ul.last.simple span{
+            font-weight: bolder;
+        }
+        .key{
+            width: 90px;
+            display: inline-block;
+        }
+        .chip{
+            font-weight: 500;
+            display: inline-block;
+            padding: 2px 10px;
+            font-size: 13px;
+            color: #fff;
         }
     </style>
 </head>
-
 <body>
-    <!-- <h1>HELP of {{ handler.__class__.__name__ }}</h1> -->
-    <div class="container-fluid">
-        <div class="row mx-auto" style="max-width:1260px">
-            <div class="card left-card col-9 ">
-                <div class="card-body inner-card-body" style="position:relative">
-                    <div data-spy="scroll" data-target="#help-list" data-offset="0" class="scrollspy-help">
-                        <h3 id="list-item-1">{{ title }}</h3>
-                        <h5>{{ subtitle }}</h5>
-                        <div id="accordion">
-                            <div class="card inner-card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        QUAL_NAME : {{qual_name}} 
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        AUTHOR : {{author}}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        TAG : <span class="md-chips pt-0 pb-0 pl-1">
-                                                {% for t in tag[:3] %}
-                                                <div class="md-chip">
+<!--{{globals()}}-->
+<!-- list of all.code available variables -->
+<div id="app">
+    <v-app>
+        <div class="wrapper">
+            <v-card>
+                <header class="px-7 pt-7 pb-2">
+                    <a class="display-2 mb-0" href="{{enter_url}}" style="text-decoration: none;">[[ title ]]</a>
+                    <h2 class="font-weight-regular" v-text="subtitle || qual_name"></h2>
+                    <section class="">
+                        <v-tooltip left>
+                             <template v-slot:activator="{ on }">
+                                  <span class="mr-2 caption py-1 pr-1" v-on="on">
+                                        <v-icon class="mr-1" small>account_box</v-icon>[[ author ]]
+                                  </span>
+                             </template>
+                            <span>Author</span>
+                        </v-tooltip>
+                        <v-tooltip bottom>
+                             <template v-slot:activator="{ on }">
+                                  <span class="mr-2 caption pa-1" v-on="on">
+                                        <v-icon class="mr-1" small>date_range</v-icon>{{created_at.strftime("%d.%m.%Y %H:%M")}}
+                                  </span>
+                             </template>
+                            <span>Created at</span>
+                        </v-tooltip>
+                        <v-tooltip top>
+                             <template v-slot:activator="{ on }">
+                                  <span class="mr-2 caption darken-2 pa-1" v-on="on">
+                                        <v-icon class="mr-1" small>description</v-icon>
+                                             {% for t in tag[:3] %}
+                                                <span class="chip accent">
                                                     {{t}}
-                                                </div>
-                                                {% end %}
-                                            </span>
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        ICON : <i class="material-icons">{{ icon }}</i> - {{ icon }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        PROTECTED : {{ protected }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        RESOURCE ID : {{ rsc_id }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CONTAINER : {{ container }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CREATED AT : {{created_at.strftime("%d.%m.%Y %H:%M")}}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        THIS ENTER_URL : {{ enter_url }}
-                                    </h6>
-                                </div>
-                                <div class="card-header">
-                                    <h6 class="mb-0">
-                                        CLASS ARGS : {{ args }}
-                                    </h6>
-                                </div>
-                            </div>
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo"
-                                    aria-expanded="false" aria-controls="collapseTwo">
-                                    <div class="card-header" id="headingTwo">
-                                        <h6 class="mb-0 ">
-                                            THIS PATTERN <i
-                                                class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <ul>
-                                            {% for p in pattern %}
-                                            <li>
-                                                {% if p["name"] is not None %}
-                                                <b>{{ p["name"] }}:</b>
-                                                {% else %}
-                                                <b>no name:</b>
-                                                {% end if %}
-                                                {{ p["regex"] }}
-                                            </li>
+                                                </span>
                                             {% end %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--<div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                                    <div class="card-header" id="headingThree">
-                                        <h6 class="mb-0 ">
-                                            CONTAINER <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseThree" class="collapse" aria-labelledby="headingThree"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <div class="md-chips pt-0 pb-0">
-                                            {% for t in tag[:3] %}
-                                            <div class="md-chip">
-                                                {{t}}
-                                            </div>
-                                            {% end %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>-->
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
-                                    <div class="card-header" id="headingFour">
-                                        <h6 class="mb-0 ">
-                                            ENDPOINTS <i class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
+                                  </span>
+                             </template>
+                            <span>Tags</span>
+                        </v-tooltip>
+                        <v-tooltip bottom>
+                             <template v-slot:activator="{ on }">
+                                   <span class="mr-2 caption pa-1" v-on="on">
+                                        <v-icon class="mr-1" small>[[icon]]</v-icon>[[icon]]
+                                    </span>
+                             </template>
+                            <span>Icon</span>
+                        </v-tooltip>
+                        <v-tooltip right>
+                             <template v-slot:activator="{ on }">
+                                  <span class="mr-2 caption pa-1" v-on="on">
+                                        <v-icon v-if="protected" class="mr-1" small>lock</v-icon>
+                                        <v-icon v-else class="mr-1" small>lock_open</v-icon>
+                                  </span>
+                             </template>
+                            <span>Protected</span>
+                        </v-tooltip>
+                    </section>
+                </header>
+                <main>
+                    <v-tabs v-model="tabs" background-color="accent lighten5" slider-color="primary" :centered="true" :grow="true" class="mt-2" dark>
+                        <v-tab class="font-weight-bold">Description</v-tab>
+                        <v-tab class="font-weight-bold">Details</v-tab>
+                    </v-tabs>
 
-                                <div id="collapseFour" class="collapse" aria-labelledby="headingFour"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <ul>
-                                            {% for ep in endpoint %}
-                                            <li>
-                                                {{ ep }}
-                                                <ul>
-                                                    <li><a href="{{ ep }}/_info/card/{{ rsc_id }}">card</a></li>
-                                                    <li><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
-                                                    {% if enter_url != None %}
-                                                    <li>ENTER: <a href="{{ enter_url }}">{{ enter_url }}</a></li>
-                                                    {% else %}
-                                                    <li><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
-                                                    {% end if %}
-                                                </ul>
-                                            </li>
-                                            {% end for %}
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card inner-card">
-                                <button class="btn btn-link collapsed" data-toggle="collapse"
-                                    data-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
-                                    <div class="card-header" id="headingFive">
-                                        <h6 class="mb-0 ">
-                                            DESCRIPTION <i
-                                                class="material-icons accordion-arrow">keyboard_arrow_down</i>
-                                        </h6>
-                                    </div>
-                                </button>
-                                <div id="collapseFive" class="collapse" aria-labelledby="headingFive"
-                                    data-parent="#accordion">
-                                    <div class="card-body">
-                                        <pre>{% raw description_html %}</pre>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <hr />
-                        <h4 id="list-item-2" stlye="margin-top:10px">Introduction</h4>
+                    <v-tabs-items v-model="tabs" class="tabs-items px-7 py-4">
 
-                        <span>{% raw description_html %}</span>
-                        <hr />
-                        {% for elem in method %}
-                        <h4 id="{{elem['method'].upper()}}">{{ elem['method'].upper() }}</h4>
-                        <h2></h2>
-                        {% raw elem["html"] %}
-                        <hr />
-                        {% end %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-3">
-                <div id="help-list" class="list-group">
-                    <a class="list-group-item list-group-item-action active" href="#list-item-1">{{ title }}</a>
-                    <a class="list-group-item list-group-item-action" href="#list-item-2">Introduction</a>
-                    {% for elem in method %}
-                    <a class="list-group-item list-group-item-action"
-                        href="#{{elem['method'].upper()}}">{{elem['method'].upper()}}</a>
-                    {% end %}
-                </div>
-            </div>
+                        <v-tab-item class="tab-item">
+                            <h4 id="list-item-2" class="headline pt-2 pb-3">Introduction</h4>
+                            <span class="introduction-desc">{% raw description_html %}</span>
+                            <!--v-divider class="pb-5 mt-5"></v-divider-->
+                            {% if method %}
+                            <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
+                                {% for elem in method %}
+                                <v-row >
+                                    <v-col class="method-table">
+                                        <span id="{{elem['method'].upper()}}" class="method-name title pb-2">{{ elem['method'].upper() }}</span>
+                                        {% raw elem["html"] %}
+                                    </v-col>
+                                </v-row>
+                                {% end %}
+                            {% end if %}
+                            <div v-if="isCoreStaticFileHandler">
+                                <span class="text-uppercase">Path:</span> [[args.data.path]]
+                                <br>
+                                <span class="text-uppercase">Enter:</span> [[args.data.enter]]
+                                <br>
+                                <span class="text-uppercase">Enter url:</span>
+                                <a href="{{enter_url}}" class="pl-2">{{enter_url}}</a>
+                            </div>
+                        </v-tab-item>
+
+                        <v-tab-item class="tab-item">
+                            <div class="py-3">
+                                <span class="key">Resource ID</span>
+                                <span class="font-weight-regular code">[[ rsc_id ]]</span>
+                            </div>
+                            <div class="py-3">
+                                <span class="key">Container</span>
+                                <span class="font-weight-regular code">[[ container ]]</span>
+                            </div>
+                            <div class="py-3">
+                                <span class="key pb-3">Class args</span>
+                                <pre class="doctest-block">[[args.template]]</pre>
+                            </div>
+                            <div class="py-3">
+                                <span class="key pb-1">Pattern</span>
+                                <ul class="font-weight-regular no">
+                                    {% for p in pattern %}
+                                    <li cladd="mb-2">
+                                        {% if p["name"] is not None %}
+                                        <b class="key">{{ p["name"] }}</b>
+                                        {% else %}
+                                        <b class="key">no name</b>
+                                        {% end if %}
+                                        <span class="code">{{ p["regex"] }}</span>
+                                    </li>
+                                    {% end %}
+                                </ul>
+                            </div>
+                            <div class="py-3">
+                                <span class="key pb-2">Endpoints</span>
+                                <ul class="font-weight-regular no">
+                                    {% for ep in endpoint %}
+                                    <span class="code mb-3">{{ ep }}</span>
+                                    <li>
+                                        <ul class="no">
+                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{ ep }}/_info/card/{{ rsc_id }}">card </a></li>
+
+                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
+                                            
+                                            {% if enter_url != None %}
+                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{enter_url}}">enter</a></li>
+                                            {% else %}
+                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
+                                            {% end if %}
+                                        </ul>
+                                    </li>
+                                    {% end for %}
+                                </ul>
+                            </div>
+                        </v-tab-item>
+                    </v-tabs-items>
+                </main>
+            </v-card>
         </div>
-</body>
-<script src="{{ default_static('jq.pop.bsmd.min.js') }}"></script>
-<script src="https://fezvrasta.github.io/bootstrap-material-design/assets/js/vendor/anchor.min.js"></script>
-<script type="text/javascript">
-    $('body').scrollspy({
-        target: '#help-list'
+    </v-app>
+</div>
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
+<script>
+    new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#app',
+        vuetify: new Vuetify({
+            icons: {
+                iconfont: 'md', // 'mdi' || 'mdiSvg' || 'md' || 'fa' || 'fa4'
+            },
+            theme: window.VUETIFY_THEME
+        }),
+        data() {
+            return {
+                tabs: 0,
+                subtitle: '{{subtitle}}',
+                qual_name: '{{qual_name}}',
+                title: '{{title}}',
+                author: '{{author}}',
+                protected: ('{{protected}}' === 'True'),
+                rsc_id: '{{rsc_id}}',
+                container: '{{container}}',
+                icon: '{{icon}}',
+                enter_url: '{{enter_url}}'
+            }
+        },
+        computed: {
+            args: function () {
+                var result = {
+                        data: {},
+                        template: '{{args}}'
+                    },
+                    regDict= {
+                        "&#39;": `"`,
+                        "True": true,
+                        "False": false,
+                        "None": null
+                    }
+
+                try {
+                    const re = new RegExp(`(${ Object.keys(regDict).join('|') })`,'gi')
+                    const clean_str = result.template.replace(re, m => regDict[m])
+
+                    result.data = JSON.parse(clean_str)
+                    result.template =  JSON.stringify(result.data, undefined, 4)
+                } catch (e) {
+                    console.warn(`Error with a parsing string ${result}`)
+                    console.error(e)
+                }
+
+                return result;
+            },
+            isCoreStaticFileHandler: function () {
+                const qual_name = '{{qual_name}}'
+                return qual_name.split(".").slice(-1)[0] === 'CoreStaticFileHandler'
+            }
+        },
+        mounted() {
+            document.querySelector('body').style.opacity = 1;
+            window.setTimeout(function(){
+                // special styling for elments with http methods
+                // wraps elments that include a methodname in the first position with a class
+                const rubric = document.querySelectorAll('.rubric');
+                const methods =  ["GET", "POST", "DELETE", "PUT"];
+                rubric.forEach( (item, i, arr) => {
+                    const text = item.textContent.split(' ')[0]
+                    if(methods.indexOf(text) > -1){
+                        item.innerHTML = text + ' <span class="code" style="margin-left: 90px;">' + item.textContent.replace(text, '') + '</span>' 
+                    }
+                } )
+                // special styling for code elements
+                document.querySelectorAll('.introduction-desc pre.literal-block').forEach((element)=> {element.classList.add('doctest-block');})
+            }, 300)
+        }
     })
 </script>
 </body>
-
 </html>

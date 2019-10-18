@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <title>Role Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="https://unpkg.com/vuetify@1.5.13/dist/vuetify.css" rel="stylesheet">
-    <link href="https://bi.plan-net.com/cdn/assets/fonts/material-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css" rel="stylesheet">
     <style>
         .big-search {
             max-width:100% !important;
@@ -18,19 +19,16 @@
     <div id="app">
         <v-app>
             <v-container fluid>
-                <v-layout>
-                    <v-flex>
-                        <h1 class="headline mb-3">Roles overview</h1>
-                    </v-flex>
-                    <v-flex class="text-xs-right">
-                        <v-btn small @click="isCreateDialogOpen=true; currentRole={'is_active': true};" color="primary">
-                            <v-icon class="mr-1" small>
-                                create
-                            </v-icon>
-                            Create Role
-                        </v-btn>
-                    </v-flex>
-                </v-layout>
+                <v-row no-gutters class="py-3">
+                    <h1 class="headline mb-3">Roles overview</h1>
+                    <v-flex grow></v-flex>
+                    <v-btn small @click="isCreateDialogOpen=true; currentRole={'is_active': true}; getSelectRoles()" color="primary">
+                        <v-icon class="mr-1" small>
+                            create
+                        </v-icon>
+                        Create Role
+                    </v-btn>
+                </v-row>
                 <v-card>
                     <v-card-title class="text-xs-right">
                         <v-spacer v-if="!bigSearch"></v-spacer>
@@ -49,19 +47,50 @@
                             @click:prepend="bigSearch=!bigSearch"
                         ></v-text-field>
                     </v-card-title>
-                    <v-data-table flat v-if="roles" :loading="loading"
-                    :pagination.sync="pagination"
-                    :rows-per-page-items="[10, 25, 75]"
-                    :total-items="pagination.totalItems"
+                    <v-data-table v-if="roles" :loading="loading"
+                    :hide-default-footer="pagination.totalItems < footerProps.itemsPerPageOptions[0]"
+                    :server-items-length="pagination.totalItems"
+                    :options.sync="pagination"
+                    :page.sync="pagination.page"
+                    :footer-props="footerProps"
                     :headers="headers"
                     :items="roles"
+                    @update:sortBy="update"
+                    @update:page="update"
                     @update:pagination="update"
-                    class="elevation-1">
+                    >
+                        <template v-slot:item.is_active="{ item }">
+                            <v-icon v-if="item.is_active" small class="success--text">
+                                check
+                            </v-icon>
+                            <v-icon v-else small class="warning--text">
+                                remove_circle_outline
+                            </v-icon>
+                        </template>
+                        <template v-slot:item.perm="{ item }">
+                            <div v-if="item.perm.length" v-for="perm in item.perm">
+                                [[ perm ]] </br>
+                            </div>
+                        </template>
+                        <template v-slot:item.actions="{ item }">
+                            <v-row align="center" justify="end" class="pr-3">
+                                <v-btn small @click="onCreateDialogOpen(item)" text icon>
+                                    <v-icon class="grey--text" small>
+                                        edit
+                                    </v-icon>
+                                </v-btn>
+                                <v-btn small @click="deleteRole(item)" icon>
+                                    <v-icon small class="grey--text">delete
+                                    </v-icon>
+                                </v-btn>
+                            </v-row>
+                        </template>
+                        
 
-                        <template v-slot:items="props">
-                            <td class="text-xs-center">{{! props.item.name }}</td>
-                            <td class="text-xs-center">{{! props.item.realname }}</td>
-                            <td class="text-xs-center">
+                        <!--<template v-slot:items="props">
+                            <td class="text-xs-center">[[ props.item.name ]]</td>
+                            <td class="text-xs-center">[[ props.item.realname ]]</td>
+                            <td class="text-xs-left">
                                 <v-icon v-if="props.item.is_active" small class="success--text">
                                     check
                                 </v-icon>
@@ -71,13 +100,13 @@
                             </td>
                             <td class="text-xs-center">
                                 <div v-if="props.item.perm.length" v-for="perm in props.item.perm">
-                                    {{! perm }} </br>
+                                    [[ perm ]] </br>
                                 </div>
                             </td>
                             <td class="text-xs-right">
                                 <v-layout row>
                                     <v-flex xs5>
-                                        <v-btn small @click="onCreateDialogOpen(props.item)" flat icon>
+                                        <v-btn small @click="onCreateDialogOpen(props.item)" text icon>
                                             <v-icon class="grey--text" small>
                                                 edit
                                             </v-icon>
@@ -91,84 +120,100 @@
                                     </v-flex>
                                 </v-layout>
                             </td>
-                        </template>
+                        </template>-->
                         <template v-slot:pageText="props">
-                        <pre>{{! props }}</pre>
-                            {{! props.pageStart + 1 }} - {{! props.pageStop +1 }} of {{! props.itemsLength }}
+                            [[ props.pageStart + 1 ]] - [[ props.pageStop +1 ]] of [[ props.itemsLength ]]
                         </template>
                     </v-data-table>
                 </v-card>
                 <div>
                     <v-alert :value="error" type="error" dismissible >
-                      {{! error}}</br>
+                      [[ error]]</br>
                     </v-alert>
                 </div>
             </v-container>
+            <v-dialog v-if="currentRole" v-model="isCreateDialogOpen" persistent max-width="600px">
+
+                    <v-card>
+                        <v-card-title v-if="currentRole._id">
+                            Edit role
+                        </v-card-title>
+                        <v-card-title v-else>
+                            Create Role
+                        </v-card-title>
+                        <v-card-text>
+        
+                            <v-form>
+                                <v-layout class="pa-3" column>
+                                    <v-text-field v-model="currentRole.name" label="Name"> </v-text-field>
+                                    <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
+                                    <v-text-field v-model="currentRole.email" label="E-Mail"></v-text-field>
+                                    <v-combobox
+                                        clearable
+                                        multiple
+                                        deletable-chips
+                                        small-chips
+                                        hide-selected
+                                        :search-input.sync="search1"
+                                        v-model="currentRole.perm"
+                                        label="Permissions"
+                                        @change="search1 = null">
+                                    </v-combobox>
+                                    <v-combobox
+                                        clearable
+                                        v-model="currentRole.role"
+                                        :items="distinctRoles"
+                                        attach
+                                        hide-selected
+                                        deletable-chips
+                                        small-chips
+                                        multiple
+                                        label="Roles"
+                                        :search-input.sync="search2"
+                                        @change="search2 = null"
+                                        flat
+                                    >
+                                        <template v-slot:no-data>
+                                            <v-list-item>
+                                                <v-list-item-content>
+                                                <v-list-item-title>
+                                                    No results matching "<strong>[[ search2 ]]</strong>".
+                                                </v-list-item-title>
+                                                </v-list-item-content>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
+                                    <v-text-field
+                                        v-model="currentRole.passwd"
+                                        label="Password"
+                                        :append-icon="showPw ? 'visibility' : 'visibility_off'"
+                                        :type="showPw ? 'text': 'password'"
+                                        @click:append="showPw= !showPw"
+                                        ></v-text-field>
+                                    <v-checkbox v-model="currentRole.is_active" label="Active"></v-checkbox>
+                                </v-layout>
+                            </v-form>
+                          <v-alert :value="error" type="error" dismissible>
+                              [[ error]]</br>
+                          </v-alert>
+        
+                        </v-card-text>
+                          <v-card-actions>
+                            <v-spacer></v-spacer>
+                            <v-btn color="accent" @click="isCreateDialogOpen=false;currentRole=null;error=null;">Cancel</v-btn>
+                            <!--<v-btn color="primary" @click="deleteRole(currentRole)">Delete</v-btn>-->
+                            <v-btn color="primary" @click="submit(currentRole)">submit</v-btn>
+        
+                          <v-card-actions>
+                         </v-card>
+                </v-dialog>
         </v-app>
 
-        <v-dialog v-if="currentRole" v-model="isCreateDialogOpen" persistent max-width="600px">
-
-            <v-card>
-                <v-card-title v-if="currentRole._id">
-                    Edit role
-                </v-card-title>
-                <v-card-title v-else>
-                    Create Role
-                </v-card-title>
-                <v-card-text>
-
-                    <v-form>
-                        <v-layout class="pa-3 pl-5" column>
-                            <v-text-field v-model="currentRole.name" label="Name"> </v-text-field>
-                            <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
-                            <v-text-field v-model="currentRole.email" label="E-Mail"></v-text-field>
-                            <v-combobox
-                                multiple
-                                deletable-chips
-                                small-chips
-                                v-model="currentRole.perm"
-                                label="Permissions">
-                            </v-combobox>
-                            <v-combobox
-                                v-model="currentRole.role"
-                                :items="distinctRoles"
-                                attach
-                                deletable-chips
-                                small-chips
-                                multiple
-                                label="Roles"
-                                flat
-                            ></v-combobox>
-                            <v-text-field
-                                v-model="currentRole.passwd"
-                                label="Password"
-                                :append-icon="showPw ? 'visibility' : 'visibility_off'"
-                                :type="showPw ? 'text': 'password'"
-                                @click:append="showPw= !showPw"
-                                ></v-text-field>
-                            <v-checkbox v-model="currentRole.is_active" label="Active"></v-checkbox>
-                        </v-layout>
-                    </v-form>
-                  <v-alert :value="error" type="error" dismissible>
-                      {{! error}}</br>
-                  </v-alert>
-
-                </v-card-text>
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="primary" @click="isCreateDialogOpen=false;currentRole=null;error=null;">Cancel</v-btn>
-                    <v-btn color="primary" @click="deleteRole(currentRole)">Delete</v-btn>
-                    <v-btn color="primary" @click="submit(currentRole)">submit</v-btn>
-
-                  <v-card-actions>
-                 </v-card>
-        </v-dialog>
+        
     </div>
 </body>
 
-<script src="https://unpkg.com/vue@2.6.10/dist/vue.js"></script>
-<script src="https://unpkg.com/vuetify@1.5.13/dist/vuetify.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
+<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
 
 <script>
     const api = {
@@ -196,36 +241,42 @@
             return axios.post('/core4/api/v1/roles', role);
         },
         distinctRoles: function() {
-            console.warn("distinct roles")
             return axios.get('/core4/api/v1/roles/distinct');
         },
 
     }
     var app = new Vue({
         el: "#app",
+        vuetify: new Vuetify({
+            icons: {
+                iconfont: 'md',
+            },
+            theme: window.VUETIFY_THEME
+        }),
+        delimiters: ['[[', ']]'],
         data: function() {
             return {
                 headers: [{
                         text: 'Name',
                         value: 'name',
-                        align: 'center'
+                        align: 'left'
                     }, {
                         text: 'Realname',
                         value: 'realname',
-                        align: 'center',
+                        align: 'left',
                     }, {
                         text: 'Active',
                         value: 'is_active',
-                        align: 'center'
+                        align: 'left'
                     },{
                         text: 'Perm',
                         value: 'perm',
-                        align: 'center'
+                        align: 'left'
                     }, {
                         text: 'Actions',
-                        value: '',
+                        value: 'actions',
                         sortable: false,
-                        align: 'center'
+                        align: 'right'
                     }
                 ],
                 isCreateDialogOpen: false,
@@ -237,12 +288,18 @@
                 bigSearch: false,
                 distinctRoles: [],
                 showPw: false,
+                footerProps: {
+                    itemsPerPageOptions: [15,30,75]
+                },
+                search1: null,
+                search2: null,
                 pagination: {
                     page: 1,
                     rowsPerPage: 25,
                     totalItems: 0,
-                    sortBy: "_id",
+                    sortBy: ["_id"],
                     descending: true,
+                    sortDesc: true
                 }
             }
         },
@@ -258,18 +315,16 @@
             }.bind(this));
         },
         computed: {
-        internalPagination : function(){
-            ret =
-            "?per_page="+ this.pagination.rowsPerPage +
-            "&page=" + (this.pagination.page -1 )+
-            "&order=" + (this.pagination.descending ? -1:1) +
-            "&sort=" + this.pagination.sortBy
-
-            if(this.searchData){
-                ret = ret + "&filter=" + this.searchData
-            }
-            return ret
-
+            internalPagination : function(){
+                let ret =
+                "?per_page="+ this.pagination.itemsPerPage +
+                "&page=" + (this.pagination.page -1 )+
+                "&order=" + (this.pagination.sortDesc ? -1:1) +
+                "&sort=" + this.pagination.sortBy[this.pagination.sortBy.length - 1]
+                if(this.searchData){
+                    ret = ret + "&filter=" + this.searchData
+                }
+                return ret
             }
 
         },
@@ -298,10 +353,10 @@
                             this.loading = false;
                             this.error = null;
                         }.bind(this))
+                    this.getSelectRoles()
                 }
             },
             submit: function(roles) {
-                console.log(roles.perm)
                 this.loading = true;
                 if (roles._id) {
                     api.submitRole(roles)
@@ -345,7 +400,6 @@
             },
             update: function() {
                    this.loading = true;
-                   console.warn("updatePaging")
                    api.getRoles(this.internalPagination).then(function(success) {
                        this.pagination.totalItems = success.data.total_count
                        this.roles = success.data.data
@@ -360,7 +414,7 @@
             },
             getSelectRoles: function(){
                 api.distinctRoles().then(function(success){
-                    this.distinctRoles = success.data.data
+                    this.distinctRoles = success.data.data;
                 }.bind(this))
                 .catch(function(error){
                     this.error = error.response.data.error.split("File")[0];
