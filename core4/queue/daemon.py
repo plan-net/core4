@@ -203,7 +203,7 @@ class CoreDaemon(CoreBase):
                 if in_maintenance:
                     in_maintenance = False
                     self.logger.info("leaving maintenance")
-                self.at = core4.util.node.mongo_now()
+                self.at = core4.util.node.mongo_now().replace(microsecond=0)
                 if heartbeat is None or self.at > heartbeat:
                     self.heartbeat()
                     heartbeat = self.at + heartbeat_delta
