@@ -19,11 +19,4 @@ job queue history handler
     :show-inheritance:
 
 
-job execution system information
-################################
-
-.. automodule:: core4.api.v1.request.queue.system
-    :members:
-    :show-inheritance:
-
 

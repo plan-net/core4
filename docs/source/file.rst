@@ -10,7 +10,7 @@ The directory structure of core4 repository is::
 
     core4
     ├── core4                        .. core4 source root
-    │   ├── api                      .. ReST API
+    │   ├── api                      .. web service API
     │   │   └── v1                   .. current version
     │   │       ├── request          .. request handlers
     │   │       │   ├── queue        .. sys.queue handlers

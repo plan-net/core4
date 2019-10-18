@@ -174,58 +174,53 @@ class JobCollection(pymongo.collection.Collection):
             "_job_id": _id,
             "_src": _src
         }
-        if self._job["_job_id"] is None or self._job["_src"] is None:
-            self._core4_verified = False
-        else:
-            self._core4_verified = True
 
-    def _verify(self):
-        if not self._core4_verified:
+    def _update_job(self, doc, _src):
+        doc.update(self._job)
+        if _src is not None:
+            doc["_src"] = _src
+        if doc["_job_id"] is None or doc["_src"] is None:
             raise AttributeError("_id and _src must not be None")
 
-    def insert_one(self, document, *args, **kwargs):
+    def insert_one(self, document, *args, _src=None, **kwargs):
         """
         Overwrites :class:`pymongo.collection.Collection` method to add
         extra job attributes.
         """
-        self._verify()
-        document.update(self._job)
+        self._update_job(document, _src)
         return super().insert_one(document, *args, **kwargs)
 
-    def insert_many(self, documents, *args, **kwargs):
+    def insert_many(self, documents, *args, _src=None, **kwargs):
         """
         Overwrites :class:`pymongo.collection.Collection` method to add
         extra job attributes.
         """
-        self._verify()
         for i in range(len(documents)):
-            documents[i].update(self._job)
+            self._update_job(documents[i], _src)
         return super().insert_many(documents, *args, **kwargs)
 
-    def bulk_write(self, requests, *args, **kwargs):
+    def bulk_write(self, requests, *args, _src=None, **kwargs):
         """
         Overwrites :class:`pymongo.collection.Collection` method to add
         extra job attributes.
         """
-        self._verify()
         for i in range(len(requests)):
             if hasattr(requests[i], "_doc"):
                 if requests[i]._doc.get('$set'):
-                    requests[i]._doc['$set'].update(self._job)
+                    self._update_job(requests[i]._doc['$set'], _src)
                 elif requests[i]._doc.get("$setOnInsert"):
-                    requests[i]._doc['$setOnInsert'].update(self._job)
+                    self._update_job(requests[i]._doc['$setOnInsert'], _src)
                 else:
-                    requests[i]._doc.update(self._job)
+                    self._update_job(requests[i]._doc, _src)
         return super().bulk_write(requests, *args, **kwargs)
 
-    def _update(self, sock_info, criteria, document, *args, **kwargs):
+    def _update(self, sock_info, criteria, document, *args, _src=None,
+                **kwargs):
         """
         Overwrites :class:`pymongo.collection.Collection` method to add
         extra job attributes.
         """
-        self._verify()
-        if "$set" in document:
-            document["$set"].update(self._job)
-        else:
-            document["$set"] = self._job
+        if "$set" not in document:
+            document["$set"] = {}
+        self._update_job(document["$set"], _src)
         return super()._update(sock_info, criteria, document, *args, **kwargs)

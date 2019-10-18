@@ -107,8 +107,8 @@ class CorePager:
         :param length: callback method processing a ``filter`` attribute. This
                        method is expected to return the total filtered number
                        of records, see :meth:`.length`.
-        :param query: callback method processing ``filter``, ``skip``,
-                      ``limit``, and ``sort_by`` attribute, see :meth:`.query`.
+        :param query: callback method processing ``limit``, ``skip``,
+                      ``filter``, and ``sort_by`` attribute, see :meth:`.query`.
         :param current_page: of the pager
         :param per_page: number of records per page
         :param filter: dict with :mod:`motor` filter syntax to query MongoDB

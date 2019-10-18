@@ -177,7 +177,10 @@ async def test_server_test(core4api):
     assert rv.code == 403
 
     rv = await core4api.post("/core4/api/v1/system")
-    assert rv.code == 403
+    assert rv.code == 405
+    
+    rv = await core4api.get("/core4/api/v1/system")
+    assert rv.code == 200
 
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
