@@ -1,16 +1,16 @@
-import pytest
-from tests.api.test_test import setup, run, mongodb
-from core4.api.v1.server import CoreApiServer, CoreApiContainer
-from core4.api.v1.request.main import CoreRequestHandler
-from core4.api.v1.tool.datatable import CoreDataTable, convert
 import datetime
 import random
 from pprint import pprint
 
+import pytest
+
+from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.server import CoreApiServer, CoreApiContainer
+from core4.api.v1.tool.datatable import CoreDataTable, convert
+from tests.api.test_test import setup, run, mongodb
 
 _ = setup
 _ = mongodb
-
 
 COLS = [
     {
@@ -93,7 +93,7 @@ class TableHandler(CoreRequestHandler):
         return await self.collection.find(filter).sort(
             sort_by).skip(skip).limit(limit).to_list(limit)
 
-    def initialize_request(self, *args, **kwargs):
+    def mktable(self, *args, **kwargs):
         self.collection = self.config.tests.data1_collection
         args = dict(
             length=self._length,
@@ -113,16 +113,18 @@ class TableHandler(CoreRequestHandler):
                                      dict_decode=convert),
             sort_by=self.get_argument("sort", list, default=None)
         )
-        self.datatable = CoreDataTable(**args)
+        return CoreDataTable(**args)
 
     async def post(self):
+        datatable = self.mktable()
         self.reply(
-            await self.datatable.post()
+            await datatable.post()
         )
 
     async def get(self):
+        datatable = self.mktable()
         self.reply(
-            await self.datatable.get()
+            await datatable.get()
         )
 
 
@@ -157,6 +159,7 @@ def _make_data(coll, count=60):
             "segment": segment[random.randint(0, 4)]
         })
     return coll
+
 
 @pytest.yield_fixture
 def make_data(mongodb, count=60):
@@ -195,7 +198,8 @@ async def test_page(table_server, make_data):
     pprint(resp.json())
 
     # sorting
-    resp = await table_server.get('/test/table?sort=[{"name": "real", "ascending": true}]')
+    resp = await table_server.get(
+        '/test/table?sort=[{"name": "real", "ascending": true}]')
     assert resp.code == 200
     data = [float(i["real"]) for i in resp.json()["data"]["body"]]
     assert data == sorted(data)
@@ -203,7 +207,8 @@ async def test_page(table_server, make_data):
     pprint(resp.json())
 
     # multi-sorting
-    resp = await table_server.get('/test/table?per_page=60&sort=[{"name": "segment", "ascending": false}, {"name": "real", "ascending": true}]')
+    resp = await table_server.get(
+        '/test/table?per_page=60&sort=[{"name": "segment", "ascending": false}, {"name": "real", "ascending": true}]')
     assert resp.code == 200
     body = resp.json()["data"]["body"]
     data = [i["segment"] for i in body]
@@ -215,7 +220,8 @@ async def test_page(table_server, make_data):
     pprint(resp.json())
 
     # filtering
-    resp = await table_server.get('/test/table?per_page=60&filter={"segment": "segment D"}')
+    resp = await table_server.get(
+        '/test/table?per_page=60&filter={"segment": "segment D"}')
     assert resp.code == 200
     body = resp.json()["data"]["body"]
     data = set([i["segment"] for i in body])
@@ -224,19 +230,22 @@ async def test_page(table_server, make_data):
     pprint(resp.json())
 
     # prepare filtering with datetime
-    resp = await table_server.get('/test/table?per_page=1000&sort=[{"name": "timestamp", "ascending": false}]')
+    resp = await table_server.get(
+        '/test/table?per_page=1000&sort=[{"name": "timestamp", "ascending": false}]')
     assert resp.code == 200
     body = resp.json()["data"]["body"]
     data = [i["timestamp"] for i in body]
     print(data)
-    data = [datetime.datetime.strptime(i["timestamp"], "%Y-%m-%d ... %H:%M:%S") for i in body]
+    data = [datetime.datetime.strptime(i["timestamp"], "%Y-%m-%d ... %H:%M:%S")
+            for i in body]
     assert data == sorted(data, reverse=True)
     middle = data[30]
 
     pprint(resp.json())
 
     # do filtering with datetime
-    resp = await table_server.get('/test/table?per_page=1000&filter={"timestamp": {"$gte": {"$datetime": "' + middle.isoformat() + '"}}}')
+    resp = await table_server.get(
+        '/test/table?per_page=1000&filter={"timestamp": {"$gte": {"$datetime": "' + middle.isoformat() + '"}}}')
     assert resp.code == 200
     page = resp.json()["data"]["paging"]
     assert page["page_count"] == 1
@@ -245,15 +254,28 @@ async def test_page(table_server, make_data):
     assert page["count"] == 31
 
     body = resp.json()["data"]["body"]
-    data = [datetime.datetime.strptime(i["timestamp"], "%Y-%m-%d ... %H:%M:%S") for i in body]
+    data = [datetime.datetime.strptime(i["timestamp"], "%Y-%m-%d ... %H:%M:%S")
+            for i in body]
     assert 31 == sum([1 for i in data if i >= middle])
+
+
+async def test_parameter(table_server, make_data):
+    await table_server.login()
+    rv = await table_server.post("/test/table", json={"per_page": 5})
+    pprint(rv.json())
+    paging = rv.json()["data"]["paging"]
+    assert 5 == paging["per_page"]
 
 
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
     from core4.base.main import CoreBase
+
+
     class T(CoreBase):
         def get_db(self):
             return self.config.tests.data1_collection
+
+
     _make_data(T().get_db())
     serve(TableServer)
