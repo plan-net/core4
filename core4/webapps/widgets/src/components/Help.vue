@@ -1,7 +1,6 @@
 <template>
   <div>
     <iframe
-      style="border: 1px dashed red;"
       v-if="widget"
       :src="path"
       frameborder="0"
