@@ -20,6 +20,8 @@ export default {
     if (this.widget != null) {
       this.$store.dispatch('setWidgetTitle', this.widget.title)
       this.$store.dispatch('setInWidget', true)
+      console.warn('setInWidget true mount')
+
       this.checkAppbarVis()
     }
   },
@@ -28,6 +30,7 @@ export default {
       if (newValue != null) {
         this.$store.dispatch('setWidgetTitle', newValue.title)
         this.$store.dispatch('setInWidget', true)
+        console.warn('setInWidget true watch')
       }
     },
     qualName (newValue) {
