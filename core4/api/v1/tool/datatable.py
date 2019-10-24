@@ -194,9 +194,11 @@ class CoreDataTable(CoreBase):
                 if key is not None:
                     raise RuntimeError("multiple keys defined")
                 key = col["name"]
-        if sort_by is None:
+        if key is not None and sort_by is None:
             sort_by = [{"name": key, "ascending": True}]
-        sort_by = [(s["name"], 1 if s["ascending"] else -1) for s in sort_by]
+        if sort_by is not None:
+            sort_by = [(s["name"], 1 if s["ascending"] else -1)
+                       for s in sort_by]
         self.pager = CorePager(
             length=self._length, query=self._query, current_page=page,
             per_page=per_page, filter=filter, sort_by=sort_by)
