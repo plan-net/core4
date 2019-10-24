@@ -291,7 +291,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         title=handler.title,
                         subtitle=handler.subtitle,
                         enter_url=handler.enter_url,
-                        target=handler.target
+                        target=handler.target,
+                        spa=handler.spa
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
