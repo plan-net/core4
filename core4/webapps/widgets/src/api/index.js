@@ -69,16 +69,21 @@ const api = {
       qual_name: 'DotSeperated',
       tag: 'Array',
       decription: 'String',
-      author: 'String'
+      author: 'String',
+      container: 'Array'
     }
     function constructSearchString (widget) {
+      console.log(widget)
       let $search = ''
       Object.keys(fields).forEach(key => {
         if (widget[key] != null) {
           if (fields[key] === 'String') {
             $search += widget[key] + ' '
           } else if (fields[key] === 'Array') {
-            if (widget[key].length) {
+            if (key === 'container' && widget[key].length) {
+              const tmp = (widget.container[0] || '').split('.')
+              $search += tmp[tmp.length - 1] // core4.api.v1.server.CoreApiServer => CoreApiServer
+            } else if (widget[key].length) {
               $search += widget[key].join(' ') + ' '
             }
           } else {
@@ -90,7 +95,7 @@ const api = {
       /* replace words and whitespace */
       // $search = $search.replace(/ for| and| v1| api| request| core4/gi, '').replace(/\s+/g, ' ').trim()
       $search = $search
-        .replace(/ for| and| v1| request| core4/gi, '')
+        .replace(/ for| and| v1| request/gi, '')
         .replace(/\s+/g, ' ')
         .trim()
       return Object.assign(widget, { $search: $search.split(' ') })

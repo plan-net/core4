@@ -51,6 +51,7 @@ export default {
   computed: {
     ...mapGetters(['dark']),
     isWidgetSpa () {
+      console.log(this, '########')
       return this.qualName.includes('CoreStaticFileHandler')
     },
     qualName () {
