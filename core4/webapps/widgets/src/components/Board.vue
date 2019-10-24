@@ -1,9 +1,9 @@
 <template>
   <!-- https://github.com/kutlugsahin/smooth-dnd -->
   <div v-resize.quiet="onResize">
+
     <template v-if=noBoards>
       <div class="text-xs-center pt-5">
-
         <v-tooltip>
           <template v-slot:activator="{ on }">
             <v-btn
@@ -22,8 +22,9 @@
         </v-tooltip>
       </div>
     </template>
+
     <template v-else>
-      <v-layout row>
+      <v-row class="px-5">
         <v-btn
           icon
           @click="prevBoard"
@@ -61,11 +62,11 @@
             class="grey--text "
           >navigate_next</v-icon>
         </v-btn>
-      </v-layout>
+      </v-row>
     </template>
 
     <drop
-      class="drop"
+      class="drop pl-4 pr-1"
       @drop="onDrop"
       :class="{ 'over-board': over }"
       @dragover="onOver"

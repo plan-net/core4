@@ -1,10 +1,5 @@
 <template>
   <div>
-    <!-- //CRUD -->
-    <create-dialog
-      v-model="nameDialog"
-      :board="activeBoard"
-    ></create-dialog>
 
     <v-dialog
       v-model="deleteDialog"
@@ -105,32 +100,36 @@
       </template>
 
     </v-slide-y-transition>
-    <v-row align="start" justify="end" no-gutters>
-        <v-btn @click="nameDialog = true"
-          class="mx-3 mt-1"
-          color="primary"
+    <v-row
+      align="start"
+      justify="end"
+      no-gutters
+    >
+      <v-btn
+        @click="$bus.$emit('edit-board-name', true)"
+        class="mx-3 mt-1"
+        color="secondary lighten-3"
+        dark
+      >
+        <v-icon
+          class="mr-2"
           dark
-        >
-          <v-icon
-            class="mr-2"
-            dark
-          >add_circle</v-icon>New board
-        </v-btn>
+        >add_circle</v-icon>New board
+      </v-btn>
     </v-row>
   </div>
 </template>
 <script>
-import CreateDialog from '@/components/CreateDialog'
+// import CreateDialog from '@/components/CreateDialog'
 import Howto from '@/components/Howto'
 import { mapActions } from 'vuex'
 
 export default {
   components: {
-    CreateDialog,
     Howto
   },
   mounted () {
-    this.$bus.$on('edit-board-name', this.onEditBoardName)
+    // this.$bus.$on('edit-board-name', this.onEditBoardName)
   },
   props: {
     helpDialogOpen: {
@@ -141,10 +140,10 @@ export default {
   },
   methods: {
     ...mapActions(['deleteBoard']),
-    onEditBoardName () {
+    /*     onEditBoardName () {
       this.activeBoard = this.$store.getters.activeBoard
       this.nameDialog = true
-    },
+    }, */
     onBeforeDelete (item) {
       this.itemToDelete = item
       this.deleteDialog = true
@@ -153,13 +152,13 @@ export default {
       this.$store.dispatch('setActiveBoard', item.name)
     }
   },
-  watch: {
+  /*   watch: {
     nameDialog (val) {
       if (val === false) {
         this.activeBoard = null
       }
     }
-  },
+  }, */
   computed: {
     activeBoardName () {
       return this.$store.getters.activeBoard.name
@@ -174,8 +173,6 @@ export default {
   },
   data () {
     return {
-      activeBoard: null,
-      nameDialog: false,
       deleteDialog: false,
       itemToDelete: false
     }

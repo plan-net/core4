@@ -39,13 +39,15 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
-          color="primary"
-          @click.native="onCancel"
+          small
+          color="secondary lighten-3"
+          @click="onCancel"
         >Cancel</v-btn>
         <v-btn
+          small
           color="primary"
           :disabled="errors.any()"
-          @click.native="onSave"
+          @click="onSave"
         >Save</v-btn>
       </v-card-actions>
     </v-card>
