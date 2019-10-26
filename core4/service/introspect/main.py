@@ -219,14 +219,11 @@ class CoreProject(core4.base.CoreBase):
         members = inspect.getmembers(module, inspect.isclass)
         for (clsname, cls) in members:
             if issubclass(cls, core4.base.main.CoreBase):
-                if cls.qual_name() == "core4.queue.helper.job.base.CoreLoadJob":
-                    print("OK")
                 if cls is core4.queue.job.CoreJob:
                     continue
                 if cls is core4.api.v1.application.CoreApiContainer:
                     continue
-                if core4.queue.helper.job.base.CoreAbstractJobMixin \
-                        in cls.__mro__:
+                if core4.base.main.CoreAbstractMixin in cls.__bases__:
                     continue
                 if cls in self._seen:
                     continue
