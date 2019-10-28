@@ -71,10 +71,12 @@ class CoreBaseHandler(CoreBase):
     icon = "copyright"
     #: open in new window/tab
     target = None
+    #: open as single page application; this hides the app managers header
+    spa = False
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc")
+                 "static_path", "enter_url", "icon", "doc", "spa")
     supported_types = [
         "text/html",
     ]
@@ -103,8 +105,9 @@ class CoreBaseHandler(CoreBase):
     def propagate_property(self, source, kwargs):
         """
         Merge the attributes ``protected``, ``title``, ``author``, ``tag``,
-        ``template_path``, ``static_path``, ``enter_url`` and ``icon``
-        from the passed class/object (``source`` parameter) and ``kwargs``.
+        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc`` and
+        ``spa`` from the passed class/object (``source`` parameter) and
+        ``kwargs``.
 
         :param source: class or object based on :class:`.CoreRequestHandler` or
             :class:`.CoreStaticFileHandler`

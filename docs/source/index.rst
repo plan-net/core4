@@ -29,11 +29,11 @@
    R
    parallel
    api
+   http_api
    config
    logging
    data
    file
-   http_api
    access
    deploy
    release

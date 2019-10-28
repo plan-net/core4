@@ -66,3 +66,11 @@ event system endpoint
     :members:
     :show-inheritance:
 
+
+job execution system information
+################################
+
+.. automodule:: core4.api.v1.request.standard.system
+    :members:
+    :show-inheritance:
+

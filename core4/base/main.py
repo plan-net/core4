@@ -49,6 +49,22 @@ def is_core4_project(body):
                     + CORE4 + r'[\"\']{1,3}.*', body, re.DOTALL)
 
 
+class CoreAbstractMixin:
+    """
+    Mix in this class to create an abstract job or request handler class.
+    Abstract classes are not officially listed, e.g. extracted with
+    ``coco --job``::
+
+        class MyJobTemplate(CoreJob, CoreAbstractJobMixin):
+
+            def method(self):
+                # example method to be used by concrete classes inheriting
+                # from MyJobTemplate
+                pass
+    """
+    pass
+
+
 class CoreBase:
     """
     This is the base class to all core4os classes. :class:`CoreBase` ships with
