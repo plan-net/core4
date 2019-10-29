@@ -236,8 +236,11 @@ The widget manager sets the class 'theme--dark' or 'theme--light' depending on t
 
 .. code-block:: css
 
-    .theme--dark header a.display-2 {
+    .theme--dark h2.display-2 {
         color: white;
+    }
+    .theme--light h2.display-2 {
+        color: black;
     }
 
 By using Vue and Vuetify to create a widget, the developer is relieved of a lot of work when implementing the dark mode, as Vuetify automatically adapts most components.

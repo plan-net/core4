@@ -36,7 +36,6 @@ An installation of Nodejs including npm is necessary. Yarn is recommended as pac
     # install yarn after a succesfull nodejs installation using npm
     npm install -g yarn
 
- ::
 
 Getting Started
 ###############
@@ -58,7 +57,7 @@ There's everything set up to start developing.
     # start a development server
     yarn serve
 
- ::
+
 
 Now you can open your browser to ``http://localhost:808{0-9}``   and start developing.
 
@@ -77,7 +76,7 @@ The following visual studio code plugins should be installed:
 * npm Intellisense
 * Path intellisense
 
-Most of this plugins are alsw available for atom, WebStorm and sublime text.
+Most of this plugins are available for atom, WebStorm and sublime text.
 
 `Additional Information  <https://www.sitepoint.com/vue-development-environment/>`_
 
@@ -115,7 +114,7 @@ Anatomy of a CORE4os Frontend
     ├── README.md                   # Default README file
     └── vue.config.js               # Configuration of devserver port, Vue version for development, public path on the server etc.
 
- ::
+
 
 Configuration  of a CORE4os Frontend
 ####################################
@@ -134,4 +133,49 @@ package.json
 The following settings can be made in the package.json:
 
 * ``"name": "app-name"`` should be updated according to the application that is beeing developed
-* the field ``"core4ui": "^1.0.0"`` can be updated to the latest version of core4ui. Currently it is version 1.0.6.
+* the field ``"core4ui": "^1.0.22"`` can be updated to the latest version of core4ui. Currently it is version 1.0.22.
+
+The package.json contains control commands for the core4os build system. These can, but don't have to be changed.
+
+.. code-block:: js
+
+    "core4": {
+    "build_command": [
+      "rm yarn.lock",
+      "yarn install",
+      "yarn build --dest dist --modern"
+    ],
+    "dist": "./dist"
+    },
+
+core4ui lib
+------------
+The core4ui library can be configured in the file ``src/main.js``.
+
+.. code-block:: js
+
+    import Vue from 'vue'
+    import App from './App.vue'
+    import router from './router'
+    import store from './store'
+    import Core4ui from 'core4ui/core4'
+    import 'core4ui/core4/themes/core4/theme-c4.scss'
+    import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
+    export const config = {
+      THEME,
+      TITLE: 'CORE4OS',
+      APP_IDENTIFIER: 'core'
+    }
+    Vue.use(Core4ui, {
+      App,
+      router,
+      store,
+      config
+    })
+
+The configuration object contains the title, which is displayed within the application, the ``store`` and ``router``,
+which are merged with the core4ui router and store, a reference to the ``app`` object and some ``scss and theme configuration`` files.
+The user can customize the sass and theme files and pass his own variants.
+
+Store
+*****
