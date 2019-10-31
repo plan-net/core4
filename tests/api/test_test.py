@@ -44,6 +44,7 @@ def setup(tmpdir):
     os.environ["CORE4_OPTION_api__setting__debug"] = "!!bool True"
     os.environ["CORE4_OPTION_api__setting__cookie_secret"] = "blabla"
     os.environ["CORE4_OPTION_worker__min_free_ram"] = "!!int 32"
+    os.environ["CORE4_OPTION_rdbms__password"] = "654321"
     conn = pymongo.MongoClient(MONGO_URL)
     conn.drop_database(MONGO_DATABASE)
     core4.logger.mixin.logon()

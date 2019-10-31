@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Table Test</title>
+    {% raw dt.css %}
+    {% raw dt.js %}
+    <style>
+        .example {
+            background: #dddddd;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    CoreDataTable
+</h1>
+
+<div class="example">
+{% raw dt.div %}
+</div>
+
+<div>
+    <a href="javascript:table.next_page();">next</a>
+    <a href="javascript:table.previous_page();">previous</a>
+    <a href="javascript:table.update();">load</a>
+    <p>
+        page: <span class="data-table-current_page"></span>
+        - total pages: <span class="data-table-page_count"></span>
+        - total count: <span class="data-table-total_count"></span>
+    </p>
+    <div>per page:<br/><input id="data-table-per_page" class="data-table-per_page"/></div>
+    <div>current page:<br/><input id="data-table-current_page" class="data-table-current_page"/></div>
+    <div>filter:<br/><textarea id="data-table-filter" class="data-table-filter" cols="60" rows="6"></textarea></div>
+    <div>column:<br/><textarea id="data-table-column" class="data-table-column" cols="60" rows="6"></textarea></div>
+</div>
+
+{% raw dt.script %}
+
+</body>
+</html>
