@@ -5,7 +5,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import random
+import string
+
 from core4.api.v1.request.role.access.handler import BaseHandler
+
+#: password length used to create MongoDB access
+PASSWORD_LENGTH = 32
 
 
 class MongoHandler(BaseHandler):
@@ -22,10 +28,26 @@ class MongoHandler(BaseHandler):
               core4 configuration option ``sys.userdb``.
     """
 
-    def __init__(self, role, token, *args, **kwargs):
-        super().__init__(role, token, *args, **kwargs)
+    def __init__(self, role, *args, **kwargs):
+        super().__init__(role, *args, **kwargs)
+        self.token = None
         coll = self.config.sys.admin.connect_async()
         self.admin_db = coll.connection[self.config.sys.admin.database]
+
+    def create_token(self):
+        """
+        This method creates a random password of length :attr:`PASSWORD_LENGTH`
+        for the user to access the database
+
+        :return: token/password (str)
+        """
+        if self.token is None:
+            token = ''.join(
+                random.SystemRandom().choice(
+                    string.ascii_uppercase + string.digits) for _
+                in range(PASSWORD_LENGTH))
+            self.token = token
+        return self.token
 
     async def del_role(self):
         """
@@ -54,15 +76,16 @@ class MongoHandler(BaseHandler):
         """
         # create the role
         username = self.role.name
+        password = self.create_token()
         userdb = "".join([self.config.sys.userdb, username])
-        await self.admin_db.command('createUser', username, pwd=self.token,
+        await self.admin_db.command('createUser', username, pwd=password,
                                     roles=[])
         await self.admin_db.command(
             'grantRolesToUser', username,
             roles=[{'role': 'dbOwner', 'db': userdb}])
         self.logger.info(
             'created mongo user [%s] with private [%s]', username, userdb)
-        return self.token
+        return password
 
     async def grant(self, database):
         """

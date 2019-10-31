@@ -44,8 +44,7 @@ setup(
         "sh>=1.12.14",
         "pip>=18.1",
         "pytz>=2018.9",
-        "tzlocal>=1.5.1",
-        "momoko>=2.2.5.1"
+        "tzlocal>=1.5.1"
     ],
     extras_require={
         "tests": [

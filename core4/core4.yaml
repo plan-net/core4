@@ -22,13 +22,6 @@ sys:
   userdb: user!
   worker: !connect mongodb://sys.worker
 
-rdbms:
-  database: postgres
-  hostname: localhost
-  port: 5432
-  username: core
-  password: ~
-
 # system folders
 folder:
   root: /tmp/core4

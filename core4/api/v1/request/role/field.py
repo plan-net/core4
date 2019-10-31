@@ -22,8 +22,7 @@ PROTOCOL = [
     re.compile(r"^job://[^\s\/]+/[xr]$"),
     re.compile(r"^api://[^\s\/]+$"),
     re.compile(r"^app://[^\s]+$"),
-    re.compile(r"^mongodb://[^\s]+$"),
-    re.compile(r"^postgres://[^\s]+$")
+    re.compile(r"^mongodb://[^\s]+$")
 ]
 JOB_EXECUTION_RIGHT = 'x'
 JOB_READ_RIGHT = 'r'

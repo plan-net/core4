@@ -14,7 +14,6 @@ import json
 import core4.error
 import core4.util.crypt
 import core4.util.node
-from core4.api.v1.request.role.access.manager import CoreAccessManager
 from core4.api.v1.request.role.field import *
 from core4.base.main import CoreBase
 
@@ -182,7 +181,7 @@ class CoreRole(CoreBase):
             if not (has_email == has_password or has_email):
                 raise AttributeError("user role requires email on creation")
         elif ((not (has_password and has_email))
-              and (has_password or has_email)):
+                and (has_password or has_email)):
             raise AttributeError("user role requires email and password")
 
     async def save(self, initial=False):
@@ -275,8 +274,6 @@ class CoreRole(CoreBase):
         ret = await self.role_collection.update_one(
             filter={"_id": self._id, "etag": curr_etag},
             update={"$set": doc})
-        if not doc.get("is_active", False):
-            await self._reset_access()
         if ret.matched_count == 0:
             raise core4.error.Core4ConflictError(
                 "update [{}] with etag [{}] failed".format(
@@ -441,14 +438,7 @@ class CoreRole(CoreBase):
                          self._id)
         self._id = None
         self.data["etag"].set(None)
-        await self._reset_access()
         return True
-
-    async def _reset_access(self):
-        # remove database access
-        if self.is_user:
-            manager = CoreAccessManager(self)
-            await manager.reset_all()
 
     async def _job_access(self, qual_name, access):
         # verify access (r|x) to the passed qual_name
