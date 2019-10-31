@@ -119,7 +119,7 @@ class CorePager:
         self.__dict__["paging"] = dict(
             per_page=10,
             current_page=0,
-            sort_by={},
+            sort_by=None,
             filter={},
         )
         self.initialise(*args, **kwargs)

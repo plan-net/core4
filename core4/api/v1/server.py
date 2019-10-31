@@ -123,7 +123,8 @@ class CoreApiServer(CoreApiContainer):
 
     def on_exit(self):
         QueueWatch.stop = True
-        EventWatch.change_stream.close()
+        if EventWatch.change_stream is not None:
+            EventWatch.change_stream.close()
 
 
 if __name__ == '__main__':
