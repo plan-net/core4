@@ -14,7 +14,7 @@
         }
     </style>
 </head>
-<body style="opacity: 0">
+<body>
 
 <div id="app">
     <v-app class="ma-2">
@@ -52,21 +52,13 @@
                         <v-btn class="mx-10" color="primary" @click="onclick">Refresh</v-btn>
                     </v-layout>
                 </p>
-                <v-text-field class="mx-10" v-model="token" label="Access Token" readonly box></v-text-field>
+                <v-text-field class="mx-10" v-model="token" label="MongoDB Access Token" readonly box></v-text-field>
                 <v-layout row>
                     <v-flex xs11>
-                        <v-text-field id="mongo_url" class="mx-10" v-model="mongo_url" label="MongoDB Connection URL" readonly box></v-text-field>
+                        <v-text-field id="url" class="mx-10" v-model="url" label="MongoDB Connection URL" readonly box></v-text-field>
                     </v-flex>
                     <v-flex xs1 class="text-xs-center">
-                        <v-btn class="mx-2" fab small color="accent" @click="mongo_oncopy"><v-icon>file_copy</v-icon></v-btn>
-                    </v-flex>
-                </v-layout>
-                <v-layout row>
-                    <v-flex xs11>
-                        <v-text-field id="pg_url" class="mx-10" v-model="pg_url" label="Postgresql Connection URL" readonly box></v-text-field>
-                    </v-flex>
-                    <v-flex xs1 class="text-xs-center">
-                        <v-btn class="mx-2" fab small color="accent" @click="pg_oncopy"><v-icon>file_copy</v-icon></v-btn>
+                        <v-btn class="mx-2" fab small color="accent" @click="oncopy"><v-icon>file_copy</v-icon></v-btn>
                     </v-flex>
                 </v-layout>
             </v-layout>
@@ -97,8 +89,6 @@ var app = new Vue({
             token: null,
             current_user: "{{ current_user }}",
             mongodb: "{{ mongodb }}",
-            postgres_hostname: "{{ postgres_hostname }}",
-            postgres_port: "{{ postgres_port }}",
             snackbar: false,
             snackbar_text: "",
         }
@@ -119,14 +109,9 @@ var app = new Vue({
     },
 
     computed: {
-        mongo_url: function() {
+        url: function() {
             if (this.token != null) {
                 return "mongodb://" + this.current_user + ":" + this.token + "@" + this.mongodb;
-            }
-        },
-        pg_url: function() {
-            if (this.token != null) {
-                return "dbname=postgres user=" + this.current_user + " password=" + this.token + " host=" + this.postgres_hostname + " port=" + this.postgres_port;
             }
         }
     },
@@ -134,7 +119,6 @@ var app = new Vue({
     delimiters: ['[[', ']]'],
 
     mounted(){
-        document.querySelector('body').style.opacity = 1.;
     },
 
     methods:{
@@ -147,28 +131,19 @@ var app = new Vue({
                     console.log(error);
               });
         },
-        mongo_oncopy: function() {
-            this.copypaste("mongo_url");
-        },
-        pg_oncopy: function() {
-            this.copypaste("pg_url");
-        },
-        copypaste: function (value) {
+        oncopy: function() {
             if (this.token != null) {
-                var toCopy = document.querySelector('#' + value);
-                toCopy.select();
+                var toCopy = document.querySelector('#url')
+                toCopy.select()
                 try {
                     var successful = document.execCommand('copy');
-                    this.snackbar_text = "Connection string copied to your clipboard";
+                    this.snackbar_text = "MongoDB URL copied to your clipboard";
                 }
                 catch (err) {
-                    this.snackbar_text = "Failed to copy connection string to your clipboard";
+                    this.snackbar_text = "Failed to copy MongoDB URL to your clipboard";
                 }
                 this.snackbar = true;
-                window.getSelection().removeAllRanges();
-            }
-            else {
-                console.log("nothing to copy");
+                window.getSelection().removeAllRanges()
             }
         }
     }

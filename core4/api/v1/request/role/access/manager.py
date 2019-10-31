@@ -5,20 +5,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import random
-import string
-
-from core4.api.v1.request.role.access.handler.mongo import MongoHandler
-from core4.api.v1.request.role.access.handler.postgres import PostgresHandler
+import core4.api.v1.request.role.access.handler.mongo
 import core4.base
 import core4.error
 
-#: password length used to create MongoDB access
-PASSWORD_LENGTH = 32
 #: key/value pairs of permission protocols and access handlers
 HANDLER = {
-    "mongodb": MongoHandler,
-    "postgres": PostgresHandler
+    "mongodb": core4.api.v1.request.role.access.handler.mongo.MongoHandler
 }
 
 
@@ -49,26 +42,10 @@ class CoreAccessManager(core4.base.CoreBase):
         :param role: :class:`.core4.api.v1.role.Role`
         """
         super().__init__(*args, **kwargs)
-        self.token = None
         if not role.is_user:
             raise core4.error.Core4UsageError(
                 "cannot synchronise core4 roles, only users")
         self.role = role
-
-    def create_token(self):
-        """
-        This method creates a random password of length :attr:`PASSWORD_LENGTH`
-        for the user to access the database
-
-        :return: token/password (str)
-        """
-        if self.token is None:
-            token = ''.join(
-                random.SystemRandom().choice(
-                    string.ascii_uppercase + string.digits) for _
-                in range(PASSWORD_LENGTH))
-            self.token = token
-        return self.token
 
     async def synchronise(self, protocol):
         """
@@ -78,7 +55,7 @@ class CoreAccessManager(core4.base.CoreBase):
 
         :return: access token (password)
         """
-        handler = HANDLER[protocol](self.role, self.create_token())
+        handler = HANDLER[protocol](self.role)
         await handler.del_role()
         token = await handler.add_role()
         perms = await self.role.casc_perm()
@@ -97,7 +74,7 @@ class CoreAccessManager(core4.base.CoreBase):
         return access
 
     async def reset(self, protocol):
-        handler = HANDLER[protocol](self.role, self.token)
+        handler = HANDLER[protocol](self.role)
         await handler.del_role()
 
     async def reset_all(self):

@@ -3,12 +3,6 @@ import motor
 import pymongo.errors
 import core4.api.v1.request.role.field
 from tests.api.test_test import setup, mongodb, core4api
-import momoko
-import momoko.exceptions
-from core4.api.v1.request.role.main import CoreRole
-from core4.api.v1.request.role.access.handler.postgres import PostgresHandler, dsn
-import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 _ = setup
 _ = mongodb
@@ -21,26 +15,6 @@ def reset_user(tmpdir, mongodb):
     for user in ret["users"]:
         if user["user"].startswith("test_reg_"):
             mongodb.client.admin.command('dropUser', user["user"])
-    pg = psycopg2.connect(dsn("postgres", "core", "654321", "localhost", 5432))
-    pg.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cur = pg.cursor()
-    cur.execute("SELECT rolname FROM pg_roles")
-    roles = list(cur.fetchall())
-    cur = pg.cursor()
-    cur.execute("SELECT datname FROM pg_database")
-    dbs = [i[0] for i in list(cur.fetchall()) if i[0].startswith("test_reg_")]
-    for d in dbs:
-        dl = pg.cursor()
-        dl.execute('DROP DATABASE %s' % d)
-    for r in roles:
-        if r[0].startswith("test_reg_"):
-            d = pg.cursor()
-            d.execute('DROP ROLE "%s"' % r[0])
-    for r in roles:
-        if r[0].startswith("ro_test_reg_"):
-            d = pg.cursor()
-            d.execute('DROP ROLE "%s"' % r[0])
-
 
 
 async def test_login(core4api):
@@ -204,7 +178,7 @@ async def test_server_test(core4api):
 
     rv = await core4api.post("/core4/api/v1/system")
     assert rv.code == 405
-  
+    
     rv = await core4api.get("/core4/api/v1/system")
     assert rv.code == 200
 
@@ -450,177 +424,3 @@ async def test_profile_cascade(core4api):
     assert data["token_expires"] is not None
 
 
-async def test_postgres():
-    dsn = 'dbname=postgres user=core password=654321 host=localhost port=5432'
-    conn = momoko.Connection(dsn=dsn)
-    await conn.connect()
-    cursor = await  conn.execute("SELECT 1234")
-    rows = cursor.fetchall()
-    assert rows[0] == (1234, )
-
-async def test_postgres_connect():
-    role = CoreRole(
-        name="myclient1",
-        realname="my client 1",
-        is_active=True,
-        perm=[
-            "postgres://test_reg_db1"
-        ]
-    )
-    await role.save()
-    role._check_user()
-    assert not role.is_user
-    user = CoreRole(
-        name="mra",
-        realname="Michael Rau",
-        is_active=True,
-        email="m.rau@plan-net.com",
-        password="hello world",
-        role=["myclient1"]
-    )
-    await user.save()
-    user._check_user()
-    pg = PostgresHandler(user, "12345678910")
-    await pg.del_role()
-    await pg.add_role()
-    if await pg.database_exists("test_reg_db1"):
-        await pg.del_database("test_reg_db1")
-    await pg.grant("test_reg_db1")
-    await pg.del_role()
-
-async def test_grant_postgres(core4api):
-
-    await core4api.login()
-    data = {
-        "name": "test_reg_test_role1",
-        "realname": "test role1",
-        "passwd": "123456",
-        "email": "test@mail.com",
-        "role": [
-            "standard_user"
-        ],
-        "perm": []
-    }
-
-    pg = PostgresHandler()
-    if await pg.database_exists("test_reg_db1"):
-        await pg.del_database("test_reg_db1")
-
-    rv = await core4api.post("/core4/api/v1/roles", json=data)
-    assert rv.code == 200
-    id = rv.json()["data"]["_id"]
-    etag = rv.json()["data"]["etag"]
-
-    await core4api.login("test_reg_test_role1", "123456")
-    rv = await core4api.post("/core4/api/v1/access")
-    assert rv.code == 200
-    access = rv.json()["data"]["postgres"]
-    print(access)
-    # await _no_access(access)
-    #
-    core4api.set_admin()
-    data = {
-        "etag": etag,
-        "perm": [
-            "postgres://test_reg_test1"
-        ]
-    }
-    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
-    assert rv.code == 200
-    etag = rv.json()["data"]["etag"]
-    #
-    # await _no_access(access)
-    #
-    await core4api.login("test_reg_test_role1", "123456")
-    rv = await core4api.post("/core4/api/v1/access")
-    assert rv.code == 200
-    access = rv.json()["data"]
-    assert access["mongodb"] == access["postgres"]
-
-async def test_inactivate(core4api):
-
-    async def _access(db, access):
-        await momoko.connect(
-            dsn(db, "test_reg_test_role1", access, "localhost", 5432))
-
-    async def _no_access(db, access):
-        with pytest.raises(psycopg2.OperationalError):
-            await _access(db, access)
-
-    await core4api.login()
-    data = {
-        "name": "test_reg_test_role1",
-        "realname": "test role1",
-        "passwd": "123456",
-        "email": "test@mail.com",
-        "role": [
-            "standard_user"
-        ],
-        "perm": []
-    }
-
-    rv = await core4api.post("/core4/api/v1/roles", json=data)
-    assert rv.code == 200
-    id = rv.json()["data"]["_id"]
-    etag = rv.json()["data"]["etag"]
-
-    await core4api.login("test_reg_test_role1", "123456")
-    rv = await core4api.post("/core4/api/v1/access")
-    assert rv.code == 200
-    access = rv.json()["data"]["postgres"]
-    await _no_access("test_reg_test1", access)
-
-    core4api.set_admin()
-    data = {
-        "etag": etag,
-        "perm": [
-            "postgres://test_reg_test1"
-        ]
-    }
-    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
-    assert rv.code == 200
-    etag = rv.json()["data"]["etag"]
-
-    await _no_access("test_reg_test1", access)
-
-    await core4api.login("test_reg_test_role1", "123456")
-    rv = await core4api.post("/core4/api/v1/access")
-    assert rv.code == 200
-    access = rv.json()["data"]["postgres"]
-
-    await _access("test_reg_test1", access)
-
-    core4api.set_admin()
-    data = {
-        "etag": etag,
-        "is_active": False
-    }
-    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
-    assert rv.code == 200
-    etag = rv.json()["data"]["etag"]
-
-    await _no_access("test_reg_test1", access)
-
-    data = {
-        "etag": etag,
-        "is_active": True
-    }
-    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
-    assert rv.code == 200
-    etag = rv.json()["data"]["etag"]
-
-    await core4api.login("test_reg_test_role1", "123456")
-    rv = await core4api.post("/core4/api/v1/access")
-    assert rv.code == 200
-    access = rv.json()["data"]["postgres"]
-    await _access("test_reg_test1", access)
-
-    core4api.set_admin()
-    data = {
-        "etag": etag
-    }
-    u = "/core4/api/v1/roles/" + id + "/" + etag
-    print(u)
-    rv = await core4api.delete(u)
-    assert rv.code == 200
-    await _no_access("test_reg_test1", access)
