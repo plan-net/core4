@@ -21,18 +21,18 @@
       </template>
 
       <v-list>
-        <v-list-tile>
-          <v-list-tile-action>
+        <v-list-item>
+          <v-list-item-action>
             <v-switch
               v-model="technical"
               color="primary"
             ></v-switch>
-          </v-list-tile-action>
-          <v-list-tile-title
+          </v-list-item-action>
+          <v-list-item-title
             style="cursor: pointer;"
             @click="toggle"
-          >Show technical widgets</v-list-tile-title>
-        </v-list-tile>
+          >Show technical widgets</v-list-item-title>
+        </v-list-item>
       </v-list>
     </v-menu>
   </div>

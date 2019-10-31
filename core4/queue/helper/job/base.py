@@ -26,6 +26,9 @@ class CoreAbstractJobMixin:
                 # example method to be used by concrete classes inheriting
                 # from MyJobTemplate
                 pass
+
+    DEPRECATED! Use core4.base.main.CoreAbstractMixin applicable to jobs and
+                apis!
     """
     pass
 

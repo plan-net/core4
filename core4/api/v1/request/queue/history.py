@@ -19,7 +19,9 @@ dates = ['year', 'month', 'day', 'hour', 'minute', 'second']
 
 class JobHistoryHandler(CoreRequestHandler):
     """
-    Retrieves the paginated job state history from ``sys.event``. This provides
+    Retrieves the paginated job state history from ``sys.event``.
+
+    This provides
     total and aggregated job counts with the following dimensions:
 
     * job qual_name
