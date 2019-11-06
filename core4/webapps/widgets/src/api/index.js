@@ -73,7 +73,6 @@ const api = {
       container: 'Array'
     }
     function constructSearchString (widget) {
-      console.log(widget)
       let $search = ''
       Object.keys(fields).forEach(key => {
         if (widget[key] != null) {
