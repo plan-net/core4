@@ -37,7 +37,7 @@ export default {
   },
   methods: {
     checkAppbarVis () {
-      if (this.isWidgetSpa) {
+      if ((this.widget || {}).spa) {
         this.$store.dispatch('hideAppbar')
       }
     }
@@ -50,10 +50,6 @@ export default {
   },
   computed: {
     ...mapGetters(['dark']),
-    isWidgetSpa () {
-      console.log(this, '########')
-      return this.qualName.includes('CoreStaticFileHandler')
-    },
     qualName () {
       return (this.widget || {}).qual_name
     },
@@ -61,10 +57,7 @@ export default {
       const data = this.$store.getters.widgetById(this.$route.params.widgetId)
       return data
     },
-
     path () {
-      /*       if ((this.widget || {}).qual_name.includes('JobHistoryHandler') ||
-      (this.widget || {}).title === 'about core4os') { */
       let path
       switch (this.$route.name) {
         case 'help':
