@@ -22,7 +22,6 @@ export default {
   watch: {
     authenticated (newValue, oldValue) {
       this.$disconnect()
-
       if (newValue && newValue !== oldValue) {
         let token = JSON.parse(localStorage.getItem('user'))['token']
         this.$connect(`${getBasePath()}/event?token=${token}`)
