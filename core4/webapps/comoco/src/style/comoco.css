@@ -1,0 +1,10 @@
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.job-count {
+  font-weight: 500;
+  font-size: 28px;
+}

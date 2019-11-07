@@ -6,10 +6,15 @@ $error: #d70f14;
 $inactive: #8d1407;
 $killed: #d8c9c7;
 
-.text-left{
+.text-left {
   text-align: left;
 }
 
-.text-right{
+.text-right {
   text-align: right;
+}
+
+.job-count {
+  font-weight: 500;
+  font-size: 28px;
 }

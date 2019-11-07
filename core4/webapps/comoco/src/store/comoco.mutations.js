@@ -28,7 +28,7 @@ const channelDict = {
   }
 }
 
-console.log(createObjectWithDefaultValues(eventChannelNames, eventChannelHandler))
+// console.log(createObjectWithDefaultValues(eventChannelNames, eventChannelHandler))
 
 export default {
   [SOCKET_ONOPEN] (state, event) {
