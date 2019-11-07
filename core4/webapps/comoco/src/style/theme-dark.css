@@ -1,0 +1,43 @@
+.theme--dark .board {
+  background-color: #393939;
+}
+.theme--dark .board /deep/ .flag.active {
+  color: #ffffff;
+}
+.theme--dark .board /deep/ .flag.passive {
+  color: rgba(255, 255, 255, 0.18);
+}
+.theme--dark .board .border-info {
+  background-color: #282828;
+}
+.theme--dark .board .jobs {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.theme--dark .board .jobs::-webkit-scrollbar-track {
+  background-color: #4a4a4a;
+}
+.theme--dark .board .jobs::-webkit-scrollbar {
+  width: 5px;
+  background-color: transparent;
+}
+.theme--dark .board .jobs::-webkit-scrollbar-thumb {
+  background-color: #5c5c5c;
+}
+.theme--dark .board .jobs:hover::-webkit-scrollbar-thumb {
+  background-color: #737373;
+}
+.theme--dark .board .job {
+  background-color: #282828;
+}
+.theme--dark .board .job:before {
+  border-top-color: #393939;
+  border-left-color: #282828;
+}
+.theme--dark .board .job:hover {
+  background-color: #2e2e2e;
+}
+.theme--dark .board .job:hover:before {
+  border-top-color: #393939;
+  border-left-color: #2e2e2e;
+}

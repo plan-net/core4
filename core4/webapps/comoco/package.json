@@ -1,6 +1,6 @@
 {
   "name": "comoco",
-  "version": "0.9.0",
+  "version": "1.0.1",
   "private": true,
   "core4": {
     "build_command" : [
@@ -19,7 +19,7 @@
   "dependencies": {
     "highcharts": "^7.0.3",
     "highcharts-vue": "^1.2.0",
-    "core4ui": "https://github.com/plan-net/core4ui.git#develop",
+    "core4ui": "^1.1.3",
     "vue-grid-layout": "^2.3.4",
     "vue-native-websocket": "2.0.12"
   },
@@ -34,8 +34,7 @@
     "eslint-plugin-vue": "^5.0.0",
     "node-sass": "^4.9.0",
     "sass-loader": "^7.0.1",
-    "vue-template-compiler": "^2.5.21",
-    "vuetify": "^1.5.7"
+    "vue-template-compiler": "^2.5.21"
   },
   "eslintConfig": {
     "root": true,

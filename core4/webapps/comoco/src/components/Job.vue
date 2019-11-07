@@ -1,46 +1,62 @@
 <template>
-  <div>
-    <div class="job mt-1 pa-1" :class="`job-${job.state}`">
-      <v-layout column xs12>
-        <!-- Job account name -->
-        <v-flex class="caption">{{ job.name | accountName }}</v-flex>
+  <v-row
+    no-gutters
+    style=""
+    class="job px-2 pt-1 pb-2"
+    :class="`job-${job.state}`"
+  >
+    <v-col cols="12">
+      <!-- Job account name -->
+      <v-row no-gutters class="caption">{{ job.name | accountName }}</v-row>
 
-        <!-- Job name and amount of jobs with the same name on queue-->
-        <v-flex>
-          <v-layout row xs12>
-            <v-flex class="name text-truncate">
-              <v-tooltip bottom>
-                <span class="font-weight-bold subheading" slot="activator">{{ job.name | shortName }}</span>
-                <span>{{ job.name | shortName }}</span>
-              </v-tooltip>
-            </v-flex>
-            <v-flex class="text-right">
-              <span class="font-weight-bold title">{{ job.n }}</span>
-            </v-flex>
-          </v-layout>
-        </v-flex>
-
-        <!-- Existing job flags-->
-        <v-flex class="align-right caption flags">
+      <!-- Job name and amount of jobs with the same name on queue-->
+      <v-row
+        no-gutters
+        align="center"
+      >
+        <v-col class="name text-truncate">
           <v-tooltip bottom>
-            <span v-for="(icon, flag) in flags" class="text-uppercase font-weight-bold text--darken-3"
-                  :key="flag"
-                  :class="[ (job[flag]) ? 'active' : 'passive']" slot="activator">
-                {{ icon }}
-            </span>
-            <span>K - killed, N - nonstop, R - removed, Z - zombie</span>
+            <template v-slot:activator="{ on }">
+              <span
+                v-on="on"
+                class="subheading"
+              >{{ job.name | shortName }}</span>
+            </template>
+            <span>{{ job.name }}</span>
           </v-tooltip>
-        </v-flex>
-      </v-layout>
-    </div>
+        </v-col>
+        <v-col class="text-right">
+          <span class="job-count">{{ job.n }}</span>
+        </v-col>
+      </v-row>
 
+      <!-- Existing job flags-->
+      <v-row class="flags" justify="end" no-gutters>
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <span
+              v-on="on"
+              v-for="(icon, flag) in flags"
+              class="text-uppercase font-weight-bold flag"
+              :key="flag"
+              :class="[ (job[flag]) ? 'active' : 'passive']"
+            >
+              {{ icon }}
+            </span>
+          </template>
+          <span>K - killed, N - nonstop, R - removed, Z - zombie</span>
+        </v-tooltip>
+      </v-row>
+    </v-col>
     <!-- Job progress bar in %, available only for running jobs -->
-    <v-progress-linear v-if="job.state === 'running'"
-                       color="#64a505"
-                       height="2"
-                       :value="job.progress * 100">
+    <v-progress-linear
+      v-if="job.state === 'running'"
+      color="#64a505"
+      height="2"
+      :value="job.progress * 100"
+    >
     </v-progress-linear>
-  </div>
+  </v-row>
 </template>
 
 <script>
@@ -70,22 +86,28 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '../style/comoco';
+@import "../style/comoco";
 
-.align-right{
+/* .align-right {
   align-self: flex-end;
-}
+} */
 
-.v-progress-linear{
+.v-progress-linear {
   margin: 0;
   top: -2px;
 }
-
+.flags{
+  font-size: 11.5px;
+  padding-right: 3px;
+  .flag{
+    margin-left: 1px;
+  }
+}
 .job {
   position: relative;
 
   &:before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     right: 0;
@@ -98,10 +120,9 @@ export default {
     border-left-style: solid;
   }
 
-  &:hover {
-
-    &:before{
-      content: '';
+/*   &:hover {
+    &:before {
+      content: "";
       position: absolute;
       top: 0;
       right: 0;
@@ -113,11 +134,21 @@ export default {
       border-left-width: 10px;
       border-left-style: solid;
     }
+  } */
+
+  .name {
+/*     position: relative;
+    top: -6px; */
+    max-width: 250px;
+    .subheading {
+      font-weight: 500;
+      font-size: 22px;
+    }
+  }
+  .subheading, .job-count{
+    line-height: .8;
   }
 
-  .name{
-    max-width: 250px;
-  }
 }
 
 .job-pending {
