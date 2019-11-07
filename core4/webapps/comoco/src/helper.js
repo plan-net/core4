@@ -32,7 +32,7 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
 function getBasePath () {
   if (window.location.href.includes('http')) {
     // index.html
-    return window.APIBASE_CORE.replace('http:', 'ws:')
+    return process.env.VUE_APP_APIBASE_CORE.replace('http:', 'ws:')
   }
 
   console.error(`incorrect network protocol ${window.location.href}`)
