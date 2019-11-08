@@ -576,28 +576,6 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                         "after [%d] sec. and [%s] to go: %s", runtime,
                         job.inactive_at - now, job.last_error["exception"])
 
-    def set_inactivate(self, job):
-        """
-        Set the passed ``job`` to state ``inactive``.
-
-        The method updates the job ``state``, ``finished_at`` timestamp, the
-        ``runtime``, increases the number of ``trial``s, and resets the
-        ``locked`` property.
-
-        Finally, the job lock is removed from ``sys.lock``
-
-        :param job: :class:`.CoreJob` object
-        """
-        self.logger.debug("inactivate job [%s]", job._id)
-        runtime = self._finish(job, core4.queue.job.STATE_INACTIVE)
-        self._update_job(job, "state", "finished_at", "runtime", "locked",
-                         "trial")
-        self.make_stat('inactivate_job', str(job._id))
-        self.unlock_job(job._id)
-        job.logger.error("done execution with [inactive] "
-                         "after [%d] sec. and [%d] trials in [%s]", runtime,
-                         job.trial, job.inactive_at - job.enqueued["at"])
-
     def set_failed(self, job):
         """
         If the passed job has ``.attempts_left``, then set the job state to
