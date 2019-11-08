@@ -202,7 +202,7 @@ export default {
       window.open(path, '_blank')
     },
     onResize: lodash.debounce(function () {
-      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth - 15
+      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth - 25
     },
     600),
     ...mapActions(['addToBoard', 'removeFromBoard', 'prevBoard', 'nextBoard']),
