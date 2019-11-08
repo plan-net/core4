@@ -491,14 +491,14 @@ def test_mass_defer(queue, worker, mongodb):
     worker.stop()
 
 
-@pytest.mark.timeout(60)
+@pytest.mark.timeout(120)
 def test_fail2inactive(queue, worker, mongodb):
     import tests.project.work
     queue.enqueue(tests.project.work.ErrorJob, defer_max=5, attempts=10)
     worker.start(1)
     while queue.config.sys.queue.count_documents({}) > 0:
         time.sleep(1)
-        if queue.config.sys.queue.count_documents({"state": "inactive"}) == 1:
+        if queue.config.sys.queue.count_documents({"state": "error"}) == 1:
             break
     worker.stop()
 
@@ -568,7 +568,7 @@ def test_remove_inactive(queue, worker):
     assert job.state == "inactive"
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(60)
 def test_remove_error(queue, worker):
     import tests.project.work
     job = queue.enqueue(tests.project.work.ErrorJob, attempts=1)
