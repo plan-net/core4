@@ -88,8 +88,12 @@ class CoreLoggerMixin:
                             capped=True,
                             size=self.config.logging.size
                         )
-                        conn.create_index([("created", pymongo.DESCENDING)],
-                                          name="created")
+                        for idx in ("hostname", "identifier", "username",
+                                    "qual_name"):
+                            conn.create_index([
+                                ("created", pymongo.DESCENDING),
+                                (idx, pymongo.DESCENDING)],
+                                name=idx)
                     except:
                         self.logger.warning("failed to create [sys.log]")
                 level = getattr(logging, mongodb)
