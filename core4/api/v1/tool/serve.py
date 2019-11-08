@@ -284,6 +284,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         rsc_id=rule.rsc_id,
 
                         author=handler.author,
+                        version=handler.version(),
                         project=handler.get_project(),
                         protected=handler.protected,
                         qual_name=handler.qual_name(),

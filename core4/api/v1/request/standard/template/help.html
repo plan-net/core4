@@ -198,10 +198,17 @@
                              </template>
                             <span>Created at</span>
                         </v-tooltip>
+                        <v-tooltip bottom>
+                             <template v-slot:activator="{ on }">
+                                  <span class="mr-2 caption pa-1" v-on="on">
+                                        <v-icon class="mr-1" small>new_releases</v-icon>{{version}}
+                                  </span>
+                             </template>
+                            <span>Version</span>
+                        </v-tooltip>
                         <v-tooltip top>
                              <template v-slot:activator="{ on }">
                                   <span class="mr-2 caption darken-2 pa-1" v-on="on">
-                                        <v-icon class="mr-1" small>description</v-icon>
                                              {% for t in tag[:3] %}
                                                 <span class="chip accent">
                                                     {{t}}
