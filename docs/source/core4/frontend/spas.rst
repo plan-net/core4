@@ -179,3 +179,24 @@ The user can customize the sass and theme files and pass his own variants.
 
 Store
 *****
+
+The core4ui store contains application wide information.
+These are user profiles, settings made by the user, and settings required for functions of the application.
+.. code-block:: js
+
+    const state = {
+      hasOwnTheme: false,   // Disable / enable the possibility to choose between the light or the dark theme
+      dark: false,          // Current theme - light or dark
+      appBarVisible: true,  // Show or hide the application navbar
+      loading: false,       // Show or hide the application loading bar
+      inWidget: false,      // Adds or removes functionality if a webapp is shown inside the widget manager (close button)
+
+      title: 'Application Name', // the displayed application name, configured in ``core4ui lib``
+      menu: [],                  // array of items that are available through the navigation bar menu
+      profile: {                 // general user information
+        error: null,
+        authenticated: false,
+        name: null,
+        email: 'No email'
+      }
+    }
