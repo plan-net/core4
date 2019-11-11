@@ -17,6 +17,11 @@ serving tools
 rendering tools
 ###############
 
+.. _datatable:
+
+datatable request handler
+=========================
+
 .. automodule:: core4.api.v1.tool.datatable
     :members:
     :show-inheritance:

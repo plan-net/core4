@@ -25,6 +25,8 @@ import tornado.iostream
 import pandas as pd
 
 
+DEFAULT_ALIGN = "left"
+
 def convert(obj):
     """
     Special json hook to parse typed mongodb query. The hook parses
@@ -179,16 +181,16 @@ class CoreDataTable(CoreBase):
                     if isnull(v):
                         ndoc[k] = "."
                     else:
-                        if callable(self.column[self.lookup[k]]["format"]):
-                            ndoc[k] = self.column[self.lookup[k]]["format"](v)
+                        fmt = self.column[self.lookup[k]].get("format", "{}")
+                        if callable(fmt):
+                            ndoc[k] = fmt(v)
                         else:
                             try:
-                                ndoc[k] = self.column[self.lookup[k]].get(
-                                    "format", {}).format(v)
+                                ndoc[k] = fmt.format(v)
                             except (ValueError, TypeError):
                                 self.logger.error(
                                     "unsupported format string [%s] at [%s]",
-                                    self.column[self.lookup[k]]["format"], k)
+                                    fmt, k)
             ret.append(ndoc)
         return ret
 
@@ -216,6 +218,14 @@ class CoreDataTable(CoreBase):
         for col in column:
             if "format" in col:
                 del col["format"]
+            if "align" not in col:
+                col["align"] = DEFAULT_ALIGN
+            if "editable" not in col:
+                col["editable"] = True
+            if "nowrap" not in col:
+                col["nowrap"] = False
+            if "hide" not in col:
+                col["hide"] = False
         return dict(
             option=dict(
                 fixed_header=self.fixed_header,
@@ -278,8 +288,8 @@ class CoreDataTableRequest(CoreRequestHandler, CoreAbstractMixin):
     * ``sort_by`` - sort order (see below for further information)
 
     Define the default values for these attributes as class properties. The
-    following attributes set these attributes as request parameters (URL query
-    parameters or body payload):
+    following attributes set these as request parameters (URL query parameters
+    or body payload):
 
     * ``dense``
     * all pagination parameters, i..e. ``page``, ``per_page``, ``filter`` and
@@ -481,9 +491,9 @@ class CoreDataTableRequest(CoreRequestHandler, CoreAbstractMixin):
             for req in column:
                 if req["name"] in cdt.lookup:
                     cid = cdt.lookup[req["name"]]
-                    column = cdt.column[cid]
-                    column["hide"] = req.get("hide", column["hide"])
-                    target_column.append(column)
+                    col = cdt.column[cid]
+                    col["hide"] = req.get("hide", col.get("hide", False))
+                    target_column.append(col)
                     required_column.remove(cid)
                     cdt.lookup[req["name"]] = len(target_column) - 1
             for cid in required_column:
@@ -525,7 +535,7 @@ class CoreDataTableRequest(CoreRequestHandler, CoreAbstractMixin):
 
     async def _download(self, datatable):
         pager = datatable.pager
-        column = [c for c in datatable.column if not c["hide"]]
+        column = [c for c in datatable.column if not c.get("hide", False)]
         names = [c["name"] for c in column]
         labels = [c["label"] for c in column]
         pager.per_page = self.per_page * 100
@@ -573,13 +583,84 @@ class CoreDataTableRequest(CoreRequestHandler, CoreAbstractMixin):
 
     async def post(self):
         """
-        HTTP ``POST`` request. Do not overwrite..
+        Retrieve data table and save all passed parameters as the user's default
+        settings.
+
+        Methods:
+            POST <endpoint>
+
+        Parameters:
+            reset (bool): ignore user defined settings
+            dense (bool): render table in dense format
+            page (int): page to retrieve, starting with 0
+            per_page (int): number of records to retrieve per page
+            filter (str): filter to be applied
+            sort (list): sort order with column ``name`` and ``ascending``
+                (bool)
+            column (list): column order with column ``name`` and ``hide`` (bool)
+                attribute
+            download (bool): stream the complete data table in CSV format
+
+        Returns:
+            data element with
+
+            - **paging** (dict):
+                pagination information with
+                ``page_count`` (int), ``page`` (int), ``count`` (int),
+                ``per_page`` (int) and ``total_count`` (int)
+            - **option** (dict):
+                with ``fixed_header`` (bool),
+                ``hide_header`` (bool), ``height`` (int), ``dense`` (bool),
+                ``search`` (bool), ``advanced_options`` (bool),
+                ``footer`` (bool) and ``info`` (str)
+            - **action** (list):
+                render last column as action column with
+                ``icon`` (str) as the material icon, ``method`` (str) as
+                ``GET``, ``POST``, ``PUT``, ``DELETE`` and the non-standard
+                action ``FOLLOW`` and ``endpoint`` (str). Is ``None`` if no
+                action column is to be rendered.
+            - **sort** (list):
+                row sort order with ``name`` (str) and
+                ``ascending`` (bool)
+            - **column** (list):
+                column order and definition with ``name``
+                (str), ``label`` (str), ``align`` (str with ``left``, ``right``
+                or ``center``), ``editable`` (bool), ``hide`` (bool) and
+                ``nowrap`` (bool)
+            - **body** (list):
+                of records with keys as column names and values
+                as formatted strings
+
+        Raises:
+            401: Unauthorized
+
+        Examples:
+            >>> from requests import get, post
+            ...
+            >>> url = "http://localhost:5001/tests/table"
+            ... username = "admin"
+            ... password = "hans"
+            ...
+            ... login = get(
+            ...     "http://localhost:5001/core4/api/v1/login?username=%s&password=%s" %(
+            ...         username, password))
+            ...
+            ... # get results with default settings, display available keys
+            ... get(url, cookies=login.cookies).json()["data"].keys()
+            ... # show pagination
+            ... get(url, cookies=login.cookies).json()["data"]["paging"]
+            ... # show columns
+            ... get(url, cookies=login.cookies).json()["data"]["column"]
+            ... # show page 2
+            ... post(url, json={"page": 1}, cookies=login.cookies).json()["data"]["paging"]
+            {'count': 25,'page': 1,'page_count': 400, 'per_page': 25, 'total_count': 10000.0}
         """
         await self._fetch(True)
 
     async def get(self):
         """
-        HTTP ``GET`` request. Do not overwrite..
+        HTTP ``GET`` request with same parameters and response as
+        :meth:`.post`. This method does not change the user's default settings.
         """
         await self._fetch(False)
 
