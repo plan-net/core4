@@ -122,6 +122,27 @@ Configuration  of a CORE4os Frontend
 Api Basepath
 ------------
 
+There are 2 different paths used in core4os: ``VUE_APP_APIBASE_CORE`` and ``VUE_APP_APIBASE_APP``.
+These two paths are defined in the ".env", ".env.development" and ".env.production" files.
+These files can be found in the root directory of the frontend application.
+If these files do not exist, they must be inserted there.
+The difference between the individual files are the modes in which the application is located.
+During the development and execution of 'yarn serve' the application is in development mode.
+In this mode the '.env.development' file is used.
+However, if the application is running on the server, it is in production mode, so the ".env.production" is the dominant file.
+If there is no suitable file in one of the two modes, the ".env" file is used.
+The paths described above are now defined within the appropriate file.
+
+.env
+VUE_APP_APIBASE_CORE=/core4/api/v1VUE_APP_APIBASE_APP=/<< app-name >>/api/v1
+
+.env.development
+VUE_APP_APIBASE_CORE=http://localhost:5001/core4/api/v1VUE_APP_APIBASE_APP=http://localhost:5001/<< app-name >>/api/v1
+
+.env.production
+VUE_APP_APIBASE_CORE=/core4/api/v1VUE_APP_APIBASE_APP=/<< app-name >> /api/v1
+
+
 There are two different paths which are used in core4os. Please open ``project/public/index.html`` to change these paths.
 
 ``window.APIBASE_CORE`` is the path to all CORE4os ressources. This path usually does not need to be changed. These ressources are ``/login``, ``/logout``, ``/profile``, ``/settings``, etc.
