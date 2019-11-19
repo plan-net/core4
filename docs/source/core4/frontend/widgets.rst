@@ -6,7 +6,7 @@ Widgets
 
 Widgets are small applications with usually low complexity. They consist of an API and a frontend. In this section, however, we will only deal with the user interface / frontend. Information about creating a suitable API can be found here :ref:`api`
 
-Any frontend technology can be used to create widgets. There is no limitation within CORE4os. In CORE4os we rely on Vue.js/vuetify 2.0 or Jquery/Material design bootstrap.
+Any frontend technology can be used to create widgets. There is no limitation within core4os. In CORE4os we rely on Vue.js/vuetify 2.0 or Jquery/Material design bootstrap.
 
 No matter what technology you use the file structure should be like this.
 
@@ -177,7 +177,7 @@ The last step is to create a Vuetify instance and to set the theme. From this po
 Vuetify offers the possibility to use a different icon libraries. In this example 'md' icon font is used. A More detailed information can be found here https://vuetifyjs.com/en/customization/icons
 
 
-Jquery/Bootstrap Materiel Design
+Jquery/Bootstrap Material Design
 --------------------------------
 
 If the variant with Vue.js/Vuetify is too high an entry hurdle, you can also develop material design with Jquery/Bootstrap. For a first insight please visit https://fezvrasta.github.io/bootstrap-material-design/docs/4.0/getting-started/introduction/
