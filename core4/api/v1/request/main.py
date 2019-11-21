@@ -460,7 +460,10 @@ class CoreBaseHandler(CoreBase):
         Renders the default help page. This method is to be overwritten for
         custom help page impelementation.
         """
-        return self.render(self.help_html_page, **data)
+        if self.wants_html():
+            return self.render(self.help_html_page, **data)
+        return self.reply(data)
+
 
     def get_template_path(self):
         """
@@ -586,6 +589,7 @@ class CoreBaseHandler(CoreBase):
         # internal method to wrap the response
         ret = {
             "_id": self.identifier,
+            "version": self.project + '-' + self.version(),
             "timestamp": core4.util.node.now(),
             "message": message,
             "code": code

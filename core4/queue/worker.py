@@ -159,7 +159,33 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
         doc = self.get_next_job()
         if doc is None:
             return
-        self.start_job(doc)
+        if not self.inactivate(doc):
+            self.start_job(doc)
+
+    def inactivate(self, doc):
+        """
+        This method is called by :meth:`.work_jobs` to mark jobs which have
+        reached ``inactive_at`` as ``inactive``.
+
+        :param doc: job document to inactivate
+        """
+        if doc["state"] == core4.queue.job.STATE_DEFERRED:
+            if doc.get("inactive_at", None):
+                if doc["inactive_at"] <= self.at:
+                    update = {
+                        "state": core4.queue.job.STATE_INACTIVE
+                    }
+                    ret = self.config.sys.queue.update_one(
+                        filter={"_id": doc["_id"]}, update={"$set": update})
+                    if ret.raw_result["n"] != 1:
+                        raise RuntimeError(
+                            "failed to inactivate job [{}]".format(doc["_id"]))
+                    self.queue.unlock_job(doc["_id"])
+                    self.queue.make_stat('inactivate_job', str(doc["_id"]))
+                    self.logger.error("done execution with [inactive] - [%s] "
+                                      "with [%s]", doc["name"], doc["_id"])
+                    return True
+        return False
 
     def start_job(self, doc, run_async=True):
         """
