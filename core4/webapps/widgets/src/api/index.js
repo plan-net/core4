@@ -139,7 +139,6 @@ axiosInternal.interceptors.response.use(
     // First load of the widget app
     if (
       error.config.url.includes(`${process.env.VUE_APP_APIBASE_CORE}/setting`) &&
-      // error.config.url.includes('core4/api/v1/setting') &&
       error.config.method === 'get' &&
       error.response.status === 400
     ) {
@@ -152,12 +151,6 @@ axiosInternal.interceptors.response.use(
       }
       await api.persistOptions(data)
       store.dispatch('setOptions', data)
-      /*       axiosInternal
-        .post('/setting/core_widgets', { data })
-        .then(result => {
-          store.dispatch('setOptions', data)
-        })
-        .catch(error => Promise.reject(error)) */
     } else {
       return Promise.reject(error)
     }
