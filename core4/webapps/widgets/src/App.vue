@@ -1,8 +1,15 @@
 <template>
-  <c4-webapp :full-width="true" :nav-button-visible="false">
+  <c4-webapp
+    :full-width="true"
+    :nav-button-visible="false"
+  >
     <div slot="router">
-      <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
-        <router-view/>
+      <transition
+        name="fade"
+        mode="out-in"
+        :duration="{ enter: 200, leave: 300 }"
+      >
+        <router-view />
       </transition>
     </div>
   </c4-webapp>
@@ -14,9 +21,7 @@ export default {
   name: 'CORE4OS',
   watch: {
     authenticated (newValue, oldValue) {
-      if (newValue === false) {
-        this.$store.dispatch('clear')
-      }
+      this.$store.dispatch('clear')
     }
   },
   computed: {
@@ -44,5 +49,4 @@ export default {
 }
 </script>
 <style lang="scss">
-
 </style>
