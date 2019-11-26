@@ -9,8 +9,19 @@
 </template>
 <script>
 import { inIframe } from 'core4ui/core4/store/state'
+import { mapGetters } from 'vuex'
 export default {
   name: 'CORE4OS',
+  watch: {
+    authenticated (newValue, oldValue) {
+      if (newValue === false) {
+        this.$store.dispatch('clear')
+      }
+    }
+  },
+  computed: {
+    ...mapGetters(['authenticated'])
+  },
   mounted () {
     function bindEvent (element, eventName, eventHandler) {
       if (element.addEventListener) {
