@@ -460,7 +460,7 @@ class CoreBaseHandler(CoreBase):
         Renders the default help page. This method is to be overwritten for
         custom help page impelementation.
         """
-        if self.wants_html():
+        if self.wants_html() or getattr(self, "reply", None) is None:
             return self.render(self.help_html_page, **data)
         return self.reply(data)
 
@@ -579,7 +579,7 @@ class CoreBaseHandler(CoreBase):
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
         if self.wants_html():
-            ret["contact"] = self.config.api.contact
+            ret["contact"] = self.config.user_setting._general.contact
             return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             return self.render(self.error_text_page, **var)
