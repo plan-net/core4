@@ -106,12 +106,14 @@ async def test_default_settings_override(core4api):
     expect = {
         "_general": {
             "language": "UA",
+            'contact': 'mail@mailer.com',
             'menu': [
                 {'About': '/about'},
                 {'Profile': '/core4/api/v1/profile'}
             ]
         }
     }
+    print(response.json()["data"])
     assert response.json()["data"] == expect
 
 
@@ -126,6 +128,7 @@ async def test_delete_settings(core4api):
     expect = {
         "_general": {
             "language": "UA",
+            'contact': 'mail@mailer.com',
             'menu': [
                 {'About': '/about'},
                 {'Profile': '/core4/api/v1/profile'}
@@ -152,6 +155,7 @@ async def test_delete_nested_settings(core4api):
     response = await core4api.get("/core4/api/v1/setting")
     assert response.json()["data"] == {"_general": {
         "language": "FR",
+        'contact': 'mail@mailer.com',
         'menu': [
             {'About': '/about'},
             {'Profile': '/core4/api/v1/profile'}
@@ -166,6 +170,7 @@ async def test_delete_nested_settings(core4api):
     assert response.json()["data"] == {
         "_general": {
             "language": "FR",
+            'contact': 'mail@mailer.com',
             'menu': [
                 {'About': '/about'},
                 {'Profile': '/core4/api/v1/profile'}
@@ -181,6 +186,7 @@ async def test_delete_nested_settings(core4api):
     assert response.json()["data"] == {
         "_general": {
             "language": "FR",
+            'contact': 'mail@mailer.com',
             'menu': [
                 {'About': '/about'},
                 {'Profile': '/core4/api/v1/profile'}
