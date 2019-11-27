@@ -12,6 +12,7 @@ import core4.base.collection
 import core4.config
 import core4.config.tag
 import core4.config.test
+import core4.config.map
 import core4.error
 import core4.queue.helper
 import core4.queue.helper.functool
@@ -547,3 +548,30 @@ def test_temp_folder():
     assert os.path.isfile(tf) is False
     td = job.make_temp(folder=True)
     assert os.path.isdir(td)
+
+
+
+class MyConfigMap(core4.config.map.ConfigMap):
+    """
+    A read-only dictionary that supports dot notation as well as dictionary
+    access notation.
+    """
+
+    def __init__(self, dct):
+        super().__init__(dct)
+        self.__dict__["__ro__"] = False
+
+
+
+def test_enqueue_exists():
+    core4.config.map.ConfigMap = MyConfigMap
+    job = core4.queue.helper.job.example.DummyJob
+    core4.queue.helper.functool.enqueue(job)
+    q = core4.queue.main.CoreQueue()
+    root = os.path.abspath(os.path.join(q.project_path(), ".."))
+    q.config._config["folder"]["home"] = root
+    with pytest.raises(core4.error.CoreJobExists):
+        core4.queue.helper.functool.enqueue(job)
+    core4.queue.helper.functool.enqueue("core4.queue.helper.job.example.DummyJob", sleep=1)
+    with pytest.raises(AttributeError):
+        core4.queue.helper.functool.enqueue("core4.queue.helper.job.example.DummyJob_XXX")

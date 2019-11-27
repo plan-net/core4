@@ -24,7 +24,8 @@ ENQUEUE_ARG = """
 from core4.queue.main import CoreQueue
 queue = CoreQueue()
 job = queue.enqueue("{qual_name:s}", {args:s})
-print(job._id)
+if job:
+    print(job._id)
 """
 
 #: command used to start job processing with :meth:`.CoreWorkerProecess.start`
