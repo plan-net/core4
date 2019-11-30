@@ -34,19 +34,18 @@ Options:
 """
 
 import datetime
+import importlib
 import json
 import os
 import re
 import shutil
-import sys
 from subprocess import Popen, STDOUT, PIPE, DEVNULL
-import setuptools
-import importlib
-
-from docopt import docopt
 
 import core4.const
+import setuptools
+import sys
 from core4.base.main import CoreBase
+from docopt import docopt
 
 LOGFILE = os.path.join(os.path.abspath("."), "cadmin.log")
 CLONE = ".origin"
@@ -90,8 +89,6 @@ class WebBuilder(CoreBase, InstallMixin):
         self.project_config = os.path.join(self.root, CONFIG)
         self.env = os.environ
 
-    # self.clone
-
     def build(self, filter):
         self.print("  build webapps in [{}]".format(self.root))
         for build in self.identify_webapp(self.root):
@@ -99,7 +96,6 @@ class WebBuilder(CoreBase, InstallMixin):
                 self.print("    build [{}]".format(build["base"]))
                 self.clean_webapp(os.path.join(build["base"], build["dist"]))
                 self.build_webapp(build["base"], build["command"])
-
 
     def clean_webapp(self, dist):
         if os.path.exists(dist):
@@ -264,8 +260,10 @@ class CoreInstaller(WebBuilder):
         self.print("  install from local folder [{}]".format(self.clone))
         os.chdir(self.clone)
         sys.path.insert(0, self.clone)
+
         def x(*_, **kwargs):
             self.install_requires = kwargs.get("install_requires", [])
+
         setuptools.setup = x
         importlib.import_module("setup")
         self.popen(self.pip, "install", "--upgrade", ".")
@@ -386,7 +384,6 @@ class CoreInstaller(WebBuilder):
             raise RuntimeError(
                 "package [{}] not in scope of install_requires".format(package))
 
-
     def version(self):
         args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
         proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
@@ -479,7 +476,7 @@ def run(args):
 
 def main():
     args = docopt(__doc__, help=True)
-    #print(args)
+    # print(args)
     run(args)
 
 
