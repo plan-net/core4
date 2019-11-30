@@ -374,7 +374,6 @@ class CoreInstaller(WebBuilder):
         data = self.read_config()
         found = False
         install_requires = data.get("install_requires", [])
-        self.print("  install_requires scope {}".format(install_requires))
         for install in install_requires:
             name = re.split(r"[\@\<\>\=]+", install)[0]
             if name == package:
@@ -383,8 +382,7 @@ class CoreInstaller(WebBuilder):
                 self.popen(self.pip, "install", install)
                 found = True
         if not found:
-            raise RuntimeError(
-                "package [{}] not in scope of install_requires".format(package))
+            self.print("  not in scope of {}".format(install_requires))
 
     def version(self):
         args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
@@ -444,8 +442,9 @@ def run(args):
                               be=args["--nobuild"])
     elif args["dep-upgrade"]:
         for p in project:
-            installer = CoreInstaller(p, home=args["--home"])
-            installer.dependency_upgrade(args["PACKAGE"])
+            if p != "core4":
+                installer = CoreInstaller(p, home=args["--home"])
+                installer.dependency_upgrade(args["PACKAGE"])
     elif args["uninstall"]:
         for p in project:
             installer = CoreInstaller(p, home=args["--home"])
