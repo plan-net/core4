@@ -373,7 +373,9 @@ class CoreInstaller(WebBuilder):
             package, self.project))
         data = self.read_config()
         found = False
-        for install in data["install_requires"]:
+        install_requires = data.get("install_requires", [])
+        self.print("  install_requires scope {}".format(install_requires))
+        for install in install_requires:
             name = re.split(r"[\@\<\>\=]+", install)[0]
             if name == package:
                 self.print("  package found")
