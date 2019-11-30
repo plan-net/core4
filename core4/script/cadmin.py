@@ -10,7 +10,8 @@ cadmin - core-4 build and deployment utililty.
 
 Usage:
   cadmin install [--reset] [--web] [--home=HOME] [--build=APP...] REPOSITORY PROJECT
-  cadmin upgrade [--test] [--force] [--reset] [--core4] [--be] [--home=HOME] [PROJECT...]
+  cadmin upgrade [--test] [--force] [--reset] [--nobuild] [--home=HOME] [PROJECT...]
+  cadmin dep-upgrade [--home=HOME] PACKAGE [PROJECT...]
   cadmin uninstall [--home=HOME] PROJECT...
   cadmin version [--home=HOME] [PROJECT...]
   cadmin build [--build=APP...]
@@ -20,15 +21,16 @@ Arguments:
   PROJECT     project name
 
 Options:
-  --home=HOME     set core4 home directory, defaults to config.folder.home
-  -r --reset      reset existing project root
-  -f --force      force build and installation even if no changes
-  -w --web        build and install web apps
-  -b --build=APP  build and install web apps
-  -e --be         build and install backend apps only
-  -t --test       dry-run
-  -h --help       show this screen
-  -v --version    show version
+  --home=HOME         set core4 home directory, defaults to config.folder.home
+  -r --reset          reset existing project root
+  -f --force          force build and installation even if no changes
+  -w --web            build and install web apps
+  -b --build=APP      build and install web apps
+  -d --dependency=DEP upgrade package dependency
+  -e --nobuild        skip build and install of web apps
+  -t --test           dry-run
+  -h --help           show this screen
+  -v --version        show version
 """
 
 import datetime
@@ -38,6 +40,8 @@ import re
 import shutil
 import sys
 from subprocess import Popen, STDOUT, PIPE, DEVNULL
+import setuptools
+import importlib
 
 from docopt import docopt
 
@@ -150,6 +154,7 @@ class CoreInstaller(WebBuilder):
         self.repository = repository
         self.reset = reset
         self.web = web
+        self.install_requires = None
         self.home = home or self.config.folder.home
         root = os.path.join(self.home, self.project)
         self.clone = os.path.join(root, CLONE)
@@ -209,7 +214,8 @@ class CoreInstaller(WebBuilder):
         data = {
             "repository": self.repository,
             "commit": self.get_local_commit(),
-            "web": self.web
+            "web": self.web,
+            "install_requires": self.install_requires
         }
         json.dump(data, open(self.project_config, "w", encoding="utf-8"))
 
@@ -257,6 +263,11 @@ class CoreInstaller(WebBuilder):
     def install_project(self):
         self.print("  install from local folder [{}]".format(self.clone))
         os.chdir(self.clone)
+        sys.path.insert(0, self.clone)
+        def x(*_, **kwargs):
+            self.install_requires = kwargs.get("install_requires", [])
+        setuptools.setup = x
+        importlib.import_module("setup")
         self.popen(self.pip, "install", "--upgrade", ".")
 
     def install_venv(self):
@@ -299,9 +310,7 @@ class CoreInstaller(WebBuilder):
         assert ret == 0
         return "\n".join(stdout)
 
-    def upgrade(self, test=False, force=False, core4=False, be=False):
-        if self.project == "core4" and core4:
-            return
+    def upgrade(self, test=False, force=False, be=False):
         self.check_for_upgrade()
         self.print("upgrading [{}]".format(self.project))
         data = self.read_config()
@@ -327,17 +336,13 @@ class CoreInstaller(WebBuilder):
             self.print("  force upgrade with [{}]".format(self.project))
         if self.reset:
             self.print("  reset [{}]".format(self.project))
-        if core4:
-            self.print("  reset [core4] of [{}]".format(self.project))
-            if not test:
-                self.popen(self.pip, "uninstall", "core4", "--yes")
-        if not test and (self.reset or force or core4 or latest != current):
+        if not test and (self.reset or force or latest != current):
             if self.reset:
                 self.install([])
             else:
                 self.install_project()
                 self.write_config()
-                if not be and self.web and (not core4 or force):
+                if not be and self.web:
                     self.build([])
 
     def build(self, filter):
@@ -364,6 +369,23 @@ class CoreInstaller(WebBuilder):
         source = os.path.join(base, dist)
         self.print("    copy [{}] to [{}]".format(source, target))
         shutil.copytree(source, target)
+
+    def dependency_upgrade(self, package):
+        self.print("upgrading package [{}] in [{}]".format(
+            package, self.project))
+        data = self.read_config()
+        found = False
+        for install in data["install_requires"]:
+            name = re.split(r"[\@\<\>\=]+", install)[0]
+            if name == package:
+                self.print("  package found")
+                self.popen(self.pip, "uninstall", "--yes", install)
+                self.popen(self.pip, "install", install)
+                found = True
+        if not found:
+            raise RuntimeError(
+                "package [{}] not in scope of install_requires".format(package))
+
 
     def version(self):
         args = [self.python, "-c", VERSION_COMMAND.format(p=self.project)]
@@ -420,7 +442,11 @@ def run(args):
             installer = CoreInstaller(
                 p, reset=args["--reset"], home=args["--home"])
             installer.upgrade(test=args["--test"], force=args["--force"],
-                              core4=args["--core4"], be=args["--be"])
+                              be=args["--nobuild"])
+    elif args["dep-upgrade"]:
+        for p in project:
+            installer = CoreInstaller(p, home=args["--home"])
+            installer.dependency_upgrade(args["PACKAGE"])
     elif args["uninstall"]:
         for p in project:
             installer = CoreInstaller(p, home=args["--home"])
