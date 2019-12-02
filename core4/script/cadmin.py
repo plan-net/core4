@@ -391,6 +391,9 @@ class CoreInstaller(WebBuilder):
         data = self.read_config()
         self.repository = data["repository"]
         self.web = data["web"]
+        core4_repository = [r for r in data["install_requires"]
+                            if "/core4.git" in r]
+        core4_repository = core4_repository[0] if core4_repository else ""
         current = data["commit"]
         if os.path.isdir(self.repository):
             self.clone = self.repository
@@ -408,7 +411,8 @@ class CoreInstaller(WebBuilder):
             },
             "core4": {
                 "version": core4_version,
-                "build": ", ".join(core4_build)
+                "build": ", ".join(core4_build),
+                "repository": core4_repository
             },
             "error": stderr or None
         }
@@ -463,8 +467,9 @@ def run(args):
                 print("  commit:  {} ({})".format(
                     data["commit"]["timestamp"], data["commit"]["hash"]))
                 print("  source:  {}".format(data["repository"]))
-                print("  core4:   {}, build {}".format(
-                    data["core4"]["version"], data["core4"]["build"]))
+                print("  core4:   {}, build {} from {}".format(
+                    data["core4"]["version"], data["core4"]["build"],
+                    data["core4"]["repository"]))
     elif args["build"]:
         installer = WebBuilder()
         installer.init_vars(".")
