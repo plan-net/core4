@@ -190,7 +190,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 clsname = container_cls.split(".")[-1]
                 module = importlib.import_module(modname)
                 container_cls = getattr(module, clsname)
-            container_obj = container_cls(**kwargs)
+            container_obj = container_cls(routing=self.routing, **kwargs)
             root = container_obj.get_root()
             application = container_obj.make_application()
             if root in [c.get_root() for c in self.container]:

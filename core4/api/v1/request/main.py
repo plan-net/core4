@@ -511,6 +511,16 @@ class CoreBaseHandler(CoreBase):
         self.logger.debug("template_path is [%s]", self.template_path)
         return super().render_string(template_name, **kwargs)
 
+    def _static(self, mode, path):
+        url = "{}{}/{}/{}/{}/{}".format(
+            self.settings.get("routing", ""),
+            self.application.container.get_root(),
+            core4.const.ASSET_URL,
+            mode,
+            self.rsc_id,
+            path)
+        return url
+
     def default_static(self, path):
         """
         Build urls to core4 default static folder. The method is in scope of
@@ -520,10 +530,7 @@ class CoreBaseHandler(CoreBase):
         :param path: name
         :return: full url
         """
-        url = "{}/{}/default/{}/{}".format(
-            self.application.container.get_root(), core4.const.ASSET_URL,
-            self.rsc_id, path)
-        return url
+        return self._static("default", path)
 
     def static_url(self, path):
         """
@@ -542,10 +549,7 @@ class CoreBaseHandler(CoreBase):
         :param kwargs:
         :return: full url
         """
-        url = "{}/{}/project/{}/{}".format(
-            self.application.container.get_root(), core4.const.ASSET_URL,
-            self.rsc_id, path)
-        return url
+        return self._static("project", path)
 
     def get_template_namespace(self):
         """
