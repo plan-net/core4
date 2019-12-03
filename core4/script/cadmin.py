@@ -376,7 +376,7 @@ class CoreInstaller(WebBuilder):
         install_requires = data.get("install_requires", [])
         for install in install_requires:
             name = re.split(r"[\@\<\>\=]+", install)[0]
-            if name == package:
+            if name.strip() == package.strip():
                 self.print("  package found")
                 self.popen(self.pip, "uninstall", "--yes", install)
                 self.popen(self.pip, "install", install)
