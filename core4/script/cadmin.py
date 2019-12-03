@@ -467,9 +467,10 @@ def run(args):
                 print("  commit:  {} ({})".format(
                     data["commit"]["timestamp"], data["commit"]["hash"]))
                 print("  source:  {}".format(data["repository"]))
-                print("  core4:   {}, build {} from {}".format(
-                    data["core4"]["version"], data["core4"]["build"],
-                    data["core4"]["repository"]))
+                if p != "core4":
+                    print("  core4:   {}, build {} from {}".format(
+                        data["core4"]["version"], data["core4"]["build"],
+                        data["core4"]["repository"]))
     elif args["build"]:
         installer = WebBuilder()
         installer.init_vars(".")
