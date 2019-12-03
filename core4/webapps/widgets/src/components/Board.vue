@@ -197,7 +197,7 @@ export default {
       if (widget.target === 'blank') {
         path = widget.enter_url || widget.endpoint.enter_url
       } else {
-        path = '/#/enter/' + widget.rsc_id
+        path = window.location.pathname + '#/enter/' + widget.rsc_id
       }
       window.open(path, '_blank')
     },
