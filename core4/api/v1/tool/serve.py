@@ -59,6 +59,12 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         http_args = {}
         cert_file = self.config.api.crt_file
         key_file = self.config.api.key_file
+        # global settings
+        name = name or "app"
+        self.identifier = "@".join([name, core4.util.node.get_hostname()])
+        self.port = int(port or self.config.api.port)
+        self.address = address or "0.0.0.0"
+        self.hostname = core4.util.node.get_hostname()
         if cert_file and key_file:
             self.logger.info("securing server with [%s]", cert_file)
             http_args["ssl_options"] = {
@@ -68,16 +74,18 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             self.protocol = "https"
         else:
             self.protocol = "http"
-        # global settings
-        name = name or "app"
-        self.identifier = "@".join([name, core4.util.node.get_hostname()])
-        self.port = int(port or self.config.api.port)
-        self.address = address or "0.0.0.0"
-        self.hostname = core4.util.node.get_hostname()
-        self.routing = "{}://{}".format(
-            self.protocol, routing or "%s:%d" % (self.address, self.port))
-        if self.routing.endswith("/"):
-            self.routing = self.routing[:-1]
+        if routing is None:
+            routing = "%s://%s:%d" % (self.protocol, self.address, self.port)
+        elif routing.startswith("http://"):
+            self.protocol = "http"
+        elif routing.startswith("https://"):
+            self.protocol = "https"
+        else:
+            routing = "{}://{}".format(self.protocol, routing)
+        if routing.endswith("/"):
+            self.routing = routing[:-1]
+        else:
+            self.routing = routing
         return http_args
 
     def start_http(self, http_args, router, reuse_port=True):
