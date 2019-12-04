@@ -44,7 +44,9 @@ setup(
         "sh>=1.12.14",
         "pip>=18.1",
         "pytz>=2018.9",
-        "tzlocal>=1.5.1"
+        "tzlocal>=1.5.1",
+        "feather-format==0.4.0",
+        "rpy2==3.0.5"
     ],
     extras_require={
         "tests": [
