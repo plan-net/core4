@@ -30,14 +30,17 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
  * @returns {string}
  */
 function getBasePath () {
-  if (window.location.href.includes('http')) {
-    // index.html
-    return window.APIBASE_CORE.replace('http:', 'ws:')
+  if (process.env.NODE_ENV === 'development') {
+    return process.env.VUE_APP_APIBASE_CORE_WS
   }
-
-  console.error(`incorrect network protocol ${window.location.href}`)
-
-  return `ws://${window.location.host}/core4/api`
+  return `ws://${window.location.host}${process.env.VUE_APP_APIBASE_CORE_WS}`
+/*   if (window.location.href.includes('http')) {
+    // index.html
+    return process.env.VUE_APP_APIBASE_CORE.replace('http:', 'ws:')
+  } else {
+    console.error(`incorrect network protocol ${window.location.href}`)
+    return `ws://${window.location.host}/core4/api`
+  } */
 }
 
 /**

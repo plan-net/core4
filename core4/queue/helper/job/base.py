@@ -13,9 +13,10 @@ import shutil
 
 import core4.util.data
 from core4.queue.job import CoreJob
+from core4.base.main import CoreAbstractMixin
 
 
-class CoreAbstractJobMixin:
+class CoreAbstractJobMixin(CoreAbstractMixin):
     """
     Mix in this class to create an abstract job class. Abstract job classes
     are not listed in the job listing, e.g. extracted with ``coco --job``::
@@ -26,11 +27,14 @@ class CoreAbstractJobMixin:
                 # example method to be used by concrete classes inheriting
                 # from MyJobTemplate
                 pass
+
+    DEPRECATED! Use core4.base.main.CoreAbstractMixin applicable to jobs and
+                apis!
     """
     pass
 
 
-class CoreLoadJob(CoreJob, CoreAbstractJobMixin):
+class CoreLoadJob(CoreJob, CoreAbstractMixin):
     """
     This extended and abstracted :class:`.CoreJob` class provides additional
     methods for file management with folders ``transfer``, ``proc``, and

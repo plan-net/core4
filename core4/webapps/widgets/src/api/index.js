@@ -33,7 +33,7 @@ const api = {
         return true
       })
       .catch(error => {
-        console.log(error)
+        // console.log(error)
         return Promise.reject(error)
       })
   },
@@ -69,7 +69,8 @@ const api = {
       qual_name: 'DotSeperated',
       tag: 'Array',
       decription: 'String',
-      author: 'String'
+      author: 'String',
+      container: 'Array'
     }
     function constructSearchString (widget) {
       let $search = ''
@@ -78,7 +79,10 @@ const api = {
           if (fields[key] === 'String') {
             $search += widget[key] + ' '
           } else if (fields[key] === 'Array') {
-            if (widget[key].length) {
+            if (key === 'container' && widget[key].length) {
+              const tmp = (widget.container[0] || '').split('.')
+              $search += tmp[tmp.length - 1] // core4.api.v1.server.CoreApiServer => CoreApiServer
+            } else if (widget[key].length) {
               $search += widget[key].join(' ') + ' '
             }
           } else {
@@ -90,7 +94,7 @@ const api = {
       /* replace words and whitespace */
       // $search = $search.replace(/ for| and| v1| api| request| core4/gi, '').replace(/\s+/g, ' ').trim()
       $search = $search
-        .replace(/ for| and| v1| request| core4/gi, '')
+        .replace(/ for| and| v1| request/gi, '')
         .replace(/\s+/g, ' ')
         .trim()
       return Object.assign(widget, { $search: $search.split(' ') })
@@ -134,8 +138,7 @@ axiosInternal.interceptors.response.use(
   async error => {
     // First load of the widget app
     if (
-      error.config.url.includes(`${window.APIBASE_CORE}/setting`) &&
-      // error.config.url.includes('core4/api/v1/setting') &&
+      error.config.url.includes(`${process.env.VUE_APP_APIBASE_CORE}/setting`) &&
       error.config.method === 'get' &&
       error.response.status === 400
     ) {
@@ -148,12 +151,6 @@ axiosInternal.interceptors.response.use(
       }
       await api.persistOptions(data)
       store.dispatch('setOptions', data)
-      /*       axiosInternal
-        .post('/setting/core_widgets', { data })
-        .then(result => {
-          store.dispatch('setOptions', data)
-        })
-        .catch(error => Promise.reject(error)) */
     } else {
       return Promise.reject(error)
     }

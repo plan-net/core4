@@ -199,7 +199,7 @@ async def test_login_inactive(core4api):
 def test_admin_settings1():
     os.environ["CORE4_OPTION_api__admin_username"] = "hello"
     os.environ["CORE4_OPTION_api__admin_password"] = "~"
-    os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
+    os.environ["CORE4_OPTION_user_setting___general__contact"] = "mail@test.com"
     with pytest.raises(TypeError):
         serve(CoreApiServer)
 
@@ -207,7 +207,7 @@ def test_admin_settings1():
 def test_admin_settings2():
     os.environ["CORE4_OPTION_api__admin_username"] = "~"
     os.environ["CORE4_OPTION_api__admin_password"] = "123456"
-    os.environ["CORE4_OPTION_api__contact"] = "mail@test.com"
+    os.environ["CORE4_OPTION_user_setting___general__contact"] = "mail@test.com"
     with pytest.raises(TypeError):
         serve(CoreApiServer)
 
@@ -215,7 +215,7 @@ def test_admin_settings2():
 def test_admin_settings3():
     os.environ["CORE4_OPTION_api__admin_username"] = "hello"
     os.environ["CORE4_OPTION_api__admin_password"] = "123456"
-    os.environ["CORE4_OPTION_api__contact"] = "~"
+    os.environ["CORE4_OPTION_user_setting___general__contact"] = "~"
     with pytest.raises(TypeError):
         serve(CoreApiServer)
 

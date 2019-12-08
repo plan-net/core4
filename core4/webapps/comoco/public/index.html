@@ -5,31 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <title>starter</title>
-    <script>
-      window.APIBASE_CORE = "/core4/api/v1";
-      window.APIBASE_APP = "/voting";
-
-      const dev = window.location.hostname.indexOf('localhost') >= 0;
-
-      if(dev){
-        //local dev
-        const devPrefix = "http://" + "localhost:5001";
-
-        window.APIBASE_CORE = devPrefix + window.APIBASE_CORE;
-        window.APIBASE_APP = devPrefix + window.APIBASE_APP;
-      } else {
-        // prod
-        const prodPrefix = "http://" + window.location.host;
-
-        window.APIBASE_CORE = prodPrefix + window.APIBASE_CORE;
-        window.APIBASE_APP = prodPrefix + window.APIBASE_APP;
-      }
-    </script>
+    <title></title>
   </head>
   <body>
     <noscript>
-      <strong>We're sorry but starter doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+      <strong>We're sorry but comoco doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
     <div id="app"></div>
     <!-- built files will be auto injected -->

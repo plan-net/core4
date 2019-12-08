@@ -52,7 +52,8 @@ class CoreWorkerProcess(core4.base.main.CoreBase,
         self.queue = core4.queue.main.CoreQueue()
         now = core4.util.node.mongo_now()
         job = self.load_job(_id)
-
+        if job is None:
+            return False
         update = {
             "locked.pid": core4.util.node.get_pid()
         }
@@ -67,9 +68,6 @@ class CoreWorkerProcess(core4.base.main.CoreBase,
                 "failed to update job [{}] state [starting]".format(job._id))
         for k, v in update.items():
             job.__dict__[k] = v
-        if job.inactive_at <= now:
-            self.queue.set_inactivate(job)
-            return
 
         job.logger.info("start execution")
         self.drop_privilege()
@@ -144,6 +142,7 @@ class CoreWorkerProcess(core4.base.main.CoreBase,
             exc_info = sys.exc_info()
             update = {
                 "state": core4.queue.job.STATE_ERROR,
+                "locked": None,
                 "last_error": {
                     "exception": repr(exc_info[1]),
                     "timestamp": core4.util.node.mongo_now(),

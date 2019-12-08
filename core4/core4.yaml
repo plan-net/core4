@@ -106,7 +106,6 @@ api:
   card_html_page: standard/template/card.html
   help_html_page: standard/template/help.html
   info_html_page: standard/template/info.html
-  contact: mail@mailer.com
   reset_password:
     expiration: 28800  # 8h
   token:
@@ -148,6 +147,7 @@ user_setting:
      menu:
        - About: /about
        - Profile: /core4/api/v1/profile
+     contact: mail@mailer.com
 
 queue:
   history_in_days: 7

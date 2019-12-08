@@ -20,9 +20,11 @@ from pip import __version__ as pip_version
 import core4
 import core4.api.v1.application
 import core4.base
+from core4.base.main import CoreAbstractMixin
 import core4.error
 import core4.queue.helper.job.base
 import core4.queue.job
+import core4.queue.helper.job.base
 import core4.queue.query
 import core4.service.introspect.main
 import core4.util.node
@@ -218,15 +220,11 @@ class CoreProject(core4.base.CoreBase):
         #   - core4.api.v1.application.CoreApiContainer
         members = inspect.getmembers(module, inspect.isclass)
         for (clsname, cls) in members:
-            if issubclass(cls, core4.base.main.CoreBase):
-                if cls.qual_name() == "core4.queue.helper.job.base.CoreLoadJob":
-                    print("OK")
+            if (issubclass(cls, core4.base.main.CoreBase)
+                    and CoreAbstractMixin not in cls.__bases__):
                 if cls is core4.queue.job.CoreJob:
                     continue
                 if cls is core4.api.v1.application.CoreApiContainer:
-                    continue
-                if core4.queue.helper.job.base.CoreAbstractJobMixin \
-                        in cls.__mro__:
                     continue
                 if cls in self._seen:
                     continue

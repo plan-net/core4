@@ -19,27 +19,44 @@ export default {
     })
     if (this.widget != null) {
       this.$store.dispatch('setWidgetTitle', this.widget.title)
+      this.$store.dispatch('setInWidget', true)
+
+      this.checkAppbarVis()
     }
   },
   watch: {
     widget (newValue) {
       if (newValue != null) {
         this.$store.dispatch('setWidgetTitle', newValue.title)
+        this.$store.dispatch('setInWidget', true)
+      }
+    },
+    qualName (newValue) {
+      this.checkAppbarVis()
+    }
+  },
+  methods: {
+    checkAppbarVis () {
+      if ((this.widget || {}).spa) {
+        this.$store.dispatch('hideAppbar')
       }
     }
   },
-  methods: {},
   beforeDestroy () {
     this.$store.dispatch('resetWidgetTitle', config.TITLE)
+    this.$store.dispatch('resetInWidget')
+    this.$store.dispatch('showAppbar')
     this.$bus.$off('c4-application-close')
   },
   computed: {
     ...mapGetters(['dark']),
+    qualName () {
+      return (this.widget || {}).qual_name
+    },
     widget () {
       const data = this.$store.getters.widgetById(this.$route.params.widgetId)
       return data
     },
-
     path () {
       let path
       switch (this.$route.name) {
@@ -50,6 +67,8 @@ export default {
           path = this.widget.endpoint.enter_url
       }
       return `${path}&dark=${this.dark}`
+      /*       }
+      return 'http://localhost:8085/#/' */
     }
   }
 
@@ -61,14 +80,14 @@ div {
   position: absolute;
   left: 0;
   right: 0;
-  top: 48px;
+  top: 0;
   bottom: 0;
   background-color: #fff;
   padding: 0 0 0 0;
 
   iframe {
     width: 100%;
-    height: calc(100% - 4px);
+    height: 100%;
   }
 }
 </style>

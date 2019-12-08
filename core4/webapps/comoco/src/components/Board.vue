@@ -2,14 +2,28 @@
   <v-container class="board">
 
     <!-- Group info (counter all of jobs with the same states) -->
-    <info :name="name" :states="states"></info>
+    <info
+      :name="name"
+      :states="states"
+    ></info>
 
-    <transition-group name="jobs-list" tag="v-layout" class="column nowrap jobs mt-3" >
+    <transition-group
+      name="jobs-list"
+      tag="v-row"
+      class="nowrap jobs mt-3"
+    >
 
       <!-- list of all jobs which belongs to this group -->
-      <v-flex v-for="job in getJobsByGroupName(name)" :key="job.key" class="jobs-list-item">
-        <job :flags="flags" :job="job"></job>
-      </v-flex>
+      <v-col cols="12"
+        v-for="job in getJobsByGroupName(name)"
+        :key="job.key"
+        class="jobs-list-item pt-0 pb-1 px-3"
+      >
+        <job
+          :flags="flags"
+          :job="job"
+        ></job>
+      </v-col>
     </transition-group>
 
   </v-container>
@@ -58,10 +72,12 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@import '../style/comoco';
+@import "../style/comoco";
+@import "../style/theme-dark";
+@import "../style/theme-light";
 
 .jobs-list-item {
-  transition: all .5s;
+  transition: all 0.5s;
 }
 
 .jobs-list-enter {
@@ -109,7 +125,7 @@ export default {
   ## Device = Desktop
   ## Screen = 1281 > < 1904px
 */
-@media (min-width: 1281px)and (max-width: 1904px) {
+@media (min-width: 1281px) and (max-width: 1904px) {
   .jobs {
     max-height: calc(100vh - 548px);
   }

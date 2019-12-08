@@ -71,10 +71,12 @@ class CoreBaseHandler(CoreBase):
     icon = "copyright"
     #: open in new window/tab
     target = None
+    #: open as single page application; this hides the app managers header
+    spa = False
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc")
+                 "static_path", "enter_url", "icon", "doc", "spa")
     supported_types = [
         "text/html",
     ]
@@ -103,8 +105,9 @@ class CoreBaseHandler(CoreBase):
     def propagate_property(self, source, kwargs):
         """
         Merge the attributes ``protected``, ``title``, ``author``, ``tag``,
-        ``template_path``, ``static_path``, ``enter_url`` and ``icon``
-        from the passed class/object (``source`` parameter) and ``kwargs``.
+        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc`` and
+        ``spa`` from the passed class/object (``source`` parameter) and
+        ``kwargs``.
 
         :param source: class or object based on :class:`.CoreRequestHandler` or
             :class:`.CoreStaticFileHandler`
@@ -457,7 +460,10 @@ class CoreBaseHandler(CoreBase):
         Renders the default help page. This method is to be overwritten for
         custom help page impelementation.
         """
-        return self.render(self.help_html_page, **data)
+        if self.wants_html() or getattr(self, "reply", None) is None:
+            return self.render(self.help_html_page, **data)
+        return self.reply(data)
+
 
     def get_template_path(self):
         """
@@ -505,6 +511,16 @@ class CoreBaseHandler(CoreBase):
         self.logger.debug("template_path is [%s]", self.template_path)
         return super().render_string(template_name, **kwargs)
 
+    def _static(self, mode, path):
+        url = "{}{}/{}/{}/{}/{}".format(
+            self.settings.get("routing", ""),
+            self.application.container.get_root(),
+            core4.const.ASSET_URL,
+            mode,
+            self.rsc_id,
+            path)
+        return url
+
     def default_static(self, path):
         """
         Build urls to core4 default static folder. The method is in scope of
@@ -514,10 +530,7 @@ class CoreBaseHandler(CoreBase):
         :param path: name
         :return: full url
         """
-        url = "{}/{}/default/{}/{}".format(
-            self.application.container.get_root(), core4.const.ASSET_URL,
-            self.rsc_id, path)
-        return url
+        return self._static("default", path)
 
     def static_url(self, path):
         """
@@ -536,10 +549,7 @@ class CoreBaseHandler(CoreBase):
         :param kwargs:
         :return: full url
         """
-        url = "{}/{}/project/{}/{}".format(
-            self.application.container.get_root(), core4.const.ASSET_URL,
-            self.rsc_id, path)
-        return url
+        return self._static("project", path)
 
     def get_template_namespace(self):
         """
@@ -573,7 +583,7 @@ class CoreBaseHandler(CoreBase):
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
         if self.wants_html():
-            ret["contact"] = self.config.api.contact
+            ret["contact"] = self.config.user_setting._general.contact
             return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             return self.render(self.error_text_page, **var)
@@ -583,6 +593,7 @@ class CoreBaseHandler(CoreBase):
         # internal method to wrap the response
         ret = {
             "_id": self.identifier,
+            "version": self.project + '-' + self.version(),
             "timestamp": core4.util.node.now(),
             "message": message,
             "code": code
@@ -763,8 +774,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         RequestHandler.__init__(self, *args, **kwargs)
 
     def initialize(self, *args, **kwargs):
-        """Hook for subclass initialization called for each request.
-
+        """
         The following keywords represent special ``**kwargs`` and overwrite
         :class:`.CoreRequestHandler` class properties. See
         :meth:`.propagate_property`.
@@ -777,6 +787,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         * ``static_path`` - absolute from project root, relative from request
         * ``enter_url`` - custom target url
         * ``icon`` - material icon
+        * ``doc`` - handler docstring (introduction)
         """
         for attr, value in self.propagate_property(self, kwargs):
             self.__dict__[attr] = value

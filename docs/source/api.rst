@@ -1,8 +1,8 @@
 .. _api:
 
-##############################
-ReST API and mini applications
-##############################
+#####################################
+web service API and mini applications
+#####################################
 
 core4 features an API and mini applications. The implementation
 of an API endpoint starts with a :class:`.CoreRequestHandler`::
@@ -554,6 +554,8 @@ with the ``POST`` method::
         'timestamp': '2018-11-07T15:55:17.417723'
     }
 
+
+.. _static:
 
 static file serving
 ###################

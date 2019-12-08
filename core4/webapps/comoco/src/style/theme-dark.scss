@@ -1,14 +1,18 @@
-.application.theme--dark {
-
+.theme--dark {
   $jobs-board-bck-color: #393939;
   $info-panel-bck-color: #282828;
   $job-panel-bck-color: #282828;
 
-  $scrollbar-track: #4A4A4A;
-  $scrollbar-thumb: #5C5C5C;
+  $scrollbar-track: #4a4a4a;
+  $scrollbar-thumb: #5c5c5c;
   $scrollbar-thumb-hover: #737373;
-
   .board {
+    /deep/ .flag.active {
+      color: #ffffff;
+    }
+    /deep/ .flag.passive {
+      color: rgba(255,255,255,0.18);
+    }
     background-color: $jobs-board-bck-color;
 
     & .border-info {
@@ -37,7 +41,7 @@
       }
     }
 
-    & .job{
+    & .job {
       background-color: $job-panel-bck-color;
 
       &:before {
@@ -46,21 +50,11 @@
       }
 
       &:hover {
-        background-color: #2E2E2E;
+        background-color: #2e2e2e;
 
         &:before {
           border-top-color: $jobs-board-bck-color;
-          border-left-color: #2E2E2E;
-        }
-      }
-
-      .flags {
-        & .active {
-          color: #ffffff
-        }
-
-        & .passive {
-          color: #424242
+          border-left-color: #2e2e2e;
         }
       }
     }

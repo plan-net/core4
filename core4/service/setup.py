@@ -82,7 +82,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         * ``api.admin_username``
         * ``api.admin_realname``
         * ``api.admin_password``
-        * ``api.contact``
+        * ``user_setting._general.contact``
 
         and a user default role as defined in core4 configuration settings
 
@@ -92,7 +92,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         """
         if ((self.config.api.admin_username is None)
                 or (self.config.api.admin_password is None)
-                or (self.config.api.contact is None)):
+                or (self.config.user_setting._general.contact is None)):
             raise TypeError("admin _username, _realname, _password or contact "
                             "not set")
         data = dict(
@@ -103,7 +103,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
             updated=None,
             password=core4.util.crypt.pwd_context.hash(
                 self.config.api.admin_password),
-            email=self.config.api.contact,
+            email=self.config.user_setting._general.contact,
             etag=ObjectId(),
             perm=[core4.const.COP],
         )
