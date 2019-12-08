@@ -325,7 +325,7 @@ def test_remove(mongodb):
     assert 0 == mongodb.core4test.sys.lock.count_documents({})
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_removing():
     queue = core4.queue.main.CoreQueue()
     pool = []
@@ -350,7 +350,7 @@ def test_removing():
     assert queue.config.sys.journal.count_documents({}) == count
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_start_job():
     queue = core4.queue.main.CoreQueue()
     worker = core4.queue.worker.CoreWorker()
