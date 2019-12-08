@@ -15,7 +15,7 @@ from rpy2.robjects.conversion import localconverter
 import core4.error
 import core4.error
 from core4.queue.helper.job.base import CoreLoadJob
-
+from core4.queue.helper.job.base import CoreAbstractMixin
 # https://stackoverflow.com/questions/11716923/python-interface-for-r-programming-language
 # https://www.kdnuggets.com/2015/10/integrating-python-r-data-analysis-part1.html
 
@@ -34,7 +34,7 @@ return <- function(v){
 """
 
 
-class CoreRJob(CoreLoadJob):
+class CoreRJob(CoreLoadJob, CoreAbstractMixin):
 
     def r(self, source=None, code=None, **kwargs):
         tempdir = self.make_temp_folder()
