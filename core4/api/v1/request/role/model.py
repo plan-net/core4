@@ -577,9 +577,9 @@ class CoreRole(CoreBase):
                 query_filter = \
                     {
                         "$or": [
-                            {"name": filter},
-                            {"realname": filter},
-                            {"perm": filter}
+                            {"name": {"$regex": filter, '$options': 'i'}},
+                            {"realname": {"$regex": filter, '$options': 'i'}},
+                            {"perm": {"$regex": filter, '$options': 'i'}}
                         ]
                     }
                 filter = query_filter
