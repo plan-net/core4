@@ -194,8 +194,6 @@
     )
     const api = {
         getRoles: function(internalPagination) {
-            console.log(internalPagination);
-            
             return axios.get('/core4/api/v1/roles' + internalPagination
             )
             .then(
@@ -294,19 +292,23 @@
         },
         computed: {
             internalPagination : function(){
-                console.log(this.pagination,'----------------------');
                 const order = this.pagination.sortDesc[this.pagination.sortDesc.length - 1]
                 let ret =
                 "?per_page="+ this.pagination.itemsPerPage +
-                "&page=" + (this.pagination.page -1 )+
-                "&order=" + ((order === true) ? 0:1) 
+                "&page=" + (this.pagination.page - 1 ) 
+                if(order === true){
+                    ret += "&order=1"  
+                }
+                
 
                 if(this.pagination.sortBy[this.pagination.sortBy.length - 1] != null){
                     ret += "&sort=" + this.pagination.sortBy[this.pagination.sortBy.length - 1]
                 }
-                if(this.pagination.sortDesc[this.pagination.sortDesc.length - 1] != null){
-                    ret += "&descending=" + this.pagination.sortDesc[this.pagination.sortDesc.length - 1]
-                }
+                /*if(this.pagination.sortDesc[this.pagination.sortDesc.length - 1] != null){
+                    const descending = this.pagination.sortDesc[this.pagination.sortDesc.length - 1] === true ? 1 : 0
+                    if(descending === 0)
+                        ret += "&descending=" + descending
+                }*/
                 if(this.searchData){
                     ret += "&filter=" + this.searchData
                 }
