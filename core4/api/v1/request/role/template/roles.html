@@ -50,14 +50,13 @@
                     <v-data-table v-if="roles" :loading="loading"
                     :hide-default-footer="pagination.totalItems < footerProps.itemsPerPageOptions[0]"
                     :server-items-length="pagination.totalItems"
-                    :options.sync="pagination"
+                    xxxx:options.sync="pagination"
                     :page.sync="pagination.page"
                     :footer-props="footerProps"
                     :headers="headers"
                     :items="roles"
-                    @update:sortBy="update"
-                    @update:page="update"
-                    @update:pagination="update"
+                     @update:options="update"
+                 
                     >
                         <template v-slot:item.is_active="{ item }">
                             <v-icon v-if="item.is_active" small class="success--text">
@@ -85,42 +84,7 @@
                                 </v-btn>
                             </v-row>
                         </template>
-                        
-
-                        <!--<template v-slot:items="props">
-                            <td class="text-xs-center">[[ props.item.name ]]</td>
-                            <td class="text-xs-center">[[ props.item.realname ]]</td>
-                            <td class="text-xs-left">
-                                <v-icon v-if="props.item.is_active" small class="success--text">
-                                    check
-                                </v-icon>
-                                <v-icon v-else small class="warning--text">
-                                    remove_circle_outline
-                                </v-icon>
-                            </td>
-                            <td class="text-xs-center">
-                                <div v-if="props.item.perm.length" v-for="perm in props.item.perm">
-                                    [[ perm ]] </br>
-                                </div>
-                            </td>
-                            <td class="text-xs-right">
-                                <v-layout row>
-                                    <v-flex xs5>
-                                        <v-btn small @click="onCreateDialogOpen(props.item)" text icon>
-                                            <v-icon class="grey--text" small>
-                                                edit
-                                            </v-icon>
-                                        </v-btn>
-                                    </v-flex>
-                                    <v-flex xs3>
-                                        <v-btn small @click="deleteRole(props.item)" icon>
-                                            <v-icon small class="grey--text">delete
-                                            </v-icon>
-                                        </v-btn>
-                                    </v-flex>
-                                </v-layout>
-                            </td>
-                        </template>-->
+                    
                         <template v-slot:pageText="props">
                             [[ props.pageStart + 1 ]] - [[ props.pageStop +1 ]] of [[ props.itemsLength ]]
                         </template>
@@ -190,7 +154,7 @@
                                         :type="showPw ? 'text': 'password'"
                                         @click:append="showPw= !showPw"
                                         ></v-text-field>
-                                    <v-checkbox v-model="currentRole.is_active" label="Active"></v-checkbox>
+                                    <v-checkbox color="primary" v-model="currentRole.is_active" label="Active"></v-checkbox>
                                 </v-layout>
                             </v-form>
                           <v-alert :value="error" type="error" dismissible>
@@ -216,8 +180,22 @@
 <script src="https://bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
 
 <script>
+    axios.interceptors.request.use(
+      request => {
+        const user = JSON.parse(localStorage.getItem('user'))
+        if (user != null) {
+            request.headers.Authorization = `Bearer ${user.token}`
+        }
+        return request
+      },
+      error => {
+        return Promise.reject(error)
+      }
+    )
     const api = {
         getRoles: function(internalPagination) {
+            console.log(internalPagination);
+            
             return axios.get('/core4/api/v1/roles' + internalPagination
             )
             .then(
@@ -270,6 +248,7 @@
                         align: 'left'
                     },{
                         text: 'Perm',
+                        sortable: false,
                         value: 'perm',
                         align: 'left'
                     }, {
@@ -289,17 +268,16 @@
                 distinctRoles: [],
                 showPw: false,
                 footerProps: {
-                    itemsPerPageOptions: [15,30,75]
+                    itemsPerPageOptions: [25,50,100]
                 },
                 search1: null,
                 search2: null,
                 pagination: {
                     page: 1,
-                    rowsPerPage: 25,
+                    itemsPerPage: 25,
                     totalItems: 0,
                     sortBy: ["_id"],
-                    descending: true,
-                    sortDesc: true
+                   
                 }
             }
         },
@@ -316,13 +294,21 @@
         },
         computed: {
             internalPagination : function(){
+                console.log(this.pagination,'----------------------');
+                const order = this.pagination.sortDesc[this.pagination.sortDesc.length - 1]
                 let ret =
                 "?per_page="+ this.pagination.itemsPerPage +
                 "&page=" + (this.pagination.page -1 )+
-                "&order=" + (this.pagination.sortDesc ? -1:1) +
-                "&sort=" + this.pagination.sortBy[this.pagination.sortBy.length - 1]
+                "&order=" + ((order === true) ? 0:1) 
+
+                if(this.pagination.sortBy[this.pagination.sortBy.length - 1] != null){
+                    ret += "&sort=" + this.pagination.sortBy[this.pagination.sortBy.length - 1]
+                }
+                if(this.pagination.sortDesc[this.pagination.sortDesc.length - 1] != null){
+                    ret += "&descending=" + this.pagination.sortDesc[this.pagination.sortDesc.length - 1]
+                }
                 if(this.searchData){
-                    ret = ret + "&filter=" + this.searchData
+                    ret += "&filter=" + this.searchData
                 }
                 return ret
             }
@@ -398,12 +384,14 @@
                     return currentRole;
                 })
             },
-            update: function() {
-                   this.loading = true;
-                   api.getRoles(this.internalPagination).then(function(success) {
+            update: function(val) {
+                    this.pagination = Object.assign(this.pagination, val)
+                    this.loading = true;
+                    api.getRoles(this.internalPagination).then(function(success) {
+                       
                        this.pagination.totalItems = success.data.total_count
                        this.roles = success.data.data
-                       this.loading = false;
+                        this.loading = false;
                        this.getSelectRoles();
                    }.bind(this))
                    .catch(function(error){
