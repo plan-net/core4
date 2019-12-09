@@ -321,7 +321,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
         :param rsc_id: filter for
         :return: dict or list of ``rsc_id`` is provided.
         """
-        alive = [(d["protocol"], d["hostname"], d["port"])
+        alive = [(d["routing"], d["hostname"], d["port"])
                  for d in await self.get_daemon_async(kind="app")]
         handler = {}
         inactive = 0
@@ -330,7 +330,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
         else:
             query = {"rsc_id": rsc_id}
         async for doc in self.config.sys.handler.find(query):
-            if ((doc["protocol"], doc["hostname"], doc["port"]) in alive) \
+            if ((doc["routing"], doc["hostname"], doc["port"]) in alive) \
                     and (doc["started_at"] is not None):
                 del doc["_id"]
                 handler.setdefault(doc["rsc_id"], []).append(doc)
@@ -339,7 +339,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
         self.logger.debug("found [%d] handler alive, [%d] inactive",
                           len(handler), inactive)
         ret = []
-        detail = ("hostname", "protocol", "port", "routing", "container")
+        detail = ("hostname", "port", "routing", "container")
         for data in handler.values():
             first = data[0].copy()
             for attr in detail:

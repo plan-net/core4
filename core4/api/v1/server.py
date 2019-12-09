@@ -129,5 +129,4 @@ class CoreApiServer(CoreApiContainer):
 
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
-
     serve(CoreAppManager, CoreApiServer)

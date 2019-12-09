@@ -117,10 +117,10 @@ class RoleEmail(MailMixin, CoreJob):
         template = template_env.\
             get_template(template)
 
-        message = template.render(realname=realname, username=username,
-                                  domain=self.config.email.template[
-                                      language.lower()]['domain'],
-                                  token=token,
-                                  contact_email=self.config.api.contact)
+        message = template.render(
+            realname=realname, username=username,
+            domain=self.config.email.template[language.lower()]['domain'],
+            token=token,
+            contact_email=self.config.user_setting._general.contact)
 
         self.send_mail(to=recipients, subject=subject, message=message)

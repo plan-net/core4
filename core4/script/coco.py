@@ -30,6 +30,7 @@ Usage:
   coco --listing [STATE]...
   coco --detail (ID | QUAL_NAME)...
   coco --remove (ID | QUAL_NAME)...
+  coco --remove-hard (ID | QUAL_NAME)...
   coco --restart [ID | QUAL_NAME]...
   coco --kill [ID | QUAL_NAME]...
   coco (--pause | --resume) [PROJECT]
@@ -260,6 +261,14 @@ def remove(*_id):
             print("failed to remove [{}]".format(oid))
 
 
+def remove_hard(*_id):
+    for (oid, ret) in _handle(set(_id), QUEUE.remove_hard):
+        if ret:
+            print("hard removed [{}]".format(oid))
+        else:
+            print("failed to hard remove [{}]".format(oid))
+
+
 def restart(*_id):
     for (oid, ret) in _handle(set(_id), QUEUE.restart_job):
         if ret:
@@ -461,6 +470,8 @@ def main():
         listing(*args["STATE"])
     elif args["--remove"]:
         remove(*args["ID"])
+    elif args["--remove-hard"]:
+        remove_hard(*args["ID"])
     elif args["--restart"]:
         restart(*args["ID"])
     elif args["--kill"]:
