@@ -282,6 +282,29 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         self.logger.error("failed to flag job [%s] to be remove", _id)
         return False
 
+    def remove_hard(self, _id):
+        """
+        Hard remove the job with the passed ``_id`` from ``sys.queue``
+        irrespective of the current job state.
+
+        This method is a fallback and should be used only if you exactly know
+        what you are doing.
+
+        :param _id: :class:`bson.object.ObjectId`
+        :return: ``True`` if the request succeeded, else ``False``
+        """
+        at = core4.util.node.now()
+        doc = self.config.sys.queue.find_one({"_id": _id})
+        ret = self.config.sys.queue.delete_one({"_id": _id})
+        if ret.raw_result["n"] == 1:
+            self.journal(doc)
+            self.logger.warning(
+                "hard removed and journaled job [%s]", _id)
+            self.make_stat('hard_remove_job', str(_id))
+            return True
+        self.logger.error("failed to hard remove job [%s]", _id)
+        return False
+
     def restart_job(self, _id):
         """
         Requests to restart the job with the passed ``_id``.
