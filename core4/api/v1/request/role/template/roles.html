@@ -66,11 +66,18 @@
                                 remove_circle_outline
                             </v-icon>
                         </template>
+
                         <template v-slot:item.perm="{ item }">
-                            <div v-if="item.perm.length" v-for="perm in item.perm">
-                                [[ perm ]] </br>
+                            <div v-if="item.perm.length">
+                                    <template v-if="item.perm.length >= 1">
+                                [[ item.perm[0] ]]
+                                <template v-if="item.perm.length > 1">
+                                   &nbsp;(+[[item.perm.length - 1]])
+                                </template>
+                            </template>
                             </div>
                         </template>
+
                         <template v-slot:item.actions="{ item }">
                             <v-row align="center" justify="end" class="pr-3">
                                 <v-btn small @click="onCreateDialogOpen(item)" text icon>
