@@ -7,6 +7,7 @@
       "rm yarn.lock",
       "yarn install",
       "yarn build --dest dist --modern"
+      
     ],
     "dist": "./dist"
   },
