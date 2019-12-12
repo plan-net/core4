@@ -18,7 +18,7 @@
 <body style="opacity: 0;">
     <div id="app">
         <v-app>
-            <v-container fluid>
+            <v-container>
                 <v-row no-gutters class="py-3">
                     <h1 class="headline mb-3">Roles overview</h1>
                     <v-flex grow></v-flex>
@@ -34,7 +34,7 @@
                         <v-spacer v-if="!bigSearch"></v-spacer>
                         <v-text-field
                             :class="{'big-search':bigSearch}"
-                            style="max-width:200px"
+                            style="max-width:240px"
                             v-model="searchData"
                             prepend-icon="loupe"
                             append-icon="search"
@@ -50,7 +50,6 @@
                     <v-data-table v-if="roles" :loading="loading"
                     :hide-default-footer="pagination.totalItems < footerProps.itemsPerPageOptions[0]"
                     :server-items-length="pagination.totalItems"
-                    xxxx:options.sync="pagination"
                     :page.sync="pagination.page"
                     :footer-props="footerProps"
                     :headers="headers"
@@ -112,11 +111,11 @@
                         <v-card-title v-else>
                             Create Role
                         </v-card-title>
-                        <v-card-text>
+                        <v-card-text class="pb-0">
         
                             <v-form>
                                 <v-layout class="pa-3" column>
-                                    <v-text-field v-model="currentRole.name" label="Name"> </v-text-field>
+                                    <v-text-field v-model="currentRole.name" label="Name*" required> </v-text-field>
                                     <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
                                     <v-text-field v-model="currentRole.email" label="E-Mail"></v-text-field>
                                     <v-combobox
@@ -169,11 +168,11 @@
                           </v-alert>
         
                         </v-card-text>
-                          <v-card-actions>
+                          <v-card-actions class="pb-4">
                             <v-spacer></v-spacer>
-                            <v-btn color="accent" @click="isCreateDialogOpen=false;currentRole=null;error=null;">Cancel</v-btn>
+                            <v-btn color="accent" small @click="isCreateDialogOpen=false;currentRole=null;error=null;" >Cancel</v-btn>
                             <!--<v-btn color="primary" @click="deleteRole(currentRole)">Delete</v-btn>-->
-                            <v-btn color="primary" @click="submit(currentRole)">submit</v-btn>
+                            <v-btn color="primary" small @click="submit(currentRole)" :disabled="(currentRole || {}).name == null">submit</v-btn>
         
                           <v-card-actions>
                          </v-card>
