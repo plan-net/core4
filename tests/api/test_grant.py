@@ -26,8 +26,13 @@ async def test_login(core4api):
 
 
 async def test_grant(core4api):
-
     async def _access(access):
+        """
+        Check if accessing collection ons mongodb is possible, try/except is caused by
+        async, otherwise tests fail randomly
+        :param access:
+        :return:
+        """
         counter = 0
 
         while True:
@@ -39,17 +44,16 @@ async def test_grant(core4api):
                 _ = await mongo["core4test"].list_collection_names()
                 time.sleep(1)
                 break
-            except pymongo.errors.OperationFailure as aha:
-                print(aha.details['codeName'])
+            except pymongo.errors.OperationFailure as ops_fail:
+                print(ops_fail.details['codeName'])
                 time.sleep(1)
                 if counter == 5:
                     break
                 continue
 
             except Exception as E:
-                print(aha.E['codeName'])
+                print("something really strange happen: ", E.details['codeName'])
                 break
-
 
         assert await mongo.core4test.sys.role.count_documents({}) > 0
 
@@ -65,18 +69,16 @@ async def test_grant(core4api):
 
                     time.sleep(1)
                     break
-                except pymongo.errors.OperationFailure as aha:
-                    print(aha.details['codeName'])
+                except pymongo.errors.OperationFailure as ops_fail:
+                    print(ops_fail.details['codeName'])
                     time.sleep(1)
                     if counter == 5:
                         break
                     continue
-
                 except Exception as E:
-                    print(aha.E['codeName'])
+                    print("something really strange happen: ", E.details['codeName'])
                     break
             _ = await mongo["core4test"].list_collection_names()
-
 
     await core4api.login()
     data = {
@@ -118,8 +120,6 @@ async def test_grant(core4api):
     # 2
     await _access(access)
 
-
-
     await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
@@ -153,7 +153,6 @@ async def test_grant(core4api):
     # 5
     await _access(access)
 
-
     await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access/mongodb")
     assert rv.code == 200
@@ -183,7 +182,6 @@ async def test_grant(core4api):
     # 8
     await _no_access(access)
 
-
     core4api.set_admin()
     rv = await core4api.get("/core4/api/v1/roles/" + id)
     # 9
@@ -208,7 +206,6 @@ async def test_grant(core4api):
     # 11
     assert rv.code == 200
 
-
     counter = 0
     while True:
         try:
@@ -226,15 +223,13 @@ async def test_grant(core4api):
                 break
 
     assert counter == 5
-
+    # 12
     await _no_access(access)
 
     await core4api.login("test_reg_test_role1", "123456", 401)
     rv = await core4api.get("/core4/api/v1/profile")
 
     assert rv.code == 401
-
-
 
 
 async def add_user(http, username):
@@ -278,7 +273,7 @@ async def test_server_test(core4api):
 
     rv = await core4api.post("/core4/api/v1/system")
     assert rv.code == 405
-    
+
     rv = await core4api.get("/core4/api/v1/system")
     assert rv.code == 200
 
@@ -522,5 +517,3 @@ async def test_profile_cascade(core4api):
     assert data["is_active"]
     assert data["role"] == ['test_reg_role', 'test_reg_role2']
     assert data["token_expires"] is not None
-
-
