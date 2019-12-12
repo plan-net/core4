@@ -75,7 +75,7 @@ class CoreAccessManager(core4.base.CoreBase):
 
     async def reset(self, protocol):
         handler = HANDLER[protocol](self.role)
-        await handler.del_role()
+        await handler.revoke()
 
     async def reset_all(self):
         for proto in HANDLER:
@@ -89,7 +89,7 @@ class CoreAccessManager(core4.base.CoreBase):
         """
         handler = HANDLER[protocol](self.role)
 
-        await handler.del_role()
+        await handler.revoke()
         perms = await self.role.casc_perm()
 
         for perm in perms:
@@ -110,7 +110,7 @@ class CoreAccessManager(core4.base.CoreBase):
         :return:
         """
         handler = HANDLER[protocol](self.role)
-        await handler.del_grant_access()
+        await handler.revoke_access()
 
 
     async def delete_all(self):

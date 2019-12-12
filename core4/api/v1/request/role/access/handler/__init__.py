@@ -32,7 +32,13 @@ class BaseHandler(core4.base.CoreBase):
         """
         raise NotImplementedError()  # pragma: no cover
 
-    async def del_role(self):
+    async def revoke_access(self):
+        """
+        This method deletes user, when exists
+        :return:
+        """
+
+    async def revoke(self):
         """
         This method deletes the role if exists.
         """

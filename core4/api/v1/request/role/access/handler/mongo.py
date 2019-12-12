@@ -49,7 +49,7 @@ class MongoHandler(BaseHandler):
             self.token = token
         return self.token
 
-    async def del_grant_access(self):
+    async def revoke_access(self):
         """
         This method deletes the MongoDB user and role if exist.
         :return:
@@ -63,7 +63,7 @@ class MongoHandler(BaseHandler):
             self.logger.debug("mongo user [%s] not found", username)
 
 
-    async def del_role(self):
+    async def revoke(self):
         """
         This method deletes the Roles of MongoDB.
         """
