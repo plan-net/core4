@@ -430,7 +430,7 @@ class RoleHandler(CoreRequestHandler):
         if set_perm:
             self.logger.info("revoke access grants with {}".format(kwargs))
             manager = CoreAccessManager(ret)
-            await manager.change('mongodb')
+            await manager.change_all()
 
     async def delete(self, _id):
         """
@@ -501,8 +501,9 @@ class RoleHandler(CoreRequestHandler):
             raise
         else:
             if removed:
-                manager = CoreAccessManager(ret)
-                await manager.delete('mongodb')
+                if ret.is_user:
+                    manager = CoreAccessManager(ret)
+                    await manager.delete_all()
                 self.reply(True)
             else:
                 self.reply(False)

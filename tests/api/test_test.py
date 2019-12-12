@@ -75,16 +75,18 @@ class HTTPTestServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):
         self.token = None
         self.admin_token = None
 
-    async def login(self, username="admin", password="hans"):
+    async def login(self, username="admin", password="hans", code=200):
         self.token = None
         resp = await self.get(
             "/core4/api/v1/login?username={}&password={}".format(
                 username, password
             ))
-        assert resp.code == 200
-        self.token = resp.json()["data"]["token"]
-        if username == "admin":
-            self.admin_token = self.token
+
+        assert resp.code == code
+        if code == 200:
+            self.token = resp.json()["data"]["token"]
+            if username == "admin":
+                self.admin_token = self.token
 
     def set_admin(self):
         self.token = self.admin_token

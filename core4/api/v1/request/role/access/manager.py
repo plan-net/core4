@@ -83,7 +83,7 @@ class CoreAccessManager(core4.base.CoreBase):
 
     async def change(self, protocol):
         """
-        This method syncronises the roles when changing permissions
+        This method synchronises the roles when changing permissions
         :param protocol:
         :return:
         """
@@ -101,7 +101,7 @@ class CoreAccessManager(core4.base.CoreBase):
 
     async def change_all(self):
         for proto in HANDLER:
-            self.change(proto)
+            await self.change(proto)
 
     async def delete(self, protocol):
         """
@@ -120,4 +120,4 @@ class CoreAccessManager(core4.base.CoreBase):
         :return:
         """
         for proto in HANDLER:
-            self.delete(proto)
+            await self.delete(proto)

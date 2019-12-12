@@ -28,9 +28,11 @@ async def test_login(core4api):
 async def test_grant(core4api):
 
     async def _access(access):
+        counter = 0
 
         while True:
             try:
+                counter += 1
                 mongo = motor.MotorClient(
                     "mongodb://test_reg_test_role1:" + access + "@testmongo:27017")
                 _ = await mongo.server_info()
@@ -40,6 +42,8 @@ async def test_grant(core4api):
             except pymongo.errors.OperationFailure as aha:
                 print(aha.details['codeName'])
                 time.sleep(1)
+                if counter == 5:
+                    break
                 continue
 
             except Exception as E:
@@ -50,9 +54,11 @@ async def test_grant(core4api):
         assert await mongo.core4test.sys.role.count_documents({}) > 0
 
     async def _no_access(access):
+        counter = 0
         with pytest.raises(pymongo.errors.OperationFailure):
             while True:
                 try:
+                    counter += 1
                     mongo = motor.MotorClient(
                         "mongodb://test_reg_test_role1:" + access + "@testmongo:27017")
                     _ = await mongo.server_info()
@@ -62,6 +68,8 @@ async def test_grant(core4api):
                 except pymongo.errors.OperationFailure as aha:
                     print(aha.details['codeName'])
                     time.sleep(1)
+                    if counter == 5:
+                        break
                     continue
 
                 except Exception as E:
@@ -181,8 +189,23 @@ async def test_grant(core4api):
     # 9
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
-    rv = await core4api.delete("/core4/api/v1/roles/" + id + "/" + etag)
+
+    data = {
+        "etag": etag,
+        "perm": [
+            "mongodb://core4test"
+        ]
+    }
+
+    rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     # 10
+    assert rv.code == 200
+    etag = rv.json()["data"]["etag"]
+
+    await _access(access)
+
+    rv = await core4api.delete("/core4/api/v1/roles/" + id + "/" + etag)
+    # 11
     assert rv.code == 200
 
 
@@ -204,14 +227,13 @@ async def test_grant(core4api):
 
     assert counter == 5
 
-    # rv = await core4api.login("test_reg_test_role1", "123456")
-    #
-    # assert rv.code == 401
-    #
-    # rv = await core4api.get("/core4/api/v1/profile")
-    # assert rv.code == 401
-    #
-    #
+    await _no_access(access)
+
+    await core4api.login("test_reg_test_role1", "123456", 401)
+    rv = await core4api.get("/core4/api/v1/profile")
+
+    assert rv.code == 401
+
 
 
 
