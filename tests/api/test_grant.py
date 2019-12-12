@@ -1,6 +1,7 @@
 import pytest
 import motor
 import pymongo.errors
+import time
 import core4.api.v1.request.role.field
 from tests.api.test_test import setup, mongodb, core4api
 
@@ -27,15 +28,47 @@ async def test_login(core4api):
 async def test_grant(core4api):
 
     async def _access(access):
-        mongo = motor.MotorClient(
-            "mongodb://test_reg_test_role1:" + access + "@testmongo:27017")
-        _ = await mongo.server_info()
-        _ = await mongo["core4test"].list_collection_names()
+
+        while True:
+            try:
+                mongo = motor.MotorClient(
+                    "mongodb://test_reg_test_role1:" + access + "@testmongo:27017")
+                _ = await mongo.server_info()
+                _ = await mongo["core4test"].list_collection_names()
+                time.sleep(1)
+                break
+            except pymongo.errors.OperationFailure as aha:
+                print(aha.details['codeName'])
+                time.sleep(1)
+                continue
+
+            except Exception as E:
+                print(aha.E['codeName'])
+                break
+
+
         assert await mongo.core4test.sys.role.count_documents({}) > 0
 
     async def _no_access(access):
         with pytest.raises(pymongo.errors.OperationFailure):
-            await _access(access)
+            while True:
+                try:
+                    mongo = motor.MotorClient(
+                        "mongodb://test_reg_test_role1:" + access + "@testmongo:27017")
+                    _ = await mongo.server_info()
+
+                    time.sleep(1)
+                    break
+                except pymongo.errors.OperationFailure as aha:
+                    print(aha.details['codeName'])
+                    time.sleep(1)
+                    continue
+
+                except Exception as E:
+                    print(aha.E['codeName'])
+                    break
+            _ = await mongo["core4test"].list_collection_names()
+
 
     await core4api.login()
     data = {
@@ -60,7 +93,7 @@ async def test_grant(core4api):
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
     access = rv.json()["data"]["mongodb"]
-
+    # 1
     await _no_access(access)
 
     core4api.set_admin()
@@ -70,17 +103,20 @@ async def test_grant(core4api):
             "mongodb://core4test"
         ]
     }
+
     rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
+    # 2
+    await _access(access)
 
-    await _no_access(access)
+
 
     await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access")
     assert rv.code == 200
     access = rv.json()["data"]["mongodb"]
-
+    # 3
     await _access(access)
 
     data = {
@@ -92,7 +128,7 @@ async def test_grant(core4api):
     rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
-
+    # 4
     await _access(access)
 
     data = {
@@ -106,14 +142,15 @@ async def test_grant(core4api):
     rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
     etag = rv.json()["data"]["etag"]
+    # 5
+    await _access(access)
 
-    await _no_access(access)
 
     await core4api.login("test_reg_test_role1", "123456")
     rv = await core4api.post("/core4/api/v1/access/mongodb")
     assert rv.code == 200
     access = rv.json()["data"]
-
+    # 6
     await _access(access)
 
     data = {
@@ -127,6 +164,7 @@ async def test_grant(core4api):
     rv = await core4api.put("/core4/api/v1/roles/" + id, json=data)
     assert rv.code == 200
 
+    # 7
     await _no_access(access)
 
     await core4api.login("test_reg_test_role1", "123456")
@@ -134,7 +172,47 @@ async def test_grant(core4api):
     assert rv.code == 200
     access = rv.json()["data"]
 
+    # 8
     await _no_access(access)
+
+
+    core4api.set_admin()
+    rv = await core4api.get("/core4/api/v1/roles/" + id)
+    # 9
+    assert rv.code == 200
+    etag = rv.json()["data"]["etag"]
+    rv = await core4api.delete("/core4/api/v1/roles/" + id + "/" + etag)
+    # 10
+    assert rv.code == 200
+
+
+    counter = 0
+    while True:
+        try:
+            mongo = motor.MotorClient(
+                "mongodb://test_reg_test_role1:" + access + "@testmongo:27017")
+            _ = await mongo.server_info()
+
+            time.sleep(1)
+            break
+        except pymongo.errors.OperationFailure as aha:
+            print(aha.details['codeName'])
+            time.sleep(1)
+            counter += 1
+            if counter == 5:
+                break
+
+    assert counter == 5
+
+    # rv = await core4api.login("test_reg_test_role1", "123456")
+    #
+    # assert rv.code == 401
+    #
+    # rv = await core4api.get("/core4/api/v1/profile")
+    # assert rv.code == 401
+    #
+    #
+
 
 
 async def add_user(http, username):

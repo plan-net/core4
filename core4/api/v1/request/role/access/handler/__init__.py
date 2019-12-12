@@ -38,7 +38,7 @@ class BaseHandler(core4.base.CoreBase):
         """
         raise NotImplementedError()  # pragma: no cover
 
-    async def add_role(self):
+    async def grant_access(self):
         """
         This method creates the role and returns the token/password created by
         :meth:`.create_token`.
@@ -60,3 +60,6 @@ class BaseHandler(core4.base.CoreBase):
         This optional method finishes the workflow of the handler.
         """
         pass
+
+
+
