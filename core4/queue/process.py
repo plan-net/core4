@@ -68,9 +68,6 @@ class CoreWorkerProcess(core4.base.main.CoreBase,
                 "failed to update job [{}] state [starting]".format(job._id))
         for k, v in update.items():
             job.__dict__[k] = v
-        if job.inactive_at <= now:
-            self.queue.set_inactivate(job)
-            return
 
         job.logger.info("start execution")
         self.drop_privilege()

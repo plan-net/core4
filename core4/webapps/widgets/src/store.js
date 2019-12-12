@@ -207,9 +207,34 @@ export default new Vuex.Store({
     },
     setWidgetOver ({ commit }, payload) {
       commit('set_widget_over', payload)
+    },
+    clear ({ commit }) {
+      commit('clear')
     }
+
   },
   mutations: {
+    clear (state) {
+      state = Object.assign({}, {
+        scales: [60, 0.3, 0.6, 0.9],
+        currScale: 0.3,
+        currScaleAbs: 400,
+        searchOptions: {
+          technical: false
+        },
+        widgetsObj: {},
+        widgetsList: [],
+
+        boardsObj: {},
+        boardsList: [],
+
+        ready: false,
+        activeBoard: {
+          name: null,
+          widgets: []
+        }
+      })
+    },
     set_widget_over (state, payload) {
       const widget = clone(state.widgetsObj[payload.id])
       widget.$over = payload.$over

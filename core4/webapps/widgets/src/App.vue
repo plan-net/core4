@@ -1,16 +1,32 @@
 <template>
-  <c4-webapp :full-width="true" :nav-button-visible="false">
+  <c4-webapp
+    :full-width="true"
+    :nav-button-visible="false"
+  >
     <div slot="router">
-      <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
-        <router-view/>
+      <transition
+        name="fade"
+        mode="out-in"
+        :duration="{ enter: 200, leave: 300 }"
+      >
+        <router-view />
       </transition>
     </div>
   </c4-webapp>
 </template>
 <script>
 import { inIframe } from 'core4ui/core4/store/state'
+import { mapGetters } from 'vuex'
 export default {
   name: 'CORE4OS',
+  watch: {
+    authenticated (newValue, oldValue) {
+      this.$store.dispatch('clear')
+    }
+  },
+  computed: {
+    ...mapGetters(['authenticated'])
+  },
   mounted () {
     function bindEvent (element, eventName, eventHandler) {
       if (element.addEventListener) {
@@ -33,5 +49,4 @@ export default {
 }
 </script>
 <style lang="scss">
-
 </style>

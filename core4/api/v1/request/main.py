@@ -460,7 +460,10 @@ class CoreBaseHandler(CoreBase):
         Renders the default help page. This method is to be overwritten for
         custom help page impelementation.
         """
-        return self.render(self.help_html_page, **data)
+        if self.wants_html() or getattr(self, "reply", None) is None:
+            return self.render(self.help_html_page, **data)
+        return self.reply(data)
+
 
     def get_template_path(self):
         """
@@ -508,6 +511,16 @@ class CoreBaseHandler(CoreBase):
         self.logger.debug("template_path is [%s]", self.template_path)
         return super().render_string(template_name, **kwargs)
 
+    def _static(self, mode, path):
+        url = "{}{}/{}/{}/{}/{}".format(
+            self.settings.get("routing", ""),
+            self.application.container.get_root(),
+            core4.const.ASSET_URL,
+            mode,
+            self.rsc_id,
+            path)
+        return url
+
     def default_static(self, path):
         """
         Build urls to core4 default static folder. The method is in scope of
@@ -517,10 +530,7 @@ class CoreBaseHandler(CoreBase):
         :param path: name
         :return: full url
         """
-        url = "{}/{}/default/{}/{}".format(
-            self.application.container.get_root(), core4.const.ASSET_URL,
-            self.rsc_id, path)
-        return url
+        return self._static("default", path)
 
     def static_url(self, path):
         """
@@ -539,10 +549,7 @@ class CoreBaseHandler(CoreBase):
         :param kwargs:
         :return: full url
         """
-        url = "{}/{}/project/{}/{}".format(
-            self.application.container.get_root(), core4.const.ASSET_URL,
-            self.rsc_id, path)
-        return url
+        return self._static("project", path)
 
     def get_template_namespace(self):
         """
@@ -576,7 +583,7 @@ class CoreBaseHandler(CoreBase):
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
         if self.wants_html():
-            ret["contact"] = self.config.api.contact
+            ret["contact"] = self.config.user_setting._general.contact
             return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             return self.render(self.error_text_page, **var)
@@ -586,6 +593,7 @@ class CoreBaseHandler(CoreBase):
         # internal method to wrap the response
         ret = {
             "_id": self.identifier,
+            "version": self.project + '-' + self.version(),
             "timestamp": core4.util.node.now(),
             "message": message,
             "code": code

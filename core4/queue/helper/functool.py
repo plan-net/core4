@@ -16,6 +16,7 @@ import core4.queue.worker
 import core4.service.introspect.main
 import core4.service.setup
 import core4.util.node
+import core4.error
 from core4.service.introspect.command import ENQUEUE_ARG
 from bson.objectid import ObjectId
 
@@ -46,7 +47,15 @@ def enqueue(job, **kwargs):
             stdout = core4.service.introspect.main.exec_project(
                 found[0], ENQUEUE_ARG, qual_name=name,
                 args="**%s" % (str(kwargs)), comm=True)
-            return ObjectId(stdout)
+            try:
+                return ObjectId(stdout)
+            except:
+                check = "core4.error.CoreJobExists: job [{}]".format(name)
+                if check in stdout:
+                    raise core4.error.CoreJobExists(
+                        "job [{}] exists with args {}".format(
+                            name, kwargs))
+                raise RuntimeError("failed to launch job: " + stdout)
     return queue.enqueue(name=name, **kwargs)._id
 
 

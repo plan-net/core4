@@ -197,12 +197,12 @@ export default {
       if (widget.target === 'blank') {
         path = widget.enter_url || widget.endpoint.enter_url
       } else {
-        path = '/#/enter/' + widget.rsc_id
+        path = window.location.pathname + '#/enter/' + widget.rsc_id
       }
       window.open(path, '_blank')
     },
     onResize: lodash.debounce(function () {
-      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth - 25
+      this.elWidth = (this.$el || document.querySelector('body')).offsetWidth
     },
     600),
     ...mapActions(['addToBoard', 'removeFromBoard', 'prevBoard', 'nextBoard']),
@@ -242,7 +242,8 @@ export default {
       // getter
       get: function () {
         if (this.activeBoard && this.activeBoard.widgets) {
-          const offset = Math.floor(this.elWidth / this.cellSize.w)
+          console.log(this.elWidth, this.cellSize.w)
+          const offset = Math.floor((this.elWidth - 75) / this.cellSize.w)
           return this.activeBoard.widgets.map((id, index) => {
             const w = this.$store.getters.widgetById(id)
             // const cardUrl = `${w.endpoint.card_url}&theme=${}`
