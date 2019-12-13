@@ -403,6 +403,9 @@ class RoleHandler(CoreRequestHandler):
                 "perm", as_type=list, default=None)
         )
         set_perm = False
+        #todo: set inactive no impact to db acess only for core login
+        # add also test for this scenario
+        # dont use syncronise when toggle perm write own meethod syncronise_roles
         for k, v in kwargs.items():
             if v is not None:
                 ret.data[k].set(v)
@@ -427,7 +430,7 @@ class RoleHandler(CoreRequestHandler):
         if set_perm:
             self.logger.info("revoke access grants with {}".format(kwargs))
             manager = CoreAccessManager(ret)
-            await manager.reset_all()
+            await manager.change_all()
 
     async def delete(self, _id):
         """
@@ -475,6 +478,8 @@ class RoleHandler(CoreRequestHandler):
                 'timestamp': '2018-11-15T06:24:52.262685'
             }
         """
+
+        #todo: add delete access to database
         if "/" in _id:
             _id, *e = _id.split("/")
             etag = self.parse_objectid("/".join(e))
@@ -496,6 +501,9 @@ class RoleHandler(CoreRequestHandler):
             raise
         else:
             if removed:
+                if ret.is_user:
+                    manager = CoreAccessManager(ret)
+                    await manager.delete_all()
                 self.reply(True)
             else:
                 self.reply(False)

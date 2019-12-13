@@ -49,9 +49,10 @@ class MongoHandler(BaseHandler):
             self.token = token
         return self.token
 
-    async def del_role(self):
+    async def revoke_access(self):
         """
         This method deletes the MongoDB user and role if exist.
+        :return:
         """
         username = self.role.name
         user_info = await self.admin_db.command("usersInfo", username)
@@ -61,7 +62,26 @@ class MongoHandler(BaseHandler):
         else:
             self.logger.debug("mongo user [%s] not found", username)
 
-    async def add_role(self):
+
+    async def revoke(self):
+        """
+        This method deletes the Roles of MongoDB.
+        """
+        username = self.role.name
+        user_info = await self.admin_db.command("usersInfo", username)
+        if user_info["users"]:
+            self.logger.info('revokes Roles from user [%s]', username)
+            # results for every matched user
+            for u in user_info['users']:
+                # check if roles exists and ddddeeelete only read premissions
+                to_delete = [d for d in u.get('roles') if d['role'] != 'dbOwner']
+                if to_delete:
+                    self.logger.info('revokes Roles [%s] from user [%s]', u.get('roles'), username)
+                    await self.admin_db.command('revokeRolesFromUser', username, roles=to_delete)
+        else:
+            self.logger.debug("mongo user [%s] not found", username)
+
+    async def grant_access(self):
         """
         This method creates the role and returns the token/password created by
         :meth:`.create_token`.
@@ -78,7 +98,13 @@ class MongoHandler(BaseHandler):
         username = self.role.name
         password = self.create_token()
         userdb = "".join([self.config.sys.userdb, username])
-        await self.admin_db.command('createUser', username, pwd=password,
+        # check if user exists
+        user_info = await self.admin_db.command("usersInfo", username)
+        if user_info["users"]:
+            await self.admin_db.command('updateUser', username, pwd=password,
+                                  roles=[])
+        else:
+           await self.admin_db.command('createUser', username, pwd=password,
                                     roles=[])
         await self.admin_db.command(
             'grantRolesToUser', username,
@@ -98,3 +124,4 @@ class MongoHandler(BaseHandler):
             'grantRolesToUser', username,
             roles=[{'role': 'read', 'db': database}])
         self.logger.info('grant role [%s] access to [%s]', username, database)
+

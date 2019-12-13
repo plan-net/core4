@@ -56,8 +56,8 @@ class CoreAccessManager(core4.base.CoreBase):
         :return: access token (password)
         """
         handler = HANDLER[protocol](self.role)
-        await handler.del_role()
-        token = await handler.add_role()
+        # await handler.del_role()
+        token = await handler.grant_access()
         perms = await self.role.casc_perm()
         for perm in perms:
             (proto, *database) = perm.split("://")
@@ -75,8 +75,49 @@ class CoreAccessManager(core4.base.CoreBase):
 
     async def reset(self, protocol):
         handler = HANDLER[protocol](self.role)
-        await handler.del_role()
+        await handler.revoke()
 
     async def reset_all(self):
         for proto in HANDLER:
             await self.reset(proto)
+
+    async def change(self, protocol):
+        """
+        This method synchronises the roles when changing permissions
+        :param protocol:
+        :return:
+        """
+        handler = HANDLER[protocol](self.role)
+
+        await handler.revoke()
+        perms = await self.role.casc_perm()
+
+        for perm in perms:
+            (proto, *database) = perm.split("://")
+            if proto == protocol:
+                dbname = "://".join(database)
+
+                await handler.grant(dbname)
+
+    async def change_all(self):
+        for proto in HANDLER:
+            await self.change(proto)
+
+    async def delete(self, protocol):
+        """
+        This method deletes user wit all roles
+        :param protocol:
+        :return:
+        """
+        handler = HANDLER[protocol](self.role)
+        await handler.revoke_access()
+
+
+    async def delete_all(self):
+        """
+        This method deletes user wit all roles
+        :param protocol:
+        :return:
+        """
+        for proto in HANDLER:
+            await self.delete(proto)
