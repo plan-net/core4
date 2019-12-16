@@ -21,7 +21,9 @@ export default {
   name: 'CORE4OS',
   watch: {
     authenticated (newValue, oldValue) {
-      this.$store.dispatch('clear')
+      if (newValue === false) {
+        this.$store.dispatch('clear')
+      }
     }
   },
   computed: {
