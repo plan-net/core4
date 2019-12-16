@@ -415,7 +415,9 @@ async def test_profile_cascade(core4api):
     assert data["_id"] == user_id
     assert data["email"] == "test@user.com"
     assert data["realname"] == "test user"
-    assert data["perm"] == ['api://core4.api.v1.aaa',
+    assert data["perm"] == ["api://core4.api.v1.request"]
+
+    assert data["perm_total"] == ['api://core4.api.v1.aaa',
                             'api://core4.api.v1.abc',
                             'api://core4.api.v1.request']
     assert data["last_login"] is not None

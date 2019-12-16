@@ -138,9 +138,30 @@ async def test_role(core4api):
     rr2 = await core4api.get("/core4/api/v1/roles/" + i2)
     rr3 = await core4api.get("/core4/api/v1/roles/" + i3)
 
-    assert rr1.json()["data"]["perm"] == ['app://1']
-    assert rr2.json()["data"]["perm"] == ['app://1', 'app://2']
-    assert rr3.json()["data"]["perm"] == ['app://1', 'app://2', 'app://3']
+    assert rr1.json()["data"]["perm_total"] == ['app://1']
+    assert rr2.json()["data"]["perm_total"] == ['app://1', 'app://2']
+    assert rr3.json()["data"]["perm_total"] == ['app://1', 'app://2', 'app://3']
+
+    r4 = await core4api.put("/core4/api/v1/roles/" + rr3.json()["data"]["_id"], body=dict(
+        name="test_role3",
+        realname="test role 3",
+        email="m.rau@plan-net.com",
+        passwd="hello world",
+        role=["test_role1", "test_role2"],
+        perm=["app://3"],
+        perm_total=rr3.json()["data"]["perm_total"],
+        etag=rr3.json()["data"]["etag"]
+    ))
+
+    assert r4.code == 200
+
+    r5 = await core4api.get("/core4/api/v1/roles/" + i3)
+    assert r5.code == 200
+
+    assert r5.json()["data"]["perm_total"] == ['app://1', 'app://2', 'app://3']
+    assert r5.json()["data"]["perm"] == ['app://3']
+    assert r5.json()["data"]["role"] == ["test_role1", "test_role2"]
+
 
 
 def test_comparison():
@@ -752,7 +773,8 @@ async def test_recursive_delete(core4api):
 
     rv = await core4api.get('/core4/api/v1/roles/' + id3)
     assert rv.code == 200
-    assert rv.json()["data"]["perm"] == ['app://1', 'app://2', 'app://3']
+    assert rv.json()["data"]["perm"] == ['app://3']
+    assert rv.json()["data"]["perm_total"] == ['app://1', 'app://2', 'app://3']
     assert rv.json()["data"]["role"] == ['test_role1', 'test_role2']
 
     rv = await core4api.get(
@@ -765,7 +787,8 @@ async def test_recursive_delete(core4api):
 
     rv = await core4api.get('/core4/api/v1/roles/' + id3)
     assert rv.code == 200
-    assert rv.json()["data"]["perm"] == ['app://2', 'app://3']
+    assert rv.json()["data"]["perm_total"] == ['app://2', 'app://3']
+    assert rv.json()["data"]["perm"] == ['app://3']
     assert rv.json()["data"]["role"] == ['test_role2']
 
     rv = await core4api.get(
