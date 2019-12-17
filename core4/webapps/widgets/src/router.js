@@ -12,15 +12,37 @@ export default new Router({
       path: '/',
       component: Home,
       children: [
-        { name: 'boards-home', path: '', component: BoardsHome },
-        { name: 'help', path: 'help/:widgetId', component: Help },
-        { name: 'enter', path: 'enter/:widgetId', component: Help }
-      ],
-      meta: {
-        auth: true,
-        hideNav: false,
-        title: 'Overview'
-      }
+        {
+          name: 'boards-home',
+          path: '',
+          component: BoardsHome,
+          meta: {
+            auth: true,
+            hideNav: false,
+            title: 'Overview'
+          }
+        },
+        {
+          name: 'help',
+          path: 'help/:widgetId',
+          component: Help,
+          meta: {
+            auth: true,
+            hideNav: false,
+            title: 'Overview'
+          }
+        },
+        {
+          name: 'enter',
+          path: 'enter/:widgetId',
+          component: Help,
+          meta: {
+            auth: true,
+            hideNav: false,
+            title: 'Overview'
+          }
+        }
+      ]
     }
   ]
 })
