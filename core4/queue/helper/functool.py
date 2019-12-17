@@ -44,18 +44,19 @@ def enqueue(job, **kwargs):
         found = [d["name"] for d in data
                  if name in [i["name"] for i in d["jobs"]]]
         if found:
-            stdout = core4.service.introspect.main.exec_project(
+            stdout, stderr = core4.service.introspect.main.exec_project(
                 found[0], ENQUEUE_ARG, qual_name=name,
                 args="**%s" % (str(kwargs)), comm=True)
+            check = "core4.error.CoreJobExists: job [{}]".format(name)
+            if check in stderr:
+                raise core4.error.CoreJobExists(
+                    "job [{}] exists with args {}".format(
+                        name, kwargs))
             try:
                 return ObjectId(stdout)
             except:
-                check = "core4.error.CoreJobExists: job [{}]".format(name)
-                if check in stdout:
-                    raise core4.error.CoreJobExists(
-                        "job [{}] exists with args {}".format(
-                            name, kwargs))
-                raise RuntimeError("failed to launch job: " + stdout)
+                raise RuntimeError("failed to launch job: {}\n{}".format(
+                    stdout, stderr))
     return queue.enqueue(name=name, **kwargs)._id
 
 

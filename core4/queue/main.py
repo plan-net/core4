@@ -335,7 +335,7 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                 if doc is None:
                     raise core4.error.CoreJobNotFound(
                         "job [{}] not found".format(_id))
-                new_id = core4.service.introspect.main.exec_project(
+                new_id, stderr = core4.service.introspect.main.exec_project(
                     doc["name"], RESTART, job_id=str(doc["_id"]), comm=True)
             except:
                 raise

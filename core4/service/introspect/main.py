@@ -384,14 +384,15 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                     self.logger.info("listing [%s]", pypath)
                     if os.path.exists(pypath) and os.path.isfile(pypath):
                         # this is Python virtual environment:
-                        out = core4.service.introspect.main.exec_project(
+                        out, err = core4.service.introspect.main.exec_project(
                             pro, ITERATE, comm=True)
                         try:
                             js = json.loads(out)
                             data += js
                         except Exception as exc:
-                            self.logger.error("failed to load [%s]:\n%s\n%s",
-                                              pro, exc, out)
+                            self.logger.error(
+                                "failed to load [%s]:\n%s\n%s\n%s",
+                                pro, exc, out, err)
                     else:
                         self.logger.error("failed to load [%s] due to"
                                           "missing Python virtual "
@@ -587,17 +588,24 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if replace:
             os.execve(python_path, [python_path, "-c", cmd], env)
         proc = subprocess.Popen([python_path, "-c", cmd], stdout=stdout,
-                                stderr=subprocess.DEVNULL, env=env)
+                                stderr=stdout, env=env)
         os.chdir(currdir)
         if wait or comm:
             if comm:
                 (stdout, stderr) = proc.communicate()
+                if stderr:
+                    stderr = stderr.decode("utf-8").strip()
+                else:
+                    stderr = "null"
+                if stderr == "":
+                    stderr = "null"
                 if stdout:
-                    out = stdout.decode("utf-8").strip()
-                    if out == "":
-                        return "null"
-                    return out
-                return "null"
+                    stdout = stdout.decode("utf-8").strip()
+                    if stdout == "":
+                        stdout = "null"
+                else:
+                    stdout = "null"
+                return stdout, stderr
             proc.wait()
 
     def collect_job(self):

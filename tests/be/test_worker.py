@@ -154,7 +154,7 @@ class ProgressJob(core4.queue.job.CoreJob):
             time.sleep(0.25)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_success_after_failure(queue, worker):
     import tests.project.work
     queue.enqueue(tests.project.work.ErrorJob, success=True)
@@ -170,7 +170,7 @@ def test_success_after_failure(queue, worker):
 
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_progress1(queue, worker):
     # fh = open("/tmp/test.txt", "w", encoding="utf-8")
     # fh.write("%s\n" %(os.path.abspath(os.curdir)))
@@ -184,7 +184,7 @@ def test_progress1(queue, worker):
                 if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_register(caplog):
     pool = []
     workers = []
@@ -221,7 +221,7 @@ def test_plan():
     assert len(worker.create_plan()) == 4
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_5loops():
     worker = core4.queue.worker.CoreWorker()
     t = threading.Thread(target=worker.start, args=())
@@ -232,14 +232,14 @@ def test_5loops():
     t.join()
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_setup():
     worker = core4.queue.worker.CoreWorker()
     worker.exit = True
     worker.start()
 
 
-# @pytest.mark.timeout(30)
+# @pytest.mark.timeout(120)
 def test_maintenance():
     queue = core4.queue.main.CoreQueue()
     queue.enter_maintenance()
@@ -256,7 +256,7 @@ def test_maintenance():
         'collect_stats': 0, 'work_jobs': 0, 'flag_jobs': 0, 'remove_jobs': 0}
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_halt():
     queue = core4.queue.main.CoreQueue()
     queue.halt(now=True)
@@ -432,14 +432,14 @@ def worker():
     return WorkerHelper()
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_ok(queue, worker):
     queue.enqueue(core4.queue.helper.job.example.DummyJob, sleep=0)
     worker.start(1)
     worker.wait_queue()
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_error(queue, worker):
     import tests.project.work
     queue.enqueue(tests.project.work.ErrorJob)
@@ -460,7 +460,7 @@ def test_error(queue, worker):
     assert (delta[2] - delta[1]).total_seconds() >= 3
 
 
-@pytest.mark.timeout(90)
+@pytest.mark.timeout(120)
 def test_defer(queue, worker):
     import tests.project.work
     queue.enqueue(tests.project.work.DeferJob)
@@ -477,7 +477,7 @@ def test_defer(queue, worker):
                 "done execution with [inactive]" in d["message"]]) == 1
 
 
-@pytest.mark.timeout(90)
+@pytest.mark.timeout(120)
 def test_mass_defer(queue, worker, mongodb):
     import tests.project.work
     for i in range(0, 10):
@@ -503,7 +503,7 @@ def test_fail2inactive(queue, worker, mongodb):
     worker.stop()
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_remove_failed(queue, worker, mongodb):
     import tests.project.work
     job = queue.enqueue(tests.project.work.ErrorJob, attempts=5, sleep=1)
@@ -518,7 +518,7 @@ def test_remove_failed(queue, worker, mongodb):
     assert queue.config.sys.queue.count_documents({}) == 0
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_remove_deferred(queue, worker, mongodb):
     import tests.project.work
     job = queue.enqueue(tests.project.work.DeferJob, defer_time=10)
@@ -533,7 +533,7 @@ def test_remove_deferred(queue, worker, mongodb):
     assert queue.config.sys.queue.count_documents({}) == 0
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_remove_complete(queue, worker, mongodb):
     job = queue.enqueue(core4.queue.helper.job.example.DummyJob, sleep=3)
     worker.start(1)
@@ -587,7 +587,7 @@ def test_remove_error(queue, worker):
     assert job.state == "error"
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_nonstop(queue, worker):
     job = queue.enqueue(core4.queue.helper.job.example.DummyJob, sleep=5,
                         wall_time=1)
@@ -634,7 +634,7 @@ class NoProgressJob(core4.queue.job.CoreJob):
         time.sleep(3)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_zombie(queue, worker):
     job = queue.enqueue(NoProgressJob, zombie_time=1)
     worker.start(1)
@@ -655,7 +655,7 @@ class ForeverJob(core4.queue.job.CoreJob):
         time.sleep(60 * 60 * 24)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_no_pid(queue, worker):
     job = queue.enqueue(ForeverJob)
     worker.start(1)
@@ -677,7 +677,7 @@ def test_no_pid(queue, worker):
     worker.stop()
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_kill(queue, worker):
     job = queue.enqueue(ForeverJob, zombie_time=2)
     worker.start(1)
@@ -709,7 +709,7 @@ class RestartDeferredTest(core4.queue.job.CoreJob):
         self.defer("expected deferred")
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_restart_deferred(queue, worker):
     job = queue.enqueue(RestartDeferredTest)
     worker.start(1)
@@ -737,7 +737,7 @@ class RestartFailedTest(core4.queue.job.CoreJob):
         raise RuntimeError("expected failure")
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_failed_deferred(queue, worker):
     job = queue.enqueue(RestartFailedTest)
     worker.start(1)
@@ -765,7 +765,7 @@ class RestartErrorTest(core4.queue.job.CoreJob):
         raise RuntimeError("expected failure")
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_restart_error(queue, worker):
     job = queue.enqueue(RestartErrorTest)
     worker.start(1)
@@ -800,7 +800,7 @@ class RequiresArgTest(core4.queue.job.CoreJob):
         pass
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_requires_arg(queue, worker):
     job = queue.enqueue(RequiresArgTest)
     worker.start(1)
@@ -821,7 +821,7 @@ class RestartKilledTest(core4.queue.job.CoreJob):
         time.sleep(120)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_restart_killed(queue, worker):
     job = queue.enqueue(RestartKilledTest)
     worker.start(1)
@@ -851,7 +851,7 @@ class RestartInactiveTest(core4.queue.job.CoreJob):
         self.defer("expected defer")
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_restart_inactive(queue, worker):
     job = queue.enqueue(RestartInactiveTest)
     worker.start(1)
@@ -873,7 +873,7 @@ class OutputTestJob(core4.queue.job.CoreJob):
         libc.puts(b"this comes from C")
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_stdout(queue, worker, mongodb):
     job = queue.enqueue(OutputTestJob)
     worker.start(3)
@@ -895,7 +895,7 @@ class BinaryOutputTestJob(core4.queue.job.CoreJob):
         sys.stdout.buffer.write(b"evil payload \xDE\xAD\xBE\xEF.")
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_binary_out(queue, worker, mongodb):
     job = queue.enqueue(BinaryOutputTestJob)
     worker.start(3)
@@ -906,7 +906,7 @@ def test_binary_out(queue, worker, mongodb):
     assert doc["stdout"] == b"evil payload \xDE\xAD\xBE\xEF."
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_project_maintenance(queue, worker):
     job = queue.enqueue(core4.queue.helper.job.example.DummyJob)
     worker.start(1)
@@ -925,7 +925,7 @@ def test_project_maintenance(queue, worker):
     assert queue.config.sys.queue.count_documents({}) == 0
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_no_resources(queue):
     job = queue.enqueue(core4.queue.helper.job.example.DummyJob)
     worker1 = WorkerNoCPU(name="testRes_1")
@@ -962,7 +962,7 @@ class WorkerNoRAM(core4.queue.worker.CoreWorker):
         return (0, 30)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_no_resources_force(queue):
     job = queue.enqueue(core4.queue.helper.job.example.DummyJob, force=True)
     worker = WorkerNoCPU(name="testRes_1")
@@ -983,7 +983,7 @@ def test_no_resources_force(queue):
     assert sum([1 for d in data if "start execution" in d["message"]]) == 2
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_worker_has_resources(queue):
     job = queue.enqueue(core4.queue.helper.job.example.DummyJob)
     worker = WorkerNoCPU(name="testRes")
@@ -1003,7 +1003,7 @@ class WorkerHasRes(core4.queue.worker.CoreWorker):
         return (70, 1024)
 
 
-@pytest.mark.timeout(30)
+@pytest.mark.timeout(120)
 def test_project_process(queue):
     queue.enqueue(core4.queue.helper.job.example.DummyJob)
     worker = core4.queue.worker.CoreWorker()
