@@ -73,6 +73,12 @@ class CoreRole(CoreBase):
             # QuotaField("quota", **kwargs),
         ]
         self.data = dict([(f.key, f) for f in fields])
+
+
+        #todo: deprecated later, discussion with mkr and mra
+        # so long drop of field "total_perm" manually
+        kwargs.pop('perm_total', None)
+
         for field in kwargs:
             if (field not in self.data):
                 raise KeyError("unknown field [{}]".format(field))
@@ -547,7 +553,8 @@ class CoreRole(CoreBase):
         :return: dict
         """
         doc = self.to_response()
-        doc["perm"] = sorted(await self.casc_perm())
+        doc["perm"] = sorted(doc["perm"])
+        doc["perm_total"] = sorted(await self.casc_perm())
         doc["role"] = sorted([r.name for r in await self.casc_role()
                               if r.name != self.name])
         return doc
