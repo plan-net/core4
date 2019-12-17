@@ -375,7 +375,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
             data = []
             currpath = os.curdir
             for pro in sorted(os.listdir(home)):
-                if pro is not None and pro != project:
+                if project is not None and pro != project:
                     continue
                 fullpath = os.path.abspath(os.path.join(home, pro))
                 if os.path.isdir(fullpath):
