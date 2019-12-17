@@ -587,7 +587,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if replace:
             os.execve(python_path, [python_path, "-c", cmd], env)
         proc = subprocess.Popen([python_path, "-c", cmd], stdout=stdout,
-                                stderr=subprocess.STDOUT, env=env)
+                                stderr=subprocess.DEVNULL, env=env)
         os.chdir(currdir)
         if wait or comm:
             if comm:
