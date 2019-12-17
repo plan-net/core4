@@ -359,7 +359,7 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
                 )
         return home
 
-    def introspect(self):
+    def introspect(self, project=None):
         """
         Retrieves meta information about the current or all projects. If
         ``config.folder.home`` is specified, then information about all
@@ -374,26 +374,28 @@ class CoreIntrospector(core4.base.CoreBase, core4.queue.query.QueryMixin):
         if home:
             data = []
             currpath = os.curdir
-            for project in sorted(os.listdir(home)):
-                fullpath = os.path.abspath(os.path.join(home, project))
+            for pro in sorted(os.listdir(home)):
+                if pro is not None and pro != project:
+                    continue
+                fullpath = os.path.abspath(os.path.join(home, pro))
                 if os.path.isdir(fullpath):
-                    pypath = os.path.join(home, project, VENV_PYTHON)
+                    pypath = os.path.join(home, pro, VENV_PYTHON)
                     os.chdir(fullpath)
                     self.logger.info("listing [%s]", pypath)
                     if os.path.exists(pypath) and os.path.isfile(pypath):
                         # this is Python virtual environment:
                         out = core4.service.introspect.main.exec_project(
-                            project, ITERATE, comm=True)
+                            pro, ITERATE, comm=True)
                         try:
                             js = json.loads(out)
                             data += js
                         except Exception as exc:
                             self.logger.error("failed to load [%s]:\n%s\n%s",
-                                              project, exc, out)
+                                              pro, exc, out)
                     else:
                         self.logger.error("failed to load [%s] due to"
                                           "missing Python virtual "
-                                          "environment", project)
+                                          "environment", pro)
                 os.chdir(currpath)
             return data
         else:

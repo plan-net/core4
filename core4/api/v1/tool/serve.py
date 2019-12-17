@@ -379,7 +379,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         scope = []
         intro = CoreIntrospector()
         for f in filter:
-            for pro in intro.introspect():
+            for pro in intro.introspect(project):
                 for container in pro["api_containers"]:
                     if f is None or container["name"].startswith(f):
                         if container["name"] not in scope:
