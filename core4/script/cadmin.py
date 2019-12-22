@@ -233,18 +233,19 @@ class CoreInstaller(WebBuilder):
                          stdout=PIPE, stderr=DEVNULL).communicate()
         return out.decode("utf-8").strip()
 
-    def checkout(self):
+    def checkout(self, quiet=False):
         """
         Clone and checkout appropriate version from remote git repository.
         """
-        self.print("  installing from remote [{}]".format(self.repository))
+        if not quiet:
+            self.print("  installing from remote [{}]".format(self.repository))
         (url, marker) = self.parse_repository()
         if not os.path.exists(self.clone):
-            self.popen("git", "clone", url, self.clone)
-        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD")
-        self.popen("git", "-C", self.clone, "checkout", marker)
-        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD")
-        self.popen("git", "-C", self.clone, "pull")
+            self.popen("git", "clone", url, self.clone, quiet=quiet)
+        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD", quiet=quiet)
+        self.popen("git", "-C", self.clone, "checkout", marker, quiet=quiet)
+        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD", quiet=quiet)
+        self.popen("git", "-C", self.clone, "pull", quiet=quiet )
 
     def parse_repository(self):
         url_match = re.match("(.+?)(@[^\/]+)?$", self.repository)
@@ -291,7 +292,7 @@ class CoreInstaller(WebBuilder):
         else:
             self.print("project root [{}] not found".format(self.root))
 
-    def popen(self, *args):
+    def popen(self, *args, quiet=False):
         proc = Popen(args, env=self.env, stdout=PIPE, stderr=STDOUT)
         logfile = open(LOGFILE, "a", encoding="utf-8")
         stdout = []
@@ -302,7 +303,8 @@ class CoreInstaller(WebBuilder):
                     and (not out.startswith(" ")
                          or out.strip().startswith("core4.setup: "))):
                 stdout.append(out)
-                print("  " + out.strip())
+                if not quiet:
+                    print("  " + out.strip())
         ret = proc.wait()
         logfile.close()
         assert ret == 0
@@ -395,11 +397,18 @@ class CoreInstaller(WebBuilder):
                             if "/core4.git" in r]
         core4_repository = core4_repository[0] if core4_repository else ""
         current = data["commit"]
+        self.check_for_upgrade()
+        #self.print("check for upgrade [{}]".format(self.project))
         if os.path.isdir(self.repository):
             self.clone = self.repository
+            #self.print("  installing from [{}]".format(self.clone))
+        else:
+            self.checkout(quiet=True)
+        latest = self.get_local_commit()
         timestamp = self.get_commit_datetime(current)
         (version, build, core4_version, *core4_build) = stdout.decode(
             "utf-8").strip().split(", ")
+
         return {
             "repository": self.repository,
             "web": self.web,
@@ -407,7 +416,9 @@ class CoreInstaller(WebBuilder):
             "build": build,
             "commit": {
                 "hash": data["commit"],
-                "timestamp": timestamp
+                "timestamp": timestamp,
+                "latest": latest,
+                "upgrade": latest == current
             },
             "core4": {
                 "version": core4_version,
@@ -466,6 +477,8 @@ def run(args):
                     "with" if data["web"] else "without"))
                 print("  commit:  {} ({})".format(
                     data["commit"]["timestamp"], data["commit"]["hash"]))
+                print("  latest:  {} (upgrade == {})".format(
+                    data["commit"]["latest"], not data["commit"]["upgrade"]))
                 print("  source:  {}".format(data["repository"]))
                 if p != "core4":
                     print("  core4:   {}, build {} from {}".format(
