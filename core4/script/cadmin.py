@@ -13,7 +13,7 @@ Usage:
   cadmin upgrade [--test] [--force] [--reset] [--nobuild] [--home=HOME] [PROJECT...]
   cadmin dep-upgrade [--home=HOME] PACKAGE [PROJECT...]
   cadmin uninstall [--home=HOME] PROJECT...
-  cadmin version [--home=HOME] [PROJECT...]
+  cadmin version [--dump] [--home=HOME] [PROJECT...]
   cadmin build [--build=APP...]
 
 Arguments:
@@ -28,6 +28,7 @@ Options:
   -b --build=APP      build and install web apps
   -d --dependency=DEP upgrade package dependency
   -e --nobuild        skip build and install of web apps
+  -u --dump           dump output in json rather than pretty-print
   -t --test           dry-run
   -h --help           show this screen
   -v --version        show version
@@ -465,9 +466,13 @@ def run(args):
             installer = CoreInstaller(p, home=args["--home"])
             installer.uninstall()
     elif args["version"]:
+        ret = {}
         for p in project:
             installer = CoreInstaller(p, home=args["--home"])
             data = installer.version()
+            if args["--dump"]:
+                ret[p] = data
+                continue
             print(p)
             if data["error"]:
                 print("  ERROR:\n{}".format(data["error"]))
@@ -484,6 +489,9 @@ def run(args):
                     print("  core4:   {}, build {} from {}".format(
                         data["core4"]["version"], data["core4"]["build"],
                         data["core4"]["repository"]))
+        if args["--dump"]:
+            print(json.dumps(ret))
+            sys.exit(0)
     elif args["build"]:
         installer = WebBuilder()
         installer.init_vars(".")
