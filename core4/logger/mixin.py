@@ -85,8 +85,8 @@ class CoreLoggerMixin:
                     try:
                         conn.connection[conn.database].create_collection(
                             name=conn.name,
-                            capped=True,
-                            size=self.config.logging.size
+                            #capped=True,
+                            #size=self.config.logging.size
                         )
                         for idx in ("hostname", "identifier", "username",
                                     "qual_name"):
