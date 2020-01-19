@@ -190,10 +190,10 @@ async def test_query_args(core4_test):
     assert rv.json()["data"][
                "a8"] == "<class 'datetime.datetime'> = 2018-02-01 12:34:55"
 
-    rv = await core4_test.get('/test/args?a8=2009-01-01T12:55:12 CET')
+    rv = await core4_test.get('/test/args?a8=2009-01-01T12:55:12')
     assert rv.code == 200
     assert rv.json()["data"][
-               "a8"] == "<class 'datetime.datetime'> = 2009-01-01 11:55:12"
+               "a8"] == "<class 'datetime.datetime'> = 2009-01-01 12:55:12"
 
 
 async def test_json_args(core4_test):
@@ -279,10 +279,10 @@ async def test_json_args(core4_test):
                "a8"] == "<class 'datetime.datetime'> = 2018-02-01 12:34:55"
 
     rv = await core4_test.post("/test/args",
-                               body={"a8": '2009-01-01T12:55:12 CET'})
+                               body={"a8": '2009-01-01T12:55:12'})
     assert rv.code == 200
     assert rv.json()["data"][
-               "a8"] == "<class 'datetime.datetime'> = 2009-01-01 11:55:12"
+               "a8"] == "<class 'datetime.datetime'> = 2009-01-01 12:55:12"
 
 
 async def test_conv_error(core4_test):
