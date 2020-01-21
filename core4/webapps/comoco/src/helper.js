@@ -30,17 +30,14 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
  * @returns {string}
  */
 function getBasePath () {
+  let isSecure = location && location.protocol === 'https:' || false
+
   if (process.env.NODE_ENV === 'development') {
-    return process.env.VUE_APP_APIBASE_CORE_WS
-  }
-  return `ws://${window.location.host}${process.env.VUE_APP_APIBASE_CORE_WS}`
-/*   if (window.location.href.includes('http')) {
-    // index.html
-    return process.env.VUE_APP_APIBASE_CORE.replace('http:', 'ws:')
+    return isSecure ? process.env.VUE_APP_APIBASE_CORE_WSS : process.env.VUE_APP_APIBASE_CORE_WS
   } else {
-    console.error(`incorrect network protocol ${window.location.href}`)
-    return `ws://${window.location.host}/core4/api`
-  } */
+    // production
+    return (isSecure ? 'wss://' : 'ws://') + `${window.location.host}${process.env.VUE_APP_APIBASE_CORE_WS}`
+  }
 }
 
 /**
