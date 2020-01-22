@@ -33,7 +33,8 @@ function getBasePath () {
   let isSecure = location && location.protocol === 'https:' || false
 
   if (process.env.NODE_ENV === 'development') {
-    return isSecure ? process.env.VUE_APP_APIBASE_CORE_WSS : process.env.VUE_APP_APIBASE_CORE_WS
+    // development always runs under http
+    return process.env.VUE_APP_APIBASE_CORE_WS
   } else {
     // production
     return (isSecure ? 'wss://' : 'ws://') + `${window.location.host}${process.env.VUE_APP_APIBASE_CORE_WS}`
