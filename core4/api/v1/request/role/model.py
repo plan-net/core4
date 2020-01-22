@@ -182,8 +182,8 @@ class CoreRole(CoreBase):
                  yet. It will be set prior to logging in via a token provided
                  by email.
         """
-        has_password = self.password is not None
-        has_email = self.email is not None
+        has_password = bool(self.password)
+        has_email = bool(self.email)
         if initial:
             if not (has_email == has_password or has_email):
                 raise AttributeError("user role requires email on creation")
