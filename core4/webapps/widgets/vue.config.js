@@ -1,5 +1,6 @@
 // vue.config.js
 module.exports = {
+  filenameHashing: false,
   outputDir: 'dist',
   lintOnSave: true,
   publicPath: './',
