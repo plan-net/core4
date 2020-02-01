@@ -55,7 +55,7 @@ First you create the following HTML file:
     </body>
     </html>
 
-Currently - in 2019 - we are using the following assets, which are hosted at "https://bi.plan-net.com/cdn":
+Currently - in 2020 - we are using the following assets, which are hosted at "https://bi.plan-net.com/cdn":
 
 vuetify_2.0.css:
     * This file contains a copy of the Vuetify.css file (v2.0.17).
@@ -157,11 +157,10 @@ The last step is to create a Vuetify instance and to set the theme. From this po
         delimiters: ['[[', ']]'],
         el: '#app',
         vuetify: new Vuetify({
-          icons: {
-              iconfont: 'md',
-          },
-          theme: window.VUETIFY_THEME
-          },
+            themes: {
+                light: window.PNBI_THEME,
+                dark: window.PNBI_THEME
+            }
         }),
         data: {
         },

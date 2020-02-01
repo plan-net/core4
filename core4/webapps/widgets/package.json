@@ -1,6 +1,6 @@
 {
   "name": "core-widgets",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "core4": {
     "build_command": [
       "rm yarn.lock",
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@dattn/dnd-grid": "^0.0.14",
-    "core4ui": "^1.2.11",
+    "core4ui": "^1.2.15",
     "vue-drag-drop": "^1.1.4"
   },
   "devDependencies": {
