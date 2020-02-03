@@ -120,6 +120,7 @@ class StringField(Field):
     are :attr:`.required` to indicate non-optional fields and :attr:`regex`
     to perform value validation.
     """
+
     field_type = str
 
     def __init__(self, *args, regex=None, **kwargs):
@@ -127,13 +128,12 @@ class StringField(Field):
         self.regex = regex
 
     def validate_value(self):
-        if self.required:
-            if self.value is None or self.value.strip() == "":
-                raise AttributeError("field [{}] is mandatory".format(
-                    self.key))
+        super().validate_value()
         if self.value is not None:
             self.value = self.value.strip()
-            if self.regex is not None:
+            if not self.value:
+                self.value = None
+            elif self.regex is not None:
                 if not self.regex.match(self.value) is not None:
                     raise TypeError("field [{}] must match [{}]".format(
                         self.key, self.regex.pattern))
@@ -192,15 +192,13 @@ class PasswordField(Field):
     """
     field_type = str
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def set(self, value):
-        if value is not None:
+        if value is not None and value.strip() != "":
             value = core4.util.crypt.pwd_context.hash(value)
         else:
-            value = value
+            value = None
         super().set(value)
+
 
 
 class RoleField(Field):

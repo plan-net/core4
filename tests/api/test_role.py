@@ -898,3 +898,58 @@ async def test_cookie_create(core4api):
     data["passwd"] = "test"
     rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
     assert rv.json()["code"] == 200
+
+
+async def test_empty_mail(core4api):
+    URL = '/core4/api/v1/login'
+    resp = await core4api.get(URL + '?username=admin&password=hans')
+    assert resp.code == 200
+    cookie = list(resp.cookie().values())
+    header = {"Cookie": "token=" + cookie[0].coded_value}
+    # this is OK because an email will be sent
+    data = {}
+    data["name"] = "mkr"
+    data["realname"] = "Markus Kral"
+    data["email"] = "test@test.de"
+    #data["passwd"] = ""
+    rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
+    assert rv.json()["code"] == 200
+    # this is NOT OK because this is not initial
+    data = rv.json()["data"]
+    id = rv.json()["data"]["_id"]
+    rv = await core4api.put("/core4/api/v1/roles/" + id, headers=header,
+                            body=data)
+    assert rv.json()["code"] == 400
+    "requires email and password" in rv.json()["error"]
+    # this is not OK because this is a role exists
+    data = {}
+    data["name"] = "mkr"
+    data["realname"] = "Markus Kral"
+    data["email"] = ""
+    data["passwd"] = ""
+    rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
+    assert rv.json()["code"] == 400
+    "name or email exists" in rv.json()["error"]
+    # this is OK because this is a role
+    data = {}
+    data["name"] = "mkr1"
+    data["realname"] = "Markus Kral"
+    data["email"] = ""
+    data["passwd"] = ""
+    rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
+    assert rv.json()["code"] == 200
+
+async def test_passwd_no_mail(core4api):
+    URL = '/core4/api/v1/login'
+    resp = await core4api.get(URL + '?username=admin&password=hans')
+    assert resp.code == 200
+    cookie = list(resp.cookie().values())
+    header = {"Cookie": "token=" + cookie[0].coded_value}
+    data = {}
+    data["name"] = "mkr2"
+    data["realname"] = "Markus Kral"
+    data["email"] = ""
+    data["passwd"] = "bla"
+    rv = await core4api.post("/core4/api/v1/roles", headers=header, body=data)
+    assert rv.json()["code"] == 400
+

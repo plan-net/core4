@@ -593,7 +593,10 @@ class CoreBaseHandler(CoreBase):
         # internal method to wrap the response
         ret = {
             "_id": self.identifier,
-            "version": self.project + '-' + self.version(),
+            "version": "%s/%s" % (
+                self.application.container.project,
+                self.application.container.version()
+            ),
             "timestamp": core4.util.node.now(),
             "message": message,
             "code": code
