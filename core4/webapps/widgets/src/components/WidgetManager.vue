@@ -27,6 +27,38 @@
               icon
               small
               class="mr-0 ml-2"
+              @click.stop="boardHelpDialogOpen = true"
+            >
+              <v-icon
+                small
+                color="grey"
+              >help</v-icon>
+              <v-dialog
+                v-model="boardHelpDialogOpen"
+                max-width="960px"
+              >
+                <v-card>
+                  <v-card-text>
+                    <howto type="layer">
+                      <v-btn
+                        slot="button-slot"
+                        color="primary"
+                        @click.stop="boardHelpDialogOpen = false"
+                      >Close</v-btn>
+                    </howto>
+                  </v-card-text>
+                </v-card>
+              </v-dialog>
+            </v-btn>
+          </v-tab>
+          <v-tab>
+
+            <span>Boards</span>
+            <v-spacer></v-spacer>
+            <v-btn
+              icon
+              small
+              class="mr-0 ml-2"
               @click.stop="helpDialogOpen = true"
             >
               <v-icon
@@ -60,22 +92,7 @@
                   </v-card-actions>
                 </v-card>
               </v-dialog>
-            </v-btn>
-          </v-tab>
-          <v-tab>
 
-            <span>Boards</span>
-            <v-spacer></v-spacer>
-            <v-btn
-              icon
-              small
-              class="mr-0 ml-2"
-              @click.stop="boardHelpDialogOpen = true"
-            >
-              <v-icon
-                small
-                color="grey"
-              >help</v-icon>
             </v-btn>
 
           </v-tab>
@@ -136,11 +153,8 @@
       <v-tab-item>
         <widgets-list :scale="currScalePerc" />
       </v-tab-item>
-      <v-tab-item>
-        <side-navigation
-          :help-dialog-open="boardHelpDialogOpen"
-          @close="boardHelpDialogOpen = false"
-        />
+      <v-tab-item>sdsad
+        <side-navigation />
       </v-tab-item>
     </v-tabs-items>
   </v-navigation-drawer>
@@ -151,12 +165,14 @@ import { mapActions, mapGetters } from 'vuex'
 
 import WidgetsList from '@/components/WidgetsList'
 import SideNavigation from '@/components/SideNavigation'
+import Howto from '@/components/Howto'
 
 export default {
   name: 'widget-manager',
   components: {
     WidgetsList,
-    SideNavigation
+    SideNavigation,
+    Howto
   },
   mounted () {
   },
@@ -270,7 +286,8 @@ div.dreiviertel {
     }
   }
 
-  &.v-navigation-drawer, &.v-tabs-items {
+  &.v-navigation-drawer,
+  &.v-tabs-items {
     background-color: darken(#202020, 1);
     background: darken(#202020, 1);
   }

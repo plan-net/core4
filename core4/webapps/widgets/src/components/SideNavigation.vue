@@ -140,10 +140,6 @@ export default {
   },
   methods: {
     ...mapActions(['deleteBoard']),
-    /*     onEditBoardName () {
-      this.activeBoard = this.$store.getters.activeBoard
-      this.nameDialog = true
-    }, */
     onBeforeDelete (item) {
       this.itemToDelete = item
       this.deleteDialog = true
@@ -152,13 +148,6 @@ export default {
       this.$store.dispatch('setActiveBoard', item.name)
     }
   },
-  /*   watch: {
-    nameDialog (val) {
-      if (val === false) {
-        this.activeBoard = null
-      }
-    }
-  }, */
   computed: {
     activeBoardName () {
       return this.$store.getters.activeBoard.name
