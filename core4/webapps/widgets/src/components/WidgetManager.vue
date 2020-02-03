@@ -153,7 +153,7 @@
       <v-tab-item>
         <widgets-list :scale="currScalePerc" />
       </v-tab-item>
-      <v-tab-item>sdsad
+      <v-tab-item>
         <side-navigation />
       </v-tab-item>
     </v-tabs-items>
