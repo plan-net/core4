@@ -326,7 +326,7 @@ class CoreBaseHandler(CoreBase):
             return jwt.decode(token, key=secret, algorithms=[algorithm],
                               verify=True)
         except jwt.InvalidSignatureError:
-            raise HTTPError("signature verification failed")
+            raise HTTPError(500, "signature verification failed")
         except jwt.ExpiredSignatureError:
             return {}
 
