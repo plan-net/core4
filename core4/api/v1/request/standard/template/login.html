@@ -162,7 +162,6 @@
               val => {
                 const urlParams = new URLSearchParams(window.location.search);
                 let next = urlParams.get("next") || '/';
-                console.log(next);
                 
                 if (next != null) {
                   next += "?token=" + val.token;

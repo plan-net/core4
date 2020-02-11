@@ -179,7 +179,7 @@ class CoreBaseHandler(CoreBase):
             print(urllib.parse.quote(self.request.path))
 
             from uuid import uuid4
-            self.redirect("/core4/api/v1/login?h=" + str(uuid4())+'&next='+ urlparse(urllib.parse.quote(self.request.path))
+            self.redirect("/core4/api/v1/login?h=" + str(uuid4())+'&next='+ urllib.parse.quote(self.request.path))
             #raise HTTPError(401)
 
     async def verify_access(self):
