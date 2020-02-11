@@ -83,6 +83,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/vee-validate/2.2.15/vee-validate.js"></script>
 
     <script>
+      axios.defaults.withCredentials = true
       Vue.use(VeeValidate, {
         mode: "eager",
         aria: false,
@@ -160,7 +161,9 @@
             this.login().then(
               val => {
                 const urlParams = new URLSearchParams(window.location.search);
-                let next = urlParams.get("next") || '/core4/api/v1/_info';
+                let next = urlParams.get("next") || '/';
+                console.log(next);
+                
                 if (next != null) {
                   next += "?token=" + val.token;
                   this.$nextTick(function() {
