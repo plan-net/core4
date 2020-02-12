@@ -113,11 +113,14 @@
                         </v-card-title>
                         <v-card-text class="pb-0">
         
-                            <v-form>
+                            <v-form autocomplete="off">
                                 <v-layout class="pa-3" column>
                                     <v-text-field v-model="currentRole.name" label="Name*" required> </v-text-field>
                                     <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
-                                    <v-text-field v-model="currentRole.email" label="E-Mail"></v-text-field>
+                                    <v-text-field v-model="currentRole.email" label="E-Mail  " 
+                                    name="email-field"     aria-autocomplete="none"
+                                    autocomplete="off"
+                                    browser-autocomplete="new-email"></v-text-field>
                                     <v-combobox
                                         clearable
                                         multiple
@@ -155,7 +158,11 @@
                                     </v-combobox>
                                     <v-text-field
                                         v-model="currentRole.passwd"
-                                        label="Password"
+                                        aria-autocomplete="none"
+                                        autocomplete="off"
+                                        browser-autocomplete="new-password"
+                                        label="Password  "
+                                        name="input-10-1"
                                         :append-icon="showPw ? 'visibility' : 'visibility_off'"
                                         :type="showPw ? 'text': 'password'"
                                         @click:append="showPw= !showPw"
@@ -355,7 +362,7 @@
                 if (roles._id) {
                     api.submitRole(roles)
                         .then(function(success) {
-                            console.warn(success)
+                            roles.email = (roles.email && roles.email.length === 0) ? null : roles.email 
                             this.updateRoles(success.data.data);
                             this.currentRole = null;
                             this.isCreateDialogOpen = false;
