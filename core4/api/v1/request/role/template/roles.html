@@ -115,14 +115,14 @@
                         </v-card-title>
                         <v-card-text class="pb-0">
         
-                            <v-form autocomplete="off">
+                            <v-form >
                                 <v-layout class="pa-3" column>
                                     <v-text-field v-model="currentRole.name" label="Name*" required> </v-text-field>
                                     <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
                                     <v-text-field v-model="currentRole.email" label="E-Mail  " 
                                     name="email-field"     aria-autocomplete="none"
-                                    autocomplete="off"
-                                    browser-autocomplete="new-email"></v-text-field>
+                                    autocomplete="new-email"
+                                    ></v-text-field>
                                     <v-combobox
                                         clearable
                                         multiple
@@ -161,8 +161,7 @@
                                     <v-text-field
                                         v-model="currentRole.passwd"
                                         aria-autocomplete="none"
-                                        autocomplete="off"
-                                        browser-autocomplete="new-password"
+                                        autocomplete="new-password"
                                         label="Password  "
                                         name="input-10-1"
                                         :append-icon="showPw ? 'visibility' : 'visibility_off'"
@@ -195,7 +194,6 @@
 <script src="https://bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
 
 <script>
- const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
 
     axios.interceptors.request.use(
       request => {
@@ -307,10 +305,8 @@
                 this.pagination.rowsPerPageItems = roles.data.per_page
                 this.roles = roles.data.data
             }.bind(this));
-            this._repairAutocomplete()
         },
         updated() {
-            this._repairAutocomplete()
         },
         computed: {
             internalPagination : function(){
@@ -341,12 +337,7 @@
         watch: {
         },
         methods: {
-            _repairAutocomplete() {
-            const el = this.$el
-            el.querySelectorAll('input[type="text"][autocomplete="off"').forEach(it => {
-                it.setAttribute('autocomplete', 'new-password')
-            })
-            },
+
             deleteRole: function(role) {
                 this.loading = true;
                 api.deleteRole(role).then(function(success) {
