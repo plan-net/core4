@@ -74,6 +74,14 @@ class CoreRole(CoreBase):
         ]
         self.data = dict([(f.key, f) for f in fields])
 
+        # fix #144
+        if "email" in self.data:
+            if self.data["email"].value is not None:
+                self.data["email"].value = self.data[
+                    "email"].value.lower().strip()
+            # fix #138
+            if not self.data["email"].value:
+                self.data["email"].value = None
 
         #todo: deprecated later, discussion with mkr and mra
         # so long drop of field "total_perm" manually
