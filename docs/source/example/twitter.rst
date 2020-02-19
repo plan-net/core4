@@ -8,24 +8,21 @@ https://github.com/Alioun/twitter/
 The following example shows a simple and easy way of how you can use core to
 realize a wide variety of tasks, in this case retrieving tweets from a
 particular place and then running a Part of Speech (POS) tagger over the
-retrieved tweets to build a base for further analyses on those tweets.
+retrieved tweets to build a base for further analyses on them.
 
-Foreign packages used in this example:
-
-tweepy: Tweepy is used as an easy to use, yet quite powerful way to use the
-various twitter apis in our case tweepy is only used to access the "Geo Search"
-API and the standard "Search" API. https://github.com/tweepy/tweepy
-
-nltk: short for "Natural Language Toolkit" is a library combining many different
-libraries used for natural language processing into one convenient package.
-In this example we are only using a TweetTokenizer provided by the nltk to try to
-clean up the tweets while also tokenizing them for the POS tagger.
-https://github.com/nltk/nltk
-https://www.nltk.org/
-
-pattern: another library for natural language processing and much more,
-we are only using the pos tagger from the german module
-https://github.com/clips/pattern
+* Third-party packages used in this example:
+    * tweepy: Tweepy is an easy-to-use, yet powerful way to use the various
+      twitter APIs. In our case tweepy is only used to access the "Geo Search"
+      API and the standard "Search" API.
+      https://github.com/tweepy/tweepy
+    * nltk: NLTK is short for "Natural Language Toolkit" and is a library combining
+      many different libraries used for NLP into one convenient package.
+      In this example, we only use the TweetTokenizer provided by NLTK to try to
+      clean up the tweets while also tokenizing them for the POS tagger. 
+      https://github.com/nltk/nltk , https://www.nltk.org/
+    * pattern: Another library for NLP and much more. We will only use the POS
+      tagger from its German module.
+      https://github.com/clips/pattern
 
 Imports::
 
@@ -34,26 +31,30 @@ Imports::
     from nltk.tokenize.casual import TweetTokenizer
     from pattern.text.de import parsetree
 
-The first part is to retrieve the Tweets.
+The first part is to retrieve the tweets.
 
-To be able to retrieve any tweets you need to have an twitter dev app if you
-don't have one yet, you can create one over at
-https://developer.twitter.com/en/apps after you've created one, go into the App
-Details and then to the "Keys and tokens" tab and copy consumer key, consumer
-secret, access token and access token secret into your local.yaml, you can find
-an example twitter.yaml and local.yaml down below.
+To be able to retrieve any tweets, you need to have Twitter Developer account
+and need to create an app within that account. If you don't have these already,
+you can create them over at https://developer.twitter.com/ and 
+https://developer.twitter.com/en/apps respectively.
+After you are done, go into the app's "Details" and then to the "Keys and tokens"
+tab. Here, you can find your Consumer API keys. Note that you have to generate a
+access token and its secret if you have never generated it before and regenerate
+the two if you don't have previously generated values saved anywhere.
 
-With the authorization requirements cleared we are querying the "Geo Search" to
-get the place id for a specific region (Germany in this case).
+Copy all four - consumer API key, consumer API secret key, access token and access
+token secret - into your local.yaml. You can find example twitter.yaml and
+local.yaml files below.
 
-Using that place id we can query twitter for all tweets coming from that region.
+With the authorization requirements cleared, we will query the Geo Search API to
+get the place ID for a specific region (Germany in this case). Using that place ID,
+we can query Twitter for all tweets coming from that region.
+
 The job is set up to stop execution and terminate when it encounters a rate
-limit error.
+limit error. Twitter's rate limit timeframe is 15 minutes, so the job is scheduled
+to get as much data as it can until being rate-limited every 20 minutes.
 
-Twitters rate limit timeframe is 15 minutes, so the job is scheduled to get as
-much data until being rate limited every 20 minutes.
-
-All retrieved tweets are written into a mongodb collection for easy access
+All retrieved tweets are written into a MongoDB collection for easy access
 later on::
 
     class TweetLoader(CoreJob):
@@ -106,9 +107,9 @@ later on::
                 pass  # let the job end normally
 
 
-For the Pos tagging the tweets found in the previous tweet collection are
-tokenized, pos tagged and then written into a seperate mongodb collection to
-make them available for later analyses::
+For the POS tagging, the tweets found in the previous tweet collection are tokenized,
+POS tagged and then written into a seperate MongoDB collection to make them available
+for later analyses::
 
     class TweetPOSTagger(CoreJob):
         """
@@ -173,7 +174,7 @@ make them available for later analyses::
             # TODO: re-enable once the bug is fixed
             # pos_unprocessed_coll.bulk_write(requests)
 
-twitter.yaml example::
+Example of the project yaml (twitter.yaml)::
 
     DEFAULT:
       mongo_database: twitter
@@ -188,7 +189,7 @@ twitter.yaml example::
       access_token:         #check local.yaml
       access_token_secret:  #check local.yaml
 
-local.yaml example::
+Example of the local.yaml file::
 
     DEFAULT:
       mongo_url: mongodb://core:654321@localhost:27017
