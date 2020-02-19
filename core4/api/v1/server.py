@@ -57,7 +57,7 @@ class CoreAppManager(CoreApiContainer):
             "static_path": "/webapps/comoco/dist",
             "title": "monitoring and control (comoco)",
             "tag": "jobs app",
-            "protected": False
+            "protected": True
         }),
         (r'/about', CoreLinkHandler, {
             "enter_url": "https://core4os.readthedocs.io/en/latest/about.html",
@@ -71,7 +71,7 @@ class CoreAppManager(CoreApiContainer):
             "path": "/webapps/widgets/dist",
             "static_path": "/webapps/widgets/dist",
             "title": "root",
-            "protected": False
+            "protected": True
         })
     ]
 
@@ -106,6 +106,7 @@ class CoreApiServer(CoreApiContainer):
         (r'/event/?', EventHandler, None),
 
         (r"/login", LoginHandler),
+        (r"/reset", LoginHandler),
         (r"/logout", LogoutHandler),
 
         (r"/profile", ProfileHandler),

@@ -27,6 +27,7 @@ import tornado.routing
 import tornado.template
 from bson.objectid import ObjectId
 from tornado.web import RequestHandler, HTTPError
+import urllib.parse
 
 import core4.const
 import core4.error
@@ -174,7 +175,12 @@ class CoreBaseHandler(CoreBase):
                 if await self.verify_access():
                     return
                 raise HTTPError(403)
-            raise HTTPError(401)
+            print(urllib.parse.quote("http://www.sample.com/"))
+            print(urllib.parse.quote(self.request.path))
+
+            from uuid import uuid4
+            self.redirect("/core4/api/v1/login?h=" + str(uuid4())+'&next='+ urllib.parse.quote(self.request.path))
+            #raise HTTPError(401)
 
     async def verify_access(self):
         """

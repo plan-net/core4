@@ -30,7 +30,7 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
  * @returns {string}
  */
 function getBasePath () {
-  let isSecure = location && location.protocol === 'https:' || false
+  let isSecure = (location && location.protocol === 'https:') || false
 
   if (process.env.NODE_ENV === 'development') {
     // development always runs under http
