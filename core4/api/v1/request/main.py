@@ -233,7 +233,7 @@ class CoreBaseHandler(CoreBase):
             payload = self.parse_token(token)
             username = payload.get("name")
             if username:
-                user = await CoreRole().find_one(name=username)
+                user = await CoreRole.find_one(name=username)
                 if user is None:
                     self.logger.warning(
                         "failed to load [%s] by [%s] from [%s]", username,
