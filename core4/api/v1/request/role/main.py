@@ -428,7 +428,8 @@ class RoleHandler(CoreRequestHandler):
             else:
                 self.reply("no changes")
         if set_perm:
-            self.logger.info("revoke access grants with {}".format(kwargs))
+            self.logger.info("revoke access grants with [{}]".format(
+                kwargs.get("name")))
             manager = CoreAccessManager(ret)
             await manager.change_all()
 
