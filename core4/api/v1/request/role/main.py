@@ -133,30 +133,30 @@ class RoleHandler(CoreRequestHandler):
             perm=self.get_argument(
                 "perm", as_type=list, default=[])
         )
-        self.logger.info("perm: " + str(kwargs['perm']))
+        #self.logger.info("perm: " + str(kwargs['perm']))
         try:
             role = CoreRole(**kwargs)
             await role.save(initial=True)
             # send password email here
-            username = kwargs['name']
-            email = kwargs['email']
-            secs = self.config.api.reset_password.expiration
-            payload = {
-                'email': email,
-                'name': username,
-            }
-            token = self.create_jwt(secs, payload)
-            core4.queue.helper.functool.enqueue(
-                RoleEmail,
-                template=self.config.email.template.en.user_creation,
-                recipients=kwargs['email'],
-                subject="core4: created user",
-                realname=kwargs['realname'],
-                token=token,
-                username=kwargs['name']
-            )
-            self.logger.info("sent initial token [%s] to user [%s] at [%s]",
-                             token, kwargs['name'], kwargs['email'])
+            if role.data["email"].value:
+                secs = self.config.api.reset_password.expiration
+                payload = {
+                    'email': role.data["email"].value,
+                    'name': role.data["name"].value
+                }
+                token = self.create_jwt(secs, payload)
+                core4.queue.helper.functool.enqueue(
+                    RoleEmail,
+                    template=self.config.email.template.en.user_creation,
+                    recipients=role.data["email"].value,
+                    subject="core4: created user",
+                    realname=role.data["realname"].value,
+                    token=token,
+                    username=role.data["name"].value
+                )
+                self.logger.info("sent initial token [%s] to user [%s] at [%s]",
+                                 token, kwargs['name'],
+                                 role.data["email"].value)
 
         except (AttributeError, TypeError, core4.error.Core4ConflictError,
                 core4.error.ArgumentParsingError) as exc:
