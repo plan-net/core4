@@ -48,7 +48,7 @@ from core4.api.v1.request.default import DefaultHandler
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.request.standard.asset import CoreAssetHandler
 from core4.api.v1.request.standard.info import InfoHandler
-from core4.api.v1.request.static import CoreStaticFileHandler
+from core4.api.v1.request.standard.static import CoreStaticFileHandler
 from core4.base.main import CoreBase
 from core4.queue.query import QueryMixin
 

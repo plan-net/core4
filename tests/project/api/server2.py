@@ -1,6 +1,5 @@
 from core4.api.v1.application import CoreApiContainer
-from core4.api.v1.request.static import CoreStaticFileHandler
-import project.api.request
+from core4.api.v1.request.standard.static import CoreStaticFileHandler
 import project.api.server1
 
 class ProjectServer2(CoreApiContainer):
