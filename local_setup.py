@@ -13,12 +13,19 @@ if os.getuid() != 0:
         "/usr/bin/sudo",
         ["/usr/bin/sudo", sys.executable]
         + sys.argv
-        + [str(os.getuid()), str(os.getgid()), os.path.expanduser("~")
-           ])
+        + [
+            "__internal__",
+            str(os.getuid()),
+            str(os.getgid()),
+            os.path.expanduser("~")
+        ])
 
 HOME = sys.argv[-1]
 GID = int(sys.argv[-2])
 UID = int(sys.argv[-3])
+if sys.argv[-4] != "__internal__":
+    print("must not start local_setup.py as root")
+    sys.exit(-1)
 
 
 def ask(prompt, default=None, hide=False):
