@@ -175,8 +175,6 @@ class CoreBaseHandler(CoreBase):
                 if await self.verify_access():
                     return
                 raise HTTPError(403)
-            print(urllib.parse.quote("http://www.sample.com/"))
-            print(urllib.parse.quote(self.request.path))
 
             from uuid import uuid4
             self.redirect("/core4/api/v1/login?h=" + str(uuid4())+'&next='+ urllib.parse.quote(self.request.path))
