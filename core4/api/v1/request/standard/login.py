@@ -31,7 +31,7 @@ class LoginHandler(CoreRequestHandler):
         if self.wants_html():
             if "login" in self.request.path:
                 return self.render("template/login.html")
-            return self.render("template/ reset.html")
+            return self.render("template/reset.html")
         # TODO mmr
         token = await self._login()
         if token:
