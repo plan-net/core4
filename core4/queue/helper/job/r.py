@@ -26,6 +26,9 @@ RLIB = "../lib/R"  # from Python executable
 RLIBVAR = "R_LIBS_SITE"
 
 SNIPPET = """
+if(require('feather')==FALSE){
+    install.packages('feather')
+}
 library(feather)
 
 return <- function(v){
