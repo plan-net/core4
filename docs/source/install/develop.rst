@@ -62,6 +62,7 @@ The repository contains the following directory and main files::
     .
     ├── .repos            # bare git repository for your project
     ├── .git              # git working directory
+    ├── .gitignore        # files to be ignored by git
     ├── .venv             # Python virtual environment
     ├── enter_env         # use to enter the Python virtual environment
     ├── MANIFEST.in       # Python MANIFEST package file
