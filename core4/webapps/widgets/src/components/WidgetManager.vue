@@ -20,7 +20,6 @@
           v-show="!miniVariant"
           v-model="tabs"
         >
-
           <v-tab>
             Widgets
             <v-btn
@@ -224,7 +223,6 @@ div.scaler {
     }
   }
 }
-
 div.leer {
   &:after {
     left: 12px;
@@ -335,21 +333,21 @@ div.dreiviertel {
 </style>
 <style scoped lang="css">
 div >>> .with-hover {
-  height: 56px !important;
+  height: 64px !important;
   width: 32px;
   padding-left: 4px;
   flex: none;
 }
 
 div >>> .with-hover.right {
-  padding-top: 0;
+  padding-top: 2px;
 }
 
 div >>> .with-hover.right .v-icon {
   margin-right: 4px !important;
-  margin-bottom: 1px !important;
+  margin-bottom: 2px !important;
   margin-top: 0 !important;
-  font-size: 17px !important;
+  font-size: 18px !important;
 }
 div >>> .with-hover.right .v-icon:hover {
   color: var(--v-primary-base) !important;
@@ -374,9 +372,6 @@ div >>> .v-list-item__content {
 }
 
 div >>> .v-list-item__action {
-  /*   padding-right: 4px;
-  margin-right: 2px;
-  min-width: 32px; */
   cursor: grab !important;
 }
 
@@ -387,21 +382,16 @@ div >>> .v-list-item__action.with-hover {
 div >>> .v-list-item__action.with-hover:hover {
   cursor: grab;
 }
-
-/* div >>> .v-subheader {
-  font-weight: 600;
-  padding-left: 12px;
-  padding-right: 3px;
-} */
 </style>
 
 <style scoped lang="scss">
 /deep/ .v-list-item__title {
   font-weight: 700;
+  margin-bottom: 6px;
 }
 /deep/ .v-list-item.mini-widget {
-  height: 58px;
-  min-height: 58px;
+  height: 66px;
+  min-height: 66px;
   margin-bottom: 6px;
 }
 // TODO: SearchOptionsMenu.vue
@@ -422,11 +412,17 @@ div >>> .v-list-item__action.with-hover:hover {
     top: 0;
     right: 0;
     width: 0;
-    height: 0;
+    height: 0px;
     border-style: solid;
     border-width: 0 12px 12px 0;
     border-color: transparent darken(#202020, 1) transparent transparent;
     z-index: 100;
+  }
+}
+/deep/ .mini-widget {
+  overflow: hidden;
+  &:after {
+    top: -54px;
   }
 }
 .theme--dark {
