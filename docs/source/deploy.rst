@@ -115,3 +115,41 @@ specifiy the version, tag or branch with the regular syntax::
           core4 home folder with core4 configuration setting ``folder.home``.
           ``cadmin`` manages installations and upgrades inside this folder.
 
+
+deployment architecture
+#######################
+
+The ``cadmin`` tool described above supports the installation and upgrade of
+multiple projects operated with core4os worker, scheduler and application
+server. Each core4os project runs in its own Python virtual environment with
+dedicated requirements as defined in the projects' ``setup.py`` file.
+
+A core4os worker, scheduler and application server needs to be aware of the
+projects' packages and modules to operate each projects' jobs and application
+containers.
+
+The relevant core4os configuration setting is ``folder.home``. All projects
+installed in the directory addressed by this setting registers are registered
+to provide objects, i.e. jobs and application containers.
+
+**example:**
+
+Given that ``folder.home`` addresses ``/srv/core4/home``, all projects managed
+with ``cadmin`` are installed in this folder and reflect the following basic
+folder structure::
+
+    .
+    └── srv
+        └── core4
+            └── home           # core4os folder.home
+                ├── project1   # core4os project1
+                │   ├── .orig  # git working tree of project1
+                │   └── .venv  # Python environment with core4os and project
+                └── core4      # core4os repository
+                    ├── .orig  # git working tree of core4os
+                    └── .venv  # Python environment with core4os
+
+
+A worker in environment ``/srv/core4/home/core4/.venv`` delivers jobs of all
+projects located in ``/srv/core4/home``. Similarily an application server in
+this environment delivers all containers.
