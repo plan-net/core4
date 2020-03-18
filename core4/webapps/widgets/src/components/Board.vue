@@ -142,8 +142,6 @@
                 <span>Remove widget from board</span>
               </v-tooltip>
             </v-layout>
-            <!--
-               :href="widget.endpoint.enter_url" -->
             <a v-if="widget.endpoint">
               <v-card-text
                 @click="open(widget)"
@@ -169,7 +167,6 @@ import { mapActions, mapGetters } from 'vuex'
 import { Box, Container } from '@dattn/dnd-grid'
 import '@dattn/dnd-grid/dist/dnd-grid.css'
 import Howto from '@/components/Howto.vue'
-
 const lodash = require('lodash')
 
 export default {
