@@ -27,6 +27,12 @@ class LoginHandler(CoreRequestHandler):
         """
         Same as :meth:`.post`
         """
+
+        if self.wants_html():
+            if "login" in self.request.path:
+                return self.render("template/login.html")
+            return self.render("template/reset.html")
+        # TODO mmr
         token = await self._login()
         if token:
             return self.reply({
