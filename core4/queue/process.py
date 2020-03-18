@@ -53,6 +53,7 @@ class CoreWorkerProcess(core4.base.main.CoreBase,
         now = core4.util.node.mongo_now()
         job = self.load_job(_id)
         if job is None:
+            self.queue.unlock_job(_id)
             return False
         update = {
             "locked.pid": core4.util.node.get_pid()

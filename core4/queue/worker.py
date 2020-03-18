@@ -372,7 +372,7 @@ class CoreWorker(CoreDaemon, core4.queue.query.QueryMixin):
                     ret = self.config.sys.queue.delete_one({"_id": doc["_id"]})
                     if ret.raw_result["n"] != 1:
                         raise RuntimeError(
-                            "failed to re<move job [{}]".format(doc["_id"]))
+                            "failed to remove job [{}]".format(doc["_id"]))
                     self.queue.make_stat('remove_job', str(doc["_id"]))
                     self.logger.info(
                         "successfully journaled and removed job [%s]",
