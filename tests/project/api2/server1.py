@@ -1,6 +1,5 @@
 from core4.api.v1.application import CoreApiContainer
-import project.api.request
-from core4.api.v1.request.static import CoreStaticFileHandler
+from core4.api.v1.request.standard.static import CoreStaticFileHandler
 import project.api.server2
 from core4.api.v1.test import StopHandler
 
