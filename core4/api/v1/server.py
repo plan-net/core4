@@ -44,7 +44,7 @@ from core4.api.v1.request.standard.login import LoginHandler
 from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.api.v1.request.standard.setting import SettingHandler
-from core4.api.v1.request.static import CoreStaticFileHandler
+from core4.api.v1.request.standard.static import CoreStaticFileHandler
 
 from core4.api.v1.request.link import CoreLinkHandler
 
