@@ -27,7 +27,6 @@ class LoginHandler(CoreRequestHandler):
         """
         Same as :meth:`.post`
         """
-
         if self.wants_html():
             if "login" in self.request.path:
                 return self.render("template/login.html")
