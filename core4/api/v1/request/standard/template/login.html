@@ -139,13 +139,13 @@
         },
         methods: {
           toReset(){
-            window.location.assign('/core4/api/v1/reset');
+            window.location.assign('{{ auth_url }}/reset');
           },
           
           login() {
             const { username, password } = this;
             return axios
-              .post("/core4/api/v1/login", { username, password })
+              .post("{{ auth_url }}/login", { username, password })
               .then(result => {
                 window.localStorage.setItem(
                   "user",
