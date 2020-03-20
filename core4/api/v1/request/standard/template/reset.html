@@ -345,11 +345,11 @@
         watch: {},
         methods: {
           toLogin() {
-            window.location.assign("/core4/api/v1/login");
+            window.location.assign("{{ auth_url }}/login");
           },
           forgot(payload) {
             try {
-              axios.put(`/core4/api/v1/login`, payload).then(val => {
+              axios.put(`{{ auth_url }}/login`, payload).then(val => {
                 this.finished = true;
               });
             } catch (err) {
@@ -358,7 +358,7 @@
           },
           reset(payload) {
             try {
-              axios.put(`/core4/api/v1/login`, payload).then(val => {
+              axios.put(`{{ auth_url }}/login`, payload).then(val => {
                 this.finished = true;
               });
             } catch (err) {

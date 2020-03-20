@@ -12,13 +12,18 @@ import base64
 import datetime
 import json
 import os
+import time
 import traceback
+import urllib.parse
+from uuid import uuid4
 
+import core4.const
+import core4.error
+import core4.util.node
 import dateutil.parser
 import jwt
 import mimeparse
 import pandas as pd
-import time
 import tornado.escape
 import tornado.gen
 import tornado.httputil
@@ -26,16 +31,11 @@ import tornado.iostream
 import tornado.routing
 import tornado.template
 from bson.objectid import ObjectId
-from tornado.web import RequestHandler, HTTPError
-import urllib.parse
-
-import core4.const
-import core4.error
-import core4.util.node
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode, rst2html
 from core4.util.pager import PageResult
+from tornado.web import RequestHandler, HTTPError
 
 tornado.escape.json_encode = json_encode
 try:
@@ -175,10 +175,10 @@ class CoreBaseHandler(CoreBase):
                 if await self.verify_access():
                     return
                 raise HTTPError(403)
-
-            from uuid import uuid4
-            self.redirect("/core4/api/v1/login?h=" + str(uuid4())+'&next='+ urllib.parse.quote(self.request.path))
-            #raise HTTPError(401)
+            url = self.config.api.auth_url.strip()
+            goto = url + "/login?h={uuid}&next={next}".format(
+                uuid=str(uuid4()), next=urllib.parse.quote(self.request.path))
+            self.redirect(goto)
 
     async def verify_access(self):
         """
@@ -467,7 +467,6 @@ class CoreBaseHandler(CoreBase):
         if self.wants_html() or getattr(self, "reply", None) is None:
             return self.render(self.help_html_page, **data)
         return self.reply(data)
-
 
     def get_template_path(self):
         """
