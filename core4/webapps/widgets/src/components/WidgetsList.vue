@@ -4,7 +4,6 @@
     no-gutters
   >
     <v-col class="pl-5 pr-7">
-      <pre>{{searchInput}}</pre>
       <!-- :disabled="false" -->
       <v-autocomplete
         v-model="tags"
