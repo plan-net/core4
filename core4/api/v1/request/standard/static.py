@@ -34,6 +34,7 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
     author = "mra"
     path = None
     default_filename = DEFAULT_FILENAME
+    perm_base = "container"
 
     def __init__(self, *args, **kwargs):
         try:
@@ -90,3 +91,17 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
         if abspath != "":
             return StaticFileHandler.get_content(abspath, start, end)
         return
+
+
+    async def verify_access(self):
+        """
+        Verifies the user has access to the api container using
+        :meth:`User.has_api_access`.
+
+        :return: ``True`` for success, else ``False``
+        """
+        container = self.application.container.qual_name()
+        if self.user and await self.user.has_api_access(container):
+            return True
+        return False
+

@@ -121,6 +121,7 @@ api:
   user_realname: standard user group
   user_permission:
     - api://core4.api.v1.request.standard.*
+    - api://core4.api.v1.server.*
   verify_ssl: True
   age_range:
     30: this month

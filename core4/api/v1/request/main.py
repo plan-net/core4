@@ -83,6 +83,8 @@ class CoreBaseHandler(CoreBase):
     ]
     concurr = True
     doc = None
+    # permission can be based on handler or container qual_name
+    perm_base = "handler"
 
     def __init__(self, *args, **kwargs):
         """
