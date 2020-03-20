@@ -27,7 +27,6 @@ class LoginHandler(CoreRequestHandler):
         """
         Same as :meth:`.post`
         """
-
         if self.wants_html():
             root = self.config.api.auth_url.rstrip()
             if "login" in self.request.path:
