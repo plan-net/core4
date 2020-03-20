@@ -1,12 +1,14 @@
 <template>
-  <v-row class="widgets-list"
+  <v-row
+    class="widgets-list"
     no-gutters
   >
     <v-col class="pl-5 pr-7">
+      <pre>{{searchInput}}</pre>
+      <!-- :disabled="false" -->
       <v-autocomplete
         v-model="tags"
         class="mt-2"
-        :disabled="false"
         :items="autocompleteItems.all"
         filled
         solo
@@ -17,7 +19,6 @@
         auto-select-first
         hide-details
         :open-on-clear="false"
-
         :menu-props="{auto: true, closeOnContentClick:true}"
         label=""
         item-text="text"
@@ -25,20 +26,7 @@
         :search-input.sync="searchInput"
         multiple
       >
-<!--         <template v-slot:selection="data">
-          <v-chip
-            :selected="data.selected"
-            close
-            class="chip--select-multi"
-            @input="removeTagFromSearch(data.item)"
-          >
-            {{ data.item.text }}
-          </v-chip>
-
-        </template> -->
-
         <template v-slot:item="data">
-
           <v-list-item-content>
             <v-list-item-title v-html="data.item.text"></v-list-item-title>
           </v-list-item-content>
@@ -117,16 +105,18 @@
               </v-layout>
 
               <v-list-item-content>
-                <v-list-item-title>{{ item.title }}</v-list-item-title>
-                <v-tooltip top>
-                  <template v-slot:activator="{ on }">
-                    <v-list-item-subtitle
-                      v-on="on"
-                      v-text="item.$qual_name"
-                    ></v-list-item-subtitle>
-                  </template>
-                  <span>{{item.qual_name}}</span>
-                </v-tooltip>
+                <span @click="openInNew(item)">
+                  <v-list-item-title>{{ item.title }}</v-list-item-title>
+                  <v-tooltip left>
+                    <template v-slot:activator="{ on }">
+                      <v-list-item-subtitle
+                        v-on="on"
+                        v-text="item.$qual_name"
+                      ></v-list-item-subtitle>
+                    </template>
+                    <span>{{item.qual_name}}</span>
+                  </v-tooltip>
+                </span>
               </v-list-item-content>
               <v-list-item-action class="with-hover">
                 <v-tooltip
@@ -325,9 +315,12 @@ export default {
   padding-right: 6px;
 }
 
+/deep/ .v-list-item__content {
+  cursor: pointer;
+}
+
 .drag {
   cursor: grab;
-
   &.is-not-draggable {
     cursor: unset !important;
   }
@@ -337,7 +330,6 @@ export default {
   /deep/ .dnd-grid-box.placeholder {
     border: 1px dashed #fff !important;
   }
-
   /deep/ .dnd-grid-box.dragging {
     opacity: 0.5 !important;
   }

@@ -1,9 +1,9 @@
 import getpass
 import os
-import sys
-from subprocess import Popen, DEVNULL
-import pymongo.errors
 import shutil
+import sys
+
+import pymongo.errors
 import yaml
 
 if os.getuid() != 0:
@@ -13,8 +13,15 @@ if os.getuid() != 0:
         "/usr/bin/sudo",
         ["/usr/bin/sudo", sys.executable]
         + sys.argv
-        + [str(os.getuid()), str(os.getgid()), os.path.expanduser("~")
-           ])
+        + [
+            str(os.getuid()),
+            str(os.getgid()),
+            os.path.expanduser("~")
+        ])
+
+if len(sys.argv) < 2:
+    print("must not start local_setup.py as root")
+    sys.exit(-1)
 
 HOME = sys.argv[-1]
 GID = int(sys.argv[-2])
