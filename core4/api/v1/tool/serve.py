@@ -11,7 +11,7 @@ Implements :class:`.CoreApiServerTool to serve one or multiple
 """
 
 import importlib
-
+import os
 import tornado.httpserver
 import tornado.ioloop
 import tornado.routing
@@ -60,7 +60,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         cert_file = self.config.api.crt_file
         key_file = self.config.api.key_file
         # global settings
-        name = name or "app"
+        name = name or str(os.getpid()) # self.project # "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
         self.port = int(port or self.config.api.port)
         self.address = address or "0.0.0.0"
