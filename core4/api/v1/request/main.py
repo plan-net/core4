@@ -177,10 +177,14 @@ class CoreBaseHandler(CoreBase):
                 if await self.verify_access():
                     return
                 raise HTTPError(403)
-            url = self.config.api.auth_url.strip()
-            goto = url + "/login?h={uuid}&next={next}".format(
-                uuid=str(uuid4()), next=urllib.parse.quote(self.request.path))
-            self.redirect(goto)
+            url = "".join([
+                self.request.protocol,
+                ":",
+                self.config.api.auth_url.strip(),
+                "/login?h={uuid}&next={next}".format(
+                    uuid=str(uuid4()),
+                    next=urllib.parse.quote(self.request.full_url()))])
+            self.redirect(url)
 
     async def verify_access(self):
         """
