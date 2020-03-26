@@ -1,6 +1,11 @@
-from setuptools import find_packages
-from setuptools import setup
+try:
+    from pip._internal.cli.main import main
+except:
+    from pip import main
+main(["install", "/home/mra/PycharmProjects/core4build"])
+from core4build import setup
 
+from setuptools import find_packages
 
 import core4
 
@@ -60,7 +65,7 @@ setup(
             "websockets"
         ]
     },
-    zip_safe=False,
+    #zip_safe=False,
     classifiers=(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
