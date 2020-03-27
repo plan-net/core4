@@ -12,7 +12,7 @@ const api = {
   },
   getBoards (dto) {
     return axiosInternal
-      .get(`/setting/core_widgets`)
+      .get('/setting/core_widgets')
       .then(result => {
         if (result.data.boards == null) {
           return {
@@ -28,7 +28,7 @@ const api = {
   },
   _putBoards (data) {
     return axiosInternal
-      .put(`/setting/core_widgets`, { data })
+      .put('/setting/core_widgets', { data })
       .then(result => {
         return true
       })
@@ -100,7 +100,7 @@ const api = {
       return Object.assign(widget, { $search: $search.split(' ') })
     }
     return axiosInternal
-      .get(`/_info`, { params: { per_page: 1000, page: 0 } })
+      .get('/_info', { params: { per_page: 1000, page: 0 } })
       .then(result => {
         const token = `?token=${
           JSON.parse(window.localStorage.getItem('user')).token

@@ -2,7 +2,7 @@
   <div>
     Unable connect to the server. Please try <a @click="socketConnect">again later</a>.
   </div>
-<!--  <v-btn color="primary" @click="socketConnect">Try Again</v-btn>-->
+  <!--  <v-btn color="primary" @click="socketConnect">Try Again</v-btn>-->
 </template>
 
 <script>
@@ -17,7 +17,7 @@ export default {
     socketConnect () {
       this.$disconnect()
 
-      let token = JSON.parse(localStorage.getItem('user'))['token']
+      const token = JSON.parse(localStorage.getItem('user')).token
       this.$connect(`${getBasePath()}/event?token=${token}`)
     }
   }
@@ -26,7 +26,7 @@ export default {
 
 <style scoped>
 a {
-  color: #FFFFFF;
+  color: #ffffff;
   text-decoration: underline;
   cursor: pointer;
 }

@@ -1,26 +1,51 @@
 <template>
   <c4-page>
     <v-layout column>
-      <v-flex v-for="(notification, key) in notifications" :key="key">
-        <c4-notification v-if="notification.inComponents.includes('home')"
-                      @timeout-handler="notificationUpdateHandler"
-                      :show="notification.state"
-                      :type="notification.type"
-                      :message="notification.message"
-                      :dismissible="notification.dismissible"
-                      :timeout="notification.timeout"
-                      :name="key">
+      <v-flex
+        v-for="(notification, key) in notifications"
+        :key="key"
+      >
+        <c4-notification
+          v-if="notification.inComponents.includes('home')"
+          @timeout-handler="notificationUpdateHandler"
+          :show="notification.state"
+          :type="notification.type"
+          :message="notification.message"
+          :dismissible="notification.dismissible"
+          :timeout="notification.timeout"
+          :name="key"
+        >
           <component :is="notification.slot"></component>
         </c4-notification>
       </v-flex>
       <v-flex>
-        <v-layout row wrap xs12>
-          <v-flex v-for="(states, group) in groupsJobsByStates" :key="group" class="ma-2 flex-equal-size">
-            <board xs12 md4 lg4 xl4 :name="group" :flags="flags" :states="states" class="pa-3"></board>
+        <v-layout
+          row
+          wrap
+          xs12
+        >
+          <v-flex
+            v-for="(states, group) in groupsJobsByStates"
+            :key="group"
+            class="ma-2 flex-equal-size"
+          >
+            <board
+              xs12
+              md4
+              lg4
+              xl4
+              :name="group"
+              :flags="flags"
+              :states="states"
+              class="pa-3"
+            ></board>
           </v-flex>
         </v-layout>
       </v-flex>
-      <v-flex ma-2 hidden-sm-and-down>
+      <v-flex
+        ma-2
+        hidden-sm-and-down
+      >
         <stock-chart></stock-chart>
       </v-flex>
     </v-layout>
@@ -54,7 +79,7 @@ export default {
   },
   methods: {
     ...mapMutations({
-      'notificationUpdate': NOTIFICATION_CHANGE_STATE
+      notificationUpdate: NOTIFICATION_CHANGE_STATE
     }),
     notificationUpdateHandler (event, data) {
       this.notificationUpdate({ name: event, data: data })
@@ -68,7 +93,7 @@ export default {
   },
   watch: {
     socketConnected (newValue) {
-      let data = {
+      const data = {
         state: false
       }
 
