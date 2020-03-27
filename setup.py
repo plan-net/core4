@@ -2,7 +2,7 @@ try:
     from pip._internal.cli.main import main
 except:
     from pip import main
-main(["install", "/home/mra/PycharmProjects/core4build"])
+main(["install", "--quiet", "/home/mra/PycharmProjects/core4build"])
 from core4build import setup
 
 from setuptools import find_packages
