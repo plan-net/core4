@@ -3,7 +3,7 @@
   "core4": {
     "build_command": [
       "yarn",
-      "yarn build --dest dist --modern"
+      "yarn build --dest dist"
     ],
     "dist": "./dist"
   },
