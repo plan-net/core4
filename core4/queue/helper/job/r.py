@@ -19,7 +19,6 @@ from core4.queue.helper.job.base import CoreAbstractMixin
 
 RSCRIPT = "/usr/bin/Rscript"
 RLIB = "../lib/R"  # from Python executable
-RLIBVAR = "R_LIBS_SITE"
 
 SNIPPET = """
 

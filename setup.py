@@ -2,13 +2,14 @@ try:
     from pip._internal.cli.main import main
 except:
     from pip import main
-main(["install", "--quiet", "/home/mra/PycharmProjects/core4build"])
-from core4build import setup
 
+main(["install", "-U", "--quiet",
+      "git+https://github.com/plan-net/core4build.git"])
+
+from core4build import setup
 from setuptools import find_packages
 
 import core4
-
 
 setup(
     name='core4',
@@ -65,7 +66,7 @@ setup(
             "websockets"
         ]
     },
-    #zip_safe=False,
+    zip_safe=False,
     classifiers=(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
