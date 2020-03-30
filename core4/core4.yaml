@@ -106,7 +106,6 @@ api:
   card_html_page: standard/template/card.html
   help_html_page: standard/template/help.html
   info_html_page: standard/template/info.html
-  #auth_url: //localhost:5001/core4/api/v1
   auth_url: /core4/api/v1
   reset_password:
     expiration: 28800  # 8h
