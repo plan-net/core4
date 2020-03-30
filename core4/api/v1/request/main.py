@@ -178,8 +178,6 @@ class CoreBaseHandler(CoreBase):
                     return
                 raise HTTPError(403)
             url = "".join([
-                self.request.protocol,
-                ":",
                 self.config.api.auth_url.strip(),
                 "/login?h={uuid}&next={next}".format(
                     uuid=str(uuid4()),
