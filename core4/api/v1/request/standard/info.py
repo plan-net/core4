@@ -44,6 +44,9 @@ class InfoHandler(CoreRequestHandler):
         result = []
         for handler in await self.application.container.get_handler():
             check = []
+
+            self.logger.info("handler: [%s]", str(handler))
+
             if handler["perm_base"] == "handler":
                 check.append(handler["qual_name"])
             elif handler["perm_base"] == "container":
