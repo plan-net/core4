@@ -73,7 +73,7 @@ export default {
   },
   created () {
     this.$validator.extend('board_exists', {
-      getMessage: field => `The board already exists.`,
+      getMessage: field => 'The board already exists.',
       validate: value => {
         if (this.internalBoards.length === 0) {
           return true

@@ -1,7 +1,11 @@
 <template>
   <v-layout>
     <v-flex class="chart">
-      <vue-highcharts constructor-type="stockChart" :options="chartOptions" ref="chart"></vue-highcharts>
+      <vue-highcharts
+        constructor-type="stockChart"
+        :options="chartOptions"
+        ref="chart"
+      ></vue-highcharts>
     </v-flex>
   </v-layout>
 </template>
@@ -278,7 +282,7 @@ export default {
       const chart = component.$refs.chart.chart
       const socketNotifications = {
         [SOCKET_ONMESSAGE] (state) {
-          let msg = state.socket.message
+          const msg = state.socket.message
 
           if (msg.channel === 'queue' && msg.name !== 'summary') {
             console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
@@ -567,9 +571,9 @@ export default {
 // ======================================================================================= //
 
 function createSeriesData () {
-  let arr = []
+  const arr = []
 
-  for (let key in jobColors) {
+  for (const key in jobColors) {
     const color = jobColors[key]
 
     arr.push({
@@ -601,5 +605,4 @@ function createSeriesData () {
 </script>
 
 <style scoped>
-
 </style>

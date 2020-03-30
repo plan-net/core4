@@ -15,10 +15,10 @@
     & .border-info {
       background-color: $info-panel-bck-color;
     }
-    /deep/ .flag.active {
+    ::v-deep .flag.active {
       color: #ffffff;
     }
-    /deep/ .flag.passive {
+    ::v-deep .flag.passive {
       color: rgba(255,255,255,0.18);
     }
     & .jobs {

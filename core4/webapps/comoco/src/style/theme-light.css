@@ -6,10 +6,10 @@
 .theme--light .board .border-info {
   background-color: #f2f2f2;
 }
-.theme--light .board /deep/ .flag.active {
+.theme--light .board ::v-deep .flag.active {
   color: #ffffff;
 }
-.theme--light .board /deep/ .flag.passive {
+.theme--light .board ::v-deep .flag.passive {
   color: rgba(255, 255, 255, 0.18);
 }
 .theme--light .board .jobs {

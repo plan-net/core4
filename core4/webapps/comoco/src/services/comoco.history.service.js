@@ -10,7 +10,7 @@ export default {
     const serverAPI = api
 
     // extend with default server API
-    for (let method in serverAPI) {
+    for (const method in serverAPI) {
       Vue.prototype[`$${method}`] = serverAPI[method]
     }
 
@@ -21,12 +21,12 @@ export default {
 
 function * chartHistory (startDate, endDate) {
   let start
-  let perPage = 1000
+  const perPage = 1000
 
   try {
     start = yield getChartHistory(perPage, 1, startDate, endDate)
 
-    for (let page of range(++start.page, --start.page_count)) {
+    for (const page of range(++start.page, --start.page_count)) {
       yield api.getQueueHistory(page, perPage, start.startDate, start.endDate)
     }
   } catch (e) {
@@ -47,7 +47,9 @@ async function getChartHistory (perPage, sort, startDate, endDate) {
       setting = await api.getSetting()
 
       if (setting.comoco && setting.comoco.startDate) {
-        startDate = moment(setting.comoco.startDate).format('YYYY-MM-DDTHH:mm:ss')
+        startDate = moment(setting.comoco.startDate).format(
+          'YYYY-MM-DDTHH:mm:ss'
+        )
       }
     }
 
@@ -55,7 +57,13 @@ async function getChartHistory (perPage, sort, startDate, endDate) {
       endDate = moment(endDate).format('YYYY-MM-DDTHH:mm:ss') // mongoDB filter
     }
 
-    history = await api.getQueueHistory(null, perPage, startDate, endDate, sort)
+    history = await api.getQueueHistory(
+      null,
+      perPage,
+      startDate,
+      endDate,
+      sort
+    )
   } catch (err) {
     throw Error(err)
   }
