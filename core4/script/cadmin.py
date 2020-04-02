@@ -63,6 +63,7 @@ if os.path.exists(LOGFILE):
 
 # ensure pip >= 18.1
 import pip
+import grp
 
 #: minimum required pip version
 PIP_VERSION = (18, 1)
@@ -243,10 +244,12 @@ class CoreInstaller(WebBuilder):
         (url, marker) = self.parse_repository()
         if not os.path.exists(self.clone):
             self.popen("git", "clone", url, self.clone, quiet=quiet)
-        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD", quiet=quiet)
+        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD",
+                   quiet=quiet)
         self.popen("git", "-C", self.clone, "checkout", marker, quiet=quiet)
-        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD", quiet=quiet)
-        self.popen("git", "-C", self.clone, "pull", quiet=quiet )
+        self.popen("git", "-C", self.clone, "reset", "--hard", "HEAD",
+                   quiet=quiet)
+        self.popen("git", "-C", self.clone, "pull", quiet=quiet)
 
     def parse_repository(self):
         url_match = re.match("(.+?)(@[^\/]+)?$", self.repository)
@@ -278,6 +281,25 @@ class CoreInstaller(WebBuilder):
             "  installing Python virtual environment in [{}]".format(
                 self.venv))
         self.popen("/usr/bin/python3", "-m", "venv", self.venv)
+        rvenv = os.path.join(self.venv, "lib", "R")
+        if not os.path.exists(rvenv):
+            os.mkdir(rvenv)
+            os.chmod(rvenv, mode=0o770)
+
+        try:
+            groupinfo = grp.getgrnam('core4')
+            os.chown(rvenv, 0, groupinfo.gr_gid)
+            self.print(
+                "  successfully created R library directory within the python "
+                "virutal environment and assigned it to user core4")
+        except KeyError:
+            self.print(
+                "  successfully created R library directory within the python"
+                " virtual environment")
+        except PermissionError:
+            self.print(
+                "  successfully created R library directory within the python"
+                " virtual environment")
 
     def upgrade_pip(self):
         """
@@ -399,10 +421,10 @@ class CoreInstaller(WebBuilder):
         core4_repository = core4_repository[0] if core4_repository else ""
         current = data["commit"]
         self.check_for_upgrade()
-        #self.print("check for upgrade [{}]".format(self.project))
+        # self.print("check for upgrade [{}]".format(self.project))
         if os.path.isdir(self.repository):
             self.clone = self.repository
-            #self.print("  installing from [{}]".format(self.clone))
+            # self.print("  installing from [{}]".format(self.clone))
         else:
             self.checkout(quiet=True)
         latest = self.get_local_commit()
