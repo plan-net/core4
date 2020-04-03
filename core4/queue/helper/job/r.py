@@ -22,6 +22,10 @@ RLIB = "../lib/R"  # from Python executable
 RLIBVAR = "R_LIBS_SITE"
 
 SNIPPET = """
+
+r = getOption("repos")
+r["CRAN"] = "%s"
+options(repos = r)
 if(require('feather')==FALSE){
     install.packages('feather')
 }
@@ -47,7 +51,7 @@ class CoreRJob(CoreLoadJob, CoreAbstractMixin):
             else:
                 value = v
             exchange[k] = value
-        snippet = SNIPPET % (tempdir)
+        snippet = SNIPPET % (self.config.rjob.cran_mirror, tempdir)
         if source is not None:
             if source.startswith("/"):
                 source = os.path.join(self.project_path(), source[1:])

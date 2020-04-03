@@ -70,6 +70,9 @@ job:
   progress_interval: 5
   archive_stamp: "{year:04d}/{month:02d}/{day:02d}/{_id:s}"
 
+rjob:
+  cran_mirror: "http://cran.us.r-project.org"
+
 daemon:
   heartbeat: 15
   alive_timeout: 60
