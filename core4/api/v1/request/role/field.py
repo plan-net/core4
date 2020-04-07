@@ -20,12 +20,22 @@ from core4.const import COP
 PROTOCOL = [
     re.compile(r"^" + COP + "$"),
     re.compile(r"^job://[^\s\/]+/[xr]$"),
-    re.compile(r"^api://[^\s\/]+$"),
+    re.compile(r"^api://[^\s\/]+($|/[crud]$)"),
     re.compile(r"^app://[^\s]+$"),
     re.compile(r"^mongodb://[^\s]+$")
 ]
 JOB_EXECUTION_RIGHT = 'x'
 JOB_READ_RIGHT = 'r'
+
+METHOD_PERMISSION = {"GET": "r",
+                     "HEAD": "r",
+                     "OPTIONS": "r",
+                     "CONNECT": "r",
+                     "TRACE": "r",
+                     "POST": "c",
+                     "PUT": "u",
+                     "PATCH": "u",
+                     "DELETE": "d"}
 
 
 class Field:

@@ -946,7 +946,8 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
 
         :return: ``True`` for success, else ``False``
         """
-        if self.user and await self.user.has_api_access(self.qual_name()):
+        if self.user and await self.user.has_api_access(self.qual_name(),
+                                                        self.request.method):
             return True
         return False
 

@@ -519,3 +519,128 @@ async def test_profile_cascade(core4api):
     assert data["is_active"]
     assert data["role"] == ['test_reg_role', 'test_reg_role2']
     assert data["token_expires"] is not None
+
+
+async def add_user_r(http, username):
+    http.set_admin()
+    rv = await http.post("/core4/api/v1/roles",
+                         json={
+                             "name": username,
+                             "role": ["standard_user"],
+                             "email": username + "@mail.com",
+                             "passwd": username,
+                             "perm": ["api://core4.api.v1.request.role/r"]
+                         })
+    assert rv.code == 200
+    http.token = None
+    conn = await http.get(
+        "/core4/api/v1/login?username=" + username + "&password=" + username)
+    assert conn.code == 200
+    http.token = conn.json()["data"]["token"]
+
+async def add_user_c(http, username):
+    http.set_admin()
+    rv = await http.post("/core4/api/v1/roles",
+                         json={
+                             "name": username,
+                             "role": ["standard_user"],
+                             "email": username + "@mail.com",
+                             "passwd": username,
+                             "perm": ["api://core4.api.v1.request.role/c"]
+                         })
+    assert rv.code == 200
+    http.token = None
+    conn = await http.get(
+        "/core4/api/v1/login?username=" + username + "&password=" + username)
+    assert conn.code == 200
+    http.token = conn.json()["data"]["token"]
+
+async def add_user_u(http, username):
+    http.set_admin()
+    rv = await http.post("/core4/api/v1/roles",
+                         json={
+                             "name": username,
+                             "role": ["standard_user"],
+                             "email": username + "@mail.com",
+                             "passwd": username,
+                             "perm": ["api://core4.api.v1.request.role/u"]
+                         })
+    assert rv.code == 200
+    http.token = None
+    conn = await http.get(
+        "/core4/api/v1/login?username=" + username + "&password=" + username)
+    assert conn.code == 200
+    http.token = conn.json()["data"]["token"]
+
+async def add_user_d(http, username):
+    http.set_admin()
+    rv = await http.post("/core4/api/v1/roles",
+                         json={
+                             "name": username,
+                             "role": ["standard_user"],
+                             "email": username + "@mail.com",
+                             "passwd": username,
+                             "perm": ["api://core4.api.v1.request.role/d"]
+                         })
+    assert rv.code == 200
+    http.token = None
+    conn = await http.get(
+        "/core4/api/v1/login?username=" + username + "&password=" + username)
+    assert conn.code == 200
+    http.token = conn.json()["data"]["token"]
+
+
+async def test_method_permission(core4api):
+    await core4api.login()
+    rv = await core4api.get("/core4/api/v1/profile")
+    assert rv.code == 200
+
+    # check GET
+    await add_user_r(core4api, "test_reg_user1")
+    rv = await core4api.get("/core4/api/v1/roles")
+    assert rv.code == 200
+    rv = await core4api.post("/core4/api/v1/roles")
+    assert rv.code == 403
+
+    # check POST
+    await add_user_c(core4api, "test_reg_user2")
+    rv = await core4api.post("/core4/api/v1/roles",
+                            json={
+                                "name": "mkr",
+                                "role": ["standard_user"],
+                                "email": "mkr" + "@mail.com",
+                                "passwd": "mkr",
+                                "perm": ["api://core4.api.v1.request.role/d"]
+                                })
+    assert rv.code == 200
+    rv = await core4api.get("/core4/api/v1/roles")
+    assert rv.code == 403
+
+    # check PUT
+    await add_user_u(core4api, "test_reg_user3")
+    user_id = await core4api.get("/core4/api/v1/profile")
+    assert user_id.code == 200
+    rv = await core4api.get("/core4/api/v1/roles")
+    assert rv.code == 403
+    rv = await core4api.put("/core4/api/v1/roles/" +
+                            user_id.json()["data"]["_id"],
+                            json={
+                                "name": "mkr2",
+                                "role": ["standard_user"],
+                                "email": "mkr2" + "@mail.com",
+                                "passwd": "mkr2",
+                                "perm": ["api://core4.api.v1.request.role/d"],
+                                "etag": user_id.json()["data"]["etag"]
+                                })
+    assert rv.code == 200
+
+    # check DELETE
+    await add_user_d(core4api, "test_perm_user4")
+    rv = await core4api.get("/core4/api/v1/roles")
+    assert rv.code == 403
+    user_id = await core4api.get("/core4/api/v1/profile")
+    rv = await core4api.delete("/core4/api/v1/roles/" +
+                               user_id.json()["data"]["_id"] +
+                               "?etag=" + user_id.json()["data"]["etag"])
+    assert rv.code == 200
+
