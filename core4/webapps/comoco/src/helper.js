@@ -10,20 +10,16 @@ import { clone } from 'core4ui/core4/helper'
  *                e. g. {<key 1>: <defaultValue>, <key n>: <defaultValue>}
  */
 function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
-  const iterator = Array.isArray(iterableObj)
-    ? iterableObj
-    : Object.keys(iterableObj)
-  const value = isFunction(defaultValue) ? defaultValue : clone(defaultValue)
+  let iterator = Array.isArray(iterableObj) ? iterableObj : Object.keys(iterableObj)
+  let value = isFunction(defaultValue) ? defaultValue : clone(defaultValue)
 
   // !!! clone function returns an empty object in case of
   // !!! cloning object values are functions
-  return clone(
-    iterator.reduce((computedResult, currentItem) => {
-      computedResult[currentItem] = value
+  return clone(iterator.reduce((computedResult, currentItem) => {
+    computedResult[currentItem] = value
 
-      return computedResult
-    }, {})
-  )
+    return computedResult
+  }, {}))
 
   // return clone(Object.assign(...iterator.map(k => ({ [k]: clone(defaultValue) }))))
 }
@@ -34,17 +30,13 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
  * @returns {string}
  */
 function getBasePath () {
-  const isSecure = (location && location.protocol === 'https:') || false
+  let isSecure = location && location.protocol === 'https:' || false
 
   if (process.env.NODE_ENV === 'development') {
-    // development always runs under http
-    return process.env.VUE_APP_APIBASE_CORE_WS
+    return isSecure ? process.env.VUE_APP_APIBASE_CORE_WSS : process.env.VUE_APP_APIBASE_CORE_WS
   } else {
     // production
-    return (
-      (isSecure ? 'wss://' : 'ws://') +
-      `${window.location.host}${process.env.VUE_APP_APIBASE_CORE_WS}`
-    )
+    return (isSecure ? 'wss://' : 'ws://') + `${window.location.host}${process.env.VUE_APP_APIBASE_CORE_WS}`
   }
 }
 
@@ -136,21 +128,19 @@ function subscribeDecorator (funcGenerator) {
       let head = {}
       let tail = head // queue of calls, 1-linked list
 
-      const ID = Math.random() // unique id
+      let ID = Math.random() // unique id
 
       function onmessage (e) {
         if (e.data !== ID) return // not our message
         head = head.next
-        const func = head.func
+        let func = head.func
         delete head.func
         func()
       }
 
-      if (window.addEventListener) {
-        // IE9+
+      if (window.addEventListener) { // IE9+
         window.addEventListener('message', onmessage)
-      } else {
-        // IE8
+      } else { // IE8
         window.attachEvent('onmessage', onmessage)
       }
 
@@ -158,7 +148,7 @@ function subscribeDecorator (funcGenerator) {
         tail = tail.next = { func: func }
         window.postMessage(ID, '*')
       }
-    })()
+    }())
   }
 
   const next = (iter, callbacks, prev = undefined) => {
@@ -171,23 +161,20 @@ function subscribeDecorator (funcGenerator) {
     }
 
     if (isPromise(value)) {
-      value.then(
-        val => {
-          onNext(val)
-          setImmediate(() => next(iter, callbacks, val))
-        },
-        err => {
-          onError(err)
-          setImmediate(() => next(iter, callbacks, err))
-        }
-      )
+      value.then(val => {
+        onNext(val)
+        setImmediate(() => next(iter, callbacks, val))
+      }, err => {
+        onError(err)
+        setImmediate(() => next(iter, callbacks, err))
+      })
     } else {
       onNext(value)
       setImmediate(() => next(iter, callbacks, value))
     }
   }
 
-  const gensync = fn => (...args) => ({
+  const gensync = (fn) => (...args) => ({
     subscribe: (onNext, onError, onCompleted) => {
       next(fn(...args), { onNext, onError, onCompleted })
     }
@@ -258,9 +245,7 @@ function isGenerator (fn) {
  * @returns {boolean}
  */
 function isFunction (functionToCheck) {
-  return (
-    functionToCheck && {}.toString.call(functionToCheck) === '[object Function]'
-  )
+  return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]'
 }
 
 /**
@@ -280,10 +265,7 @@ function isObject (item) {
  * @returns {boolean}
  */
 function isEmptyObject (objectToCheck) {
-  return (
-    Object.keys(objectToCheck).length === 0 &&
-    objectToCheck.constructor === Object
-  )
+  return Object.keys(objectToCheck).length === 0 && objectToCheck.constructor === Object
 }
 
 /**
