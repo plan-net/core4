@@ -189,8 +189,8 @@ function subscribeDecorator (funcGenerator) {
   }
 
   const gensync = fn => (...args) => ({
-    subscribe: (onNext, onError, onCompleted) => {
-      next(fn(...args), { onNext, onError, onCompleted })
+    subscribe: (onNext, onErr, onCompleted) => {
+      next(fn(...args), { onNext, onErr, onCompleted })
     }
   })
 
