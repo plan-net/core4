@@ -165,9 +165,8 @@ The package.json contains control commands for the core4os build system. These c
 
     "core4": {
     "build_command": [
-      "rm yarn.lock",
       "yarn install",
-      "yarn build --dest dist --modern"
+      "yarn build --dest dist"
     ],
     "dist": "./dist"
     },
