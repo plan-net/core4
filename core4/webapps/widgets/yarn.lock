@@ -2,7 +2,6 @@
 # yarn lockfile v1
 
 
-
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.8.3":
   version "7.8.3"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.8.3.tgz#33e25903d7481181534e12ec0a25f16b6fcf419e"
@@ -2518,10 +2517,10 @@ core-util-is@1.0.2, core-util-is@~1.0.0:
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
 
-core4ui@^1.3.4:
-  version "1.3.4"
-  resolved "https://registry.yarnpkg.com/core4ui/-/core4ui-1.3.4.tgz#7a9bfe329e786811f00b9124d9b03cb14dc29604"
-  integrity sha512-en4c6GGL/2Xk6B2F1nMy3J0EAHYnbQeTgS84C/K7RYZkNxNzD3zkXF/OMFH+mKssDFRJJUKCqtbjERi7f8FiEg==
+core4ui@^1.3.5:
+  version "1.3.5"
+  resolved "https://registry.yarnpkg.com/core4ui/-/core4ui-1.3.5.tgz#6fde4259fcf046e025dc79c112ad699a30b896f8"
+  integrity sha512-Smm2TWW6zyUlPe0wWDujqPisPM/l4tRoNJnTikmOupOaRzd+czfGHlhwQeb9B3hXkHu9NpGmz9E2oLDFEulkGA==
   dependencies:
     axios "^0.19.2"
     core-js "^3.6.4"
