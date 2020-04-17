@@ -3,7 +3,8 @@
   "core4": {
     "build_command": [
       "yarn",
-      "yarn build --dest dist"
+      "yarn build --dest dist",
+      "version"
     ],
     "dist": "./dist"
   },
@@ -12,7 +13,8 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "add_version": "node node_modules/core4ui/core4/version.js"
   },
   "dependencies": {
     "@dattn/dnd-grid": "^0.0.14",
