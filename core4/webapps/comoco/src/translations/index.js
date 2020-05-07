@@ -8,8 +8,8 @@ const i18n = new VueI18n({
   fallbackLocale: 'en',
   messages: {
     en: {
-      'waiting': 'olha',
-      // 'waiting': 'waiting',
+      // 'waiting': 'olha',
+      'waiting': 'waiting',
       'running': 'running',
       'stopped': 'stopped'
     },

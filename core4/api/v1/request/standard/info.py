@@ -43,8 +43,18 @@ class InfoHandler(CoreRequestHandler):
             return await self.post()
         result = []
         for handler in await self.application.container.get_handler():
-            if await self.user.has_api_access(handler["qual_name"]):
-                result.append(handler)
+            check = []
+
+            # self.logger.info("handler: [%s]", str(handler))
+
+            if handler["perm_base"] == "handler":
+                check.append(handler["qual_name"])
+            elif handler["perm_base"] == "container":
+                check += handler["container"]
+            for test in check:
+                if await self.user.has_api_access(test):
+                    result.append(handler)
+                    break
         if self.wants_html():
             return self.render(self.info_html_page, data=result)
         self.reply(result)

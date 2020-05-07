@@ -1,10 +1,10 @@
 .theme--dark .board {
   background-color: #393939;
 }
-.theme--dark .board /deep/ .flag.active {
+.theme--dark .board ::v-deep .flag.active {
   color: #ffffff;
 }
-.theme--dark .board /deep/ .flag.passive {
+.theme--dark .board ::v-deep .flag.passive {
   color: rgba(255, 255, 255, 0.18);
 }
 .theme--dark .board .border-info {

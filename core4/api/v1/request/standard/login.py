@@ -27,11 +27,14 @@ class LoginHandler(CoreRequestHandler):
         """
         Same as :meth:`.post`
         """
+        if self.wants_html():
+            root = self.config.api.auth_url.rstrip()
+            if "login" in self.request.path:
+                return self.render("template/login.html", auth_url=root)
+            return self.render("template/reset.html", auth_url=root)
         token = await self._login()
         if token:
-            return self.reply({
-                "token": token
-            })
+            return self.reply({"token": token})
         self.set_header('WWW-Authenticate', 'Basic realm=Restricted')
         # raise HTTPError(401)
         self.set_status(401)

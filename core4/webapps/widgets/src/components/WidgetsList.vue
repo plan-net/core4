@@ -4,7 +4,6 @@
     no-gutters
   >
     <v-col class="pl-5 pr-7">
-      <pre>{{searchInput}}</pre>
       <!-- :disabled="false" -->
       <v-autocomplete
         v-model="tags"
@@ -306,7 +305,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-/deep/ .v-icon {
+::v-deep .v-icon {
   color: grey !important;
 }
 
@@ -315,7 +314,7 @@ export default {
   padding-right: 6px;
 }
 
-/deep/ .v-list-item__content {
+::v-deep .v-list-item__content {
   cursor: pointer;
 }
 
@@ -327,10 +326,10 @@ export default {
 }
 
 .theme--dark {
-  /deep/ .dnd-grid-box.placeholder {
+  ::v-deep .dnd-grid-box.placeholder {
     border: 1px dashed #fff !important;
   }
-  /deep/ .dnd-grid-box.dragging {
+  ::v-deep .dnd-grid-box.dragging {
     opacity: 0.5 !important;
   }
 }

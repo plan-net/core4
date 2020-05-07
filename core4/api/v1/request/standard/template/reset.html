@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Reset</title>
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        opacity: 0;
+      }
+      .v-application {
+        background-color: #232323 !important;
+        background: linear-gradient(120deg,#232323 55%,#202020 0) !important;
+
+      }
+    </style>
+    <style>
+      .Password {
+        width: 100%;
+        margin: 0 0 12px 0;
+        position: relative;
+      }
+
+      .Password__score {
+        position: absolute;
+        right: 0;
+      }
+      .Password__strength-meter {
+        position: relative;
+        height: 3px;
+        background: #ddd;
+        margin: 0 6px 0 0;
+        border-radius: 3px;
+      }
+
+      .Password__strength-meter--fill {
+        background: transparent;
+        height: inherit;
+        position: absolute;
+        width: 0;
+        border-radius: inherit;
+        transition: width 0.5s ease-in-out, background 0.25s;
+      }
+
+      .Password__strength-meter--fill[data-score="0"] {
+        background: #ff6400;
+        width: 20%;
+      }
+
+      .Password__strength-meter--fill[data-score="1"] {
+        background: #f4ce42;
+        width: 40%;
+      }
+
+      .Password__strength-meter--fill[data-score="2"] {
+        background: #a4539c;
+        width: 60%;
+      }
+
+      .Password__strength-meter--fill[data-score="3"] {
+        background: #146624;
+        width: 80%;
+      }
+
+      .Password__strength-meter--fill[data-score="4"] {
+        background: #64a505;
+        width: 100%;
+      }
+      .Password__score--0 {
+        color: #ff6400;
+      }
+      .Password__score--1 {
+        color: #f4ce42;
+      }
+      .Password__score--2 {
+        color: #a4539c;
+      }
+      .Password__score--3 {
+        color: #146624;
+      }
+      .Password__score--4 {
+        color: #64a505;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <v-app>
+        <v-dialog v-model="dialogLogin" max-width="520px" persistent>
+          <v-card tile class="pa-3">
+            <v-form @submit.prevent="onReset" ref="form">
+              <v-card-title class="pb-3">
+                <h2 class="title">Reset password</h2>
+              </v-card-title>
+              <template v-if="token">
+                <!--Request password reset with email-->
+                <v-card-text class="pt-2" v-if="finished">
+                  The password has been reset. Please visit the login page to
+                  continue.
+                </v-card-text>
+                <v-card-text class="pt-2" v-else>
+                  <v-text-field
+                    class="mb-3"
+                    autofocus
+                    clearable
+                    label="New password"
+                    v-model.lazy="password"
+                    :error-messages="errors.collect('New password')"
+                    data-vv-as="New password"
+                    data-vv-name="New password"
+                    v-validate="'required|passwordscore'"
+                    :append-icon="passwordVisible ? 'visibility' : 'visibility_off'"
+                    @click:append="passwordVisible = !passwordVisible"
+                    :type="passwordVisible ? 'text' : 'password'"
+                  ></v-text-field>
+
+                  <v-text-field
+                    class="mb-4"
+                    clearable
+                    label="Repeat password"
+                    v-model.lazy="password2"
+                    :error-messages="errors.collect('Repeat password')"
+                    data-vv-as="Repeat password"
+                    data-vv-name="Repeat password"
+                    required
+                    v-validate="'confirmspecial'"
+                    :append-icon="passwordVisible ? 'visibility' : 'visibility_off'"
+                    @click:append="passwordVisible = !passwordVisible"
+                    :type="passwordVisible ? 'text' : 'password'"
+                  >
+                  </v-text-field>
+                  <password
+                    :password="password"
+                    @score="score = $event; $validator.validateAll()"
+                  ></password>
+                </v-card-text>
+                <v-card-actions>
+                  <v-layout column>
+                    <v-flex>
+                      <v-btn
+                        ref="button"
+                        v-if="!finished"
+                        class="mb-3"
+                        color="primary"
+                        block
+                        :disabled="errors.any()"
+                        type="submit"
+                        >Submit</v-btn
+                      >
+                    </v-flex>
+                    <v-flex>
+                      <v-btn @click="toLogin()" text block>To login</v-btn>
+                    </v-flex>
+                  </v-layout>
+                </v-card-actions>
+              </template>
+              <template v-else>
+                <!--Forgot password-->
+                <v-card-text class="pt-2" v-if="finished">
+                  Please check your email inbox.
+                </v-card-text>
+                <v-card-text class="pt-2" v-else>
+                  <v-text-field
+                    autofocus
+                    clearable
+                    label="Email Address"
+                    v-model="email"
+                    required
+                    :error-messages="errors.collect('Email Address')"
+                    data-vv-as="Email Address"
+                    data-vv-name="Email Address"
+                    v-validate="'required|email'"
+                  ></v-text-field>
+                </v-card-text>
+                <v-card-actions>
+                  <v-layout column>
+                    <v-btn
+                      class="mb-3"
+                      ref="button"
+                      color="primary"
+                      block
+                      :disabled="errors.any()"
+                      type="submit"
+                      >Submit
+                    </v-btn>
+                    <v-btn @click="toLogin()" text block>To login</v-btn>
+                  </v-layout>
+                </v-card-actions>
+              </template>
+            </v-form>
+          </v-card>
+          <button-counter></button-counter>
+        </v-dialog>
+      </v-app>
+    </div>
+    <script src="//bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/vee-validate/2.2.15/vee-validate.js"></script>
+
+    <script>
+      Vue.use(VeeValidate, {
+        mode: "eager",
+        aria: false,
+        locale: "en"
+      });
+      //const urlParams = new URLSearchParams(window.location.search);
+      const token = new URLSearchParams(window.location.search).get("token");
+      if (token) {
+        const loader = (a, b, c, d) => {
+          a = "//cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js";
+          b = document;
+          c = "script";
+          d = b.createElement(c);
+          d.src = a;
+          d.type = "text/java" + c;
+          d.async = true;
+          a = b.getElementsByTagName(c)[0];
+          a.parentNode.insertBefore(d, a);
+        };
+        loader();
+      }
+      Vue.component("password", {
+        delimiters: ["[[", "]]"],
+        props: {
+          id: {
+            type: String,
+            default: "password"
+          },
+          password: {
+            type: String
+          },
+          secureLength: {
+            type: Number,
+            default: 7
+          }
+        },
+        created: function() {},
+        data() {
+          return {
+            feedback: "Passwortstärke"
+          };
+        },
+
+        computed: {
+          passwordStrength() {
+            try {
+              return this.password ? window.zxcvbn(this.password).score : null;
+            } catch (err) {}
+            return null;
+          },
+          isSecure() {
+            return this.password
+              ? this.password.length >= this.secureLength
+              : null;
+          },
+          passwordCount() {
+            return (
+              this.password &&
+              (this.password.length > this.secureLength
+                ? `${this.secureLength}+`
+                : this.password.length)
+            );
+          }
+        },
+        watch: {
+          passwordStrength(score) {
+            this.$emit("score", score);
+            this.feedback = window.zxcvbn(this.password).feedback;
+          }
+        },
+        template: `<div class="Password mt-2">
+                    <div class="Password__strength-meter">
+                      <div class="Password__strength-meter--fill" :data-score="passwordStrength"></div>
+                    </div>
+                    <div style="position: absolute; top: 4px;" class="grey--text caption">Password security</div>
+                    <div class="Password__score pr-2">
+                      <div class="text-xs-right">
+                        <div class="caption Password__score--0" v-if="passwordStrength === 0">Very weak</div>
+                        <div class="caption Password__score--1" v-else-if="passwordStrength === 1">Weak</div>
+                        <div class="caption Password__score--2" v-else-if="passwordStrength === 2">Ok</div>
+                        <div class="caption Password__score--3" v-else-if="passwordStrength === 3">Good</div>
+                        <div class="caption Password__score--4" v-else-if="passwordStrength === 4">Great</div>
+                      </div>
+                    </div>
+                  </div>`
+      });
+      new Vue({
+        delimiters: ["[[", "]]"],
+        el: "#app",
+        components: ["password"],
+        vuetify: new Vuetify({
+          icons: {
+            iconfont: "md"
+          },
+          theme: window.VUETIFY_THEME
+        }),
+        created() {
+          if (token) {
+            this.$validator.extend("passwordscore", {
+              getMessage: field => `The chosen password is not secure enough.`,
+              validate: () => {
+                return {
+                  valid: true // this.score > 1
+                };
+              }
+            });
+            this.$validator.extend("confirmspecial", {
+              getMessage: field => `The passwords do not match.`,
+              validate: () => {
+                return {
+                  valid: this.password === this.password2
+                };
+              }
+            });
+          }
+        },
+        data() {
+          return {
+            dialogLogin: true,
+            finished: false,
+            email: null,
+            token: token,
+            //
+            score: null,
+            passwordVisible: false,
+            finished: false,
+            error: null,
+            password: null,
+            password2: null
+          };
+        },
+        mounted() {
+          document.querySelector("body").style.opacity = 1;
+        },
+        watch: {},
+        methods: {
+          toLogin() {
+            window.location.assign("{{ auth_url }}/login");
+          },
+          forgot(payload) {
+            try {
+              axios.put(`{{ auth_url }}/login`, payload).then(val => {
+                this.finished = true;
+              });
+            } catch (err) {
+              this.error = err;
+            }
+          },
+          reset(payload) {
+            try {
+              axios.put(`{{ auth_url }}/login`, payload).then(val => {
+                this.finished = true;
+              });
+            } catch (err) {
+              this.finished = true;
+            }
+          },
+          onReset() {
+            this.$refs.button.$el.focus();
+            this.$validator.validateAll().then(
+              function(valid) {
+                if (valid) {
+                  if (this.token != null) {
+                    return this.reset({
+                      password: this.password,
+                      token: this.token
+                    });
+                  } else {
+                    this.forgot({
+                      email: this.email
+                    });
+                  }
+                }
+              }.bind(this)
+            );
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

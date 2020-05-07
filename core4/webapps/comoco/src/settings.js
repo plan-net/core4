@@ -25,7 +25,15 @@ const eventChannelNames = [
   'remove_job'
 ]
 
-const jobTypes = ['running', 'pending', 'deferred', 'failed', 'error', 'inactive', 'killed']
+const jobTypes = [
+  'running',
+  'pending',
+  'deferred',
+  'failed',
+  'error',
+  'inactive',
+  'killed'
+]
 
 const jobColors = {
   pending: '#ffc107',
@@ -65,14 +73,14 @@ const jobFlags = {
  *          e.g. {<jobs group>: [<job state>, ..., <job state>]}
  */
 const groupsJobsByStates = (function (states) {
-  let result = {}
+  const result = {}
 
-  for (let key in states) {
+  for (const key in states) {
     (result[states[key]] = result[states[key]] || []).push(key)
   }
 
   return result
-}(jobStates))
+})(jobStates)
 
 // Array of all existing job groups ['waiting', 'running', 'stopped']
 const jobGroups = Object.keys(groupsJobsByStates)

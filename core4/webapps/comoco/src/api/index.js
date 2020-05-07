@@ -5,13 +5,13 @@ import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 export default {
   getWidgets () {
     return axiosInternal
-      .get(`/info`, { params: { per_page: 1000, page: 0 } })
+      .get('/info', { params: { per_page: 1000, page: 0 } })
       .then(result => result.data)
       .catch(error => Promise.reject(error.response))
   },
 
   getSetting (query) {
-    const url = query ? `/setting/${query}` : `/setting`
+    const url = query ? `/setting/${query}` : '/setting'
 
     return axiosInternal
       .get(url)
@@ -20,15 +20,17 @@ export default {
   },
 
   getQueueHistory (page, perPage, startDate, endDate, sort) {
-    let token = JSON.parse(localStorage.getItem('user'))['token']
-    let pageArg = page ? `page=${page}` : ''
-    let perPageArg = perPage ? `&perPage=${perPage}` : ''
-    let startDateArg = startDate ? `&startDate=${startDate}` : ''
-    let endDateArg = endDate ? `&endDate=${endDate}` : ''
-    let sortArg = sort ? `&sort=${sort}` : `&sort=1`
+    const token = JSON.parse(localStorage.getItem('user')).token
+    const pageArg = page ? `page=${page}` : ''
+    const perPageArg = perPage ? `&perPage=${perPage}` : ''
+    const startDateArg = startDate ? `&startDate=${startDate}` : ''
+    const endDateArg = endDate ? `&endDate=${endDate}` : ''
+    const sortArg = sort ? `&sort=${sort}` : '&sort=1'
 
     return axiosInternal
-      .get(`/queue/history?${pageArg}${perPageArg}${startDateArg}${endDateArg}${sortArg}&token=${token}`)
+      .get(
+        `/queue/history?${pageArg}${perPageArg}${startDateArg}${endDateArg}${sortArg}&token=${token}`
+      )
       .then(res => {
         return {
           total_count: res.total_count,
@@ -40,5 +42,4 @@ export default {
       })
       .catch(error => Promise.reject(error))
   }
-
 }

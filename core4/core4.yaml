@@ -70,6 +70,9 @@ job:
   progress_interval: 5
   archive_stamp: "{year:04d}/{month:02d}/{day:02d}/{_id:s}"
 
+rjob:
+  cran_mirror: "http://cran.us.r-project.org"
+
 daemon:
   heartbeat: 15
   alive_timeout: 60
@@ -106,6 +109,7 @@ api:
   card_html_page: standard/template/card.html
   help_html_page: standard/template/help.html
   info_html_page: standard/template/info.html
+  auth_url: /core4/api/v1
   reset_password:
     expiration: 28800  # 8h
   token:
@@ -120,6 +124,7 @@ api:
   user_realname: standard user group
   user_permission:
     - api://core4.api.v1.request.standard.*
+    - api://core4.api.v1.server.*
   verify_ssl: True
   age_range:
     30: this month

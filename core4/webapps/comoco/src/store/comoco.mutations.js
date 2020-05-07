@@ -15,9 +15,9 @@ import { jobTypes, jobFlags, jobStates, eventChannelNames } from '../settings'
 
 const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 const channelDict = {
-  'queue': {
+  queue: {
     // on_queue:
-    'summary': queueChannelHandler,
+    summary: queueChannelHandler,
 
     // on_event:
     ...eventChannelNames.reduce((computedResult, currentItem) => {
@@ -33,7 +33,10 @@ const channelDict = {
 export default {
   [SOCKET_ONOPEN] (state, event) {
     Vue.prototype.$socket = event.currentTarget
-    Vue.prototype.$socket.sendObj({ 'type': 'interest', 'data': ['queue', 'event', 'job'] })
+    Vue.prototype.$socket.sendObj({
+      type: 'interest',
+      data: ['queue', 'event', 'job']
+    })
 
     state.socket.isConnected = true
     state.socket.reconnectError = false
@@ -80,7 +83,8 @@ function queueChannelHandler (state, message) {
   console.log('queue', message)
   state.queue = groupDataAndJobStat(message.created, message.data, 'state')
 
-  if (!state.socket.reconnectError) { // ToDo: check on prod
+  if (!state.socket.reconnectError) {
+    // ToDo: check on prod
     console.log('event = queue.stat')
     state.event = state.queue.stat
   }
@@ -95,7 +99,7 @@ function queueChannelHandler (state, message) {
 function eventChannelHandler (state, message) {
   console.log('event', message)
   state.event = { ...defaultEventObj, ...message.data.queue }
-  state.event['created'] = message.created
+  state.event.created = message.created
 }
 
 /**
@@ -110,22 +114,22 @@ function eventChannelHandler (state, message) {
  */
 // ToDo: elegant decouple group data and job statistic
 function groupDataAndJobStat (created, arr, groupingKey) {
-  let groupsDict = {}
-  let initialState = createObjectWithDefaultValues(jobStates)
+  const groupsDict = {}
+  const initialState = createObjectWithDefaultValues(jobStates)
 
-  arr.forEach((job) => {
+  arr.forEach(job => {
     if (!job.key) job.key = uniqueKey(job)
 
-    let jobState = job[groupingKey]
-    let group = jobStates[jobState] || 'other';
+    const jobState = job[groupingKey]
+    const group = jobStates[jobState] || 'other';
 
     (groupsDict[group] = groupsDict[group] || []).push(job)
 
-    initialState[jobState] += job['n']
-    initialState['created'] = (new Date(created)).getTime()
+    initialState[jobState] += job.n
+    initialState.created = new Date(created).getTime()
   })
 
-  return { 'stat': initialState, ...groupsDict }
+  return { stat: initialState, ...groupsDict }
 }
 
 /**
@@ -138,7 +142,7 @@ function groupDataAndJobStat (created, arr, groupingKey) {
 function uniqueKey (obj) {
   let value = `${obj.name}-${obj.state}` // core.account.xxx.job.monitor.SolChild-pending
 
-  for (let key in jobFlags) {
+  for (const key in jobFlags) {
     if (obj[key]) value += `-${key}`
   }
 

@@ -1,9 +1,15 @@
-from setuptools import find_packages
-from setuptools import setup
+try:
+    from pip._internal.cli.main import main
+except:
+    from pip import main
 
+main(["install", "-U", "--quiet",
+      "git+https://github.com/plan-net/core4build.git"])
+
+from core4build import setup
+from setuptools import find_packages
 
 import core4
-
 
 setup(
     name='core4',

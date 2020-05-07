@@ -2,7 +2,11 @@
   <c4-webapp :full-width="true">
     <side-navigation slot="navigation-slot"></side-navigation>
     <div slot="router">
-      <transition name="fade" mode="out-in" :duration="{ enter: 200, leave: 300 }">
+      <transition
+        name="fade"
+        mode="out-in"
+        :duration="{ enter: 200, leave: 300 }"
+      >
         <router-view />
       </transition>
     </div>
@@ -23,7 +27,7 @@ export default {
     authenticated (newValue, oldValue) {
       this.$disconnect()
       if (newValue && newValue !== oldValue) {
-        let token = JSON.parse(localStorage.getItem('user'))['token']
+        const token = JSON.parse(localStorage.getItem('user')).token
         this.$connect(`${getBasePath()}/event?token=${token}`)
       }
     }
@@ -32,5 +36,4 @@ export default {
 </script>
 
 <style scoped lang="scss">
-
 </style>
