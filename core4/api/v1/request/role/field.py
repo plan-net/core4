@@ -20,7 +20,7 @@ from core4.const import COP
 PROTOCOL = [
     re.compile(r"^" + COP + "$"),
     re.compile(r"^job://[^\s\/]+/[xr]$"),
-    re.compile(r"^api://[^\s\/]+($|/[crud]$)"),
+    re.compile(r"^api://[^\s\/]+($|/[crud]*$)"),
     re.compile(r"^app://[^\s]+$"),
     re.compile(r"^mongodb://[^\s]+$")
 ]
@@ -171,7 +171,7 @@ class PermField(Field):
 
     * ``cop`` - administrative role
     * ``job://[qual_name]/[xr]`` - job read and execution permission
-    * ``api://[qual_name]`` - api access permission
+    * ``api://[qual_name]/[crud]*`` - api access permission
     * ``app://[key]`` - app key permission
     * ``mongodb://[database]`` - MongoDB database access permission (read-only)
 

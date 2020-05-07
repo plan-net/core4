@@ -508,7 +508,7 @@ class CoreRole(CoreBase):
             if proto[0] == "api:":
                 if qn:
                     if re.match(qn, qual_name):
-                        if acc.lower() == METHOD_PERMISSION.get(method, None):
+                        if METHOD_PERMISSION.get(method, None) in acc.lower():
                             self.logger.debug(
                                 "approved api permission "
                                 "[%s][%s] for user [%s]",
