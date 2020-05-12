@@ -127,7 +127,7 @@ function range (from, to, reverse) {
  */
 function subscribeDecorator (funcGenerator) {
   if (!isGenerator(funcGenerator)) {
-    console.warn(`Function ${funcGenerator} should be a generator`)
+    console.warn(`Function should be a generator - ${funcGenerator}`)
 
     return funcGenerator
   }
@@ -163,9 +163,14 @@ function subscribeDecorator (funcGenerator) {
   }
 
   const next = (iter, callbacks, prev = undefined) => {
-    const { onNext, onError, onCompleted } = callbacks
+    const { onNext, onError, onCompleted, unsubscribe } = callbacks
     const item = iter.next(prev)
     const value = item.value
+
+    if (unsubscribe()) {
+      // stop chain of calls
+      return
+    }
 
     if (item.done) {
       return onCompleted()
@@ -189,8 +194,8 @@ function subscribeDecorator (funcGenerator) {
   }
 
   const gensync = fn => (...args) => ({
-    subscribe: (onNext, onErr, onCompleted) => {
-      next(fn(...args), { onNext, onErr, onCompleted })
+    subscribe: (onNext, onErr, onCompleted, unsubscribe) => {
+      next(fn(...args), { onNext, onErr, onCompleted, unsubscribe })
     }
   })
 
@@ -249,7 +254,12 @@ function isPromise (obj) {
  * @returns {boolean}
  */
 function isGenerator (fn) {
-  return fn.constructor.name === 'GeneratorFunction'
+  const constructor = fn.constructor
+
+  if (!constructor) return false
+  if (constructor.name === 'GeneratorFunction' || constructor.displayName === 'GeneratorFunction') return true
+
+  return isGenerator(constructor.prototype)
 }
 
 /**
