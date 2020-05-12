@@ -17,7 +17,7 @@ import _ from 'lodash'
 
 import { SOCKET_ONMESSAGE } from '../../store/comoco.mutationTypes'
 
-import { jobTypes, jobColors } from '../../settings'
+import { jobTypes } from '../../settings'
 import { createObjectWithDefaultValues, isEmptyObject } from '../../helper'
 
 import LightTheme from './LightTheme'

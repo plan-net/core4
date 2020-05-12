@@ -254,10 +254,10 @@ function isPromise (obj) {
  * @returns {boolean}
  */
 function isGenerator (fn) {
-  let constructor = fn.constructor
+  const constructor = fn.constructor
 
   if (!constructor) return false
-  if ('GeneratorFunction' === constructor.name || 'GeneratorFunction' === constructor.displayName) return true
+  if (constructor.name === 'GeneratorFunction' || constructor.displayName === 'GeneratorFunction') return true
 
   return isGenerator(constructor.prototype)
 }
