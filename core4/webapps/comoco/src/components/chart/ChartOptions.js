@@ -1,5 +1,5 @@
-import {jobColors} from "../../settings";
-import Highcharts from "highcharts";
+import { jobColors } from '../../settings'
+import Highcharts from 'highcharts'
 
 function series () {
   const arr = []
@@ -33,7 +33,7 @@ function series () {
   return arr
 }
 
-const options =  {
+const options = {
   chart: {
     zoomType: 'x'
   },
@@ -48,30 +48,30 @@ const options =  {
       type: 'minute',
       text: '1m'
     },
-      {
-        count: 5,
-        type: 'minute',
-        text: '5m'
-      },
-      {
-        count: 10,
-        type: 'minute',
-        text: '10m'
-      },
-      {
-        count: 30,
-        type: 'minute',
-        text: '30m'
-      },
-      {
-        type: 'day',
-        count: 1,
-        text: '1d'
-      },
-      {
-        type: 'all',
-        text: 'All'
-      }],
+    {
+      count: 5,
+      type: 'minute',
+      text: '5m'
+    },
+    {
+      count: 10,
+      type: 'minute',
+      text: '10m'
+    },
+    {
+      count: 30,
+      type: 'minute',
+      text: '30m'
+    },
+    {
+      type: 'day',
+      count: 1,
+      text: '1d'
+    },
+    {
+      type: 'all',
+      text: 'All'
+    }],
     inputEnabled: false,
     selected: 5
   },
