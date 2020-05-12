@@ -46,21 +46,21 @@
         ma-2
         hidden-sm-and-down
       >
-        <stock-chart></stock-chart>
+        <stock-chart :isDark="dark" :key="dark"></stock-chart>
       </v-flex>
     </v-layout>
   </c4-page>
 </template>
 
 <script>
-import { mapState, mapMutations } from 'vuex'
+import { mapState, mapMutations, mapGetters } from 'vuex'
 
 import { NOTIFICATION_CHANGE_STATE } from '../store/comoco.mutationTypes'
 
 import { groupsJobsByStates, jobFlags } from '../settings'
 
 import Board from '@/components/Board'
-import stockChart from '@/components/StockChart'
+import stockChart from '@/components/chart/StockChart'
 import SocketReconnectError from '@/components/notifications/SocketReconnectError'
 
 export default {
@@ -73,8 +73,7 @@ export default {
   data () {
     return {
       groupsJobsByStates: groupsJobsByStates, // {waiting: [pending, ..., failed], running: [running], stopped: [error, ..., killed]
-      flags: jobFlags, // Z R N K
-      dark: false
+      flags: jobFlags // Z R N K
     }
   },
   methods: {
@@ -89,7 +88,8 @@ export default {
     ...mapState({
       notifications: (state) => state.notifications,
       socketConnected: (state) => state.socket.isConnected
-    })
+    }),
+    ...mapGetters(['dark'])
   },
   watch: {
     socketConnected (newValue) {
