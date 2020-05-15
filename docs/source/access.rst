@@ -18,7 +18,7 @@ for frontend features.
 qualname
 =========
 All permissions, except the custom app:// permissions, used in core4 are based
-on pythons `qualname <https://www.python.org/dev/peps/pep-3155/>`_.
+on python's `qualname <https://www.python.org/dev/peps/pep-3155/>`.
 
 All classes and functions within python ship with a ``__qualname__`` attribute,
 which contains a dotted path leading to the object from the module top-level.
@@ -29,7 +29,7 @@ a projects structure. This may be a job or an API endpoint.
 Projects can easily be structured to depict its needed permission levels.
 One usual approach is to utilize so called "subjects" that divide an application
 into multiple logical blocks that require the same access permissions.
-There might exist the following API structure for a webapplication::
+There might exist the following API structure for a web application::
 
     testproject/
     └── api
@@ -42,7 +42,7 @@ There might exist the following API structure for a webapplication::
             └── server.py
 
 
-Within server.py one configures all urls and their endpoints, this is required
+Within server.py one configures all URLs and their endpoints, this is required
 when using core4os API features. The application is further devided into two
 basic subjects: "admin" & "general". Both subjects can be easily obtained via
 its qualname and are automatically usable within core4os permission management::
@@ -54,9 +54,9 @@ its qualname and are automatically usable within core4os permission management::
 
 Please remember that a qualname does not necessarily reflect the URL that it
 is mapped to. This is why all permissions are set in qualname notation (with
-dots as separators, opposed to the / used in URLs).
+dots as separators, as opposed to the / used in URLs).
 
-A possible frontend can access a users permissions by utilizing the endpoint:
+A possible frontend can access a user's permissions by utilizing the endpoint:
 ``<domain>/core4/api/v1/profile``
 
 permission schemes
@@ -89,7 +89,7 @@ The structure of the permission scheme **for API handlers** is::
 
 The ``qual_name`` variable again is parsed as a regular expression matching
 the *qualified name* of the API.
-the crud scheme following the ``qual_name`` part further devides the permissions
+the crud scheme following the ``qual_name`` part further divides the permissions
 utilizing HTTP methods that can be roughly divided into 4 actions:
 
 * Create
@@ -97,19 +97,19 @@ utilizing HTTP methods that can be roughly divided into 4 actions:
 * Update
 * Delete
 
-To see where the individual Methods are located, visit the API documentation.
+To see where the individual methods are located, visit the API documentation.
 
 If an API permission does not contain a specific crud scheme, *all Methods are
 allowed by default*.
-Methods are freely combinable, all the following example are valid::
+Methods are freely combinable; all the following examples are valid::
 
     api://[qual_name]
     api://[qual_name]/c
     api://[qual_name]/crd
-    api://[qual_name]/crud  <- This is equal to the first example
+    api://[qual_name]/crud  <- This is equivalent to the first example
 
 
-All users which are to be allowed to manage the ``DummyJob`` at *qual_name*
+All users who are to be allowed to manage the ``DummyJob`` at *qual_name*
 ``core4.queue.helper.job.example.DummyJob`` require the following permissions
 depending on the exact intended grants::
 
@@ -119,7 +119,7 @@ depending on the exact intended grants::
     api://core4.api.v1.request.queue.state.QueueHandler
     job://core4.queue.helper.job.example.DummyJob/x
 
-More efficiently the permission scheme can be expressed as::
+More efficiently, the permission scheme can be expressed as::
 
     api://core4.api.v1.request.queue.*
     job://core4.queue.helper.job.example.*/x
@@ -131,15 +131,15 @@ API request handlers in ``core4.api.v1.request``
 database access
 ---------------
 
-The structure of the permission scheme **for MongoDB database** access is::
+The structure of the permission scheme **for MongoDB database access** is::
 
     mongodb://[database]
 
 Please note that the database specification requires an exact match. No
-patterns or regular expressions are allowed, here. The permission scheme only
+patterns or regular expressions are allowed here. The permission scheme only
 supports read-only database access. Additional requirements cannot be defined
 with core4. These special access rights have to be managed outside of the
-core4 framework. To grant read-only access to the default core4 system database
+core4 framework. To grant read-only access to the default core4 system database,
 a user requires the following permission::
 
     mongodb://core4
@@ -153,16 +153,16 @@ The structure of the permission scheme **for custom application keys** is::
     app://[key]
 
 These keys provide a means to define custom permission settings managed by
-core4 jobs or the core4 API. We have for example used these keys to provide
+core4 jobs or the core4 API. For example, we have used these keys to provide
 a user/role based regional authorization scheme::
 
     app://reporting/eu/de/by
 
-Users with a application key ``reporting`` have access to all regions. Users
-with an application key ``reporting/eu`` have access to european data. Users
-with an application key ``reporting/eu/de`` have access to german data, etc.
+Users with the application key ``reporting`` have access to all regions. Users
+with the application key ``reporting/eu`` have access to European data. Users
+with the application key ``reporting/eu/de`` have access to German data, etc.
 
-Please note that these custom application keys have to be controlled by the
+Please note that these custom application keys have to be controlled by
 :class:`.CoreJob` or :class:`.CoreRequestHandler`.
 
 
@@ -189,7 +189,7 @@ default role
 
 The core4 API ships with a default user role. This user role should be assigned
 to all users as it specifies the minimum access permissions. The default user
-role as specified with the following core4 configuration keys:
+role is specified with the following core4 configuration keys:
 
 * ``api.user_rolename`` - the name of the default role
 * ``api.user_realname`` - the real name of the default role
