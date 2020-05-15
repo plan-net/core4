@@ -15,6 +15,49 @@ Both handlers are delivered through the :class:`.CoreApiServer'. The
 application keys can be defined to customise specific access permissions, e.g.
 for frontend features.
 
+qualname
+=========
+All permissions, except the custom app:// permissions, used in core4 are based
+on pythons `qualname <https://www.python.org/dev/peps/pep-3155/>`_.
+
+All classes and functions within python ship with a ``__qualname__`` attribute,
+which contains a dotted path leading to the object from the module top-level.
+
+core4 utilizes this qualname to assign permissions to an individual class within
+a projects structure. This may be a job or an API endpoint.
+
+Projects can easily be structured to depict its needed permission levels.
+One usual approach is to utilize so called "subjects" that divide an application
+into multiple logical blocks that require the same access permissions.
+There might exist the following API structure for a webapplication::
+
+    testproject/
+    └── api
+        └── v1
+            ├── admin
+            │   └── configuration.py
+            ├── general
+            │   ├── info.py
+            │   └── welcome.py
+            └── server.py
+
+
+Within server.py one configures all urls and their endpoints, this is required
+when using core4os API features. The application is further devided into two
+basic subjects: "admin" & "general". Both subjects can be easily obtained via
+its qualname and are automatically usable within core4os permission management::
+
+    # access to admin section
+    api://testproject.api.v1.admin.*
+    # access to general section
+    api://testproject.api.v1.general.*
+
+Please remember that a qualname does not necessarily reflect the URL that it
+is mapped to. This is why all permissions are set in qualname notation (with
+dots as separators, opposed to the / used in URLs).
+
+A possible frontend can access a users permissions by utilizing the endpoint:
+``<domain>/core4/api/v1/profile``
 
 permission schemes
 ==================
@@ -42,10 +85,29 @@ API handler access
 
 The structure of the permission scheme **for API handlers** is::
 
-    api://[qual_name]
+    api://[qual_name]/[crud]*
 
 The ``qual_name`` variable again is parsed as a regular expression matching
 the *qualified name* of the API.
+the crud scheme following the ``qual_name`` part further devides the permissions
+utilizing HTTP methods that can be roughly divided into 4 actions:
+
+* Create
+* Retrieve
+* Update
+* Delete
+
+To see where the individual Methods are located, visit the API documentation.
+
+If an API permission does not contain a specific crud scheme, *all Methods are
+allowed by default*.
+Methods are freely combinable, all the following example are valid::
+
+    api://[qual_name]
+    api://[qual_name]/c
+    api://[qual_name]/crd
+    api://[qual_name]/crud  <- This is equal to the first example
+
 
 All users which are to be allowed to manage the ``DummyJob`` at *qual_name*
 ``core4.queue.helper.job.example.DummyJob`` require the following permissions
