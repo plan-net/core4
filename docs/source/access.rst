@@ -18,7 +18,7 @@ for frontend features.
 qualname
 =========
 All permissions, except the custom app:// permissions, used in core4 are based
-on python's `qualname <https://www.python.org/dev/peps/pep-3155/>`.
+on python's `qualname <https://www.python.org/dev/peps/pep-3155/>`_.
 
 All classes and functions within python ship with a ``__qualname__`` attribute,
 which contains a dotted path leading to the object from the module top-level.
