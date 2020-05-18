@@ -74,10 +74,12 @@ class CoreBaseHandler(CoreBase):
     target = None
     #: open as single page application; this hides the app managers header
     spa = False
+    #: set cache_control policy for request processed by this handler
+    cache_control = None
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa")
+                 "static_path", "enter_url", "icon", "doc", "spa", "cache_control")
     supported_types = [
         "text/html",
     ]

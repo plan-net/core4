@@ -28,7 +28,7 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
     """
     SUPPORTED_METHODS = ("GET", "HEAD", "OPTIONS", "XCARD", "XHELP", "XENTER")
     propagate = ("protected", "title", "author", "tag", "static_path",
-                 "icon", "doc", "spa", "default_filename")
+                 "icon", "doc", "spa", "default_filename", "cache_control")
 
     title = "core4 static file handler"
     author = "mra"
@@ -64,6 +64,8 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
             base = parent.pathname()
         self.root = os.path.join(base, path)
 
+        self.init_headers()
+
     @classmethod
     def get_absolute_path(cls, root, path):
         """Returns the absolute location of ``path`` relative to ``root``.
@@ -92,7 +94,6 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
             return StaticFileHandler.get_content(abspath, start, end)
         return
 
-
     async def verify_access(self):
         """
         Verifies the user has access to the api container using
@@ -104,4 +105,11 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
         if self.user and await self.user.has_api_access(container):
             return True
         return False
+
+    def init_headers(self):
+        cache = getattr(self, 'cache_control', None)
+
+        if cache:
+            self.set_header("Cache-Control", cache)
+
 

@@ -71,7 +71,8 @@ class CoreAppManager(CoreApiContainer):
             "path": "/webapps/widgets/dist",
             "static_path": "/webapps/widgets/dist",
             "title": "root",
-            "protected": True
+            "protected": True,
+            "cache_control": "no-cache"
         })
     ]
 
