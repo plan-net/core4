@@ -35,7 +35,7 @@ class LoginHandler(CoreRequestHandler):
         token = await self._login()
         if token:
             return self.reply({"token": token})
-        self.set_header('WWW-Authenticate', 'Basic realm=Restricted')
+        # self.set_header('WWW-Authenticate', 'Basic realm=Restricted')
         # raise HTTPError(401)
         self.set_status(401)
         self.write_error(401)
