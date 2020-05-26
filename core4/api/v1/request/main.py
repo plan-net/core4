@@ -145,7 +145,7 @@ class CoreBaseHandler(CoreBase):
                         'GET, POST, PUT, DELETE, OPTIONS')
         self.set_header(
             "Access-Control-Allow-Headers",
-            "access-control-allow-origin,authorization,content-type")
+            "access-control-allow-origin,authorization,content-type,content-range")
 
     async def prepare(self):
         """
