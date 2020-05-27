@@ -77,7 +77,7 @@ class CoreBaseHandler(CoreBase):
 
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle")
     supported_types = [
         "text/html",
     ]
