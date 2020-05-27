@@ -182,6 +182,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
     * ``runtime`` - total job execution time
     * ``schedule`` - job schedule in crontab format
     * ``sources`` - set of sources processed by the job
+    * ``current_source`` - stores the string that is currently the source set using set_source()
     * ``started_at`` - last job execution start-time
     * ``state`` - job state
     * ``tag`` - tag the job with freestyle string-argmuents
@@ -245,6 +246,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
            runtime   False  False False      True      na
           schedule   False   True  True     False    None crontab format, None
            sources   False  False False      True      na
+    current_source   False  False False     False    None         
         started_at   False  False False      True      na
              state   False  False False      True      na
                tag   False   True  True     False    ([]) list of str, None
@@ -361,6 +363,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
         self.removed_at = None
         self.runtime = None
         self.sources = []
+        self.current_source = None 
         self.started_at = None
         self.state = None
         self.trial = 0
@@ -411,8 +414,11 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
         :param filename: of the sourced data
         """
         basename = os.path.basename(filename)
-        self.logger.info("adding source basename of [%s]", filename)
+        if basename != self.current_source:
+            self.logger.info("source changed from {} to {}".format(self.current_source, basename))
+            self.current_source = str(basename)
         if basename not in self.sources:
+            self.logger.info("adding new source: basename of {}".format(filename))
             ret = self.config.sys.queue.update_one(
                 {
                     "_id": self._id
@@ -436,9 +442,7 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
 
         :return: basename (str)
         """
-        if self.sources:
-            return self.sources[-1]
-        return None
+        return self.current_source
 
     def __setattr__(self, key, value):
         """
