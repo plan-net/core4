@@ -493,7 +493,7 @@ class CoreRole(CoreBase):
         """
         return COP in await self.casc_perm()
 
-    async def has_api_access(self, qual_name):
+    async def has_api_access(self, qual_name, method="GET"):
         """
         Verifies the passed ``qual_name`` matches any ``api://`` permission
         of the role.
@@ -504,13 +504,23 @@ class CoreRole(CoreBase):
         if await self.is_admin():
             return True
         for p in await self.casc_perm():
-            (*proto, qn) = p.split("/")
+            (*proto, qn, acc) = p.split("/")
             if proto[0] == "api:":
-                if re.match(qn, qual_name):
-                    self.logger.debug(
-                        "approved api permission [%s] for user [%s]",
-                        self.name, qn)
-                    return True
+                if qn:
+                    if re.match(qn, qual_name):
+                        if METHOD_PERMISSION.get(method, None) in acc.lower():
+                            self.logger.debug(
+                                "approved api permission "
+                                "[%s][%s] for user [%s]",
+                                acc, self.name, qn)
+                            return True
+                else:
+                    if re.match(acc, qual_name):
+                        self.logger.debug(
+                            "approved api permission [%s] for user [%s]",
+                            self.name, qn
+                        )
+                        return True
         self.logger.debug("no appropriate api permission found for user [%s]",
                           self.name)
         return False
