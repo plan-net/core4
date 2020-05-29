@@ -106,7 +106,8 @@
               <v-list-item-content>
                 <span @click="openInNew(item)">
                   <v-list-item-title>{{ item.title }}</v-list-item-title>
-                  <v-tooltip left>
+                  <span v-if="item.subtitle !== item.qual_name">{{item.subtitle || '-'}}</span>
+                  <v-tooltip left v-else>
                     <template v-slot:activator="{ on }">
                       <v-list-item-subtitle
                         v-on="on"
