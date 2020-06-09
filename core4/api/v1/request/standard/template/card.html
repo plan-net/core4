@@ -23,8 +23,14 @@
         </div>
         <div class="d-flex flex-column pl-1">
             <h1 class="widget-title pt-1">{{ title }}</h1>
+
+            {% if qual_name != subtitle %}
+            <h2 class="widget-subtitle text-muted">{{ subtitle }}</h2>
+            {% else %}
             <h2 class="widget-subtitle text-muted">{{ qual_name.rsplit('.')[0]+'…'+qual_name.rsplit('.')[-1] }}
             </h2>
+            {% end if %}
+
 
             <div class="md-chips pt-0 pb-0">
                 {% for t in tag[:3] %}
