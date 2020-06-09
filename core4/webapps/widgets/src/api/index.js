@@ -69,6 +69,7 @@ const api = {
       qual_name: 'DotSeperated',
       tag: 'Array',
       decription: 'String',
+      subtitle: 'String',
       author: 'String',
       container: 'Array'
     }
