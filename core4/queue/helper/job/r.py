@@ -80,6 +80,11 @@ class CoreRJob(CoreLoadJob, CoreAbstractMixin):
         p = Popen([RSCRIPT, script], stdout=PIPE,
                   stderr=PIPE, env=env)
         (stdout, stderr) = p.communicate()
+        
+        # execution of the calling CoreRJob will halt if there is an error in the R script
+        if p.returncode != 0:
+            raise core4.error.Core4Error('error in the R script:\n{}'.format(stderr.decode("utf-8").strip()))
+            
         self.logger.info("run in [%s]", tempdir)
         self.logger.info("stdout:\n%s\nstderr:\n%s",
                          stdout.decode("utf-8").strip(),
