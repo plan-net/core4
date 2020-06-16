@@ -27,7 +27,7 @@ PROTOCOL = [
 JOB_EXECUTION_RIGHT = 'x'
 JOB_READ_RIGHT = 'r'
 
-METHOD_PERMISSION = {"GET": "r",
+_METHOD_PERMISSION = {"GET": "r",
                      "HEAD": "r",
                      "OPTIONS": "r",
                      "CONNECT": "r",
@@ -35,8 +35,12 @@ METHOD_PERMISSION = {"GET": "r",
                      "POST": "c",
                      "PUT": "u",
                      "PATCH": "u",
-                     "DELETE": "d"}
-
+                     "DELETE": "d",
+                     # core4 specific Methods
+                     "XCARD": "crud",
+                     "XHELP": "crud",
+                     "XENTER": "r"}
+METHOD_PERMISSION =  {key:set(val) for key,val in _METHOD_PERMISSION.items()}
 
 class Field:
     """

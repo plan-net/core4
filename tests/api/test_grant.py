@@ -4,6 +4,7 @@ import pymongo.errors
 import time
 import core4.api.v1.request.role.field
 from tests.api.test_test import setup, mongodb, core4api
+from tests.api.test_info import info_server
 
 _ = setup
 _ = mongodb
@@ -655,14 +656,14 @@ async def test_method_permission(core4api):
     # test incorrect permissions
     core4api.set_admin()
     rv = await core4api.post("/core4/api/v1/roles",
-                         json={
-                             "name": "error",
-                             "role": ["standard_user"],
-                             "email": "error" + "@mail.com",
-                             "passwd": "error",
-                             "perm": [
-                                 "api://core4.api.v1.request.role/x"]
-                         })
+                             json={
+                                 "name": "error",
+                                 "role": ["standard_user"],
+                                 "email": "error" + "@mail.com",
+                                 "passwd": "error",
+                                 "perm": [
+                                     "api://core4.api.v1.request.role/x"]
+                             })
     assert rv.code == 400
 
     rv = await core4api.post("/core4/api/v1/roles",
@@ -675,4 +676,83 @@ async def test_method_permission(core4api):
                                      "api://core4.api.v1.request.role/rxc"]
                              })
     assert rv.code == 400
+
+    # test core4os specific XENTER method
+
+
+async def test_grant_xmethods(info_server):
+    await info_server.login()
+    username = "mkrxenter"
+    rv = await info_server.post("/core4/api/v1/roles",
+                                json={
+                                    "name": username,
+                                    "role": ["standard_user"],
+                                    "email": username + "@mail.com",
+                                    "passwd": username,
+                                    "perm": ["api://core4.api.v1.*/r",
+                                             "api://test.*/r"]
+                                })
+    assert rv.code == 200
+    info_server.token = None
+    conn = await info_server.get(
+        "/core4/api/v1/login?username=" + username + "&password=" + username)
+    assert conn.code == 200
+    info_server.token = conn.json()["data"]["token"]
+
+    rv = await info_server.get("/core4/api/v1/profile")
+    assert rv.code == 200
+    rv1 = await info_server.get("/core4/api/v1/_info")
+    assert rv1.code == 200
+    rv2 = await info_server.get("/test/_info")
+    assert rv2.code == 200
+    assert len(rv1.json()["data"]) == len(rv2.json()["data"])
+    ih1 = [i for i in rv1.json()["data"] if "SimpleHandler" in i["qual_name"]]
+    ih2 = [i for i in rv2.json()["data"] if "SimpleHandler" in i["qual_name"]]
+    assert ih1 == ih2
+    r1 = ih1[0]["rsc_id"]
+    for mode in ("card", "help", "enter"):
+        rv = await info_server._fetch("X" + mode.upper(),
+                                      "/test/_info/" + mode + "/" + r1,
+                                      allow_nonstandard_methods=True)
+        assert rv.code == 200
+
+    # Test with no read-permissions to the Handler,
+    #
+    await info_server.login()
+    username = "mkrxenter_no_perms"
+    rv = await info_server.post("/core4/api/v1/roles",
+                                json={
+                                    "name": username,
+                                    "role": ["standard_user"],
+                                    "email": username + "@mail.com",
+                                    "passwd": username,
+                                    "perm": ["api://core4.api.v1.*/r",
+                                             "api://test.*/d"]
+                                })
+    assert rv.code == 200
+    info_server.token = None
+    conn = await info_server.get(
+        "/core4/api/v1/login?username=" + username + "&password=" + username)
+    assert conn.code == 200
+    info_server.token = conn.json()["data"]["token"]
+
+    rv = await info_server.get("/core4/api/v1/profile")
+    assert rv.code == 200
+    rv1 = await info_server.get("/core4/api/v1/_info")
+    assert rv1.code == 200
+    rv2 = await info_server.get("/test/_info")
+    assert rv2.code == 200
+    assert len(rv1.json()["data"]) == len(rv2.json()["data"])
+    ih1 = [i for i in rv1.json()["data"] if "SimpleHandler" in i["qual_name"]]
+    ih2 = [i for i in rv2.json()["data"] if "SimpleHandler" in i["qual_name"]]
+    # the _info handler is only viable without any arguments.
+    for mode in ("card", "help"):
+        rv = await info_server._fetch("X" + mode.upper(),
+                                      "/test/_info/" + mode + "/" + r1,
+                                      allow_nonstandard_methods=True)
+        assert rv.code == 200
+    rv = await info_server._fetch("XENTER",
+                                      "/test/_info/" + "enter" + "/" + r1,
+                                      allow_nonstandard_methods=True)
+    assert rv.code == 403
 
