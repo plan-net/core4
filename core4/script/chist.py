@@ -14,7 +14,7 @@ Usage:
   chist [--start=START] [--end=END] [--level=LEVEL] [--project=PROJECT]
       [--hostname=HOSTNAME] [--username=USERNAME] [--qual_name=QUAL_NAME]
       [--identifier=ID] [--message=PATTERN] [--tab] [--case-sensitive]
-      [--follow] [SECONDS]
+      [--explain] [--follow] [SECONDS]
 
 Options:
   -s --start=START          lower timestamp boundary
@@ -27,6 +27,7 @@ Options:
   -i --identifier=ID        object identifier filter
   -m --message=PATTERN      message regular expression filter
   -f --follow               follow log message interval
+  -x --explain              explain query
   -c --case-sensitive       search [default: False]
   -t --tab                  tab seperated
   -h --help                 Show this screen
@@ -36,13 +37,14 @@ import logging
 import re
 import sys
 from datetime import datetime, time, timedelta
-from time import sleep
 
 from docopt import docopt
+from time import sleep
 
 import core4
 import core4.util.data
 from core4.base.main import CoreBase
+from pprint import pformat
 
 LOG_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 
@@ -223,10 +225,25 @@ def build_query(args, clock=None, utc=True):
 
 def run(args, clock=None):
     query = build_query(args, clock)
-    #print(query)
     base = CoreBase()
-    data = list(base.config.sys.log.find(
-        filter={"$and": query}, sort=[("_id", -1)]))
+    conn = base.config.sys.log.connection
+    db = base.config.sys.log.database
+    coll = base.config.sys.log.collection
+    f = {"$and": query}
+    cur = base.config.sys.log.find(filter=f, sort=[("_id", 1)])
+    if args["--explain"]:
+        sys.stderr.write("*" * 80 + "\n")
+        sys.stderr.write("QUERY: \n%s\n" % pformat(query))
+        try:
+            explain = conn[db].command(
+                {"explain": {"find": coll, "filter": f}})
+            idx = explain[
+                "queryPlanner"]["winningPlan"]["inputStage"]["indexName"]
+            sys.stderr.write("INDEX: %s\n" % idx)
+        except:
+            sys.stderr.write("INDEX: None\n")
+        sys.stderr.write("COUNT: %d\n" % cur.count())
+        sys.stderr.write("*" * 80 + "\n")
 
     def printout(*args, **kwargs):
         print(*args, **kwargs, end="")
@@ -257,7 +274,7 @@ def run(args, clock=None):
                 print("|", "\n| ".join(out.split("\n")))
 
     offset = None
-    for doc in reversed(data):
+    for doc in cur:
         handle(doc)
         offset = doc["_id"]
     if args["--follow"]:
