@@ -197,8 +197,7 @@ class EventHandler(CoreWebSocketHandler):
                 data["data"] = []
                 for line in change:
                     qn = line["name"]
-                    if not await waiter.user.has_api_access(qn):
-                        #todo: has api access with has job
+                    if not await waiter.user.has_job_access(qn):
                         line["name"] = "UnauthorizedJob"
                     data["data"].append(line)
                 if data["data"] != waiter.last:
