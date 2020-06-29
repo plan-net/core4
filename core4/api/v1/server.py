@@ -37,6 +37,7 @@ from core4.api.v1.request.queue.job import JobList
 from core4.api.v1.request.standard.system import SystemHandler
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.standard.access import AccessHandler
+from core4.api.v1.request.standard.log import LogHandler
 from core4.api.v1.request.standard.event import EventHandler
 from core4.api.v1.request.standard.event import EventHistoryHandler
 from core4.api.v1.request.standard.event import EventWatch
@@ -106,6 +107,8 @@ class CoreApiServer(CoreApiContainer):
 
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
+
+        (r'/log/?', LogHandler, None, "LogHandler"),
 
         (r"/login", LoginHandler),
         (r"/reset", LoginHandler),
