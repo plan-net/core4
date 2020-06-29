@@ -33,6 +33,7 @@ from core4.api.v1.request.queue.history import QueueHistoryHandler
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.queue.job import JobStream
+from core4.api.v1.request.queue.job import JobList
 from core4.api.v1.request.standard.system import SystemHandler
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.standard.access import AccessHandler
@@ -85,6 +86,7 @@ class CoreApiServer(CoreApiContainer):
     rules = [
         (r'/jobs/poll', JobStream),
         (r'/jobs/poll/(.*)', JobStream, None, "JobStream"),
+        (r'/jobs/list', JobList, None, "JobList"),
         (r'/jobs/history', JobHistoryHandler),
         (r'/jobs/history/(.*)', JobHistoryHandler, None, "JobHistory"),
         (r'/jobs/enqueue/?', JobPost),

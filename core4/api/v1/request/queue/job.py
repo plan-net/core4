@@ -13,7 +13,7 @@ from bson.objectid import ObjectId
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
-
+import re
 import core4.const
 import core4.error
 import core4.queue.job
@@ -789,12 +789,12 @@ class JobStream(JobPost):
                 exit = True
                 await self.sse("state", doc)
                 await self.sse("close", {})
-                self.finish()
             elif last is None or doc != last:
                 last = doc
                 exit = exit or await self.sse("state", doc)
             await gen.sleep(1.)
         await self.get_log(oid)
+        self.finish()
 
     async def sse(self, event, doc):
         js = json_encode(doc, indent=None, separators=(',', ':'))
@@ -891,3 +891,112 @@ class JobStream(JobPost):
         """
         job = await self.enqueue_by_args()
         await self.get(job._id)
+
+
+class JobList(CoreRequestHandler):
+    """
+    Job Listing
+    """
+    author = "mra"
+    title = "job listing"
+    tag = "api jobs"
+    icon = "build"
+
+    async def get(self):
+        """
+        Paginated list of jobs the currently logged in user is allowed to
+        execute. If client accepts ``text/html``, then this endpoint renders
+        ``template/enqueue`` to list, parameterise and enqueue jobs using
+        ``/core4/api/v1/enqueue`` endpoint.
+
+        Methods:
+            GET /jobs/list
+
+        Parameters:
+            per_page (int): number of jobs per page
+            page (int): requested page (starts counting with ``0``)
+            sort (list): of tuples with sort field and direction (1, -1)
+            filter (dict): MongoDB query
+            search (str): parsing wildcards ``?`` and ``*``
+
+        Returns:
+            pagination information with **total_count** (int), **count** (int),
+            **page** (int), **page_count** (int), **per_page** (int)
+            
+            - **_id** (ObjectId)
+            - **author** (str)
+            - **created_at** (datetime)
+            - **doc** (str)
+            - **schedule** (str)
+            - **tag** (list of str)
+            - **updated_at** (datetime)
+
+        Raises:
+            401: Unauthorized
+            403: Forbidden
+
+        Examples:
+            >>> from requests import get
+            >>> signin = get("http://0.0.0.0:5001/core4/api/v1/login?username=admin&password=hans")
+            >>> token = signin.json()["data"]["token"]
+            >>> h = {"Authorization": "Bearer " + token}
+            >>> rv = get("http://0.0.0.0:5001/core4/api/v1/jobs/list",
+                         headers=h)
+        """
+        if self.wants_html():
+            return self.render("template/enqueue/main.html")
+        per_page = int(self.get_argument(
+            "per_page", as_type=int, default=10))
+        current_page = int(self.get_argument(
+            "page", as_type=int, default=0))
+        query_filter = self.get_argument(
+            "filter", as_type=dict, default={})
+        sort_order = self.get_argument(
+            "sort", as_type=list, default=None)
+        search = self.get_argument(
+            "search", as_type=str, default=None)
+        query_filter["valid"] = True
+        if "name" in query_filter:
+            query_filter["_id"] = query_filter["name"]
+            del query_filter["name"]
+        elif search is not None:
+            search = search.replace(
+                ".", "\.").replace(
+                "?", ".").replace(
+                "*", ".*")
+            query_filter["_id"] = re.compile(search, re.IGNORECASE)
+
+        data = await self.get_job(query_filter, sort_order)
+
+        async def _length(*args, **kwargs):
+            return len(data)
+
+        async def _query(skip, limit, *args, **kwargs):
+            return data[skip:(skip + limit)]
+
+        pager = CorePager(per_page=int(per_page),
+                          current_page=int(current_page),
+                          length=_length, query=_query,
+                          sort_by=sort_order,
+                          filter=query_filter)
+        ret = await pager.page()
+        self.reply(ret)
+
+    async def get_job(self, query, order=None):
+        if order is None:
+            order = [("_id", 1)]
+        cur = self.config.sys.job.find(query, projection=[
+            "_id", "author", "created_at", "doc", "schedule", "tag",
+            "updated_at"]).sort(order)
+        data = []
+        for doc in await cur.to_list(None):
+            if await self.user.has_job_exec_access(doc["_id"]):
+                data.append(doc)
+        return data
+
+    async def card(self, **data):
+        jobs = await self.get_job({})
+        projects = set([j["_id"].split(".", 1)[0] for j in jobs])
+        data["job_count"] = len(jobs)
+        data["project_count"] = len(projects)
+        return self.render("template/enqueue/card.html", **data)
