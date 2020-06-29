@@ -5,15 +5,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import re
 import sys
 import traceback
+
 import pymongo
 import pymongo.errors
 from bson.objectid import ObjectId
 from tornado import gen
 from tornado.iostream import StreamClosedError
 from tornado.web import HTTPError
-import re
+
 import core4.const
 import core4.error
 import core4.queue.job
@@ -257,9 +259,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         pager = CorePager(per_page=int(per_page),
                           current_page=int(current_page),
                           length=_length, query=_query,
-                          #sort_by=[sort_by, int(sort_order)],
-                          #filter=query_filter
-        )
+                          # sort_by=[sort_by, int(sort_order)],
+                          # filter=query_filter
+                          )
         return await pager.page()
 
     async def get_detail(self, _id):
@@ -397,7 +399,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         if not doc:
             raise HTTPError(404, "job_id [%s] not found", oid)
         if not await self.user.has_job_exec_access(doc["name"]):
-           raise HTTPError(403)
+            raise HTTPError(403)
 
     async def update(self, oid, attr, message, event):
         """
@@ -412,7 +414,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         """
         await self._access_by_id(oid)
         at = core4.util.node.mongo_now()
-        ret =  await self.collection("queue").update_one(
+        ret = await self.collection("queue").update_one(
             {
                 "_id": oid,
                 attr: None
