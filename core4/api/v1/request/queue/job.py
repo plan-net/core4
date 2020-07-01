@@ -743,14 +743,16 @@ class JobStream(JobPost):
         can be streamed.
 
         Methods:
-            GET /jobs/poll/<_id> - stream job attributes and logging
+            GET /jobs/poll/:job - stream job attributes and logging
 
         Parameters:
-            _id (str): job _id
+            job (ObjectId): job _id
+            job (str): job qual_name
 
         Returns:
             JSON stream with job attributes (event ``state``) and job logging
-                messages (event ``log``)
+                messages (event ``log``). If a job ``qual_name`` is passed then
+                the logging event ``log`` is not available.
 
         Raises:
             401 Bad Request: failed to parse job _id
