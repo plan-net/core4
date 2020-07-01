@@ -781,7 +781,22 @@ class JobStream(JobPost):
         self.set_header('content-type', 'text/event-stream')
         self.set_header('cache-control', 'no-cache')
         self.set_header('X-Accel-Buffering', 'no')
-        oid = self.parse_id(_id)
+        oid = None
+        qual_name = None
+        try:
+            oid = ObjectId(_id)
+        except:
+            # must be a qualname
+            qual_name = _id
+        if oid is not None:
+            await self._by_id(oid)
+        else:
+            if not self.user.has_job_access(qual_name):
+                raise HTTPError(403)
+            await self._by_qual_name(qual_name)
+        self.finish()
+
+    async def _by_id(self, oid):
         last = None
         exit = False
         while not exit:
@@ -796,7 +811,42 @@ class JobStream(JobPost):
                 exit = exit or await self.sse("state", doc)
             await gen.sleep(1.)
         await self.get_log(oid)
-        self.finish()
+
+    async def _by_qual_name(self, qual_name):
+        scope = {}
+        while True:
+            cur = self.collection("queue").find(
+                filter={"name": qual_name},
+                projection=self.project_job_listing(),
+                sort=[("_id", 1)])
+            for _id in scope:
+                if scope[_id]["state"] != "journal":
+                    scope[_id]["state"] = None
+            for doc in await cur.to_list(None):
+                if doc["_id"] not in scope or scope[doc["_id"]]["data"] != doc:
+                    scope[doc["_id"]] = {
+                        "state": "active",
+                        "data": doc
+                    }
+                    if await self.sse("update", doc):
+                        return
+                else:
+                    scope[doc["_id"]]["state"] = "nochange"
+            journal = [job["_id"] for job, doc in scope.items()
+                       if doc["data"]["state"] is None]
+            if journal:
+                cur = self.collection("journal").find(
+                    filter={"_id": {"$in": journal}},
+                    projection=self.project_job_listing(),
+                    sort=[("_id", 1)])
+                for doc in await cur.to_list(None):
+                    doc["journal"] = True
+                    scope[doc["_id"]] = {
+                        "state": "journal",
+                        "data": doc
+                    }
+                    if await self.sse("update", doc):
+                        return
 
     async def sse(self, event, doc):
         js = json_encode(doc, indent=None, separators=(',', ':'))
