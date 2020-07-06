@@ -1,4 +1,5 @@
 // vue.config.js
+
 module.exports = {
   filenameHashing: false,
   outputDir: 'dist',
@@ -18,6 +19,9 @@ module.exports = {
       alias: {
         vue$: 'vue/dist/vue.esm.js'
       }
-    }
+    },
+    plugins: [
+
+    ]
   }
 }

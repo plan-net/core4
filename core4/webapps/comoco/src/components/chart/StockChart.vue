@@ -1,6 +1,17 @@
 <template>
   <v-layout>
-    <v-flex class="chart" :class="{ 'shadow': !isDark }">
+    <v-btn
+      class="toggleIcon"
+      @click="$store.dispatch('app/toggleChartVis')"
+      large
+      icon
+    >
+      <v-icon>expand_more</v-icon>
+    </v-btn>
+    <v-flex
+      class="chart"
+      :class="{ 'shadow': !isDark }"
+    >
       <vue-highcharts
         constructor-type="stockChart"
         :options="chartOptions"
@@ -11,6 +22,7 @@
 </template>
 
 <script>
+
 import moment from 'moment'
 import { mapState } from 'vuex'
 import _ from 'lodash'
@@ -30,7 +42,7 @@ import stockInit from 'highcharts/modules/stock'
 stockInit(Highcharts)
 
 export default {
-  name: 'stockChart',
+  name: 'stock-chart',
   components: {
     VueHighcharts: Chart
   },
@@ -69,14 +81,13 @@ export default {
       const chart = component.$refs.chart.chart
       const socketNotifications = {
         [SOCKET_ONMESSAGE] (state) {
-          const msg = state.socket.message
-
+          const msg = state.history.socket.message
           if (msg.channel === 'queue' && msg.name !== 'summary') {
-            console.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.event)
-            const x = (new Date(state.event.created)).getTime()
+            // onsole.log('%c socket updates cache', 'color: orange; font-weight: bold;', state.history.event)
+            const x = (new Date(state.history.event.created)).getTime()
 
             jobTypes.forEach(item => {
-              component.socketUpdatesCache[item].push([x, state.event[item] || 0])
+              component.socketUpdatesCache[item].push([x, state.history.event[item] || 0])
             })
           }
         }
@@ -98,7 +109,6 @@ export default {
       }
 
       function onNext (value) {
-        console.log('on next: ', value)
         if (value.data.length && !component.unsubscribe) {
           // response from serve sometimes have objects with the same creation date,
           // highchart don't allowed to set points with the same creation date,
@@ -120,11 +130,12 @@ export default {
 
       function onError (err) {
         // ToDo: cover this case
+        console.log(err)
         console.log('%c on error', 'color: red; font-weight: bold;', err.type)
       }
 
       function onCompleted () {
-        console.log('%c on completed fired function', 'color: green; font-weight: bold;')
+        // console.log('%c on completed fired function', 'color: green; font-weight: bold;')
 
         const chartSeriesReference = chart.series.reduce((computedResult, series) => {
           if (jobTypes.includes(series.name)) {
@@ -148,20 +159,21 @@ export default {
 
         // recursive Timeout easier than Interval for system pressure
         component.timerId = setTimeout(function update () {
+          // const zeit0 = performance.now()
           // move chart every second in case of chart not in stop mode and
           // we already have received first chunk of data from server
           if (!component.stop && !isEmptyObject(component.getChartData)) {
             const data = component.getChartData
             const x = (new Date(moment.utc().format('YYYY-MM-DDTHH:mm:ss'))).getTime() // current time
             const shift = chart.pointCount > 1750 // (250 points for each series)
-
             chartSeriesReference.forEach(item => {
               item.addPoint([x, data[item.name]], false, shift)
             })
 
             chart.redraw()
           }
-
+          /*           const zeit1 = performance.now()
+          console.log((zeit1 - zeit0) + ' ms.') */
           component.timerId = setTimeout(update, component.timer)
         }, component.timer)
       }
@@ -169,8 +181,8 @@ export default {
   },
   computed: {
     ...mapState({
-      getChartData: (state) => state.event,
-      socketReconnectError: (state) => state.socket.reconnectError
+      getChartData: (state) => state.history.event,
+      socketReconnectError: (state) => state.history.socket.reconnectError
     })
   },
   watch: {
@@ -184,7 +196,13 @@ export default {
 </script>
 
 <style scoped>
+.toggleIcon {
+  position: absolute;
+  right: 20px;
+  z-index: 50000;
+}
 .shadow {
-  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+    0 1px 5px 0 rgba(0, 0, 0, 0.12);
 }
 </style>

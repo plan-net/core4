@@ -45,7 +45,6 @@ async function getChartHistory (perPage, sort, startDate, endDate) {
   try {
     if (!startDate) {
       setting = await api.getSetting()
-
       if (setting.comoco && setting.comoco.startDate) {
         startDate = moment(setting.comoco.startDate).format(
           'YYYY-MM-DDTHH:mm:ss'

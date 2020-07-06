@@ -7,11 +7,17 @@
   $scrollbar-thumb: #5c5c5c;
   $scrollbar-thumb-hover: #737373;
   .board {
-    ::v-deep .flag.active {
+/*     ::v-deep .flag.active {
       color: #ffffff;
     }
     ::v-deep .flag.passive {
       color: rgba(255,255,255,0.18);
+    } */
+    ::v-deep .flag.active {
+      color: var(--v-primary-darken1)//#ffffff;
+    }
+    ::v-deep .flag.passive {
+      color: grey//rgba(255,255,255,0.18);
     }
     background-color: $jobs-board-bck-color;
 

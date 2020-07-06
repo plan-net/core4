@@ -1,5 +1,13 @@
 import Vue from 'vue'
-
+// import { clone } from 'core4ui/core4/helper'
+import _ from 'lodash'
+import {
+  jobGroups,
+  jobTypes,
+  jobFlags,
+  jobStates,
+  eventChannelNames
+} from '../settings'
 import {
   SOCKET_ONOPEN,
   SOCKET_ONCLOSE,
@@ -11,7 +19,6 @@ import {
 } from './comoco.mutationTypes'
 
 import { deepMerge, createObjectWithDefaultValues } from '../helper'
-import { jobTypes, jobFlags, jobStates, eventChannelNames } from '../settings'
 
 const defaultEventObj = createObjectWithDefaultValues(jobTypes, 0)
 const channelDict = {
@@ -28,9 +35,54 @@ const channelDict = {
   }
 }
 
-// console.log(createObjectWithDefaultValues(eventChannelNames, eventChannelHandler))
+const state = {
+  queue: {
+    // queue object interface:
+    //   stat: {
+    //     running: 0,
+    //     pending: 0,
+    //     deferred: 0,
+    //     failed: 0,
+    //     error: 0,
+    //     inactive: 0,
+    //     killed: 0,
+    //     created: "2019-05-21T20:24:05.180000"
+    //   },
+    //   running: [],
+    //   stopped: [],
+    //   waiting: []
+  },
+  event: {
+    // event object interface:
+    //   running: 0,
+    //   pending: 0,
+    //   deferred: 0,
+    //   failed: 0,
+    //   error: 0,
+    //   inactive: 0,
+    //   killed: 0,
+    //   created: "2019-05-21T20:24:05.180000"
+  },
+  socket: {
+    isConnected: false,
+    message: '',
+    reconnectError: false
+  },
+  notifications: {
+    socket_reconnect_error: {
+      state: false, // false = hide, true = show
+      type: 'error',
+      dismissible: false, // show "close button" parameter
+      // timeout: 7000,
+      message: '',
+      slot: '',
+      inComponents: ['home']
+    }
+  }
+}
+const actions = {}
 
-export default {
+const mutations = {
   [SOCKET_ONOPEN] (state, event) {
     Vue.prototype.$socket = event.currentTarget
     Vue.prototype.$socket.sendObj({
@@ -50,7 +102,7 @@ export default {
   // default handler called for all methods
   [SOCKET_ONMESSAGE] (state, message) {
     state.socket.message = message
-
+    // console.log(message)
     if (message.channel && message.name) {
       channelDict[message.channel][message.name](state, message)
     }
@@ -69,6 +121,49 @@ export default {
   }
 }
 
+const getters = {
+  ...mapGettersJobGroups(jobGroups), // getter for each job type (pending, deferred, ..., killed)
+  getJobsByGroupName: (state, getters) => groupName => getters[groupName],
+  getStateCounter: state => stateName => {
+    if (state.queue.stat === undefined) return 0
+
+    return stateName.reduce((previousValue, currentItem) => {
+      previousValue += state.queue.stat[currentItem] || 0
+
+      return previousValue
+    }, 0)
+  }
+}
+export default {
+  namespaced: false,
+  state,
+  actions,
+  mutations,
+  getters
+}
+// ================================================================= //
+// Private methods
+// ================================================================= //
+
+/**
+ * Getter(s) for job(s) group from store
+ *
+ * @param {array} arr -  group(s)
+ *                       e.g. ['waiting', 'running', 'stopped']
+ *
+ * @returns {object} - object with key - group name, value - getter function
+ *                     e.g. {'running': (state) => f, ...}
+ */
+function mapGettersJobGroups (arr) {
+  return arr.reduce((computedResult, currentItem) => {
+    computedResult[currentItem] = state => {
+      return _.cloneDeep(state.queue[currentItem] || [])
+    }
+
+    return computedResult
+  }, {})
+}
+
 // ================================================================= //
 // Private methods
 // ================================================================= //
@@ -80,12 +175,12 @@ export default {
  */
 function queueChannelHandler (state, message) {
   // summary - ws type notification (all jobs in queue)
-  console.log('queue', message)
+  // console.log('queue', message)
   state.queue = groupDataAndJobStat(message.created, message.data, 'state')
 
   if (!state.socket.reconnectError) {
     // ToDo: check on prod
-    console.log('event = queue.stat')
+    // console.log('event = queue.stat')
     state.event = state.queue.stat
   }
 }
@@ -97,7 +192,7 @@ function queueChannelHandler (state, message) {
  * @param message {object} - ws notification
  */
 function eventChannelHandler (state, message) {
-  console.log('event', message)
+  // console.log('event', message)
   state.event = { ...defaultEventObj, ...message.data.queue }
   state.event.created = message.created
 }
