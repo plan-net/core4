@@ -16,11 +16,12 @@ import core4.util.crypt
 import core4.util.node
 from core4.api.v1.request.role.field import *
 from core4.base.main import CoreBase
+from os import urandom
 
 ALPHANUM = re.compile(r'^[a-zA-Z0-9_.-]+$')
 EMAIL = re.compile(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
                    r'@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$')
-
+CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 class CoreRole(CoreBase):
     """
@@ -206,15 +207,12 @@ class CoreRole(CoreBase):
 
         :return: ``True`` if the role has been updated, else ``False``.
         """
-        # await self.create_index()
         await self.resolve_roles()
         self.validate(initial)
         if self._id is None:
             saved = await self._create()
         else:
             saved = await self._update()
-        # if saved:
-        #     self.data["quota"].insert(self.config.sys.quota, self._id)
         return saved
 
     async def resolve_roles(self, by_id=False):
@@ -258,6 +256,12 @@ class CoreRole(CoreBase):
         """
         self.created = core4.util.node.mongo_now()
         self.data["etag"].set(ObjectId())
+        if "email" in self.data:
+            # so we have a user
+            if "password" not in self.data:
+                # but no password, so set one
+                self.data["password"] = "".join(
+                    [CHARS[c % len(CHARS)] for c in urandom(32)])
         ret = await self.role_collection.insert_one(self.to_doc())
         if ret.inserted_id is None:
             raise RuntimeError("failed to insert role [{}]".format(self.name))
