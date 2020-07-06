@@ -5,7 +5,7 @@
 
   $scrollbar-track: #f2f2f2;
   $scrollbar-thumb: #cccccc;
-  $scrollbar-thumb-hover: #a8a8a8;
+  $scrollbar-thumb-hover: rd;
 
   .board {
     background-color: $jobs-board-bck-color;
@@ -16,10 +16,10 @@
       background-color: $info-panel-bck-color;
     }
     ::v-deep .flag.active {
-      color: #ffffff;
+      color: var(--v-primary-darken1)//#ffffff;
     }
     ::v-deep .flag.passive {
-      color: rgba(255,255,255,0.18);
+      color: grey//rgba(255,255,255,0.18);
     }
     & .jobs {
       overflow-y: auto;
@@ -52,11 +52,11 @@
       }
 
       &:hover {
-        background-color: #e6ebf5;
+        background-color: #d4d4d4;
 
         &:before {
           border-top-color: $jobs-board-bck-color;
-          border-left-color: #e6ebf5;
+          border-left-color: #d4d4d4;
         }
       }
 

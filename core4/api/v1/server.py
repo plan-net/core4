@@ -33,9 +33,11 @@ from core4.api.v1.request.queue.history import QueueHistoryHandler
 from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.queue.job import JobStream
+from core4.api.v1.request.queue.job import JobList
 from core4.api.v1.request.standard.system import SystemHandler
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.standard.access import AccessHandler
+from core4.api.v1.request.standard.log import LogHandler
 from core4.api.v1.request.standard.event import EventHandler
 from core4.api.v1.request.standard.event import EventHistoryHandler
 from core4.api.v1.request.standard.event import EventWatch
@@ -85,6 +87,7 @@ class CoreApiServer(CoreApiContainer):
     rules = [
         (r'/jobs/poll', JobStream),
         (r'/jobs/poll/(.*)', JobStream, None, "JobStream"),
+        (r'/jobs/list', JobList, None, "JobList"),
         (r'/jobs/history', JobHistoryHandler),
         (r'/jobs/history/(.*)', JobHistoryHandler, None, "JobHistory"),
         (r'/jobs/enqueue/?', JobPost),
@@ -104,6 +107,8 @@ class CoreApiServer(CoreApiContainer):
 
         (r'/event/history/?', EventHistoryHandler, None),
         (r'/event/?', EventHandler, None),
+
+        (r'/log/?', LogHandler, None, "LogHandler"),
 
         (r"/login", LoginHandler),
         (r"/reset", LoginHandler),

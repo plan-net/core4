@@ -37,6 +37,7 @@ import logging
 import re
 import sys
 from datetime import datetime, time, timedelta
+from pprint import pformat
 
 from docopt import docopt
 from time import sleep
@@ -44,7 +45,6 @@ from time import sleep
 import core4
 import core4.util.data
 from core4.base.main import CoreBase
-from pprint import pformat
 
 LOG_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
 
@@ -82,14 +82,16 @@ def parse_delta(value):
     if match:
         number = float(match.groups()[0])
         metric = match.groups()[1].lower()
-        if metric in "hdw":
+        if metric in "hdwm":
             if metric == "h":
-                delta = number
+                k = "hours"
             elif metric == "d":
-                delta = number * 24.
+                k = "days"
             elif metric == "w":
-                delta = number * 24. * 7.
-            return timedelta(hours=delta)
+                k = "weeks"
+            elif metric == "m":
+                k = "minutes"
+            return timedelta(**{k: number})
     return None
 
 
@@ -201,7 +203,7 @@ def build_query(args, clock=None, utc=True):
                 found = True
                 break
         if not found:
-            sys.exit("unknown --level")
+            raise RuntimeError("unknown --level")
     # left match: --project
     value = args.get("--project", None)
     if value is not None:

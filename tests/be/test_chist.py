@@ -143,5 +143,5 @@ def test_main():
     assert q == [{'created': {'$gte': datetime.datetime(2018, 5, 1, 11, 0)}},
                  {'levelno': {'$gte': 20}}]
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(RuntimeError):
         build_query({"--level": "x"}, clock=clock)

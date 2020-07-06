@@ -1,15 +1,6 @@
 <template>
   <c4-webapp :full-width="true">
-    <side-navigation slot="navigation-slot"></side-navigation>
-    <div slot="router">
-      <transition
-        name="fade"
-        mode="out-in"
-        :duration="{ enter: 200, leave: 300 }"
-      >
-        <router-view />
-      </transition>
-    </div>
+    <router-view />
   </c4-webapp>
 </template>
 
@@ -36,4 +27,10 @@ export default {
 </script>
 
 <style scoped lang="scss">
+::v-deep .layout.c4-page {
+  padding-top: 12px !important;
+}
+::v-deep .ace_editor{
+  border: 1px solid rgba(0, 0, 0, 0.27);;
+}
 </style>

@@ -35,7 +35,9 @@ function series () {
 
 const options = {
   chart: {
-    zoomType: 'x'
+    zoomType: 'x',
+    animation: false,
+    height: '354x'
   },
 
   time: {
@@ -111,8 +113,10 @@ const options = {
 
   plotOptions: {
     series: {
+      animation: false,
       stacking: 'normal',
       showInNavigator: true
+      // connectNulls: true
     }
   },
 
