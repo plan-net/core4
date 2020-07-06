@@ -133,7 +133,6 @@ class RoleHandler(CoreRequestHandler):
             perm=self.get_argument(
                 "perm", as_type=list, default=[])
         )
-        #self.logger.info("perm: " + str(kwargs['perm']))
         try:
             role = CoreRole(**kwargs)
             await role.save(initial=True)
