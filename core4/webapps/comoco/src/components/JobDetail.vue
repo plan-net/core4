@@ -115,7 +115,6 @@
                 </template>
               </template>
             </v-data-table>
-
           </v-col>
           <!--    <v-col cols="2">
             <job-managment-buttons :job-count="jobs.length" />
