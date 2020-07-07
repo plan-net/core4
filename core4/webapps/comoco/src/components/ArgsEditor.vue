@@ -113,8 +113,8 @@ export default {
 
 .language-chip{
   position: absolute;
-  bottom: 2px;
-  right: 14px;
+  bottom: 3px;
+  right: 28px;
 }
 
 .json div {

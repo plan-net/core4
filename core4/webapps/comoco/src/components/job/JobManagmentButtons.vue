@@ -8,12 +8,14 @@
       class="mb-4"
       block
       color="secondary lighten-3"
+      :disabled="'running'.includes(job.state)"
       :large="jobCount > 1"
     >Restart</v-btn>
     <v-btn
       @click="beforeKill"
       class="mb-4"
       block
+       :disabled="'error_complete_killed'.includes(job.state)"
       color="secondary lighten-3"
       :large="jobCount > 1"
     >Kill</v-btn>
@@ -21,12 +23,14 @@
       @click="beforeRemove"
       block
       color="secondary lighten-3"
+      :disabled="'running_complete'.includes(job.state)"
       :large="jobCount > 1"
     >Remove</v-btn>
   </v-row>
 </template>
 
 <script>
+import { mapState } from 'vuex'
 export default {
   props: {
     jobCount: {
@@ -34,6 +38,11 @@ export default {
       default: 1,
       required: true
     }
+  },
+  computed: {
+    ...mapState('jobs', [
+      'job'
+    ])
   },
   methods: {
     async beforeKill () {

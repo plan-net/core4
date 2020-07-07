@@ -4,6 +4,7 @@
     max-width="960px"
     min-height="400px"
   >
+
     <template v-slot:activator="{ on, attrs }">
       <v-btn
         fab
@@ -44,66 +45,72 @@
             </v-btn>
           </v-toolbar>
           <v-card-text class="pt-0 pb-2">
-            <v-row
-              class="pt-5"
-              align="center"
-              justify="center"
+            <v-form
+              @submit.prevent="save"
+              ref="form"
             >
-              <v-col
-                cols="12"
-                class="pb-6 pt-0"
+              <v-row
+                class="pt-5"
+                align="center"
+                justify="center"
               >
-                <select-2
-                  :disabled="isLoading"
-                  :value="model"
-                  @input="onModelChange"
-                  data-vv-name="Job"
-                  :error-messages="errors"
-                />
-                <div
-                  style="margin-top: -6px;"
-                  class="error--text"
-                >{{ errors[0] }}</div>
-              </v-col>
-              <v-col
-                cols="12"
-                class="pt-0 pb-5"
-              >
-                <args-editor
-                  :disabled="isLoading"
-                  @change="onArgsChange"
-                />
-
-              </v-col>
-              <v-col
-                cols="12"
-                class="pt-9"
-              >
-                <v-btn
-                  block
-                  large
-                  :loading="isLoading"
-                  :disabled="isLoading"
-                  color="secondary lighten-3"
-                  @click="save"
+                <v-col
+                  cols="12"
+                  class="pb-6 pt-0"
                 >
-                  Enqueue
-                  <template v-slot:loader>
-                    <span class="custom-loader">
-                      <v-icon
-                        large
-                        light
-                      >cached</v-icon>
-                    </span>
-                  </template>
-                </v-btn>
-              </v-col>
-            </v-row>
+                  <select-2
+                    :disabled="isLoading"
+                    :value="model"
+                    @input="onModelChange"
+                    data-vv-name="Job"
+                    :error-messages="errors"
+                  />
+                  <div
+                    style="margin-top: -6px;"
+                    class="error--text"
+                  >{{ errors[0] }}</div>
+                </v-col>
+                <v-col
+                  cols="12"
+                  class="pt-0 pb-5"
+                >
+                  <args-editor
+                    :disabled="isLoading"
+                    @change="onArgsChange"
+                  />
 
+                </v-col>
+                <v-col
+                  cols="12"
+                  class="pt-9"
+                >
+                  <v-btn
+                    block
+                    type="submit"
+                    @keyup.enter.native="save"
+                    large
+                    :loading="isLoading"
+                    :disabled="isLoading"
+                    color="secondary lighten-3"
+                  >
+                    Enqueue
+                    <template v-slot:loader>
+                      <span class="custom-loader">
+                        <v-icon
+                          large
+                          light
+                        >cached</v-icon>
+                      </span>
+                    </template>
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-form>
           </v-card-text>
         </v-card>
       </validation-provider>
     </validation-observer>
+
   </v-dialog>
 </template>
 
@@ -144,6 +151,13 @@ export default {
       args: ''
     }
   },
+  created () {
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.save()
+      }
+    })
+  },
   methods: {
     onArgsChange (args) {
       this.$store.dispatch('jobs/clearJobError')
@@ -153,7 +167,12 @@ export default {
       this.model = $event
       this.$store.dispatch('jobs/clearJobError')
     },
-    async save () {
+
+    async save (event) {
+      if (event) {
+        event.preventDefault()
+      }
+
       this.$store.dispatch('jobs/clearJobError')
       // await this.$nextTick()
       this.$refs.observer.validate().then(async isValid => {
@@ -171,10 +190,16 @@ export default {
       })
     }
   },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.save)
+  },
   watch: {
     open (newValue, oldValue) {
       if (newValue) {
+        window.addEventListener('keydown', this.save.bind(this))
         this.$store.dispatch('jobs/clearJob')
+      } else {
+        window.removeEventListener('keydown', this.save)
       }
     }
 

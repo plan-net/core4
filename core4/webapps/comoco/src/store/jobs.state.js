@@ -6,7 +6,8 @@ import store from '@/store'
 import Vue from 'vue'
 
 let sses = []
-let ti, tiFetchJobs
+// let ti,
+let tiFetchJobs
 function clearSSE (e) {
   // console.log('clearSSE')
   try {
@@ -57,7 +58,7 @@ const actions = {
     context.commit('clearJobs')
     context.commit('clearLog')
     context.commit('addStateFilter', null)
-    window.clearTimeout(ti)
+    // window.clearTimeout(ti)
     window.clearTimeout(tiFetchJobs)
     if (sses.length > 0) {
       clearSSE()
@@ -132,10 +133,10 @@ const actions = {
         const delta = JSON.parse(e.data)
         // console.log('update', delta)
         context.dispatch('updateJob', delta)
-        window.clearTimeout(ti)
+        /*        window.clearTimeout(ti)
         ti = window.setTimeout(function () {
           context.commit('cleanupCompletedJobs')
-        }, 2500)
+        }, 2500) */
       })
       sse.addEventListener('log', function (e) {
         const json = JSON.parse(e.data)
@@ -218,11 +219,9 @@ const actions = {
     const current = _.cloneDeep(context.state.job)
     try {
       await api.put(`jobs/${action}/${context.state.job._id}`)
-      // context.commit('removeJob', current._id)
       tiFetchJobs = window.setTimeout(function () {
         context.dispatch('fetchJobsByName', current)
       }, 2500)
-      // context.dispatch('fetchJobsByName', current)
     } catch (err) {
       Vue.prototype.raiseError(err)
     } finally {
@@ -256,7 +255,7 @@ const mutations = {
       state.job = state.jobs[0] || null
     }
   },
-  cleanupCompletedJobs (state) {
+  /*   cleanupCompletedJobs (state) {
     state.jobs = state.jobs.filter(val => {
       if (val.state !== 'complete') {
         return true
@@ -266,7 +265,7 @@ const mutations = {
       }
       return false
     })
-  },
+  }, */
   updateJob (state, delta) {
     state.jobs = state.jobs.map(val => {
       /*       Object.keys(delta).forEach(key => {

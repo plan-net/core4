@@ -1,25 +1,31 @@
 <template>
-  <div>
-    <v-btn-toggle v-if="internalStates.length > 1"
-      v-model="selected"
-      dense
-      dark
-      multiple
-      mandatory
-      shaped
-      @change="onChange"
-    >
-      <v-btn
-        :color="`${state[1]}`"
-        small
-        v-for="(state, index) in internalStates"
-        :key="state[0]"
+  <v-row
+    align="center"
+    justify="center"
+  >
+    <template v-if="internalStates.length > 1">
+      <span class="text-caption grey--text mr-3">Job state filter</span>
+      <v-btn-toggle
+        v-model="selected"
+        dense
+        dark
+        multiple
+        mandatory
+        shaped
+        @change="onChange"
       >
-        <v-icon v-if="selected.includes(index)">check_box</v-icon>
-        <v-icon v-else>check_box_outline_blank</v-icon>
-      </v-btn>
-    </v-btn-toggle>
-  </div>
+        <v-btn
+          :color="`${state[1]}`"
+          small
+          v-for="(state, index) in internalStates"
+          :key="state[0]"
+        >
+          <v-icon v-if="selected.includes(index)">check_box</v-icon>
+          <v-icon v-else>check_box_outline_blank</v-icon>
+        </v-btn>
+      </v-btn-toggle>
+    </template>
+  </v-row>
 </template>
 
 <script>
