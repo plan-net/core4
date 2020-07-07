@@ -97,7 +97,7 @@ class MyTestRJob(CoreRJob):
 def worker():
     return WorkerHelper()
 
-@pytest.mark.timeout(300)
+@pytest.mark.timeout(120)
 def test_RJob(worker):
     queue = CoreQueue()
     job = MyTestRJob
