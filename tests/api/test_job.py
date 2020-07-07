@@ -102,12 +102,15 @@ async def test_poll(core4api, worker):
         if typ:
             event.append({"type": typ, "data": json.loads("\n".join(data)[6:])})
     logs = [i["data"] for i in event if i["type"] == "event: log"]
+    close = [i["data"] for i in event if i["type"] == "event: close"]
     tests = [i for i in logs if i["message"].startswith("message")]
     assert len(tests) == 50
     states = [i["data"] for i in event if i["type"] == "event: state"]
     assert states[-1]["state"] == "complete"
-    assert event[-1]["type"] == "event: close"
-    assert event[-1]["data"] == {}
+    assert len(close) == 1
+    # obsolete because you cannot be sure that the last event is not a log event
+    #assert event[-1]["type"] == "event: close"
+    #assert event[-1]["data"] == {}
 
 
 class MyJobHandler(JobStream):
