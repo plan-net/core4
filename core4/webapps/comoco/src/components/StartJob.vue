@@ -152,11 +152,11 @@ export default {
     }
   },
   created () {
-    window.addEventListener('keydown', (e) => {
+    /*     window.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         this.save()
       }
-    })
+    }) */
   },
   methods: {
     onArgsChange (args) {
@@ -191,15 +191,15 @@ export default {
     }
   },
   beforeDestroy () {
-    window.removeEventListener('keydown', this.save)
+  // window.removeEventListener('keydown', this.save)
   },
   watch: {
     open (newValue, oldValue) {
       if (newValue) {
-        window.addEventListener('keydown', this.save.bind(this))
+        // window.addEventListener('keydown', this.save.bind(this))
         this.$store.dispatch('jobs/clearJob')
       } else {
-        window.removeEventListener('keydown', this.save)
+        // window.removeEventListener('keydown', this.save)
       }
     }
 

@@ -279,6 +279,9 @@ const mutations = {
       }) */
       if (val._id === delta._id) {
         val = _.merge(val, delta)
+        if (val.state === 'complete') {
+          val.prog.value = 1
+        }
         if (state.job._id === delta._id) {
           state.job = val
         }
