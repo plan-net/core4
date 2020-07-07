@@ -4,3 +4,4 @@ recursive-include core4/api/v1/request/_static/ *
 recursive-include core4/api/v1/request/standard/template/ *
 recursive-include core4/api/v1/request/role/template/ *
 recursive-include core4/util/email_templates/ *
+include core4/tests/other/r_test.R

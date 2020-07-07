@@ -23,6 +23,8 @@ RLIBVAR = "R_LIBS_SITE"
 
 SNIPPET = """
 
+.libPaths( c( .libPaths(), "%s")) 
+
 r = getOption("repos")
 r["CRAN"] = "%s"
 options(repos = r)
@@ -51,7 +53,9 @@ class CoreRJob(CoreLoadJob, CoreAbstractMixin):
             else:
                 value = v
             exchange[k] = value
-        snippet = SNIPPET % (self.config.rjob.cran_mirror, tempdir)
+        snippet = SNIPPET % (
+        os.path.join(os.path.dirname(sys.executable), RLIB),
+        self.config.rjob.cran_mirror, tempdir)
         if source is not None:
             if source.startswith("/"):
                 source = os.path.join(self.project_path(), source[1:])
