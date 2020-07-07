@@ -11,6 +11,8 @@
 </template>
 
 <style lang="scss" scoped>
+#editor{
+}
 .theme--dark {
   label {
     color: var(--v-secondary-lighten5);
@@ -98,7 +100,6 @@ export default {
       internalEditor = editor
       this.updateEditor({
         readOnly: this.disabled,
-        vScrollBarAlwaysVisible: true,
         fontFamily: this.fontFamily,
         fontSize: '13px',
         wrap: true

@@ -15,7 +15,7 @@
                 style="margin-top: -4px;"
                 icon
                 small
-                @click="copy"
+                @click="copy(job.name)"
               >
                 <v-icon small>content_copy</v-icon>
               </v-btn>
@@ -23,7 +23,7 @@
           </div>
           <h2 class="job-count">{{jobs.length}}</h2>
         </v-row>
-        <job-state-filter v-if="jobs.length"/>
+        <job-state-filter v-if="jobs.length" />
         <v-spacer></v-spacer>
         <v-btn
           icon
@@ -115,7 +115,7 @@
                 </template>
               </template>
             </v-data-table>
-            <pre>{{filter}}</pre>
+
           </v-col>
           <!--    <v-col cols="2">
             <job-managment-buttons :job-count="jobs.length" />
@@ -291,14 +291,6 @@ export default {
     ...mapGetters('jobs', [
       'job', 'log', 'jobs', 'filter', 'filteredJobs'
     ]),
-    /*     expanded: {
-      get () {
-        return [this.job]
-      },
-      set(newVal){
-
-      }
-    }, */
     id () {
       return this.job._id
     },
@@ -395,11 +387,21 @@ tr.prog {
   .killed-border td:first-child {
     border-left: 7px solid #d8c9c7 !important;
   }
-  .complete-border {
-    td:first-child {
-      border-left: 7px solid rgba(0, 0, 0, 0.25) !important;
+  .theme--light {
+    .complete-border {
+      td:first-child {
+        border-left: 7px dashed rgba(0, 0, 0, 0.87) !important;
+      }
+      //background-color: rgba(0, 0, 0, 0.5) !important;
     }
-    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+  .theme--dark {
+    .complete-border {
+      td:first-child {
+        border-left: 7px dashed rgba(255, 255, 255, 1) !important;
+      }
+      //background-color: rgba(0, 0, 0, 0.5) !important;
+    }
   }
 }
 
