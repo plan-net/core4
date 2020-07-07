@@ -8,7 +8,7 @@
       class="mb-4"
       block
       color="secondary lighten-3"
-      :disabled="'running'.includes(job.state)"
+      :disabled="'running_complete'.includes(job.state)"
       :large="jobCount > 1"
     >Restart</v-btn>
     <v-btn
