@@ -166,13 +166,21 @@
               .catch(error => Promise.reject(error));
           },
           onLogin() {
+            function getParameterByName(name, url) {
+              // URLSearchParams dont work here #  in next is cut off
+                if (!url) url = window.location.href;
+                name = name.replace(/[\[\]]/g, '\\$&');
+                var regex = new RegExp('[?&]' + name + '(=([^&]*)|&|$)'),
+                    results = regex.exec(url);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            }
             this.$refs.button.$el.focus();
             this.errorLogin = false;
             this.login().then(
               val => {
-                const urlParams = new URLSearchParams(window.location.search);
-                let next = urlParams.get("next") || '/';
-                
+                let next = getParameterByName('next')
                 if (next != null) {
                   next += "?token=" + val.token;
                   this.$nextTick(function() {
