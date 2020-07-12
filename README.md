@@ -38,24 +38,40 @@ core4os has on the following prerequisites:
 Install pip for Python 3, python-venv and git with:
 
     # install prerequisites
-    sudo apt-get install python3-pip python3-venv python3-dev --yes
-    sudo apt-get install gcc make git dirmngr libffi-dev --yes
+    sudo -s
+    apt-get install python3-pip python3-venv python3-dev gcc make git dirmngr libffi-dev --yes
 
 
 Install MongoDB and enable the service to start at boot time with:
 
     # install MongoDB
-    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
-    echo "deb http://repo.mongodb.org/apt/debian "$(lsb_release -sc)"/mongodb-org/4.0 main" | sudo tee /etc/apt/sources.list.d/mongodb.list
-    sudo apt-get update
-    sudo apt-get install mongodb-org --yes
-    sudo systemctl start mongod.service
-    sudo systemctl enable mongod.service
+    sudo -s
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+    echo "deb http://repo.mongodb.org/apt/debian "$(lsb_release -sc)"/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb.list
+    apt-get update
+    apt-get install mongodb-org --yes
+    systemctl start mongod.service
+    systemctl enable mongod.service
 
 
 Please note that MongoDB requires further configuration. See below.
 
+Install nodejs, yarn and npm to build and setup web tools:
 
+    # install nodejs and npm
+    sudo -s
+    wget -qO- https://deb.nodesource.com/setup_11.x | bash -
+    apt-get install -y nodejs
+    
+    # install yarn
+    sudo -s
+    wget -qO- https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+    apt-get update
+    apt-get install yarn --yes
+    npm -g install vue-cli
+
+    
 core4os installation 
 --------------------
 
@@ -71,8 +87,7 @@ framework in a Python virtual environment:
     source enter_env
     
     # install core4
-    pip install --upgrade pip
-    pip install .
+    python setup.py --fe
     
 
 MongoDB setup
@@ -84,45 +99,6 @@ special features of MongoDB which are only available with replica set.
 The interactive script ``local_setup.py`` simplifies this configuration. Start 
 the script with ``python local_setup.py`` in the Python virtual environment 
 created above. 
-
-
-
-
-
-
-
-
-
-
-Install nodejs, yarn and npm to build and setup web tools:
-
-    # install nodejs and npm
-    wget -qO- https://deb.nodesource.com/setup_11.x | sudo bash -
-    sudo apt-get update
-    sudo apt-get install -y nodejs
-    
-    # install yarn
-    wget -qO- https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-    sudo apt-get update
-    sudo apt-get install yarn --yes
-    sudo npm -g install vue-cli
-
-    
-
-
-
-
-
-
-build web tools
----------------
-
-Use core4os tool ``cadmin`` to build all web tools inside the Python virtual 
-environment created above:
-
-    # build core4 web apps
-    cadmin build
 
 
 further reads
