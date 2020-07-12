@@ -12,6 +12,7 @@ is a dedicated :doc:`quick install guide <quick>`.
 
    # install prerequisites
    sudo -s
+   apt update
    apt install python3-pip python3-venv python3-dev --yes
    apt install gcc make git dirmngr libffi-dev --yes
    apt install mongodb --yes  # install MongoDB 3.6

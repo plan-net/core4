@@ -39,6 +39,7 @@ Install pip for Python 3, python-venv and git with:
 
     # install prerequisites
     sudo -s
+    apt-get update
     apt-get install python3-pip python3-venv python3-dev gcc make git dirmngr libffi-dev --yes
 
 
