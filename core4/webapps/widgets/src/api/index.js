@@ -140,7 +140,7 @@ axiosInternal.interceptors.response.use(
   async error => {
     // First load of the widget app
     if (
-      error.config.url.includes(`${process.env.VUE_APP_APIBASE_CORE}/setting`) &&
+      error.config.url.includes(`/setting`) &&
       error.config.method === 'get' &&
       error.response.status === 400
     ) {
