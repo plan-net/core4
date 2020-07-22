@@ -18,7 +18,7 @@ from core4.queue.helper.job.base import CoreAbstractMixin
 # install libraries
 
 RSCRIPT = "/usr/bin/Rscript"
-RLIB = "../lib/R"  # from Python executable
+RLIB = "lib/R"  # from Python executable
 RLIBVAR = "R_LIBS_SITE"
 
 SNIPPET = """
@@ -71,10 +71,11 @@ class CoreRJob(CoreLoadJob, CoreAbstractMixin):
             raise core4.error.Core4UsageError(
                 "either source or code parameter required")
         env = os.environ
-        lib_path = os.path.join(os.path.dirname(sys.executable), RLIB)
+        lib_path = os.path.join(sys.prefix, RLIB)
         if os.path.exists(lib_path):
             if RLIBVAR in env:
-                env[RLIBVAR] += ":" + lib_path
+                if not lib_path in env[RLIBVAR]:
+                    env[RLIBVAR] += ":" + lib_path
             else:
                 env[RLIBVAR] = lib_path
         p = Popen([RSCRIPT, script], stdout=PIPE,
@@ -112,7 +113,7 @@ class CoreRJob(CoreLoadJob, CoreAbstractMixin):
         from rpy2.robjects import pandas2ri
         from rpy2 import robjects as ro
 
-        lib_path = os.path.join(os.path.dirname(sys.executable), RLIB)
+        lib_path = os.path.join(sys.prefix, RLIB)
         pandas2ri.activate()
         base = rpackages.importr('base')
         base._libPaths(np.append(base._libPaths(), lib_path))
