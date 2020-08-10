@@ -38,7 +38,7 @@ function onSseError (e) {
 }
 const state = {
   filter: null,
-  log: [],
+  log: '',
   error: null,
   job: { _id: null },
   jobs: []
@@ -93,11 +93,11 @@ const actions = {
     sses.push(sse)
     sse.addEventListener('log', e => {
       const json = JSON.parse(e.data)
-      const { message, epoch, level } = json
+      const { message, epoch } = json
       context.dispatch('addLog', {
         message,
-        date: formatDate(new Date(epoch * 1000)),
-        level
+        date: formatDate(new Date(epoch * 1000))
+        // level
       })
     })
     sse.addEventListener('error', onSseError)
@@ -234,7 +234,8 @@ const mutations = {
     state.filter = payload
   },
   addLog (state, payload) {
-    state.log = (state.log || []).concat([payload])
+    state.log = (state.log || '') + payload.date + ' | ' + payload.message + '\n'
+    // state.log = (state.log || []).concat([payload])
   },
   clearLog (state, payload) {
     state.log = []
