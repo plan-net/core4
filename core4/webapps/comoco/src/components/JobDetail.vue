@@ -55,7 +55,7 @@
                 <td
                   :colspan="headers.length"
                   class="px-0 py-0"
-                >
+                >wssfdas
                   <v-row>
                     <v-col
                       cols="10"
@@ -85,7 +85,9 @@
                       class="pr-6"
                       style="margin-top:100px;"
                     >
+
                       <job-managment-buttons :job-count="jobs.length" />
+
                     </v-col>
                   </v-row>
                 </td>
@@ -124,26 +126,6 @@
               </template>
             </v-data-table>
           </v-col>
-          <!--    <v-col cols="2">
-            <job-managment-buttons :job-count="jobs.length" />
-          </v-col> -->
-          <!--    <v-col cols="6">
-            <pre>{{jobs}}</pre>
-          </v-col> -->
-          <!--           <v-col
-            cols="12"
-            v-if="job"
-          >
-
-            <ace-editor
-              disabled
-              :height="'480px'"
-              label="Log"
-              language="rdoc"
-              font-family="monospace"
-              :value="internalLogMessage"
-            />
-          </v-col> -->
         </v-row>
       </v-card-text>
     </v-card>
@@ -268,23 +250,6 @@ export default {
         this.dialog = true
       }
     }
-    /*     job (newValue, oldValue) {
-      if (newValue !== oldValue && newValue != null) {
-        this.dialog = true
-      } else {
-        this.dialog = false
-      }
-    }, */
-    /*     id (newValue, oldValue) {
-      console.log(newValue)
-      this.$nextTick(function () {
-        if (newValue !== oldValue && newValue != null) {
-          this.dialog = true
-        } else {
-          this.dialog = false
-        }
-      })
-    } */
   },
   computed: {
     jobsAvail () {
@@ -328,19 +293,7 @@ tr.prog {
   position: relative;
   box-shadow: 0px 24px 3px -24px magenta !important;
 }
-/*tr.prog td:first-child::after {
-  pointer-events: none;
-  content: attr(data-width);
-  position: absolute;
-  display: block;
-  height: inherit;
-  height: inherit;
-  left: 0;
-  top: 0;
-  right: 0;
-  width: 1;
-  background: rgba(0, 0, 0, 0.2);
-} */
+
 </style>
 <style lang="scss" scoped>
 .job-count {
@@ -373,6 +326,11 @@ tr.prog {
 ::v-deep {
   .v-textarea {
     font-family: monospace !important;
+    textarea{
+
+    font-size: 13px !important;
+    line-height: 15px !important;
+    }
   }
   .pending-border td:first-child {
     border-left: 7px solid #ffc107 !important;
