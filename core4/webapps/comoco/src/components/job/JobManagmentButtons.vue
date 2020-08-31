@@ -8,14 +8,14 @@
       class="mb-4"
       block
       color="secondary lighten-3"
-      :disabled="'running_complete'.includes(job.state)"
+      :disabled="'running_complete'.includes(job.state) || jobManagerBusy"
       :large="jobCount > 1"
     >Restart</v-btn>
     <v-btn
       @click="beforeKill"
       class="mb-4"
       block
-       :disabled="'error_complete_killed'.includes(job.state)"
+      :disabled="'error_complete_killed'.includes(job.state) || jobManagerBusy"
       color="secondary lighten-3"
       :large="jobCount > 1"
     >Kill</v-btn>
@@ -23,9 +23,17 @@
       @click="beforeRemove"
       block
       color="secondary lighten-3"
-      :disabled="'running_complete'.includes(job.state)"
+      :disabled="'running_complete'.includes(job.state) || jobManagerBusy"
       :large="jobCount > 1"
     >Remove</v-btn>
+    <template v-if="jobManagerBusy">
+      <v-progress-circular
+        indeterminate
+        :size="70"
+        :width="7"
+        color="grey"
+      ></v-progress-circular>
+    </template>
   </v-row>
 </template>
 
@@ -41,7 +49,7 @@ export default {
   },
   computed: {
     ...mapState('jobs', [
-      'job'
+      'job', 'jobManagerBusy'
     ])
   },
   methods: {
