@@ -55,7 +55,7 @@
                 <td
                   :colspan="headers.length"
                   class="px-0 py-0"
-                >wssfdas
+                >
                   <v-row>
                     <v-col
                       cols="10"
