@@ -18,9 +18,12 @@ from core4.util.email import RoleEmail
 
 
 class RoleHandler(CoreRequestHandler):
-    title = "role and user management"
+    title = "Role and user management"
+    subtitle = "Create new users or roles"
     author = "mra"
+    icon = "mdi-account-multiple-plus"
     tag = ["roles app", "rolemanagement"]
+    res = 21
 
     async def post(self, _id=None):
         """
