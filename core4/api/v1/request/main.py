@@ -70,15 +70,17 @@ class CoreBaseHandler(CoreBase):
     #: link to api (can be overwritten)
     enter_url = None
     #: default material icon
-    icon = "copyright"
+    icon = "mdi-copyright"
     #: open in new window/tab
     target = None
     #: open as single page application; this hides the app managers header
     spa = False
+    # widget size, resolution
+    res = 11
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res")
     supported_types = [
         "text/html",
     ]
