@@ -1,55 +1,19 @@
 import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
-import store from '@/store.js'
+import store from '@/store'
 const api = {
-  createBoard (dto) {
-    const board = dto.board
-    const allBoards = dto.boards
-    allBoards.push(board)
-    return this._putBoards({ boards: allBoards })
-  },
-  updateBoard (dto) {
-    return this._putBoards(dto)
-  },
-  getBoards (dto) {
-    return axiosInternal
-      .get('/setting/core_widgets')
-      .then(result => {
-        if (result.data.boards == null) {
-          return {
-            boards: [],
-            board: ''
-          }
+  async fetchBoards (dto) {
+    try {
+      const ret = await axiosInternal.get('/setting/core_widgets')
+      return (
+        ret.data || {
+          boards: [],
+          board: ''
         }
-        return result.data
-      })
-      .catch(error => {
-        return Promise.reject(error)
-      })
+      )
+    } catch (err) {
+      console.warn(err)
+    }
   },
-  _putBoards (data) {
-    return axiosInternal
-      .put('/setting/core_widgets', { data })
-      .then(result => {
-        return true
-      })
-      .catch(error => {
-        // console.log(error)
-        return Promise.reject(error)
-      })
-  },
-  deleteBoard (dto) {
-    const board = dto.board
-    const allBoards = dto.boards
-    return this._putBoards({
-      boards: allBoards.filter(val => val.name !== board.name)
-    })
-  },
-  addToBoard (dto) {
-    const { board, widgetId, boards } = dto
-    boards.find(val => val.name === board.name).widgets.push(widgetId)
-    return this._putBoards({ boards })
-  },
-
   async persistOptions (
     data = {
       boards: [],
@@ -63,7 +27,7 @@ const api = {
       .catch(error => Promise.reject(error))
   },
 
-  getWidgets () {
+  async fetchWidgets () {
     const fields = {
       title: 'String',
       qual_name: 'DotSeperated',
@@ -100,33 +64,43 @@ const api = {
         .trim()
       return Object.assign(widget, { $search: $search.split(' ') })
     }
-    return axiosInternal
-      .get('/_info', { params: { per_page: 1000, page: 0 } })
-      .then(result => {
-        const user = JSON.parse(window.localStorage.getItem('user') || {})
-        const token = `?token=${user.token || -1}`
-        const widgets = result.data
-        let endpoint
-        let pathEnd
-        return widgets.map(val => {
-          endpoint = {}
-          pathEnd = `${val.rsc_id}${token}`
-          endpoint.card_url = `${val.endpoint[0]}/_info/card/${pathEnd}`
-          endpoint.enter_url = `${val.endpoint[0]}/_info/enter/${pathEnd}`
-          endpoint.help_url = `${val.endpoint[0]}/_info/help/${pathEnd}`
-          val.endpoint = endpoint
-          const vq = val.qual_name
-          val.$qual_name =
-            vq.substring(0, vq.indexOf('.')) +
-            '…' +
-            vq.substring(vq.lastIndexOf('.') + 1)
-          delete val.project
-          delete val.started_at
-          delete val.created_at
-          return constructSearchString(val)
+    try {
+      const w = await axiosInternal
+        .get('/_info', { params: { per_page: 1000, page: 0 } })
+        .then(result => {
+          const user = JSON.parse(window.localStorage.getItem('user') || {})
+          const token = `?token=${user.token || -1}`
+          const widgets = result.data
+          let endpoint
+          let pathEnd
+          return widgets.map(val => {
+            endpoint = {}
+            pathEnd = `${val.rsc_id}${token}`
+            endpoint.card_url = `${val.endpoint[0]}/_info/card/${pathEnd}`
+            endpoint.enter_url = `${val.endpoint[0]}/_info/enter/${pathEnd}`
+            endpoint.help_url = `${val.endpoint[0]}/_info/help/${pathEnd}`
+            val.endpoint = endpoint
+            const vq = val.qual_name
+            val.$qual_name =
+              vq.substring(0, vq.indexOf('.')) +
+              '…' +
+              vq.substring(vq.lastIndexOf('.') + 1)
+            val.doc = val.doc || 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.'
+            val.res = val.res || 11
+            val.width = Number(val.res.toString().split('')[0])
+            val.height = Number(val.res.toString().split('')[1])
+            delete val.project
+            delete val.started_at
+            delete val.created_at
+            return constructSearchString(val)
+          })
         })
-      })
-      .catch(error => Promise.reject(error))
+
+      return w
+      // return w
+    } catch (err) {
+      console.warn(err)
+    }
   }
 }
 

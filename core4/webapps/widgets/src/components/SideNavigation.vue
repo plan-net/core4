@@ -1,135 +1,86 @@
 <template>
-  <div>
-
-    <v-dialog
-      v-model="deleteDialog"
-      persistent
-      max-width="290"
-    >
-      <v-card>
-        <v-card-title class="headline">Delete board</v-card-title>
-        <v-card-text>Board {{itemToDelete.name}} will be deleted.</v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn
-            color="primary"
-            @click.native="deleteDialog = false"
-          >Cancel</v-btn>
-          <v-btn
-            color="primary"
-            autofocus
-            @click.native="deleteBoard(itemToDelete); deleteDialog = false"
-          >Delete
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-slide-y-transition
-      class="pl-2 pr-3 pt-0"
-      group
-      tag="v-list"
-    >
-
-      <!-- //LIST OF BOARDS -->
-      <template>
-        <template v-if="boards.length">
-          <v-list-item
-            :disabled="(item.name === activeBoardName)"
-            v-for="(item, i) in boards"
-            :key="i"
-            @click="onClick(item, i)"
-            class="mini-widget"
-          >
-
-            <v-list-item-content>
-              <v-list-item-title :class="{active: (item.name === activeBoardName)}">
-                {{ item.name }}
-              </v-list-item-title>
-            </v-list-item-content>
-            <v-list-item-action class="with-hover">
-              <v-tooltip left>
-                <template v-slot:activator="{ on }">
-                  <v-icon
-                    class="grey--text"
-                    v-on="on"
-                    :disabled="(item.name === activeBoardName)"
-                    @click.stop="onBeforeDelete(item)"
-                  >
-                    delete
-                  </v-icon>
-                </template>
-                <span>Delete board</span>
-              </v-tooltip>
-            </v-list-item-action>
-          </v-list-item>
-        </template>
-      </template>
-
-    </v-slide-y-transition>
+  <v-container fluid>
     <v-row
-      align="start"
-      justify="end"
+      column
       no-gutters
     >
-      <v-btn
-        @click="$bus.$emit('edit-board-name', true)"
-        class="mx-3 mt-1"
-        color="secondary lighten-3"
-        dark
+      <v-col
+        class="mt-16 pt-8"
+        cols="12"
       >
-        <v-icon
-          class="mr-2"
-          dark
-        >add_circle</v-icon>New board
-      </v-btn>
+        <img
+          class="client"
+          src="img/targobank-logo.svg"
+          alt=""
+        >
+      </v-col>
+      <v-col
+        cols="12"
+        class="mt-16 px-3"
+      >
+        <v-divider></v-divider>
+      </v-col>
+      <v-col
+        cols="12"
+        class="mt-4"
+      >
+        <v-list>
+          <v-subheader v-ripple @click="boardsVisible = !boardsVisible">
+            MY BOARDS <span class="ml-2" v-if="!boardsVisible">({{boards.length}})</span>
+            <v-spacer></v-spacer>
+            <v-icon
+              small
+              v-if="boardsVisible"
+            >mdi-menu-up</v-icon>
+            <v-icon
+              small
+              v-else
+            >mdi-menu-down</v-icon>
+          </v-subheader>
+          <v-list-item-group v-if="boardsVisible"
+            color="primary"
+          >
+            <v-list-item
+              v-for="(board, i) in boards"
+              :key="i"
+            >
+              <!--    <v-list-item-icon>
+                <v-icon v-text="item.icon"></v-icon>
+              </v-list-item-icon> -->
+              <v-list-item-content>
+                <v-list-item-title>
+                  {{board.name}}
+                </v-list-item-title>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list-item-group>
+        </v-list>
+      </v-col>
     </v-row>
-  </div>
+  </v-container>
 </template>
-<script>
-import { mapActions } from 'vuex'
 
+<script>
+import { mapGetters } from 'vuex'
 export default {
-  methods: {
-    ...mapActions(['deleteBoard']),
-    onBeforeDelete (item) {
-      this.itemToDelete = item
-      this.deleteDialog = true
-    },
-    onClick (item, i) {
-      this.$store.dispatch('setActiveBoard', item.name)
-    }
-  },
   computed: {
-    activeBoardName () {
-      return this.$store.getters.activeBoard.name
-    },
-    boards: {
-      get: function () {
-        return this.$store.getters.boardsSet
-      },
-      set: function (newValue) {
-      }
-    }
+    ...mapGetters('widgets', [
+      'boards'
+    ])
   },
   data () {
     return {
-      deleteDialog: false,
-      itemToDelete: false
+      boardsVisible: true
     }
   }
 }
 </script>
-<style scoped lang="scss">
-.active {
-  cursor: default;
-  color: #d70f14;
 
-  .v-list__tile__title {
-    pointer-events: none;
-  }
-}
-.active .v-icon {
-  color: inherit;
+<style lang="scss" scoped>
+img.client {
+  width: 90%;
+  height: auto;
+  margin: 0 auto;
+  display: block;
 }
 </style>
