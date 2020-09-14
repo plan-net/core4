@@ -23,7 +23,8 @@ class RoleHandler(CoreRequestHandler):
     author = "mra"
     icon = "mdi-account-multiple-plus"
     tag = ["roles app", "rolemanagement"]
-    res = 21
+    res = 11
+    cardExists = True
 
     async def post(self, _id=None):
         """
@@ -536,3 +537,6 @@ class RoleHandler(CoreRequestHandler):
         )
 
         return await pager.page()
+
+    async def card(self, **data):
+        return self.render("template/card.html", **data)

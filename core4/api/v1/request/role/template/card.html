@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link
+      href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css"
+      rel="stylesheet"
+    />
+    <style>
+    </style>
+</head>
+<body style="opacity: 0;">
+    <div id="app">
+        <v-app>
+            <v-container fluid>
+                <v-card flat class="c4-card pt-4">
+                    <v-card-title class="pa-0">
+                        <v-avatar
+                            color="accent"
+                            size="80"
+                            class="c4-avatar mx-auto mb-3">
+                            <v-icon
+                            dark
+                            large
+                            >{{icon}}</v-icon>
+                        </v-avatar>
+                        <div class="c4-card--widget-title grey--text text--darken-1 mx-auto body-1">{{title}}</div>
+                    </v-card-title>
+                    <v-card-text class="px-0 pt-8">
+                        <v-text-field
+                            outlined
+                            v-model="searchData"
+                            prepend-inner-icon="mdi-account-search"
+                            append-icon="mdi-magnify"
+                            label="Search users or roles"
+                            @keyup.enter="submit"
+                            single-line
+                            clearable
+                            hide-details
+                            @click:append="submit"
+                        ></v-text-field>
+                    </v-card-text>
+                </v-card>
+            </v-container>
+        </v-app>
+    </div>
+</body>
+<script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js">
+
+</script>
+<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.12/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vuetify/2.3.10/vuetify.min.js"></script>-->
+<script>
+</script>
+<script>
+    var app = new Vue({
+        el: "#app",
+        vuetify: window.c4Vuetify, // from widgets-4.0.min.js
+        data: function() {
+            return {
+                searchData: null
+            }
+        },
+        mounted: function() {
+        },
+        computed: {
+        },
+        methods: {
+            submit: function() {
+               console.warn('redirect to toles widget')
+               window.parent.postMessage(
+                 {event: 'WidgetOpen',
+                  payload: this.searchData
+              }, '*');
+
+            }
+        }
+    });
+</script>
+
+</html>
