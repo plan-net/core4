@@ -83,6 +83,7 @@ class CoreBaseHandler(CoreBase):
                  "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res")
     supported_types = [
         "text/html",
+        "application/json"
     ]
     concurr = True
     doc = None
@@ -448,9 +449,15 @@ class CoreBaseHandler(CoreBase):
 
     async def card(self, **data):
         """
-        Renders the default card page. This method is to be overwritten for
-        custom card page impelementation.
+        Returns the classes properties in json format.
+        May be overwritten for a custom html implementation.
         """
+        if self.wants_json():
+            # make datetime object serializable
+            for i in data.keys():
+                if isinstance(data[i], datetime.datetime):
+                    data[i] = data[i].__str__()
+            return self.finish(json.dumps(data))
         return self.render(self.card_html_page, **data)
 
     def enter(self):
