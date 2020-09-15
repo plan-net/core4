@@ -36,10 +36,10 @@ export default {
     next(vm => {})
   },
   mounted: function () {
-    /*     this.$bus.$on('c4-application-close', () => {
+    this.$bus.$on('c4-application-close', () => {
       this.$router.push('/')
     })
-    if (this.widget != null) {
+    /* if (this.widget != null) {
       this.$store.dispatch('setWidgetTitle', this.widget.title)
       this.$store.dispatch('setInWidget', true)
 
@@ -64,8 +64,8 @@ export default {
   beforeDestroy () {
     /*     this.$store.dispatch('resetWidgetTitle', config.TITLE)
     this.$store.dispatch('resetInWidget')
-    this.$store.dispatch('showAppbar')
-    this.$bus.$off('c4-application-close') */
+    this.$store.dispatch('showAppbar') */
+    this.$bus.$off('c4-application-close')
   },
   computed: {
     ...mapGetters(['dark', 'widgetById', 'theme']),
