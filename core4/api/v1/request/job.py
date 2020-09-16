@@ -113,15 +113,12 @@ class JobRequest(CoreRequestHandler):
     """
     core4 job management request to
 
-    * enqueue jobs
-    * retrieve queue listing
-    * retrieve job details
-    * kill jobs (``PUT /job/kill/:id``)
-    * remove jobs (``PUT /job/remove/:id``)
-    * restart jobs (``PUT /job/restart/:id``)
-    * get available jobs (``GET /job/list``)
-    * follow jobs (``GET /job/follow``)
-    * read job logs (``GET /job/log``)
+    * listing of available jobs
+    * enqueuing of jobs
+    * streaming job states, progress and logging
+    * retrieve running jobs
+    * retrieve details of current and past jobs
+    * kill, restart and remove jobs
     """
 
     author = "mra"
