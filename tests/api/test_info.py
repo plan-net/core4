@@ -23,6 +23,7 @@ def info_server():
 
 class SimpleHandler(CoreRequestHandler):
 
+    title = "Simple Handler"
     async def get(self):
         self.reply("OK")
 
@@ -57,9 +58,9 @@ async def test_simple(info_server):
     await info_server.login()
     rv = await info_server.get("/core4/api/v1/profile")
     assert rv.code == 200
-    rv1 = await info_server.get("/core4/api/v1/_info")
+    rv1 = await info_server.get("/core4/api/v1/_info?search=!&per_page=1000")
     assert rv1.code == 200
-    rv2 = await info_server.get("/test/_info")
+    rv2 = await info_server.get("/test/_info?search=!&per_page=1000")
     assert rv2.code == 200
     assert len(rv1.json()["data"]) == len(rv2.json()["data"])
     ih1 = [i for i in rv1.json()["data"] if "SimpleHandler" in i["qual_name"]]
@@ -75,7 +76,7 @@ async def test_simple(info_server):
 
 
 async def get_info(server, qn, key="qual_name"):
-    rv = await server.get("/core4/api/v1/_info")
+    rv = await server.get("/core4/api/v1/_info?search=!&per_page=1000")
     assert rv.code == 200
     return [i for i in rv.json()["data"] if i[key] and qn in i[key]]
 
