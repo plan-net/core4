@@ -72,7 +72,8 @@ class InfoHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import get
-            >>> rv = get("http://localhost:5001/core4/api/v1/_info?version")
+            >>> rv = get("http://localhost:5001/core4/api/v1/_info?version"
+                         "?page=1&search=!foobar")
             >>> rv.json()
 
         Methods:
