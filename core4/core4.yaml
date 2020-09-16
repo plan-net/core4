@@ -126,11 +126,11 @@ api:
     - api://core4.api.v1.request.standard.*
     - api://core4.api.v1.server.*
   verify_ssl: True
-  age_range:
-    30: this month
-    180: this half-year
-    360: this year
-
+  new_range: 180
+  tag:
+    - app
+    - new
+    - analytics
 email:
   username: ~
   password: ~
