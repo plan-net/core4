@@ -22,7 +22,7 @@ class RoleHandler(CoreRequestHandler):
     subtitle = "Create new users or roles"
     author = "mra"
     icon = "mdi-account-multiple-plus"
-    tag = ["roles app", "rolemanagement"]
+    tag = ["roles", "app"]
     res = 21
 
     async def post(self, _id=None):

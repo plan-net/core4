@@ -45,16 +45,12 @@ featured endpoints
 The following list of request handlers implement specific functionalities.
 These request handlers are delivered through the standard ``CoreApiServer``.
 
+``core4.api.v1.request.job.JobRequest``
+    enqueue and control core4 jobs, see also :doc:`job_api`
 ``core4.api.v1.request.queue.history.JobHistoryHandler``
     retrieves the paginated job state history from ``sys.event``
 ``core4.api.v1.request.queue.history.QueueHistoryHandler``
     retrieves total and aggregated job counts for past job execution
-``core4.api.v1.request.queue.job.JobHandler``
-    retrieves job listing, job details, kills, deletes and restarts jobs
-``core4.api.v1.request.queue.job.JobPost``
-    post a new job
-``core4.api.v1.request.queue.job.JobStream``
-    streams job attributes until the job reaches a final state
 ``core4.api.v1.request.role.main.RoleHandler``
     manages users and roles
 ``core4.api.v1.request.standard.access.AccessHandler``
