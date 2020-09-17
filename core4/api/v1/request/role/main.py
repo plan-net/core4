@@ -24,7 +24,7 @@ class RoleHandler(CoreRequestHandler):
     icon = "mdi-account-multiple-plus"
     tag = ["roles app", "rolemanagement"]
     res = 11
-    cardExists = True
+    #cardExists = True
 
     async def post(self, _id=None):
         """
