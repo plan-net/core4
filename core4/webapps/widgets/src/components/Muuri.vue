@@ -20,6 +20,7 @@ export default {
 
   watch: {
     async widgets (newValue, oldValue) {
+      await this.$nextTick()
       this.setupGrid()
     }
   },
