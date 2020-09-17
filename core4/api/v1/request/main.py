@@ -420,12 +420,22 @@ class CoreBaseHandler(CoreBase):
 
     async def xcard(self, *args, **kwargs):
         """
-        Prepares the ``card`` page and triggers :meth:`.card` which is to be
-        overwritten for custom card implementations.
+        Prepares the ``card`` page and either returns the classes properties if
+        called with header accept: application/json or
+        triggers :meth:`.card` otherwise, which
+         is to be overwritten for custom
+        card implementations.
 
         :return: result of :meth:`.card`
         """
         doc = await self.meta()
+        if self.wants_json():
+            # make datetime object serializable
+            for i in doc.keys():
+                if isinstance(doc[i], datetime.datetime):
+                    doc[i] = doc[i].__str__()
+            return self.finish(json.dumps(doc))
+
         return await self.card(**doc)
 
     def xenter(self, *args, **kwargs):
@@ -454,12 +464,6 @@ class CoreBaseHandler(CoreBase):
         Returns the classes properties in json format.
         May be overwritten for a custom html implementation.
         """
-        if self.wants_json():
-            # make datetime object serializable
-            for i in data.keys():
-                if isinstance(data[i], datetime.datetime):
-                    data[i] = data[i].__str__()
-            return self.finish(json.dumps(data))
         return self.render(self.card_html_page, **data)
 
     def enter(self):
