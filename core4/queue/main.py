@@ -125,7 +125,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
                     "[{}] not found".format(job))
             class_name = parts[-1]
             module = importlib.import_module(package)
-            cls = getattr(module, class_name)
+            cls = getattr(module, class_name, None)
+            if cls is None:
+                raise core4.error.CoreJobNotFound(
+                    "[{}] not found".format(job))
         else:
             cls = job
         if not isinstance(cls, type):
@@ -508,7 +511,10 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         # internal method used to set the most relevant job attributes
         job.__dict__["state"] = state
         job.__dict__["finished_at"] = core4.util.node.mongo_now()
-        runtime = (job.finished_at - job.started_at).total_seconds()
+        if job.started_at:
+            runtime = (job.finished_at - job.started_at).total_seconds()
+        else:
+            runtime = 0
         job.__dict__["runtime"] = (job.runtime or 0.) + runtime
         job.__dict__["locked"] = None
         return runtime

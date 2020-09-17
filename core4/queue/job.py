@@ -74,7 +74,7 @@ JOB_ARGS = {
     "started_at": (SERIALISE,),
     "state": (SERIALISE,),
     "tag": (CONFIG, PROPERTY,),
-    "trial": (SERIALISE,),
+    "trial": (ENQUEUE, SERIALISE,),
     "wall_at": (SERIALISE,),
     "wall_time": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
     "worker": (ENQUEUE, CONFIG, PROPERTY, SERIALISE,),
@@ -545,7 +545,8 @@ class CoreJob(CoreBase, core4.logger.mixin.CoreExceptionLoggerMixin):
             self.logger.debug("progress [%1.0f%%] - " + message, p * 100.)
             ret = self.config.sys.queue.update_one(
                 {
-                    "_id": self._id
+                    "_id": self._id,
+                    "locked": {"$ne": None}
                 },
                 update={
                     '$set': {

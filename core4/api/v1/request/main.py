@@ -398,7 +398,8 @@ class CoreBaseHandler(CoreBase):
         self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
         handler = self.application.lookup[self.rsc_id]["handler"]
         pattern = self.application.lookup[self.rsc_id]["pattern"]
-        doc = await self.application.container.get_handler(rsc_id)
+        docs = await self.application.container.get_handler(rsc_id=rsc_id)
+        doc = docs[0]
         description = str(self.doc or self.__doc__)
         doc.update(dict(
             args=handler.target_kwargs,

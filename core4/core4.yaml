@@ -21,6 +21,7 @@ sys:
   stdout: !connect mongodb://sys.stdout
   userdb: user!
   worker: !connect mongodb://sys.worker
+  store: !connect mongodb://sys.store
 
 # system folders
 folder:
@@ -125,12 +126,13 @@ api:
   user_permission:
     - api://core4.api.v1.request.standard.*
     - api://core4.api.v1.server.*
+    - api://core4.api.v1.request.store.*/u
   verify_ssl: True
-  age_range:
-    30: this month
-    180: this half-year
-    360: this year
-
+  new_range: 180
+  tag:
+    - app
+    - new
+    - analytics
 email:
   username: ~
   password: ~

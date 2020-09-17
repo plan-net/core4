@@ -52,7 +52,8 @@ setup(
         "pytz>=2018.9",
         "tzlocal>=1.5.1",
         "feather-format==0.4.0",
-        "rpy2==3.0.5"
+        "rpy2==3.0.5",
+        "pql>=0.4.31"
     ],
     extras_require={
         "tests": [

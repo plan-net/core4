@@ -40,6 +40,7 @@ def setup(tmpdir):
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+    os.environ["CORE4_OPTION_logging__stderr"] = "DEBUG"
     os.environ["CORE4_OPTION_api__token__expiration"] = "!!int 60"
     os.environ["CORE4_OPTION_api__setting__debug"] = "!!bool True"
     os.environ["CORE4_OPTION_api__setting__cookie_secret"] = "blabla"
@@ -48,7 +49,7 @@ def setup(tmpdir):
     conn.drop_database(MONGO_DATABASE)
     core4.logger.mixin.logon()
     yield
-    conn.drop_database(MONGO_DATABASE)
+    #conn.drop_database(MONGO_DATABASE)
     for i, j in core4.service.setup.CoreSetup.__dict__.items():
         if callable(j):
             if "has_run" in j.__dict__:

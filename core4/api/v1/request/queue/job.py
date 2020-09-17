@@ -42,6 +42,8 @@ STATE_STOPPED = (
 
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     """
+    .. note:: **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+
     Get job listing, job details, kill, delete and restart jobs.
     """
 
@@ -599,6 +601,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
 class JobPost(JobHandler):
     """
+    .. note:: **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+
     Post new job.
     """
 
@@ -721,6 +725,8 @@ class JobPost(JobHandler):
 
 class JobStream(JobPost):
     """
+    .. note:: **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+
     Stream job attributes until job reached final state (``ERROR``,
     ``INACTIVE``, ``KILLED``).
     """
@@ -949,6 +955,8 @@ class JobStream(JobPost):
 
 class JobList(CoreRequestHandler):
     """
+    .. note:: **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+
     Job Listing
     """
     author = "mra"

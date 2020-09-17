@@ -74,3 +74,10 @@ job execution system information
     :members:
     :show-inheritance:
 
+
+general document store
+######################
+
+.. automodule:: core4.api.v1.request.store
+    :members:
+    :show-inheritance:
