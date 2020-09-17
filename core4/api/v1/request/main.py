@@ -434,8 +434,13 @@ class CoreBaseHandler(CoreBase):
             for i in doc.keys():
                 if isinstance(doc[i], datetime.datetime):
                     doc[i] = doc[i].__str__()
+            # check if the subclass has its own card method.
+            # if it has not, the default-card method will be called.
+            if callable(self.card.__self__.__class__.__dict__.get("card", None)):
+                doc['custom_card'] = True
+            else:
+                doc['custom_card'] = False
             return self.finish(json.dumps(doc))
-
         return await self.card(**doc)
 
     def xenter(self, *args, **kwargs):
