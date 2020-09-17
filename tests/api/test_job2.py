@@ -17,7 +17,7 @@ _ = core4api
 _ = worker
 
 
-class TestJob(CoreJob):
+class MyJob(CoreJob):
     author = "mra"
 
     def execute(self):
@@ -27,7 +27,7 @@ class TestJob(CoreJob):
             # time.sleep(1)
 
 
-class TestJob1(CoreJob):
+class MyJob1(CoreJob):
     author = "mra"
 
     def execute(self):
@@ -36,7 +36,7 @@ class TestJob1(CoreJob):
             self.logger.info("hello world: %d", i)
 
 
-class TestJob2(CoreJob):
+class MyJob2(CoreJob):
     author = "mra"
 
     def execute(self):
@@ -82,7 +82,7 @@ async def test_post(core4api, worker):
 
     resp = await core4api.post(
         '/core4/api/v1/job',
-        json={"qual_name": "tests.api.test_job2.TestJob"},
+        json={"qual_name": "tests.api.test_job2.MyJob"},
         request_timeout=60.)
     assert resp.code == 200
 
@@ -116,7 +116,7 @@ async def test_follow(core4api, worker, mongodb):
     await core4api.login()
     resp = await core4api.post(
         '/core4/api/v1/job',
-        json={"qual_name": "tests.api.test_job2.TestJob", "follow": False})
+        json={"qual_name": "tests.api.test_job2.MyJob", "follow": False})
     assert resp.code == 200
     job_id = resp.json()["data"]
 
@@ -196,7 +196,7 @@ async def test_enqueue_kill_restart(core4api, worker, mongodb):
 
     resp = await core4api.post(
         '/core4/api/v1/job',
-        json={"qual_name": "tests.api.test_job2.TestJob2", "follow": False},
+        json={"qual_name": "tests.api.test_job2.MyJob2", "follow": False},
         request_timeout=120.
     )
     assert resp.code == 200
@@ -247,7 +247,7 @@ async def test_get(core4api, worker, mongodb):
     q = core4.queue.main.CoreQueue()
     jobs = []
     for i in range(25):
-        job = q.enqueue("tests.api.test_job2.TestJob", _i=i, segment=i % 3)
+        job = q.enqueue("tests.api.test_job2.MyJob", _i=i, segment=i % 3)
         jobs.append(job._id)
 
     resp = await core4api.get('/core4/api/v1/job')
@@ -286,7 +286,7 @@ async def test_job_log(core4api, worker, mongodb):
 
     resp = await core4api.post(
         '/core4/api/v1/job',
-        json={"qual_name": "tests.api.test_job2.TestJob1", "follow": False},
+        json={"qual_name": "tests.api.test_job2.MyJob1", "follow": False},
         request_timeout=120.
     )
     assert resp.code == 200
@@ -332,12 +332,12 @@ async def test_job_list(core4api, worker, mongodb):
     assert resp.code == 200
     pprint(resp.json())
 
-async def test_job_tag(core4api, worker, mongodb):
-    worker.start(1)
-    worker.stop()
-    await core4api.login()
-
-    resp = await core4api.get('/core4/api/v1/job/tag', request_timeout=120.)
-    assert resp.code == 200
-    pprint(resp.json())
-
+# async def test_job_tag(core4api, worker, mongodb):
+#     worker.start(1)
+#     worker.stop()
+#     await core4api.login()
+#
+#     resp = await core4api.get('/core4/api/v1/job/tag', request_timeout=120.)
+#     assert resp.code == 200
+#     pprint(resp.json())
+#
