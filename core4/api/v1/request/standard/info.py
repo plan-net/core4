@@ -166,10 +166,10 @@ class InfoHandler(CoreRequestHandler):
                 all = True
             if search:
                 try:
-                    query = pql.find(search)
+                    q = pql.find(search)
                 except:
                     search = ".*" + search + ".*"
-                    query = {"$or": [
+                    q = {"$or": [
                         {"author": re.compile(search, re.I)},
                         {"description": re.compile(search, re.I)},
                         {"qual_name": re.compile(search, re.I)},
@@ -177,6 +177,7 @@ class InfoHandler(CoreRequestHandler):
                         {"tag": re.compile(search, re.I)},
                         {"title": re.compile(search, re.I)}
                     ]}
+                query.update(q)
         # search
         if not all:
             query = {"$and": [query, {"tag": {"$ne": "api"}}]}
