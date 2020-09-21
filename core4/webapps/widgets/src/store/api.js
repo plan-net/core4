@@ -26,6 +26,20 @@ const api = {
       console.warn(err)
     }
   },
+  async searchWidgets (params = {
+    search: '',
+    per_page: 2,
+    page: 0
+  }) {
+    try {
+      const ret = await axiosInternal.get('/_info', {
+        params
+      })
+      return ret
+    } catch (err) {
+      console.warn(err)
+    }
+  },
   async persistOptions (
     data = {
       boards: [],

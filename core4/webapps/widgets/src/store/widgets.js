@@ -30,9 +30,12 @@ const actions = {
     }, 25)
     return boards.boards
   },
-  removeFromBoard (context, widgetId) {
+  /*   async searchWidgets (context) {
+    console.log('searchWidgets', '-------')
+  }, */
+  async removeFromBoard (context, widgetId) {
     context.commit('removeFromBoard', widgetId)
-    api.updateBoard({
+    await api.updateBoard({
       boards: context.state.boards
     })
     /*     const boards = getters.boardsSet
@@ -96,7 +99,6 @@ const actions = {
       const w = _.cloneDeep(context.state.widgetsWaitingRoom)
       // sort like saved
       const w2 = boardComplete.widgets.map(val => {
-        console.log(val)
         return w.find(val2 => val2.rsc_id === val)
       })
       context.commit('setWidgets', w2)
@@ -118,6 +120,18 @@ const actions = {
       await api.createBoard(boards)
       commit('add_board', nb)
     }
+  },
+  async updateBoard (context, delta) {
+    // const boardWithWidgets = _.cloneDeep(context.getters.boardWithWidgets)
+    const flat = delta.map(val => val.rsc_id)
+    const obj = {}
+    flat.forEach(val => {
+      obj[flat] = delta.filter(val2 => val2.rsc_id === val)
+    })
+    console.log(flat, obj)
+    /*     boardWithWidgets.widgets = boardWithWidgets.widgets.map(val => {
+      if(val.rsc_id)
+    })  */
   }
 }
 
@@ -173,6 +187,9 @@ const getters = {
   },
   board () {
     return state.board
+  },
+  boardWithWidgets () {
+    return state.boards.find(val => val.name === state.board)
   }
   /*   busy (state) {
     return state.busy

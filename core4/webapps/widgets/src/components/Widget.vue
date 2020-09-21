@@ -130,7 +130,8 @@ export default {
   inject: ['theme'],
   async created () {
   },
-  mounted () {
+  async mounted () {
+    await this.$nextTick()
     if (this.isHtml) {
       this.setupHTML()
     }
@@ -303,9 +304,7 @@ export default {
 }
 .widget-content {
   height: 100%;
-  /*   position: relative;
-  width: 100%;
-  height: 100%; */
+
   iframe {
     width: 100%;
     height: 100%;

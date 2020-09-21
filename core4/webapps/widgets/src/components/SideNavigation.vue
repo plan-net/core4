@@ -1,6 +1,5 @@
 <template>
   <v-container fluid>
-
     <v-row
       column
       no-gutters
