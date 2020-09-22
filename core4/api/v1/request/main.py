@@ -78,11 +78,11 @@ class CoreBaseHandler(CoreBase):
     # widget size, resolution
     res = 11
     # temp
-    cardExists = False
+    custom_card = False
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res", "cardExists")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res", "custom_card")
     supported_types = [
         "text/html",
         "application/json"

@@ -303,7 +303,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         icon=handler.icon,
                         description=description,
                         description_html=description_html,
-                        cardExists=handler.cardExists
+                        custom_card=handler.custom_card
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
