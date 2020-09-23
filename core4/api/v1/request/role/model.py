@@ -258,10 +258,10 @@ class CoreRole(CoreBase):
         self.data["etag"].set(ObjectId())
         if "email" in self.data:
             # so we have a user
-            if "password" not in self.data:
+            if self.data["password"].value is None:
                 # but no password, so set one
-                self.data["password"] = "".join(
-                    [CHARS[c % len(CHARS)] for c in urandom(32)])
+                self.data["password"].set("".join(
+                    [CHARS[c % len(CHARS)] for c in urandom(32)]))
         ret = await self.role_collection.insert_one(self.to_doc())
         if ret.inserted_id is None:
             raise RuntimeError("failed to insert role [{}]".format(self.name))
