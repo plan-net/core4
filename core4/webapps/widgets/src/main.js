@@ -12,11 +12,12 @@ Vue.use(InfiniteLoading, {
     /* other props need to configure */
   },
   system: {
-    throttleLimit: 50
+    throttleLimit: 25
     /* other settings need to configure */
   },
   slots: {
-    noMore: 'No more search results …' // you can pass a string value
+    noMore: 'No more search results …', // you can pass a string value
+    noResults: 'No results …'
   }
 })
 Vue.use(Core4ui, {

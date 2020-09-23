@@ -2,13 +2,19 @@ import api from '@/store/api.js'
 import router from '@/router'
 import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import _ from 'lodash'
-// import Vue from 'vue'
+
+function swap (item, oldIndex, newIndex) {
+  const temp = item[oldIndex]
+
+  item[oldIndex] = item[newIndex]
+  item[newIndex] = temp
+}
 let ti
 const state = {
-  widgetsWaitingRoom: [],
   widgets: [],
-  boards: null,
+  boards: [],
   board: null,
+  tags: [],
   client: {
     logo: 'targobank-logo.svg'
   }
@@ -20,6 +26,25 @@ const actions = {
     // await context.dispatch('fetchWidgets')
     return true
   },
+  async fetchTags (context) {
+    try {
+      const tags = await api.fetchTags()
+      let tags2 = Object.entries(tags).map(val => {
+        return Object.assign(val[1], { label: val[0] })
+      }).filter(val => {
+        return ['app', 'api', 'new'].includes(val.label)
+      })
+      tags2.unshift({
+        label: 'all',
+        default: true,
+        count: -1
+      })
+      tags2 = tags2.map(val => {
+        return Object.assign(val, { value: val.label })
+      })
+      context.commit('setTags', tags2)
+    } catch (err) {}
+  },
   async fetchBoards (context) {
     window.clearTimeout(ti)
     const boards = await api.fetchBoards()
@@ -30,18 +55,31 @@ const actions = {
     }, 25)
     return boards.boards
   },
-  /*   async searchWidgets (context) {
-    console.log('searchWidgets', '-------')
-  }, */
+  async sortBoard (context, dto) {
+    const { oldIndex, newIndex } = dto
+    const boardComplete = _.cloneDeep(context.state.boards.find(
+      val => val.name === context.state.board
+    ))
+    swap(boardComplete.widgets, oldIndex, newIndex)
+    context.commit('setBoard', boardComplete)
+    try {
+      await api.updateBoard({
+        boards: context.state.boards
+      })
+    } catch (err) {
+      console.error(err)
+    }
+  },
   async removeFromBoard (context, widgetId) {
     context.commit('removeFromBoard', widgetId)
-    await api.updateBoard({
-      boards: context.state.boards
-    })
-    /*     const boards = getters.boardsSet
-    api.updateBoard({
-      boards
-    }) */
+
+    try {
+      await api.updateBoard({
+        boards: context.state.boards
+      })
+    } catch (err) {
+      console.error(console.error)
+    }
   },
   setActiveBoard (context, board) {
     context.commit('setActiveBoard', board)
@@ -58,52 +96,80 @@ const actions = {
     const boardComplete = context.state.boards.find(
       val => val.name === context.state.board
     )
+    // TODO - queue this
+    const w = _.cloneDeep(boardComplete.widgets).map(val => {
+      val.icon = val.icon || 'mdi-copyright'
+      val.description = val.description || ''
+      val.description_html = val.description_html || ''
+      val.html = val.html || null
+      val.custom_card = val.custom_card || false
+      val.error = val.error || null
+      return val
+    })
+
+    context.commit('setWidgets', w)
     boardComplete.widgets.forEach(val => {
-      if (typeof (val) === 'string') {
-        context.dispatch('fetchWidget', val)
+      let id
+      if (typeof val === 'string') {
+        // update existing widgets in boards to be in obj format
+        id = val
       } else {
-        console.warn('Not implmented yet: widget is obj')
+        id = val.rsc_id
       }
+      context.dispatch('fetchWidget', {
+        id,
+        accept: 'application/json'
+      })
     })
   },
-  async fetchWidget (context, id) {
+  async fetchHtmlWidget (
+    context,
+    config = {
+      id: -1,
+      accept: 'application/json'
+    }
+  ) {
+    const { id, accept } = config
     try {
-      const widget = await axiosInternal.get(
-        `_info/card/${id}`,
-        { headers: { common: { Accept: 'application/json' } } }
-      )
-      const type = typeof widget
-      if (type === 'string') {
-        // html
-        context.commit('preAddWidget', {
-          rsc_id: id,
-          html: widget
-        })
-      } else {
-        // json
-        context.commit('preAddWidget', widget)
+      const html = await axiosInternal.get(`_info/card/${id}`, {
+        headers: { common: { Accept: accept } }
+      })
+      return html
+    } catch (error) {
+      return {
+        rsc_id: id,
+        error
       }
+    }
+  },
+  async fetchWidget (
+    context,
+    config = {
+      id: -1,
+      accept: 'application/json'
+    }
+  ) {
+    let widget
+    const { id, accept } = config
+    try {
+      widget = await axiosInternal.get(`_info/card/${id}`, {
+        headers: { common: { Accept: accept } }
+      })
+      if (widget.custom_card === true) {
+        const html = await context.dispatch('fetchHtmlWidget', {
+          id,
+          accept: 'text/html'
+        })
+        widget = Object.assign({}, widget, { html })
+      }
+      context.commit('preAddWidget', widget)
     } catch (error) {
       context.commit('preAddWidget', {
         rsc_id: id,
         error
       })
-      // console.log('NotFound', this.widget)
     }
-    const boardComplete = context.state.boards.find(
-      val => val.name === context.state.board
-    )
-
-    if (context.state.widgetsWaitingRoom.length === boardComplete.widgets.length) {
-      // all widgets loaded
-      const w = _.cloneDeep(context.state.widgetsWaitingRoom)
-      // sort like saved
-      const w2 = boardComplete.widgets.map(val => {
-        return w.find(val2 => val2.rsc_id === val)
-      })
-      context.commit('setWidgets', w2)
-    }
-    return true
+    return widget
   },
 
   async createBoard ({ commit, getters, state }, dto) {
@@ -122,37 +188,102 @@ const actions = {
     }
   },
   async updateBoard (context, delta) {
-    // const boardWithWidgets = _.cloneDeep(context.getters.boardWithWidgets)
-    const flat = delta.map(val => val.rsc_id)
-    const obj = {}
-    flat.forEach(val => {
-      obj[flat] = delta.filter(val2 => val2.rsc_id === val)
+    const boardWithWidgets = _.cloneDeep(context.getters.boardWithWidgets)
+    const toAdd = []
+    delta.forEach(val => {
+      const isAdded = boardWithWidgets.widgets.find(
+        val2 => val2.rsc_id === val.rsc_id
+      )
+      if (isAdded) {
+        boardWithWidgets.widgets = boardWithWidgets.widgets.filter(
+          val2 => val2.rsc_id !== val.rsc_id
+        )
+        context.commit('removeFromBoard', val.rsc_id)
+      } else {
+        boardWithWidgets.widgets.push(val)
+        toAdd.push(val)
+      }
     })
-    console.log(flat, obj)
-    /*     boardWithWidgets.widgets = boardWithWidgets.widgets.map(val => {
-      if(val.rsc_id)
-    })  */
+    context.commit('addToBoard', toAdd)
+    // ajax, perist
+    try {
+      await api.updateBoard({
+        boards: context.state.boards
+      })
+    } catch (err) {
+      console.error(err)
+    }
+    toAdd.forEach(val => {
+      context.dispatch('fetchWidget', {
+        id: val.rsc_id,
+        accept: 'application/json'
+      })
+    })
+    return true
   }
 }
 
 const mutations = {
-  preAddWidget (state, widget) {
-    const widgetAdded = state.widgetsWaitingRoom.findIndex(val => val.rsc_id === widget.rsc_id)
-    if (widgetAdded >= 0) {
-      state.widgetsWaitingRoom.splice(widgetAdded, 1, widget)
-    } else {
-      state.widgetsWaitingRoom = state.widgetsWaitingRoom.concat([widget])
-    }
+  setBoard (state, board) {
+    state.boards = state.boards.map(val => {
+      if (val.name === board.name) {
+        return board
+      }
+      return val
+    })
   },
-  removeFromBoard (state, id) {
-    state.boards = state.boards.map(
-      val => {
-        if (val.name === state.board) {
-          val.widgets = val.widgets.filter(val2 => val2 !== id)
+  /*   updateWidget (state, widgetDelta) {
+    state.widgetsWaitingRoom = state.widgetsWaitingRoom.map(widget => {
+      if (widget.rsc_id === widgetDelta.id) {
+        return Object.assign(widget, widgetDelta)
+      }
+      return widget
+    })
+    state.widgets = state.widgets.map(widget => {
+      if (widget.rsc_id === widgetDelta.id) {
+        return Object.assign(widget, widgetDelta)
+      }
+      return widget
+    })
+  }, */
+  setTags (state, tags) {
+    state.tags = tags
+  },
+  preAddWidget (state, widget) {
+    const added =
+      state.widgets.find(val => val.rsc_id === widget.rsc_id) != null
+    if (added) {
+      state.widgets = state.widgets.map(val => {
+        if (val.rsc_id === widget.rsc_id) {
+          return Object.assign(val, widget)
         }
         return val
+      })
+    } else {
+      state.widgets.push(widget)
+    }
+  },
+  addToBoard (state, widgets) {
+    state.boards = state.boards.map(val => {
+      if (val.name === state.board) {
+        const w = val.widgets.concat(widgets)
+        val.widgets = w
       }
-    )
+      return val
+    })
+  },
+  removeFromBoard (state, id) {
+    const b = state.boards.map(val => {
+      if (val.name === state.board) {
+        val.widgets = val.widgets.filter(val2 => {
+          const id2 = typeof val2 === 'string' ? val2 : val2.rsc_id
+          return id2 !== id
+        })
+      }
+      return val
+    })
+    state.boards = b
+    state.widgets = state.widgets.filter(val => val.rsc_id !== id)
   },
   setWidgets (state, payload) {
     state.widgets = payload
@@ -172,14 +303,6 @@ const getters = {
     })
   },
   widgets (state) {
-    /* if (state.boards.length && state.widgets.length) {
-      const board = state.boards.find(val => val.name === state.board)
-      const widgets = state.widgets.filter(val => {
-        return board.widgets.includes(val.rsc_id)
-      })
-      return widgets
-    }
-    return [] */
     return state.widgets
   },
   boards () {
@@ -191,12 +314,6 @@ const getters = {
   boardWithWidgets () {
     return state.boards.find(val => val.name === state.board)
   }
-  /*   busy (state) {
-    return state.busy
-  },
-  tenant (state) {
-    return state.tenant
-  } */
 }
 export default {
   namespaced: true,

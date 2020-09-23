@@ -13,6 +13,15 @@ const api = {
       return true
     })
   },
+  async fetchTags (dto) {
+    // return ['All', 'New']
+    try {
+      const ret = await axiosInternal.get('/_info?tag')
+      return ret.data
+    } catch (err) {
+      console.warn(err)
+    }
+  },
   async fetchBoards (dto) {
     try {
       const ret = await axiosInternal.get('/setting/core_widgets')
@@ -26,11 +35,13 @@ const api = {
       console.warn(err)
     }
   },
-  async searchWidgets (params = {
-    search: '',
-    per_page: 2,
-    page: 0
-  }) {
+  async searchWidgets (
+    params = {
+      search: '',
+      per_page: 2,
+      page: 0
+    }
+  ) {
     try {
       const ret = await axiosInternal.get('/_info', {
         params

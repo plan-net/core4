@@ -39,14 +39,9 @@ export default {
     await store.dispatch('widgets/initApp')
     next(vm => {})
   },
-
   async mounted () {
-
   },
   methods: {
-    onAddWidgetClick () {
-
-    }
   },
   name: 'Home',
   computed: {

@@ -40,7 +40,7 @@
           <tag-leiste
             class="py-2"
             :selected="selectedTag"
-            @change="selectedTag=$event"
+            @change="onTagSelection"
           ></tag-leiste>
 
           <v-row
@@ -52,19 +52,11 @@
                 <search
                   class="pl-3"
                   :search-active="true"
-                  @close-input="()=>{}"
+                  @close-input="onUserSearch"
                 ></search>
               </v-row>
             </template>
-            <!--             <template v-else>
-              <v-spacer></v-spacer>
-              <v-btn
-                icon
-                @click="searchActive = true"
-              >
-                <v-icon>mdi-magnify</v-icon>
-              </v-btn>
-            </template> -->
+
           </v-row>
         </v-row>
 
@@ -77,15 +69,32 @@
               @change="onChange"
             ></small-widget>
           </v-row>
-          <infinite-loading @infinite="searchWidgets" />
+          <infinite-loading
+            ref="il"
+            @infinite="searchWidgets"
+          />
         </v-card-text>
 
         <v-card-actions class="pt-4 pb-4 px-7">
+          <v-chip
+            class="ma-2"
+            color="grey"
+            xxxlabel
+            text-color="white"
+          >
+            <v-avatar
+              left
+              class="grey darken-2"
+            >
+              {{total}}
+            </v-avatar>
+            {{total !== 1 ? 'Widgets':'Widget'}} found
+          </v-chip>
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
             text
-            @click="this.deltaWidgets = [];
+            @click="deltaWidgets = [];
             dialogOpen = false"
           >
             Cancel
@@ -103,13 +112,18 @@
 </template>
 
 <script>
-// import { mapState, mapActions } from 'vuex'
 import api from '@/store/api.js'
 import TagLeiste from '@/components/sub/TagLeiste'
 import SearchField from '@/components/sub/SearchField'
 import SmallWidget from '@/components/sub/SmallWidget'
 import InfiniteLoading from 'vue-infinite-loading'
-import { mapState } from 'vuex'
+import { mapState, mapActions } from 'vuex'
+import _ from 'lodash'
+const defParams = {
+  search: '',
+  page: 0,
+  per_page: 6
+}
 export default {
   components: {
     TagLeiste,
@@ -120,24 +134,39 @@ export default {
   },
   computed: {
     ...mapState('widgets', [
-      'board'
-    ])
+      'board', 'tags'
+    ]),
+    params2 () {
+      const filter = { tag: { $in: [this.selectedTag] } }
+      return Object.assign(this.params, { filter })
+    }
   },
   data () {
+    const params = _.cloneDeep(defParams)
     return {
       deltaWidgets: [],
       selectedTag: 'all',
-      dialogOpen: true,
-      // searchActive: false,
-      params: {
-        search: '',
-        page: 0,
-        per_page: 4
-      },
+      dialogOpen: false,
+      total: 0,
+      params,
       widgets: []
     }
   },
   methods: {
+    async onUserSearch (val) {
+      const search = val ? val.text : this.params.search
+      this.params = Object.assign(_.cloneDeep(defParams), { search })
+      this.widgets = []
+      this.deltaWidgets = []
+      // this.selectedTag = 'all'
+      await this.$nextTick()
+      this.$refs.il.stateChanger.reset()
+      // this.searchWidgets()
+    },
+    onTagSelection ($event) {
+      this.selectedTag = $event
+      this.onUserSearch()
+    },
     onChange (payload) {
       const w = payload.widget
       const added = payload.added
@@ -167,31 +196,35 @@ export default {
       loaded: () => {},
       complete: () => {}
     }) {
-      const ret = await api.searchWidgets(this.params)
-      if (ret.data.length) {
-        this.params.page += 1
-        this.widgets.push(...ret.data)
-        // await this.$nextTick()
-        $state.loaded()
-      } else {
-        $state.complete()
+      try {
+        const ret = await api.searchWidgets(this.params)
+        this.total = ret.total_count
+        if (ret.data.length) {
+          this.params.page += 1
+          this.widgets.push(...ret.data)
+          $state.loaded()
+        } else {
+          $state.complete()
+        }
+      } catch (err) {
+        $state.error()
       }
-    }
-    /*    ...mapActions('widgets', {
-      searchWidgets: 'searchWidgets'
-    }) */
+    },
+    ...mapActions('widgets', {
+      fetchTags: 'fetchTags'
+    })
   },
   mounted () {
     // this.searchWidgets()
   },
   watch: {
     dialogOpen (newValue, oldValue) {
-      // this.onDialogOpen()
       if (newValue === false) {
         this.updateBoard()
-        // this.deltaWidgets = []
       } else {
-
+        if (this.tags.length === 0) {
+          this.fetchTags()
+        }
       }
     }
   }
