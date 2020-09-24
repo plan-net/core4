@@ -21,7 +21,7 @@
         <v-card-title>
           <!-- start -->
           <v-row no-gutters>
-            <h2 class="text-h4">Add widgets to „{{board}}“</h2>
+            <h2 class="text-h4">Add apps to „{{board}}“</h2>
             <v-spacer></v-spacer>
             <v-btn
               icon

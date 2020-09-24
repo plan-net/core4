@@ -45,14 +45,16 @@ const actions = {
       context.commit('setTags', tags2)
     } catch (err) {}
   },
-  async fetchBoards (context) {
+  async fetchBoards (context, config = { type: 'full' }) {
     window.clearTimeout(ti)
     const boards = await api.fetchBoards()
     context.commit('setBoards', boards.boards)
     //  wait for route params
-    ti = window.setTimeout(function () {
-      context.dispatch('setActiveBoard', boards.board)
-    }, 25)
+    if (config.type === 'full') {
+      ti = window.setTimeout(function () {
+        context.dispatch('setActiveBoard', boards.board)
+      }, 25)
+    }
     return boards.boards
   },
   async sortBoard (context, dto) {
@@ -81,18 +83,18 @@ const actions = {
       console.error(console.error)
     }
   },
-  setActiveBoard (context, board) {
+  async setActiveBoard (context, board) {
     context.commit('setActiveBoard', board)
     context.dispatch('fetchWidgets')
     if (router.history.current.params.board !== board) {
       router.push({ name: 'Home', params: { board } })
     }
+    await api.persistOptions({
+      board
+    })
     return true
   },
   fetchWidgets (context) {
-    /*     if ((context.state.boards == null || context.state.boards.length = 0)) {
-      throw new Error("No boards available");
-    } */
     const boardComplete = context.state.boards.find(
       val => val.name === context.state.board
     )
@@ -103,7 +105,7 @@ const actions = {
       val.description_html = val.description_html || ''
       val.html = val.html || null
       val.custom_card = val.custom_card || false
-      val.error = val.error || null
+      val.error = null
       return val
     })
 

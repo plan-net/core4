@@ -1,10 +1,15 @@
 <template>
   <div class="grid">
-    <widget
-      v-for="widget in widgets"
-      :key="widget.rsc_id"
-      :widget="widget"
-    ></widget>
+    <template v-if="widgets.length === 0">
+      <empty />
+    </template>
+    <template v-else>
+      <widget
+        v-for="widget in widgets"
+        :key="widget.rsc_id"
+        :widget="widget"
+      ></widget>
+    </template>
   </div>
 </template>
 
@@ -13,9 +18,11 @@ import { mapGetters, mapActions } from 'vuex'
 
 import Muuri from 'muuri'
 import Widget from '@/components/Widget'
+import Empty from '@/components/sub/Empty'
 export default {
   components: {
-    Widget
+    Widget,
+    Empty
   },
 
   watch: {

@@ -139,7 +139,6 @@ export default {
     if (this.widget.html && this.widget.html.length > 2) {
       this.setupHTML()
     }
-    console.log(this.widget)
   },
   data () {
     return {
@@ -223,8 +222,9 @@ export default {
     }
   },
   watch: {
-    html (newValue, oldValue) {
+    async html  (newValue, oldValue) {
       if (newValue) {
+        await this.$nextTick()
         this.setupHTML()
       }
     }
