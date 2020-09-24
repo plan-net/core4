@@ -8,16 +8,18 @@
       no-gutters
       align="center"
     >
-      <h1 class="text-h2 mb-4 ml-3">{{board}}</h1>
+      <h1 class="text-h2 mb-4 ml-3"> {{board}}</h1>
       <v-spacer></v-spacer>
-      <v-btn
+      <widget-search></widget-search>
+<!--       <v-btn
         color="primary"
         class="mr-9"
+        @click="onAddWidgetClick"
       >
         <v-icon left>mdi-sticker-plus-outline</v-icon>Add Widget
-      </v-btn>
+      </v-btn> -->
     </v-row>
-  <!--   <c4-datatable-plus :config="config"></c4-datatable-plus> -->
+    <!--   <c4-datatable-plus :config="config"></c4-datatable-plus> -->
 
     <Muuri></Muuri>
 
@@ -28,17 +30,24 @@
 
 <script>
 
-import { mapState } from 'vuex'
+import { mapState/* , mapActions */ } from 'vuex'
 import Muuri from '@/components/Muuri.vue'
+import WidgetSearch from '@/components/WidgetSearch.vue'
 import store from '@/store'
 export default {
   async beforeRouteEnter (to, from, next) {
-    await store.dispatch('widgets/initWidgets')
+    await store.dispatch('widgets/initApp')
     next(vm => {})
   },
-  /*   async mounted () {
-    await this.$store.dispatch('widgets/initWidgets')
-  }, */
+
+  async mounted () {
+
+  },
+  methods: {
+    onAddWidgetClick () {
+
+    }
+  },
   name: 'Home',
   computed: {
     ...mapState('widgets', [
@@ -47,14 +56,11 @@ export default {
   },
   data () {
     return {
-      /*       config: {
-        url: 'datatable/index',
-        payload: {}
-      } */
     }
   },
   components: {
-    Muuri
+    Muuri,
+    WidgetSearch
   }
 }
 </script>
@@ -62,9 +68,5 @@ export default {
 <style lang="scss" scoped>
 .container {
   max-width: 1074px;
-  /*   position: relative;
-  max-width: 1%;
-  margin: 0 -10px;
-  box-sizing: content-box; */
 }
 </style>

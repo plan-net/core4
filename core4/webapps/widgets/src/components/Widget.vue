@@ -6,8 +6,11 @@
     <div class="widget-content">
       <!-- Safe zone, enter your custom markup -->
       <v-card class="c4-card mx-auto rounded-lg elevation-3 flex-column d-flex">
-
-        <template v-if="widget.description != null || widget.cardExists === true">
+        <!--    <template v-else> -->
+        <template v-if="widget.error != null">
+          Error
+        </template>
+        <template v-else-if="isHtml">
           <v-boilerplate
             class="pt-12"
             v-if="loading"
@@ -17,12 +20,13 @@
           <v-card-text
             class="pb-5"
             v-show="!loading"
-            :alt="widget.endpoint.enter_url"
           >
             <iframe
-              :src="path"
-              frameborder="0"
-            ></iframe>
+              src="about:blank"
+              frameborder=""
+              id="frame"
+            >
+            </iframe>
           </v-card-text>
         </template>
         <template v-else>
@@ -42,7 +46,7 @@
           </v-card-title>
           <v-card-text class="pb-2">
             <div class="subtitle-2 mb-1 text-truncate">{{widget.subtitle}}</div>
-            <div class="body-2 font-weight-light">{{widget.doc}}</div>
+            <div class="body-2 font-weight-light">{{widgetDesc}}</div>
           </v-card-text>
         </template>
         <v-card-actions ripple>
@@ -109,7 +113,6 @@
           </template>
           <span>Drag &amp; sort apps</span>
         </v-tooltip>
-
       </v-card>
       <!-- Safe zone ends -->
     </div>
@@ -118,25 +121,20 @@
 </template>
 
 <script>
+// import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import { mapActions, mapGetters } from 'vuex'
 const baseWidth = 320
 const baseHeight = 360
 const margin = 15
 export default {
   inject: ['theme'],
-  mounted () {
-    const iframeEl = this.$el.querySelector('iframe').contentWindow
-    window.addEventListener('message', (e) => {
-      if (e.source === iframeEl) {
-        if (e.data.event === 'WidgetLoaded') {
-          this.loading = false
-        } else if (e.data.event === 'WidgetOpen') {
-          this.open({
-            payload: e.data.payload || ''
-          })
-        }
-      }
-    }, false)
+  async created () {
+  },
+  async mounted () {
+    await this.$nextTick()
+    if (this.isHtml) {
+      this.setupHTML()
+    }
   },
   data () {
     return {
@@ -144,9 +142,39 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['removeFromBoard']),
+    setupHTML () {
+      const iframeEl = this.$el.querySelector('iframe').contentWindow
+      window.addEventListener('message', (e) => {
+        if (e.source === iframeEl) {
+          if (e.data.event === 'WidgetLoaded') {
+            window.setTimeout(() => {
+              this.loading = false
+            }, 500)
+          } else if (e.data.event === 'WidgetOpen') {
+            this.open({
+              payload: e.data.payload || ''
+            })
+          }
+        }
+      }, false)
+      const doc = iframeEl.document
+      doc.open()
+
+      const tmp = this.widget.html.split('</head>')
+
+      const t = this.$vuetify.theme.themes
+      // eslint-disable-next-line
+      const vars = `<script>window.__DARK__=${JSON.stringify(this.dark)}; window.__THEME__=${JSON.stringify(t)}<\/script></head>`
+      const res = tmp[0] + vars + tmp[1]
+      doc.write(res)
+      doc.close()
+    },
+    ...mapActions('widgets', {
+      removeFromBoard: 'removeFromBoard'
+      // fetchWidget: 'fetchWidget'
+    }),
     onRemove () {
-      console.log('remove')
+      this.removeFromBoard(this.widget.rsc_id)
     },
     onHelpClick () {
       console.log('help')
@@ -179,7 +207,7 @@ export default {
       type: Object,
       default: () => {
         return {
-          _id: Math.random(),
+          rsc_id: Math.random(),
           width: 1,
           height: 1
         }
@@ -191,21 +219,28 @@ export default {
     ...mapGetters([
       'dark'
     ]),
-    path () {
-      const dark = new URLSearchParams(this.$vuetify.theme.themes.dark).toString().split('&').join('xyz')
-      const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')
-      return `${this.widget.endpoint.card_url}&dark=${this.dark}&themeDark=${dark}&themeLight=${light}`
+
+    isHtml () {
+      return typeof (this.widget.html) === 'string'
+    },
+    widgetDesc () {
+      if (this.widget.description.length > 135) {
+        return this.widget.description.substring(0, 135) + '…'
+      }
+      return this.widget.description
     },
     h () {
-      let temp = this.widget.height * baseHeight
-      if (this.widget.height === 2) {
+      const h = Number((this.widget.res || 11).toString().split('')[1])
+      let temp = h * baseHeight
+      if (h === 2) {
         temp += margin * 2
       }
       return (temp).toString() + 'px'
     },
     w () {
-      let temp = this.widget.width * baseWidth
-      if (this.widget.width === 2) {
+      const w = Number((this.widget.res || 11).toString().split('')[0])
+      let temp = w * baseWidth
+      if (w === 2) {
         temp += margin * 2
       }
       return (temp).toString() + 'px'
@@ -269,9 +304,7 @@ export default {
 }
 .widget-content {
   height: 100%;
-  /*   position: relative;
-  width: 100%;
-  height: 100%; */
+
   iframe {
     width: 100%;
     height: 100%;

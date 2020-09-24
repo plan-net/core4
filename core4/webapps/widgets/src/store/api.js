@@ -1,6 +1,18 @@
 import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import store from '@/store'
 const api = {
+  createBoard (boards) {
+    return this._putBoards({ boards })
+  },
+  updateBoard (dto) {
+    return this._putBoards(dto)
+  },
+  _putBoards (data) {
+    // console.log(data)
+    return axiosInternal.put('/setting/core_widgets', { data }).then(result => {
+      return true
+    })
+  },
   async fetchBoards (dto) {
     try {
       const ret = await axiosInternal.get('/setting/core_widgets')
@@ -10,6 +22,20 @@ const api = {
           board: ''
         }
       )
+    } catch (err) {
+      console.warn(err)
+    }
+  },
+  async searchWidgets (params = {
+    search: '',
+    per_page: 2,
+    page: 0
+  }) {
+    try {
+      const ret = await axiosInternal.get('/_info', {
+        params
+      })
+      return ret
     } catch (err) {
       console.warn(err)
     }
@@ -74,18 +100,21 @@ const api = {
           let endpoint
           let pathEnd
           return widgets.map(val => {
+            const pre = val.endpoint[0].replace('5001', '8080')
             endpoint = {}
             pathEnd = `${val.rsc_id}${token}`
-            endpoint.card_url = `${val.endpoint[0]}/_info/card/${pathEnd}`
-            endpoint.enter_url = `${val.endpoint[0]}/_info/enter/${pathEnd}`
-            endpoint.help_url = `${val.endpoint[0]}/_info/help/${pathEnd}`
+            endpoint.card_url = `${pre}/_info/card/${pathEnd}`
+            endpoint.enter_url = `${pre}/_info/enter/${pathEnd}`
+            endpoint.help_url = `${pre}/_info/help/${pathEnd}`
             val.endpoint = endpoint
             const vq = val.qual_name
             val.$qual_name =
               vq.substring(0, vq.indexOf('.')) +
               '…' +
               vq.substring(vq.lastIndexOf('.') + 1)
-            val.doc = val.doc || 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.'
+            val.doc =
+              val.doc ||
+              'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor.'
             val.res = val.res || 11
             val.width = Number(val.res.toString().split('')[0])
             val.height = Number(val.res.toString().split('')[1])

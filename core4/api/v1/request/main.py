@@ -78,11 +78,11 @@ class CoreBaseHandler(CoreBase):
     # widget size, resolution
     res = 11
     # temp
-    cardExists = False
+    custom_card = False
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res", "cardExists")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res", "custom_card")
     supported_types = [
         "text/html",
         "application/json"
@@ -398,7 +398,8 @@ class CoreBaseHandler(CoreBase):
         self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
         handler = self.application.lookup[self.rsc_id]["handler"]
         pattern = self.application.lookup[self.rsc_id]["pattern"]
-        doc = await self.application.container.get_handler(rsc_id)
+        docs = await self.application.container.get_handler(rsc_id=rsc_id)
+        doc = docs[0]
         description = str(self.doc or self.__doc__)
         doc.update(dict(
             args=handler.target_kwargs,

@@ -23,6 +23,7 @@ import core4.error
 import core4.service
 import core4.service.setup
 import core4.util.node
+import core4.util.data
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.server import CoreApiServer, CoreAppManager
 from core4.base import CoreBase
@@ -274,6 +275,9 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             for rule in app.target.wildcard_router.rules:
                 handler = rule.target
                 if issubclass(handler, CoreBaseHandler):
+                    description = rule.target_kwargs.get(
+                        "doc", handler.__doc__) or "None"
+                    description_html = core4.util.data.rst2html(description)
                     doc = dict(
                         hostname=self.hostname,
                         port=self.port,
@@ -288,7 +292,6 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         project=handler.get_project(),
                         protected=handler.protected,
                         qual_name=handler.qual_name(),
-                        tag=handler.tag,
                         title=handler.title,
                         subtitle=handler.subtitle,
                         enter_url=handler.enter_url,
@@ -296,19 +299,25 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         spa=handler.spa,
                         perm_base=handler.perm_base,
                         res=handler.res,
+                        tag=handler.tag,
                         icon=handler.icon,
-                        cardExists=handler.cardExists
+                        description=description,
+                        description_html=description_html,
+                        custom_card=handler.custom_card
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
                         if attr in handler.propagate and attr in doc:
                             doc[attr] = value
+                    if isinstance(doc["tag"], str):
+                        doc["tag"] = doc["tag"].split()
                     data.setdefault(rule.rsc_id, doc)
                     data[rule.rsc_id]["container"].append(
                         (app.target.container.qual_name(),
                          rule.matcher.regex.pattern,
                          app.target.container.get_root(),
                          rule.name))
+        age = self.config.api.new_range * 24. * 60. * 60.
         for rsc_id, doc in data.items():
             ret = coll.update_one(
                 filter={
@@ -328,10 +337,33 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 created += 1
             else:
                 updated += 1
-
-        self.logger.info("found [%s] application, handlers registered [%d], "
-                         "reset [%d], updated [%d], created [%d]",
-                         len(router.rules), total, reset, updated, created)
+            # update new
+            dbdoc = coll.find_one({
+                "hostname": self.hostname,
+                "port": self.port,
+                "rsc_id": rsc_id
+            })
+            if (dbdoc["started_at"]
+                - dbdoc["created_at"]).total_seconds() < age:
+                doc["tag"].append("new")
+            else:
+                doc["tag"].pop("new")
+            coll.update_one(
+                filter={
+                    "hostname": self.hostname,
+                    "port": self.port,
+                    "rsc_id": rsc_id,
+                },
+                update={
+                    "$set": {
+                        "tag": doc["tag"]
+                    }
+                }
+            )
+        self.logger.info(
+            "found [%s] application, handlers registered [%d], reset [%d], "
+            "updated [%d], created [%d]", len(router.rules), total, reset,
+            updated, created)
 
     def reset_handler(self):
         """

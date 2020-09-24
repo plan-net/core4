@@ -1,21 +1,22 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Home from '../views/Home.vue'
-import Help from '../views/Help.vue'
+// import Home from '../views/Home.vue'
+// import Help from '../views/Help.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
-    path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
     name: 'enter',
     path: '/enter/:widgetId/:payload?',
-    component: Help,
-    meta: {}
+    component: () =>
+      import(/* webpackChunkName: "help" */ '../views/Help.vue')
+  },
+  {
+    path: '/:board?',
+    name: 'Home',
+    component: () =>
+      import(/* webpackChunkName: "home" */ '../views/Home.vue')
   },
   {
     path: '/about',
