@@ -47,6 +47,7 @@ from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.standard.static import CoreStaticFileHandler
+from core4.api.v1.request.standard.avatar import AvatarHandler
 
 from core4.api.v1.request.link import CoreLinkHandler
 
@@ -119,6 +120,8 @@ class CoreApiServer(CoreApiContainer):
         (r'/setting', SettingHandler),
         (r'/setting/(.*)', SettingHandler),
 
+        (r'/avatar', AvatarHandler),
+        (r'/avatar/(.*)', AvatarHandler),
     ]
 
     def on_enter(self):
