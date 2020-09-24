@@ -11,12 +11,12 @@
       <h1 class="text-h2 mb-4 ml-3"> {{board}}</h1>
       <v-spacer></v-spacer>
       <widget-search></widget-search>
-<!--       <v-btn
+<!--        <v-btn
         color="primary"
-        class="mr-9"
-        @click="onAddWidgetClick"
+        class="ml-9"
+        @click="createUser"
       >
-        <v-icon left>mdi-sticker-plus-outline</v-icon>Add Widget
+        <v-icon left>mdi-sticker-plus-outline</v-icon>Dummy
       </v-btn> -->
     </v-row>
     <!--   <c4-datatable-plus :config="config"></c4-datatable-plus> -->
@@ -34,18 +34,19 @@ import { mapState/* , mapActions */ } from 'vuex'
 import Muuri from '@/components/Muuri.vue'
 import WidgetSearch from '@/components/WidgetSearch.vue'
 import store from '@/store'
+import api from '@/store/api'
 export default {
   async beforeRouteEnter (to, from, next) {
     await store.dispatch('widgets/initApp')
     next(vm => {})
   },
-
   async mounted () {
-
   },
   methods: {
-    onAddWidgetClick () {
-
+    async createUser () {
+      // const ret = await api.__createUser()
+      const ret = await api.__createStore()
+      console.log(ret)
     }
   },
   name: 'Home',

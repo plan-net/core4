@@ -6,9 +6,8 @@
     <div class="widget-content">
       <!-- Safe zone, enter your custom markup -->
       <v-card class="c4-card mx-auto rounded-lg elevation-3 flex-column d-flex">
-        <!--    <template v-else> -->
         <template v-if="widget.error != null">
-          Error
+          <widget-error :widget="widget"></widget-error>
         </template>
         <template v-else-if="isHtml">
           <v-boilerplate
@@ -41,20 +40,26 @@
                 large
               >{{widget.icon}}</v-icon>
             </v-avatar>
-            <div class="c4-card--widget-title grey--text text--darken-1 mx-auto body-1">{{widget.title}}</div>
+            <div class="c4-card--widget-title grey--text text--darken-1 mx-auto body-1">{{widget.title}} </div>
 
           </v-card-title>
           <v-card-text class="pb-2">
             <div class="subtitle-2 mb-1 text-truncate">{{widget.subtitle}}</div>
-            <div class="body-2 font-weight-light">{{widgetDesc}}</div>
+            <div class="body-2 font-weight-light desc" v-html="widget.description_html"></div>
           </v-card-text>
         </template>
         <v-card-actions ripple>
-          <v-btn
+          <v-btn v-if="widget.error == null"
             color="primary"
             text
             @click="open"
           >Open App</v-btn>
+          <v-btn v-else
+            color="primary"
+            text
+            @click="fixMissingWidget"
+
+          >Fix App</v-btn>
           <v-spacer></v-spacer>
           <v-menu
             bottom
@@ -123,16 +128,15 @@
 <script>
 // import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import { mapActions, mapGetters } from 'vuex'
+import WidgetError from '@/components/sub/WidgetError'
 const baseWidth = 320
 const baseHeight = 360
 const margin = 15
 export default {
   inject: ['theme'],
-  async created () {
-  },
   async mounted () {
     await this.$nextTick()
-    if (this.isHtml) {
+    if (this.widget.html && this.widget.html.length > 2) {
       this.setupHTML()
     }
   },
@@ -142,6 +146,10 @@ export default {
     }
   },
   methods: {
+
+    fixMissingWidget () {
+      window.alert('NotImplementedError: Please use the search to add the widget to this board again.')
+    },
     setupHTML () {
       const iframeEl = this.$el.querySelector('iframe').contentWindow
       window.addEventListener('message', (e) => {
@@ -171,7 +179,6 @@ export default {
     },
     ...mapActions('widgets', {
       removeFromBoard: 'removeFromBoard'
-      // fetchWidget: 'fetchWidget'
     }),
     onRemove () {
       this.removeFromBoard(this.widget.rsc_id)
@@ -188,6 +195,7 @@ export default {
     }
   },
   components: {
+    WidgetError,
     VBoilerplate: {
       functional: true,
       render (h, { data, props, children }) {
@@ -207,12 +215,18 @@ export default {
       type: Object,
       default: () => {
         return {
-          rsc_id: Math.random(),
-          width: 1,
-          height: 1
+
         }
       },
       required: false
+    }
+  },
+  watch: {
+    async html  (newValue, oldValue) {
+      if (newValue) {
+        await this.$nextTick()
+        this.setupHTML()
+      }
     }
   },
   computed: {
@@ -221,14 +235,17 @@ export default {
     ]),
 
     isHtml () {
-      return typeof (this.widget.html) === 'string'
+      return this.widget.custom_card === true
     },
-    widgetDesc () {
-      if (this.widget.description.length > 135) {
+    html () {
+      return this.widget.html
+    },
+    /*     widgetDesc () {
+      if ((this.widget.description || []).length > 135) {
         return this.widget.description.substring(0, 135) + '…'
       }
-      return this.widget.description
-    },
+      return this.widget.description || 'No description.'
+    }, */
     h () {
       const h = Number((this.widget.res || 11).toString().split('')[1])
       let temp = h * baseHeight
@@ -256,6 +273,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.desc{
+  max-height: 86px;
+  overflow-y: scroll;
+}
 ::v-deep .v-skeleton-loader {
   height: 100%;
 }

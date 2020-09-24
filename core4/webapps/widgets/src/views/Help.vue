@@ -27,68 +27,70 @@
 
 <script>
 import { mapGetters } from 'vuex'
+// import router from '@/router'
 import store from '@/store'
 // import { config } from '@/main'
 
 export default {
   async beforeRouteEnter (to, from, next) {
-    await store.dispatch('widgets/initWidgets')
+    store.dispatch('widgets/fetchBoards', { type: 'light' })
+    /*     console.log(router.history.current.params)
+    await this.$nextTick()
+    const id = router.history.current.params.widgetId
+    await store.dispatch('widgets/fetchWidget', {
+      id,
+      accept: 'application/json'
+    }) */
     next(vm => {})
   },
-  mounted: function () {
+  async mounted () {
     this.$bus.$on('c4-application-close', () => {
       this.$router.push('/')
     })
-    /* if (this.widget != null) {
-      this.$store.dispatch('setWidgetTitle', this.widget.title)
-      this.$store.dispatch('setInWidget', true)
-
-      this.checkAppbarVis()
-    } */
+    await store.dispatch('widgets/fetchWidget', {
+      id: this.$route.params.widgetId,
+      accept: 'application/json'
+    })
   },
   watch: {
-    widget (newValue) {
-      if (newValue != null) {
-        /*         this.$store.dispatch('setWidgetTitle', newValue.title)
-        this.$store.dispatch('setInWidget', true) */
-      }
-    }
   },
   methods: {
-    /*     checkAppbarVis () {
-      if ((this.widget || {}).spa) {
-        this.$store.dispatch('hideAppbar')
-      }
-    } */
+
   },
   beforeDestroy () {
-    /*     this.$store.dispatch('resetWidgetTitle', config.TITLE)
-    this.$store.dispatch('resetInWidget')
-    this.$store.dispatch('showAppbar') */
     this.$bus.$off('c4-application-close')
   },
   computed: {
-    ...mapGetters(['dark', 'widgetById', 'theme']),
+    ...mapGetters(['dark', 'theme']),
     widget () {
       const data = this.$store.getters['widgets/widgetById'](this.$route.params.widgetId)
-      return data
+      return data || {
+        icon: ''
+      }
     },
     theme () {
       return JSON.stringify(this.$vuetify.theme.themes)
     },
     path () {
+      if (this.widget.rsc_id == null) {
+        return 'about:blank'
+      }
+      const user = JSON.parse(window.localStorage.getItem('user') || {})
+      const token = `?token=${user.token || -1}`
+      const pathEnd = `${this.widget.rsc_id}${token}`
       let path
       switch (this.$route.name) {
         case 'help':
-          path = this.widget.endpoint.help_url
+          path = `${this.widget.endpoint}/_info/help/${pathEnd}`
           break
         default:
-          path = this.widget.endpoint.enter_url
+          path = `${this.widget.endpoint}/_info/enter/${pathEnd}`
       }
       const dark = new URLSearchParams(this.$vuetify.theme.themes.dark).toString().split('&').join('xyz')
       const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')
-      const search = this.$route.params.payload
-      return `${path}&dark=${this.dark}&themeDark=${dark}&themeLight=${light}&search=${search}`
+      const search = this.$route.params.payload || ''
+      const ret = `${path}&dark=${this.dark}&themeDark=${dark}&themeLight=${light}&search=${search}`
+      return ret.replace('5001', '8080')
     }
   }
 

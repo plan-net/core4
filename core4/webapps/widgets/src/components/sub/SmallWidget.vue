@@ -131,7 +131,7 @@ export default {
       }
     },
     widgetDesc () {
-      if (this.widget.description.length > 135) {
+      if ((this.widget.description || []).length > 135) {
         return this.widget.description.substring(0, 135) + '…'
       }
       return this.widget.description

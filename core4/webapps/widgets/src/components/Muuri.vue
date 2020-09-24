@@ -1,25 +1,33 @@
 <template>
   <div class="grid">
-    <widget
-      v-for="widget in widgets"
-      :key="widget.rsc_id"
-      :widget="widget"
-    />
+    <template v-if="widgets.length === 0">
+      <empty />
+    </template>
+    <template v-else>
+      <widget
+        v-for="widget in widgets"
+        :key="widget.rsc_id"
+        :widget="widget"
+      ></widget>
+    </template>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 
 import Muuri from 'muuri'
 import Widget from '@/components/Widget'
+import Empty from '@/components/sub/Empty'
 export default {
   components: {
-    Widget
+    Widget,
+    Empty
   },
 
   watch: {
-    async widgets (newValue, oldValue) {
+    // we watch for widget rsc ids in widgets array to rebuild grid
+    async widgetsHack (newValue, oldValue) {
       await this.$nextTick()
       this.setupGrid()
     }
@@ -56,18 +64,33 @@ export default {
         dragReleaseDuration: 400,
         dragReleseEasing: 'ease'
       })
+      let oldIndex
       this.grid.on('dragInit', (item, event) => {
         console.log('oldIndex', item, this.grid.getItems().indexOf(item))
+        oldIndex = this.grid.getItems().indexOf(item)
       })
       this.grid.on('dragReleaseEnd', (item) => {
         console.log('newIndex', item, this.grid.getItems().indexOf(item))
+        const newIndex = this.grid.getItems().indexOf(item)
+        if (newIndex !== oldIndex) {
+          this.sortBoard({
+            oldIndex,
+            newIndex
+          })
+        }
       })
-    }
+    },
+    ...mapActions('widgets', {
+      sortBoard: 'sortBoard'
+    })
   },
   computed: {
     ...mapGetters('widgets', [
       'widgets'
-    ])
+    ]),
+    widgetsHack () {
+      return this.widgets.map(val => val.rsc_id).join('_')
+    }
   },
   data () {
     return {
@@ -75,7 +98,8 @@ export default {
       show: false
     }
   },
-  mounted () {
+  async mounted () {
+    await this.$nextTick()
     this.setupGrid()
   }
 

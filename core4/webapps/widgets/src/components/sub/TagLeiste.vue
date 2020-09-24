@@ -1,22 +1,25 @@
 <template>
-  <v-btn-toggle
-    v-model="innerSelected"
-    tile
-    color="primary"
-    group
-  >
-    <v-btn
-      :value="item.value"
-      text
-      v-for="item in tags"
-      :key="item.value"
+  <div style="min-width: 120px;">
+    <v-btn-toggle
+      v-model="innerSelected"
+      xxtile
+      color="primary"
+      group
     >
-      {{item.label}}
-    </v-btn>
-  </v-btn-toggle>
+      <v-btn
+        :value="item.value"
+        text
+        v-for="item in tags"
+        :key="item.value"
+      >
+        {{item.label}}
+      </v-btn>
+    </v-btn-toggle>
+  </div>
 </template>
 
 <script>
+import { mapState } from 'vuex'
 export default {
   props: {
     selected: {
@@ -25,24 +28,27 @@ export default {
       default: 'all'
     }
   },
+  components: {
 
+  },
   computed: {
     innerSelected: {
       get () {
         return this.selected
       },
       set (newValue) {
-        this.$emit('change', newValue)
+        if (newValue !== this.selected) {
+          this.$emit('change', newValue)
+        }
       }
-    }
+    },
+    ...mapState('widgets', [
+      'tags'
+    ])
+
   },
   data () {
     return {
-      tags: [
-        { label: 'All', value: 'all' },
-        { label: 'New', value: 'new' },
-        { label: 'Tech', value: 'technical' }
-      ]
     }
   }
 
