@@ -37,10 +37,10 @@
                 </v-icon>
 
               </v-avatar>
-              <v-btn color="primary" @click="()=>{}">
+           <!--    <v-btn color="primary" @click="()=>{}">
                 <v-icon left>mdi-cloud-upload</v-icon>
                 Upload picture
-              </v-btn>
+              </v-btn> -->
             </v-row>
             <v-row class="mt-6">
               <v-col cols="6" cols-xs="12">
@@ -258,7 +258,9 @@
   </div>
   <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js"></script>
 </body>
-
+<script>
+  
+</script>
 <script>
   function checkMail(value) {
     const pattern =
@@ -270,7 +272,6 @@
   var ERROR = {
     'HTTPError(400, "name or email exists")': "This E-Mail already exists!"
   }
-
 
   var app = new Vue({
 

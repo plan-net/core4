@@ -23,7 +23,7 @@ class AvatarHandler(CoreRequestHandler):
         img = await self.config.sys.setting.find_one({"_id": _id},
                                                      {"_id": 0, "avatar": 1})
         if img:
-            self.set_header("Content-Type", "image/gif")
+            self.set_header("Content-Type", "image/jpeg")
             self.set_header("Pragma", "no-cache")
             self.set_header("Cache-Control",
                         "no-store, "
@@ -54,7 +54,7 @@ class AvatarHandler(CoreRequestHandler):
         _id = user._id
 
         file = self.request.files
-        bio = BytesIO(file['avatar'][0]['body'])
+        bio = BytesIO(file['file'][0]['body'])
 
         if bio.getbuffer().nbytes > self.MAX_AVATAR_SIZE:
             raise HTTPError("Maximal allowed avatar size is 16MB!")
