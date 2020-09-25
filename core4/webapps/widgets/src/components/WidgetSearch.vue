@@ -13,7 +13,7 @@
           v-on="on"
         >
           <v-icon left>mdi-plus-circle</v-icon>
-          Add widgets to „{{board}}“
+          Add apps to „{{board}}“
         </v-btn>
       </template>
 
@@ -187,7 +187,9 @@ export default {
       }
     },
     async updateBoard () {
-      await this.$store.dispatch('widgets/updateBoard', this.deltaWidgets)
+      if (this.deltaWidgets.length) {
+        await this.$store.dispatch('widgets/updateBoard', this.deltaWidgets)
+      }
     },
     onDialogOpen () {
       // this.searchWidgets()

@@ -2,6 +2,8 @@ import api from '@/store/api.js'
 import router from '@/router'
 import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import _ from 'lodash'
+import Vue from 'vue'
+import bus from 'core4ui/core4/event-bus.js'
 
 function swap (item, oldIndex, newIndex) {
   const temp = item[oldIndex]
@@ -29,11 +31,13 @@ const actions = {
   async fetchTags (context) {
     try {
       const tags = await api.fetchTags()
-      let tags2 = Object.entries(tags).map(val => {
-        return Object.assign(val[1], { label: val[0] })
-      }).filter(val => {
-        return ['app', 'api', 'new'].includes(val.label)
-      })
+      let tags2 = Object.entries(tags)
+        .map(val => {
+          return Object.assign(val[1], { label: val[0] })
+        })
+        .filter(val => {
+          return ['app', 'api', 'new'].includes(val.label)
+        })
       tags2.unshift({
         label: 'all',
         default: true,
@@ -59,9 +63,9 @@ const actions = {
   },
   async sortBoard (context, dto) {
     const { oldIndex, newIndex } = dto
-    const boardComplete = _.cloneDeep(context.state.boards.find(
-      val => val.name === context.state.board
-    ))
+    const boardComplete = _.cloneDeep(
+      context.state.boards.find(val => val.name === context.state.board)
+    )
     swap(boardComplete.widgets, oldIndex, newIndex)
     context.commit('setBoard', boardComplete)
     try {
@@ -94,12 +98,20 @@ const actions = {
     })
     return true
   },
-  fetchWidgets (context) {
+  /*   async modernizeBoard (context, board) {
+    console.log(board)
+  }, */
+  async fetchWidgets (context) {
     const boardComplete = context.state.boards.find(
       val => val.name === context.state.board
     )
     // TODO - queue this
+    // let modernize = false
     const w = _.cloneDeep(boardComplete.widgets).map(val => {
+      if (typeof val === 'string') {
+        // modernize = true
+        return val
+      }
       val.icon = val.icon || 'mdi-copyright'
       val.description = val.description || ''
       val.description_html = val.description_html || ''
@@ -108,16 +120,13 @@ const actions = {
       val.error = null
       return val
     })
-
+    /*     if (modernize) {
+      w = await context.commit('modernizeBoard', w)
+    } */
     context.commit('setWidgets', w)
     boardComplete.widgets.forEach(val => {
-      let id
-      if (typeof val === 'string') {
-        // update existing widgets in boards to be in obj format
-        id = val
-      } else {
-        id = val.rsc_id
-      }
+      // update existing widgets in boards to be in obj format
+      const id = typeof val === 'string' ? val : val.rsc_id
       context.dispatch('fetchWidget', {
         id,
         accept: 'application/json'
@@ -173,25 +182,56 @@ const actions = {
     }
     return widget
   },
-
   async createBoard ({ commit, getters, state }, dto) {
-    // try {
-    const exists = state.boards.find(val => val.name === dto.board)
+    const exists = state.boards.find(val => {
+      return val.name === dto.board
+    })
+    let boards = _.cloneDeep(state.boards) || []
     if (exists != null) {
-      throw new Error('Board exists')
+      throw new Error('Board exists') // do not change message
     } else {
       const nb = {
         name: dto.board,
         widgets: []
       }
-      const boards = (state.boards || []).concat([nb])
+      boards = boards.concat([nb])
       await api.createBoard(boards)
-      commit('add_board', nb)
+      commit('setBoards', boards)
+    }
+    return boards
+  },
+  async editBoard (context, dto) {
+    try {
+      let boards = _.cloneDeep(state.boards) || []
+      boards = boards.map(val => {
+        if (val.name === dto.oldName) {
+          val.name = dto.board
+        }
+        return val
+      })
+      context.commit('setBoards', boards)
+      await api.createBoard(boards)
+      // this is the active board
+      if (context.state.board === dto.oldName) {
+        context.commit('setActiveBoard', dto.board)
+        await api.persistOptions({
+          board: dto.board
+        })
+        if (router.history.current.params.board !== dto.board) {
+          router.push({ name: 'Home', params: { board: dto.board } })
+        }
+      }
+      return true
+    } catch (err) {
+      Vue.prototype.raiseError(err)
+      return false
     }
   },
+
   async updateBoard (context, delta) {
     const boardWithWidgets = _.cloneDeep(context.getters.boardWithWidgets)
     const toAdd = []
+    let toRemove = 0
     delta.forEach(val => {
       const isAdded = boardWithWidgets.widgets.find(
         val2 => val2.rsc_id === val.rsc_id
@@ -201,6 +241,7 @@ const actions = {
           val2 => val2.rsc_id !== val.rsc_id
         )
         context.commit('removeFromBoard', val.rsc_id)
+        toRemove++
       } else {
         boardWithWidgets.widgets.push(val)
         toAdd.push(val)
@@ -221,6 +262,17 @@ const actions = {
         accept: 'application/json'
       })
     })
+    let text = 'Board updated. '
+    if (toAdd.length) {
+      text += `${toAdd.length} widget${toAdd.length > 1 ? 's' : ''} added. `
+    }
+    if (toRemove > 0) {
+      text += `${toRemove} widget${toRemove > 1 ? 's' : ''} removed.`
+    }
+    bus.$emit('SHOW_NOTIFICATION', {
+      type: 'success',
+      text
+    })
     return true
   }
 }
@@ -234,20 +286,7 @@ const mutations = {
       return val
     })
   },
-  /*   updateWidget (state, widgetDelta) {
-    state.widgetsWaitingRoom = state.widgetsWaitingRoom.map(widget => {
-      if (widget.rsc_id === widgetDelta.id) {
-        return Object.assign(widget, widgetDelta)
-      }
-      return widget
-    })
-    state.widgets = state.widgets.map(widget => {
-      if (widget.rsc_id === widgetDelta.id) {
-        return Object.assign(widget, widgetDelta)
-      }
-      return widget
-    })
-  }, */
+
   setTags (state, tags) {
     state.tags = tags
   },

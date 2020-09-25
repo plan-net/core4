@@ -105,7 +105,7 @@
         </v-card-actions>
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
-            <v-btn
+            <v-btn v-if="showHandle"
               v-bind="attrs"
               v-on="on"
               class="handle text--disabled"
@@ -219,6 +219,10 @@ export default {
         }
       },
       required: false
+    },
+    showHandle: {
+      type: Boolean,
+      default: true
     }
   },
   watch: {
@@ -230,16 +234,18 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([
-      'dark'
+    /*     ...mapGetters([
+      'dark', 'widgets'
     ]),
-
+    showHandle () {
+      return this.widgets.length > 1
+    }, */
     isHtml () {
       return this.widget.custom_card === true
     },
-    html () {
+    /*     html () {
       return this.widget.html
-    },
+    }, */
     /*     widgetDesc () {
       if ((this.widget.description || []).length > 135) {
         return this.widget.description.substring(0, 135) + '…'

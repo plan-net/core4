@@ -48,13 +48,14 @@
             color="primary"
           >
             <template v-if="boards != null">
-
               <template v-for="brd in boards">
                 <v-list-item
-                  :disabled="(brd.name === board)"
+                  class="pr-0"
+                  :mouse-over="brd.over=true"
+                  :mouse-out="brd.over=false"
+                  xxxdisabled="(brd.name === board)"
                   :key="brd.name"
                   @click="setActiveBoard(brd.name)"
-                  xxxxto="{name: 'Home', params: {board : brd.name}}"
                 >
                   <v-list-item-icon>
                     <v-icon>mdi-view-dashboard-variant</v-icon>
@@ -64,6 +65,14 @@
                       {{brd.name}}
                     </v-list-item-title>
                   </v-list-item-content>
+                  <v-list-item-action>
+                    <v-icon
+                      @click="onEditBoard(brd.name)"
+                      ripple
+                      small
+                      color="grey"
+                    >mdi-pencil</v-icon>
+                  </v-list-item-action>
                 </v-list-item>
               </template>
             </template>
@@ -101,7 +110,7 @@
         <v-card-title>
           <!-- start -->
           <v-row no-gutters>
-            <h2 class="text-h4">Add board</h2>
+            <h2 class="text-h4">{{oldName ? 'Change name' : 'Add board'}}</h2>
             <v-spacer></v-spacer>
             <v-btn
               icon
@@ -112,7 +121,6 @@
           </v-row>
           <!-- end -->
         </v-card-title>
-
         <ValidationObserver
           ref="observer"
           v-slot="{ handleSubmit }"
@@ -120,42 +128,41 @@
           <!--  validated,, validate, invalid,  -->
           <ValidationProvider
             name="Boardname"
-            xxxrules="required|max:30"
             :rules="{required: true,max: 30, boardexists: error}"
             v-slot="{ errors }"
           >
-            <!-- , valid -->
-            <v-card-text class="pt-5 pb-0">
-              <v-text-field
-                autofocus
-                clearable
-                outlined
-                filled
-                v-model="name"
-                :error-messages="errors"
-                xxxxsuccess="valid"
-                label="Boardname"
-                required
-              ></v-text-field>
-
-            </v-card-text>
-
-            <v-card-actions class="pt-4 pb-8 px-7">
-              <v-spacer></v-spacer>
-              <v-btn
-                color="primary"
-                text
-                @click="dialogOpen = false"
-              >
-                Cancel
-              </v-btn>
-              <v-btn
-                color="primary"
-                @click="handleSubmit(submit)"
-              >
-                Create board
-              </v-btn>
-            </v-card-actions>
+            <v-form @submit.prevent="handleSubmit(submit)">
+              <!-- , valid -->
+              <v-card-text class="pt-5 pb-0">
+                <v-text-field
+                  autofocus
+                  clearable
+                  outlined
+                  filled
+                  v-model="name"
+                  :error-messages="errors"
+                  label="Boardname"
+                  required
+                ></v-text-field>
+              </v-card-text>
+              <v-card-actions class="pt-4 pb-8 px-7">
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="primary"
+                  text
+                  @click="dialogOpen = false; oldName = null; name = null"
+                >
+                  Cancel
+                </v-btn>
+                <v-btn
+                  :disabled="block"
+                  color="primary"
+                  type="submit"
+                >
+                  Save
+                </v-btn>
+              </v-card-actions>
+            </v-form>
           </ValidationProvider>
         </ValidationObserver>
       </v-card>
@@ -164,7 +171,7 @@
 </template>
 
 <script>
-import { mapGetters, mapState, mapActions } from 'vuex'
+import { mapGetters, mapActions } from 'vuex'
 import { ValidationProvider, ValidationObserver } from 'vee-validate'
 
 export default {
@@ -187,26 +194,26 @@ export default {
   },
   computed: {
     ...mapGetters('widgets', [
-      'boards'
-    ]),
-    ...mapState('widgets', [
-      'board'
+      'boards', 'board'
     ])
   },
   data () {
     return {
       selected: null,
       dialogOpen: false,
+      block: false,
       boardsVisible: true,
       name: null,
-      error: null,
-      position: null
+      oldName: null,
+      error: null
+      // position: null
     }
   },
   watch: {
     dialogOpen (newValue, oldValue) {
       if (newValue === false) {
         this.selected = []
+        this.clear()
       }
     }
   },
@@ -214,8 +221,16 @@ export default {
     ...mapActions('widgets', {
       setActiveBoard: 'setActiveBoard'
     }),
+    onEditBoard (name) {
+      this.oldName = name
+      this.name = name
+      this.dialogOpen = true
+    },
     async clear () {
-      this.name = this.email = this.select = this.checkbox = ''
+      this.oldName = null
+      this.block = false
+      this.name = null
+      this.dialogOpen = false
       requestAnimationFrame(() => {
         this.$refs.observer.reset()
       })
@@ -223,16 +238,22 @@ export default {
     async submit () {
       this.$refs.observer.validate().then(async isValid => {
         if (isValid) {
+          this.block = true
           try {
-            await this.$store.dispatch('widgets/createBoard', { board: this.name })
+            const action = this.oldName != null ? 'widgets/editBoard' : 'widgets/createBoard'
+            const dto = { board: this.name, oldName: this.oldName }
+            await this.$store.dispatch(action, dto)
+            const text = this.oldName != null ? `Board „${this.name}“ changed.` : `Board „${this.name}“ created.`
             this.$bus.$emit('SHOW_NOTIFICATION', {
               type: 'success',
-              text: `Board „${this.name}“ created.`
+              text
             })
           } catch (err) {
             if (err.message === 'Board exists') {
               this.error = err.message + '.'
             }
+          } finally {
+            this.clear()
           }
         }
       })

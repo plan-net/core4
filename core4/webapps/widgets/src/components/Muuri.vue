@@ -7,6 +7,7 @@
       <widget
         v-for="widget in widgets"
         :key="widget.rsc_id"
+        :show-handle="showHandle"
         :widget="widget"
       ></widget>
     </template>
@@ -88,6 +89,9 @@ export default {
     ...mapGetters('widgets', [
       'widgets'
     ]),
+    showHandle () {
+      return this.widgets.length > 1
+    },
     widgetsHack () {
       return this.widgets.map(val => val.rsc_id).join('_')
     }

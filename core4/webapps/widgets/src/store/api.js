@@ -1,5 +1,6 @@
 import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 // import store from '@/store'
+const widgetPath = '/setting/core_widgets_next'
 const api = {
   __createUser () {
     const data = {
@@ -52,7 +53,7 @@ const api = {
   },
   _putBoards (data) {
     // console.log(data)
-    return axiosInternal.put('/setting/core_widgets', { data }).then(result => {
+    return axiosInternal.put(widgetPath, { data }).then(result => {
       return true
     })
   },
@@ -67,7 +68,7 @@ const api = {
   },
   async fetchBoards (dto) {
     try {
-      const ret = await axiosInternal.get('/setting/core_widgets')
+      const ret = await axiosInternal.get(widgetPath)
       return (
         ret.data || {
           boards: [],
@@ -102,7 +103,7 @@ const api = {
     }
   ) {
     return axiosInternal
-      .post('/setting/core_widgets', { data })
+      .post(widgetPath, { data })
       .then(result => result)
       .catch(error => Promise.reject(error))
   }

@@ -8,24 +8,18 @@
       no-gutters
       align="center"
     >
-      <h1 class="text-h2 mb-4 ml-3"> {{board}}</h1>
+      <h1 class="text-h2 mb-4 ml-3">{{board}}</h1>
       <v-spacer></v-spacer>
       <widget-search></widget-search>
-<!--        <v-btn
-        color="primary"
-        class="ml-9"
-        @click="createUser"
-      >
-        <v-icon left>mdi-sticker-plus-outline</v-icon>Dummy
-      </v-btn> -->
     </v-row>
-    <!--   <c4-datatable-plus :config="config"></c4-datatable-plus> -->
-
+    <v-row
+      no-gutters
+      align="center"
+    >
+ <!--    <avatar /> -->
+    </v-row>
     <Muuri></Muuri>
-
   </v-container>
-  <!--   <div class="home" style="border: 1px solid green;">
-  </div> -->
 </template>
 
 <script>
@@ -33,6 +27,7 @@
 import { mapState/* , mapActions */ } from 'vuex'
 import Muuri from '@/components/Muuri.vue'
 import WidgetSearch from '@/components/WidgetSearch.vue'
+/* import Avatar from '@/components/sub/Avatar.vue' */
 import store from '@/store'
 import api from '@/store/api'
 export default {
@@ -45,8 +40,8 @@ export default {
   methods: {
     async createUser () {
       // const ret = await api.__createUser()
-      const ret = await api.__createStore()
-      console.log(ret)
+      /*     const ret = await api.__createStore()
+      console.log(ret) */
     }
   },
   name: 'Home',
@@ -62,6 +57,7 @@ export default {
   components: {
     Muuri,
     WidgetSearch
+    // Avatar
   }
 }
 </script>
