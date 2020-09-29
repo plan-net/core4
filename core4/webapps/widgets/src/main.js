@@ -4,28 +4,27 @@ import router from './router'
 import store from './store'
 
 import Core4ui from 'core4ui/core4'
-import 'core4ui/core4/themes/core4/theme-c4.scss'
-import VueDragDrop from 'vue-drag-drop'
-import THEME from 'core4ui/core4/themes/core4/theme-vuetify'
-
-export const config = {
-  THEME,
-  TITLE: 'CORE4OS',
-  APP_IDENTIFIER: 'core'
-}
-Vue.use(VueDragDrop)
+import '@/vee.js'
+import InfiniteLoading from 'vue-infinite-loading'
+Vue.use(InfiniteLoading, {
+  props: {
+    spinner: 'bubbles'
+    /* other props need to configure */
+  },
+  system: {
+    throttleLimit: 25
+    /* other settings need to configure */
+  },
+  slots: {
+    noMore: 'No more search results …', // you can pass a string value
+    noResults: 'No results …'
+  }
+})
 Vue.use(Core4ui, {
   App,
   router,
   store,
-  config
+  config: {
+    TITLE: 'Core4os'
+  }
 })
-
-/* Vue.config.productionTip = false
-
-new Vue({
-  i18n,
-  router,
-  store,
-  render: h => h(App)
-}).$mount('#app') */

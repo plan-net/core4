@@ -101,10 +101,11 @@ async def test_static_info(info_server):
     assert rv.ok
     css = "/test/_asset/default/" + rscid + "/bootstrap-material-design.custom.css"
     assert css in rv.body.decode("utf-8")
-    pprint(rv.body)
     rv = await info_server.get(css)
     assert rv.ok
-
+    rv = await info_server.get(url, headers={"accept": "application/json"})
+    assert rv.ok
+    assert isinstance(rv.json(), dict)
     url = "/test/_info/help/" + rscid
     rv = await info_server.get(url)
     # print(rv.body)

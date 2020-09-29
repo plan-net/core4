@@ -1,54 +1,104 @@
 <template>
-  <c4-webapp
-    :full-width="true"
-    :nav-button-visible="false"
-  >
-    <div slot="router">
-      <transition
-        name="fade"
-        mode="out-in"
-        :duration="{ enter: 200, leave: 300 }"
+  <!--   <v-app id="inspire">
+    <v-navigation-drawer
+      v-model="drawerRight"
+      app
+      clipped
+      right
+    >
+      <v-list dense>
+        <v-list-item @click.stop="right = !right">
+          <v-list-item-action>
+            <v-icon>mdi-exit-to-app</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Open Temporary Drawer</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app-bar
+      app
+      clipped-right
+      color="blue-grey"
+      dark
+    >
+      <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+      <v-toolbar-title>Core4os</v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-app-bar-nav-icon @click.stop="drawerRight = !drawerRight"></v-app-bar-nav-icon>
+    </v-app-bar>
+
+    <v-navigation-drawer
+      v-model="drawer"
+      app
+    >
+      <v-list dense>
+        <v-list-item @click.stop="left = !left">
+          <v-list-item-action>
+            <v-icon>mdi-exit-to-app</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>Open Temporary Drawer</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-navigation-drawer
+      v-model="left"
+      fixed
+      temporary
+    ></v-navigation-drawer>
+
+    <v-main>
+      <v-container
+        class="fill-height"
+        fluid
       >
-        <router-view />
-      </transition>
-    </div>
+        <v-row
+          justify="center"
+          align="center"
+        >
+          <v-col class="shrink">
+            <router-view />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-main>
+    <v-navigation-drawer
+      v-model="right"
+      fixed
+      right
+      temporary
+    ></v-navigation-drawer>
+
+  </v-app> -->
+  <c4-webapp :full-width="true">
+    <side-navigation slot="navigation-slot"></side-navigation>
+
+    <!--     <portal to="title-portal">
+      <p>Core4os</p>
+    </portal> -->
+
   </c4-webapp>
 </template>
+
 <script>
-import { inIframe } from 'core4ui/core4/store/state'
-import { mapGetters } from 'vuex'
+import SideNavigation from '@/components/SideNavigation'
 export default {
-  name: 'CORE4OS',
-  watch: {
-    authenticated (newValue, oldValue) {
-      if (newValue === false) {
-        this.$store.dispatch('clear')
-      }
-    }
+  components: {
+    SideNavigation
   },
-  computed: {
-    ...mapGetters(['authenticated'])
+  props: {
   },
-  mounted () {
-    function bindEvent (element, eventName, eventHandler) {
-      if (element.addEventListener) {
-        element.addEventListener(eventName, eventHandler, false)
-      } else if (element.attachEvent) {
-        element.attachEvent('on' + eventName, eventHandler)
-      }
-    }
-    if (inIframe() === false) {
-      // this is coming from the iframe application!!!
-      bindEvent(window, 'message', function (e) {
-        if (e.data === 'c4-application-close') {
-          this.$router.push('/')
-        }
-      }.bind(this))
-    } else {
-      this.$store.dispatch('setInWidget', true)
-    };
-  }
+  data: () => ({
+
+    drawer: false,
+    drawerRight: false,
+    right: false,
+    left: false
+  })
 }
 </script>
-<style lang="scss">
-</style>
