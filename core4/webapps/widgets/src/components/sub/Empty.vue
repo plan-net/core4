@@ -25,7 +25,7 @@
           Add your first app
         </h2>
         <p class="text-h5" style="max-width: 480px;">
-          You can organise apps into boards and quickly access them in the future.
+          You can organize apps into boards and quickly access them in the future.
         </p>
         <p class="body-1" style="max-width: 480px;">
           Click on the „Add apps to …“ button to add apps to this board.
