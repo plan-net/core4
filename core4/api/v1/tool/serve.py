@@ -278,6 +278,10 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                     description = rule.target_kwargs.get(
                         "doc", handler.__doc__) or "None"
                     description_html = core4.util.data.rst2html(description)
+                    if "card" in handler.__dict__:
+                        custom_card = callable(handler.__dict__["card"])
+                    else:
+                        custom_card = False
                     doc = dict(
                         hostname=self.hostname,
                         port=self.port,
@@ -303,7 +307,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         icon=handler.icon,
                         description=description,
                         description_html=description_html,
-                        custom_card=handler.custom_card
+                        custom_card=custom_card
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
