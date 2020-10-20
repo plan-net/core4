@@ -127,7 +127,7 @@
 
 <script>
 // import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions } from 'vuex'
 import WidgetError from '@/components/sub/WidgetError'
 const baseWidth = 320
 const baseHeight = 360
@@ -135,18 +135,20 @@ const margin = 15
 export default {
   inject: ['theme'],
   async mounted () {
-    await this.$nextTick()
-    if (this.widget.html && this.widget.html.length > 2) {
+    /*     await this.$nextTick()
+    if (this.html != null && this.html.length > 2) {
       this.setupHTML()
-    }
+    } else {
+      this.loading = false
+    } */
   },
   data () {
     return {
       loading: true
     }
   },
-  methods: {
 
+  methods: {
     fixMissingWidget () {
       window.alert('NotImplementedError: Please use the search to add the widget to this board again.')
     },
@@ -234,24 +236,12 @@ export default {
     }
   },
   computed: {
-    /*     ...mapGetters([
-      'dark', 'widgets'
-    ]),
-    showHandle () {
-      return this.widgets.length > 1
-    }, */
     isHtml () {
       return this.widget.custom_card === true
     },
-    /*     html () {
+    html () {
       return this.widget.html
-    }, */
-    /*     widgetDesc () {
-      if ((this.widget.description || []).length > 135) {
-        return this.widget.description.substring(0, 135) + '…'
-      }
-      return this.widget.description || 'No description.'
-    }, */
+    },
     h () {
       const h = Number((this.widget.res || 11).toString().split('')[1])
       let temp = h * baseHeight

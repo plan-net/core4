@@ -115,6 +115,7 @@ const actions = {
       val.icon = val.icon || 'mdi-copyright'
       val.description = val.description || ''
       val.description_html = val.description_html || ''
+      // console.log(JSON.stringify(val))
       val.html = val.html || null
       val.custom_card = val.custom_card || false
       val.error = null
