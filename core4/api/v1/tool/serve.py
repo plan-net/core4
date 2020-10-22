@@ -349,7 +349,8 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             })
             if (dbdoc["started_at"]
                 - dbdoc["created_at"]).total_seconds() < age:
-                doc["tag"].append("new")
+                if "new" not in dbdoc["tag"]:
+                    doc["tag"].append("new")
             else:
                 doc["tag"].pop("new")
             coll.update_one(
