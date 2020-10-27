@@ -236,7 +236,6 @@ export default {
   },
   watch: {
     async html  (newValue, oldValue) {
-      console.log(newValue, oldValue)
       if (newValue) {
         this.setupHTML()
       }
