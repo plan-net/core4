@@ -184,7 +184,10 @@
           },
           login() {
             const { username, password } = this;
-            return axios
+            var instance = axios.create();
+            delete instance.defaults.headers.common['Authorization'];
+            console.log(instance)
+            return instance
               .post("{{ auth_url }}/login", { username, password })
               .then(result => {
                 window.localStorage.setItem(
