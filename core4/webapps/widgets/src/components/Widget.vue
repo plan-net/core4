@@ -45,20 +45,24 @@
           </v-card-title>
           <v-card-text class="pb-2">
             <div class="subtitle-2 mb-1 text-truncate">{{widget.subtitle}}</div>
-            <div class="body-2 font-weight-light desc" v-html="widget.description_html"></div>
+            <div
+              class="body-2 font-weight-light desc"
+              v-html="widget.description_html"
+            ></div>
           </v-card-text>
         </template>
         <v-card-actions ripple>
-          <v-btn v-if="widget.error == null"
+          <v-btn
+            v-if="widget.error == null"
             color="primary"
             text
             @click="open"
           >Open App</v-btn>
-          <v-btn v-else
+          <v-btn
+            v-else
             color="primary"
             text
             @click="fixMissingWidget"
-
           >Fix App</v-btn>
           <v-spacer></v-spacer>
           <v-menu
@@ -105,7 +109,8 @@
         </v-card-actions>
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-if="showHandle"
+            <v-btn
+              v-if="showHandle"
               v-bind="attrs"
               v-on="on"
               class="handle text--disabled"
@@ -126,7 +131,6 @@
 </template>
 
 <script>
-// import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import { mapActions } from 'vuex'
 import WidgetError from '@/components/sub/WidgetError'
 const baseWidth = 320
@@ -135,12 +139,14 @@ const margin = 15
 export default {
   inject: ['theme'],
   async mounted () {
-    /*     await this.$nextTick()
+    await this.$nextTick()
     if (this.html != null && this.html.length > 2) {
-      this.setupHTML()
+      // this.setupHTML()
     } else {
-      this.loading = false
-    } */
+      if (this.widget.custom_card === false) {
+        this.loading = false
+      }
+    }
   },
   data () {
     return {
@@ -169,7 +175,6 @@ export default {
       }, false)
       const doc = iframeEl.document
       doc.open()
-
       const tmp = this.widget.html.split('</head>')
 
       const t = this.$vuetify.theme.themes
@@ -192,7 +197,9 @@ export default {
       if (this.widget.target === 'blank') {
         window.open(this.widget.enter_url || this.widget.endpoint.enter_url, '_blank')
       } else {
-        this.$router.push({ name: 'enter', params: { widgetId: this.widget.rsc_id, payload: dto.payload } })
+        const endpoint = this.widget.endpoint[0].replace('5001', '8080')
+        const params = { widgetId: this.widget.rsc_id, endpoint, payload: dto.payload }
+        this.$router.push({ name: 'enter', params })
       }
     }
   },
@@ -229,8 +236,8 @@ export default {
   },
   watch: {
     async html  (newValue, oldValue) {
+      console.log(newValue, oldValue)
       if (newValue) {
-        await this.$nextTick()
         this.setupHTML()
       }
     }
@@ -269,7 +276,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.desc{
+.desc {
   max-height: 86px;
   overflow-y: scroll;
 }

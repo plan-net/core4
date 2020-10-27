@@ -8,7 +8,7 @@ Vue.use(VueRouter)
 const routes = [
   {
     name: 'enter',
-    path: '/enter/:widgetId/:payload?',
+    path: '/enter/:widgetId/:endpoint/:payload?',
     component: () =>
       import(/* webpackChunkName: "help" */ '../views/Help.vue')
   },

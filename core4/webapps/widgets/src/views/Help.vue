@@ -34,13 +34,6 @@ import store from '@/store'
 export default {
   async beforeRouteEnter (to, from, next) {
     store.dispatch('widgets/fetchBoards', { type: 'light' })
-    /*     console.log(router.history.current.params)
-    await this.$nextTick()
-    const id = router.history.current.params.widgetId
-    await store.dispatch('widgets/fetchWidget', {
-      id,
-      accept: 'application/json'
-    }) */
     next(vm => {})
   },
   async mounted () {
@@ -49,6 +42,7 @@ export default {
     })
     await store.dispatch('widgets/fetchWidget', {
       id: this.$route.params.widgetId,
+      endpoint: decodeURIComponent(this.$route.params.endpoint),
       accept: 'application/json'
     })
   },
@@ -78,13 +72,14 @@ export default {
       const user = JSON.parse(window.localStorage.getItem('user') || {})
       const token = `?token=${user.token || -1}`
       const pathEnd = `${this.widget.rsc_id}${token}`
+      const ep = decodeURIComponent(this.$route.params.endpoint)
       let path
       switch (this.$route.name) {
         case 'help':
-          path = `${this.widget.endpoint}/_info/help/${pathEnd}`
+          path = `${ep}/_info/help/${pathEnd}`
           break
         default:
-          path = `${this.widget.endpoint}/_info/enter/${pathEnd}`
+          path = `${ep}/_info/enter/${pathEnd}`
       }
       const dark = new URLSearchParams(this.$vuetify.theme.themes.dark).toString().split('&').join('xyz')
       const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')

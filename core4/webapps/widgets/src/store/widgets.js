@@ -1,9 +1,16 @@
 import api from '@/store/api.js'
 import router from '@/router'
-import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
+// import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import _ from 'lodash'
 import Vue from 'vue'
 import bus from 'core4ui/core4/event-bus.js'
+
+import axios from 'axios'
+const user = JSON.parse(window.localStorage.getItem('user')) || {}
+const axiosInstance = axios.create({
+  timeout: 5000,
+  headers: { Authorization: `Bearer ${user.token}` }
+})
 
 function swap (item, oldIndex, newIndex) {
   const temp = item[oldIndex]
@@ -16,10 +23,10 @@ const state = {
   widgets: [],
   boards: [],
   board: null,
-  tags: [],
-  client: {
+  tags: []
+/*   client: {
     logo: 'targobank-logo.svg'
-  }
+  } */
 }
 
 const actions = {
@@ -98,9 +105,7 @@ const actions = {
     })
     return true
   },
-  /*   async modernizeBoard (context, board) {
-    console.log(board)
-  }, */
+
   async fetchWidgets (context) {
     const boardComplete = context.state.boards.find(
       val => val.name === context.state.board
@@ -115,62 +120,43 @@ const actions = {
       val.icon = val.icon || 'mdi-copyright'
       val.description = val.description || ''
       val.description_html = val.description_html || ''
-      // console.log(JSON.stringify(val))
       val.html = val.html || null
       val.custom_card = val.custom_card || false
       val.error = null
       return val
     })
-    /*     if (modernize) {
-      w = await context.commit('modernizeBoard', w)
-    } */
+
     context.commit('setWidgets', w)
     boardComplete.widgets.forEach(val => {
       // update existing widgets in boards to be in obj format
       const id = typeof val === 'string' ? val : val.rsc_id
       context.dispatch('fetchWidget', {
+        endpoint: val.endpoint[0].replace('5001', '8080'), // dev server mac localhost workaround / hack
         id,
         accept: 'application/json'
       })
     })
   },
-  async fetchHtmlWidget (
-    context,
-    config = {
-      id: -1,
-      accept: 'application/json'
-    }
-  ) {
-    const { id, accept } = config
-    try {
-      const html = await axiosInternal.get(`_info/card/${id}`, {
-        headers: { common: { Accept: accept } }
-      })
-      return html
-    } catch (error) {
-      return {
-        rsc_id: id,
-        error
-      }
-    }
-  },
   async fetchWidget (
     context,
     config = {
       id: -1,
-      accept: 'application/json'
+      accept: 'application/json',
+      endpoint: ''
     }
   ) {
     let widget
-    const { id, accept } = config
+    const { id, accept, endpoint } = config
     try {
-      widget = await axiosInternal.get(`_info/card/${id}`, {
+      widget = await axiosInstance.get(`${endpoint}/_info/card/${id}`, {
         headers: { common: { Accept: accept } }
       })
+      widget = widget.data
       if (widget.custom_card === true) {
         const html = await context.dispatch('fetchHtmlWidget', {
           id,
-          accept: 'text/html'
+          accept: 'text/html',
+          endpoint
         })
         widget = Object.assign({}, widget, { html })
       }
@@ -183,6 +169,28 @@ const actions = {
     }
     return widget
   },
+  async fetchHtmlWidget (
+    context,
+    config = {
+      id: -1,
+      accept: 'application/json',
+      endpoint: ''
+    }
+  ) {
+    const { id, accept, endpoint } = config
+    try {
+      const ret = await axiosInstance.get(`${endpoint}/_info/card/${id}`, {
+        headers: { common: { Accept: accept } }
+      })
+      return ret.data
+    } catch (error) {
+      return {
+        rsc_id: id,
+        error
+      }
+    }
+  },
+
   async createBoard ({ commit, getters, state }, dto) {
     const exists = state.boards.find(val => {
       return val.name === dto.board
@@ -260,7 +268,8 @@ const actions = {
     toAdd.forEach(val => {
       context.dispatch('fetchWidget', {
         id: val.rsc_id,
-        accept: 'application/json'
+        accept: 'application/json',
+        endpoint: val.endpoint[0].replace('5001', '8080') // dev server port
       })
     })
     let text = 'Board updated. '

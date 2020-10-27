@@ -58,7 +58,6 @@ const api = {
     })
   },
   async fetchTags (dto) {
-    // return ['All', 'New']
     try {
       const ret = await axiosInternal.get('/_info?tag')
       return ret.data
