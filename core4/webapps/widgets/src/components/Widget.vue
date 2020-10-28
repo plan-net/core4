@@ -132,6 +132,8 @@
 
 <script>
 import { mapActions } from 'vuex'
+// import { config } from '@/main'
+import { replacePort } from '@/plugins/fixme.js'
 import WidgetError from '@/components/sub/WidgetError'
 const baseWidth = 320
 const baseHeight = 360
@@ -197,7 +199,7 @@ export default {
       if (this.widget.target === 'blank') {
         window.open(this.widget.enter_url || this.widget.endpoint.enter_url, '_blank')
       } else {
-        const endpoint = this.widget.endpoint[0].replace('5001', '8080')
+        const endpoint = replacePort(this.widget.endpoint[0])// .replace('5001', '8080')
         const params = { widgetId: this.widget.rsc_id, endpoint, payload: dto.payload }
         this.$router.push({ name: 'enter', params })
       }

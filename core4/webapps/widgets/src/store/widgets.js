@@ -4,7 +4,7 @@ import router from '@/router'
 import _ from 'lodash'
 import Vue from 'vue'
 import bus from 'core4ui/core4/event-bus.js'
-
+import { replacePort } from '@/plugins/fixme.js'
 import axios from 'axios'
 const user = JSON.parse(window.localStorage.getItem('user')) || {}
 const axiosInstance = axios.create({
@@ -131,7 +131,7 @@ const actions = {
       // update existing widgets in boards to be in obj format
       const id = typeof val === 'string' ? val : val.rsc_id
       context.dispatch('fetchWidget', {
-        endpoint: val.endpoint[0].replace('5001', '8080'), // dev server mac localhost workaround / hack
+        endpoint: replacePort(val.endpoint[0]), // dev server mac localhost workaround / hack
         id,
         accept: 'application/json'
       })
@@ -269,7 +269,7 @@ const actions = {
       context.dispatch('fetchWidget', {
         id: val.rsc_id,
         accept: 'application/json',
-        endpoint: val.endpoint[0].replace('5001', '8080') // dev server port
+        endpoint: replacePort(val.endpoint[0])// .replace('5001', '8080') // dev server port
       })
     })
     let text = 'Board updated. '

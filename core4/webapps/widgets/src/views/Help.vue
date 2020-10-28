@@ -30,6 +30,7 @@ import { mapGetters } from 'vuex'
 // import router from '@/router'
 import store from '@/store'
 // import { config } from '@/main'
+import { replacePort } from '@/plugins/fixme.js'
 
 export default {
   async beforeRouteEnter (to, from, next) {
@@ -85,7 +86,7 @@ export default {
       const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')
       const search = this.$route.params.payload || ''
       const ret = `${path}&dark=${this.dark}&themeDark=${dark}&themeLight=${light}&search=${search}`
-      return ret.replace('5001', '8080')
+      return replacePort(ret)
     }
   }
 
