@@ -206,7 +206,6 @@ export default {
       name: null,
       oldName: null,
       error: null
-      // position: null
     }
   },
   watch: {
