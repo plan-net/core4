@@ -175,6 +175,7 @@ export default {
           }
         }
       }, false)
+
       const doc = iframeEl.document
       doc.open()
       const tmp = this.widget.html.split('</head>')
@@ -193,7 +194,9 @@ export default {
       this.removeFromBoard(this.widget.rsc_id)
     },
     onHelpClick () {
-      console.log('help')
+      const endpoint = replacePort(this.widget.endpoint[0])
+      const params = { widgetId: this.widget.rsc_id, endpoint }
+      this.$router.push({ name: 'help', params })
     },
     open (dto) {
       if (this.widget.target === 'blank') {
