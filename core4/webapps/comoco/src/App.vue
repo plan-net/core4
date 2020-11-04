@@ -1,6 +1,5 @@
 <template>
   <c4-webapp :full-width="true">
-    <router-view />
   </c4-webapp>
 </template>
 
@@ -13,6 +12,9 @@ export default {
   components: {},
   computed: {
     ...mapGetters(['authenticated'])
+  },
+  mounted () {
+    console.log(this.$vuetify)
   },
   watch: {
     authenticated (newValue, oldValue) {
@@ -30,7 +32,7 @@ export default {
 ::v-deep .layout.c4-page {
   padding-top: 12px !important;
 }
-::v-deep .ace_editor{
-  border: 1px solid rgba(0, 0, 0, 0.27);;
+::v-deep .ace_editor {
+  border: 1px solid rgba(0, 0, 0, 0.27);
 }
 </style>

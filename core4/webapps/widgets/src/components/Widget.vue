@@ -22,7 +22,7 @@
           >
             <iframe
               src="about:blank"
-              frameborder=""
+              frameborder="0"
               id="frame"
             >
             </iframe>
@@ -334,6 +334,7 @@ export default {
   height: 100%;
 
   iframe {
+    overflow: hidden;
     width: 100%;
     height: 100%;
   }

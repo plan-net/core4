@@ -26,7 +26,6 @@
     "core4ui": "https://github.com/plan-net/core4ui.git#mmr.next",
     "muuri": "^0.9.2",
     "vee-validate": "^3.3.11",
-    "vue-avatar-cropper": "^1.0.9",
     "vue-infinite-loading": "^2.4.5"
   },
   "devDependencies": {

@@ -17,7 +17,7 @@
                 small
                 @click="copy(job.name)"
               >
-                <v-icon small>content_copy</v-icon>
+                <v-icon small>mdi-content-copy</v-icon>
               </v-btn>
             </h2>
           </div>
@@ -29,7 +29,7 @@
           icon
           @click="close()"
         >
-          <v-icon large>close</v-icon>
+          <v-icon large>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
       <v-card-text>
@@ -85,9 +85,7 @@
                       class="pr-6"
                       style="margin-top:100px;"
                     >
-
                       <job-managment-buttons :job-count="jobs.length" />
-
                     </v-col>
                   </v-row>
                 </td>
@@ -99,7 +97,7 @@
                   small
                   @click="copy(item._id)"
                 >
-                  <v-icon small>content_copy</v-icon>
+                  <v-icon small>mdi-content-copy</v-icon>
                 </v-btn>
               </template>
               <template v-slot:item.started_at="{ item }">
