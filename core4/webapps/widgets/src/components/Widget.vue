@@ -143,7 +143,7 @@ export default {
   async mounted () {
     await this.$nextTick()
     if (this.html != null && this.html.length > 2) {
-      // this.setupHTML()
+      this.setupHTML()
     } else {
       if (this.widget.custom_card === false) {
         this.loading = false
@@ -157,8 +157,9 @@ export default {
   },
 
   methods: {
-    fixMissingWidget () {
-      window.alert('NotImplementedError: Please use the search to add the widget to this board again.')
+    async fixMissingWidget () {
+      /*       window.alert('NotImplementedError: Please use the search to add the widget to this board again.') */
+      await this.$store.dispatch('widgets/fixWidget', this.widget)
     },
     setupHTML () {
       const iframeEl = this.$el.querySelector('iframe').contentWindow

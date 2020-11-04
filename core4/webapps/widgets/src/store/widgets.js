@@ -24,7 +24,7 @@ const state = {
   boards: [],
   board: null,
   tags: []
-/*   client: {
+  /*   client: {
     logo: 'targobank-logo.svg'
   } */
 }
@@ -85,7 +85,6 @@ const actions = {
   },
   async removeFromBoard (context, widgetId) {
     context.commit('removeFromBoard', widgetId)
-
     try {
       await api.updateBoard({
         boards: context.state.boards
@@ -105,7 +104,6 @@ const actions = {
     })
     return true
   },
-
   async fetchWidgets (context) {
     const boardComplete = context.state.boards.find(
       val => val.name === context.state.board
@@ -191,6 +189,38 @@ const actions = {
     }
   },
 
+  async fixWidget (context, widget) {
+    const params = {
+      search: 'Role and user management',
+      page: 0,
+      per_page: 1
+    }
+    try {
+      const ret = await api.searchWidgets(params)
+      if (ret.data.length > 0) {
+        const workingWidget = ret.data[0]
+        const brokenWidget = widget
+        context.commit('addToBoard', [workingWidget])
+        context.commit('removeFromBoard', brokenWidget.rsc_id)
+        await context.dispatch('fetchWidget', {
+          id: workingWidget.rsc_id,
+          accept: 'application/json',
+          endpoint: replacePort(workingWidget.endpoint[0])
+        })
+        try {
+          await api.updateBoard({
+            boards: context.state.boards
+          })
+        } catch (err) {
+          Vue.prototype.raiseError(err)
+        }
+        return true
+      } else {
+        window.alert('Not possible to fix the broken widget.')
+      }
+    } catch (err) {}
+    return false
+  },
   async createBoard ({ commit, getters, state }, dto) {
     const exists = state.boards.find(val => {
       return val.name === dto.board
@@ -263,13 +293,14 @@ const actions = {
         boards: context.state.boards
       })
     } catch (err) {
-      console.error(err)
+      Vue.prototype.raiseError(err)
+      // console.error(err)
     }
     toAdd.forEach(val => {
       context.dispatch('fetchWidget', {
         id: val.rsc_id,
         accept: 'application/json',
-        endpoint: replacePort(val.endpoint[0])// .replace('5001', '8080') // dev server port
+        endpoint: replacePort(val.endpoint[0]) // .replace('5001', '8080') // dev server port
       })
     })
     let text = 'Board updated. '
@@ -315,6 +346,7 @@ const mutations = {
     }
   },
   addToBoard (state, widgets) {
+    console.log('addToBoard')
     state.boards = state.boards.map(val => {
       if (val.name === state.board) {
         const w = val.widgets.concat(widgets)
@@ -324,6 +356,7 @@ const mutations = {
     })
   },
   removeFromBoard (state, id) {
+    console.log('removeFromBoard', id)
     const b = state.boards.map(val => {
       if (val.name === state.board) {
         val.widgets = val.widgets.filter(val2 => {
