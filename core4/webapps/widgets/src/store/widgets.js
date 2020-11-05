@@ -192,7 +192,7 @@ const actions = {
 
   async fixWidget (context, widget) {
     const params = {
-      search: 'Role and user management',
+      search: widget.title,
       page: 0,
       per_page: 1
     }
