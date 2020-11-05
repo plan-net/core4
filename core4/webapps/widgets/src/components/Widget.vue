@@ -131,6 +131,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import { mapActions } from 'vuex'
 // import { config } from '@/main'
 import { replacePort } from '@/plugins/fixme.js'
@@ -143,7 +144,8 @@ export default {
   async mounted () {
     await this.$nextTick()
     if (this.html != null && this.html.length > 2) {
-      this.setupHTML()
+      // this.setupHTMLDebounce(this.setupHTML, 333)
+      // this.setupHTML()
     } else {
       if (this.widget.custom_card === false) {
         this.loading = false
@@ -157,26 +159,44 @@ export default {
   },
 
   methods: {
+    onMessage (e) {
+      const iframeEl = this.$el.querySelector('iframe').contentWindow
+      if (e.source === iframeEl) {
+        if (e.data.event === 'WidgetLoaded') {
+          window.setTimeout(() => {
+            this.loading = false
+          }, 500)
+        } else if (e.data.event === 'WidgetOpen') {
+          this.open({
+            payload: e.data.payload || ''
+          })
+        }
+      }
+    },
     async fixMissingWidget () {
-      /*       window.alert('NotImplementedError: Please use the search to add the widget to this board again.') */
       await this.$store.dispatch('widgets/fixWidget', this.widget)
     },
+    /*     setupHTMLDebounce (func, delay) {
+      console.log(func)
+      let debounceTimer
+      return function () {
+        console.log('debouncing call..')
+        const context = this
+        const args = arguments
+        clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => func.apply(context, args), delay)
+        console.log('..done')
+      }
+    },
+    setupHTMLDebounce2: _.debounce(function () {
+      this.setupHTML()
+    }, 333), */
     setupHTML () {
+      if (this.widget.html == null) {
+        return
+      }
       const iframeEl = this.$el.querySelector('iframe').contentWindow
-      window.addEventListener('message', (e) => {
-        if (e.source === iframeEl) {
-          if (e.data.event === 'WidgetLoaded') {
-            window.setTimeout(() => {
-              this.loading = false
-            }, 500)
-          } else if (e.data.event === 'WidgetOpen') {
-            this.open({
-              payload: e.data.payload || ''
-            })
-          }
-        }
-      }, false)
-
+      window.addEventListener('message', this.onMessage, false)
       const doc = iframeEl.document
       doc.open()
       const tmp = this.widget.html.split('</head>')
@@ -187,6 +207,7 @@ export default {
       const res = tmp[0] + vars + tmp[1]
       doc.write(res)
       doc.close()
+      // this.loading = false
     },
     ...mapActions('widgets', {
       removeFromBoard: 'removeFromBoard'
@@ -244,8 +265,12 @@ export default {
     async html  (newValue, oldValue) {
       if (newValue) {
         this.setupHTML()
+        // this.setupHTMLDebounce(this.setupHTML, 333)
       }
     }
+  },
+  beforeDestroy () {
+    // window.removeEventListener('message', this.onMessage)
   },
   computed: {
     isHtml () {

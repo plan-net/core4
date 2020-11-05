@@ -190,6 +190,7 @@ export default {
     async updateBoard () {
       if (this.deltaWidgets.length) {
         await this.$store.dispatch('widgets/updateBoard', this.deltaWidgets)
+        this.deltaWidgets = []
       }
     },
     onDialogOpen () {

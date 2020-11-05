@@ -150,15 +150,16 @@ const actions = {
         headers: { common: { Accept: accept } }
       })
       widget = widget.data
+      context.commit('preAddWidget', Object.assign({}, widget, { html: null }))
       if (widget.custom_card === true) {
         const html = await context.dispatch('fetchHtmlWidget', {
           id,
           accept: 'text/html',
           endpoint
         })
-        widget = Object.assign({}, widget, { html })
+        // widget = Object.assign({}, widget, { html })
+        context.commit('preAddWidget', Object.assign({}, widget, { html }))
       }
-      context.commit('preAddWidget', widget)
     } catch (error) {
       context.commit('preAddWidget', {
         rsc_id: id,
@@ -271,6 +272,7 @@ const actions = {
     const boardWithWidgets = _.cloneDeep(context.getters.boardWithWidgets)
     const toAdd = []
     let toRemove = 0
+    // console.log(delta.forEach(val => console.log(val.title)))
     delta.forEach(val => {
       const isAdded = boardWithWidgets.widgets.find(
         val2 => val2.rsc_id === val.rsc_id
@@ -346,7 +348,6 @@ const mutations = {
     }
   },
   addToBoard (state, widgets) {
-    console.log('addToBoard')
     state.boards = state.boards.map(val => {
       if (val.name === state.board) {
         const w = val.widgets.concat(widgets)
@@ -356,7 +357,6 @@ const mutations = {
     })
   },
   removeFromBoard (state, id) {
-    console.log('removeFromBoard', id)
     const b = state.boards.map(val => {
       if (val.name === state.board) {
         val.widgets = val.widgets.filter(val2 => {
