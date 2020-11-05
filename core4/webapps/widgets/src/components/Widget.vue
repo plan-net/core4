@@ -131,7 +131,7 @@
 </template>
 
 <script>
-import _ from 'lodash'
+// import _ from 'lodash'
 import { mapActions } from 'vuex'
 // import { config } from '@/main'
 import { replacePort } from '@/plugins/fixme.js'
