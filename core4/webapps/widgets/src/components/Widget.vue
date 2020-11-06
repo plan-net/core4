@@ -176,21 +176,6 @@ export default {
     async fixMissingWidget () {
       await this.$store.dispatch('widgets/fixWidget', this.widget)
     },
-    /*     setupHTMLDebounce (func, delay) {
-      console.log(func)
-      let debounceTimer
-      return function () {
-        console.log('debouncing call..')
-        const context = this
-        const args = arguments
-        clearTimeout(debounceTimer)
-        debounceTimer = setTimeout(() => func.apply(context, args), delay)
-        console.log('..done')
-      }
-    },
-    setupHTMLDebounce2: _.debounce(function () {
-      this.setupHTML()
-    }, 333), */
     setupHTML () {
       if (this.widget.html == null) {
         return
