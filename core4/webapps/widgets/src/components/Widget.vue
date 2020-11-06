@@ -20,7 +20,7 @@
             class="pb-5"
             v-show="!loading"
           >
-            <iframe
+            <iframe scrolling="no"
               src="about:blank"
               frameborder="0"
               id="frame"
@@ -308,7 +308,7 @@ export default {
 <style lang="scss" scoped>
 .desc {
   max-height: 86px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 ::v-deep .v-skeleton-loader {
   height: 100%;
