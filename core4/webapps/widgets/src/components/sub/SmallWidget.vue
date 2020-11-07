@@ -173,4 +173,9 @@ export default {
 .theme--light.v-card > .v-card__text {
   color: rgba(0, 0, 0, 0.87);
 }
+.c4-card--widget-title {
+  width: 99%;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
 </style>

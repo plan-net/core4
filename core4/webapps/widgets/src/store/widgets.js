@@ -1,9 +1,16 @@
 import api from '@/store/api.js'
 import router from '@/router'
-import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
+// import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
 import _ from 'lodash'
 import Vue from 'vue'
 import bus from 'core4ui/core4/event-bus.js'
+import { replacePort } from '@/plugins/fixme.js'
+import axios from 'axios'
+const user = JSON.parse(window.localStorage.getItem('user')) || {}
+const axiosInstance = axios.create({
+  timeout: 5000,
+  headers: { Authorization: `Bearer ${user.token}` }
+})
 
 function swap (item, oldIndex, newIndex) {
   const temp = item[oldIndex]
@@ -16,10 +23,10 @@ const state = {
   widgets: [],
   boards: [],
   board: null,
-  tags: [],
-  client: {
+  tags: []
+  /*   client: {
     logo: 'targobank-logo.svg'
-  }
+  } */
 }
 
 const actions = {
@@ -78,7 +85,6 @@ const actions = {
   },
   async removeFromBoard (context, widgetId) {
     context.commit('removeFromBoard', widgetId)
-
     try {
       await api.updateBoard({
         boards: context.state.boards
@@ -98,9 +104,6 @@ const actions = {
     })
     return true
   },
-  /*   async modernizeBoard (context, board) {
-    console.log(board)
-  }, */
   async fetchWidgets (context) {
     const boardComplete = context.state.boards.find(
       val => val.name === context.state.board
@@ -120,60 +123,43 @@ const actions = {
       val.error = null
       return val
     })
-    /*     if (modernize) {
-      w = await context.commit('modernizeBoard', w)
-    } */
+
     context.commit('setWidgets', w)
     boardComplete.widgets.forEach(val => {
       // update existing widgets in boards to be in obj format
       const id = typeof val === 'string' ? val : val.rsc_id
       context.dispatch('fetchWidget', {
+        endpoint: replacePort(val.endpoint[0]), // dev server mac localhost workaround / hack
         id,
         accept: 'application/json'
       })
     })
   },
-  async fetchHtmlWidget (
-    context,
-    config = {
-      id: -1,
-      accept: 'application/json'
-    }
-  ) {
-    const { id, accept } = config
-    try {
-      const html = await axiosInternal.get(`_info/card/${id}`, {
-        headers: { common: { Accept: accept } }
-      })
-      return html
-    } catch (error) {
-      return {
-        rsc_id: id,
-        error
-      }
-    }
-  },
   async fetchWidget (
     context,
     config = {
       id: -1,
-      accept: 'application/json'
+      accept: 'application/json',
+      endpoint: ''
     }
   ) {
     let widget
-    const { id, accept } = config
+    const { id, accept, endpoint } = config
     try {
-      widget = await axiosInternal.get(`_info/card/${id}`, {
+      widget = await axiosInstance.get(`${endpoint}/_info/card/${id}`, {
         headers: { common: { Accept: accept } }
       })
+      widget = widget.data
+      context.commit('preAddWidget', Object.assign({}, widget, { html: null }))
       if (widget.custom_card === true) {
         const html = await context.dispatch('fetchHtmlWidget', {
           id,
-          accept: 'text/html'
+          accept: 'text/html',
+          endpoint
         })
-        widget = Object.assign({}, widget, { html })
+        // widget = Object.assign({}, widget, { html })
+        context.commit('preAddWidget', Object.assign({}, widget, { html }))
       }
-      context.commit('preAddWidget', widget)
     } catch (error) {
       context.commit('preAddWidget', {
         rsc_id: id,
@@ -181,6 +167,60 @@ const actions = {
       })
     }
     return widget
+  },
+  async fetchHtmlWidget (
+    context,
+    config = {
+      id: -1,
+      accept: 'application/json',
+      endpoint: ''
+    }
+  ) {
+    const { id, accept, endpoint } = config
+    try {
+      const ret = await axiosInstance.get(`${endpoint}/_info/card/${id}`, {
+        headers: { common: { Accept: accept } }
+      })
+      return ret.data
+    } catch (error) {
+      return {
+        rsc_id: id,
+        error
+      }
+    }
+  },
+
+  async fixWidget (context, widget) {
+    const params = {
+      search: widget.title,
+      page: 0,
+      per_page: 1
+    }
+    try {
+      const ret = await api.searchWidgets(params)
+      if (ret.data.length > 0) {
+        const workingWidget = ret.data[0]
+        const brokenWidget = widget
+        context.commit('addToBoard', [workingWidget])
+        context.commit('removeFromBoard', brokenWidget.rsc_id)
+        await context.dispatch('fetchWidget', {
+          id: workingWidget.rsc_id,
+          accept: 'application/json',
+          endpoint: replacePort(workingWidget.endpoint[0])
+        })
+        try {
+          await api.updateBoard({
+            boards: context.state.boards
+          })
+        } catch (err) {
+          Vue.prototype.raiseError(err)
+        }
+        return true
+      } else {
+        window.alert('Not possible to fix the broken widget.')
+      }
+    } catch (err) {}
+    return false
   },
   async createBoard ({ commit, getters, state }, dto) {
     const exists = state.boards.find(val => {
@@ -232,6 +272,7 @@ const actions = {
     const boardWithWidgets = _.cloneDeep(context.getters.boardWithWidgets)
     const toAdd = []
     let toRemove = 0
+    // console.log(delta.forEach(val => console.log(val.title)))
     delta.forEach(val => {
       const isAdded = boardWithWidgets.widgets.find(
         val2 => val2.rsc_id === val.rsc_id
@@ -254,12 +295,14 @@ const actions = {
         boards: context.state.boards
       })
     } catch (err) {
-      console.error(err)
+      Vue.prototype.raiseError(err)
+      // console.error(err)
     }
     toAdd.forEach(val => {
       context.dispatch('fetchWidget', {
         id: val.rsc_id,
-        accept: 'application/json'
+        accept: 'application/json',
+        endpoint: replacePort(val.endpoint[0]) // .replace('5001', '8080') // dev server port
       })
     })
     let text = 'Board updated. '

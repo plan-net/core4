@@ -20,9 +20,9 @@
             class="pb-5"
             v-show="!loading"
           >
-            <iframe
+            <iframe scrolling="no"
               src="about:blank"
-              frameborder=""
+              frameborder="0"
               id="frame"
             >
             </iframe>
@@ -45,20 +45,24 @@
           </v-card-title>
           <v-card-text class="pb-2">
             <div class="subtitle-2 mb-1 text-truncate">{{widget.subtitle}}</div>
-            <div class="body-2 font-weight-light desc" v-html="widget.description_html"></div>
+            <div
+              class="body-2 font-weight-light desc"
+              v-html="widget.description_html"
+            ></div>
           </v-card-text>
         </template>
         <v-card-actions ripple>
-          <v-btn v-if="widget.error == null"
+          <v-btn
+            v-if="widget.error == null"
             color="primary"
             text
             @click="open"
           >Open App</v-btn>
-          <v-btn v-else
+          <v-btn
+            v-else
             color="primary"
             text
             @click="fixMissingWidget"
-
           >Fix App</v-btn>
           <v-spacer></v-spacer>
           <v-menu
@@ -105,7 +109,8 @@
         </v-card-actions>
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
-            <v-btn v-if="showHandle"
+            <v-btn
+              v-if="showHandle"
               v-bind="attrs"
               v-on="on"
               class="handle text--disabled"
@@ -126,8 +131,10 @@
 </template>
 
 <script>
-// import { axiosInternal } from 'core4ui/core4/internal/axios.config.js'
-import { mapActions, mapGetters } from 'vuex'
+// git import _ from 'lodash'
+import { mapActions } from 'vuex'
+// import { config } from '@/main'
+import { replacePort } from '@/plugins/fixme.js'
 import WidgetError from '@/components/sub/WidgetError'
 const baseWidth = 320
 const baseHeight = 360
@@ -136,8 +143,13 @@ export default {
   inject: ['theme'],
   async mounted () {
     await this.$nextTick()
-    if (this.widget.html && this.widget.html.length > 2) {
-      this.setupHTML()
+    if (this.html != null && this.html.length > 2) {
+      // this.setupHTMLDebounce(this.setupHTML, 333)
+      // this.setupHTML()
+    } else {
+      if (this.widget.custom_card === false) {
+        this.loading = false
+      }
     }
   },
   data () {
@@ -145,29 +157,33 @@ export default {
       loading: true
     }
   },
-  methods: {
 
-    fixMissingWidget () {
-      window.alert('NotImplementedError: Please use the search to add the widget to this board again.')
+  methods: {
+    onMessage (e) {
+      const iframeEl = this.$el.querySelector('iframe').contentWindow
+      if (e.source === iframeEl) {
+        if (e.data.event === 'WidgetLoaded') {
+          window.setTimeout(() => {
+            this.loading = false
+          }, 500)
+        } else if (e.data.event === 'WidgetOpen') {
+          this.open({
+            payload: e.data.payload || ''
+          })
+        }
+      }
+    },
+    async fixMissingWidget () {
+      await this.$store.dispatch('widgets/fixWidget', this.widget)
     },
     setupHTML () {
+      if (this.widget.html == null) {
+        return
+      }
       const iframeEl = this.$el.querySelector('iframe').contentWindow
-      window.addEventListener('message', (e) => {
-        if (e.source === iframeEl) {
-          if (e.data.event === 'WidgetLoaded') {
-            window.setTimeout(() => {
-              this.loading = false
-            }, 500)
-          } else if (e.data.event === 'WidgetOpen') {
-            this.open({
-              payload: e.data.payload || ''
-            })
-          }
-        }
-      }, false)
+      window.addEventListener('message', this.onMessage, false)
       const doc = iframeEl.document
       doc.open()
-
       const tmp = this.widget.html.split('</head>')
 
       const t = this.$vuetify.theme.themes
@@ -176,6 +192,7 @@ export default {
       const res = tmp[0] + vars + tmp[1]
       doc.write(res)
       doc.close()
+      // this.loading = false
     },
     ...mapActions('widgets', {
       removeFromBoard: 'removeFromBoard'
@@ -184,13 +201,17 @@ export default {
       this.removeFromBoard(this.widget.rsc_id)
     },
     onHelpClick () {
-      console.log('help')
+      const endpoint = replacePort(this.widget.endpoint[0])
+      const params = { widgetId: this.widget.rsc_id, endpoint }
+      this.$router.push({ name: 'help', params })
     },
     open (dto) {
       if (this.widget.target === 'blank') {
         window.open(this.widget.enter_url || this.widget.endpoint.enter_url, '_blank')
       } else {
-        this.$router.push({ name: 'enter', params: { widgetId: this.widget.rsc_id, payload: dto.payload } })
+        const endpoint = replacePort(this.widget.endpoint[0])
+        const params = { widgetId: this.widget.rsc_id, endpoint, payload: dto.payload }
+        this.$router.push({ name: 'enter', params })
       }
     }
   },
@@ -228,30 +249,21 @@ export default {
   watch: {
     async html  (newValue, oldValue) {
       if (newValue) {
-        await this.$nextTick()
         this.setupHTML()
+        // this.setupHTMLDebounce(this.setupHTML, 333)
       }
     }
   },
+  beforeDestroy () {
+    // window.removeEventListener('message', this.onMessage)
+  },
   computed: {
-    /*     ...mapGetters([
-      'dark', 'widgets'
-    ]),
-    showHandle () {
-      return this.widgets.length > 1
-    }, */
     isHtml () {
       return this.widget.custom_card === true
     },
-    /*     html () {
+    html () {
       return this.widget.html
-    }, */
-    /*     widgetDesc () {
-      if ((this.widget.description || []).length > 135) {
-        return this.widget.description.substring(0, 135) + '…'
-      }
-      return this.widget.description || 'No description.'
-    }, */
+    },
     h () {
       const h = Number((this.widget.res || 11).toString().split('')[1])
       let temp = h * baseHeight
@@ -279,9 +291,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.desc{
+.desc {
   max-height: 86px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 ::v-deep .v-skeleton-loader {
   height: 100%;
@@ -333,6 +345,7 @@ export default {
   height: 100%;
 
   iframe {
+    overflow: hidden;
     width: 100%;
     height: 100%;
   }

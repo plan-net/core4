@@ -6,7 +6,7 @@
       large
       icon
     >
-      <v-icon>expand_more</v-icon>
+      <v-icon>mdi-chevron-down</v-icon>
     </v-btn>
     <v-flex
       class="chart"

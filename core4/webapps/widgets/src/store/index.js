@@ -1,12 +1,12 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import createLogger from 'vuex/dist/logger'
 import widgets from '@/store/widgets'
-Vue.use(Vuex)
+/* import createLogger from 'vuex/dist/logger'
 const debug = process.env.NODE_ENV !== 'production'
-const plugins = debug ? [createLogger({})] : []
+const plugins = debug ? [createLogger({})] : [] */
+Vue.use(Vuex)
 export default new Vuex.Store({
-  plugins,
+  // plugins,
   modules: {
     widgets
   }

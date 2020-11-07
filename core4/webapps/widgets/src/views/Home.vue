@@ -29,7 +29,7 @@ import Muuri from '@/components/Muuri.vue'
 import WidgetSearch from '@/components/WidgetSearch.vue'
 /* import Avatar from '@/components/sub/Avatar.vue' */
 import store from '@/store'
-import api from '@/store/api'
+// import api from '@/store/api'
 export default {
   async beforeRouteEnter (to, from, next) {
     await store.dispatch('widgets/initApp')

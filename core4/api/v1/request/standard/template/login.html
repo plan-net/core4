@@ -12,7 +12,6 @@
       href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css"
       rel="stylesheet"
     />
-    <style></style>
     <style>
         body {
           opacity: 0;
@@ -22,10 +21,6 @@
         }
         .v-form{
           width: 100%;
-        }
-        .left-col{
-
-
         }
         .client-logo-container{
 
@@ -50,8 +45,6 @@
           width: 450vw !important;
           opacity: .2
         }
-  
-
     </style>
   </head>
   <body>
@@ -151,7 +144,7 @@
         },
         data() {
           return {
-            dialogLogin: true,
+            //dialogLogin: true,
             passwordVisible: false,
             errorLogin: false,
             username: null,
@@ -184,7 +177,10 @@
           },
           login() {
             const { username, password } = this;
-            return axios
+            var instance = axios.create();
+            delete instance.defaults.headers.common['Authorization'];
+            console.log(instance)
+            return instance
               .post("{{ auth_url }}/login", { username, password })
               .then(result => {
                 window.localStorage.setItem(

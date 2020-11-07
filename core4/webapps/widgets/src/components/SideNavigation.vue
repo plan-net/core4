@@ -4,7 +4,7 @@
       column
       no-gutters
     >
-      <v-col
+     <!--  <v-col
         class="mt-16 pt-8"
         cols="12"
       >
@@ -13,10 +13,10 @@
           src="img/targobank-logo.svg"
           alt=""
         >
-      </v-col>
+      </v-col> -->
       <v-col
         cols="12"
-        class="mt-16 px-3"
+        class=" px-3"
       >
         <v-divider></v-divider>
       </v-col>
@@ -206,7 +206,6 @@ export default {
       name: null,
       oldName: null,
       error: null
-      // position: null
     }
   },
   watch: {
