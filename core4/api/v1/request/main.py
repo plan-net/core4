@@ -70,7 +70,7 @@ class CoreBaseHandler(CoreBase):
     #: link to api (can be overwritten)
     enter_url = None
     #: default material icon
-    icon = "mdi-copyright"
+    icon = "mdi-circle-medium"
     #: open in new window/tab
     target = None
     #: open as single page application; this hides the app managers header
