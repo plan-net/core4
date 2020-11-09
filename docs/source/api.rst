@@ -185,6 +185,10 @@ This handler returns the following response::
     }
 
 
+The error message contains traceback details if
+``core4.config.api.setting.debug is True``.
+
+
 .. _pagination:
 
 pagination

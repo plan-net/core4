@@ -60,7 +60,6 @@ Install MongoDB and enable the service to start at boot time with:
     rs.initiate() # set the MongoDB server as the first member of a new replica set
     exit # exit the MongoDB shell
 
-
 More details on installing MongoDB can be found on https://docs.mongodb.com/manual/tutorial/install-mongodb-on-debian/.   
 Please note that MongoDB requires further configuration later. See below.
 
@@ -71,6 +70,14 @@ Install nodejs, yarn and npm to build and setup web tools:
     wget -qO- https://deb.nodesource.com/setup_12.x | bash -
     apt-get install -y nodejs
 
+
+Install nodejs, yarn and npm to build and setup web tools:
+
+    # install nodejs and npm
+    sudo -s
+    wget -qO- https://deb.nodesource.com/setup_11.x | bash -
+    apt-get install -y nodejs
+    
     # install yarn
     sudo -s
     wget -qO- https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -127,6 +134,7 @@ In a new terminal instance, enter the python virtual environment and launch the 
     coco --app --filter core4.api.v1
 
 The core4 widget manager will now be accessible at http://0.0.0.0:5001 with username and password **admin** (for both). Once logged in, there are several widgets available with which core4os can be used used graphically.
+
 
 further reads
 -------------

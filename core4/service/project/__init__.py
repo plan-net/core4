@@ -233,5 +233,7 @@ def make_project(package_name=None, package_description=None, auto=False):
     print("\ninstall project")
     print("---------------\n")
 
-    subprocess.check_call([pip, "install", "--upgrade", "-e", full_path],
-                          env=env)
+    curr_dir = os.path.abspath(os.path.curdir)
+    os.chdir(full_path)
+    retcode = subprocess.call([sys.executable, "setup.py", "--edit"], env=env)
+    os.chdir(curr_dir)

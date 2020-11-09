@@ -11,12 +11,12 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build && node node_modules/core4ui/core4/version.js", 
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "@dattn/dnd-grid": "^0.0.14",
-    "core4ui": "^1.3.5",
+    "core4ui": "^1.3.12",
     "vue-drag-drop": "^1.1.4"
   },
   "devDependencies": {

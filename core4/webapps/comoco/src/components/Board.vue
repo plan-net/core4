@@ -1,20 +1,22 @@
 <template>
-  <v-container class="board">
+  <v-container
+    class="board"
+    :class="{'full-size': !stockChartVisible}"
+  >
 
     <!-- Group info (counter all of jobs with the same states) -->
     <info
       :name="name"
       :states="states"
     ></info>
-
     <transition-group
       name="jobs-list"
       tag="v-row"
       class="nowrap jobs mt-3"
     >
-
       <!-- list of all jobs which belongs to this group -->
-      <v-col cols="12"
+      <v-col
+        cols="12"
         v-for="job in getJobsByGroupName(name)"
         :key="job.key"
         class="jobs-list-item pt-0 pb-1 px-3"
@@ -25,7 +27,6 @@
         ></job>
       </v-col>
     </transition-group>
-
   </v-container>
 </template>
 
@@ -65,7 +66,10 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['getJobsByGroupName'])
+    ...mapGetters(['getJobsByGroupName']),
+    ...mapGetters('app', [
+      'stockChartVisible'
+    ])
   },
   mounted () {}
 }
@@ -82,7 +86,7 @@ export default {
 
 .jobs-list-enter {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateY(15px);
 }
 
 .jobs-list-enter-active {
@@ -90,16 +94,16 @@ export default {
 
 .jobs-list-leave {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateY(15px);
 }
 
 .jobs-list-leave-active {
-  transform: translateX(30px);
+  transform: translateY(15px);
 }
 
 .jobs-list-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateY(15px);
 }
 
 .board {
@@ -107,52 +111,16 @@ export default {
   min-height: 100px;
 }
 
-/*
-  ## Device = 4k and ultra-wides
-  ## Screen = > 1904px
-*/
-@media (min-width: 1904px) {
+@media (min-width: 960px) {
   .jobs {
-    max-height: calc(100vh - 548px);
+    max-height: calc(100vh - 563px);
   }
 
   .board {
-    height: calc(100vh - 435px);
+    height: calc(100vh - 450px);
   }
 }
 
-/*
-  ## Device = Desktop
-  ## Screen = 1281 > < 1904px
-*/
-@media (min-width: 1281px) and (max-width: 1904px) {
-  .jobs {
-    max-height: calc(100vh - 548px);
-  }
-
-  .board {
-    height: calc(100vh - 435px);
-  }
-}
-
-/*
-  ## Device = Large tablet to laptop
-  ## Screen = 960px > < 1264px
-*/
-@media (min-width: 960px) and (max-width: 1264px) {
-  .jobs {
-    max-height: calc(100vh - 548px);
-  }
-
-  .board {
-    height: calc(100vh - 435px);
-  }
-}
-
-/*
-  ## Device = Small to medium tablet
-  ## Screen = 600px > < 960px
-*/
 @media (min-width: 600px) and (max-width: 960px) {
   .jobs {
     max-height: calc(100vh - 236px);
@@ -163,16 +131,22 @@ export default {
   }
 }
 
-/*
-  ## Device = Small to large handset
-  ## Screen = < 600px
-*/
 @media (max-width: 600px) {
   .jobs {
     max-height: calc(100vh - 236px);
   }
 
   .board {
+    height: auto;
+  }
+}
+.container.board.full-size {
+  /*   .jobs {
+    max-height: 100% !important;
+    height: 100% !important;
+  }*/
+  height: calc(100vh - 85px) !important;
+  @media (max-width: 600px) {
     height: auto;
   }
 }

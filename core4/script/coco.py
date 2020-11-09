@@ -122,8 +122,10 @@ def alive():
         mx = max(0, len(doc["_id"]))
         doc["loop"] = doc["loop"].replace(microsecond=0)
         for t in ("loop_time", "heartbeat"):
-            doc[t] = datetime.timedelta(seconds=int(doc[t].total_seconds()))
-        rec.append([str(doc[k]) for k in cols])
+            if doc[t] is not None:
+                doc[t] = datetime.timedelta(seconds=int(doc[t].total_seconds()))
+        if doc["heartbeat"] is not None:
+            rec.append([str(doc[k]) for k in cols])
     if rec:
         print("{:19s} {:19s} {:19s} {:9s} {:s}".format(*cols))
         print(" ".join(["-" * i for i in [19, 19, 19, 9, mx]]))

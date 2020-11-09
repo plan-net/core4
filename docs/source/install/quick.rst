@@ -11,16 +11,18 @@ core4 settings. The setup has been tested with Debian 9 (Stretch). For Ubuntu
    :linenos:
 
     # install prerequisites
-    sudo apt-get install python3-pip python3-venv python3-dev --yes
-    sudo apt-get install gcc make git dirmngr libffi-dev --yes
+    sudo -s
+    apt-get update
+    apt-get install python3-pip python3-venv python3-dev gcc make git dirmngr libffi-dev --yes
 
     # install MongoDB
-    sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
-    echo "deb http://repo.mongodb.org/apt/debian "$(lsb_release -sc)"/mongodb-org/4.0 main" | sudo tee /etc/apt/sources.list.d/mongodb.list
-    sudo apt-get update
-    sudo apt-get install mongodb-org --yes
-    sudo systemctl start mongod.service
-    sudo systemctl enable mongod.service
+    sudo -s
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
+    echo "deb http://repo.mongodb.org/apt/debian "$(lsb_release -sc)"/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb.list
+    apt-get update
+    apt-get install mongodb-org --yes
+    systemctl start mongod.service
+    systemctl enable mongod.service
 
     # clone core4
     git clone https://github.com/plan-net/core4.git

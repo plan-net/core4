@@ -5,8 +5,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import re
 import sys
 import traceback
+
 import pymongo
 import pymongo.errors
 from bson.objectid import ObjectId
@@ -257,9 +259,9 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         pager = CorePager(per_page=int(per_page),
                           current_page=int(current_page),
                           length=_length, query=_query,
-                          #sort_by=[sort_by, int(sort_order)],
-                          #filter=query_filter
-        )
+                          # sort_by=[sort_by, int(sort_order)],
+                          # filter=query_filter
+                          )
         return await pager.page()
 
     async def get_detail(self, _id):
@@ -397,7 +399,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         if not doc:
             raise HTTPError(404, "job_id [%s] not found", oid)
         if not await self.user.has_job_exec_access(doc["name"]):
-           raise HTTPError(403)
+            raise HTTPError(403)
 
     async def update(self, oid, attr, message, event):
         """
@@ -412,7 +414,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
         """
         await self._access_by_id(oid)
         at = core4.util.node.mongo_now()
-        ret =  await self.collection("queue").update_one(
+        ret = await self.collection("queue").update_one(
             {
                 "_id": oid,
                 attr: None
@@ -741,14 +743,16 @@ class JobStream(JobPost):
         can be streamed.
 
         Methods:
-            GET /jobs/poll/<_id> - stream job attributes and logging
+            GET /jobs/poll/:job - stream job attributes and logging
 
         Parameters:
-            _id (str): job _id
+            job (ObjectId): job _id
+            job (str): job qual_name
 
         Returns:
             JSON stream with job attributes (event ``state``) and job logging
-                messages (event ``log``)
+                messages (event ``log``). If a job ``qual_name`` is passed then
+                the logging event ``log`` is not available.
 
         Raises:
             401 Bad Request: failed to parse job _id
@@ -779,7 +783,22 @@ class JobStream(JobPost):
         self.set_header('content-type', 'text/event-stream')
         self.set_header('cache-control', 'no-cache')
         self.set_header('X-Accel-Buffering', 'no')
-        oid = self.parse_id(_id)
+        oid = None
+        qual_name = None
+        try:
+            oid = ObjectId(_id)
+        except:
+            # must be a qualname
+            qual_name = _id
+        if oid is not None:
+            await self._by_id(oid)
+        else:
+            if not self.user.has_job_access(qual_name):
+                raise HTTPError(403)
+            await self._by_qual_name(qual_name)
+        self.finish()
+
+    async def _by_id(self, oid):
         last = None
         exit = False
         while not exit:
@@ -789,12 +808,47 @@ class JobStream(JobPost):
                 exit = True
                 await self.sse("state", doc)
                 await self.sse("close", {})
-                self.finish()
             elif last is None or doc != last:
                 last = doc
                 exit = exit or await self.sse("state", doc)
             await gen.sleep(1.)
         await self.get_log(oid)
+
+    async def _by_qual_name(self, qual_name):
+        scope = {}
+        while True:
+            cur = self.collection("queue").find(
+                filter={"name": qual_name},
+                projection=self.project_job_listing(),
+                sort=[("_id", 1)])
+            for _id in scope:
+                if scope[_id]["state"] != "journal":
+                    scope[_id]["state"] = None
+            for doc in await cur.to_list(None):
+                if doc["_id"] not in scope or scope[doc["_id"]]["data"] != doc:
+                    scope[doc["_id"]] = {
+                        "state": "active",
+                        "data": doc
+                    }
+                    if await self.sse("update", doc):
+                        return
+                else:
+                    scope[doc["_id"]]["state"] = "nochange"
+            journal = [job["_id"] for job, doc in scope.items()
+                       if doc["data"]["state"] is None]
+            if journal:
+                cur = self.collection("journal").find(
+                    filter={"_id": {"$in": journal}},
+                    projection=self.project_job_listing(),
+                    sort=[("_id", 1)])
+                for doc in await cur.to_list(None):
+                    doc["journal"] = True
+                    scope[doc["_id"]] = {
+                        "state": "journal",
+                        "data": doc
+                    }
+                    if await self.sse("update", doc):
+                        return
 
     async def sse(self, event, doc):
         js = json_encode(doc, indent=None, separators=(',', ':'))
@@ -891,3 +945,112 @@ class JobStream(JobPost):
         """
         job = await self.enqueue_by_args()
         await self.get(job._id)
+
+
+class JobList(CoreRequestHandler):
+    """
+    Job Listing
+    """
+    author = "mra"
+    title = "job listing"
+    tag = "api jobs"
+    icon = "build"
+
+    async def get(self):
+        """
+        Paginated list of jobs the currently logged in user is allowed to
+        execute. If client accepts ``text/html``, then this endpoint renders
+        ``template/enqueue`` to list, parameterise and enqueue jobs using
+        ``/core4/api/v1/enqueue`` endpoint.
+
+        Methods:
+            GET /jobs/list
+
+        Parameters:
+            per_page (int): number of jobs per page
+            page (int): requested page (starts counting with ``0``)
+            sort (list): of tuples with sort field and direction (1, -1)
+            filter (dict): MongoDB query
+            search (str): parsing wildcards ``?`` and ``*``
+
+        Returns:
+            pagination information with **total_count** (int), **count** (int),
+            **page** (int), **page_count** (int), **per_page** (int)
+            
+            - **_id** (ObjectId)
+            - **author** (str)
+            - **created_at** (datetime)
+            - **doc** (str)
+            - **schedule** (str)
+            - **tag** (list of str)
+            - **updated_at** (datetime)
+
+        Raises:
+            401: Unauthorized
+            403: Forbidden
+
+        Examples:
+            >>> from requests import get
+            >>> signin = get("http://0.0.0.0:5001/core4/api/v1/login?username=admin&password=hans")
+            >>> token = signin.json()["data"]["token"]
+            >>> h = {"Authorization": "Bearer " + token}
+            >>> rv = get("http://0.0.0.0:5001/core4/api/v1/jobs/list",
+                         headers=h)
+        """
+        if self.wants_html():
+            return self.render("template/enqueue/main.html")
+        per_page = int(self.get_argument(
+            "per_page", as_type=int, default=10))
+        current_page = int(self.get_argument(
+            "page", as_type=int, default=0))
+        query_filter = self.get_argument(
+            "filter", as_type=dict, default={})
+        sort_order = self.get_argument(
+            "sort", as_type=list, default=None)
+        search = self.get_argument(
+            "search", as_type=str, default=None)
+        query_filter["valid"] = True
+        if "name" in query_filter:
+            query_filter["_id"] = query_filter["name"]
+            del query_filter["name"]
+        elif search is not None:
+            search = search.replace(
+                ".", "\.").replace(
+                "?", ".").replace(
+                "*", ".*")
+            query_filter["_id"] = re.compile(search, re.IGNORECASE)
+
+        data = await self.get_job(query_filter, sort_order)
+
+        async def _length(*args, **kwargs):
+            return len(data)
+
+        async def _query(skip, limit, *args, **kwargs):
+            return data[skip:(skip + limit)]
+
+        pager = CorePager(per_page=int(per_page),
+                          current_page=int(current_page),
+                          length=_length, query=_query,
+                          sort_by=sort_order,
+                          filter=query_filter)
+        ret = await pager.page()
+        self.reply(ret)
+
+    async def get_job(self, query, order=None):
+        if order is None:
+            order = [("_id", 1)]
+        cur = self.config.sys.job.find(query, projection=[
+            "_id", "author", "created_at", "doc", "schedule", "tag",
+            "updated_at"]).sort(order)
+        data = []
+        for doc in await cur.to_list(None):
+            if await self.user.has_job_exec_access(doc["_id"]):
+                data.append(doc)
+        return data
+
+    async def card(self, **data):
+        jobs = await self.get_job({})
+        projects = set([j["_id"].split(".", 1)[0] for j in jobs])
+        data["job_count"] = len(jobs)
+        data["project_count"] = len(projects)
+        return self.render("template/enqueue/card.html", **data)

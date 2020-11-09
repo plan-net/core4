@@ -1,6 +1,6 @@
 import json
 import threading
-
+from pprint import pprint
 import pytest
 import time
 from bson.objectid import ObjectId
@@ -102,12 +102,15 @@ async def test_poll(core4api, worker):
         if typ:
             event.append({"type": typ, "data": json.loads("\n".join(data)[6:])})
     logs = [i["data"] for i in event if i["type"] == "event: log"]
+    close = [i["data"] for i in event if i["type"] == "event: close"]
     tests = [i for i in logs if i["message"].startswith("message")]
     assert len(tests) == 50
     states = [i["data"] for i in event if i["type"] == "event: state"]
     assert states[-1]["state"] == "complete"
-    assert event[-1]["type"] == "event: close"
-    assert event[-1]["data"] == {}
+    assert len(close) == 1
+    # obsolete because you cannot be sure that the last event is not a log event
+    #assert event[-1]["type"] == "event: close"
+    #assert event[-1]["data"] == {}
 
 
 class MyJobHandler(JobStream):
@@ -205,3 +208,48 @@ async def test_enqueue_by_api_permission(mycore4api, worker):
     resp = await mycore4api.post('/another/test')
     assert resp.code == 200
     oid = ObjectId(resp.json()["data"])
+
+
+async def test_job_listing(core4api, worker):
+    worker.start()
+    role = CoreRole(
+        name="job_access",
+        realname="Michael Rau",
+        is_active=True,
+        perm=[
+            "job://core4.queue.helper.job.example.DummyJob/x",
+            "api://core4.api.v1.request.queue.*",
+            "api://tests.api.test_job.*",
+        ]
+    )
+    await role.save()
+    role._check_user()
+    assert not role.is_user
+    user = CoreRole(
+        name="mra",
+        realname="Michael Rau",
+        is_active=True,
+        email="m.rau@plan-net.com",
+        password="hello world",
+        role=["job_access"]
+    )
+    await user.save()
+    user._check_user()
+    assert user.is_user
+    while True:
+        if worker.worker[0].phase.get("loop", None) is not None:
+            break
+        time.sleep(0.5)
+    await core4api.login("mra", "hello world")
+
+    rv = await core4api.get("/core4/api/v1/jobs/list?q=core4")
+    assert rv.code == 200
+    print([j["_id"] for j in rv.json()["data"]])
+
+    rv = await core4api.get('/core4/api/v1/jobs/list?filter={"name": "core4.util.email.RoleEmail"}')
+    assert rv.code == 200
+    print([j["_id"] for j in rv.json()["data"]])
+
+    #worker.wait_queue()
+
+

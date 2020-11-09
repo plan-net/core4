@@ -45,6 +45,7 @@ except:
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
 MB = 1024 * 1024
+DEFAULT_HEADERS = "access-control-allow-origin,authorization,content-type"
 
 
 class CoreBaseHandler(CoreBase):
@@ -74,10 +75,10 @@ class CoreBaseHandler(CoreBase):
     target = None
     #: open as single page application; this hides the app managers header
     spa = False
-
+    default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle")
     supported_types = [
         "text/html",
     ]
@@ -143,9 +144,7 @@ class CoreBaseHandler(CoreBase):
                         "x-requested-with")
         self.set_header('Access-Control-Allow-Methods',
                         'GET, POST, PUT, DELETE, OPTIONS')
-        self.set_header(
-            "Access-Control-Allow-Headers",
-            "access-control-allow-origin,authorization,content-type")
+        self.set_header("Access-Control-Allow-Headers", self.default_headers)
 
     async def prepare(self):
         """
@@ -953,7 +952,8 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
 
         :return: ``True`` for success, else ``False``
         """
-        if self.user and await self.user.has_api_access(self.qual_name()):
+        if self.user and await self.user.has_api_access(self.qual_name(),
+                                                        self.request.method):
             return True
         return False
 

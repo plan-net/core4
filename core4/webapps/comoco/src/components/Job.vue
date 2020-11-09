@@ -1,13 +1,14 @@
 <template>
   <v-row
+    @click="onClick"
     no-gutters
     style=""
-    class="job px-2 pt-1 pb-2"
+    class="job px-2 pt-1 pb-0"
     :class="`job-${job.state}`"
   >
     <v-col cols="12">
       <!-- Job account name -->
-      <v-row no-gutters class="caption">{{ job.name | accountName }}</v-row>
+      <h2 class="caption">{{ job.name | accountName }}</h2>
 
       <!-- Job name and amount of jobs with the same name on queue-->
       <v-row
@@ -29,30 +30,13 @@
           <span class="job-count">{{ job.n }}</span>
         </v-col>
       </v-row>
-
-      <!-- Existing job flags-->
-      <v-row class="flags" justify="end" no-gutters>
-        <v-tooltip bottom>
-          <template v-slot:activator="{ on }">
-            <span
-              v-on="on"
-              v-for="(icon, flag) in flags"
-              class="text-uppercase font-weight-bold flag"
-              :key="flag"
-              :class="[ (job[flag]) ? 'active' : 'passive']"
-            >
-              {{ icon }}
-            </span>
-          </template>
-          <span>K - killed, N - nonstop, R - removed, Z - zombie</span>
-        </v-tooltip>
-      </v-row>
+      <job-state :flags="flags" :job="job"/>
     </v-col>
     <!-- Job progress bar in %, available only for running jobs -->
     <v-progress-linear
       v-if="job.state === 'running'"
       color="#64a505"
-      height="2"
+      height="4"
       :value="job.progress * 100"
     >
     </v-progress-linear>
@@ -60,27 +44,37 @@
 </template>
 
 <script>
+import JobState from '@/components/job/JobState.vue'
 export default {
+  components: {
+    JobState
+  },
   name: 'job',
   props: {
     /**
      * Job object
      */
     job: {
-      type: [Object],
+      type: Object,
       required: true
     },
     /**
      * Possible flags for job, needed for "Job" component
      */
     flags: {
-      type: [Object],
+      type: Object,
       required: false
     }
   },
   filters: {
     shortName: value => value.split('.').slice(-1)[0],
     accountName: value => value.split('.')[0]
+  },
+  methods: {
+    onClick () {
+      this.$store.dispatch('jobs/clearJob')
+      this.$store.dispatch('jobs/fetchJobsByName', this.job)
+    }
   }
 }
 </script>
@@ -88,21 +82,23 @@ export default {
 <style scoped lang="scss">
 @import "../style/comoco";
 
-/* .align-right {
-  align-self: flex-end;
-} */
-
-.v-progress-linear {
-  margin: 0;
-  top: -2px;
+.job {
+  cursor: pointer;
 }
-.flags{
+.v-progress-linear {
+  margin: 0 -8px 0 -10px;
+  width: calc(100% + 20px);
+  top: 0;
+}
+/* .flags {
+  margin-top: -2px;
+  margin-bottom: 2px;
   font-size: 11.5px;
   padding-right: 3px;
-  .flag{
+  .flag {
     margin-left: 1px;
   }
-}
+} */
 .job {
   position: relative;
 
@@ -120,7 +116,7 @@ export default {
     border-left-style: solid;
   }
 
-/*   &:hover {
+  /*   &:hover {
     &:before {
       content: "";
       position: absolute;
@@ -137,7 +133,7 @@ export default {
   } */
 
   .name {
-/*     position: relative;
+    /*     position: relative;
     top: -6px; */
     max-width: 250px;
     .subheading {
@@ -145,10 +141,10 @@ export default {
       font-size: 22px;
     }
   }
-  .subheading, .job-count{
-    line-height: .8;
+  .subheading,
+  .job-count {
+    line-height: 0.8;
   }
-
 }
 
 .job-pending {

@@ -52,7 +52,7 @@ class InfoHandler(CoreRequestHandler):
             elif handler["perm_base"] == "container":
                 check += handler["container"]
             for test in check:
-                if await self.user.has_api_access(test):
+                if await self.user.has_api_access(test, info_request=True):
                     result.append(handler)
                     break
         if self.wants_html():

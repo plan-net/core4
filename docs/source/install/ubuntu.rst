@@ -11,9 +11,11 @@ is a dedicated :doc:`quick install guide <quick>`.
    :linenos:
 
    # install prerequisites
-   sudo apt install python3-pip python3-venv python3-dev --yes
-   sudo apt install gcc make git dirmngr libffi-dev --yes
-   sudo apt install mongodb --yes  # install MongoDB 3.6
+   sudo -s
+   apt update
+   apt install python3-pip python3-venv python3-dev --yes
+   apt install gcc make git dirmngr libffi-dev --yes
+   apt install mongodb --yes  # install MongoDB 3.6
 
    # clone core4
    git clone https://github.com/plan-net/core4.git
@@ -23,8 +25,7 @@ is a dedicated :doc:`quick install guide <quick>`.
    source enter_env
 
    # install core4
-   pip install --upgrade pip
-   pip install .
+   python setup.py --fe
 
    # finish local setup with MongoDB and local.yaml
    python local_setup.py

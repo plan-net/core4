@@ -163,7 +163,7 @@ function subscribeDecorator (funcGenerator) {
   }
 
   const next = (iter, callbacks, prev = undefined) => {
-    const { onNext, onError, onCompleted, unsubscribe } = callbacks
+    const { onNext, onErr, onCompleted, unsubscribe } = callbacks
     const item = iter.next(prev)
     const value = item.value
 
@@ -183,7 +183,7 @@ function subscribeDecorator (funcGenerator) {
           setImmediate(() => next(iter, callbacks, val))
         },
         err => {
-          onError(err)
+          onErr(err)
           setImmediate(() => next(iter, callbacks, err))
         }
       )
