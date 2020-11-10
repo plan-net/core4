@@ -69,14 +69,6 @@ Install nodejs, yarn and npm to build and setup web tools:
     sudo -s
     wget -qO- https://deb.nodesource.com/setup_12.x | bash -
     apt-get install -y nodejs
-
-
-Install nodejs, yarn and npm to build and setup web tools:
-
-    # install nodejs and npm
-    sudo -s
-    wget -qO- https://deb.nodesource.com/setup_11.x | bash -
-    apt-get install -y nodejs
     
     # install yarn
     sudo -s
