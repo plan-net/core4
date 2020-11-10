@@ -247,10 +247,14 @@ export default {
     }
   },
   watch: {
+    dark  (newValue, oldValue) {
+      if (newValue) {
+        this.setupHTML()
+      }
+    },
     async html  (newValue, oldValue) {
       if (newValue) {
         this.setupHTML()
-        // this.setupHTMLDebounce(this.setupHTML, 333)
       }
     }
   },
@@ -258,6 +262,9 @@ export default {
     // window.removeEventListener('message', this.onMessage)
   },
   computed: {
+    dark () {
+      return this.$store.getters.dark
+    },
     isHtml () {
       return this.widget.custom_card === true
     },
