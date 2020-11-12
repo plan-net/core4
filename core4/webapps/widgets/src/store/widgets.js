@@ -8,7 +8,7 @@ import { replacePort } from '@/plugins/fixme.js'
 import axios from 'axios'
 const user = JSON.parse(window.localStorage.getItem('user')) || {}
 const axiosInstance = axios.create({
-  timeout: 5000,
+  // timeout: 5000,
   headers: { Authorization: `Bearer ${user.token}` }
 })
 
