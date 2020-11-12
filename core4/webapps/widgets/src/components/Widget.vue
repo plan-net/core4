@@ -47,7 +47,7 @@
             <div class="subtitle-2 mb-1 text-truncate">{{widget.subtitle}}</div>
             <div
               class="body-2 font-weight-light desc"
-              v-html="widget.description_html"
+              v-html="desc"
             ></div>
           </v-card-text>
         </template>
@@ -267,6 +267,9 @@ export default {
     },
     isHtml () {
       return this.widget.custom_card === true
+    },
+    desc () {
+      return this.widget.description_html.body || this.widget.description_html
     },
     html () {
       return this.widget.html
