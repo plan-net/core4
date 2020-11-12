@@ -238,9 +238,14 @@ export default {
 
 <style lang="scss" scoped>
 ::v-deep .widgetsearch-card-text.v-card__text {
-  background-color: #fcfcfd;
   height: 520px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.15);
   border-top: 1px solid rgba(0, 0, 0, 0.15);
+}
+.theme--light ::v-deep .widgetsearch-card-text.v-card__text {
+  background-color: #fcfcfd;
+}
+.theme--dark ::v-deep .widgetsearch-card-text.v-card__text {
+  background-color: lighten(#333, 3);
 }
 </style>

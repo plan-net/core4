@@ -167,6 +167,14 @@ export default {
     border: 2px solid var(--v-primary-base);
   }
 }
+.theme--dark .v-card {
+  &.disabled {
+    background: #333;
+  }
+  &.new-added {
+    border: 2px solid var(--v-primary-base);
+  }
+}
 ::v-deep .v-chip.v-size--x-small {
   letter-spacing: -0.005rem;
 }
