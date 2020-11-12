@@ -1,5 +1,4 @@
-import { clone } from 'core4ui/core4/helper'
-
+import { cloneDeep } from 'lodash'
 /**
  * Create object with defined keys with default value for each key
  *
@@ -13,11 +12,13 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
   const iterator = Array.isArray(iterableObj)
     ? iterableObj
     : Object.keys(iterableObj)
-  const value = isFunction(defaultValue) ? defaultValue : clone(defaultValue)
+  const value = isFunction(defaultValue)
+    ? defaultValue
+    : cloneDeep(defaultValue)
 
   // !!! clone function returns an empty object in case of
   // !!! cloning object values are functions
-  return clone(
+  return cloneDeep(
     iterator.reduce((computedResult, currentItem) => {
       computedResult[currentItem] = value
 
@@ -25,7 +26,7 @@ function createObjectWithDefaultValues (iterableObj, defaultValue = 0) {
     }, {})
   )
 
-  // return clone(Object.assign(...iterator.map(k => ({ [k]: clone(defaultValue) }))))
+  // return cloneDeep(Object.assign(...iterator.map(k => ({ [k]: cloneDeep(defaultValue) }))))
 }
 
 /**
@@ -257,7 +258,10 @@ function isGenerator (fn) {
   const constructor = fn.constructor
 
   if (!constructor) return false
-  if (constructor.name === 'GeneratorFunction' || constructor.displayName === 'GeneratorFunction') return true
+  if (
+    constructor.name === 'GeneratorFunction' ||
+    constructor.displayName === 'GeneratorFunction'
+  ) { return true }
 
   return isGenerator(constructor.prototype)
 }

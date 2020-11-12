@@ -59,7 +59,7 @@
         large
         icon
       >
-        <v-icon large>expand_less</v-icon>
+        <v-icon large>mdi-chevron-up</v-icon>
       </v-btn>
     </v-layout>
     <job-detail />
