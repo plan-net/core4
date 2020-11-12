@@ -20,12 +20,15 @@
             class="pb-5"
             v-show="!loading"
           >
-            <iframe scrolling="no"
-              src="about:blank"
-              frameborder="0"
-              id="frame"
-            >
-            </iframe>
+            <template v-if="show">
+              <iframe
+                scrolling="no"
+                src="about:blank"
+                frameborder="0"
+                id="frame"
+              >
+              </iframe>
+            </template>
           </v-card-text>
         </template>
         <template v-else>
@@ -154,7 +157,8 @@ export default {
   },
   data () {
     return {
-      loading: true
+      loading: true,
+      show: true
     }
   },
 
@@ -176,10 +180,14 @@ export default {
     async fixMissingWidget () {
       await this.$store.dispatch('widgets/fixWidget', this.widget)
     },
-    setupHTML () {
+    async setupHTML () {
       if (this.widget.html == null) {
         return
       }
+      this.show = false
+      await this.$nextTick()
+      this.show = true
+      await this.$nextTick()
       const iframeEl = this.$el.querySelector('iframe').contentWindow
       window.addEventListener('message', this.onMessage, false)
       const doc = iframeEl.document
@@ -188,7 +196,9 @@ export default {
 
       const t = this.$vuetify.theme.themes
       // eslint-disable-next-line
+      /* eslint-disable */
       const vars = `<script>window.__DARK__=${JSON.stringify(this.dark)}; window.__THEME__=${JSON.stringify(t)}<\/script></head>`
+      /* eslint-enable */
       const res = tmp[0] + vars + tmp[1]
       doc.write(res)
       doc.close()
@@ -248,14 +258,10 @@ export default {
   },
   watch: {
     dark  (newValue, oldValue) {
-      if (newValue) {
-        this.setupHTML()
-      }
+      this.setupHTML()
     },
     async html  (newValue, oldValue) {
-      if (newValue) {
-        this.setupHTML()
-      }
+      this.setupHTML()
     }
   },
   beforeDestroy () {

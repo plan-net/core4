@@ -126,7 +126,6 @@ const actions = {
 
     context.commit('setWidgets', w)
     boardComplete.widgets.forEach(val => {
-      console.log(val)
       // update existing widgets in boards to be in obj format
       const id = typeof val === 'string' ? val : val.rsc_id
       context.dispatch('fetchWidget', {
@@ -151,7 +150,6 @@ const actions = {
         headers: { common: { Accept: accept } }
       })
       widget = widget.data
-      console.log(widget)
       context.commit('preAddWidget', Object.assign({}, widget, { html: null }))
       if (widget.custom_card === true) {
         const html = await context.dispatch('fetchHtmlWidget', {
