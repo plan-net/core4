@@ -197,6 +197,7 @@ export default {
       const t = this.$vuetify.theme.themes
       // eslint-disable-next-line
       /* eslint-disable */
+      console.log('dark:', this.dark)
       const vars = `<script>window.__DARK__=${JSON.stringify(this.dark)}; window.__THEME__=${JSON.stringify(t)}<\/script></head>`
       /* eslint-enable */
       const res = tmp[0] + vars + tmp[1]
