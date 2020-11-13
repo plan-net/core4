@@ -167,7 +167,7 @@
         font-size: 13px;
         color: #fff;
       }
-      .theme--dark.v-application{
+      .theme--dark.v-application {
         background: #121212 !important;
       }
     </style>
@@ -179,8 +179,8 @@
       <v-app>
         <v-container>
           <v-card>
-            <v-toolbar color="accent darken-3"  dark flat prominent>
-              <header class=" pl-3 pt-3">
+            <v-toolbar color="accent darken-3" dark flat prominent>
+              <header class="pl-3 pt-3">
                 <a
                   class="text-h2 mb-3"
                   href="{{enter_url}}"
@@ -251,47 +251,44 @@
                 </section>
               </header>
 
-              <template v-slot:extension>
+              <!--          <template v-slot:extension>
                 <v-tabs v-model="tabs" class="mt-2" right>
                   <v-tab class="font-weight-bold">Description</v-tab>
                   <v-tab class="font-weight-bold">Details</v-tab>
                 </v-tabs>
-              </template>
+              </template> -->
             </v-toolbar>
-            <v-tabs-items v-model="tabs" class="tabs-items px-7 py-4">
-              <v-tab-item class="tab-item">
-                <h4 id="list-item-2" class="headline pt-2 pb-3">
-                  Introduction
-                </h4>
-                <span class="introduction-desc"
-                  >{% raw description_html %}</span
-                >
-                <!--v-divider class="pb-5 mt-5"></v-divider-->
-                {% if method %}
-                <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
-                {% for elem in method %}
-                <v-row>
-                  <v-col class="method-table">
-                    <span
-                      id="{{elem['method'].upper()}}"
-                      class="method-name title pb-2"
-                      >{{ elem['method'].upper() }}</span
-                    >
-                    {% raw elem["html"] %}
-                  </v-col>
-                </v-row>
-                {% end %} {% end if %}
-                <div v-if="isCoreStaticFileHandler">
-                  <span class="text-uppercase">Path:</span>
-                  {{!args.data.path}}
-                  <br />
-                  <span class="text-uppercase">Enter:</span>
-                  {{!args.data.enter}}
-                  <br />
-                  <span class="text-uppercase">Enter url:</span>
-                  <a href="{{enter_url}}" class="pl-2">{{enter_url}}</a>
-                </div>
-              </v-tab-item>
+            <!--             <v-tabs-items v-model="tabs" class="tabs-items px-7 py-4">
+              <v-tab-item class="tab-item"> -->
+            <v-card-text>
+              <h4 id="list-item-2" class="headline pt-2 pb-3">Introduction</h4>
+              <span class="introduction-desc">{% raw description_html %}</span>
+              <!--v-divider class="pb-5 mt-5"></v-divider-->
+              {% if method %}
+              <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
+              {% for elem in method %}
+              <v-row no-gutters>
+                <v-col class="method-table" class="pl-2">
+                  <span
+                    id="{{elem['method'].upper()}}"
+                    class="method-name title pb-2"
+                    >{{ elem['method'].upper() }}</span
+                  >
+                  {% raw elem["html"] %}
+                </v-col>
+              </v-row>
+              {% end %} {% end if %}
+              <div v-if="isCoreStaticFileHandler">
+                <span class="text-uppercase">Path:</span>
+                {{!args.data.path}}
+                <br />
+                <span class="text-uppercase">Enter:</span>
+                {{!args.data.enter}}
+                <br />
+                <span class="text-uppercase">Enter url:</span>
+                <a href="{{enter_url}}" class="pl-2">{{enter_url}}</a>
+              </div>
+              <!-- </v-tab-item>
 
               <v-tab-item class="tab-item">
                 <div class="py-3">
@@ -359,7 +356,8 @@
                   </ul>
                 </div>
               </v-tab-item>
-            </v-tabs-items>
+            </v-tabs-items> -->
+            </v-card-text>
           </v-card>
         </v-container>
       </v-app>
