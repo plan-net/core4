@@ -2,7 +2,7 @@
   <div>
     <v-dialog
       v-model="dialogOpen"
-      width="1090px"
+      width="1440px"
       scrollable
     >
       <template v-slot:activator="{ on, attrs }">
@@ -32,8 +32,8 @@
           </v-row>
           <!-- end -->
         </v-card-title>
-        <v-divider class="mx-6"></v-divider>
-        <v-row
+        <v-divider class=""></v-divider>
+        <v-row no-gutters
           align="center"
           class="pl-7 pr-6"
         >
