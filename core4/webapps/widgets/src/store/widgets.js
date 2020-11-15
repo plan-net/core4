@@ -240,6 +240,31 @@ const actions = {
     }
     return boards
   },
+  async deleteBoard (context, name) {
+    let boards = _.cloneDeep(state.boards) || []
+    boards = boards.filter(val => {
+      return val.name !== name
+    })
+    console.log(boards)
+    try {
+      await api.updateBoard({
+        boards
+      })
+      context.commit('setBoards', boards)
+      if (context.state.board === name) {
+        const newActive = (boards[0] || {}).name
+        context.dispatch('setActiveBoard', (boards[0] || {}).name)
+
+        if (router.history.current.params.board !== newActive) {
+          router.push({ name: 'Home', params: { board: newActive } })
+        }
+      }
+      return true
+    } catch (err) {
+      Vue.prototype.raiseError(err)
+      // console.error(err)
+    }
+  },
   async editBoard (context, dto) {
     try {
       let boards = _.cloneDeep(state.boards) || []
