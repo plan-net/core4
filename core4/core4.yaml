@@ -153,7 +153,8 @@ user_setting:
      language: EN
      menu:
        - About: /about
-       - Profile: /core4/api/v1/profile
+       - Mail: mailto:mail@mailer.com
+     profile: /core4/api/v1/profile
      contact: mail@mailer.com
 
 queue:
