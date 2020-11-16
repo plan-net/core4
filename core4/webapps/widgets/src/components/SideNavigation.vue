@@ -222,6 +222,15 @@ export default {
         this.selected = []
         this.clear()
       }
+    },
+    name (newValue, oldValue) {
+      if (this.error != null && newValue !== oldValue) {
+        this.error = null
+        this.block = false
+        requestAnimationFrame(() => {
+          this.$refs.observer.reset()
+        })
+      }
     }
   },
   methods: {
@@ -248,9 +257,12 @@ export default {
       requestAnimationFrame(() => {
         this.$refs.observer.reset()
       })
+      this.error = null
     },
     async submit () {
+      await this.$nextTick()
       this.$refs.observer.validate().then(async isValid => {
+        console.log(isValid)
         if (isValid) {
           this.block = true
           try {
@@ -262,12 +274,12 @@ export default {
               type: 'success',
               text
             })
+            this.clear()
           } catch (err) {
+            console.log(err, 'error caught')
             if (err.message === 'Board exists') {
               this.error = err.message + '.'
             }
-          } finally {
-            this.clear()
           }
         }
       })

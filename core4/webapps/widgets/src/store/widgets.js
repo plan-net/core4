@@ -110,30 +110,33 @@ const actions = {
     )
     // TODO - queue this
     // let modernize = false
-    const w = _.cloneDeep(boardComplete.widgets).map(val => {
-      if (typeof val === 'string') {
-        // modernize = true
+    try {
+      const w = _.cloneDeep(boardComplete.widgets).map(val => {
+        if (typeof val === 'string') {
+          // modernize = true
+          return val
+        }
+        val.icon = val.icon || 'mdi-copyright'
+        val.description = val.description || ''
+        val.description_html = val.description_html || ''
+        val.html = val.html || null
+        val.custom_card = val.custom_card || false
+        val.error = null
         return val
-      }
-      val.icon = val.icon || 'mdi-copyright'
-      val.description = val.description || ''
-      val.description_html = val.description_html || ''
-      val.html = val.html || null
-      val.custom_card = val.custom_card || false
-      val.error = null
-      return val
-    })
-
-    context.commit('setWidgets', w)
-    boardComplete.widgets.forEach(val => {
-      // update existing widgets in boards to be in obj format
-      const id = typeof val === 'string' ? val : val.rsc_id
-      context.dispatch('fetchWidget', {
-        endpoint: replacePort(val.endpoint[0]), // dev server mac localhost workaround / hack
-        id,
-        accept: 'application/json'
       })
-    })
+      context.commit('setWidgets', w)
+      boardComplete.widgets.forEach(val => {
+        // update existing widgets in boards to be in obj format
+        const id = typeof val === 'string' ? val : val.rsc_id
+        context.dispatch('fetchWidget', {
+          endpoint: replacePort(val.endpoint[0]), // dev server mac localhost workaround / hack
+          id,
+          accept: 'application/json'
+        })
+      })
+    } catch (err) {
+      Vue.prototype.raiseError(new Error('Board not found.'))
+    }
   },
   async fetchWidget (
     context,
@@ -227,6 +230,7 @@ const actions = {
       return val.name === dto.board
     })
     let boards = _.cloneDeep(state.boards) || []
+
     if (exists != null) {
       throw new Error('Board exists') // do not change message
     } else {
@@ -245,7 +249,6 @@ const actions = {
     boards = boards.filter(val => {
       return val.name !== name
     })
-    console.log(boards)
     try {
       await api.updateBoard({
         boards
@@ -266,30 +269,37 @@ const actions = {
     }
   },
   async editBoard (context, dto) {
-    try {
-      let boards = _.cloneDeep(state.boards) || []
-      boards = boards.map(val => {
-        if (val.name === dto.oldName) {
-          val.name = dto.board
-        }
-        return val
-      })
-      context.commit('setBoards', boards)
-      await api.createBoard(boards)
-      // this is the active board
-      if (context.state.board === dto.oldName) {
-        context.commit('setActiveBoard', dto.board)
-        await api.persistOptions({
-          board: dto.board
+    const exists = state.boards.find(val => {
+      return val.name === dto.board
+    })
+    if (exists != null) {
+      throw new Error('Board exists') // do not change message
+    } else {
+      try {
+        let boards = _.cloneDeep(state.boards) || []
+        boards = boards.map(val => {
+          if (val.name === dto.oldName) {
+            val.name = dto.board
+          }
+          return val
         })
-        if (router.history.current.params.board !== dto.board) {
-          router.push({ name: 'Home', params: { board: dto.board } })
+        context.commit('setBoards', boards)
+        await api.createBoard(boards)
+        // this is the active board
+        if (context.state.board === dto.oldName) {
+          context.commit('setActiveBoard', dto.board)
+          await api.persistOptions({
+            board: dto.board
+          })
+          if (router.history.current.params.board !== dto.board) {
+            router.push({ name: 'Home', params: { board: dto.board } })
+          }
         }
+        return true
+      } catch (err) {
+        Vue.prototype.raiseError(err)
+        return false
       }
-      return true
-    } catch (err) {
-      Vue.prototype.raiseError(err)
-      return false
     }
   },
 
@@ -297,7 +307,6 @@ const actions = {
     const boardWithWidgets = _.cloneDeep(context.getters.boardWithWidgets)
     const toAdd = []
     let toRemove = 0
-    // console.log(delta.forEach(val => console.log(val.title)))
     delta.forEach(val => {
       const isAdded = boardWithWidgets.widgets.find(
         val2 => val2.rsc_id === val.rsc_id
