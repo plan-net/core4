@@ -24,15 +24,11 @@ const state = {
   boards: [],
   board: null,
   tags: []
-  /*   client: {
-    logo: 'targobank-logo.svg'
-  } */
 }
 
 const actions = {
   async initApp (context) {
     await context.dispatch('fetchBoards')
-    // await context.dispatch('fetchWidgets')
     return true
   },
   async fetchTags (context) {
