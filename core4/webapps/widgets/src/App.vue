@@ -11,6 +11,7 @@ export default {
     SideNavigation
   },
   mounted () {
+    console.info('init c4n')
     /*     window.addEventListener('message', (e) => {
       console.log(e.source)
     }, false) */
