@@ -70,17 +70,22 @@ class CoreBaseHandler(CoreBase):
     #: link to api (can be overwritten)
     enter_url = None
     #: default material icon
-    icon = "copyright"
+    icon = "mdi-copyright"
     #: open in new window/tab
     target = None
     #: open as single page application; this hides the app managers header
     spa = False
+    # widget size, resolution
+    res = 11
+    # temp
+    custom_card = False
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res", "custom_card")
     supported_types = [
         "text/html",
+        "application/json"
     ]
     concurr = True
     doc = None
@@ -393,7 +398,8 @@ class CoreBaseHandler(CoreBase):
         self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
         handler = self.application.lookup[self.rsc_id]["handler"]
         pattern = self.application.lookup[self.rsc_id]["pattern"]
-        doc = await self.application.container.get_handler(rsc_id)
+        docs = await self.application.container.get_handler(rsc_id=rsc_id)
+        doc = docs[0]
         description = str(self.doc or self.__doc__)
         doc.update(dict(
             args=handler.target_kwargs,
@@ -415,12 +421,27 @@ class CoreBaseHandler(CoreBase):
 
     async def xcard(self, *args, **kwargs):
         """
-        Prepares the ``card`` page and triggers :meth:`.card` which is to be
-        overwritten for custom card implementations.
+        Prepares the ``card`` page and either returns the classes properties if
+        called with header accept: application/json or
+        triggers :meth:`.card` otherwise, which
+         is to be overwritten for custom
+        card implementations.
 
         :return: result of :meth:`.card`
         """
         doc = await self.meta()
+        if self.wants_json():
+            # make datetime object serializable
+            for i in doc.keys():
+                if isinstance(doc[i], datetime.datetime):
+                    doc[i] = doc[i].__str__()
+            # check if the subclass has its own card method.
+            # if it has not, the default-card method will be called.
+            if callable(self.card.__self__.__class__.__dict__.get("card", None)):
+                doc['custom_card'] = True
+            else:
+                doc['custom_card'] = False
+            return self.finish(json.dumps(doc))
         return await self.card(**doc)
 
     def xenter(self, *args, **kwargs):
@@ -446,8 +467,8 @@ class CoreBaseHandler(CoreBase):
 
     async def card(self, **data):
         """
-        Renders the default card page. This method is to be overwritten for
-        custom card page impelementation.
+        Returns the classes properties in json format.
+        May be overwritten for a custom html implementation.
         """
         return self.render(self.card_html_page, **data)
 

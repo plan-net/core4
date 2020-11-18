@@ -1,65 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
     <title>Help</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css" rel="stylesheet">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css"
+      rel="stylesheet"
+    />
     <style>
-        body{
-            opacity: 0;
-        }
-        body.theme--light .wrapper::before {
-            content: '';
-            display: block;
-            position: absolute;
-            height: 240px;
-            left: 0;
-            right: 0;
-            top: 0;
-            background-color: #283a45;
-            z-index: 0;
-            min-height: 120px;
-        }
+      body {
+        opacity: 0;
+      }
 
-        .wrapper {
-            margin-top: 62px;
-            display: flex;
-            flex-flow: row wrap;
-            justify-content: center;
-        }
+      /*       .wrapper {
+        margin-top: 62px;
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: center;
+      }
 
-        .wrapper > * {
-            margin: 10px;
-            flex: 1 100%;
-            max-width:1260px;
-        }
+      .wrapper > * {
+        margin: 10px;
+        flex: 1 100%;
+        max-width: 1260px;
+      } */
 
-        pre.doctest-block {
-            margin-left: 16px;
-            width: 75%;
-            min-width: 920px;   
-            max-width: 1280px;             
-            
-            font-weight: bold;
-            font-family: 'Consolas', 'Bitstream Vera Sans Mono', 'Courier New', Courier, monospace;
-            font-size: 0.83em;
-            border-radius: 4px;
-            padding: 16px 10px 16px 10px;
-            overflow: scroll;
-        }
-        .theme--light  pre.doctest-block {
-            border: 1px solid rgba(63,81,93,.25);
-            background-color: #fff;
-            color: #3f515d;
-        }
-        .theme--dark  pre.doctest-block {
-            border: 1px solid rgba(63,81,93,.45);
-            background-color: #3f515d;
-            color: #fff;
-        }
-/*         pre.doctest-block {
+      pre.doctest-block {
+        margin-left: 16px;
+        width: 75%;
+        min-width: 920px;
+        max-width: 1280px;
+
+        font-weight: bold;
+        font-family: "Consolas", "Bitstream Vera Sans Mono", "Courier New",
+          Courier, monospace;
+        font-size: 0.83em;
+        border-radius: 4px;
+        padding: 16px 10px 16px 10px;
+        overflow: scroll;
+      }
+      .theme--light pre.doctest-block {
+        border: 1px solid rgba(63, 81, 93, 0.25);
+        background-color: #fff;
+        color: #3f515d;
+      }
+      .theme--dark pre.doctest-block {
+        border: 1px solid rgba(63, 81, 93, 0.45);
+        background-color: #3f515d;
+        color: #fff;
+      }
+      /*         pre.doctest-block {
             width: 100%;
             border: 1px dashed #fff;
             font-weight: bold;
@@ -72,338 +69,382 @@
             overflow: scroll;
         } */
 
-        p.rubric {
-            display: block;
-            font-size: 1em;
-            margin: 1em 0 1em 0;
-            font-weight: bold;
-        }
+      p.rubric {
+        display: block;
+        font-size: 1em;
+        margin: 1em 0 1em 0;
+        font-weight: bold;
+      }
 
-        div.tab-item hr:last-child {
-            display:none;
-        }
+      div.tab-item hr:last-child {
+        display: none;
+      }
 
-        .theme--light header a.display-2 {
-            color: rgba(0, 0, 0, 0.87);
-        }
-        .theme--dark header a.display-2 {
-            color: white;
-        }
+      .theme--light header a.display-2 {
+        color: rgba(0, 0, 0, 0.87);
+      }
+      .theme--dark header a.display-2 {
+        color: white;
+      }
 
-        p{
-            max-width: 640px;
-        }
-        .introduction-desc p{
-            margin-top: 10px;
-            margin-bottom: 12px;
-        }
+      p {
+        max-width: 640px;
+      }
+      .introduction-desc p {
+        margin-top: 10px;
+        margin-bottom: 12px;
+      }
 
-        .code{
-            color: #f44336;
-            padding: 1px 4px;
-            margin: 3px 3px;
-            border-radius: 4px;
-            font-weight: 500;
-            font-size: .9em;
-        }
-        .theme--light .code {
-            background: rgba(0,0,0,.1);
-            border: 1px solid rgba(0,0,0,.15);
-        }
-        .theme--dark .code {
-            background: #283a45;
-            border: 1px solid rgba(0,0,0,.1);
-        }
+      .code {
+        color: #f44336;
+        padding: 1px 4px;
+        margin: 3px 3px;
+        border-radius: 4px;
+        font-weight: 500;
+        font-size: 0.9em;
+      }
+      .theme--light .code {
+        background: rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(0, 0, 0, 0.15);
+      }
+      .theme--dark .code {
+        background: #283a45;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
 
-        .method-table{
-            margin-bottom: 32px;
-        }
-        .theme--dark .method-table {
-            background-color: rgba(63,81,93,.25);
-            border: 1px solid rgba(63,81,93,.45);
-        }
-        .theme--light .method-table {
-            background-color: rgba(63,81,93,.05);
-            border: 1px solid rgba(63,81,93,.2);
-        }
-        .method-table .method-name{
-            padding-left: 12px;
-            padding-top: 6px;
-            padding-bottom: 16px;
-            background-color:rgba(63,81,93,.1);
-            display: block;
-            margin-left: -12px; 
-            margin-right: -12px;
-            margin-top: -12px;
-
-        }
-        table.field-list th, table.field-list td{
-            padding-bottom: 18px;
-        }
-        table.field-list th{
-            display:block;
-            text-align: left;
-            width: 120px;
-        }
-        table .field-body ul, ul.no{
-            list-style-type: none;
-            padding-left: 0;
-        }
-        table .field-body ul.last.simple span,
-        table .field-body ul strong{
-            min-width: 110px;
-            width: 110px;
-            display: inline-block;
-        }
-        table .field-body ul.last.simple span{
-            font-weight: bolder;
-        }
-        .key{
-            width: 90px;
-            display: inline-block;
-        }
-        .chip{
-            font-weight: 500;
-            display: inline-block;
-            padding: 2px 10px;
-            font-size: 13px;
-            color: #fff;
-        }
+      .method-table {
+        margin-bottom: 32px;
+      }
+      .theme--dark .method-table {
+        background-color: rgba(63, 81, 93, 0.25);
+        border: 1px solid rgba(63, 81, 93, 0.45);
+      }
+      .theme--light .method-table {
+        background-color: rgba(63, 81, 93, 0.05);
+        border: 1px solid rgba(63, 81, 93, 0.2);
+      }
+      .method-table .method-name {
+        padding-left: 12px;
+        padding-top: 6px;
+        padding-bottom: 16px;
+        background-color: rgba(63, 81, 93, 0.1);
+        display: block;
+        margin-left: -12px;
+        margin-right: -12px;
+        margin-top: -12px;
+      }
+      table.field-list th,
+      table.field-list td {
+        padding-bottom: 18px;
+      }
+      table.field-list th {
+        display: block;
+        text-align: left;
+        width: 120px;
+      }
+      table .field-body ul,
+      ul.no {
+        list-style-type: none;
+        padding-left: 0;
+      }
+      table .field-body ul.last.simple span,
+      table .field-body ul strong {
+        min-width: 110px;
+        width: 110px;
+        display: inline-block;
+      }
+      table .field-body ul.last.simple span {
+        font-weight: bolder;
+      }
+      .key {
+        width: 90px;
+        display: inline-block;
+      }
+      .chip {
+        font-weight: 500;
+        display: inline-block;
+        padding: 2px 10px;
+        font-size: 13px;
+        color: #fff;
+      }
+      .theme--dark.v-application {
+        background: #121212 !important;
+      }
     </style>
-</head>
-<body>
-<!--{{globals()}}-->
-<!-- list of all.code available variables -->
-<div id="app">
-    <v-app>
-        <div class="wrapper">
-            <v-card>
-                <header class="px-7 pt-7 pb-2">
-                    <a class="display-2 mb-0" href="{{enter_url}}" style="text-decoration: none;">[[ title ]]</a>
-                    <h2 class="font-weight-regular" v-text="subtitle || qual_name"></h2>
-                    <section class="">
-                        <v-tooltip left>
-                             <template v-slot:activator="{ on }">
-                                  <span class="mr-2 caption py-1 pr-1" v-on="on">
-                                        <v-icon class="mr-1" small>account_box</v-icon>[[ author ]]
-                                  </span>
-                             </template>
-                            <span>Author</span>
-                        </v-tooltip>
-                        <v-tooltip bottom>
-                             <template v-slot:activator="{ on }">
-                                  <span class="mr-2 caption pa-1" v-on="on">
-                                        <v-icon class="mr-1" small>date_range</v-icon>{{created_at.strftime("%d.%m.%Y %H:%M")}}
-                                  </span>
-                             </template>
-                            <span>Created at</span>
-                        </v-tooltip>
-                        <v-tooltip bottom>
-                             <template v-slot:activator="{ on }">
-                                  <span class="mr-2 caption pa-1" v-on="on">
-                                        <v-icon class="mr-1" small>new_releases</v-icon>{{version}}
-                                  </span>
-                             </template>
-                            <span>Version</span>
-                        </v-tooltip>
-                        <v-tooltip top>
-                             <template v-slot:activator="{ on }">
-                                  <span class="mr-2 caption darken-2 pa-1" v-on="on">
-                                             {% for t in tag[:3] %}
-                                                <span class="chip accent">
-                                                    {{t}}
-                                                </span>
-                                            {% end %}
-                                  </span>
-                             </template>
-                            <span>Tags</span>
-                        </v-tooltip>
-                        <v-tooltip bottom>
-                             <template v-slot:activator="{ on }">
-                                   <span class="mr-2 caption pa-1" v-on="on">
-                                        <v-icon class="mr-1" small>[[icon]]</v-icon>[[icon]]
-                                    </span>
-                             </template>
-                            <span>Icon</span>
-                        </v-tooltip>
-                        <v-tooltip right>
-                             <template v-slot:activator="{ on }">
-                                  <span class="mr-2 caption pa-1" v-on="on">
-                                        <v-icon v-if="protected" class="mr-1" small>lock</v-icon>
-                                        <v-icon v-else class="mr-1" small>lock_open</v-icon>
-                                  </span>
-                             </template>
-                            <span>Protected</span>
-                        </v-tooltip>
-                    </section>
-                </header>
-                <main>
-                    <v-tabs v-model="tabs" background-color="accent lighten5" slider-color="primary" :centered="true" :grow="true" class="mt-2" dark>
-                        <v-tab class="font-weight-bold">Description</v-tab>
-                        <v-tab class="font-weight-bold">Details</v-tab>
-                    </v-tabs>
+  </head>
+  <body>
+    <!--{{globals()}}-->
+    <!-- list of all.code available variables -->
+    <div id="app">
+      <v-app>
+        <v-container>
+          <v-card>
+            <v-toolbar color="accent darken-3" dark flat prominent>
+              <header class="pl-3 pt-3">
+                <a
+                  class="text-h2 mb-3"
+                  href="{{enter_url}}"
+                  style="text-decoration: none; color: unset"
+                  v-text="subtitle || qual_name"
+                ></a>
+                <!--          <h2
+                  class="text-h4 mt-3 mb-3"
+                  v-text="subtitle || qual_name"
+                ></h2> -->
+                <section class="pt-3">
+                  <v-tooltip left>
+                    <template v-slot:activator="{ on }">
+                      <span class="mr-2 caption py-1 pr-1" v-on="on">
+                        <v-icon class="mr-1">mdi-account-circle</v-icon>{{!
+                        author }}
+                      </span>
+                    </template>
+                    <span>Author</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <span class="mr-2 caption pa-1" v-on="on">
+                        <v-icon class="mr-1">mdi-calendar-range</v-icon
+                        >{{created_at.strftime("%d.%m.%Y %H:%M")}}
+                      </span>
+                    </template>
+                    <span>Created at</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <span class="mr-2 caption pa-1" v-on="on">
+                        <v-icon class="mr-1">mdi-alert-decagram</v-icon
+                        >{{version}}
+                      </span>
+                    </template>
+                    <span>Version</span>
+                  </v-tooltip>
+                  <v-tooltip top>
+                    <template v-slot:activator="{ on }">
+                      <span class="mr-2 caption darken-2 pa-1" v-on="on">
+                        {% for t in tag[:3] %}
+                        <span class="chip accent"> {{t}} </span>
+                        {% end %}
+                      </span>
+                    </template>
+                    <span>Tags</span>
+                  </v-tooltip>
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <span class="mr-2 caption pa-1" v-on="on">
+                        <v-icon class="mr-1">{{!icon}}</v-icon>{{!icon}}
+                      </span>
+                    </template>
+                    <span>Icon</span>
+                  </v-tooltip>
+                  <v-tooltip right>
+                    <template v-slot:activator="{ on }">
+                      <span class="mr-2 caption pa-1" v-on="on">
+                        <v-icon v-if="protected" class="mr-1" small
+                          >mdi-lock</v-icon
+                        >
+                        <v-icon v-else class="mr-1">mdi-lock-off</v-icon>
+                      </span>
+                    </template>
+                    <span>Protected</span>
+                  </v-tooltip>
+                </section>
+              </header>
 
-                    <v-tabs-items v-model="tabs" class="tabs-items px-7 py-4">
+              <!--          <template v-slot:extension>
+                <v-tabs v-model="tabs" class="mt-2" right>
+                  <v-tab class="font-weight-bold">Description</v-tab>
+                  <v-tab class="font-weight-bold">Details</v-tab>
+                </v-tabs>
+              </template> -->
+            </v-toolbar>
+            <!--             <v-tabs-items v-model="tabs" class="tabs-items px-7 py-4">
+              <v-tab-item class="tab-item"> -->
+            <v-card-text>
+              <h4 id="list-item-2" class="headline pt-2 pb-3">Introduction</h4>
+              <span class="introduction-desc">{% raw description_html %}</span>
+              <!--v-divider class="pb-5 mt-5"></v-divider-->
+              {% if method %}
+              <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
+              {% for elem in method %}
+              <v-row no-gutters>
+                <v-col class="method-table" class="pl-2">
+                  <span
+                    id="{{elem['method'].upper()}}"
+                    class="method-name title pb-2"
+                    >{{ elem['method'].upper() }}</span
+                  >
+                  {% raw elem["html"] %}
+                </v-col>
+              </v-row>
+              {% end %} {% end if %}
+              <div v-if="isCoreStaticFileHandler">
+                <span class="text-uppercase">Path:</span>
+                {{!args.data.path}}
+                <br />
+                <span class="text-uppercase">Enter:</span>
+                {{!args.data.enter}}
+                <br />
+                <span class="text-uppercase">Enter url:</span>
+                <a href="{{enter_url}}" class="pl-2">{{enter_url}}</a>
+              </div>
+              <!-- </v-tab-item>
 
-                        <v-tab-item class="tab-item">
-                            <h4 id="list-item-2" class="headline pt-2 pb-3">Introduction</h4>
-                            <span class="introduction-desc">{% raw description_html %}</span>
-                            <!--v-divider class="pb-5 mt-5"></v-divider-->
-                            {% if method %}
-                            <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
-                                {% for elem in method %}
-                                <v-row >
-                                    <v-col class="method-table">
-                                        <span id="{{elem['method'].upper()}}" class="method-name title pb-2">{{ elem['method'].upper() }}</span>
-                                        {% raw elem["html"] %}
-                                    </v-col>
-                                </v-row>
-                                {% end %}
-                            {% end if %}
-                            <div v-if="isCoreStaticFileHandler">
-                                <span class="text-uppercase">Path:</span> [[args.data.path]]
-                                <br>
-                                <span class="text-uppercase">Enter:</span> [[args.data.enter]]
-                                <br>
-                                <span class="text-uppercase">Enter url:</span>
-                                <a href="{{enter_url}}" class="pl-2">{{enter_url}}</a>
-                            </div>
-                        </v-tab-item>
+              <v-tab-item class="tab-item">
+                <div class="py-3">
+                  <span class="key">SPA</span>
+                  <span class="font-weight-regular code">{{ spa }}</span>
+                </div>
+                <div class="py-3">
+                  <span class="key">Resource ID</span>
+                  <span class="font-weight-regular code">{{! rsc_id }}</span>
+                </div>
+                <div class="py-3">
+                  <span class="key">Container</span>
+                  <span class="font-weight-regular code">{{! container }}</span>
+                </div>
+                <div class="py-3">
+                  <span class="key pb-3">Class args</span>
+                  <pre class="doctest-block">{{!args.template}}</pre>
+                </div>
+                <div class="py-3">
+                  <span class="key pb-1">Pattern</span>
+                  <ul class="font-weight-regular no">
+                    {% for p in pattern %}
+                    <li cladd="mb-2">
+                      {% if p["name"] is not None %}
+                      <b class="key">{{ p["name"] }}</b>
+                      {% else %}
+                      <b class="key">no name</b>
+                      {% end if %}
+                      <span class="code">{{ p["regex"] }}</span>
+                    </li>
+                    {% end %}
+                  </ul>
+                </div>
+                <div class="py-3">
+                  <span class="key pb-2">Endpoints</span>
+                  <ul class="font-weight-regular no">
+                    {% for ep in endpoint %}
+                    <span class="code mb-3">{{ ep }}</span>
+                    <li>
+                      <ul class="no">
+                        <li>
+                          <v-icon small class="mr-2">mdi-link</v-icon
+                          ><a href="{{ ep }}/_info/card/{{ rsc_id }}">card </a>
+                        </li>
 
-                        <v-tab-item class="tab-item">
-                            <div class="py-3">
-                                <span class="key">SPA</span>
-                                <span class="font-weight-regular code">{{ spa }}</span>
-                            </div>
-                            <div class="py-3">
-                                <span class="key">Resource ID</span>
-                                <span class="font-weight-regular code">[[ rsc_id ]]</span>
-                            </div>
-                            <div class="py-3">
-                                <span class="key">Container</span>
-                                <span class="font-weight-regular code">[[ container ]]</span>
-                            </div>
-                            <div class="py-3">
-                                <span class="key pb-3">Class args</span>
-                                <pre class="doctest-block">[[args.template]]</pre>
-                            </div>
-                            <div class="py-3">
-                                <span class="key pb-1">Pattern</span>
-                                <ul class="font-weight-regular no">
-                                    {% for p in pattern %}
-                                    <li cladd="mb-2">
-                                        {% if p["name"] is not None %}
-                                        <b class="key">{{ p["name"] }}</b>
-                                        {% else %}
-                                        <b class="key">no name</b>
-                                        {% end if %}
-                                        <span class="code">{{ p["regex"] }}</span>
-                                    </li>
-                                    {% end %}
-                                </ul>
-                            </div>
-                            <div class="py-3">
-                                <span class="key pb-2">Endpoints</span>
-                                <ul class="font-weight-regular no">
-                                    {% for ep in endpoint %}
-                                    <span class="code mb-3">{{ ep }}</span>
-                                    <li>
-                                        <ul class="no">
-                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{ ep }}/_info/card/{{ rsc_id }}">card </a></li>
+                        <li>
+                          <v-icon small class="mr-2">mdi-link</v-icon
+                          ><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a>
+                        </li>
 
-                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{ ep }}/_info/help/{{ rsc_id }}">help</a></li>
-                                            
-                                            {% if enter_url != None %}
-                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{enter_url}}">enter</a></li>
-                                            {% else %}
-                                            <li><v-icon small class="mr-2">mdi-link</v-icon><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a></li>
-                                            {% end if %}
-                                        </ul>
-                                    </li>
-                                    {% end for %}
-                                </ul>
-                            </div>
-                        </v-tab-item>
-                    </v-tabs-items>
-                </main>
-            </v-card>
-        </div>
-    </v-app>
-</div>
-<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
-<script>
-    new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#app',
-        vuetify: new Vuetify({
-            icons: {
-                iconfont: 'md', // 'mdi' || 'mdiSvg' || 'md' || 'fa' || 'fa4'
-            },
-            theme: window.VUETIFY_THEME
-        }),
+                        {% if enter_url != None %}
+                        <li>
+                          <v-icon small class="mr-2">mdi-link</v-icon
+                          ><a href="{{enter_url}}">enter</a>
+                        </li>
+                        {% else %}
+                        <li>
+                          <v-icon small class="mr-2">mdi-link</v-icon
+                          ><a href="{{ ep }}/_info/enter/{{ rsc_id }}">enter</a>
+                        </li>
+                        {% end if %}
+                      </ul>
+                    </li>
+                    {% end for %}
+                  </ul>
+                </div>
+              </v-tab-item>
+            </v-tabs-items> -->
+            </v-card-text>
+          </v-card>
+        </v-container>
+      </v-app>
+    </div>
+    <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js"></script>
+    <script>
+      new Vue({
+        delimiters: ["{{!", "}}"],
+        el: "#app",
+        vuetify: window.c4Vuetify,
         data() {
-            return {
-                tabs: 0,
-                subtitle: '{{subtitle}}',
-                qual_name: '{{qual_name}}',
-                title: '{{title}}',
-                author: '{{author}}',
-                protected: ('{{protected}}' === 'True'),
-                rsc_id: '{{rsc_id}}',
-                container: '{{container}}',
-                icon: '{{icon}}',
-                enter_url: '{{enter_url}}'
-            }
+          return {
+            tabs: 0,
+            subtitle: "{{subtitle}}",
+            qual_name: "{{qual_name}}",
+            title: "{{title}}",
+            author: "{{author}}",
+            protected: "{{protected}}" === "True",
+            rsc_id: "{{rsc_id}}",
+            container: "{{container}}",
+            icon: "{{icon}}",
+            enter_url: "{{enter_url}}",
+          };
         },
         computed: {
-            args: function () {
-                var result = {
-                        data: {},
-                        template: '{{args}}'
-                    },
-                    regDict= {
-                        "&#39;": `"`,
-                        "True": true,
-                        "False": false,
-                        "None": null
-                    }
+          args: function () {
+            var result = {
+                data: {},
+                template: "{{args}}",
+              },
+              regDict = {
+                "&#39;": `"`,
+                True: true,
+                False: false,
+                None: null,
+              };
 
-                try {
-                    const re = new RegExp(`(${ Object.keys(regDict).join('|') })`,'gi')
-                    const clean_str = result.template.replace(re, m => regDict[m])
+            try {
+              const re = new RegExp(
+                `(${Object.keys(regDict).join("|")})`,
+                "gi"
+              );
+              const clean_str = result.template.replace(re, (m) => regDict[m]);
 
-                    result.data = JSON.parse(clean_str)
-                    result.template =  JSON.stringify(result.data, undefined, 4)
-                } catch (e) {
-                    console.warn(`Error with a parsing string ${result}`)
-                    console.error(e)
-                }
-
-                return result;
-            },
-            isCoreStaticFileHandler: function () {
-                const qual_name = '{{qual_name}}'
-                return qual_name.split(".").slice(-1)[0] === 'CoreStaticFileHandler'
+              result.data = JSON.parse(clean_str);
+              result.template = JSON.stringify(result.data, undefined, 4);
+            } catch (e) {
+              console.warn(`Error with a parsing string ${result}`);
+              console.error(e);
             }
+
+            return result;
+          },
+          isCoreStaticFileHandler: function () {
+            const qual_name = "{{qual_name}}";
+            return (
+              qual_name.split(".").slice(-1)[0] === "CoreStaticFileHandler"
+            );
+          },
         },
+
         mounted() {
-            document.querySelector('body').style.opacity = 1;
-            window.setTimeout(function(){
-                // special styling for elments with http methods
-                // wraps elments that include a methodname in the first position with a class
-                const rubric = document.querySelectorAll('.rubric');
-                const methods =  ["GET", "POST", "DELETE", "PUT"];
-                rubric.forEach( (item, i, arr) => {
-                    const text = item.textContent.split(' ')[0]
-                    if(methods.indexOf(text) > -1){
-                        item.innerHTML = text + ' <span class="code" style="margin-left: 90px;">' + item.textContent.replace(text, '') + '</span>' 
-                    }
-                } )
-                // special styling for code elements
-                document.querySelectorAll('.introduction-desc pre.literal-block').forEach((element)=> {element.classList.add('doctest-block');})
-            }, 300)
-        }
-    })
-</script>
-</body>
+          document.querySelector("body").style.opacity = 1;
+          window.setTimeout(function () {
+            // special styling for elments with http methods
+            // wraps elments that include a methodname in the first position with a class
+            const rubric = document.querySelectorAll(".rubric");
+            const methods = ["GET", "POST", "DELETE", "PUT"];
+            rubric.forEach((item, i, arr) => {
+              const text = item.textContent.split(" ")[0];
+              if (methods.indexOf(text) > -1) {
+                item.innerHTML =
+                  text +
+                  ' <span class="code" style="margin-left: 90px;">' +
+                  item.textContent.replace(text, "") +
+                  "</span>";
+              }
+            });
+            // special styling for code elements
+            document
+              .querySelectorAll(".introduction-desc pre.literal-block")
+              .forEach((element) => {
+                element.classList.add("doctest-block");
+              });
+          }, 300);
+        },
+      });
+    </script>
+  </body>
 </html>

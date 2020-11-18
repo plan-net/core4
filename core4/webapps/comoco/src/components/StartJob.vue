@@ -15,7 +15,7 @@
         xxxcolor="primary darken-1"
         color="secondary lighten-3"
       >
-        <v-icon dark>add</v-icon>
+        <v-icon dark>mdi-plus</v-icon>
       </v-btn>
 
     </template>
@@ -41,7 +41,7 @@
               icon
               @click="dialog = false"
             >
-              <v-icon large>close</v-icon>
+              <v-icon large>mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
           <v-card-text class="pt-0 pb-2">
@@ -99,7 +99,7 @@
                         <v-icon
                           large
                           light
-                        >cached</v-icon>
+                        >mdi-cached</v-icon>
                       </span>
                     </template>
                   </v-btn>

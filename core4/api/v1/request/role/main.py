@@ -18,9 +18,13 @@ from core4.util.email import RoleEmail
 
 
 class RoleHandler(CoreRequestHandler):
-    title = "role and user management"
+    title = "Role and user management"
+    subtitle = "Create new users or roles"
     author = "mra"
-    tag = ["roles app", "rolemanagement"]
+    icon = "mdi-account-multiple-plus"
+    tag = ["roles app", "roles", "app", "rolemanagement"]
+    res = 11
+    #cardExists = True
 
     async def post(self, _id=None):
         """
@@ -533,3 +537,6 @@ class RoleHandler(CoreRequestHandler):
         )
 
         return await pager.page()
+
+    async def card(self, **data):
+        return self.render("template/card.html", **data)

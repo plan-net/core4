@@ -6,7 +6,7 @@
     <!-- , nlcerror: customErrors -->
     <validation-provider
       v-slot="{ errors }"
-      :rules="{ required: args.length > 0}"
+      :rules="{ required: (args || '').length > 0}"
       name="Args"
     >
       <v-row

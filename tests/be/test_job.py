@@ -573,5 +573,5 @@ def test_enqueue_exists():
     with pytest.raises(core4.error.CoreJobExists):
         core4.queue.helper.functool.enqueue(job)
     core4.queue.helper.functool.enqueue("core4.queue.helper.job.example.DummyJob", sleep=1)
-    with pytest.raises(AttributeError):
+    with pytest.raises(core4.error.CoreJobNotFound):
         core4.queue.helper.functool.enqueue("core4.queue.helper.job.example.DummyJob_XXX")

@@ -17,9 +17,10 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
     * maintenance modes (global and project specific)
     """
     author = "mra"
-    title = "system information"
-    tag = "info"  # idea is to have a system info app, remove api by then
-    icon = "settings_applications"
+    title = "System information"
+    tag = ["info"]  # idea is to have a system info app, remove api by then
+    icon = "mdi-cog-outline"
+    res = 11
 
     async def get(self):
         """

@@ -45,7 +45,8 @@ CoreQueue()._exec_kill("{job_id:s}")
 #: command used to restart a job with :meth:`.CoreQueue._exec_restart`
 RESTART = """
 from core4.queue.main import CoreQueue
-CoreQueue()._exec_restart("{job_id:s}")
+from bson.objectid import ObjectId
+print(CoreQueue().restart_job(ObjectId("{job_id:s}")))
 """
 
 #: command used to launch selected app servers in project
@@ -54,4 +55,11 @@ from core4.api.v1.tool.functool import serve
 from core4.logger.mixin import logon
 logon()
 serve(*{a}, core4api=False, **{kw})
+"""
+
+#: command used to remove a job with :meth:`.CoreQueue.remove_job`
+REMOVE = """
+from core4.queue.main import CoreQueue
+from bson.objectid import ObjectId
+print(CoreQueue().remove_job(ObjectId("{job_id:s}")))
 """

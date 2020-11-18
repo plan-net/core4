@@ -5,109 +5,131 @@
     <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
     <title>Login</title>
     <link
-      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      href="//cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css"
       rel="stylesheet"
     />
     <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-    <link
-      href="https://bi.plan-net.com/cdn/assets/css/vuetify_2.0.css"
+      href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css"
       rel="stylesheet"
     />
     <style>
         body {
           opacity: 0;
         }
-        .v-application {
-          background-color: #232323 !important;
-          background: linear-gradient(120deg,#232323 55%,#202020 0) !important;
-
+        .row.main-row{
+          height: 100%;
         }
-        div.logo {
-          width: 200px;
-          height: 35px;
-          background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAAAjCAIAAABeudKIAAAFWWlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRvYmUuY29tL3RpZmYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgZXhpZjpQaXhlbFhEaW1lbnNpb249IjIwMCIKICAgZXhpZjpQaXhlbFlEaW1lbnNpb249IjM1IgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iMjAwIgogICB0aWZmOkltYWdlTGVuZ3RoPSIzNSIKICAgdGlmZjpSZXNvbHV0aW9uVW5pdD0iMiIKICAgdGlmZjpYUmVzb2x1dGlvbj0iNzIuMCIKICAgdGlmZjpZUmVzb2x1dGlvbj0iNzIuMCIKICAgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIKICAgcGhvdG9zaG9wOklDQ1Byb2Zp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);
+        .v-form{
+          width: 100%;
         }
+        .client-logo-container{
 
-      </style>
+          box-shadow: inset 17px 0px 50px 0px var(--v-accent-darken2);
+          overflow: hidden;
+          background-color: var(--v-accent-base);
+          position: relative;
+        }
+        .logo-main svg{
+          width: 260px !important;
+        }
+        .logo-second svg{
+          width: 70% !important;
+          opacity: .6
+        }
+        .logo-third{
+          position: absolute;
+          top: -50vh;
+          left: -70vw;
+        }
+        .logo-third svg{
+          width: 450vw !important;
+          opacity: .2
+        }
+    </style>
   </head>
   <body>
     <div id="app">
       <v-app>
-          <v-dialog v-model="dialogLogin" max-width="520px" persistent>
-            <v-card tile class="pa-3">
-              <v-form @submit.prevent="onLogin" ref="form">
-                <v-card-title class="justify-center py-0">
-                  <!--<h2 class="c4-headline">CORE4OS</h2>-->
-                  <div class="logo">
-                  </div>
-                </v-card-title>
-                <v-card-text class="pt-2">
-                  <v-text-field
+        <v-container fluid fill-height class="pa-0">
+          <v-row no-gutters class="main-row">
+            <v-col cols="12" sm="6" md="5" lg="4" class="left-col">
+              <v-container fluid fill-height>
+              <v-form @submit.prevent="onLogin" ref="form" class="px-12" >
+                <v-card flat>
+                  <v-card-title class="justify-center pt-0 pb-9">
+                  <c4-logo :dark="dark" class="logo-main"></c4-logo>
+                  </v-card-title>
+                  <v-card-text class="pt-2">
+                    <v-text-field
+                      outlined
+                      clearable
+                      clear-icon="mdi-eye"
+                      label="Username"
+                      v-model="username"
+                      :error-messages="errors.collect('Username')"
+                      data-vv-as="Username"
+                      :data-vv-name="'Username'"
+                      v-validate="'required|min:3|auth'"
+                    ></v-text-field>
+                    <v-text-field
                     clearable
-                    autofocus
-                    ref="field"
-                    label="Username"
-                    v-model="username"
-                    :error-messages="errors.collect('Username')"
-                    data-vv-as="Username"
-                    :data-vv-name="'Username'"
-                    v-validate="'required|min:3|auth'"
-                  ></v-text-field>
-                  <v-text-field
-                    clearable
-                    label="Password"
-                    v-model="password"
-                    :error-messages="errors.collect('Password')"
-                    data-vv-as="Password"
-                    data-vv-name="Password"
-                    v-validate="'required|min:3|auth'"
-                    :append-icon="passwordVisible ? 'visibility' : 'visibility_off'"
-                    @click:append="passwordVisible = !passwordVisible"
-                    :type="passwordVisible ? 'text' : 'password'"
-                  ></v-text-field>
-                </v-card-text>
-                <v-card-actions>
-                  <v-layout column>
-                    <v-btn
-                      class="mb-3"
-                      ref="button"
-                      color="primary"
-                      block
-                      :disabled="errors.any()"
-                      type="submit"
-                      >Login
-                    </v-btn>
-                    <div></div>
-                    <v-btn @click="toReset()" text block>Reset password</v-btn>
-                  </v-layout>
-                </v-card-actions>
+                      :clear-icon="'mdi-close'"
+                      outlined
+                      label="Password"
+                      v-model="password"
+                      :error-messages="errors.collect('Password')"
+                      data-vv-as="Password"
+                      data-vv-name="Password"
+                      v-validate="'required|min:3|auth'"
+                      :append-icon="iconEye"
+                      @click:append="passwordVisible = !passwordVisible"
+                      :type="passwordVisible ? 'text' : 'password'">
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-layout column>
+                      <v-btn
+                        class="mb-3"
+                        ref="button"
+                        color="primary"
+                        block
+                        :disabled="errors.any()"
+                        type="submit"
+                        >Login
+                      </v-btn>
+                      <div></div>
+                      <v-btn @click="toReset()" text block>Forgot password</v-btn>
+                    </v-layout>
+                  </v-card-actions>
+                </v-card>
               </v-form>
-            </v-card>
-          </v-dialog>
+              </v-container>
+            </v-col>
+            <v-col cols="7" sm="6" md="7" lg="8" class="d-none d-sm-block client-logo-container" align="end">
+              <c4-logo :dark="true" class="logo-third"></c4-logo>
+              <v-row align="end" justify="end" style="width: inherit; height: 100%;">
+                <v-col style="position: relative;">
+                  <c4-logo :dark="true" class="logo-second"></c4-logo>
+                </v-col>
+              </v-row>
+              </div>
+            </v-col>
+          </v-row>
+        </v-container>
       </v-app>
     </div>
-    <script src="//bi.plan-net.com/cdn/assets/js/vue-assets_2.0.js"></script>
+    <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js">
+    </script>    
     <script src="//cdnjs.cloudflare.com/ajax/libs/vee-validate/2.2.15/vee-validate.js"></script>
-
+    <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/core4ui/C4Logo.min.js"></script>
     <script>
-      axios.defaults.withCredentials = true
       Vue.use(VeeValidate, {
         mode: "eager",
         aria: false,
         locale: "en"
       });
       new Vue({
-        delimiters: ["[[", "]]"],
         el: "#app",
-        vuetify: new Vuetify({
-          icons: {
-              iconfont: 'md',
-          },
-          theme: window.VUETIFY_THEME
-        }),
+        vuetify: window.c4Vuetify, // from widgets-4.0.min.js
         created() {
           this.$validator.extend("auth", {
             getMessage: field => "Please check your name and password.",
@@ -118,31 +140,33 @@
               };
             }
           });
+          this.dark
         },
         data() {
           return {
-            dialogLogin: true,
+            //dialogLogin: true,
             passwordVisible: false,
-
             errorLogin: false,
-
             username: null,
             password: null
           };
         },
         computed: {
-          up() {
+          up: function(){
             return String(this.username) + String(this.password);
-          }
+          },
+          iconEye: function(){
+            return this.passwordVisible ? 'mdi-eye-off' : 'mdi-eye' 
+          } 
         },
         mounted() {
           document.querySelector("body").style.opacity = 1;
+          console.log(this.$vuetify)
         },
         watch: {
           up() {
             if (this.errorLogin) {
               this.errorLogin = false;
-              
               this.$validator.validateAll();
             }
           }
@@ -151,10 +175,12 @@
           toReset(){
             window.location.assign('{{ auth_url }}/reset');
           },
-          
           login() {
             const { username, password } = this;
-            return axios
+            var instance = axios.create();
+            delete instance.defaults.headers.common['Authorization'];
+            console.log(instance)
+            return instance
               .post("{{ auth_url }}/login", { username, password })
               .then(result => {
                 window.localStorage.setItem(
@@ -181,12 +207,12 @@
             this.login().then(
               val => {
                 let next = getParameterByName('next') || '/'
-                if (next != null) {
+                 if (next != null) {
                   next += "?token=" + val.token;
                   this.$nextTick(function() {
                     window.location.assign(next);
                   });
-                }
+                } 
               },
               error => {
                 this.errorLogin = true;
