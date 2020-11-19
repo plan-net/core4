@@ -226,7 +226,7 @@ class StoreHandler(CoreRequestHandler):
             del rec["doc"]["_id"]
             inherited = rec["doc"]
         else:
-            doc = {}
+            doc = self.raw_config.store.default
             inherited = []
         if self.wants_html():
             self.render(
@@ -297,7 +297,7 @@ class StoreHandler(CoreRequestHandler):
             if not parts:
                 break
         parents = list(reversed(parents))
-        doc = {}
+        doc = self.raw_config.store.default
         for parent in parents:
             pdoc = await self.config.sys.store.find_one({"_id": parent})
             if pdoc is None:
