@@ -148,6 +148,7 @@ email:
       password_reset: en/password_reset.txt
       user_creation: en/user_creation.txt
 
+# todo: remove this with CORE4-492 ticket; it is obsolete
 user_setting:
    _general:
      language: EN
@@ -155,6 +156,19 @@ user_setting:
        - About: /about
        - Profile: /core4/api/v1/profile
      contact: mail@mailer.com
+
+# todo: this is to be the new setting with CORE4-492 ticket
+store:
+  default:
+    contact: mail@mailer.com
+    profile: /core4/api/v1/profile
+    menu:
+      - Contact: mailto:mail@mailer.com?subject=core4os support request
+    tag:
+      - app
+      - analytics
+      - data
+      - new
 
 queue:
   history_in_days: 7
