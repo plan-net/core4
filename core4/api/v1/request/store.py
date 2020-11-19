@@ -277,10 +277,11 @@ class StoreHandler(CoreRequestHandler):
 
     async def load(self, user):
         xpath = None
-        for app in await user.casc_perm():
-            if app.startswith("app://store"):
-                xpath = app[len("app://store"):]
-                break
+        if user is not None:
+            for app in await user.casc_perm():
+                if app.startswith("app://store"):
+                    xpath = app[len("app://store"):]
+                    break
         if xpath is None:
             xpath = "/"
         xpath = self.make_path(xpath)

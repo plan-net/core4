@@ -610,7 +610,7 @@ class CoreBaseHandler(CoreBase):
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
         if self.wants_html():
-            ret["contact"] = self.config.user_setting._general.contact
+            ret["contact"] = self.config.store.default.contact
             return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             return self.render(self.error_text_page, **var)
