@@ -154,10 +154,9 @@ user_setting:
    _general:
      language: EN
      menu:
-      - About: /home4/devops/about
-      - Imprint: /home4/devops/imprint
-      - Privacy Policy: /home4/devops/pp
-      - Contact: bi-support@plan-net.com
+       - About: /about
+       - Mail: mailto:mail@mailer.com
+     profile: /core4/api/v1/profile
      contact: mail@mailer.com
 
 # todo: this is to be the new setting with CORE4-492 ticket

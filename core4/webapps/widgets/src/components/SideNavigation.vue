@@ -4,7 +4,7 @@
       column
       no-gutters
     >
-     <!--  <v-col
+      <!--  <v-col
         class="mt-16 pt-8"
         cols="12"
       >
@@ -146,6 +146,14 @@
                 ></v-text-field>
               </v-card-text>
               <v-card-actions class="pt-4 pb-8 px-7">
+                <v-btn
+                  color="primary"
+                  text
+                  :disabled="boards.length <= 1"
+                  @click="deleteBoard"
+                >
+                  Delete board
+                </v-btn>
                 <v-spacer></v-spacer>
                 <v-btn
                   color="primary"
@@ -214,12 +222,28 @@ export default {
         this.selected = []
         this.clear()
       }
+    },
+    name (newValue, oldValue) {
+      if (this.error != null && newValue !== oldValue) {
+        this.error = null
+        this.block = false
+        requestAnimationFrame(() => {
+          this.$refs.observer.reset()
+        })
+      }
     }
   },
   methods: {
     ...mapActions('widgets', {
-      setActiveBoard: 'setActiveBoard'
+      setActiveBoard: 'setActiveBoard',
+      delBoard: 'deleteBoard'
     }),
+    deleteBoard (name) {
+      this.delBoard(this.name)
+      this.dialogOpen = false
+      this.oldName = null
+      this.name = null
+    },
     onEditBoard (name) {
       this.oldName = name
       this.name = name
@@ -233,9 +257,12 @@ export default {
       requestAnimationFrame(() => {
         this.$refs.observer.reset()
       })
+      this.error = null
     },
     async submit () {
+      await this.$nextTick()
       this.$refs.observer.validate().then(async isValid => {
+        console.log(isValid)
         if (isValid) {
           this.block = true
           try {
@@ -247,12 +274,12 @@ export default {
               type: 'success',
               text
             })
+            this.clear()
           } catch (err) {
+            console.log(err, 'error caught')
             if (err.message === 'Board exists') {
               this.error = err.message + '.'
             }
-          } finally {
-            this.clear()
           }
         }
       })
