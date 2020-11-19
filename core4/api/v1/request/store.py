@@ -270,17 +270,21 @@ class StoreHandler(CoreRequestHandler):
             <Response [200]>
         """
         if xpath is None:
-            for app in await self.user.casc_perm():
-                if app.startswith("app://store"):
-                    xpath = app[len("app://store"):]
-                    break
-            if xpath is None:
-                xpath = "/"
+            ret = await self.load(self.user)
         else:
             raise HTTPError(405)
-        xpath = self.make_path(xpath)
-        ret = await self.parse(xpath)
         self.reply(ret)
+
+    async def load(self, user):
+        xpath = None
+        for app in await user.casc_perm():
+            if app.startswith("app://store"):
+                xpath = app[len("app://store"):]
+                break
+        if xpath is None:
+            xpath = "/"
+        xpath = self.make_path(xpath)
+        return await self.parse(xpath)
 
     async def parse(self, xpath):
         parts = xpath.split("/")
