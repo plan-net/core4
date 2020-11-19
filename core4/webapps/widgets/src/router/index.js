@@ -32,6 +32,7 @@ const router = new VueRouter({
 })
 const fetchBoards = ['content', 'help', 'notfound']
 router.beforeEach((to, from, next) => {
+  console.log(to.name, 'router.beforeEach')
   if (fetchBoards.includes(to.name)) {
     store.dispatch('widgets/fetchBoards', { type: 'light' })
   }
