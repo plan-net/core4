@@ -167,6 +167,7 @@ class InfoHandler(CoreRequestHandler):
             if search:
                 try:
                     q = pql.find(search)
+                    self.logger.debug("search: %s", q)
                 except:
                     search = ".*" + search + ".*"
                     q = {"$or": [
