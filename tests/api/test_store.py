@@ -56,45 +56,12 @@ async def test_create(core4api):
         '/core4/api/v1/store')
     assert resp.code == 200
 
-    # resp = await core4api.put(
-    #     '/core4/api/v1/store')
-    # assert resp.code == 200
-    # data = resp.json()["data"]
-    # pprint(data)
-    # assert data == {'doc': {'_id': '/default/lufthansa/eurowings/team-a',
-    #                         'hallo': 'Europa',
-    #                         'hello': None,
-    #                         'kranich': True,
-    #                         'team': True},
-    #                 'parents': ['/',
-    #                             '/default',
-    #                             '/default/lufthansa',
-    #                             '/default/lufthansa/eurowings',
-    #                             '/default/lufthansa/eurowings/team-a']}
-
     resp = await core4api.delete('/core4/api/v1/store/default/lufthansa')
     assert resp.code == 400
-
-    # for doc in ['/default/lufthansa/eurowings/team-a',
-    #             '/default/lufthansa/eurowings',
-    #             '/default/lufthansa/air-berlin',
-    #             '/default/lufthansa']:
-    #     resp = await core4api.put('/core4/api/v1/store' + doc)
-    #     assert resp.code == 200
 
     resp = await core4api.delete(
         '/core4/api/v1/store/default/lufthansa?recursive=1')
     assert resp.code == 200
-
-    # for doc in ['/default/lufthansa/eurowings/team-a',
-    #             '/default/lufthansa/eurowings',
-    #             '/default/lufthansa/air-berlin',
-    #             '/default/lufthansa']:
-    #     resp = await core4api.put('/core4/api/v1/store' + doc)
-    #     assert resp.code == 404
-
-    # resp = await core4api.put('/core4/api/v1/store')
-    # assert resp.code == 200
 
     r1 = await core4api.post("/core4/api/v1/roles", body=dict(
         name="test_role1",
@@ -110,8 +77,22 @@ async def test_create(core4api):
 
     resp = await core4api.put('/core4/api/v1/store')
     assert resp.code == 200
+
+    default = {
+        "contact": "mail@mailer.com",
+        "profile": "/core4/api/v1/profile",
+        "menu": [
+            {"Contact": "mailto:mail@mailer.com?subject=core4os support request"}
+        ],
+        "tag": [
+            "app",
+            "analytics",
+            "data",
+            "new"
+        ]
+    }
     assert resp.json()["data"] == {
-        'doc': {'_id': '/outlier', 'hello': 'root', 'out': True},
+        'doc': {**default, **{'_id': '/outlier', 'hello': 'root', 'out': True}},
         'parents': ['/', '/outlier']}
 
     await core4api.login()
@@ -129,8 +110,7 @@ async def test_create(core4api):
     resp = await core4api.put('/core4/api/v1/store')
     assert resp.code == 200
 
-    assert resp.json()["data"] == {'doc': {'_id': '/', 'hello': 'root'},
-                                   'parents': ['/']}
+    assert resp.json()["data"]["doc"] == {**default, **{'_id': '/', 'hello': 'root'}}
 
     resp = await core4api.delete('/core4/api/v1/store/default')
     assert resp.code == 403
