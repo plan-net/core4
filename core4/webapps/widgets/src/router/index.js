@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import store from '@/store'
 // import Home from '../views/Home.vue'
 // import Help from '../views/Help.vue'
 
@@ -28,6 +29,14 @@ const routes = [
 
 const router = new VueRouter({
   routes
+})
+const fetchBoards = ['content', 'help', 'notfound', 'enter']
+router.beforeEach((to, from, next) => {
+  console.log(to.name, 'router.beforeEach')
+  if (fetchBoards.includes(to.name)) {
+    store.dispatch('widgets/fetchBoards', { type: 'light' })
+  }
+  next()
 })
 
 export default router

@@ -33,10 +33,10 @@ import store from '@/store'
 import { replacePort } from '@/plugins/fixme.js'
 
 export default {
-  async beforeRouteEnter (to, from, next) {
+/*   async beforeRouteEnter (to, from, next) {
     store.dispatch('widgets/fetchBoards', { type: 'light' })
     next(vm => {})
-  },
+  }, */
   async mounted () {
     this.$bus.$on('c4-application-close', () => {
       this.$router.push('/')
