@@ -19,23 +19,10 @@
         opacity: 0;
       }
 
-      /*       .wrapper {
-        margin-top: 62px;
-        display: flex;
-        flex-flow: row wrap;
-        justify-content: center;
-      }
-
-      .wrapper > * {
-        margin: 10px;
-        flex: 1 100%;
-        max-width: 1260px;
-      } */
-
       pre.doctest-block {
         margin-left: 16px;
-        width: 75%;
-        min-width: 920px;
+        xxxwidth: 75%;
+        xxxmin-width: 920px;
         max-width: 1280px;
 
         font-weight: bold;
@@ -129,9 +116,9 @@
         padding-bottom: 16px;
         background-color: rgba(63, 81, 93, 0.1);
         display: block;
-        margin-left: -12px;
+         margin-left: -12px;
         margin-right: -12px;
-        margin-top: -12px;
+        margin-top: -12px; 
       }
       table.field-list th,
       table.field-list td {
@@ -267,7 +254,7 @@
               {% if method %}
               <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
               {% for elem in method %}
-              <v-row no-gutters>
+              <v-row>
                 <v-col class="method-table" class="pl-2">
                   <span
                     id="{{elem['method'].upper()}}"
