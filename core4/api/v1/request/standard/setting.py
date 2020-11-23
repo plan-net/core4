@@ -109,7 +109,7 @@ class SettingHandler(CoreRequestHandler):
         return True
 
     def _has_empty_keys(self, recourse_dict):
-        return any(key is "" for key in [*recourse_dict])
+        return any(key == "" for key in [*recourse_dict])
 
     def _is_body_structure_valid(self, body):
         if type(body) is not dict:

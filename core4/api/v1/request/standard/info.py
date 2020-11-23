@@ -167,6 +167,7 @@ class InfoHandler(CoreRequestHandler):
             if search:
                 try:
                     q = pql.find(search)
+                    self.logger.debug("search: %s", q)
                 except:
                     search = ".*" + search + ".*"
                     q = {"$or": [
@@ -193,7 +194,8 @@ class InfoHandler(CoreRequestHandler):
                     data.append(handler)
                     break
 
-        data.sort(key=lambda d: (d["title"].lower(), d["subtitle"].lower()))
+        data.sort(key=lambda d: (
+            (d["title"] or "").lower(), (d["subtitle"] or "").lower()))
 
         # paginate
         async def _length(*_, **__):

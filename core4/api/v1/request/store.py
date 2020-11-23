@@ -226,7 +226,7 @@ class StoreHandler(CoreRequestHandler):
             del rec["doc"]["_id"]
             inherited = rec["doc"]
         else:
-            doc = {}
+            doc = self.raw_config.store.default
             inherited = []
         if self.wants_html():
             self.render(
@@ -270,17 +270,22 @@ class StoreHandler(CoreRequestHandler):
             <Response [200]>
         """
         if xpath is None:
-            for app in await self.user.casc_perm():
+            ret = await self.load(self.user)
+        else:
+            raise HTTPError(405)
+        self.reply(ret)
+
+    async def load(self, user):
+        xpath = None
+        if user is not None:
+            for app in await user.casc_perm():
                 if app.startswith("app://store"):
                     xpath = app[len("app://store"):]
                     break
-            if xpath is None:
-                xpath = "/"
-        else:
-            raise HTTPError(405)
+        if xpath is None:
+            xpath = "/"
         xpath = self.make_path(xpath)
-        ret = await self.parse(xpath)
-        self.reply(ret)
+        return await self.parse(xpath)
 
     async def parse(self, xpath):
         parts = xpath.split("/")
@@ -297,7 +302,7 @@ class StoreHandler(CoreRequestHandler):
             if not parts:
                 break
         parents = list(reversed(parents))
-        doc = {}
+        doc = self.raw_config.store.default
         for parent in parents:
             pdoc = await self.config.sys.store.find_one({"_id": parent})
             if pdoc is None:

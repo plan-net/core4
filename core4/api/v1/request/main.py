@@ -70,7 +70,7 @@ class CoreBaseHandler(CoreBase):
     #: link to api (can be overwritten)
     enter_url = None
     #: default material icon
-    icon = "mdi-copyright"
+    icon = "mdi-circle-medium"
     #: open in new window/tab
     target = None
     #: open as single page application; this hides the app managers header
@@ -82,7 +82,8 @@ class CoreBaseHandler(CoreBase):
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res", "custom_card")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle",
+                 "res", "custom_card", "target")
     supported_types = [
         "text/html",
         "application/json"
@@ -114,9 +115,9 @@ class CoreBaseHandler(CoreBase):
     def propagate_property(self, source, kwargs):
         """
         Merge the attributes ``protected``, ``title``, ``author``, ``tag``,
-        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc`` and
-        ``spa`` from the passed class/object (``source`` parameter) and
-        ``kwargs``.
+        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc``,
+        ``spa``, ``subtitle``, ``res``, ``custom_card`` and ``target`` from
+        the passed class/object (``source`` parameter) and ``kwargs``.
 
         :param source: class or object based on :class:`.CoreRequestHandler` or
             :class:`.CoreStaticFileHandler`
@@ -610,7 +611,7 @@ class CoreBaseHandler(CoreBase):
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
         if self.wants_html():
-            ret["contact"] = self.config.user_setting._general.contact
+            ret["contact"] = self.config.store.default.contact
             return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             return self.render(self.error_text_page, **var)
@@ -811,13 +812,17 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
 
         * ``protected`` - authentication/authorization required
         * ``title`` - api title
+        * ``subtitle`` - api subtitle
+        * ``res`` - card resolution
         * ``author`` - author
         * ``tag`` - list of tags
-        * ``template_path`` - absolte from project root, relative from request
+        * ``template_path`` - absolute from project root, relative from request
         * ``static_path`` - absolute from project root, relative from request
         * ``enter_url`` - custom target url
         * ``icon`` - material icon
         * ``doc`` - handler docstring (introduction)
+        * ``spa`` - single page application (bool)
+        * ``target`` - href target
         """
         for attr, value in self.propagate_property(self, kwargs):
             self.__dict__[attr] = value
