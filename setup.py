@@ -62,7 +62,7 @@ setup(
         "tzlocal>=1.5.1",
         "feather-format==0.4.0",
         "rpy2==3.0.5",
-        "git+https://github.com/comfuture/pql.git"
+        "pql @ git+https://github.com/comfuture/pql.git"
     ],
     extras_require={
         "tests": [
