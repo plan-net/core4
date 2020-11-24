@@ -35,7 +35,7 @@
       pre.doctest-block {
         margin-left: 16px;
         width: 75%;
-        min-width: 920px;
+        min-width: 480px;
         max-width: 1280px;
 
         font-weight: bold;
@@ -267,7 +267,7 @@
               {% if method %}
               <h4 class="headline mt-5 pt-2 pb-5">HTTP Method Summary</h4>
               {% for elem in method %}
-              <v-row no-gutters>
+              <v-row>
                 <v-col class="method-table" class="pl-2">
                   <span
                     id="{{elem['method'].upper()}}"
