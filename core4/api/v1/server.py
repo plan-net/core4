@@ -59,9 +59,11 @@ class CoreAppManager(CoreApiContainer):
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",
             "static_path": "/webapps/comoco/dist",
-            "title": "monitoring and control (comoco)",
-            "tag": "jobs app",
-            "protected": True
+            "title": "comoco",
+            "subtitle": "Job Monitoring and Control",
+            "tag": ["operations"],
+            "icon": "mdi-electron-framework",
+            "doc": "Review and manage automation jobs"
         }),
         (r'/about', CoreLinkHandler, {
             "enter_url": "https://core4os.readthedocs.io/en/latest/about.html",
@@ -76,8 +78,12 @@ class CoreAppManager(CoreApiContainer):
         (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
             "static_path": "/webapps/widgets/dist",
-            "title": "root",
-            "protected": True
+            "title": "App Manager",
+            "subtitle": "core4os Suite",
+            "tag": ["api"],
+            "icon": "mdi-application",
+            "doc": "Start Apps and Manage Boards",
+            "target": "blank"
         })
     ]
 

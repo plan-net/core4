@@ -24,16 +24,18 @@ class ProfileHandler(CoreRequestHandler):
     View and edit your profile.
     """
 
-    title = "user profile"
+    title = "Profile"
+    subtitle = "Account Information"
     author = "mra"
-    tag = "roles"
+    tag = ["setting"]
+    icon = "mdi-account-circle"
 
     async def get(self):
         """
         User and role details for the current logged in user.
 
         Methods:
-            GET / - get current user details
+            GET /core4/api/v1/profile - get current user details
 
         Parameters:
             None
@@ -106,7 +108,7 @@ class ProfileHandler(CoreRequestHandler):
         Update user data, i.e. email, real name and password.
 
         Methods:
-            PUT / - udpdate current user data
+            PUT /core4/api/v1/profile - udpdate current user data
 
         Parameters:
             etag (str): to handle concurrency

@@ -89,10 +89,13 @@ class SettingHandler(CoreRequestHandler):
         * **_general** - level 1
         * **language** - level 2
     """
-    title = "user settings"
+    title = "Settings"
+    subtitle = "User Settings (read-only)"
     author = "oto"
-    tag = "roles"
+    tag = "setting"
+    icon = "mdi-account-cog"
     default_setting = None
+    doc = "Details About Your Personal Settings"
 
     # ###################################################################### #
     # Private methods
