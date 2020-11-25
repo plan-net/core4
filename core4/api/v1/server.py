@@ -65,7 +65,7 @@ class CoreAppManager(CoreApiContainer):
         }),
         (r'/about', CoreLinkHandler, {
             "enter_url": "https://core4os.readthedocs.io/en/latest/about.html",
-            "doc":  "About core4os at readthedocs",
+            "doc":  "core4os documentation at readthedocs",
             "author": "mra",
             "tag": ["cooperations"],
             "icon": "mdi-information",
