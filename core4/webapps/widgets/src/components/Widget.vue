@@ -120,7 +120,6 @@
               small
               icon
             >
-              <!-- <v-icon>mdi-drag-variant</v-icon> -->
               <v-icon>mdi-drag</v-icon>
             </v-btn>
           </template>
@@ -146,10 +145,7 @@ export default {
   inject: ['theme'],
   async mounted () {
     await this.$nextTick()
-    if (this.html != null && this.html.length > 2) {
-      // this.setupHTMLDebounce(this.setupHTML, 333)
-      // this.setupHTML()
-    } else {
+    if (this.html == null) {
       if (this.widget.custom_card === false) {
         this.loading = false
       }
@@ -195,9 +191,7 @@ export default {
       const tmp = this.widget.html.split('</head>')
 
       const t = this.$vuetify.theme.themes
-      // eslint-disable-next-line
       /* eslint-disable */
-      console.log('dark:', this.dark)
       const vars = `<script>window.__DARK__=${JSON.stringify(this.dark)}; window.__THEME__=${JSON.stringify(t)}<\/script></head>`
       /* eslint-enable */
       const res = tmp[0] + vars + tmp[1]
@@ -260,6 +254,16 @@ export default {
   watch: {
     dark  (newValue, oldValue) {
       this.setupHTML()
+    },
+    async style (newValue, oldValue) {
+      try {
+        const one = Object.values(newValue).join()
+        const two = Object.values(oldValue).join()
+        if (one !== two) {
+          await this.$nextTick()
+          this.$emit('refresh')
+        }
+      } catch (err) {}
     },
     async html  (newValue, oldValue) {
       this.setupHTML()

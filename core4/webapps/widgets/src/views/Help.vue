@@ -70,9 +70,7 @@ export default {
       if (this.widget.rsc_id == null) {
         return 'about:blank'
       }
-      const user = JSON.parse(window.localStorage.getItem('user') || {})
-      const token = `?token=${user.token || -1}`
-      const pathEnd = `${this.widget.rsc_id}${token}`
+      const pathEnd = `${this.widget.rsc_id}`
       const ep = decodeURIComponent(this.$route.params.endpoint)
       let path
       switch (this.$route.name) {
@@ -85,7 +83,7 @@ export default {
       const dark = new URLSearchParams(this.$vuetify.theme.themes.dark).toString().split('&').join('xyz')
       const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')
       const search = this.$route.params.payload || ''
-      const ret = `${path}&dark=${this.dark}&themeDark=${dark}&themeLight=${light}&search=${search}`
+      const ret = `${path}?dark=${this.dark}&themeDark=${dark}&themeLight=${light}&search=${search}`
       return replacePort(ret)
     }
   }

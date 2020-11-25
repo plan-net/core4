@@ -60,7 +60,7 @@
           </v-row>
         </v-row>
 
-        <v-card-text class="pt-3 widgetsearch-card-text">
+        <v-card-text class="pt-3 widgetsearch-card-text" v-if="dialogOpen">
           <v-row>
             <small-widget
               v-for="(widget, $index) in widgets"
