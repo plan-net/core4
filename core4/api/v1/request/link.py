@@ -19,6 +19,7 @@ class CoreLinkHandler(CoreRequestHandler):
     """
     Visit {{ enter_url }}
     """
+    target = "blank"
     def get(self):
         """
         Redirect to the specified URL.
