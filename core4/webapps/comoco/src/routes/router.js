@@ -11,7 +11,7 @@ export default new Router({
       name: 'home',
       component: Home,
       meta: {
-        hideNav: true,
+        hideNav: false,
         title: 'Home'
       }
     }

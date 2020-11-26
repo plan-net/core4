@@ -1,5 +1,8 @@
 <template>
   <c4-webapp :full-width="true">
+    <template slot="title-slot">
+      <span class="p-headline">COMOCO</span>
+    </template>
   </c4-webapp>
 </template>
 
@@ -8,7 +11,7 @@ import { mapGetters } from 'vuex'
 import { getBasePath } from './helper'
 
 export default {
-  name: 'CORE4',
+  name: 'Comoco',
   components: {},
   computed: {
     ...mapGetters(['authenticated'])
