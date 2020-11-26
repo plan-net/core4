@@ -12,11 +12,11 @@ const axiosInstance = axios.create({
   headers: { Authorization: `Bearer ${user.token}` }
 })
 
-function swap (item, oldIndex, newIndex) {
+/* function swap (item, oldIndex, newIndex) {
   const temp = item[oldIndex]
   item[oldIndex] = item[newIndex]
   item[newIndex] = temp
-}
+} */
 let ti
 const state = {
   widgets: [],
@@ -63,25 +63,34 @@ const actions = {
     }
     return boards.boards
   },
-  async sortBoard (context, dto) {
-    const { oldIndex, newIndex } = dto
-    const currBoard = context.state.boards.find(val => val.name === context.state.board)
-    const boardComplete = _.cloneDeep(currBoard)
-    const w = _.cloneDeep(boardComplete.widgets[oldIndex])
+  async sortBoard (context, { oldIndex, newIndex, newSort }) {
+    let currBoard = context.state.boards.find(val => val.name === context.state.board)
+    currBoard = _.cloneDeep(currBoard)
+    const widgets = newSort.map(rscid => {
+      return currBoard.widgets.find(val => val.rsc_id === rscid)
+    })
+    currBoard.widgets = widgets
+    context.commit('setBoard', currBoard)
+    context.commit('setWidgets', widgets)
+    /*     const boardComplete = _.cloneDeep(currBoard)
     swap(boardComplete.widgets, oldIndex, newIndex)
     context.commit('setBoard', boardComplete)
-    console.log({ oldIndex, newIndex })
+
     const completeWidgets = _.cloneDeep(context.state.widgets)
-    console.log(completeWidgets.map(val => val.title))
     swap(completeWidgets, oldIndex, newIndex)
-    console.log(completeWidgets.map(val => val.title))
-    context.commit('setWidgets', completeWidgets)
+    context.commit('setWidgets', completeWidgets) */
+
     /// /// custom_card widgets lloose content
-    context.dispatch('fetchWidget', {
-      endpoint: replacePort(w.endpoint[0]), // dev server mac localhost workaround / hack
-      id: w.rsc_id,
-      accept: 'application/json'
-    })
+    widgets
+      .filter(val => val.custom_card)
+      .forEach(val => {
+      // update existing widgets in boards to be in obj format
+        context.dispatch('fetchWidget', {
+          endpoint: replacePort(val.endpoint[0]),
+          id: val.rsc_id,
+          accept: 'application/json'
+        })
+      })
     /// ///
     try {
       await api.updateBoard({
