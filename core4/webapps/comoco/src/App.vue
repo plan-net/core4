@@ -17,7 +17,6 @@ export default {
     ...mapGetters(['authenticated'])
   },
   mounted () {
-    console.log(this.$vuetify)
   },
   watch: {
     authenticated (newValue, oldValue) {

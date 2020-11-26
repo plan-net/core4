@@ -46,7 +46,7 @@ export default {
       this.setupGrid()
       window.setTimeout(() => {
         this.show2 = true
-      }, 300)
+      }, 350)
     }
   },
   async beforeRouteLeave (to, from, next) {
@@ -64,7 +64,7 @@ export default {
       this.show = false
       this.ti = window.setTimeout(() => {
         this.show = true
-      }, 1)
+      }, 33)
       this.ti2 = window.setTimeout(async () => {
         if (this.grid != null) {
           this.grid.destroy()
@@ -101,7 +101,7 @@ export default {
             await this.$nextTick()
           }
         })
-      }, 10)
+      }, 100)
     },
     ...mapActions('widgets', {
       sortBoard: 'sortBoard'
