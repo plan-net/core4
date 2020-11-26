@@ -9,8 +9,13 @@
         :key="widget.rsc_id"
         :show-handle="showHandle"
         :widget="widget"
+        @refresh="refreshItems"
       ></widget>
     </template>
+<!--     <div style="height: 1000px;"></div>
+    <pre v-for="(item, index) in widgets" :key="index">
+      {{item.title}}
+    </pre> -->
   </div>
 </template>
 
@@ -25,11 +30,24 @@ export default {
     Widget,
     Empty
   },
-
+  async mounted () {
+    await this.$nextTick()
+    // this.setupGrid()
+  },
+  computed: {
+    ...mapGetters('widgets', [
+      'widgets'
+    ]),
+    showHandle () {
+      return this.widgets.length > 1
+    },
+    widgetsHack () {
+      return this.widgets.map(val => val.rsc_id).join('_')
+    }
+  },
   watch: {
-    // we watch for widget rsc ids in widgets array to rebuild grid
+    // we watch for widget rsc ids in widgets array to REBUILD grid
     async widgetsHack (newValue, oldValue) {
-      await this.$nextTick()
       this.setupGrid()
     }
   },
@@ -39,7 +57,10 @@ export default {
     next()
   },
   methods: {
-    setupGrid () {
+    refreshItems () {
+      if (this.grid != null) { this.grid.refreshItems().layout() }
+    },
+    async setupGrid () {
       window.clearTimeout(this.ti)
       this.show = false
       this.ti = window.setTimeout(() => {
@@ -47,8 +68,10 @@ export default {
       }, 200)
       if (this.grid != null) {
         this.grid.destroy()
+        this.grid.off('dragInit')
         this.grid.off('dragReleaseEnd')
       }
+      await this.$nextTick()
       this.grid = new Muuri('.grid', {
         dragEnabled: true,
         dragSortInterval: 100,
@@ -57,21 +80,13 @@ export default {
         dragContainer: document.querySelector('#board'),
         layout: {
           fillGaps: true
-        },
-        dragStartPredicate: {
-          distance: 10,
-          delay: 100
-        },
-        dragReleaseDuration: 400,
-        dragReleseEasing: 'ease'
+        }
       })
       let oldIndex
       this.grid.on('dragInit', (item, event) => {
-        console.log('oldIndex', item, this.grid.getItems().indexOf(item))
         oldIndex = this.grid.getItems().indexOf(item)
       })
       this.grid.on('dragReleaseEnd', (item) => {
-        console.log('newIndex', item, this.grid.getItems().indexOf(item))
         const newIndex = this.grid.getItems().indexOf(item)
         if (newIndex !== oldIndex) {
           this.sortBoard({
@@ -85,26 +100,12 @@ export default {
       sortBoard: 'sortBoard'
     })
   },
-  computed: {
-    ...mapGetters('widgets', [
-      'widgets'
-    ]),
-    showHandle () {
-      return this.widgets.length > 1
-    },
-    widgetsHack () {
-      return this.widgets.map(val => val.rsc_id).join('_')
-    }
-  },
+
   data () {
     return {
       grid: null,
       show: false
     }
-  },
-  async mounted () {
-    await this.$nextTick()
-    this.setupGrid()
   }
 
 }

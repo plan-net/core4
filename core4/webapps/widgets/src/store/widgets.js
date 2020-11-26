@@ -14,7 +14,6 @@ const axiosInstance = axios.create({
 
 function swap (item, oldIndex, newIndex) {
   const temp = item[oldIndex]
-
   item[oldIndex] = item[newIndex]
   item[newIndex] = temp
 }
@@ -66,11 +65,24 @@ const actions = {
   },
   async sortBoard (context, dto) {
     const { oldIndex, newIndex } = dto
-    const boardComplete = _.cloneDeep(
-      context.state.boards.find(val => val.name === context.state.board)
-    )
+    const currBoard = context.state.boards.find(val => val.name === context.state.board)
+    const boardComplete = _.cloneDeep(currBoard)
+    const w = _.cloneDeep(boardComplete.widgets[oldIndex])
     swap(boardComplete.widgets, oldIndex, newIndex)
     context.commit('setBoard', boardComplete)
+    console.log({ oldIndex, newIndex })
+    const completeWidgets = _.cloneDeep(context.state.widgets)
+    console.log(completeWidgets.map(val => val.title))
+    swap(completeWidgets, oldIndex, newIndex)
+    console.log(completeWidgets.map(val => val.title))
+    context.commit('setWidgets', completeWidgets)
+    /// /// custom_card widgets lloose content
+    context.dispatch('fetchWidget', {
+      endpoint: replacePort(w.endpoint[0]), // dev server mac localhost workaround / hack
+      id: w.rsc_id,
+      accept: 'application/json'
+    })
+    /// ///
     try {
       await api.updateBoard({
         boards: context.state.boards
