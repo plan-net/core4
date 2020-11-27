@@ -111,7 +111,8 @@ export default {
   data () {
     return {
       grid: null,
-      show: false
+      show: false,
+      show2: false
     }
   }
 
