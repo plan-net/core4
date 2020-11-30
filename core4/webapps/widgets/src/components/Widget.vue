@@ -210,6 +210,7 @@ export default {
       this.$router.push({ name: 'help', params })
     },
     open (dto) {
+      console.log(this.widget)
       if (this.widget.target === 'blank') {
         window.open(this.widget.enter_url || this.widget.endpoint.enter_url, '_blank')
       } else {
