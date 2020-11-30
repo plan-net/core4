@@ -9,12 +9,6 @@ import SideNavigation from '@/components/SideNavigation'
 export default {
   components: {
     SideNavigation
-  },
-  mounted () {
-    console.info('init c4n3')
-    /*     window.addEventListener('message', (e) => {
-      console.log(e.source)
-    }, false) */
   }
 }
 </script>

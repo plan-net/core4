@@ -197,7 +197,6 @@ export default {
       const res = tmp[0] + vars + tmp[1]
       doc.write(res)
       doc.close()
-      // this.loading = false
     },
     ...mapActions('widgets', {
       removeFromBoard: 'removeFromBoard'
@@ -280,7 +279,12 @@ export default {
       return this.widget.custom_card === true
     },
     desc () {
-      return this.widget.description_html.body || this.widget.description_html
+      try {
+        return this.widget.description_html.body || this.widget.description_html
+      } catch (err) {
+
+      }
+      return ''
     },
     html () {
       return this.widget.html
