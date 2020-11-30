@@ -9,6 +9,9 @@ import SideNavigation from '@/components/SideNavigation'
 export default {
   components: {
     SideNavigation
+  },
+  mounted () {
+    console.log('init c4.widgets')
   }
 }
 </script>
