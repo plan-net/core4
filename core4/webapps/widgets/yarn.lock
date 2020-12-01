@@ -5753,10 +5753,10 @@ mute-stream@0.0.8:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.8.tgz#1630c42b2251ff81e2a283de96a5497ea92e5e0d"
   integrity sha512-nnbWWOkoWyUsTjKrhgD0dcz22mdkSnpYqbEjIm2nhwhuxlSkpywJmBo8h0ZqJdkp73mb90SssHkN4rsRaBAfAA==
 
-muuri@0.9.1:
-  version "0.9.1"
-  resolved "https://registry.yarnpkg.com/muuri/-/muuri-0.9.1.tgz#a08861116c17a20beda19e16f477284fb2587fbc"
-  integrity sha512-V881CEdQXARtttGBn9lP/121RMb8xpIDkyLba+704LjczFiu033eQDVslpw3apgCfzdZsUUrRd37tlyREnxXYw==
+muuri@0.9.2:
+  version "0.9.2"
+  resolved "https://registry.yarnpkg.com/muuri/-/muuri-0.9.2.tgz#9edf263364bfa84e5c7529bc71c731cd74ec037b"
+  integrity sha512-382JowP2v8VQ19vzZfumkCYSnDrlzFMW9+FEg7U++39ap0Hkk/r7bvYhBXmd6jQPwOhBvda4oPECDcaFzs2o5w==
 
 mz@^2.4.0:
   version "2.7.0"
@@ -8416,6 +8416,11 @@ utils-merge@1.0.1:
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=
 
+uuid@3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.1.0.tgz#3dd3d3e790abc24d7b0d3a034ffababe28ebbc04"
+  integrity sha512-DIWtzUkw04M4k3bf1IcpS2tngXEL26YUD2M0tMDUpnUrz2hgzUBlD55a4FjdLGPvfHxS6uluGWvaVEqgBcVa+g==
+
 uuid@^3.3.2, uuid@^3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
@@ -8479,6 +8484,13 @@ vue-eslint-parser@^7.0.0:
     espree "^6.2.1"
     esquery "^1.0.1"
     lodash "^4.17.15"
+
+vue-friendly-iframe@^0.18.0:
+  version "0.18.0"
+  resolved "https://registry.yarnpkg.com/vue-friendly-iframe/-/vue-friendly-iframe-0.18.0.tgz#c81b4ca1e3b41fd9f28454fe4f031b873681cba2"
+  integrity sha512-RHDxKEnlFhtcf7mie7/4s1o1j4qac/vzcb5kvuKIo1daTkvfZEGTx0Irri15wfl1MCi9loCSSvuVgeUxlArHhA==
+  dependencies:
+    uuid "3.1.0"
 
 vue-hot-reload-api@^2.3.0:
   version "2.3.4"

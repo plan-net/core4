@@ -9,7 +9,7 @@
         <template v-if="widget.error != null">
           <widget-error :widget="widget"></widget-error>
         </template>
-        <template v-else-if="isHtml">
+        <template v-else-if="widget.custom_card">
           <v-boilerplate
             class="pt-12"
             v-if="loading"
@@ -20,15 +20,11 @@
             class="pb-5"
             v-show="!loading"
           >
-            <template v-if="show">
-              <iframe
-                scrolling="no"
-                src="about:blank"
-                frameborder="0"
-                id="frame"
-              >
-              </iframe>
-            </template>
+            <vue-friendly-iframe
+              :src="src"
+              @load="onLoad"
+            >
+            </vue-friendly-iframe>
           </v-card-text>
         </template>
         <template v-else>
@@ -113,7 +109,6 @@
         <v-tooltip bottom>
           <template v-slot:activator="{ on, attrs }">
             <v-btn
-              v-if="showHandle"
               v-bind="attrs"
               v-on="on"
               class="handle text--disabled"
@@ -144,12 +139,10 @@ const margin = 15
 export default {
   inject: ['theme'],
   async mounted () {
-    await this.$nextTick()
-    if (this.html == null) {
-      if (this.widget.custom_card === false) {
-        this.loading = false
-      }
-    }
+    window.addEventListener('message', this.onMessage, false)
+  },
+  beforeDestroy () {
+    window.removeEventListener('message', this.onMessage)
   },
   data () {
     return {
@@ -157,47 +150,28 @@ export default {
       show: true
     }
   },
-
   methods: {
+    onLoad () {
+      window.setTimeout(() => {
+        this.loading = false
+      }, 500)
+    },
     onMessage (e) {
-      const iframeEl = this.$el.querySelector('iframe').contentWindow
-      if (e.source === iframeEl) {
-        if (e.data.event === 'WidgetLoaded') {
-          window.setTimeout(() => {
-            this.loading = false
-          }, 500)
-        } else if (e.data.event === 'WidgetOpen') {
-          this.open({
-            payload: e.data.payload || ''
-          })
+      try {
+        const iframeEl = this.$el.querySelector('iframe').contentWindow
+        if (e.source === iframeEl) {
+          if (e.data.event === 'WidgetOpen') {
+            this.open({
+              payload: e.data.payload || ''
+            })
+          }
         }
-      }
+      } catch (err) {}
     },
     async fixMissingWidget () {
       await this.$store.dispatch('widgets/fixWidget', this.widget)
     },
-    async setupHTML () {
-      if (this.widget.html == null) {
-        return
-      }
-      this.show = false
-      await this.$nextTick()
-      this.show = true
-      await this.$nextTick()
-      const iframeEl = this.$el.querySelector('iframe').contentWindow
-      window.addEventListener('message', this.onMessage, false)
-      const doc = iframeEl.document
-      doc.open()
-      const tmp = this.widget.html.split('</head>')
 
-      const t = this.$vuetify.theme.themes
-      /* eslint-disable */
-      const vars = `<script>window.__DARK__=${JSON.stringify(this.dark)}; window.__THEME__=${JSON.stringify(t)}<\/script></head>`
-      /* eslint-enable */
-      const res = tmp[0] + vars + tmp[1]
-      doc.write(res)
-      doc.close()
-    },
     ...mapActions('widgets', {
       removeFromBoard: 'removeFromBoard'
     }),
@@ -210,7 +184,6 @@ export default {
       this.$router.push({ name: 'help', params })
     },
     open (dto = {}) {
-      console.log(this.widget, '-------------------')
       if (this.widget.target === 'blank') {
         window.open(this.widget.enter_url || this.widget.endpoint.enter_url, '_blank')
       } else {
@@ -241,7 +214,6 @@ export default {
       type: Object,
       default: () => {
         return {
-
         }
       },
       required: false
@@ -252,9 +224,6 @@ export default {
     }
   },
   watch: {
-    dark  (newValue, oldValue) {
-      this.setupHTML()
-    },
     async style (newValue, oldValue) {
       try {
         const one = Object.values(newValue).join()
@@ -264,21 +233,24 @@ export default {
           this.$emit('refresh')
         }
       } catch (err) {}
-    },
-    async html  (newValue, oldValue) {
-      this.setupHTML()
     }
   },
-  beforeDestroy () {
-    // window.removeEventListener('message', this.onMessage)
-  },
   computed: {
+    src () {
+      try {
+        const dark = new URLSearchParams(this.$vuetify.theme.themes.dark).toString().split('&').join('xyz')
+        const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')
+        const endpoint = replacePort(this.widget.endpoint[0])
+        return `${endpoint}/_info/card/${this.widget.rsc_id}?dark=${this.dark}&themeDark=${dark}&themeLight=${light}`
+      } catch (err) {}
+      return 'about:blank'
+    },
     dark () {
       return this.$store.getters.dark
     },
-    isHtml () {
+    /*     isHtml () {
       return this.widget.custom_card === true
-    },
+    }, */
     desc () {
       try {
         return this.widget.description_html.body || this.widget.description_html
@@ -287,9 +259,9 @@ export default {
       }
       return ''
     },
-    html () {
+    /*     html () {
       return this.widget.html
-    },
+    }, */
     h () {
       const h = Number((this.widget.res || 11).toString().split('')[1])
       let temp = h * baseHeight
@@ -369,7 +341,10 @@ export default {
 }
 .widget-content {
   height: 100%;
-
+}
+::v-deep .vue-friendly-iframe {
+  height: 100%;
+  overflow: hidden;
   iframe {
     overflow: hidden;
     width: 100%;

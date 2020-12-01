@@ -24,7 +24,7 @@
 
 <script>
 
-import { mapState/* , mapActions */ } from 'vuex'
+import { mapState, mapActions } from 'vuex'
 import Muuri from '@/components/Muuri.vue'
 import WidgetSearch from '@/components/WidgetSearch.vue'
 /* import Avatar from '@/components/sub/Avatar.vue' */
@@ -35,20 +35,20 @@ export default {
     await store.dispatch('widgets/initApp')
     next(vm => {})
   },
-  async mounted () {
-  },
-  methods: {
-    async createUser () {
-      // const ret = await api.__createUser()
-      /*     const ret = await api.__createStore()
-      console.log(ret) */
-    }
-  },
   name: 'Home',
   computed: {
     ...mapState('widgets', [
       'board'
     ])
+  },
+  async beforeRouteLeave (to, from, next) {
+    this.clearWidgets()
+    next()
+  },
+  methods: {
+    ...mapActions('widgets', {
+      clearWidgets: 'clearWidgets'
+    })
   },
   data () {
     return {

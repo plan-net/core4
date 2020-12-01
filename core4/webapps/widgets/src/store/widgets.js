@@ -8,19 +8,13 @@ import { replacePort } from '@/plugins/fixme.js'
 import axios from 'axios'
 const user = JSON.parse(window.localStorage.getItem('user')) || {}
 const axiosInstance = axios.create({
-  // timeout: 5000,
   headers: { Authorization: `Bearer ${user.token}` }
 })
 
-/* function swap (item, oldIndex, newIndex) {
-  const temp = item[oldIndex]
-  item[oldIndex] = item[newIndex]
-  item[newIndex] = temp
-} */
 let ti
 const state = {
-  widgets: [],
-  boards: [],
+  widgets: null,
+  boards: null,
   board: null,
   tags: []
 }
@@ -50,6 +44,12 @@ const actions = {
       })
       context.commit('setTags', tags2)
     } catch (err) {}
+  },
+  async clearWidgets (context) {
+    context.commit('setBoard', null)
+    context.commit('setBoards', null)
+    context.commit('setWidgets', Math.random())
+    context.commit('setActiveBoard', null)
   },
   async fetchBoards (context, config = { type: 'full' }) {
     window.clearTimeout(ti)
@@ -129,15 +129,10 @@ const actions = {
     // let modernize = false
     try {
       const w = _.cloneDeep(boardComplete.widgets).map(val => {
-        if (typeof val === 'string') {
-          // modernize = true
-          return val
-        }
         val.icon = val.icon || 'mdi-copyright'
         val.description = val.description || ''
-        val.description_html = val.description_html || ''
-        val.html = val.html || null
         val.custom_card = val.custom_card || false
+        val.res = null
         val.error = null
         return val
       })
@@ -170,8 +165,8 @@ const actions = {
         headers: { common: { Accept: accept } }
       })
       widget = widget.data
-      context.commit('preAddWidget', Object.assign({}, widget, { html: null }))
-      if (widget.custom_card === true) {
+      context.commit('preAddWidget', widget)
+      /*  if (widget.custom_card === true) {
         const html = await context.dispatch('fetchHtmlWidget', {
           id,
           accept: 'text/html',
@@ -179,7 +174,7 @@ const actions = {
         })
         // widget = Object.assign({}, widget, { html })
         context.commit('preAddWidget', Object.assign({}, widget, { html }))
-      }
+      } */
     } catch (error) {
       context.commit('preAddWidget', {
         rsc_id: id,
@@ -188,7 +183,7 @@ const actions = {
     }
     return widget
   },
-  async fetchHtmlWidget (
+  /*   async fetchHtmlWidget (
     context,
     config = {
       id: -1,
@@ -208,7 +203,7 @@ const actions = {
         error
       }
     }
-  },
+  }, */
 
   async fixWidget (context, widget) {
     const params = {
@@ -242,7 +237,7 @@ const actions = {
     } catch (err) {}
     return false
   },
-  async createBoard ({ commit, getters, state }, dto) {
+  async createBoard ({ commit }, dto) {
     const exists = state.boards.find(val => {
       return val.name === dto.board
     })

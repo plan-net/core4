@@ -1,6 +1,7 @@
 <template>
   <div class="grid">
-    <template v-if="widgets.length === 0">
+<!--     <pre>{{widgetsHack}}</pre> -->
+    <template v-if="widgets === []">
       <empty />
     </template>
     <template v-else-if="show">
@@ -8,7 +9,7 @@
         :class="{show2}"
         v-for="widget in widgets"
         :key="widget.rsc_id"
-        :show-handle="showHandle"
+        xxxshow-handle="showHandle"
         :data-id="widget.rsc_id"
         :widget="widget"
         @refresh="refreshItems"
@@ -28,33 +29,41 @@ export default {
     Widget,
     Empty
   },
+  mounted () {
+    if (this.widgets != null) {
+      this.showGrid()
+    }
+  },
   computed: {
     ...mapGetters('widgets', [
       'widgets'
     ]),
-    showHandle () {
-      return this.widgets.length > 1
-    },
+    /*     showHandle () {
+      return this.internalWidgets.length > 1
+    }, */
     widgetsHack () {
-      return this.widgets.map(val => val.rsc_id).join('_')
+      return this.internalWidgets.map(val => val.rsc_id).join('_')
+    },
+    internalWidgets () {
+      return this.widgets || []
     }
   },
   watch: {
     // we watch for widget rsc ids in widgets array to REBUILD grid
     async widgetsHack (newValue, oldValue) {
-      this.show2 = false
-      this.setupGrid()
-      window.setTimeout(() => {
-        this.show2 = true
-      }, 350)
+      this.showGrid()
     }
   },
-  async beforeRouteLeave (to, from, next) {
-    this.show = false
-    await this.$nextTick()
-    next()
-  },
+
   methods: {
+    showGrid () {
+      window.clearTimeout(this.ti3)
+      this.show2 = false
+      this.setupGrid()
+      this.ti3 = window.setTimeout(() => {
+        this.show2 = true
+      }, 100)
+    },
     refreshItems () {
       if (this.grid != null) { this.grid.refreshItems().layout() }
     },

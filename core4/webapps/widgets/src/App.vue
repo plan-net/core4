@@ -11,7 +11,6 @@ export default {
     SideNavigation
   },
   mounted () {
-    console.log('init c4.widgets')
   }
 }
 </script>
