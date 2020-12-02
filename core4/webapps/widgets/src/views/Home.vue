@@ -42,7 +42,7 @@ export default {
     ])
   },
   async beforeRouteLeave (to, from, next) {
-    this.clearWidgets()
+    // this.clearWidgets()
     next()
   },
   methods: {
