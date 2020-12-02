@@ -13,7 +13,7 @@ const axiosInstance = axios.create({
 
 let ti
 const state = {
-  widgets: null,
+  widgets: [],
   boards: null,
   board: null,
   tags: []
@@ -46,10 +46,10 @@ const actions = {
     } catch (err) {}
   },
   async clearWidgets (context) {
-    context.commit('setBoard', null)
+    /*     context.commit('setBoard', null)
     context.commit('setBoards', null)
     context.commit('setWidgets', Math.random())
-    context.commit('setActiveBoard', null)
+    context.commit('setActiveBoard', null) */
   },
   async fetchBoards (context, config = { type: 'full' }) {
     window.clearTimeout(ti)
