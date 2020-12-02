@@ -369,7 +369,7 @@ const actions = {
 const mutations = {
   setBoard (state, board) {
     state.boards = state.boards.map(val => {
-      if (val.name === board.name) {
+      if (val.name === (board || {}).name) {
         return board
       }
       return val
