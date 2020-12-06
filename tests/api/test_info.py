@@ -136,9 +136,11 @@ async def test_link_info(info_server):
 
 async def test_version_info(info_server):
     await info_server.login()
-    rv1 = await info_server.get("/core4/api/v1/_info")
+    rv1 = await info_server.get("/core4/api/v1/_info?per_page=1000&search=!")
     assert rv1.code == 200
     ep = rv1.json()["data"]
     t = 'core4.api.v1.request.standard.login.LoginHandler'
+    from pprint import pprint
+    pprint(ep)
     v = [i for i in ep if i["qual_name"] == t][0]
     assert v["version"] == core4.__version__
