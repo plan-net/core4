@@ -50,7 +50,7 @@ from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.standard.static import CoreStaticFileHandler
 from core4.api.v1.request.standard.avatar import AvatarHandler
 from core4.api.v1.request.store import StoreHandler
-from core4.api.v1.request.link import CoreLinkHandler
+from core4.api.v1.request.standard.about import AboutHandler
 
 
 class CoreAppManager(CoreApiContainer):
@@ -65,15 +65,6 @@ class CoreAppManager(CoreApiContainer):
             "icon": "mdi-electron-framework",
             "doc": "Review and manage automation jobs"
         }),
-        (r'/about', CoreLinkHandler, {
-            "enter_url": "https://core4os.readthedocs.io/en/latest/about.html",
-            "doc":  "core4os documentation at readthedocs",
-            "author": "mra",
-            "tag": ["cooperations"],
-            "icon": "mdi-information",
-            "title": "About core4os",
-            "subtitle": "core4os Information"
-         }),
         # the following static file handler must be the last handler
         (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
@@ -129,6 +120,7 @@ class CoreApiServer(CoreApiContainer):
         (r"/logout", LogoutHandler),
 
         (r"/profile", ProfileHandler),
+        (r"/about", AboutHandler),
 
         (r'/setting', SettingHandler),
         (r'/setting/(.*)', SettingHandler),
@@ -154,4 +146,5 @@ class CoreApiServer(CoreApiContainer):
 
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
+
     serve(CoreAppManager, CoreApiServer)
