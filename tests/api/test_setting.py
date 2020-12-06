@@ -101,15 +101,15 @@ async def test_default_settings_override(core4api):
     response = await core4api.post("/core4/api/v1/setting",
                                    json={"data": to_send})
     assert response.ok
-
     response = await core4api.get("/core4/api/v1/setting")
     expect = {
         "_general": {
             "language": "UA",
             'contact': 'mail@mailer.com',
+            'profile': '/core4/api/v1/profile',
             'menu': [
                 {'About': '/about'},
-                {'Profile': '/core4/api/v1/profile'}
+                {'Mail': 'mailto:mail@mailer.com'}
             ]
         }
     }
@@ -129,12 +129,14 @@ async def test_delete_settings(core4api):
         "_general": {
             "language": "UA",
             'contact': 'mail@mailer.com',
+            'profile': '/core4/api/v1/profile',
             'menu': [
                 {'About': '/about'},
-                {'Profile': '/core4/api/v1/profile'}
+                {'Mail': 'mailto:mail@mailer.com'}
             ]
         }
     }
+
     assert response.json()["data"] == expect
 
     response = await core4api.delete("/core4/api/v1/setting")
@@ -153,46 +155,59 @@ async def test_delete_nested_settings(core4api):
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
-    assert response.json()["data"] == {"_general": {
-        "language": "FR",
-        'contact': 'mail@mailer.com',
-        'menu': [
-            {'About': '/about'},
-            {'Profile': '/core4/api/v1/profile'}
-        ]},
-        "project": {"setting1": 57,
-                    "setting2": 111}}
+    expect = {
+        "_general": {
+            'contact': 'mail@mailer.com',
+            "language": "FR",
+            'profile': '/core4/api/v1/profile',
+            'menu': [
+                {'About': '/about'},
+                {'Mail': 'mailto:mail@mailer.com'}
+            ]
+        },
+        "project": {
+            "setting1": 57,
+            "setting2": 111
+        }
+    }
+    assert response.json()["data"] == expect
     response = await core4api.delete("/core4/api/v1/setting/project/setting1")
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
     assert response.ok
-    assert response.json()["data"] == {
+    expect = {
         "_general": {
-            "language": "FR",
             'contact': 'mail@mailer.com',
+            "language": "FR",
+            'profile': '/core4/api/v1/profile',
             'menu': [
                 {'About': '/about'},
-                {'Profile': '/core4/api/v1/profile'}
+                {'Mail': 'mailto:mail@mailer.com'}
             ]
         },
-        "project": {"setting2": 111}}
-
+        "project": {
+            "setting2": 111
+        }
+    }
+    assert response.json()["data"] == expect
     response = await core4api.delete("/core4/api/v1/setting/project")
     assert response.ok
 
     response = await core4api.get("/core4/api/v1/setting")
     assert response.ok
-    assert response.json()["data"] == {
+    expect = {
         "_general": {
-            "language": "FR",
             'contact': 'mail@mailer.com',
+            "language": "FR",
+            'profile': '/core4/api/v1/profile',
             'menu': [
                 {'About': '/about'},
-                {'Profile': '/core4/api/v1/profile'}
+                {'Mail': 'mailto:mail@mailer.com'}
             ]
         }
     }
+    assert response.json()["data"] == expect
 
 
 async def test_user_override(core4api):

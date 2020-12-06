@@ -1,6 +1,8 @@
 <template>
   <c4-webapp :full-width="true">
-    <router-view />
+    <template slot="title-slot">
+      <span class="p-headline">COMOCO</span>
+    </template>
   </c4-webapp>
 </template>
 
@@ -9,10 +11,12 @@ import { mapGetters } from 'vuex'
 import { getBasePath } from './helper'
 
 export default {
-  name: 'CORE4',
+  name: 'Comoco',
   components: {},
   computed: {
     ...mapGetters(['authenticated'])
+  },
+  mounted () {
   },
   watch: {
     authenticated (newValue, oldValue) {
@@ -30,7 +34,7 @@ export default {
 ::v-deep .layout.c4-page {
   padding-top: 12px !important;
 }
-::v-deep .ace_editor{
-  border: 1px solid rgba(0, 0, 0, 0.27);;
+::v-deep .ace_editor {
+  border: 1px solid rgba(0, 0, 0, 0.27);
 }
 </style>

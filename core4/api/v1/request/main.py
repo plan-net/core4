@@ -70,19 +70,23 @@ class CoreBaseHandler(CoreBase):
     #: link to api (can be overwritten)
     enter_url = None
     #: default material icon
-    icon = "mdi-copyright"
+    icon = "mdi-circle-medium"
     #: open in new window/tab
     target = None
     #: open as single page application; this hides the app managers header
     spa = False
     # widget size, resolution
     res = 11
+    # temp
+    custom_card = False
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle", "res")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle",
+                 "res", "custom_card", "target")
     supported_types = [
         "text/html",
+        "application/json"
     ]
     concurr = True
     doc = None
@@ -111,9 +115,9 @@ class CoreBaseHandler(CoreBase):
     def propagate_property(self, source, kwargs):
         """
         Merge the attributes ``protected``, ``title``, ``author``, ``tag``,
-        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc`` and
-        ``spa`` from the passed class/object (``source`` parameter) and
-        ``kwargs``.
+        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc``,
+        ``spa``, ``subtitle``, ``res``, ``custom_card`` and ``target`` from
+        the passed class/object (``source`` parameter) and ``kwargs``.
 
         :param source: class or object based on :class:`.CoreRequestHandler` or
             :class:`.CoreStaticFileHandler`
@@ -395,7 +399,8 @@ class CoreBaseHandler(CoreBase):
         self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
         handler = self.application.lookup[self.rsc_id]["handler"]
         pattern = self.application.lookup[self.rsc_id]["pattern"]
-        doc = await self.application.container.get_handler(rsc_id)
+        docs = await self.application.container.get_handler(rsc_id=rsc_id)
+        doc = docs[0]
         description = str(self.doc or self.__doc__)
         doc.update(dict(
             args=handler.target_kwargs,
@@ -417,12 +422,27 @@ class CoreBaseHandler(CoreBase):
 
     async def xcard(self, *args, **kwargs):
         """
-        Prepares the ``card`` page and triggers :meth:`.card` which is to be
-        overwritten for custom card implementations.
+        Prepares the ``card`` page and either returns the classes properties if
+        called with header accept: application/json or
+        triggers :meth:`.card` otherwise, which
+         is to be overwritten for custom
+        card implementations.
 
         :return: result of :meth:`.card`
         """
         doc = await self.meta()
+        if self.wants_json():
+            # make datetime object serializable
+            for i in doc.keys():
+                if isinstance(doc[i], datetime.datetime):
+                    doc[i] = doc[i].__str__()
+            # check if the subclass has its own card method.
+            # if it has not, the default-card method will be called.
+            if callable(self.card.__self__.__class__.__dict__.get("card", None)):
+                doc['custom_card'] = True
+            else:
+                doc['custom_card'] = False
+            return self.finish(json.dumps(doc))
         return await self.card(**doc)
 
     def xenter(self, *args, **kwargs):
@@ -448,8 +468,8 @@ class CoreBaseHandler(CoreBase):
 
     async def card(self, **data):
         """
-        Renders the default card page. This method is to be overwritten for
-        custom card page impelementation.
+        Returns the classes properties in json format.
+        May be overwritten for a custom html implementation.
         """
         return self.render(self.card_html_page, **data)
 
@@ -591,7 +611,7 @@ class CoreBaseHandler(CoreBase):
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
         if self.wants_html():
-            ret["contact"] = self.config.user_setting._general.contact
+            ret["contact"] = self.config.store.default.contact
             return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             return self.render(self.error_text_page, **var)
@@ -792,13 +812,17 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
 
         * ``protected`` - authentication/authorization required
         * ``title`` - api title
+        * ``subtitle`` - api subtitle
+        * ``res`` - card resolution
         * ``author`` - author
         * ``tag`` - list of tags
-        * ``template_path`` - absolte from project root, relative from request
+        * ``template_path`` - absolute from project root, relative from request
         * ``static_path`` - absolute from project root, relative from request
         * ``enter_url`` - custom target url
         * ``icon`` - material icon
         * ``doc`` - handler docstring (introduction)
+        * ``spa`` - single page application (bool)
+        * ``target`` - href target
         """
         for attr, value in self.propagate_property(self, kwargs):
             self.__dict__[attr] = value
@@ -979,7 +1003,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                 chunk = chunk.to_string()
                 content_type = "text/plain"
             else:
-                chunk = chunk.to_dict('rec')
+                chunk = chunk.to_dict('records')
                 content_type = None
             if content_type is not None:
                 self.set_header("Content-Type", content_type)

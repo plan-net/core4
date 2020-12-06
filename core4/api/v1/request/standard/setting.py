@@ -89,10 +89,13 @@ class SettingHandler(CoreRequestHandler):
         * **_general** - level 1
         * **language** - level 2
     """
-    title = "user settings"
+    title = "Settings"
+    subtitle = "User Settings (read-only)"
     author = "oto"
-    tag = "roles"
+    tag = "setting"
+    icon = "mdi-account-cog"
     default_setting = None
+    doc = "Details About Your Personal Settings"
 
     # ###################################################################### #
     # Private methods
@@ -109,7 +112,7 @@ class SettingHandler(CoreRequestHandler):
         return True
 
     def _has_empty_keys(self, recourse_dict):
-        return any(key is "" for key in [*recourse_dict])
+        return any(key == "" for key in [*recourse_dict])
 
     def _is_body_structure_valid(self, body):
         if type(body) is not dict:

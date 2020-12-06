@@ -121,6 +121,6 @@ class RoleEmail(MailMixin, CoreJob):
             realname=realname, username=username,
             domain=self.config.email.template[language.lower()]['domain'],
             token=token,
-            contact_email=self.config.user_setting._general.contact)
+            contact_email=self.config.store.default.contact)
 
         self.send_mail(to=recipients, subject=subject, message=message)

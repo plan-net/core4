@@ -15,11 +15,13 @@ from core4.api.v1.request.role.access.manager import CoreAccessManager
 
 class AccessHandler(CoreRequestHandler):
     """
-    core4 database access handler.
+    Create your personnel MongoDB Database Token
     """
-    title = "database access manager"
-    tag = "data app"
+    title = "Access Manager"
+    subtitle = "MongoDB"
+    tag = "data"
     author = "mra"
+    icon = "mdi-database"
 
     async def post(self, protocol=None):
         """

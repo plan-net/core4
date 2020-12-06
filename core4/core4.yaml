@@ -21,6 +21,7 @@ sys:
   stdout: !connect mongodb://sys.stdout
   userdb: user!
   worker: !connect mongodb://sys.worker
+  store: !connect mongodb://sys.store
 
 # system folders
 folder:
@@ -125,11 +126,13 @@ api:
   user_permission:
     - api://core4.api.v1.request.standard.*
     - api://core4.api.v1.server.*
+    - api://core4.api.v1.request.store.*/u
   verify_ssl: True
-  age_range:
-    30: this month
-    180: this half-year
-    360: this year
+  new_range: 180
+  tag:
+    - app
+    - new
+    - analytics
 
 email:
   username: ~
@@ -146,13 +149,49 @@ email:
       password_reset: en/password_reset.txt
       user_creation: en/user_creation.txt
 
+# todo: remove this with CORE4-492 ticket; it is obsolete
 user_setting:
    _general:
      language: EN
      menu:
        - About: /about
-       - Profile: /core4/api/v1/profile
+       - Mail: mailto:mail@mailer.com
+     profile: /core4/api/v1/profile
      contact: mail@mailer.com
+
+# todo: this is to be the new setting with CORE4-492 ticket
+store:
+  default:
+    contact: mail@mailer.com
+    profile: /core4/api/v1/profile
+    menu:
+      - Contact: mailto:mail@mailer.com?subject=core4os support request
+    tag:
+      - app
+      - analytics
+      - data
+      - new
+    logo:
+      # todo: define the preferred width/height
+      dark: data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI0LjIuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkNPUkU0T1MiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1MTIgNTEyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGwtcnVsZTpldmVub2RkO2NsaXAtcnVsZTpldmVub2RkO2ZpbGw6I0ZGRkZGRjt9Cgkuc3Qxe2ZpbGwtcnVsZTpldmVub2RkO2NsaXAtcnVsZTpldmVub2RkO2ZpbGw6I0Y3MDYwNjt9Cjwvc3R5bGU+CjxnIGlkPSJMb2dvLUNPUkU0T1Mtd2hpdGUtb25seS1tYXJrIj4KCTxwYXRoIGlkPSJGaWxsLTIyIiBjbGFzcz0ic3QwIiBkPSJNMzQ3LjcsMTI1LjVMMzIyLDE1MS41YzI2LjQsMjYuNSw0Mi44LDYzLjMsNDIuOCwxMDMuOGMwLDgxLTY1LjIsMTQ2LjYtMTQ1LjYsMTQ2LjYKCQljLTgwLjQsMC0xNDUuNi02NS42LTE0NS42LTE0Ni42YzAtNDAuNiwxNi40LTc3LjMsNDIuOC0xMDMuOGwtMjUuNy0yNS45Yy0zMywzMy4yLTUzLjQsNzkuMS01My40LDEyOS43CgkJYzAsMTAxLjIsODEuNSwxODMuMywxODIsMTgzLjNjMTAwLjUsMCwxODItODIuMSwxODItMTgzLjNDNDAxLjIsMjA0LjYsMzgwLjgsMTU4LjcsMzQ3LjcsMTI1LjUiLz4KCTxwYXRoIGlkPSJGaWxsLTI0IiBjbGFzcz0ic3QwIiBkPSJNMjcxLjUsMzA4LjNjLTEzLjEsMTMuNC0zMS4zLDIxLjYtNTEuNSwyMS42Yy00MC4xLDAtNzIuNi0zMi44LTcyLjYtNzMuMwoJCWMwLTQwLjUsMzIuNS03My4zLDcyLjYtNzMuM2MyMC4xLDAsMzguMyw4LjMsNTEuNSwyMS42bDI1LjctMjUuOWMtMTkuNy0yMC00Ny0zMi40LTc3LjEtMzIuNGMtNjAuMSwwLTEwOC45LDQ5LjItMTA4LjksMTEwCgkJYzAsNjAuOCw0OC43LDExMCwxMDguOSwxMTBjMzAuMSwwLDU3LjQtMTIuNCw3Ny4xLTMyLjRMMjcxLjUsMzA4LjN6Ii8+Cgk8cGF0aCBpZD0iRmlsbC0yNiIgY2xhc3M9InN0MCIgZD0iTTIxOS4yLDAuNVYzN2MxMjAuNywwLDIxOC42LDk4LjEsMjE4LjYsMjE5cy05Ny45LDIxOS0yMTguNiwyMTl2MzYuNQoJCWMxNDAuOCwwLDI1NS0xMTQuNCwyNTUtMjU1LjVTMzYwLDAuNSwyMTkuMiwwLjUiLz4KCTxwYXRoIGlkPSJGaWxsLTI4IiBjbGFzcz0ic3QxIiBkPSJNMjU2LjIsMjU3YzAsMjAuMi0xNi4zLDM2LjUtMzYuNSwzNi41Yy0yMC4yLDAtMzYuNS0xNi4zLTM2LjUtMzYuNXMxNi4zLTM2LjUsMzYuNS0zNi41CgkJQzIzOS45LDIyMC41LDI1Ni4yLDIzNi45LDI1Ni4yLDI1NyIvPgo8L2c+Cjwvc3ZnPgo=
+      light: data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI0LjIuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkNPUkU0T1MiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBzdHlsZT0iZW5hYmxlLWJhY2tncm91bmQ6bmV3IDAgMCA1MTIgNTEyOyIgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+CjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+Cgkuc3Qwe2ZpbGwtcnVsZTpldmVub2RkO2NsaXAtcnVsZTpldmVub2RkO2ZpbGw6IzE0MTQxNDt9Cgkuc3Qxe2ZpbGwtcnVsZTpldmVub2RkO2NsaXAtcnVsZTpldmVub2RkO2ZpbGw6I0Y3MDYwNjt9Cjwvc3R5bGU+CjxnIGlkPSJMb2dvLUNPUkU0T1MtYmxhY2stb25seS1tYXJrIj4KCTxnIGlkPSJHcm91cC0zMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMzcuMDAwMDAwLCAwLjAwMDAwMCkiPgoJCTxwYXRoIGlkPSJGaWxsLTIyIiBjbGFzcz0ic3QwIiBkPSJNMzEwLjcsMTI1LjVMMjg1LDE1MS41YzI2LjQsMjYuNSw0Mi44LDYzLjMsNDIuOCwxMDMuOGMwLDgxLTY1LjIsMTQ2LjYtMTQ1LjYsMTQ2LjYKCQkJYy04MC40LDAtMTQ1LjYtNjUuNi0xNDUuNi0xNDYuNmMwLTQwLjYsMTYuNC03Ny4zLDQyLjgtMTAzLjhsLTI1LjctMjUuOWMtMzMsMzMuMi01My40LDc5LjEtNTMuNCwxMjkuNwoJCQljMCwxMDEuMiw4MS41LDE4My4zLDE4MiwxODMuM2MxMDAuNSwwLDE4Mi04Mi4xLDE4Mi0xODMuM0MzNjQuMiwyMDQuNiwzNDMuOCwxNTguNywzMTAuNywxMjUuNSIvPgoJCTxwYXRoIGlkPSJGaWxsLTI0IiBjbGFzcz0ic3QwIiBkPSJNMjM0LjUsMzA4LjNjLTEzLjEsMTMuNC0zMS4zLDIxLjYtNTEuNSwyMS42Yy00MC4xLDAtNzIuNi0zMi44LTcyLjYtNzMuMwoJCQljMC00MC41LDMyLjUtNzMuMyw3Mi42LTczLjNjMjAuMSwwLDM4LjMsOC4zLDUxLjUsMjEuNmwyNS43LTI1LjljLTE5LjctMjAtNDctMzIuNC03Ny4xLTMyLjRjLTYwLjEsMC0xMDguOSw0OS4yLTEwOC45LDExMAoJCQljMCw2MC44LDQ4LjcsMTEwLDEwOC45LDExMGMzMC4xLDAsNTcuNC0xMi40LDc3LjEtMzIuNEwyMzQuNSwzMDguM3oiLz4KCQk8cGF0aCBpZD0iRmlsbC0yNiIgY2xhc3M9InN0MCIgZD0iTTE4Mi4yLDAuNVYzN2MxMjAuNywwLDIxOC42LDk4LjEsMjE4LjYsMjE5cy05Ny45LDIxOS0yMTguNiwyMTl2MzYuNQoJCQljMTQwLjgsMCwyNTUtMTE0LjQsMjU1LTI1NS41UzMyMywwLjUsMTgyLjIsMC41Ii8+CgkJPHBhdGggaWQ9IkZpbGwtMjgiIGNsYXNzPSJzdDEiIGQ9Ik0yMTkuMiwyNTdjMCwyMC4yLTE2LjMsMzYuNS0zNi41LDM2LjVjLTIwLjIsMC0zNi41LTE2LjMtMzYuNS0zNi41czE2LjMtMzYuNSwzNi41LTM2LjUKCQkJQzIwMi45LDIyMC41LDIxOS4yLDIzNi45LDIxOS4yLDI1NyIvPgoJPC9nPgo8L2c+Cjwvc3ZnPgo=
+    theme:
+      dark:
+        error: "#FF5252"
+        primary: "#D70F14"
+        info: "#2196F3"
+        accent: "#1D4161"
+        success: "#4CAF50"
+        warning: "#FB8C00"
+        secondary: "#424242"
+      light:
+        error: "#FF5252"
+        primary: "#D70F14"
+        info: "#2196F3"
+        accent: "#1D4161"
+        success: "#4CAF50"
+        warning: "#FB8C00"
+        secondary: "#424242"
 
 queue:
   history_in_days: 7
