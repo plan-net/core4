@@ -149,6 +149,10 @@ email:
       password_reset: en/password_reset.txt
       user_creation: en/user_creation.txt
 
+user_setting:
+   _general:
+     language: EN
+
 store:
   default:
     contact: mail@mailer.com

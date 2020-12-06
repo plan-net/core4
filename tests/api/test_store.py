@@ -82,7 +82,8 @@ async def test_create(core4api):
         "contact": "mail@mailer.com",
         "profile": "/core4/api/v1/profile",
         "menu": [
-            {"Contact": "mailto:mail@mailer.com?subject=core4os support request"}
+            {"Contact": "mailto:mail@mailer.com?subject=core4os support request"},
+            {"About": "/core4/api/v1/about"}
         ],
         "tag": [
             "app",
@@ -91,9 +92,12 @@ async def test_create(core4api):
             "new"
         ]
     }
-    assert resp.json()["data"] == {
-        'doc': {**default, **{'_id': '/outlier', 'hello': 'root', 'out': True}},
-        'parents': ['/', '/outlier']}
+    for k in ("contact", "profile", "menu", "tag"):
+        assert resp.json()["data"]["doc"][k] == default[k]
+    assert resp.json()["data"]["doc"]["_id"] == "/outlier"
+    assert resp.json()["data"]["doc"]["hello"] == "root"
+    assert resp.json()["data"]["doc"]["out"] is True
+    assert resp.json()["data"]["parents"] == ['/', '/outlier']
 
     await core4api.login()
     r2 = await core4api.post("/core4/api/v1/roles", body=dict(
@@ -110,7 +114,11 @@ async def test_create(core4api):
     resp = await core4api.put('/core4/api/v1/store')
     assert resp.code == 200
 
-    assert resp.json()["data"]["doc"] == {**default, **{'_id': '/', 'hello': 'root'}}
+    for k in ("contact", "profile", "menu", "tag"):
+        assert resp.json()["data"]["doc"][k] == default[k]
+    assert resp.json()["data"]["doc"]["_id"] == "/"
+    assert resp.json()["data"]["doc"]["hello"] == "root"
+    assert "out" not in resp.json()["data"]["doc"]
 
     resp = await core4api.delete('/core4/api/v1/store/default')
     assert resp.code == 403

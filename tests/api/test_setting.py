@@ -104,13 +104,7 @@ async def test_default_settings_override(core4api):
     response = await core4api.get("/core4/api/v1/setting")
     expect = {
         "_general": {
-            "language": "UA",
-            'contact': 'mail@mailer.com',
-            'profile': '/core4/api/v1/profile',
-            'menu': [
-                {'About': '/about'},
-                {'Mail': 'mailto:mail@mailer.com'}
-            ]
+            "language": "UA"
         }
     }
     print(response.json()["data"])
@@ -127,13 +121,7 @@ async def test_delete_settings(core4api):
     response = await core4api.get("/core4/api/v1/setting")
     expect = {
         "_general": {
-            "language": "UA",
-            'contact': 'mail@mailer.com',
-            'profile': '/core4/api/v1/profile',
-            'menu': [
-                {'About': '/about'},
-                {'Mail': 'mailto:mail@mailer.com'}
-            ]
+            "language": "UA"
         }
     }
 
@@ -157,13 +145,7 @@ async def test_delete_nested_settings(core4api):
     response = await core4api.get("/core4/api/v1/setting")
     expect = {
         "_general": {
-            'contact': 'mail@mailer.com',
-            "language": "FR",
-            'profile': '/core4/api/v1/profile',
-            'menu': [
-                {'About': '/about'},
-                {'Mail': 'mailto:mail@mailer.com'}
-            ]
+            "language": "FR"
         },
         "project": {
             "setting1": 57,
@@ -178,13 +160,7 @@ async def test_delete_nested_settings(core4api):
     assert response.ok
     expect = {
         "_general": {
-            'contact': 'mail@mailer.com',
-            "language": "FR",
-            'profile': '/core4/api/v1/profile',
-            'menu': [
-                {'About': '/about'},
-                {'Mail': 'mailto:mail@mailer.com'}
-            ]
+            "language": "FR"
         },
         "project": {
             "setting2": 111
@@ -198,13 +174,7 @@ async def test_delete_nested_settings(core4api):
     assert response.ok
     expect = {
         "_general": {
-            'contact': 'mail@mailer.com',
-            "language": "FR",
-            'profile': '/core4/api/v1/profile',
-            'menu': [
-                {'About': '/about'},
-                {'Mail': 'mailto:mail@mailer.com'}
-            ]
+            "language": "FR"
         }
     }
     assert response.json()["data"] == expect
