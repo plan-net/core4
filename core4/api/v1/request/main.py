@@ -1003,7 +1003,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                 chunk = chunk.to_string()
                 content_type = "text/plain"
             else:
-                chunk = chunk.to_dict('rec')
+                chunk = chunk.to_dict('records')
                 content_type = None
             if content_type is not None:
                 self.set_header("Content-Type", content_type)
