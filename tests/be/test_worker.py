@@ -928,7 +928,8 @@ def test_project_maintenance(queue, worker):
 
 @pytest.mark.timeout(120)
 def test_no_resources(queue):
-    job = queue.enqueue(core4.queue.helper.job.example.DummyJob)
+    os.environ["CORE4_OPTION_worker__max_cpu"] = "!!int 95"
+    queue.enqueue(core4.queue.helper.job.example.DummyJob)
     worker1 = WorkerNoCPU(name="testRes_1")
     worker2 = WorkerNoCPU(name="testRes_2")
     worker3 = WorkerNoRAM(name="testRes_3")
