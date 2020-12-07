@@ -347,12 +347,17 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 "port": self.port,
                 "rsc_id": rsc_id
             })
-            if (dbdoc["started_at"]
-                - dbdoc["created_at"]).total_seconds() < age:
+            if ((dbdoc["started_at"] - dbdoc["created_at"]).total_seconds()
+                    < age):
                 if "new" not in dbdoc["tag"]:
                     doc["tag"].append("new")
             else:
-                doc["tag"].pop("new")
+                try:
+                    doc["tag"].remove("new")
+                except ValueError:
+                    pass
+                except:
+                    raise
             coll.update_one(
                 filter={
                     "hostname": self.hostname,
