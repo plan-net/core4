@@ -305,9 +305,8 @@ class StoreHandler(CoreRequestHandler):
         doc = self.raw_config.store.default
         for parent in parents:
             pdoc = await self.config.sys.store.find_one({"_id": parent})
-            if pdoc is None:
-                raise HTTPError(404, "not found")
-            doc.update(pdoc)
+            if pdoc is not None:
+                doc.update(pdoc)
         return {"parents": parents, "doc": doc}
 
     def make_path(self, xpath):
