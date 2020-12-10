@@ -38,6 +38,7 @@ const actions = {
         label: 'all',
         default: true,
         count: -1
+
       })
       tags2 = tags2.map(val => {
         return Object.assign(val, { value: val.label })
