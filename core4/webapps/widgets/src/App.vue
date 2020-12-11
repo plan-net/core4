@@ -1,5 +1,5 @@
 <template>
-  <c4-webapp :full-width="true">
+  <c4-webapp :full-width="true" :hide-hamburger="false">
     <side-navigation slot="navigation-slot"></side-navigation>
   </c4-webapp>
 </template>
