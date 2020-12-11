@@ -2725,7 +2725,7 @@ core-util-is@1.0.2, core-util-is@~1.0.0:
 
 "core4ui@https://github.com/plan-net/core4ui.git#mmr.next":
   version "1.3.7"
-  resolved "https://github.com/plan-net/core4ui.git#bf905d92f5d20b655524888ea03ca67df16b8233"
+  resolved "https://github.com/plan-net/core4ui.git#331660374b2bf37d066293a3cd010f1b7de316d5"
   dependencies:
     axios "^0.19.2"
     core-js "^3.6.4"
