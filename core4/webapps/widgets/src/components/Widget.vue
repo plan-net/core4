@@ -17,7 +17,7 @@
             type="avatar, article"
           ></v-boilerplate>
           <v-card-text
-            class="pb-0"
+            class="pb-0 vue-friendly-iframe-cnt"
             v-show="!loading"
           >
             <vue-friendly-iframe
@@ -315,8 +315,9 @@ export default {
   .v-card {
     height: inherit;
     .v-card__text {
+
       width: inherit;
-      display: flex !important;
+      //display: flex !important;
     }
   }
   .handle {
@@ -342,6 +343,9 @@ export default {
 }
 .widget-content {
   height: 100%;
+}
+.vue-friendly-iframe-cnt {
+  display: flex !important;
 }
 ::v-deep .vue-friendly-iframe {
   overflow: hidden;
