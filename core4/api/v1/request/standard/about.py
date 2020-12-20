@@ -46,7 +46,7 @@ class AboutHandler(CoreRequestHandler, QueryMixin):
             - contact (str): email contact
 
         Raises:
-            401 Unauthorized:
+            401: Unauthorized
 
         Examples:
             >>> from requests import get

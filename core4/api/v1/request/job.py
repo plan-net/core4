@@ -582,7 +582,8 @@ class JobRequest(CoreRequestHandler):
 
         async def _pre_log(rec=None):
             """
-            helper method to query job logs materialised before streaming starts
+            helper method to query job logs materialised before streaming 
+            starts
             """
             nonlocal first_log
             if first_log is None:
@@ -777,7 +778,7 @@ class JobRequest(CoreRequestHandler):
             del query_filter["qual_name"]
         elif search is not None:
             search = search.replace(
-                ".", "\.").replace(
+                ".", "\\.").replace(
                 "?", ".").replace(
                 "*", ".*")
             query_filter["_id"] = re.compile(search, re.IGNORECASE)

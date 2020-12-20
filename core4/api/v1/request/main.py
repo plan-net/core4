@@ -40,7 +40,7 @@ from tornado.web import RequestHandler, HTTPError
 tornado.escape.json_encode = json_encode
 try:
     ARG_DEFAULT = tornado.web.RequestHandler._ARG_DEFAULT
-except:
+except Exception:
     ARG_DEFAULT = tornado.web._ARG_DEFAULT
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
@@ -187,7 +187,12 @@ class CoreBaseHandler(CoreBase):
                 "/login?h={uuid}&next={next}".format(
                     uuid=str(uuid4()),
                     next=urllib.parse.quote(self.request.full_url()))])
-            self.redirect(url)
+            login = self.config.api.auth_url.strip() + "/login"
+            source = urllib.parse.quote(self.request.full_url())
+            self.flash_error({"login": login})
+            self.flash_error({"source": source})
+            self.flash_error({"url": url})
+            raise HTTPError(401)
 
     async def verify_access(self):
         """
@@ -270,7 +275,7 @@ class CoreBaseHandler(CoreBase):
         elif username and password:
             try:
                 user = await CoreRole.find_one(name=username)
-            except:
+            except Exception:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
             else:
@@ -438,7 +443,8 @@ class CoreBaseHandler(CoreBase):
                     doc[i] = doc[i].__str__()
             # check if the subclass has its own card method.
             # if it has not, the default-card method will be called.
-            if callable(self.card.__self__.__class__.__dict__.get("card", None)):
+            if callable(self.card.__self__.__class__.__dict__.get(
+                    "card", None)):
                 doc['custom_card'] = True
             else:
                 doc['custom_card'] = False
@@ -761,7 +767,7 @@ class CoreBaseHandler(CoreBase):
                         return ret
                     return ObjectId(ret)
                 return as_type(ret)
-            except:
+            except Exception:
                 raise core4.error.ArgumentParsingError(
                     "parameter [%s] expected as_type [%s]", name,
                     as_type.__name__) from None
@@ -1033,47 +1039,50 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         Add a flash message with
 
         :param level: DEBUG, INFO, WARNING or ERROR
-        :param message: str to flash
+        :param message: str or dict to flash
         """
         level = level.upper().strip()
         assert level in FLASH_LEVEL
-        self._flash.append({"level": level, "message": message % vars})
+        if isinstance(message, dict):
+            self._flash.append({"level": level, "data": message})
+        else:
+            self._flash.append({"level": level, "message": message % vars})
 
     def flash_debug(self, message, *vars):
         """
         Add a DEBUG flash message.
 
-        :param message: str.
+        :param message: str or dict to flash
         :param vars: optional str template variables
         """
-        self.flash("DEBUG", message % vars)
+        self.flash("DEBUG", message, *vars)
 
     def flash_info(self, message, *vars):
         """
         Add a INFO flash message.
 
-        :param message: str.
+        :param message: str or dict to flash
         :param vars: optional str template variables
         """
-        self.flash("INFO", message % vars)
+        self.flash("INFO", message, *vars)
 
     def flash_warning(self, message, *vars):
         """
         Add a WARNING flash message.
 
-        :param message: str.
+        :param message: str or dict to flash
         :param vars: optional str template variables
         """
-        self.flash("WARNING", message % vars)
+        self.flash("WARNING", message, *vars)
 
     def flash_error(self, message, *vars):
         """
         Add a ERROR flash message.
 
-        :param message: str.
+        :param message: str or dict to flash
         :param vars: optional str template variables
         """
-        self.flash("ERROR", message % vars)
+        self.flash("ERROR", message, *vars)
 
     def parse_objectid(self, _id):
         """
@@ -1087,7 +1096,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         """
         try:
             return ObjectId(_id)
-        except:
+        except Exception:
             raise HTTPError(400, "failed to parse ObjectId [%s]", _id)
 
     async def download(self, source, filename, chunk_size=MB):

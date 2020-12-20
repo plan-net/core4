@@ -10,9 +10,9 @@ from core4.api.v1.request.main import CoreRequestHandler
 class StoreHandler(CoreRequestHandler):
     """
     This endpoint services a storage in collection ``sys.store``. You can
-    configure the entry point into this storage for each user/role individually.
-    By defining a permission ``app://store/<path>`` the path element locates
-    the document in ``sys.store``.
+    configure the entry point into this storage for each user/role 
+    individually. By defining a permission ``app://store/<path>`` the path 
+    element locates the document in ``sys.store``.
 
     Furthermore the *path* is organised hierarchically. All key/value pairs of
     parent documents are inherited down the *path*. A specified key/value pair
@@ -151,8 +151,9 @@ class StoreHandler(CoreRequestHandler):
 
         Examples:
             >>> from requests import delete
-            >>> rv = delete("http://localhost:5001/core4/api/v1/store/client-2",
-            ...             auth=("admin", "hans"))
+            >>> rv = delete(
+            ...          "http://localhost:5001/core4/api/v1/store/client-2",
+            ...          auth=("admin", "hans"))
             >>> rv
             <Response [200]>
         """
@@ -212,7 +213,7 @@ class StoreHandler(CoreRequestHandler):
             return self.redirect(redirect[:-1])
         xpath = self.make_path(xpath)
         if xpath == "/":
-            down = '^\/[^\/]+$'
+            down = '^\\/[^\\/]+$'
         else:
             down = xpath + "\/[^\/]+$"
         cur = self.config.sys.store.find({"_id": re.compile(down)},

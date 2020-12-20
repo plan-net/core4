@@ -14,7 +14,7 @@ class DefaultHandler(CoreRequestHandler):
     protected = False
 
     """
-    Handles all non-existing endpoints throwing ``404`` - ``Not Found``. 
+    Handles all non-existing endpoints throwing ``404`` - ``Not Found``.
     """
 
     def initialize(self, *args, status_code=404, **kwargs):
