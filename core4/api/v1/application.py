@@ -341,16 +341,22 @@ class CoreApiContainer(CoreBase, QueryMixin):
                 del first[attr]
             first["endpoint"] = []
             first["container"] = []
+            first["pattern"] = []
             info = set()
             container = set()
+            pattern = set()
             for d in data:
                 for c in d["container"]:
+                    url = "{}{}".format(
+                        d["routing"], c[2])
+                    info.add(url)
                     container.add(c[0])
-                    info.add((d["routing"] + c[1], c[3]))
+                    pattern.add((d["routing"] + c[1], c[3]))
                 for k in ("started_at", "created_at"):
                     first[k] = min(first[k], d[k])
             first["endpoint"] += sorted(list(info))
             first["container"] += sorted(list(container))
+            first["pattern"] += sorted(list(pattern))
             if first["tag"] is None:
                 first["tag"] = []
             first["subtitle"] = first["subtitle"] or first["qual_name"]
