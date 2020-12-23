@@ -302,7 +302,6 @@ class CoreApiContainer(CoreBase, QueryMixin):
           handler has been published first
         * rsc_id
         * project
-        * pattern (list) - of dist with key ``name`` if defined and ``regex``
         * container (str) - of the parent :class:`.CoreApiContainer`
         * protected (bool) - defaults to ``True``
         * created_at (str) - in iso format indicating when the resource has
@@ -346,10 +345,8 @@ class CoreApiContainer(CoreBase, QueryMixin):
             container = set()
             for d in data:
                 for c in d["container"]:
-                    url = "{}{}".format(
-                        d["routing"], c[2])
                     container.add(c[0])
-                    info.add(url)
+                    info.add((d["routing"] + c[1], c[3]))
                 for k in ("started_at", "created_at"):
                     first[k] = min(first[k], d[k])
             first["endpoint"] += sorted(list(info))
