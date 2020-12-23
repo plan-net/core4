@@ -326,7 +326,7 @@ class CoreBaseHandler(CoreBase):
                           + expires).replace(microsecond=0)
         payload["exp"] = self.token_exp
         token = jwt.encode(payload, secret, algorithm)
-        return token.decode("utf-8")
+        return token
 
     def parse_token(self, token):
         """
