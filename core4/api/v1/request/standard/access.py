@@ -79,11 +79,43 @@ class AccessHandler(CoreRequestHandler):
         return self.reply(body)
 
     async def get(self):
+        """
+        Retrieve database access.
+
+        Methods:
+            GET /core4/api/v1/access
+
+        Parameters:
+            None
+
+        Returns:
+            render ``./template/access.html`` or data element with 
+
+            - **mongodb** (*str*): database URL
+            - **access** (*list*): list of granted databases
+
+        Raises:
+            401: Unauthorized
+
+        Examples:
+            >>> from requests import get
+            >>> url = "http://localhost:5001/core4/api/v1/login"
+            >>> rv = get(url + "?username=admin&password=hans")
+            >>> token = rv.json()["data"]["token"]
+            >>> rv = get("http://localhost:5001/core4/api/v1/access",
+            >>>           headers={"Authorization": "Bearer " + token})
+            >>> rv.json()
+        """
         access = []
         for a in await self.user.casc_perm():
             (*proto, db) = a.split("/")
             if proto and proto[0] == "mongodb:":
                 access.append(db)
-        return self.render("template/access.html",
-                           mongodb=self.config.sys.role.hostname,
-                           access=sorted(access))
+        if self.wants_html():
+            return self.render("template/access.html",
+                            mongodb=self.config.sys.role.hostname,
+                            access=sorted(access))
+        return self.reply(dict(
+            mongodb=self.config.sys.role.hostname,
+            access=sorted(access)
+        ))
