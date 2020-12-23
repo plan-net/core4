@@ -25,12 +25,12 @@
 
     }
   </style>
-
+</head>
 <body>
 
   <div id="app">
     <v-app>
-      <v-container class="py-12 px-12" style="max-width=1200px;">
+      <v-container class="py-12 px-12" style="max-width: 1200px;">
         <v-card class="border-1" flat rounded-lg>
           <v-card-text>
 
@@ -48,7 +48,7 @@
             </v-row>
             <v-row class="mt-6">
               <v-col cols="6" cols-xs="12">
-                <v-text-field prepend-inner-icon="mdi-account" v-model="username" label="Username" outlined readonly clearable></v-text-field>
+                <v-text-field prepend-inner-icon="mdi-account" v-model="username" label="Username" outlined readonly></v-text-field>
               </v-col>
               <v-col cols="6" cols-xs="12">
                 <v-text-field prepend-inner-icon="mdi-account" v-model="realname" :rules="[rules.required]" label="Real Name" outlined clearable></v-text-field>
@@ -322,7 +322,7 @@
         return (this.password == this.password2) ? '' : "Passwords do not match"
       },
       toDbAccess: function () {
-        location.href = "/core4/api/v1/access";
+        location.href = "/core4/api/v1/access?dark=" + window.c4Vuetify.preset.theme.dark;
       },
       send: function () {
         var data = {
