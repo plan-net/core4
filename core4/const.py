@@ -30,3 +30,5 @@ VENV_PIP = VENV + "/bin/pip3"
 QUEUE_CHANNEL = "queue"
 DEFAULT_CHANNEL = "system"
 MESSAGE_CHANNEL = "message"
+
+CORE4_REPOSITORY = "https://github.com/plan-net/core4.git"

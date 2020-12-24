@@ -20,7 +20,8 @@ import sh
 from jinja2 import Template
 
 import core4.base.main
-from core4.const import VENV, REPOSITORY
+from core4.const import VENV, REPOSITORY, VENV_PYTHON, VENV_PIP
+from core4.const import CORE4_REPOSITORY
 
 
 def input_loop(message, identifier=False):
@@ -38,7 +39,8 @@ def printout(*args):
     sys.stdout.flush()
 
 
-def make_project(package_name=None, package_description=None, auto=False):
+def make_project(package_name=None, package_description=None, auto=False, 
+                 core4_source=CORE4_REPOSITORY):
     """
     Interactive method used by :mod:`.coco` to create a new project.
     The project templates are located in directory ``/template``. A combination
@@ -49,11 +51,13 @@ def make_project(package_name=None, package_description=None, auto=False):
     :param package_name: str
     :param package_description: str
     :param auto: bool (default ``False``) to skip confirmation
+    :param core4_source: str of core4 repository location
     """
     kwargs = {
         "package_name": package_name,
         "package_description": package_description,
         "package_version": "0.0.0",
+        "core4_source": core4_source
     }
     if kwargs["package_name"] and not kwargs["package_name"].isidentifier():
         print("this is not a valid package name")
@@ -90,6 +94,9 @@ def make_project(package_name=None, package_description=None, auto=False):
     if it does not exist, yet at
         > {venv:s}
 
+    Inside the Python virtual environment core4os will be installed from
+        > {core4_source:s}
+
     Inside this project directory a bare git repository will be created if it
     does not exist, yet at
         > {repository:s}
@@ -111,7 +118,8 @@ def make_project(package_name=None, package_description=None, auto=False):
         $ deactivate        
     """.format(
         root=root_path, package_name=kwargs["package_name"], venv=VENV,
-        repository=REPOSITORY, exist=exist, full_path=full_path))
+        repository=REPOSITORY, core4_source=kwargs["core4_source"],
+        exist=exist, full_path=full_path))
 
     while not auto and True:
         i = input("type [yes] to continue or press CTRL+C: ")
@@ -220,6 +228,8 @@ def make_project(package_name=None, package_description=None, auto=False):
         builder.create(venv)
         print("done")
 
+    pyexe = os.path.join(full_path, VENV_PYTHON)
+    pipexe = os.path.join(full_path, VENV_PIP)
     env = os.environ.copy()
     if "PYTHONPATH" in env:
         del env["PYTHONPATH"]
@@ -227,13 +237,16 @@ def make_project(package_name=None, package_description=None, auto=False):
     print("\nupgrade pip")
     print("-----------\n")
 
-    pip = os.path.join(venv, "bin", "pip")
-    subprocess.check_call([pip, "install", "--upgrade", "pip"], env=env)
+    print(">>>", [pipexe, "install", "--upgrade", "pip"])
+    print(env)
+    subprocess.check_call([pipexe, "install", "--upgrade", "pip"], env=env)
 
     print("\ninstall project")
     print("---------------\n")
 
     curr_dir = os.path.abspath(os.path.curdir)
     os.chdir(full_path)
-    retcode = subprocess.call([sys.executable, "setup.py", "--edit"], env=env)
+    print(">>>", [pipexe, "install", "--edit"])
+    print(env)
+    retcode = subprocess.call([pipexe, "install", "--edit", "."], env=env)
     os.chdir(curr_dir)
