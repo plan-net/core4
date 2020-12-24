@@ -5,21 +5,52 @@
     <meta charset="UTF-8">
     <title>core4os DB access</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify.css" rel="stylesheet">
-    <style>
+    <link href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css" rel="stylesheet" />
+    <link href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css" rel="stylesheet" />
+      <style>
         .monospace {
             font-family: monospace;
             background-color: #dddddd;
         }
+        .theme--dark .monospace {
+            font-family: monospace;
+            background-color: #dddddd;
+            color: black;
+        }
+        .v-avatar {
+      border: 4px solid var(--v-primary-base);
+      position: relative;
+
+    }
+
+    .border-1 {
+      border: 1px solid;
+      border-color: #e6e6e6 !important;
+
+    }
+    .theme--dark .border-1 {
+      border-color: #333 !important;
+
+    }
     </style>
 </head>
 <body>
 
 <div id="app">
     <v-app class="ma-2">
-        <v-container>
-            <v-layout column>
+        <v-container class="py-12 px-12" style="max-width: 1200px;">
+            <v-card class="border-1" flat rounded-lg>
+              <v-card-text>
+                <v-row align="center" justify="center">
+                    <v-avatar size="112" class="mr-5">
+                      <v-icon style="font-size: 116px;" color="primary">
+                        mdi-database
+                      </v-icon>
+      
+                    </v-avatar>
+                  </v-row>
+                <v-row class="mt-6">
+                    <v-col cols="12">
                 <h1 class="headline mb-3">Create your personal MongoDB Access Token</h1>
                 <p>
                     core4os supports read-only access to MongoDB databases and
@@ -48,107 +79,105 @@
                     token at any time with this access manager.
                 </p>
                 <p>
-                    <v-layout row>
-                        <v-btn class="mx-10" color="primary" @click="onclick">Refresh</v-btn>
-                    </v-layout>
+                    <v-btn color="primary" @click="onclick">Refresh</v-btn>
                 </p>
-                <v-text-field class="mx-10" v-model="token" label="MongoDB Access Token" readonly box></v-text-field>
-                <v-layout row>
-                    <v-flex xs11>
-                        <v-text-field id="url" class="mx-10" v-model="url" label="MongoDB Connection URL" readonly box></v-text-field>
-                    </v-flex>
-                    <v-flex xs1 class="text-xs-center">
-                        <v-btn class="mx-2" fab small color="accent" @click="oncopy"><v-icon>file_copy</v-icon></v-btn>
-                    </v-flex>
-                </v-layout>
-            </v-layout>
+                <v-text-field v-model="token" label="MongoDB Access Token" readonly filled></v-text-field>
+                <v-row>
+                    <v-col cols="11">
+                        <v-text-field id="url" v-model="url" label="MongoDB Connection URL" readonly filled></v-text-field>
+                    </v-col>
+                    <v-col cols="1">
+                        <v-btn fab small color="accent" @click="oncopy"><v-icon>mdi-content-copy</v-icon></v-btn>
+                    </v-col>
+                </v-row>
+            </v-col>
+            </v-row>
+        </v-card-text>
+    </v-card>
+    </v-container>
+    
             <v-snackbar v-model="snackbar" :bottom="true"
                         :multi-line="false"
                         :timeout=3000
                         :vertical=true>
                 [[ snackbar_text ]]
-                <v-btn color="primary" flat @click="snackbar = false">
+                <v-btn color="primary" text @click="snackbar = false">
                     Close
                 </v-btn>
             </v-snackbar>
-        </v-container>
     </v-app>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
-<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
+<script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js"></script>
+</body>
 
 <script>
 
-var app = new Vue({
-
-    el: '#app',
-
-    data() {
-        return {
-            token: null,
-            current_user: "{{ current_user }}",
-            mongodb: "{{ mongodb }}",
-            snackbar: false,
-            snackbar_text: "",
-        }
-    },
-
-    created() {
-        this.$vuetify.theme = window.PNBI_THEME;
-
-        axios.interceptors.request.use(
-            request => {
-                request.headers['Accept'] = 'application/json'
-                request.withCredentials = true
-                return request
-            },
-            error => {
-                return Promise.reject(error)
-        })
-    },
-
-    computed: {
-        url: function() {
-            if (this.token != null) {
-                return "mongodb://" + this.current_user + ":" + this.token + "@" + this.mongodb;
+    var app = new Vue({
+    
+        el: '#app',
+        vuetify: window.c4Vuetify, // from widgets-4.0.min.js
+    
+        data() {
+            return {
+                token: null,
+                current_user: "{{ current_user }}",
+                mongodb: "{{ mongodb }}",
+                snackbar: false,
+                snackbar_text: "",
             }
-        }
-    },
-
-    delimiters: ['[[', ']]'],
-
-    mounted(){
-    },
-
-    methods:{
-        onclick: function() {
-            axios.post('/core4/api/v1/access')
-                .then(function (response) {
-                    this.token = response.data.data.mongodb
-              }.bind(this))
-              .catch(function (error) {
-                    console.log(error);
-              });
         },
-        oncopy: function() {
-            if (this.token != null) {
-                var toCopy = document.querySelector('#url')
-                toCopy.select()
-                try {
-                    var successful = document.execCommand('copy');
-                    this.snackbar_text = "MongoDB URL copied to your clipboard";
+    
+        created() {
+            axios.interceptors.request.use(
+                request => {
+                    request.headers['Accept'] = 'application/json'
+                    request.withCredentials = true
+                    return request
+                },
+                error => {
+                    return Promise.reject(error)
+            })
+        },
+    
+        computed: {
+            url: function() {
+                if (this.token != null) {
+                    return "mongodb://" + this.current_user + ":" + this.token + "@" + this.mongodb;
                 }
-                catch (err) {
-                    this.snackbar_text = "Failed to copy MongoDB URL to your clipboard";
+            }
+        },
+    
+        delimiters: ['[[', ']]'],
+    
+        mounted(){
+        },
+    
+        methods:{
+            onclick: function() {
+                axios.post('/core4/api/v1/access')
+                    .then(function (response) {
+                        this.token = response.data.data.mongodb
+                  }.bind(this))
+                  .catch(function (error) {
+                        console.log(error);
+                  });
+            },
+            oncopy: function() {
+                if (this.token != null) {
+                    var toCopy = document.querySelector('#url')
+                    toCopy.select()
+                    try {
+                        var successful = document.execCommand('copy');
+                        this.snackbar_text = "MongoDB URL copied to your clipboard";
+                    }
+                    catch (err) {
+                        this.snackbar_text = "Failed to copy MongoDB URL to your clipboard";
+                    }
+                    this.snackbar = true;
+                    window.getSelection().removeAllRanges()
                 }
-                this.snackbar = true;
-                window.getSelection().removeAllRanges()
             }
         }
-    }
-})
-</script>
-</body>
-
+    })
+    </script>
 </html>
