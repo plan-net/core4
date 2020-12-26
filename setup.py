@@ -86,3 +86,34 @@ setup(
         "Operating System :: POSIX :: Linux"
     )
 )
+
+
+"""
+
+find . -iname .venv -type d | xargs -I {} rm -vRf "{}";
+find . -name node_modules -type d | xargs -I {} rm -vRf "{}";
+find . -name dist -type d | xargs -I {} rm -vRf "{}";
+
+python3.8 -m venv .venv
+export PATH=./.venv/bin:$PATH
+
+pip install --edit .
+
+export INSTALL=`find . -iname package.json | xargs -I {} dirname {}`
+export ORIG=`pwd`
+
+
+cd ./core4/webapps/comoco
+yarn
+yarn install
+yarn build
+cd $ORIG
+
+cd ./core4/webapps/widgets
+yarn
+yarn install
+yarn build
+cd $ORIG
+
+
+"""

@@ -187,11 +187,10 @@ class CoreBaseHandler(CoreBase):
                 "/login?h={uuid}&next={next}".format(
                     uuid=str(uuid4()),
                     next=urllib.parse.quote(self.request.full_url()))])
-            login = self.config.api.auth_url.strip() + "/login"
-            source = urllib.parse.quote(self.request.full_url())
-            self.flash_error({"login": login})
-            self.flash_error({"source": source})
-            self.flash_error({"url": url})
+            self.flash_error({
+                "login": self.config.api.auth_url.strip() + "/login",
+                "source": urllib.parse.quote(self.request.full_url()),
+                "url": url})
             raise HTTPError(401)
 
     async def verify_access(self):
@@ -775,6 +774,56 @@ class CoreBaseHandler(CoreBase):
             del self.request.arguments[name]
         return ret
 
+    def flash(self, level, message, *vars):
+        """
+        Add a flash message with
+
+        :param level: DEBUG, INFO, WARNING or ERROR
+        :param message: str or dict to flash
+        """
+        level = level.upper().strip()
+        assert level in FLASH_LEVEL
+        if isinstance(message, dict):
+            self._flash.append({"level": level, "data": message})
+        else:
+            self._flash.append({"level": level, "message": message % vars})
+
+    def flash_debug(self, message, *vars):
+        """
+        Add a DEBUG flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("DEBUG", message, *vars)
+
+    def flash_info(self, message, *vars):
+        """
+        Add a INFO flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("INFO", message, *vars)
+
+    def flash_warning(self, message, *vars):
+        """
+        Add a WARNING flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("WARNING", message, *vars)
+
+    def flash_error(self, message, *vars):
+        """
+        Add a ERROR flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("ERROR", message, *vars)
+
 
 class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
@@ -1033,56 +1082,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
             data=chunk
         )
         self.finish(chunk)
-
-    def flash(self, level, message, *vars):
-        """
-        Add a flash message with
-
-        :param level: DEBUG, INFO, WARNING or ERROR
-        :param message: str or dict to flash
-        """
-        level = level.upper().strip()
-        assert level in FLASH_LEVEL
-        if isinstance(message, dict):
-            self._flash.append({"level": level, "data": message})
-        else:
-            self._flash.append({"level": level, "message": message % vars})
-
-    def flash_debug(self, message, *vars):
-        """
-        Add a DEBUG flash message.
-
-        :param message: str or dict to flash
-        :param vars: optional str template variables
-        """
-        self.flash("DEBUG", message, *vars)
-
-    def flash_info(self, message, *vars):
-        """
-        Add a INFO flash message.
-
-        :param message: str or dict to flash
-        :param vars: optional str template variables
-        """
-        self.flash("INFO", message, *vars)
-
-    def flash_warning(self, message, *vars):
-        """
-        Add a WARNING flash message.
-
-        :param message: str or dict to flash
-        :param vars: optional str template variables
-        """
-        self.flash("WARNING", message, *vars)
-
-    def flash_error(self, message, *vars):
-        """
-        Add a ERROR flash message.
-
-        :param message: str or dict to flash
-        :param vars: optional str template variables
-        """
-        self.flash("ERROR", message, *vars)
 
     def parse_objectid(self, _id):
         """
