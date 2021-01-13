@@ -18,46 +18,45 @@ from core4.util.email import RoleEmail
 
 
 class RoleHandler(CoreRequestHandler):
-    title = "Role and user management"
-    subtitle = "Create new users or roles"
+
+    title = "Roles and Users"
+    subtitle = "Manage Users or Roles"
     author = "mra"
     icon = "mdi-account-multiple-plus"
-    tag = ["roles app", "roles", "app", "rolemanagement"]
+    tag = ["operations"]
     res = 11
-    #cardExists = True
 
     async def post(self, _id=None):
         """
         Creates a new user or role. Note that users are different to roles in
-        that actual users have a valid :class:`.StringField` ``email`` and
-        :class:`.PasswordField` ``password``. For roles both attributes must be
-        ``None``.
-        On creating a new user, an Email-Job is enqueued that sends a token to
-        set/reset the password to the given email-address.
+        that actual users have a valid ``email`` and ``password``. For roles
+        both attributes must be ``None``. On creating a new user, an Email-Job
+        is enqueued that sends a token to set/reset the password to the given
+        email-address.
 
         Methods:
             POST /core4/api/v1/roles - user/role creation
 
         Parameters:
-            name (str): unique name of the user or role.
-            realname (str): of the user or role
-            is_active (bool): disable login and permission cascade with
-                              ``True``
-            role (list): of role names assigned
-            email (str): for actual users; for roles the email attribute is
-                         expected to be undefined or ``None``
-            passwd (str): for actual users; for roles the password attribute
-                          is expected to be undefined or ``None``
-            perm (list): of permission protocols
+            - name (str): unique name of the user or role.
+            - realname (str): of the user or role
+            - is_active (bool): disable login and permission cascade with
+              ``True``
+            - role (list): of role names assigned
+            - email (str): for actual users; for roles the email attribute is
+              expected to be undefined or ``None``
+            - passwd (str): for actual users; for roles the password attribute
+              is expected to be undefined or ``None``
+            - perm (list): of permission protocols
+        
+              The following permission protocols exist:
 
-        The following permission protocols exist:
-
-        * ``cop`` - administrative role
-        * ``job://[qual_name]/[xr]`` - job read and execution permission
-        * ``api://[qual_name]`` - api access permission
-        * ``app://[key]`` - app key permission
-        * ``mongodb://[database]`` - MongoDB database access permission
-          (read-only)
+              * ``cop`` - administrative role
+              * ``job://[qual_name]/[xr]`` - job read and execution permission
+              * ``api://[qual_name]`` - api access permission
+              * ``app://[key]`` - app key permission
+              * ``mongodb://[database]`` - MongoDB database access permission
+                (read-only)
 
         Returns:
             data element with
@@ -70,12 +69,12 @@ class RoleHandler(CoreRequestHandler):
             - **perm** (*list*): of cascading permission protocols
 
         Raises:
-            400 Bad Request: AttributeError
-            400 Bad Request: TypeError
-            400 Bad Request: Core4ConflictError
-            400 Bad Request: name or email exists
-            401 Unauthorized:
-            404 Bad Request: Core4RoleNotFound
+            400: Bad Request (AttributeError)
+            400: Bad Request (TypeError)
+            400: Bad Request (Core4ConflictError)
+            400: Bad Request (name or email exists)
+            401: Unauthorized
+            404: Not Found (Core4RoleNotFound)
 
         Examples:
             >>> from requests import get, post, delete, put
@@ -175,28 +174,28 @@ class RoleHandler(CoreRequestHandler):
 
     async def get(self, _id=None):
         """
-        Get users/roles listing and details.
-        If accessed via browser, this endpoint renders a RoleManagement Widget
-        capable of creating/deleting/editing roles.
+        Get users/roles listing and details. If accessed via browser, this
+        endpoint renders a RoleManagement Widget capable of
+        creating/deleting/editing roles.
 
         Methods:
             GET /core4/api/v1/roles/<_id> - user/role listing
 
         Arguments:
-            per_page (int): number of jobs per page
-            page (int): requested page (starts counting with ``0``)
-            sort (str): sort field
-            order (int): sort direction (``1`` for ascending, ``-1`` for
-                descending)
-            _id: (str): a given user_id for which to return information or
-                "distinct" to retrieve a list of all distinct rolenames or
-                all userinformation if no _id is given.
+            - per_page (int): number of jobs per page
+            - page (int): requested page (starts counting with ``0``)
+            - sort (str): sort field
+            - order (int): sort direction (``1`` for ascending, ``-1`` for
+              descending)
+            - _id: (str): a given user_id for which to return information or
+              "distinct" to retrieve a list of all distinct rolenames or all
+              user information if no _id is given.
 
         Returns:
-            dictionary of roleinformation for a given _id , list of names of all
-            present roles if _id == "distinct" or information about all roles
-            if no _id is given.
-            For pagination the following top level attributes are returned:
+            dictionary of role information for a given _id , list of names of
+            all present roles if ``_id == "distinct"`` or information about all
+            roles if no ``_id`` is given. For pagination the following top level
+            attributes are returned:
 
             - **total_count** (int): the total number of records
             - **count** (int): the number of records in current page
@@ -205,11 +204,11 @@ class RoleHandler(CoreRequestHandler):
             - **per_page** (int): the number of elements per page
 
         Raises:
-            400 Bad Request: AttributeError
-            400 Bad Request: TypeError
-            400 Bad Request: Core4ConflictError
-            401 Unauthorized: Login required
-            404 Bad Request: Core4RoleNotFound
+            400: Bad Request (AttributeError)
+            400: Bad Request (TypeError)
+            400: Bad Request (Core4ConflictError)
+            401: Unauthorized
+            404: Bad Request (Core4RoleNotFound)
 
         Examples:
             >>> rv = get(url + "/roles", headers=h)
@@ -309,19 +308,19 @@ class RoleHandler(CoreRequestHandler):
             PUT /core4/api/v1/roles/<_id> - user/role update
 
         Parameters:
-            _id (str): of the user/role to update
-            etag (str): of the user/role
-            name (str): unique name of the user or role.
-            realname (str): of the user or role
-            is_active (bool): disable login and permission cascade with
-                ``True``
-            role (list): of role names assigned
-            email (str): for actual users; for roles the email attribute is
-                expected to be undefined or ``None``
-            passwd (str): for actual users; for roles the password attribute
-                is expected to be undefined or ``None``
-            perm (list): of permission protocols. For valid permission
-                protocols see ``POST`` method.
+            - _id (str): of the user/role to update
+            - etag (str): of the user/role
+            - name (str): unique name of the user or role.
+            - realname (str): of the user or role
+            - is_active (bool): disable login and permission cascade with
+              ``True``
+            - role (list): of role names assigned
+            - email (str): for actual users; for roles the email attribute is
+              expected to be undefined or ``None``
+            - passwd (str): for actual users; for roles the password attribute
+              is expected to be undefined or ``None``
+            - perm (list): of permission protocols. For valid permission
+              protocols see ``POST`` method.
 
         Returns:
             If the requested update did not change any attribute, then
@@ -337,11 +336,11 @@ class RoleHandler(CoreRequestHandler):
             - **perm** (*list*): of cascading permission protocols
 
         Raises:
-            400 Bad Request: AttributeError
-            400 Bad Request: TypeError
-            400 Bad Request: Core4ConflictError
-            401 Unauthorized:
-            404 Bad Request: Core4RoleNotFound
+            400: Bad Request (AttributeError)
+            400: Bad Request (TypeError)
+            400: Bad Request (Core4ConflictError)
+            401: Unauthorized
+            404: Bad Request (Core4RoleNotFound)
 
         Examples:
             >>> rv = put(url + "/roles/5bed1271de8b6973711e9715",
@@ -445,8 +444,8 @@ class RoleHandler(CoreRequestHandler):
             DELETE /core4/api/v1/roles/<_id>/<etag>
 
         Parameters:
-            _id (str): of the user/role to delete
-            etag (str): of the user/role
+            - _id (str): of the user/role to delete
+            - etag (str): of the user/role
 
         Returns:
             data with ``True`` for success, else ``False``
@@ -460,10 +459,10 @@ class RoleHandler(CoreRequestHandler):
             - **perm** (*list*): of cascading permission protocols
 
         Raises:
-            400 Bad Request: AttributeError
-            400 Bad Request: TypeError
-            400 Bad Request: Core4ConflictError
-            404 Bad Request: Core4RoleNotFound
+            400: Bad Request (AttributeError)
+            400: Bad Request (TypeError)
+            400: Bad Request (Core4ConflictError)
+            404: Bad Request (Core4RoleNotFound)
 
         Examples:
             >>> rv = get(url + "/roles/5bed0a9ade8b693044cb7674", headers=h)

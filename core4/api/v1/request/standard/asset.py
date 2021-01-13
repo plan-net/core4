@@ -41,7 +41,7 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
     author = "mra"
     title = "asset handler"
     default_filename = "index.html"
-    icon = "memory"
+    doc = "Technical endpoint to deliver assets."
 
     def __init__(self, *args, **kwargs):
         CoreRequestHandler.__init__(self, *args, **kwargs)

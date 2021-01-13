@@ -15,7 +15,7 @@ from core4.api.v1.request.role.access.manager import CoreAccessManager
 
 class AccessHandler(CoreRequestHandler):
     """
-    Create your personnel MongoDB Database Token
+    Create your personnel MongoDB Database Access Token
     """
     title = "Access Manager"
     subtitle = "MongoDB"
@@ -33,7 +33,7 @@ class AccessHandler(CoreRequestHandler):
             POST /core4/api/v1/access
 
         Parameters:
-            protocol (str): access protocol
+            - protocol (str): access protocol
 
         Returns:
             data element with
