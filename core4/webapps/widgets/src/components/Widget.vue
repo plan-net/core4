@@ -6,6 +6,7 @@
     <div class="widget-content">
       <!-- Safe zone, enter your custom markup -->
       <v-card class="c4-card mx-auto rounded-lg elevation-3 flex-column d-flex">
+
         <template v-if="widget.error != null">
           <widget-error :widget="widget"></widget-error>
         </template>
@@ -238,6 +239,7 @@ export default {
   computed: {
     src () {
       try {
+        console.log(this.dark)
         const dark = new URLSearchParams(this.$vuetify.theme.themes.dark).toString().split('&').join('xyz')
         const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')
         const endpoint = replacePort(this.widget.endpoint[0])
@@ -248,9 +250,6 @@ export default {
     dark () {
       return this.$store.getters.dark
     },
-    /*     isHtml () {
-      return this.widget.custom_card === true
-    }, */
     desc () {
       try {
         return this.widget.description_html.body || this.widget.description_html
@@ -259,9 +258,6 @@ export default {
       }
       return ''
     },
-    /*     html () {
-      return this.widget.html
-    }, */
     h () {
       const h = Number((this.widget.res || 11).toString().split('')[1])
       let temp = h * baseHeight
@@ -315,7 +311,6 @@ export default {
   .v-card {
     height: inherit;
     .v-card__text {
-
       width: inherit;
       //display: flex !important;
     }
