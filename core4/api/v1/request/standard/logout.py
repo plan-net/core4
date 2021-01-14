@@ -13,7 +13,10 @@ from core4.api.v1.request.main import CoreRequestHandler
 
 
 class LogoutHandler(CoreRequestHandler):
-    title = "logout"
+    """
+    core4os standard Logout Handler.
+    """
+    title = "Logout Handler"
     author = "mra"
 
     async def get(self):
@@ -26,13 +29,13 @@ class LogoutHandler(CoreRequestHandler):
         """
         Logout an authenticated user.
 
-        .. note:: This request resets the secure cookie. Further actions have
-                  to be taken by the client itself, e.g. resetting the token
-                  or resetting client basic authentication. The latter
-                  typically requires to restart the client.
+        This request resets the secure cookie. Further actions have
+        to be taken by the client itself, e.g. resetting the token
+        or resetting client basic authentication. The latter
+        typically requires to restart the client.
 
         Methods:
-            POST /
+            POST /core4/api/v1/logout
 
         Parameters:
             None

@@ -39,7 +39,7 @@ class CoreAssetHandler(CoreRequestHandler, StaticFileHandler):
               use or inherit from this handler.
     """
     author = "mra"
-    title = "asset handler"
+    title = "Asset Handler"
     default_filename = "index.html"
     doc = "Technical endpoint to deliver assets."
 

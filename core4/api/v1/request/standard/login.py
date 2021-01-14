@@ -15,11 +15,10 @@ from core4.util.email import RoleEmail
 
 class LoginHandler(CoreRequestHandler):
     """
-    core4os standard :class:`LoginHandler`.
+    core4os standard Login Handler.
     """
-    title = "Authentication"
+    title = "Login Handler"
     author = "mra"
-    tag = "api"
     protected = False
 
     async def get(self):
@@ -47,8 +46,8 @@ class LoginHandler(CoreRequestHandler):
             POST /core4/api/v1/login
 
         Parameters:
-            username (str): requesting login
-            password (str): requesting login
+            - username (str): requesting login
+            - password (str): requesting login
 
         Returns:
             data element with
@@ -117,28 +116,28 @@ class LoginHandler(CoreRequestHandler):
         """
         User password reset.
 
-        Methods:
-            PUT /core4/api/v1/login
-
-        Parameters:
-            email (str): of the user who requests to reset his password
-            token (str): of the authenticated user
-            password (str): the new password to set
-
         ``PUT`` with an existing ``email`` parameter starts the password  reset
         workflow and sends a password reset token by email. ``PUT`` with this
         ``token`` and a new ``password`` updates the user's password and
         finishes the password reset workflow.
 
-        .. note:: The email with the reset password token is sent with a
-                  seperate job. Check core4 logging or ``sys.queue`` regarding
-                  the email and token (see :ref:`tools`)
+        The email with the reset password token is sent with a seperate job.
+        Check core4 logging or ``sys.queue`` regarding the email and token
+        (see :ref:`tools`)
+
+        Methods:
+            PUT /core4/api/v1/login
+
+        Parameters:
+            - email (str): of the user who requests to reset his password
+            - token (str): of the authenticated user
+            - password (str): the new password to set
 
         Returns:
             dict with empty data element
 
         Raises:
-            400 Bad Request: if no email or token/password is sent
+            400: Bad Request (if no email or token/password is sent)
 
         Examples:
             >>> from requests import get, put

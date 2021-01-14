@@ -21,6 +21,7 @@ class RoleHandler(CoreRequestHandler):
 
     title = "Roles and Users"
     subtitle = "Manage Users or Roles"
+    doc = "Create, edit and delete users and roles"
     author = "mra"
     icon = "mdi-account-multiple-plus"
     tag = ["operations"]
