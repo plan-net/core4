@@ -71,6 +71,7 @@ class EventHandler(CoreWebSocketHandler):
     """
     author = "mra"
     title = "event web socket"
+    doc = "Web socket handler to process channel interests"
     waiters = {}
     last = []
 
