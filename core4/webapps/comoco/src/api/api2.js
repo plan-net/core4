@@ -1,7 +1,7 @@
 import axios from 'axios'
 import Vue from 'vue'
 import { SSE } from '@/components/misc/sse.modified.js'
-
+console.log('process.env.VUE_APP_APIBASE_CORE', process.env.VUE_APP_APIBASE_CORE)
 const on = () => {}
 const off = () => {}
 export function getSSE (
