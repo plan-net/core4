@@ -7,6 +7,7 @@ const off = () => {}
 export function getSSE (
   options = { endpoint: 'jobs/poll', json: {} }
 ) {
+  console.log(process.env.VUE_APP_APIBASE_APP)
   const path = `${process.env.VUE_APP_APIBASE_CORE}/${options.endpoint}` // token necessary here because stream handling
   return new SSE(path, {
     headers: { 'Content-Type': 'text/plain' },
