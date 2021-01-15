@@ -1,13 +1,12 @@
 import axios from 'axios'
 import Vue from 'vue'
 import { SSE } from '@/components/misc/sse.modified.js'
-
+console.log('process.env.VUE_APP_APIBASE_APP', process.env.VUE_APP_APIBASE_APP)
 const on = () => {}
 const off = () => {}
 export function getSSE (
   options = { endpoint: 'jobs/poll', json: {} }
 ) {
-  console.log(process.env.VUE_APP_APIBASE_APP)
   const path = `${process.env.VUE_APP_APIBASE_CORE}/${options.endpoint}` // token necessary here because stream handling
   return new SSE(path, {
     headers: { 'Content-Type': 'text/plain' },
