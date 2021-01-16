@@ -130,9 +130,10 @@ api:
   verify_ssl: True
   new_range: 180
   tag:
-    - app
     - new
     - analytics
+    - data
+    - operations
 
 email:
   username: ~
