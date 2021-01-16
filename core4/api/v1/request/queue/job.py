@@ -42,7 +42,7 @@ STATE_STOPPED = (
 
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     """
-    **DEPRICATED**! Get job listing, job details, kill, delete and restart jobs.
+    **DEPRECATED!** Get job listing, job details, kill, delete and restart jobs.
     """
 
     author = "mra"
@@ -66,7 +66,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def get(self, _id=None):
         """
-        **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
 
         Paginated job listing with ``/jobs``,  and single job details with
         ``/jobs/<_id>``. Only jobs with read/execute access permissions granted
@@ -599,7 +599,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
 class JobPost(JobHandler):
     """
-    **DEPRICATED** Post new job.
+    **DEPRECATED!** Post new job.
     """
 
     author = "mra"
@@ -608,7 +608,7 @@ class JobPost(JobHandler):
 
     async def post(self, _id=None):
         """
-        **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
 
         Only jobs with execute access permissions granted to the current user
         can be posted.
@@ -723,7 +723,7 @@ class JobPost(JobHandler):
 
 class JobStream(JobPost):
     """
-    **DEPRICATED** Stream job attributes until job reaches final state
+    **DEPRECATED!** Stream job attributes until job reaches final state
     (``ERROR``, ``INACTIVE``, ``KILLED``).
     """
 
@@ -741,7 +741,7 @@ class JobStream(JobPost):
 
     async def get(self, _id=None):
         """
-        **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
 
         Only jobs with execute access permissions granted to the current user
         can be streamed.
@@ -884,7 +884,7 @@ class JobStream(JobPost):
 
     async def post(self, _id=None):
         """
-        **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
 
         Only jobs with execute access permissions granted to the current user
         can be enqueued and streamed.
@@ -955,7 +955,7 @@ class JobStream(JobPost):
 
 class JobList(CoreRequestHandler):
     """
-    **DEPRICATED:** List of existing jobs
+    **DEPRECATED!** List of existing jobs
     """
     author = "mra"
     title = "Job Listing"
@@ -963,7 +963,7 @@ class JobList(CoreRequestHandler):
 
     async def get(self):
         """
-        **DEPRICATED:** Use :class:`core4.api.v1.request.job.JobRequest`.
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
 
         Paginated list of jobs the currently logged in user is allowed to
         launch.
@@ -1004,16 +1004,11 @@ class JobList(CoreRequestHandler):
         """
         # if self.wants_html():
         #     return self.render("template/enqueue/main.html")
-        per_page = int(self.get_argument(
-            "per_page", as_type=int, default=10))
-        current_page = int(self.get_argument(
-            "page", as_type=int, default=0))
-        query_filter = self.get_argument(
-            "filter", as_type=dict, default={})
-        sort_order = self.get_argument(
-            "sort", as_type=list, default=None)
-        search = self.get_argument(
-            "search", as_type=str, default=None)
+        per_page = int(self.get_argument("per_page", as_type=int, default=10))
+        current_page = int(self.get_argument("page", as_type=int, default=0))
+        query_filter = self.get_argument("filter", as_type=dict, default={})
+        sort_order = self.get_argument("sort", as_type=list, default=None)
+        search = self.get_argument("search", as_type=str, default=None)
         query_filter["valid"] = True
         if "name" in query_filter:
             query_filter["_id"] = query_filter["name"]

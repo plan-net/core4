@@ -8,14 +8,10 @@
 <h1>{{ root }}</h1>
 <ul>
     {% if root != "/" %}
-        <li><a href="/core4/api/v1/store{{ root }}/..">../</a></li>
+        <li><a href="/core4/api/v1/store{{ root }}../">../</a></li>
     {% end if %}
     {% for elem in xpath %}
-        {% if root == "/" %}
-            {% set v = elem[len(root):] %}
-        {% else %}
-            {% set v = elem[len(root) + 1:] %}
-        {% end if %}
+        {% set v = elem[len(root):] %}
         <li><a href="/core4/api/v1/store{{ elem }}">./{{ v }}</a></li>
     {% end for %}
 </ul>
@@ -40,6 +36,7 @@
 <button id="deleter">DELETE</button>
 <pre><span id="log"></span></pre>
 <script>
+    console.log("HOME: {{ root }}");
     function req(url, method, data, location) {
         var xhr = new XMLHttpRequest();
         var out = document.getElementById("log");
@@ -47,28 +44,37 @@
             out.textContent = this.status + ": " + this.responseText;
             if (this.status == 200) {
                 setTimeout(function(){
-                    document.location.href = location;
+                    console.log("refer to " + "/core4/api/v1/store" + location);
+                    document.location.href = "/core4/api/v1/store" + location;
                 }, 500);
             }
         }
-        xhr.open(method, url, true);
+        console.log("visit " + "/core4/api/v1/store" + url);
+        xhr.open(method, "/core4/api/v1/store" + url, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.send(data);
-
     }
     document.getElementById("submitter").addEventListener("click",function(e){
         var js = document.getElementById("geno");
-        req(location.href, "POST", js.value, document.location.href);
+        req("{{ root }}", "POST", js.value, "{{ root }}");
     }, false);
 
     document.getElementById("newer").addEventListener("click",function(e){
         var title = prompt("go:");
         if (title != null) {
-            req(location.href + "/" + title, "POST", "{}", document.location.href + "/" + title);
+            req("{{ root }}" + title, "POST", "{}", "{{ root }}");
         }
     }, false);
     document.getElementById("deleter").addEventListener("click",function(e){
-        req(location.href, "DELETE", null, document.location.href + "/..");
+        var elem = "{{ root }}";
+        var up = "{{ root }}";
+        if (elem != "/") {
+            if (elem.endsWith("/")) {
+                elem = elem.substring(0, elem.length - 1);
+            }
+            up = elem + "/..";
+        }
+        req(elem, "DELETE", null, up);
     }, false);
 </script>
 </body>

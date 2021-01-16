@@ -276,7 +276,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 handler = rule.target
                 if issubclass(handler, CoreBaseHandler):
                     description = rule.target_kwargs.get(
-                        "doc", handler.__doc__) or "None"
+                        "doc", handler.doc or handler.__doc__) or "None"
                     description_html = core4.util.data.rst2html(description)
                     if "card" in handler.__dict__:
                         custom_card = callable(handler.__dict__["card"])

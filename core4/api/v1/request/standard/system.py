@@ -17,8 +17,8 @@ class SystemHandler(CoreRequestHandler, QueryMixin):
     * maintenance modes (global and project specific)
     """
     author = "mra"
-    title = "System information"
-    tag = ["info"]  # idea is to have a system info app, remove api by then
+    title = "System Information"
+    tag = ["api"]
     icon = "mdi-cog-outline"
     res = 11
 

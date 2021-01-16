@@ -92,7 +92,6 @@ class SettingHandler(CoreRequestHandler):
     title = "Settings"
     subtitle = "User Settings (read-only)"
     author = "oto"
-    tag = "setting"
     icon = "mdi-account-cog"
     default_setting = None
     doc = "Details About Your Personal Settings"
@@ -251,17 +250,16 @@ class SettingHandler(CoreRequestHandler):
             GET /core4/api/v1/setting
 
         Parameters:
-            username (str): parameter which specifies the user for which the
-                            settings should be retrieved. Requires **COP**
-                            (*core operators*) permissions to be used.
-                            If not provided, settings for the current user
-                            are returned.
+            - username (str): parameter which specifies the user for which the
+              settings should be retrieved. Requires **COP** (*core operators*)
+              permissions to be used. If not provided, settings for the current
+              user are returned.
 
         Returns:
             data with user-related system data and project specific settings
 
         Raises:
-            400 Bad request: Invalid resource name
+            400: Bad request (Invalid resource name)
 
         Examples:
             >>> from requests import get
@@ -320,21 +318,21 @@ class SettingHandler(CoreRequestHandler):
             DELETE /core4/api/v1/setting
 
         Parameters:
-            username (str): parameter which specifies the user for which the
-                            settings should be retrieved. Requires **COP**
-                            (*core operators*) permissions to be used.
-                            If not provided, settings for the current user
-                            are returned.
+            - username (str): parameter which specifies the user for which the
+              settings should be retrieved. Requires **COP** (*core operators*)
+              permissions to be used. If not provided, settings for the current
+              user are returned.
 
         Returns:
             None
 
         Raises:
-            400 Bad request: Invalid resource name
-            400 Bad request: Failed to delete setting - database not able to
-                                                        delete record(s)
-            404 Not found: Resource not found - database not able to find user
-                                                related document
+            400: Bad request (Invalid resource name)
+            400: Bad request (Failed to delete setting - database not able to
+                 delete record(s)
+            404: Not found (Resource not found) - database not able to find user
+                 related document
+
         Examples:
             >>> from requests import get, delete
             >>> url = "http://localhost:5001/core4/api"
@@ -368,26 +366,26 @@ class SettingHandler(CoreRequestHandler):
             POST /core4/api/v1/setting
 
         Parameters:
-            username (str): parameter which specifies the user for which the
-                            settings should be retrieved. Requires **COP**
-                            (*core operators*) permissions to be used.
-                            If not provided, settings for the current user
-                            are returned.
+            - username (str): parameter which specifies the user for which the
+              settings should be retrieved. Requires **COP** (*core operators*)
+              permissions to be used. If not provided, settings for the current
+              user are returned.
 
         Returns:
             data element with set data from request body
 
         Raises:
-            400 Bad request: Invalid resource name
+            400: Bad request (Invalid resource name)
 
-            400 Bad request: Body in request is empty - invalid request
-                                       structure, empty body section
+            400: Bad request (Body in request is empty - invalid request
+                 structure, empty body section)
 
-            400 Bad request: Failed to insert setting - database not able to
-                               create new user-related document (initial post)
+            400: Bad request (Failed to insert setting - database not able to
+                 create new user-related document (initial post))
 
-            400 Bad request: Failed to update setting - database not able to
-                                                        update records
+            400: Bad request (Failed to update setting - database not able to
+                 update records)
+
         Examples:
             >>> from requests import get, post
             >>> url = "http://localhost:5001/core4/api/setting"
@@ -486,8 +484,8 @@ class CoreSettingDataAccess(CoreBase):
             None
 
         Raises:
-            400 Bad request: Failed to insert setting
-            400 Bad request: Failed to update setting
+            400: Bad request (Failed to insert setting)
+            400: Bad request (Failed to update setting)
         """
         db_document = await self.find_one(_id=user_id)
 
@@ -519,8 +517,8 @@ class CoreSettingDataAccess(CoreBase):
             None
 
         Raises:
-            404 Nor found: Resource not found
-            400 Bad request: Failed to delete setting
+            404: Not found (Resource not found)
+            400: Bad request (Failed to delete setting)
         """
         db_document = await self.find_one(_id=user_id)
 

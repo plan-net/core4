@@ -1,3 +1,10 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import os
 import re
 import sys
@@ -111,7 +118,7 @@ def end_of_job(rec):
 
 class JobRequest(CoreRequestHandler):
     """
-    core4 job management request to
+    Job Management Handler delivers
 
     * listing of available jobs
     * enqueuing of jobs
@@ -123,7 +130,9 @@ class JobRequest(CoreRequestHandler):
 
     author = "mra"
     title = "job management"
+    subtitle = "Enqueue and Manage Jobs"
     tag = "api jobs"
+    doc = "Job Management Handler"
 
     @property
     def queue(self):
@@ -136,12 +145,12 @@ class JobRequest(CoreRequestHandler):
         enqueue new job and retrieve current job list
 
         Methods:
-            POST /core4/api/v1/job - enqueue new job and receive SSE state/log stream
+            POST /core4/api/v1/job - enqueue new job and receive state stream
 
         Parameters:
-            qual_name (str)
-            follow (bool) - receive state/log stream (True) or job id (False)
-            args (dict) - job arguments
+            - qual_name (str)
+            - follow (bool): receive state/log stream (True) or job id (False)
+            - args (dict): job arguments
 
         Returns:
             SSE event stream with type ``state`` delivering the job document
@@ -150,10 +159,10 @@ class JobRequest(CoreRequestHandler):
             the created ``job_id``.
 
         Raises:
-            401 Unauthorized:
-            403 Forbidden
-            404 Not Found
-            500 Server Error (failed to enqueue)
+            401: Unauthorized
+            403: Forbidden
+            404: Not Found
+            500: Server Error (failed to enqueue)
 
         Examples:
             >>> from requests import post
@@ -171,18 +180,18 @@ class JobRequest(CoreRequestHandler):
             POST /core4/api/v1/job/queue - retrieve current jobs list
 
         Parameters:
-            page (int)
-            per_page (int)
-            filter (dict) - MongoDB json query
-            sort (list) - list of 2-element list with key and direction
+            - page (int)
+            - per_page (int)
+            - filter (dict): MongoDB json query
+            - sort (list): list of 2-element list with key and direction
 
         Returns:
             paginated list of job details from ``sys.queue``. Note that jobs
             without access permissions are masked with ``UnauthorizedJob``.
 
         Raises:
-            401 Unauthorized:
-            403 Forbidden
+            401: Unauthorized:
+            403: Forbidden
 
         Examples:
             >>> from requests import post
@@ -202,23 +211,21 @@ class JobRequest(CoreRequestHandler):
         logging
 
         Methods:
-            GET /core4/api/v1/job - retrieve current jobs list
-
-        see :meth:`.post` (``POST /core4/api/v1/job``)
+            GET /core4/api/v1/job - see :meth:`.post`
 
         Methods:
             GET /core4/api/v1/job/<_id> - retrieve job details
 
         Parameters:
-            _id (ObjectId) - job _id
+            - _id (ObjectId): job _id
 
         Returns:
             Job details retrieved from ``sys.queue`` for current jobs and from
             ``sys.journal`` for past jobs
 
         Raises:
-            401 Unauthorized:
-            403 Forbidden
+            401: Unauthorized
+            403: Forbidden
 
         Examples:
             >>> from requests import get
@@ -231,7 +238,7 @@ class JobRequest(CoreRequestHandler):
             GET /core4/api/v1/job/follow/<_id> - follow running job
 
         Parameters:
-            _id (ObjectId)
+            - _id (ObjectId)
 
         Returns:
             SSE event stream with type ``state`` delivering the job document
@@ -239,8 +246,8 @@ class JobRequest(CoreRequestHandler):
             ``sys.log``.
 
         Raises:
-            401 Unauthorized:
-            403 Forbidden
+            401: Unauthorized:
+            403: Forbidden
 
         Examples:
             >>> from requests import post, get
@@ -263,17 +270,17 @@ class JobRequest(CoreRequestHandler):
             GET /core4/api/v1/job/log/<_id> - follow job log
 
         Parameters:
-            _id (ObjectId) - job _id
-            follow (bool) - ``True`` for SSE streaming, ``False`` for paginated
-            log retrieval
+            - _id (ObjectId): job _id
+            - follow (bool): ``True`` for SSE streaming, ``False`` for
+              paginated log retrieval
 
         Returns:
             SSE event stream with type ``log`` delivering the jog log from
             ``sys.log``.
 
         Raises:
-            401 Unauthorized:
-            403 Forbidden
+            401: Unauthorized:
+            403: Forbidden
 
         Examples:
             >>> from requests import post, get
@@ -296,11 +303,11 @@ class JobRequest(CoreRequestHandler):
             GET /core4/api/v1/job/list - retrieve paginated list of jobs
 
         Parameters:
-            page (int)
-            per_page (int)
-            filter (dict) - MongoDB json query
-            sort (list) - list of 2-element list with key and direction
-            search (str) - free text search in ``qual_name``
+            - page (int)
+            - per_page (int)
+            - filter (dict): MongoDB json query
+            - sort (list): list of 2-element list with key and direction
+            - search (str): free text search in ``qual_name``
 
         Returns:
             list of jobs with ``qual_name`` (``_id``), ``author``,
@@ -308,7 +315,7 @@ class JobRequest(CoreRequestHandler):
             ``updated_at``
 
         Raises:
-            401 Unauthorized:
+            401: Unauthorized
 
         Examples:
             >>> from requests import get
@@ -339,18 +346,18 @@ class JobRequest(CoreRequestHandler):
             PUT /core4/api/v1/job/<action>/<_id> - act on a job
 
         Parameters:
-            action (str) - any of ``kill``, ``restart``, or ``remove``
-                _id (ObjectId) - job _id
-            follow (bool) - follow the restarted job (defaults to ``True``).
-                This option applies only to the ``restart`` action.
+            - action (str): any of ``kill``, ``restart``, or ``remove``
+            - _id (ObjectId): job _id
+            - follow (bool): follow the restarted job (defaults to ``True``).
+              This option applies only to the ``restart`` action.
 
         Returns:
             True
 
         Raises:
-            401 Unauthorized:
-            403 Forbidden
-            404 Not Found
+            401: Unauthorized:
+            403: Forbidden
+            404: Not Found
 
         Examples:
             >>> from requests import get

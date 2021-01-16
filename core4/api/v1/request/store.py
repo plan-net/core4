@@ -1,3 +1,10 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import json
 import os.path
 import re
@@ -11,7 +18,7 @@ class StoreHandler(CoreRequestHandler):
     """
     This endpoint services a storage in collection ``sys.store``. You can
     configure the entry point into this storage for each user/role 
-    individually. By defining a permission ``app://store/<path>`` the path 
+    individually. By defining a permission ``app://store/<path>`` the ``path``
     element locates the document in ``sys.store``.
 
     Furthermore the *path* is organised hierarchically. All key/value pairs of
@@ -19,8 +26,10 @@ class StoreHandler(CoreRequestHandler):
     down this path overwrites existing values in parent documents.
 
     With this layout the application can provide default settings. All users
-    without a dedicated ``app:/store/<path`` have access to the root document
-    (``id == "/"``).
+    without a dedicated ``app:/store/<path>`` have access to the root document
+    (``id == "/"``). If the root document is not devined, the ``core4.yaml``
+    configuration defaults in section ``store`` provide the keys and their
+    values.
 
     Note that access to ``POST``, ``DELETE`` and ``GET`` is supposed to be
     reserved for administrators. Regular users access the endpoint with
@@ -77,8 +86,9 @@ class StoreHandler(CoreRequestHandler):
     """
 
     author = "mra"
-    title = "global user-independent store"
-    tag = "api"
+    title = "Cross User Store"
+    tag = "api operations"
+    doc = "Get and manage the cross-user store."
 
     async def post(self, xpath=None):
         """
@@ -90,16 +100,16 @@ class StoreHandler(CoreRequestHandler):
             POST /core4/api/v1/store/<xpath> - create/update a store document
 
         Parameters:
-            xpath (str) - location of the store document
-            key/value pairs (dict) - elements to store
+            - xpath (str): location of the store document
+            - key/value pairs (dict): elements to store
 
         Returns:
             The unmodified store document (dict). Key/value inheritance from
             parent documents is not applied.
 
         Raises:
-            400 Bad Request - failed to parse JSON
-            404 Not Found - parent not found
+            400: Bad Request (failed to parse JSON)
+            404: Not Found (parent not found)
 
         Examples:
             >>> from requests import post
@@ -137,17 +147,17 @@ class StoreHandler(CoreRequestHandler):
             DELETE /core4/api/v1/store/<xpath> - remove a store document
 
         Parameters:
-            xpath (str) - location of the store document
-            recursive (bool) - recursively remove all child store documents
-                (defaults to ``False``)
+            - xpath (str) - location of the store document
+            - recursive (bool) - recursively remove all child store documents
+              (defaults to ``False``)
 
         Returns:
             list of removed store documents
 
         Raises:
-            400 Bad Request - xpath has children if ``recursive is False``
-            400 Bad Request - requires xpath
-            404 Not Found - xpath not found
+            400: Bad Request (xpath has children if ``recursive is False``)
+            400: Bad Request (requires xpath)
+            404: Not Found (xpath not found)
 
         Examples:
             >>> from requests import delete
@@ -191,16 +201,16 @@ class StoreHandler(CoreRequestHandler):
             GET /core4/api/v1/store/<xpath> - retrieve the storage
 
         Parameters:
-            xpath (str) - location of the store
+            - xpath (str): location of the store
 
         Returns:
-            root (str) - store location
-            children (list) - of child documents
-            body (dict) - raw data
-            inherited - data including key/value pairs from parents
+            - **root** (str) - store location
+            - **children** (list) - of child documents
+            - **body** (dict) - raw data
+            - **inherited** - data including key/value pairs from parents
 
         Raises:
-            403 Forbidden
+            403: Forbidden
 
         Examples:
             >>> rv = get("http://localhost:5001/core4/api/v1/store/client-1",
@@ -227,15 +237,19 @@ class StoreHandler(CoreRequestHandler):
             del rec["doc"]["_id"]
             inherited = rec["doc"]
         else:
-            doc = self.raw_config.store.default
-            inherited = []
+            if xpath == "/":
+                doc = None
+            else:
+                doc = {}
+            rec = await self.parse(xpath)
+            inherited = rec["doc"]
         if self.wants_html():
             self.render(
                 "standard/template/store.html",
                 xpath=children,
-                root=xpath,
-                body=json.dumps(doc),
-                inherited=json.dumps(inherited))
+                root=xpath if xpath.endswith("/") else xpath + "/",
+                body=json.dumps(doc, indent=2),
+                inherited=json.dumps(inherited, indent=2))
         else:
             self.reply({
                 "children": children,
@@ -257,11 +271,11 @@ class StoreHandler(CoreRequestHandler):
             None
 
         Returns:
-            data (dict) - store document including key/value pairs from parents
-            parents (list) - applied parent paths
+            - **data** (dict) - store document including key/value pairs from parents
+            - **parents** (list) - applied parent paths
 
         Raises:
-            405 Not Allowed
+            405: Not Allowed
 
         Examples:
             >>> from requests import put

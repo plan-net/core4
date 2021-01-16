@@ -16,9 +16,9 @@ import re
 
 class InfoHandler(CoreRequestHandler):
     """
-    API endpoint details, help and tag summary.
+    Paginated API details, help and tag listing.
     """
-    title = "endpoint information"
+    title = "Endpoint Information"
     author = "mra"
 
     async def get(self):
@@ -34,23 +34,24 @@ class InfoHandler(CoreRequestHandler):
 
         The search attributes support
 
-        #. free text search, for example ``foobar``
-        #. a domain specific query language filtering the following attributes,
-           for example ``tag == "app" or tag == "role" or title == regex("role.*", "i")``
+        #. free text search applied to the attributes *author*, *description*,
+           *qual_name*, *subtitle*, *tag*, and *title*
+        #. a domain specific query language filtering all available attributes,
+           for example
+           ``tag == "app" or tag == "role" or title == regex("role.*", "i")``
         #. hiding/showing technical APIs flagged with the *api* tag by prefixing
-           the search string with a "!" character, for example ``! foobar``
-           (free text search on all APIs including the technical APIs) or
+           the search with a "!" character, for example ``! foobar``
+           (free text search including technical APIs) or
            ``! tag == "app" or tag == "role" or title == regex("role.*", "i")``.
-
-        See https://github.com/alonho/pql for a complete description of the
-        domain specific query language.
+           See https://github.com/alonho/pql for a complete description of the
+           domain specific query language.
 
         Returns:
-            data element with list of dicts, see
-            :meth:`.CoreApiContainer.get_handler`
+            - data element with list of dicts, see
+              :meth:`.CoreApiContainer.get_handler`
 
         Raises:
-            401 Unauthorized:
+            401: Unauthorized
 
         Examples:
             >>> from requests import get
@@ -68,7 +69,7 @@ class InfoHandler(CoreRequestHandler):
             of installed core4.
 
         Raises:
-            401 Unauthorized:
+            401: Unauthorized
 
         Examples:
             >>> from requests import get
@@ -87,7 +88,7 @@ class InfoHandler(CoreRequestHandler):
             (bool) to indicate default versus custom tags.
 
         Raises:
-            401 Unauthorized:
+            401: Unauthorized
 
         Examples:
             >>> from requests import get
@@ -117,7 +118,7 @@ class InfoHandler(CoreRequestHandler):
             data element with dict of version, project and core4 version
 
         Raises:
-            401 Unauthorized:
+            401: Unauthorized
 
         Examples:
             >>> from requests import post

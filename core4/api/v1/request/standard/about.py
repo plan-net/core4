@@ -22,7 +22,7 @@ class AboutHandler(CoreRequestHandler, QueryMixin):
     author = "mra"
     title = "About core4os"
     subtitle = "core4os Information"
-    tag = ["setting"]
+    tag = ["cooperations"]
     icon = "mdi-information"
 
     async def get(self):

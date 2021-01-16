@@ -19,7 +19,7 @@ class LogHandler(CoreRequestHandler):
     """
 
     author = "mra"
-    title = "logging"
+    title = "Logging"
 
     async def get(self):
         """
@@ -33,19 +33,20 @@ class LogHandler(CoreRequestHandler):
     async def post(self):
         """
         Methods:
-            POST /log
+            POST /core4/api/v1/log
 
         Parameters:
-            start (str): date, time, datetime or delta with weeks (w), days (d),
-                         hours (h) or minutes (h)
-            end (str): date, time or datetime
-            level (str): minimum level DEBUG, INFO, WARNING, ERROR, CRITICAL
-            project (str)
-            hostname (str)
-            username (str)
-            qual_name (str): accepts Python regular expressions
-            identifier (str): accepts Python regular expressions
-            message (str): accepts Python regular expressions
+            - follow (bool): deliver logs with SSE, defaults to ``False``
+            - start (str): date, time, datetime or delta with weeks (w), days
+              (d), hours (h) or minutes (h)
+            - end (str): date, time or datetime
+            - level (str): minimum level DEBUG, INFO, WARNING, ERROR, CRITICAL
+            - project (str)
+            - hostname (str)
+            - username (str)
+            - qual_name (str): accepts Python regular expressions
+            - identifier (str): accepts Python regular expressions
+            - message (str): accepts Python regular expressions
 
         Returns:
             - **_id** (ObjectId)
@@ -77,8 +78,8 @@ class LogHandler(CoreRequestHandler):
             >>> part = ""
             >>> for line in rv:
             >>>     part += line.decode("utf-8")
-            >>>     if part.endswith("\n\n"):
-            >>>         js = json.loads(part.split("\n", 1)[1].split(": ", 1)[1])
+            >>>     if part.endswith("\\n\\n"):
+            >>>         js = json.loads(part.split("\\n", 1)[1].split(": ", 1)[1])
             >>>         if "created" in js:
             >>>             print(js["created"], js["message"])
             >>>         part = ""

@@ -147,7 +147,7 @@ async def test_enqueue_kill_remove(core4api, worker, mongodb):
     resp = await core4api.post(
         '/core4/api/v1/job',
         json={"qual_name": "core4.queue.helper.job.example.DummyJob",
-              "args": {"sleep": 10}, "follow": False},
+              "args": {"sleep": 30}, "follow": False},
         request_timeout=120.
     )
     assert resp.code == 200

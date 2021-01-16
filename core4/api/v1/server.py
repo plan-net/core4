@@ -61,7 +61,7 @@ class CoreAppManager(CoreApiContainer):
             "static_path": "/webapps/comoco/dist",
             "title": "comoco",
             "subtitle": "Job Monitoring and Control",
-            "tag": ["operations"],
+            "tag": ["operations", "jobs"],
             "icon": "mdi-electron-framework",
             "doc": "Review and manage automation jobs"
         }),
@@ -125,7 +125,6 @@ class CoreApiServer(CoreApiContainer):
         (r'/setting/(.*)', SettingHandler),
 
         (r'/avatar', AvatarHandler),
-        (r'/avatar/(.*)', AvatarHandler),
 
         (r'/store', StoreHandler),
         (r'/store(\/.*)', StoreHandler),

@@ -78,12 +78,11 @@ class CoreBaseHandler(CoreBase):
     # widget size, resolution
     res = 11
     # temp
-    custom_card = False
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
                  "static_path", "enter_url", "icon", "doc", "spa", "subtitle",
-                 "res", "custom_card", "target")
+                 "res", "target")
     supported_types = [
         "text/html",
         "application/json"
@@ -105,7 +104,7 @@ class CoreBaseHandler(CoreBase):
 
         self.error_html_page = rel(self.config.api.error_html_page)
         self.error_text_page = rel(self.config.api.error_text_page)
-        self.card_html_page = rel(self.config.api.card_html_page)
+        #self.card_html_page = rel(self.config.api.card_html_page)
         self.help_html_page = rel(self.config.api.help_html_page)
         self.info_html_page = rel(self.config.api.info_html_page)
         self.started = core4.util.node.now()
@@ -116,8 +115,8 @@ class CoreBaseHandler(CoreBase):
         """
         Merge the attributes ``protected``, ``title``, ``author``, ``tag``,
         ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc``,
-        ``spa``, ``subtitle``, ``res``, ``custom_card`` and ``target`` from
-        the passed class/object (``source`` parameter) and ``kwargs``.
+        ``spa``, ``subtitle``, ``res``, and ``target`` from the passed
+        class/object (``source`` parameter) and ``kwargs``.
 
         :param source: class or object based on :class:`.CoreRequestHandler` or
             :class:`.CoreStaticFileHandler`
@@ -436,18 +435,10 @@ class CoreBaseHandler(CoreBase):
         """
         doc = await self.meta()
         if self.wants_json():
-            # make datetime object serializable
-            for i in doc.keys():
-                if isinstance(doc[i], datetime.datetime):
-                    doc[i] = doc[i].__str__()
             # check if the subclass has its own card method.
             # if it has not, the default-card method will be called.
-            if callable(self.card.__self__.__class__.__dict__.get(
-                    "card", None)):
-                doc['custom_card'] = True
-            else:
-                doc['custom_card'] = False
-            return self.finish(json.dumps(doc))
+            doc['custom_card'] = callable(getattr(self, "card", None))
+            return self.finish(doc)
         return await self.card(**doc)
 
     def xenter(self, *args, **kwargs):
@@ -471,12 +462,13 @@ class CoreBaseHandler(CoreBase):
         doc = await self.meta()
         return self.help(**doc)
 
-    async def card(self, **data):
-        """
-        Returns the classes properties in json format.
-        May be overwritten for a custom html implementation.
-        """
-        return self.render(self.card_html_page, **data)
+    # async def card(self, **data):
+    #     """
+    #     Returns the classes properties in json format.
+    #     May be overwritten for a custom html implementation.
+    #     """
+    #     self.reply(data)
+    #     #return self.render(self.card_html_page, **data)
 
     def enter(self):
         """
