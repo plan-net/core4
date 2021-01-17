@@ -229,7 +229,6 @@ def make_project(package_name=None, package_description=None, auto=False,
         print("done")
 
     pipexe = os.path.join(full_path, VENV_PIP)
-    print(">>>", pipexe)
     env = os.environ.copy()
     if "PYTHONPATH" in env:
         del env["PYTHONPATH"]
@@ -242,5 +241,6 @@ def make_project(package_name=None, package_description=None, auto=False,
     print("---------------\n")
     curr_dir = os.path.abspath(os.path.curdir)
     os.chdir(full_path)
+    subprocess.call([pipexe, "install", core4_source], env=env)
     subprocess.call([pipexe, "install", "--edit", "."], env=env)
     os.chdir(curr_dir)
