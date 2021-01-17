@@ -228,8 +228,8 @@ def make_project(package_name=None, package_description=None, auto=False,
         builder.create(venv)
         print("done")
 
-    pyexe = os.path.join(full_path, VENV_PYTHON)
     pipexe = os.path.join(full_path, VENV_PIP)
+    print(">>>", pipexe)
     env = os.environ.copy()
     if "PYTHONPATH" in env:
         del env["PYTHONPATH"]
