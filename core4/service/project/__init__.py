@@ -40,7 +40,7 @@ def printout(*args):
 
 
 def make_project(package_name=None, package_description=None, auto=False, 
-                 core4_source=CORE4_REPOSITORY):
+                 core4_source=None):
     """
     Interactive method used by :mod:`.coco` to create a new project.
     The project templates are located in directory ``/template``. A combination
@@ -57,7 +57,7 @@ def make_project(package_name=None, package_description=None, auto=False,
         "package_name": package_name,
         "package_description": package_description,
         "package_version": "0.0.0",
-        "core4_source": core4_source
+        "core4_source": core4_source or CORE4_REPOSITORY
     }
     if kwargs["package_name"] and not kwargs["package_name"].isidentifier():
         print("this is not a valid package name")
@@ -236,17 +236,11 @@ def make_project(package_name=None, package_description=None, auto=False,
 
     print("\nupgrade pip")
     print("-----------\n")
-
-    print(">>>", [pipexe, "install", "--upgrade", "pip"])
-    print(env)
     subprocess.check_call([pipexe, "install", "--upgrade", "pip"], env=env)
 
     print("\ninstall project")
     print("---------------\n")
-
     curr_dir = os.path.abspath(os.path.curdir)
     os.chdir(full_path)
-    print(">>>", [pipexe, "install", "--edit"])
-    print(env)
-    retcode = subprocess.call([pipexe, "install", "--edit", "."], env=env)
+    subprocess.call([pipexe, "install", "--edit", "."], env=env)
     os.chdir(curr_dir)
