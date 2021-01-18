@@ -186,11 +186,7 @@ class CoreBaseHandler(CoreBase):
                 "/login?h={uuid}&next={next}".format(
                     uuid=str(uuid4()),
                     next=urllib.parse.quote(self.request.full_url()))])
-            self.flash_error({
-                "login": self.config.api.auth_url.strip() + "/login",
-                "source": urllib.parse.quote(self.request.full_url()),
-                "url": url})
-            raise HTTPError(401)
+            self.redirect(url)
 
     async def verify_access(self):
         """
