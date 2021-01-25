@@ -102,12 +102,12 @@ api:
     cookie_secret: a not so secret cookie secret  # must be set
   crt_file: ~
   key_file: ~
+  route: localhost
   allow_origin: "*"
   port: 5001
   default_static: api/v1/request/_static
   error_html_page: standard/template/error.html
   error_text_page: standard/template/error.txt
-  #card_html_page: standard/template/card.html
   help_html_page: standard/template/help.html
   info_html_page: standard/template/info.html
   auth_url: /core4/api/v1

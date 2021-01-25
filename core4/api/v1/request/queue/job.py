@@ -1047,10 +1047,3 @@ class JobList(CoreRequestHandler):
             if await self.user.has_job_exec_access(doc["_id"]):
                 data.append(doc)
         return data
-
-    # async def card(self, **data):
-    #     jobs = await self.get_job({})
-    #     projects = set([j["_id"].split(".", 1)[0] for j in jobs])
-    #     data["job_count"] = len(jobs)
-    #     data["project_count"] = len(projects)
-    #     return self.render("template/enqueue/card.html", **data)

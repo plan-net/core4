@@ -64,7 +64,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         name = name or str(os.getpid()) # self.project # "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
         self.port = int(port or self.config.api.port)
-        self.address = address or "0.0.0.0"
+        self.address = address or self.config.api.route
         self.hostname = core4.util.node.get_hostname()
         if cert_file and key_file:
             self.logger.info("securing server with [%s]", cert_file)
