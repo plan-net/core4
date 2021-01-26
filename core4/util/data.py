@@ -8,6 +8,7 @@
 """
 General purpose data management helpers.
 """
+import datetime
 import gzip
 import json
 import os
@@ -15,17 +16,15 @@ import textwrap
 from io import StringIO
 
 import bson.objectid
-import datetime
 import docutils.parsers.rst.directives.body
 import docutils.parsers.rst.roles
 import numpy as np
 import pandas as pd
+import pytz
 import sphinx.ext.napoleon
-import time
+import tzlocal
 from docutils import core
 from docutils.parsers.rst.directives import register_directive
-import pytz, tzlocal
-
 
 LOCAL_TZ = lambda: pytz.timezone(tzlocal.get_localzone().zone)
 
