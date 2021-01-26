@@ -5,7 +5,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-import json
 import re
 from functools import wraps
 
@@ -15,6 +14,7 @@ import core4
 import core4.const
 import core4.util
 import core4.util.tool
+import core4.util.data
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
 from core4.base.main import CoreBase
@@ -303,7 +303,7 @@ class SettingHandler(CoreRequestHandler):
         document = await self._get_db_document(user_id, True)
         data = self._data_extractor(resources, document)
         if self.wants_html():
-            out = json.dumps(data, sort_keys=True, indent=4)
+            out = core4.util.data.json_encode(data, sort_keys=True, indent=4)
             self.render("template/setting.html",
                         data=out)
         else:

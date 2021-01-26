@@ -45,8 +45,8 @@ class AvatarHandler(CoreRequestHandler):
             <Response [200]>
         """
         _id = self.user._id
-        img = await self.config.sys.setting.find_one({"_id": _id},
-                                                     {"_id": 0, "avatar": 1})
+        img = await self.config.sys.role.find_one(
+            {"_id": _id}, {"_id": 0, "avatar": 1})
         if img:
             self.set_header("Content-Type", "image/jpeg")
             self.set_header("Pragma", "no-cache")
@@ -111,7 +111,7 @@ class AvatarHandler(CoreRequestHandler):
                     400, "Maximal allowed avatar size is {:1.0f}MB!".format(
                         self.MAX_AVATAR_SIZE / MB))
             if what(bio) in self.VALID_IMAGES:
-                await self.config.sys.setting.update_one(
+                await self.config.sys.role.update_one(
                     {"_id": _id}, {"$set": {"avatar": bio.getvalue()}},
                     upsert=True)
                 return self.reply("Successfully set an avatar.")

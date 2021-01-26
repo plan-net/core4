@@ -344,7 +344,7 @@ class CoreRole(CoreBase):
         """
         filter = await self.manage_filter(filter)
 
-        cur = self.role_collection.find(filter) \
+        cur = self.role_collection.find(filter, projection={"avatar": 0}) \
             .sort(*sort_by) \
             .skip(skip) \
             .limit(limit)
