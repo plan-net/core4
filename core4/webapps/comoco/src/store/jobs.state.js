@@ -27,8 +27,7 @@ function clearSSE (e) {
       })
       sses = []
     }
-  } catch (err) {
-  }
+  } catch (err) {}
 }
 function onSseError (e) {
   if (typeof e.error === 'string') {
@@ -41,7 +40,8 @@ const state = {
   filter: null,
   log: '',
   error: null,
-  job: { _id: null },
+  job: { _id: null, args: '' },
+
   jobs: [],
   jobManagerBusy: false
 }
@@ -73,11 +73,19 @@ const actions = {
   setJob (context, job) {
     context.commit('setJob', job)
     context.dispatch('logJob', job._id)
+    // context.dispatch('fetchArgs', job._id)
+    // TODO fetch args
   },
   async fetchJob (context, id) {
     const job = await api.get(`jobs/${id}`)
     context.commit('setJob', job.data)
     return job.data
+  },
+  async fetchJobArgs (context, id) {
+    const job = await api.get(`job/${id}`)
+    context.commit('setJobArgs', job.data.args)
+    /*     context.commit('setJob', job.data)
+    return job.data */
   },
   logJob (context, jobId = null) {
     context.commit('clearLog')
@@ -165,10 +173,7 @@ const actions = {
 
     let job
     try {
-      const ret = await api.post(
-        'jobs/enqueue', dto
-
-      )
+      const ret = await api.post('jobs/enqueue', dto)
       job = ret.data
       context.commit('setJob', job) // only name, id, triggers dialog to open, starts logging
       context.dispatch('fetchJob', job._id).then(val => {
@@ -241,7 +246,8 @@ const mutations = {
     state.filter = payload
   },
   addLog (state, payload) {
-    state.log = (state.log || '') + payload.date + ' | ' + payload.message + '\n'
+    state.log =
+      (state.log || '') + payload.date + ' | ' + payload.message + '\n'
     // state.log = (state.log || []).concat([payload])
   },
   clearLog (state, payload) {
@@ -282,6 +288,10 @@ const mutations = {
   },
   setJob (state, payload) {
     state.job = payload
+  },
+  setJobArgs (state, args) {
+    console.log(args)
+    state.job.args = args
   }
 }
 
