@@ -12,8 +12,8 @@
         small
         v-bind="attrs"
         v-on="on"
-        xxxcolor="primary darken-1"
         color="secondary lighten-3"
+        style="margin-top: -7px; margin-bottom: 8px;"
       >
         <v-icon dark>mdi-plus</v-icon>
       </v-btn>
