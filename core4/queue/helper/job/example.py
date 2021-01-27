@@ -33,7 +33,7 @@ class DummyJob(CoreJob):
                 sleep - (until
                          - core4.util.node.now()).total_seconds()) / sleep
             self.progress(p, "running")
-            time.sleep(0.5)
+            time.sleep(kwargs.get("loop_time", 0.5))
 
 
 class EmailJob(MailMixin, CoreJob):
