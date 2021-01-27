@@ -66,8 +66,8 @@ export default {
       that.$emit('input', item.id)
     })
     $('.select2-selection__arrow')
-      .addClass('material-icons')
-      .html('mdi-chevron-down')
+      // .addClass('material-icons')
+      .html('↓')
   }
 }
 </script>
