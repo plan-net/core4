@@ -17,7 +17,6 @@
       >
         <v-col
           cols="12"
-          class="py-0"
         >
           Args
           <span class="pl-3 error--text">{{ errors[0] }}</span>
