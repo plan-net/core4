@@ -182,7 +182,7 @@ def test_progress1(queue, worker):
     worker.wait_queue()
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data
-                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 1
 
 
 @pytest.mark.timeout(120)
@@ -624,9 +624,9 @@ def test_progress3(queue, worker):
     worker.start(1)
     worker.wait_queue()
     data = list(queue.config.sys.log.find())
+    print([(d["level"], d["message"]) for d in data])
     assert sum([1 for d in data
-                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
-
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 1
 
 class NoProgressJob(core4.queue.job.CoreJob):
     author = "mra"

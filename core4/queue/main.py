@@ -519,12 +519,15 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
         job.__dict__["locked"] = None
         return runtime
 
-    def _update_job(self, job, *args):
+    def _update_job(self, job, *args, kwargs=None):
         # internal method used to update the most relevant and passed
         #   job attributes
+        upd = dict([(k, getattr(job, k)) for k in args])
+        if kwargs is not None:
+            upd = {**upd, **kwargs}
         ret = self.config.sys.queue.update_one(
             filter={"_id": job._id},
-            update={"$set": dict([(k, getattr(job, k)) for k in args])})
+            update={"$set": upd})
         if ret.raw_result["n"] != 1:
             raise RuntimeError(
                 "failed to update job [{}] state [%s]".format(
@@ -557,7 +560,8 @@ class CoreQueue(CoreBase, QueryMixin, metaclass=core4.util.tool.Singleton):
             core4.queue.job.STATE_COMPLETE)
         runtime = self._finish(job, core4.queue.job.STATE_COMPLETE)
         self._update_job(job, "state", "finished_at", "runtime", "locked",
-                         "trial")
+                         "trial", 
+                         kwargs={"prog": {"value": 1., "message": ""}})
         self.logger.debug("journaling job [%s]", job._id)
         job = self.load_job(job._id)
         if self.journal(job.serialise()):

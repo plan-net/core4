@@ -39,7 +39,8 @@ CoreWorkerProcess().start("{job_id:s}")
 #: command used to kill a job with :meth:`.CoreQueue._exec_kill`
 KILL = """
 from core4.queue.main import CoreQueue
-CoreQueue()._exec_kill("{job_id:s}")
+from bson.objectid import ObjectId
+CoreQueue().kill_job(ObjectId("{job_id:s}"))
 """
 
 #: command used to restart a job with :meth:`.CoreQueue._exec_restart`

@@ -8,8 +8,11 @@
 import os
 import re
 import sys
+from datetime import timedelta
 
+import tornado.gen
 from bson.objectid import ObjectId
+from tornado.ioloop import IOLoop
 from tornado.iostream import StreamClosedError
 from tornado.process import Subprocess
 from tornado.web import HTTPError
@@ -37,6 +40,7 @@ STATE_WAITING = (
     core4.queue.job.STATE_PENDING)
 
 FOLLOW_WAIT = 3.
+FRIENDLY_COUNT = 1000
 
 
 class JobError(HTTPError):
@@ -109,7 +113,7 @@ def end_of_job(rec):
     Helper method to indentify job completion from ``sys.log``.
     """
     match = re.match(r"done execution with \[(.+?)\]",
-                     rec["fullDocument"]["message"])
+                     rec["message"])
     if match:
         if match.groups()[0] in STATE_FINAL:
             return True
@@ -128,11 +132,18 @@ class JobRequest(CoreRequestHandler):
     * kill, restart and remove jobs
     """
 
-    author = "mra"
-    title = "job management"
+    title = "Job Management"
     subtitle = "Enqueue and Manage Jobs"
     tag = "api jobs"
     doc = "Job Management Handler"
+
+    def initialise_object(self):
+        super().initialise_object()
+        self._stop_state = False
+        self._stop_log = False
+        self._last_log = None
+        self._count = {}
+        self._friendly = FRIENDLY_COUNT
 
     @property
     def queue(self):
@@ -207,7 +218,7 @@ class JobRequest(CoreRequestHandler):
 
     async def get(self, args=None):
         """
-        get current job list, job details, follow running jobs states  and job
+        get current job list, job details, follow running jobs states and job
         logging
 
         Methods:
@@ -235,7 +246,7 @@ class JobRequest(CoreRequestHandler):
             <Response [200]>
 
         Methods:
-            GET /core4/api/v1/job/follow/<_id> - follow running job
+            GET /core4/api/v1/job/follow/<_id> - follow active job
 
         Parameters:
             - _id (ObjectId)
@@ -558,98 +569,144 @@ class JobRequest(CoreRequestHandler):
         """
         helper method to follow the job log (streamed)
         """
+        self.set_header("Content-Type", "text/event-stream")
+        self.set_header("Cache-Control", "no-cache")
+        self.set_header("X-Accel-Buffering", "no")
         oid = ObjectId(_id)
-        self.logger.info("following [%s]", _id)
-        job_stream = self.config.sys.queue.watch(
-            pipeline=[{
-                "$match": {
-                    "documentKey._id": oid,
-                    "operationType": {
-                        "$in": ["update", "delete"]
-                    }
-                }
-            }], full_document="updateLookup")
-        log_stream = self.config.sys.log.watch(
-            pipeline=[{
-                "$match": {
-                    "operationType": "insert",
-                    "fullDocument.identifier": str(_id)
-                }
-            }])
-        # verify the job exists
-        follow = await self.config.sys.queue.count_documents({"_id": oid}) > 0
-        done = False
-        # get old logs
-        doc = await self.config.sys.log.find_one(
-            {"identifier": _id}, sort=[("_id", 1)])
-        if doc:
-            first_log = doc["_id"]
-        else:
-            first_log = None
+        self.logger.info("following job [%s]", _id)
 
-        async def _pre_log(rec=None):
-            """
-            helper method to query job logs materialised before streaming 
-            starts
-            """
-            nonlocal first_log
-            if first_log is None:
-                return True
-            first_log = None
-            query = {"identifier": _id}
-            if rec:
-                query["_id"] = {"$lt": rec["_id"]}
+        follow = True
+        job_doc = await self.config.sys.queue.find_one({"_id": oid})
+        job_stream = None
+        log_stream = None
+        if job_doc is not None:
+            self.logger.debug("job found in sys.queue")
+            job_stream = self.config.sys.queue.watch(
+                pipeline=[{
+                    "$match": {
+                        "documentKey._id": oid,
+                        "operationType": {
+                            "$in": ["update", "delete"]
+                        }
+                    }
+                }], full_document="updateLookup")
+            log_stream = self.config.sys.log.watch(
+                pipeline=[
+                    {"$match": {
+                        "operationType": "insert",
+                        "fullDocument.identifier": str(_id)
+                    }
+                    }]
+            )
+        else:
+            self.logger.debug("job found in sys.journal")
+            follow = False
+            job_doc = await self.config.sys.journal.find_one({"_id": oid})
+            if job_doc is None:
+                raise HTTPError(404, "job not found")
+
+        try:
+            if follow_state:
+                await self.sse("state", job_doc)
+
+            query = {"identifier": str(_id)}
             cur = self.config.sys.log.find(query, sort=[("_id", 1)])
             for doc in await cur.to_list(None):
-                if not await self.sse("log", doc):
-                    return False
-            return True
+                doc["mode"] = "prelog"
+                await self.sse("log", doc)
+                self._last_log = doc["_id"]
 
-        self.logger.info("stream open")
-        # follow sys.queue and sys.log
-        while follow:
-            job_change = await job_stream.try_next()
-            log_change = await log_stream.try_next()
-            if job_change:
-                ops = job_change.get("operationType", None)
-                doc = job_change.get('fullDocument', {})
-                if ops:
-                    if ops == "delete":
-                        follow = False
-                    if doc:
-                        state = doc["state"]
-                        if follow_state:
-                            if (not await self.sse("state", doc) or
-                                    (state in STATE_FINAL)):
-                                follow = False
-            if log_change:
-                if end_of_job(log_change):
-                    done = True
-                log_change["fullDocument"]["postproc"] = False
-                if not await _pre_log(log_change["fullDocument"]):
-                    follow = False
-                if not await self.sse("log", log_change["fullDocument"]):
-                    follow = False
-        # process not yet received logs
-        t0 = core4.util.node.now()
-        while not done:
-            log_change = await log_stream.try_next()
-            if log_change:
-                if end_of_job(log_change):
-                    done = True
-                log_change["fullDocument"]["postproc"] = True
-                if not await _pre_log(log_change["fullDocument"]):
-                    break
-                if not await self.sse("log", log_change["fullDocument"]):
-                    break
-            if (core4.util.node.now() - t0).total_seconds() > FOLLOW_WAIT:
-                break
-        await _pre_log()
-        await log_stream.close()
-        await job_stream.close()
-        await self.sse("close", {})
+            if follow:
+                IOLoop.current().spawn_callback(self._cb_status, job_stream,
+                                                follow_state, oid)
+                IOLoop.current().spawn_callback(self._cb_log, log_stream)
+                self.logger.debug("starting loop")
+                while not (self._stop_state and self._stop_log):
+                    await tornado.gen.sleep(0.25)
+
+            if self._last_log is not None:
+                query["_id"] = {"$gt": self._last_log}
+
+            cur = self.config.sys.log.find(query, sort=[("_id", 1)])
+            for doc in await cur.to_list(None):
+                doc["mode"] = "postlog"
+                await self.sse("log", doc)
+
+            await self.sse("close", self._count)
+
+        except Exception:
+            self.logger.error("error occured", exc_info=True)
+
+        if job_stream is not None:
+            await job_stream.close()
+        if log_stream is not None:
+            await log_stream.close()
+
         self.logger.info("stream close by server")
         self.finish()
+
+    async def _cb_status(self, stream, follow, oid):
+        t0 = None
+        while True:
+            change = await stream.try_next()
+            if change:
+                ops = change.get("operationType", None)
+                self.logger.debug("operation [%s]", ops)
+                if ops:
+                    if ops == "delete":
+                        break
+                    else:
+                        upd = change["fullDocument"]
+                        state = upd.get("state", None)
+                        self.logger.debug("job state [%s]", state)
+                        if upd:
+                            if follow:
+                                await self.sse("state", upd)
+                            if state in STATE_FINAL:
+                                break
+            else:
+                if t0:
+                    if core4.util.node.now() > t0:
+                        job_doc = await self.config.sys.queue.find_one(
+                            {"_id": oid})
+                        if job_doc is None:
+                            self.logger.warning("state query timeout")
+                            break
+                        else:
+                            state = job_doc.get("state", None)
+                            self.logger.debug("job state [%s]", state)
+                            if state in STATE_FINAL:
+                                if follow:
+                                    await self.sse("state", job_doc)
+                                break
+                    else:
+                        tornado.gen.sleep(0.25)
+                else:
+                    t0 = core4.util.node.now() + timedelta(seconds=FOLLOW_WAIT)
+        self.logger.debug("exit status stream")
+        self._stop_state = True
+
+    async def _cb_log(self, stream):
+        t0 = None
+        while True:
+            change = await stream.try_next()
+            if change:
+                doc = change["fullDocument"]
+                doc["mode"] = "watchlog"
+                if self._last_log is None or doc["_id"] > self._last_log:
+                    await self.sse("log", doc)
+                self._last_log = doc["_id"]
+            elif self._stop_state:
+                if t0:
+                    if core4.util.node.now() > t0:
+                        self.logger.debug("log query timeout")
+                        break
+                    else:
+                        tornado.gen.sleep(0.5)
+                else:
+                    t0 = core4.util.node.now() + timedelta(seconds=FOLLOW_WAIT)
+        self.logger.debug("exit log stream at %s", self._last_log)
+        self._stop_log = True
 
     async def _put_kill(self, *args):
         """
@@ -706,13 +763,18 @@ class JobRequest(CoreRequestHandler):
             self.write("event: " + event + "\n")
             self.write("data: " + js + "\n\n")
             await self.flush()
+            self._count.setdefault(event, 0)
+            self._count[event] += 1
         except StreamClosedError:
             self.logger.info("stream close by client")
-            return False
+            raise
         except Exception:
             self.logger.error("stream error", exc_info=True)
-            return False
-        return True
+            raise
+        self._friendly -= 1
+        if self._friendly <= 0:
+            self._friendly = FRIENDLY_COUNT
+            await tornado.gen.sleep(FOLLOW_WAIT)
 
     async def exec_project(self, command_key, qual_name=None, job_id=None,
                            wait=True, *args, **kwargs):
