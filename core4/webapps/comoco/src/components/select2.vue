@@ -67,7 +67,7 @@ export default {
     })
     $('.select2-selection__arrow')
       .addClass('material-icons')
-      .html('mdi-menu-down')
+      .html('mdi-chevron-down')
   }
 }
 </script>
