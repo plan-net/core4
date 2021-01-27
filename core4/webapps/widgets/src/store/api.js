@@ -81,13 +81,24 @@ const api = {
   async searchWidgets (
     params = {
       search: '',
+      tags: [],
       per_page: 2,
       page: 0
     }
   ) {
+    console.log(params)
+    const tmpParams = { per_page: params.per_page, page: params.page }
+    let search = params.search
+    if (params.tags.length) {
+      const tagArrStr = JSON.stringify(params.tags.map(t => t.value))
+      const tag = `tag in ${tagArrStr}`
+      search = search.length ? `${search} and ${tag}` : tag
+    }
+    tmpParams.search = search
+    console.log(tmpParams)
     try {
       const ret = await axiosInternal.get('/_info', {
-        params
+        params: tmpParams
       })
       return ret
     } catch (err) {

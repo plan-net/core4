@@ -33,34 +33,32 @@
           <!-- end -->
         </v-card-title>
         <v-divider class=""></v-divider>
-        <v-row no-gutters
+        <v-row
+          no-gutters
           align="center"
           class="pl-7 pr-6"
         >
-          <tag-leiste
-            class="py-2"
-            :selected="selectedTag"
-            @change="onTagSelection"
-          ></tag-leiste>
+          <v-col cols="5">
+            <tag-leiste
+              class="py-2"
+              :selected="selectedTags"
+              @change="onTagSelection"
+            ></tag-leiste>
+          </v-col>
+          <v-col cols="7">
+            <search
+              class="pl-3"
+              :search-active="true"
+              @close-input="onUserSearch"
+            ></search>
+          </v-col>
 
-          <v-row
-            no-gutters
-            class="search-component pr-4"
-          >
-            <template>
-              <v-row class="pl-9">
-                <search
-                  class="pl-3"
-                  :search-active="true"
-                  @close-input="onUserSearch"
-                ></search>
-              </v-row>
-            </template>
-
-          </v-row>
         </v-row>
 
-        <v-card-text class="pt-3 widgetsearch-card-text" v-if="dialogOpen">
+        <v-card-text
+          class="pt-3 widgetsearch-card-text"
+          v-if="dialogOpen"
+        >
           <v-row>
             <small-widget
               v-for="(widget, $index) in widgets"
@@ -123,6 +121,7 @@ import _ from 'lodash'
 const defParams = {
   search: '',
   page: 0,
+  tags: [],
   per_page: 6
 }
 export default {
@@ -136,17 +135,13 @@ export default {
   computed: {
     ...mapState('widgets', [
       'board', 'tags'
-    ]),
-    params2 () {
-      const filter = { tag: { $in: [this.selectedTag] } }
-      return Object.assign(this.params, { filter })
-    }
+    ])
   },
   data () {
     const params = _.cloneDeep(defParams)
     return {
       deltaWidgets: [],
-      selectedTag: 'all',
+      selectedTags: [],
       dialogOpen: false,
       total: 0,
       params,
@@ -154,19 +149,42 @@ export default {
     }
   },
   methods: {
+    onTagSelection ($event) {
+      this.selectedTags = $event
+      this.onUserSearch()
+    },
     async onUserSearch (val) {
       const search = val ? val.text : this.params.search
-      this.params = Object.assign(_.cloneDeep(defParams), { search })
+      console.log(search)
+      /*       if ((this.selectedTags || []).length) {
+        const tagArrStr = JSON.stringify(this.selectedTags.map(t => t.value))
+        const tag = `tag in ${tagArrStr}`
+        search = search.length ? `${search} and ${tag}` : tag
+      } */
+      this.params = Object.assign(_.cloneDeep(defParams), { search, tags: this.selectedTags })
       this.widgets = []
       this.deltaWidgets = []
-      // this.selectedTag = 'all'
       await this.$nextTick()
       this.$refs.il.stateChanger.reset()
-      // this.searchWidgets()
     },
-    onTagSelection ($event) {
-      this.selectedTag = $event
-      this.onUserSearch()
+    async searchWidgets ($state = {
+      loaded: () => {},
+      complete: () => {}
+    }) {
+      try {
+        const ret = await api.searchWidgets(this.params)
+        this.total = ret.total_count
+        if (ret.data.length) {
+          this.params.page += 1
+          this.widgets.push(...ret.data)
+          $state.loaded()
+        } else {
+          $state.complete()
+        }
+      } catch (err) {
+        console.log(err)
+        $state.error()
+      }
     },
     onChange (payload) {
       const w = payload.widget
@@ -196,24 +214,7 @@ export default {
     onDialogOpen () {
       // this.searchWidgets()
     },
-    async searchWidgets ($state = {
-      loaded: () => {},
-      complete: () => {}
-    }) {
-      try {
-        const ret = await api.searchWidgets(this.params)
-        this.total = ret.total_count
-        if (ret.data.length) {
-          this.params.page += 1
-          this.widgets.push(...ret.data)
-          $state.loaded()
-        } else {
-          $state.complete()
-        }
-      } catch (err) {
-        $state.error()
-      }
-    },
+
     ...mapActions('widgets', {
       fetchTags: 'fetchTags'
     })

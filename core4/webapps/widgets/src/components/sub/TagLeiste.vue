@@ -1,6 +1,37 @@
 <template>
   <div style="min-width: 120px;">
-    <v-btn-toggle
+    <!--     <pre>
+      {{tags}}
+    </pre> -->
+    <v-combobox
+      v-model="innerSelected"
+      :items="tags"
+      clearable
+      outlined
+      xxxfilled
+      multiple
+      small-chips
+      item-text="label"
+      item-value="value"
+      hide-details
+      prepend-inner-icon="mdi-tag-plus-outline"
+      label="Tags"
+    >
+      <template v-slot:item="{ attrs, item }">
+        <v-checkbox v-model="attrs.inputValue"></v-checkbox>
+        {{ item.label }}
+        <v-spacer></v-spacer>
+        <v-list-item-action @click.stop>
+          <v-chip
+            color="accent"
+            label
+            outlined
+            small
+          >{{item.count}}</v-chip>
+        </v-list-item-action>
+      </template>
+    </v-combobox>
+    <!-- <v-btn-toggle
       v-model="innerSelected"
       xxtile
       color="primary"
@@ -14,7 +45,7 @@
       >
         {{item.label}}
       </v-btn>
-    </v-btn-toggle>
+    </v-btn-toggle> -->
   </div>
 </template>
 
@@ -23,9 +54,9 @@ import { mapState } from 'vuex'
 export default {
   props: {
     selected: {
-      type: String,
+      type: Array,
       required: true,
-      default: 'all'
+      default: () => []
     }
   },
   components: {

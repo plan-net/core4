@@ -27,21 +27,21 @@ const actions = {
   async fetchTags (context) {
     try {
       const tags = await api.fetchTags()
-      let tags2 = Object.entries(tags)
-        .map(val => {
-          return Object.assign(val[1], { label: val[0] })
-        })
-        .filter(val => {
-          return ['app', 'api', 'new'].includes(val.label)
-        })
-      tags2.unshift({
-        label: 'all',
-        default: true,
-        count: -1
-
+      let tags2 = Object.entries(tags).map(val => {
+        return Object.assign(val[1], { label: val[0] })
       })
+      /*     .filter(val => {
+          return ['app', 'api', 'new'].includes(val.label)
+        }) */
+      /*       tags2.unshift({
+        label: 'All',
+        default: true,
+        count: '?'
+      }) */
       tags2 = tags2.map(val => {
-        return Object.assign(val, { value: val.label })
+        return Object.assign(val, {
+          value: val.label === 'all' ? '' : val.label
+        })
       })
       context.commit('setTags', tags2)
     } catch (err) {}
@@ -65,7 +65,9 @@ const actions = {
     return boards.boards
   },
   async sortBoard (context, { oldIndex, newIndex, newSort }) {
-    let currBoard = context.state.boards.find(val => val.name === context.state.board)
+    let currBoard = context.state.boards.find(
+      val => val.name === context.state.board
+    )
     currBoard = _.cloneDeep(currBoard)
     const widgets = newSort.map(rscid => {
       return currBoard.widgets.find(val => val.rsc_id === rscid)
@@ -85,7 +87,7 @@ const actions = {
     widgets
       .filter(val => val.custom_card)
       .forEach(val => {
-      // update existing widgets in boards to be in obj format
+        // update existing widgets in boards to be in obj format
         context.dispatch('fetchWidget', {
           endpoint: replacePort(val.endpoint[0]),
           id: val.rsc_id,
