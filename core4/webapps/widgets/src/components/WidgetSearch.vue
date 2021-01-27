@@ -2,7 +2,8 @@
   <div>
     <v-dialog
       v-model="dialogOpen"
-      width="1440px"
+      width="1150px"
+      max
       scrollable
     >
       <template v-slot:activator="{ on, attrs }">
