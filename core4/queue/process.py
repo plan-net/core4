@@ -95,7 +95,7 @@ class CoreWorkerProcess(core4.base.main.CoreBase,
             job.__dict__["attempts_left"] -= 1
             self.queue.set_complete(job, unlock=not manual)
             job.cookie.set("last_runtime", job.finished_at)
-            job.progress(1.0, "execution end marker", force=True)
+            #job.progress(1.0, "execution end marker", force=True)
             return True
         finally:
             if redirect:
