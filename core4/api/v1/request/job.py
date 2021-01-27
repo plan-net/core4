@@ -132,10 +132,10 @@ class JobRequest(CoreRequestHandler):
     * kill, restart and remove jobs
     """
 
-    author = "mra"
-    title = "job management"
+    title = "Job Management"
     subtitle = "Enqueue and Manage Jobs"
     tag = "api jobs"
+    doc = "Job Management Handler"
 
     def initialise_object(self):
         super().initialise_object()
@@ -570,6 +570,8 @@ class JobRequest(CoreRequestHandler):
         helper method to follow the job log (streamed)
         """
         self.set_header("Content-Type", "text/event-stream")
+        self.set_header("Cache-Control", "no-cache")
+        self.set_header("X-Accel-Buffering", "no")
         oid = ObjectId(_id)
         self.logger.info("following job [%s]", _id)
 
