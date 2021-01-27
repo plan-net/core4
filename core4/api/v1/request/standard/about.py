@@ -11,7 +11,7 @@ Implements core4os standard :class:`.AboutHandler`.
 
 from core4.api.v1.request.main import CoreRequestHandler
 import core4
-from core4.api.v1.request.store import StoreHandler
+from core4.api.v1.request.store.handler import StoreHandler
 from core4.queue.query import QueryMixin
 
 

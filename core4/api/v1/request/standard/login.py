@@ -11,6 +11,9 @@ import core4.queue.helper.functool
 import core4.queue.helper.job
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
+from core4.api.v1.request.store import CoreStore
+
+
 from core4.util.email import RoleEmail
 
 class LoginHandler(CoreRequestHandler):
@@ -25,17 +28,27 @@ class LoginHandler(CoreRequestHandler):
         """
         Same as :meth:`.post`
         """
+        login = True
+        if "reset" in self.request.path:
+            login = False
+        await self.getter(login)
+
+    async def getter(self, login=True):
         if self.wants_html():
-            root = self.config.api.auth_url.rstrip()
-            if "login" in self.request.path:
-                return self.render("template/login.html", auth_url=root)
-            if "reset" in self.request.path:
-                return self.render("template/reset.html", auth_url=root)
+            store = await CoreStore.load(self.user)
+            params = {
+                "login_url": store["doc"]["login"],
+                "reset_url": store["doc"]["reset"]
+            }
+            if login:
+                return self.render("template/login.html", **params)
+            return self.render("template/reset.html", **params)
         token = await self._login()
         if token:
             return self.reply({"token": token})
         self.set_status(401)
         self.write_error(401)
+
 
     async def post(self):
         """

@@ -217,3 +217,59 @@ async def test_image_example(core4api):
     #pprint(rv.json())
     img = rv.json()["data"]["doc"]["logo"]
     assert img == b1.decode("utf-8")
+
+
+async def test_base_store():
+    from core4.api.v1.request.store import CoreStore
+    from core4.api.v1.request.role.model import CoreRole
+    r = await CoreRole().load_one(_id="admin")
+    data = await CoreStore.load(r)
+    assert data["doc"]["logout"] == "/core4/api/v1/login"
+    assert data["doc"]["reset"] == "/core4/api/v1/login/reset"
+
+
+async def test_dyn_login(core4api):
+    rv = await core4api.get("/core4/api/v1/roles",
+                            headers={"Accept": "text/html"})
+    body = rv.body.decode("utf-8")
+    assert "/core4/api/v1/login/reset" in body
+    assert "/core4/api/v1/login" in body
+    rv = await core4api.get("/core4/api/v1/roles", follow_redirects=False)
+    print(dict(rv.headers))
+    assert rv.code == 302
+    assert rv.headers["Location"].startswith("/core4/api/v1/login?")
+    assert rv.headers["Location"].endswith("/core4/api/v1/roles")
+
+
+async def test_dyn_login2(core4api):
+    await core4api.login()
+    resp = await core4api.post('/core4/api/v1/store', json={})
+    assert resp.code == 200
+
+    resp = await core4api.post('/core4/api/v1/store/client-A',
+                               json={"reset": "/core4/api/v1/logout-dummy"})
+    assert resp.code == 200
+
+    r1 = await core4api.post("/core4/api/v1/roles", body=dict(
+        name="test_role1",
+        realname="test role 1",
+        passwd="test_role1",
+        email="test@mail.de",
+        role=["standard_user"],
+        perm=["app://store/client-A"]
+    ))
+    assert r1.code == 200
+    rv = await core4api.login("test_role1", "test_role1")
+    print(rv)
+    resp = await core4api.get('/core4/api/v1/profile')
+    assert resp.code == 200
+    print(resp.json())
+    rv = await core4api.get("/core4/api/v1/logout",
+                            headers={"Accept": "text/html"})
+    body = rv.body.decode("utf-8")
+    assert "<!-- LOGIN -->" in body
+    assert "/core4/api/v1/logout-dummy" in body
+
+    resp = await core4api.get('/core4/api/v1/profile')
+    print(resp.json())
+    assert resp.code == 200
