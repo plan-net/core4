@@ -36,6 +36,7 @@
 
         <v-row>
           <v-col cols="12">
+            <!--    <pre>{{internalJob}}</pre> -->
             <v-data-table
               dense
               v-model="internalJob"
@@ -59,24 +60,28 @@
                   <v-row>
                     <v-col
                       cols="10"
-                      class="pr-1 pl-8 py-0"
+                      class="pr-1 pl-8 pb-0 pt-4"
                     >
-                      <!--                  <ace-editor
-                        disabled
-                        :height="'400px'"
-                        label="Log"
-                        language="rdoc"
-                        font-family="monospace"
-                        :value="internalLogMessage"
-                      /> -->
-                      <v-textarea
-                      auto-grow
-                        filled
-                        :dark="$store.getters.dark"
-                        label=""
-                        :value="internalLogMessage"
-                        readonly
-                      ></v-textarea>
+                      <v-tabs v-model="tabs">
+                        <v-tab>Log</v-tab>
+                        <v-tab>Args</v-tab>
+                      </v-tabs>
+                      <v-tabs-items v-model="tabs">
+                        <v-tab-item>
+                          <v-textarea
+                            auto-grow
+                            filled
+                            :dark="$store.getters.dark"
+                            label=""
+                            :value="internalLogMessage"
+                            readonly
+                          ></v-textarea>
+
+                        </v-tab-item>
+                        <v-tab-item>
+                          <args-display v-if="tabs === 1" :job-id="internalJob[0]._id"></args-display>
+                        </v-tab-item>
+                      </v-tabs-items>
                     </v-col>
                     <v-col
                       cols="2"
@@ -132,6 +137,7 @@
 
 <script>
 import JobManagmentButtons from '@/components/job/JobManagmentButtons.vue'
+import ArgsDisplay from '@/components/ArgsDisplay.vue'
 import JobStateFilter from '@/components/job/JobStateFilter.vue'
 import { mapGetters } from 'vuex'
 
@@ -173,17 +179,6 @@ const headers = [
     value: 'prog'
   }
 ]
-/* let int
-const adjustProg = () => {
-  const prog = document.querySelectorAll('.prog')
-  prog.forEach(val => {
-    let progress = val.className.substring(val.className.indexOf('prog-') + 5)
-    progress = Number(progress) * 100
-
-         const td = val.querySelector('td')
-    td.setAttribute('data-width', `${progress}%`)
-  })
-} */
 export default {
   filters: {
     number: function (value) {
@@ -203,27 +198,21 @@ export default {
   },
   components: {
     JobManagmentButtons,
-    JobStateFilter
+    JobStateFilter,
+    ArgsDisplay
   },
   data () {
     return {
+      tabs: null,
       dialog: false,
       headers,
       expanded: null
     }
   },
-  beforeDestroy () {
-
-  },
   methods: {
     itemClass (val) {
       const c1 = val.state + '-border'
-      /*      const prog = val.prog.value
-      let c2 = ''
-      if (prog) {
-        c2 = ' prog prog-' + prog
-      } */
-      return c1 // + c2
+      return c1
     },
     copy (text) {
       text = text || this.job.name
@@ -231,8 +220,6 @@ export default {
     },
     close () {
       this.$store.dispatch('jobs/clearJob', true)
-      /*       await this.$nextTick()
-      this.dialog = false */
     }
   },
   mounted () {
@@ -291,7 +278,6 @@ tr.prog {
   position: relative;
   box-shadow: 0px 24px 3px -24px magenta !important;
 }
-
 </style>
 <style lang="scss" scoped>
 .job-count {
@@ -324,10 +310,9 @@ tr.prog {
 ::v-deep {
   .v-textarea {
     font-family: monospace !important;
-    textarea{
-
-    font-size: 13px !important;
-    line-height: 15px !important;
+    textarea {
+      font-size: 13px !important;
+      line-height: 15px !important;
     }
   }
   .pending-border td:first-child {

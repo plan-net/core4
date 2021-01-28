@@ -40,7 +40,10 @@
     </v-card-title>
     <v-card-text class="pt-9 px-0">
       <div class="subtitle-2 mb-1´2 text-truncate">{{widget.subtitle}}</div>
-      <div class="body-2 font-weight-light">{{widgetDesc}}</div>
+      <div
+        class="body-2 font-weight-light"
+        v-html="widgetDesc"
+      ></div>
     </v-card-text>
 
     <v-card-actions class="pa-0">
@@ -130,10 +133,10 @@ export default {
       }
     },
     widgetDesc () {
-      if ((this.widget.description || []).length > 135) {
+      /*       if ((this.widget.description || []).length > 135) {
         return this.widget.description.substring(0, 135) + '…'
-      }
-      return this.widget.description
+      } */
+      return this.widget.description_html.body || this.widget.description
     }
   },
   mounted () {
