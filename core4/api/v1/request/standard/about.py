@@ -11,7 +11,7 @@ Implements core4os standard :class:`.AboutHandler`.
 
 from core4.api.v1.request.main import CoreRequestHandler
 import core4
-from core4.api.v1.request.store import StoreHandler
+from core4.api.v1.request.store import CoreStore
 from core4.queue.query import QueryMixin
 
 
@@ -53,8 +53,7 @@ class AboutHandler(CoreRequestHandler, QueryMixin):
             >>> rv = get("http://localhost:5001/core4/api/v1/about")
             >>> rv.json()
         """
-        store = StoreHandler(self.application, self.request)
-        s = await store.load(self.user)
+        s = await CoreStore.load(self.user)
         daemon = await self.get_daemon_async()
         worker = [d for d in daemon if d["kind"] == "worker"]
         app = [d for d in daemon if d["kind"] == "app"]

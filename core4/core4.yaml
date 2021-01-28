@@ -110,7 +110,6 @@ api:
   error_text_page: standard/template/error.txt
   help_html_page: standard/template/help.html
   info_html_page: standard/template/info.html
-  auth_url: /core4/api/v1
   reset_password:
     expiration: 28800  # 8h
   token:
@@ -158,7 +157,9 @@ store:
   default:
     contact: mail@mailer.com
     profile: /core4/api/v1/profile
+    reset: /core4/api/v1/reset
     logout: /core4/api/v1/login
+    login: /core4/api/v1/login
     menu:
       - Contact: mailto:mail@mailer.com?subject=core4os support request
       - About: /core4/api/v1/about

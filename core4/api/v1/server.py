@@ -49,7 +49,7 @@ from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.standard.static import CoreStaticFileHandler
 from core4.api.v1.request.standard.avatar import AvatarHandler
-from core4.api.v1.request.store import StoreHandler
+from core4.api.v1.request.store.handler import StoreHandler
 from core4.api.v1.request.standard.about import AboutHandler
 
 

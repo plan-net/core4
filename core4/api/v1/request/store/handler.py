@@ -1,23 +1,16 @@
-#
-# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
-#
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 import json
-import os.path
 import re
 
 from tornado.web import HTTPError
 
 from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.store import CoreStore
 
 
-class StoreHandler(CoreRequestHandler):
+class StoreHandler(CoreRequestHandler, CoreStore):
     """
     This endpoint services a storage in collection ``sys.store``. You can
-    configure the entry point into this storage for each user/role 
+    configure the entry point into this storage for each user/role
     individually. By defining a permission ``app://store/<path>`` the ``path``
     element locates the document in ``sys.store``.
 
@@ -245,7 +238,7 @@ class StoreHandler(CoreRequestHandler):
             inherited = rec["doc"]
         if self.wants_html():
             self.render(
-                "standard/template/store.html",
+                "template/store.html",
                 xpath=children,
                 root=xpath if xpath.endswith("/") else xpath + "/",
                 body=json.dumps(doc, indent=2),
@@ -285,48 +278,7 @@ class StoreHandler(CoreRequestHandler):
             <Response [200]>
         """
         if xpath is None:
-            ret = await self.load(self.user)
+            ret = await self.load_by_user(self.user)
         else:
             raise HTTPError(405)
         self.reply(ret)
-
-    async def load(self, user):
-        xpath = None
-        if user is not None:
-            for app in await user.casc_perm():
-                if app.startswith("app://store"):
-                    xpath = app[len("app://store"):]
-                    break
-        if xpath is None:
-            xpath = "/"
-        xpath = self.make_path(xpath)
-        return await self.parse(xpath)
-
-    async def parse(self, xpath):
-        parts = xpath.split("/")
-        if xpath == "/":
-            parents = [xpath]
-        else:
-            parents = []
-        while xpath != "/":
-            parent = "/".join(parts)
-            if not parent:
-                parent = "/"
-            parents.append(parent)
-            parts.pop(-1)
-            if not parts:
-                break
-        parents = list(reversed(parents))
-        doc = self.raw_config.store.default
-        for parent in parents:
-            pdoc = await self.config.sys.store.find_one({"_id": parent})
-            if pdoc is not None:
-                doc.update(pdoc)
-        return {"parents": parents, "doc": doc}
-
-    def make_path(self, xpath):
-        if xpath is None:
-            return "/"
-        if not xpath.startswith("/"):
-            xpath = "/" + xpath
-        return os.path.normpath(xpath)
