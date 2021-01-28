@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="min-height: 250px;">
     <pre>{{job.args}}</pre>
   </div>
 </template>
