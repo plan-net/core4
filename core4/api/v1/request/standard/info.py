@@ -27,10 +27,11 @@ class InfoHandler(CoreRequestHandler):
             GET /core4/api/v1/_info - paginated list of endpoints
 
         Parameters:
-            per_page (int)
-            current_page (int)
-            query (dict)
-            serach (str)
+            - per_page (int)
+            - current_page (int)
+            - query (dict)
+            - search (str)
+            - tag (list of str)
 
         The search attributes support
 
@@ -39,6 +40,7 @@ class InfoHandler(CoreRequestHandler):
         #. a domain specific query language filtering all available attributes,
            for example
            ``tag == "app" or tag == "role" or title == regex("role.*", "i")``
+        #. filtering by tags
         #. hiding/showing technical APIs flagged with the *api* tag by prefixing
            the search with a "!" character, for example ``! foobar``
            (free text search including technical APIs) or
@@ -158,8 +160,10 @@ class InfoHandler(CoreRequestHandler):
         current_page = int(self.get_argument("page", as_type=int, default=0))
         query = self.get_argument("filter", as_type=dict, default={})
         search = self.get_argument("search", as_type=str, default=None)
-        all = False
+        all = self.get_argument("api", as_type=bool, default=False)
+        tag = self.get_argument("tag", as_type=list, default=None)
         # parse search
+        q = {}
         if search:
             search = search.strip()
             if search.startswith("!"):
@@ -169,7 +173,7 @@ class InfoHandler(CoreRequestHandler):
                 try:
                     q = pql.find(search)
                     self.logger.debug("search: %s", q)
-                except:
+                except Exception:
                     search = ".*" + search + ".*"
                     q = {"$or": [
                         {"author": re.compile(search, re.I)},
@@ -179,12 +183,15 @@ class InfoHandler(CoreRequestHandler):
                         {"tag": re.compile(search, re.I)},
                         {"title": re.compile(search, re.I)}
                     ]}
-                query.update(q)
-        # search
+        else:
+            q = query
         if not all:
-            query = {"$and": [query, {"tag": {"$ne": "api"}}]}
+            q = {"$and": [{"tag": {"$ne": "api"}}, q]}
+        if tag:
+            q = {"$and": [q, {"tag": {"$in": tag}}]}
         data = []
-        for handler in await self.application.container.get_handler(**query):
+        self.logger.debug("search %s", q)
+        for handler in await self.application.container.get_handler(**q):
             check = []
             if handler["perm_base"] == "handler":
                 check.append(handler["qual_name"])
