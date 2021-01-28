@@ -157,7 +157,7 @@ store:
   default:
     contact: mail@mailer.com
     profile: /core4/api/v1/profile
-    reset: /core4/api/v1/login/reset
+    reset: /core4/api/v1/reset
     logout: /core4/api/v1/login
     login: /core4/api/v1/login
     menu:
