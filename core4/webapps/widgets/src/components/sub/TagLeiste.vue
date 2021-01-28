@@ -42,6 +42,7 @@
       style="margin-top: 8px; margin-bottom: 8px;"
     ></v-divider>
     <v-menu
+      max-width="480px"
       offset-y
       :close-on-content-click="false"
     >
