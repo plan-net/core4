@@ -84,6 +84,7 @@
         <div class="pa-4">
           <v-chip-group
             multiple
+            column
             active-class="primary"
             v-model="innerSelected2"
           >
