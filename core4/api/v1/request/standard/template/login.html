@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- LOGIN -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -173,7 +174,7 @@
         },
         methods: {
           toReset(){
-            window.location.assign('{{ auth_url }}/reset');
+            window.location.assign('{{ reset_url }}');
           },
           login() {
             const { username, password } = this;
@@ -181,7 +182,7 @@
             delete instance.defaults.headers.common['Authorization'];
             console.log(instance)
             return instance
-              .post("{{ auth_url }}/login", { username, password })
+              .post("{{ login_url }}", { username, password })
               .then(result => {
                 window.localStorage.setItem(
                   "user",

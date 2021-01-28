@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<!-- RESET -->
 <head>
   <meta charset="UTF-8" />
   <title>Reset</title>
@@ -352,11 +352,11 @@
       watch: {},
       methods: {
         toLogin() {
-          window.location.assign("{{ auth_url }}/login");
+          window.location.assign("{{ login_url }}");
         },
         async submit(payload) {
           try {
-            await axios.put(`{{ auth_url }}/login`, payload)
+            await axios.put(`{{ login_url }}`, payload)
             this.finished = true;
           } catch (err) {
             this.error = err.response.statusText;

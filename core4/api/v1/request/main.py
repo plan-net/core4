@@ -36,6 +36,8 @@ from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode, rst2html
 from core4.util.pager import PageResult
 from tornado.web import RequestHandler, HTTPError
+from core4.api.v1.request.store import CoreStore
+
 
 tornado.escape.json_encode = json_encode
 try:
@@ -181,11 +183,11 @@ class CoreBaseHandler(CoreBase):
                 if await self.verify_access():
                     return
                 raise HTTPError(403)
-            url = "".join([
-                self.config.api.auth_url.strip(),
-                "/login?h={uuid}&next={next}".format(
-                    uuid=str(uuid4()),
-                    next=urllib.parse.quote(self.request.full_url()))])
+            auth_url = await CoreStore.load(self.user)
+            url = "{url}?h={uuid}&next={next}".format(
+                url=auth_url["doc"]["login"],
+                uuid=str(uuid4()),
+                next=urllib.parse.quote(self.request.full_url()))
             self.redirect(url)
 
     async def verify_access(self):
