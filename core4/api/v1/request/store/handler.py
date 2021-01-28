@@ -238,7 +238,7 @@ class StoreHandler(CoreRequestHandler, CoreStore):
             inherited = rec["doc"]
         if self.wants_html():
             self.render(
-                "standard/template/store.html",
+                "template/store.html",
                 xpath=children,
                 root=xpath if xpath.endswith("/") else xpath + "/",
                 body=json.dumps(doc, indent=2),
