@@ -37,18 +37,17 @@
         <v-row
           no-gutters
           align="center"
-          class="pl-7 pr-6"
+          class="pl-7 pr-3"
         >
-          <v-col cols="5">
+          <v-col>
             <tag-leiste
               class="py-2"
               :selected="selectedTags"
               @change="onTagSelection"
             ></tag-leiste>
           </v-col>
-          <v-col cols="7">
+          <v-col>
             <search
-              class="pl-3"
               :search-active="true"
               @close-input="onUserSearch"
             ></search>
@@ -151,6 +150,7 @@ export default {
   },
   methods: {
     onTagSelection ($event) {
+      console.log($event)
       this.selectedTags = $event
       this.onUserSearch()
     },
