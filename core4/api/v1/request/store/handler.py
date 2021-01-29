@@ -211,9 +211,8 @@ class StoreHandler(CoreRequestHandler, CoreStore):
             >>> rv
             <Response [200]>
         """
-        redirect = self.request.full_url()
-        if redirect.endswith("/"):
-            return self.redirect(redirect[:-1])
+        if xpath and xpath != "/" and xpath.endswith("/"):
+            xpath = xpath[:-1]
         xpath = self.make_path(xpath)
         if xpath == "/":
             down = '^\\/[^\\/]+$'
