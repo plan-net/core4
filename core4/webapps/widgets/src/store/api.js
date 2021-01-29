@@ -90,16 +90,14 @@ const api = {
   ) {
     const tmpParams = { per_page: params.per_page, page: params.page }
     const search = params.search
-    /*     if (params.tags.length) {
-      const tagArrStr = JSON.stringify(params.tags.map(t => t.value))
-      const tag = `tag in ${tagArrStr}`
-      search = search.length ? `${search} and ${tag}` : tag
-    } */
     if ((search || '').length) {
       tmpParams.search = search
     }
     if (params.tags.length) {
-      tmpParams.api = params.tags.find(val => !val.default) != null
+      // tmpParams.api = params.tags.find(val => !val.default) != null
+      if (params.tags.find(val => !val.default) != null) {
+        tmpParams.api = true
+      }
       tmpParams.tag = JSON.stringify(params.tags.map(t => t.value))
     }
     try {
