@@ -132,6 +132,7 @@ class JobRequest(CoreRequestHandler):
     * kill, restart and remove jobs
     """
 
+    author = "mra"
     title = "Job Management"
     subtitle = "Enqueue and Manage Jobs"
     tag = "api jobs"

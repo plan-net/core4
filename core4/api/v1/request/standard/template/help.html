@@ -182,21 +182,19 @@
             <v-toolbar color="accent darken-3" dark flat prominent>
               <header class="pl-3 pt-3">
                 <a
-                  class="text-h2 mb-3"
+                  class="text-h4 mb-3"
                   href="{{enter_url}}"
                   style="text-decoration: none; color: unset"
-                  v-text="subtitle || qual_name"
+                  v-text="subtitle || className"
                 ></a>
-                <!--          <h2
-                  class="text-h4 mt-3 mb-3"
-                  v-text="subtitle || qual_name"
-                ></h2> -->
+                <p class="mt-0 mb-0"
+                  v-text="qual_name"
+                ></p>
                 <section class="pt-3">
                   <v-tooltip left>
                     <template v-slot:activator="{ on }">
                       <span class="mr-2 caption py-1 pr-1" v-on="on">
-                        <v-icon class="mr-1">mdi-account-circle</v-icon>{{!
-                        author }}
+                        <v-icon class="mr-1">mdi-account-circle</v-icon>{{! author }}
                       </span>
                     </template>
                     <span>Author</span>
@@ -417,6 +415,10 @@
               qual_name.split(".").slice(-1)[0] === "CoreStaticFileHandler"
             );
           },
+          className: function () {
+            const qual_name = "{{qual_name}}";
+            return qual_name.split(".").slice(-1)[0];
+          }
         },
 
         mounted() {
