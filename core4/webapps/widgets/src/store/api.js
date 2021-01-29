@@ -102,7 +102,6 @@ const api = {
       tmpParams.api = params.tags.find(val => !val.default) != null
       tmpParams.tag = JSON.stringify(params.tags.map(t => t.value))
     }
-    console.log(tmpParams)
     try {
       const ret = await axiosInternal.get('/_info', {
         params: tmpParams
