@@ -36,9 +36,11 @@ const api = {
         error: '#FF5252'
       }
     }
-    return axiosInternal.post('/store/targobank', { json: theme }).then(result => {
-      return true
-    })
+    return axiosInternal
+      .post('/store/targobank', { json: theme })
+      .then(result => {
+        return true
+      })
   },
   __getStore () {
     return axiosInternal.put('/store/targobank').then(result => {
@@ -86,16 +88,18 @@ const api = {
       page: 0
     }
   ) {
-    console.log(params)
     const tmpParams = { per_page: params.per_page, page: params.page }
-    let search = params.search
-    if (params.tags.length) {
-      const tagArrStr = JSON.stringify(params.tags.map(t => t.value))
-      const tag = `tag in ${tagArrStr}`
-      search = search.length ? `${search} and ${tag}` : tag
+    const search = params.search
+    if ((search || '').length) {
+      tmpParams.search = search
     }
-    tmpParams.search = search
-    console.log(tmpParams)
+    if (params.tags.length) {
+      // tmpParams.api = params.tags.find(val => !val.default) != null
+      if (params.tags.find(val => !val.default) != null) {
+        tmpParams.api = true
+      }
+      tmpParams.tag = JSON.stringify(params.tags.map(t => t.value))
+    }
     try {
       const ret = await axiosInternal.get('/_info', {
         params: tmpParams
@@ -117,7 +121,6 @@ const api = {
       .then(result => result)
       .catch(error => Promise.reject(error))
   }
-
 }
 
 // no additional request - just interceptors for getting boards on first contact
