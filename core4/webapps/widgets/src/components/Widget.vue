@@ -239,7 +239,6 @@ export default {
   computed: {
     src () {
       try {
-        console.log(this.dark)
         const dark = new URLSearchParams(this.$vuetify.theme.themes.dark).toString().split('&').join('xyz')
         const light = new URLSearchParams(this.$vuetify.theme.themes.light).toString().split('&').join('xyz')
         const endpoint = replacePort(this.widget.endpoint[0])

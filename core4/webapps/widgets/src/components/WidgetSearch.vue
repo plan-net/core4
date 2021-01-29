@@ -36,17 +36,16 @@
         <v-divider class=""></v-divider>
         <v-row
           no-gutters
-          align="center"
-          class="pl-7 pr-3"
+          align="center" justify="start"
+          class="pl-7 pr-3 py-2"
         >
-          <v-col>
-            <tag-leiste
-              class="py-2"
-              :selected="selectedTags"
-              @change="onTagSelection"
-            ></tag-leiste>
+          <v-col cols="auto">
+          <tag-leiste
+            :selected="selectedTags"
+            @change="onTagSelection"
+          ></tag-leiste>
           </v-col>
-          <v-col>
+          <v-col  class="pl-5">
             <search
               :search-active="true"
               @close-input="onUserSearch"
@@ -150,18 +149,12 @@ export default {
   },
   methods: {
     onTagSelection ($event) {
-      console.log($event)
       this.selectedTags = $event
       this.onUserSearch()
     },
     async onUserSearch (val) {
       const search = val ? val.text : this.params.search
       console.log(search)
-      /*       if ((this.selectedTags || []).length) {
-        const tagArrStr = JSON.stringify(this.selectedTags.map(t => t.value))
-        const tag = `tag in ${tagArrStr}`
-        search = search.length ? `${search} and ${tag}` : tag
-      } */
       this.params = Object.assign(_.cloneDeep(defParams), { search, tags: this.selectedTags })
       this.widgets = []
       this.deltaWidgets = []

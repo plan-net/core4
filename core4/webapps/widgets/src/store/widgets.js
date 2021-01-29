@@ -30,14 +30,6 @@ const actions = {
       let tags2 = Object.entries(tags).map(val => {
         return Object.assign(val[1], { label: val[0] })
       })
-      /*     .filter(val => {
-          return ['app', 'api', 'new'].includes(val.label)
-        }) */
-      /*       tags2.unshift({
-        label: 'All',
-        default: true,
-        count: '?'
-      }) */
       tags2 = tags2.map(val => {
         return Object.assign(val, {
           value: val.label === 'all' ? '' : val.label

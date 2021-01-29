@@ -24,7 +24,7 @@
         :key="tag.value"
       >
         {{ tag.value }}
-        <v-avatar
+<!--         <v-avatar
           style="opacity: .5"
           rounded
           v-if="tag.count > 1"
@@ -32,7 +32,7 @@
           light
         >
           ({{tag.count}})
-        </v-avatar>
+        </v-avatar> -->
       </v-chip>
     </v-chip-group>
     <v-divider
@@ -68,7 +68,7 @@
             align="center"
           >
             <h4>
-              Observed Tags
+              Additional Tags
             </h4>
             <v-spacer></v-spacer>
             <v-btn
@@ -94,7 +94,7 @@
               :key="tag.value"
             >
               {{ tag.value }}
-              <v-avatar
+      <!--         <v-avatar
                 style="opacity: .5"
                 rounded
                 v-if="tag.count > 1"
@@ -102,7 +102,7 @@
                 light
               >
                 ({{tag.count}})
-              </v-avatar>
+              </v-avatar> -->
             </v-chip>
           </v-chip-group>
         </div>
