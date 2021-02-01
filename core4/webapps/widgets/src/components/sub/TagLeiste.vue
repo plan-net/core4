@@ -24,7 +24,7 @@
         :key="tag.value"
       >
         {{ tag.value }}
-<!--         <v-avatar
+        <!--         <v-avatar
           style="opacity: .5"
           rounded
           v-if="tag.count > 1"
@@ -44,6 +44,7 @@
     <v-menu
       max-width="480px"
       offset-y
+      v-model="open"
       :close-on-content-click="false"
     >
       <template v-slot:activator="{ on, attrs }">
@@ -72,6 +73,7 @@
             </h4>
             <v-spacer></v-spacer>
             <v-btn
+              @click="open = false"
               class="ml-2"
               icon
             >
@@ -94,7 +96,7 @@
               :key="tag.value"
             >
               {{ tag.value }}
-      <!--         <v-avatar
+              <!--         <v-avatar
                 style="opacity: .5"
                 rounded
                 v-if="tag.count > 1"
@@ -179,6 +181,7 @@ export default {
   },
   data () {
     return {
+      open: false
     }
   }
 

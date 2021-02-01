@@ -38,7 +38,7 @@ export default {
       placeholder: 'Search for a job',
       allowClear: false,
       ajax: {
-        url: '/core4/api/v1/jobs/list',
+        url: '/core4/api/v1/job/list',
         data: function (params) {
           var query = {
             search: params.term,
@@ -51,6 +51,7 @@ export default {
           var ret = data.data.map(function (item) {
             return { id: item._id, text: item._id }
           })
+          console.log(ret)
           return {
             results: ret,
             pagination: {

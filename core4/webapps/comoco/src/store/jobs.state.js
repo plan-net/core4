@@ -130,9 +130,7 @@ const actions = {
   ) {
     return new Promise((resolve, reject) => {
       context.commit('addError', null)
-      // clearSSE()
       context.commit('clearJob')
-
       const token = JSON.parse(localStorage.getItem('user')).token
       const endpoint = `jobs/poll/${conf.job._id || conf.job}?token=${token}`
       const sse = getSSE({
@@ -141,12 +139,7 @@ const actions = {
 
       sse.addEventListener('update', function (e) {
         const delta = JSON.parse(e.data)
-        // console.log('update', delta)
         context.dispatch('updateJob', delta)
-        /*        window.clearTimeout(ti)
-        ti = window.setTimeout(function () {
-          context.commit('cleanupCompletedJobs')
-        }, 2500) */
       })
       sse.addEventListener('log', function (e) {
         const json = JSON.parse(e.data)
@@ -170,10 +163,10 @@ const actions = {
     const name = payload.job
     const args = payload.args
     const dto = Object.assign({}, args, { name })
-
+    console.log(dto)
     let job
-    try {
-      const ret = await api.post('jobs/enqueue', dto)
+    /*     try {
+      const ret = await api.post('jobs', dto)
       job = ret.data
       context.commit('setJob', job) // only name, id, triggers dialog to open, starts logging
       context.dispatch('fetchJob', job._id).then(val => {
@@ -189,7 +182,7 @@ const actions = {
     } catch (error) {
       const errorRaw = extractError(error.response.data.error)
       store.commit('jobs/addError', errorRaw)
-    }
+    } */
   },
   async fetchJobsByName (context, payload) {
     const json = {

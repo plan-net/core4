@@ -9,6 +9,7 @@
         <v-row class="qualname">
           <div>
 
+
             <h5 class="grey--text">Qualname</h5>
             <h2>{{job.name}}
               <v-btn
