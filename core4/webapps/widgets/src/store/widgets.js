@@ -203,6 +203,7 @@ const actions = {
   async fixWidget (context, widget) {
     const params = {
       search: widget.title,
+      tags: [],
       page: 0,
       per_page: 1
     }
@@ -229,7 +230,9 @@ const actions = {
       } else {
         window.alert('Not possible to fix the broken widget.')
       }
-    } catch (err) {}
+    } catch (err) {
+      console.log(err)
+    }
     return false
   },
   async createBoard ({ commit }, dto) {
