@@ -102,7 +102,6 @@ const mutations = {
   // default handler called for all methods
   [SOCKET_ONMESSAGE] (state, message) {
     state.socket.message = message
-    // console.log(message)
     if (message.channel && message.name) {
       channelDict[message.channel][message.name](state, message)
     }
@@ -175,7 +174,6 @@ function mapGettersJobGroups (arr) {
  */
 function queueChannelHandler (state, message) {
   // summary - ws type notification (all jobs in queue)
-  // console.log('queue', message)
   state.queue = groupDataAndJobStat(message.created, message.data, 'state')
 
   if (!state.socket.reconnectError) {
@@ -192,7 +190,6 @@ function queueChannelHandler (state, message) {
  * @param message {object} - ws notification
  */
 function eventChannelHandler (state, message) {
-  // console.log('event', message)
   state.event = { ...defaultEventObj, ...message.data.queue }
   state.event.created = message.created
 }

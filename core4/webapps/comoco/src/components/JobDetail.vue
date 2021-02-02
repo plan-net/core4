@@ -9,7 +9,6 @@
         <v-row class="qualname">
           <div>
 
-
             <h5 class="grey--text">Qualname</h5>
             <h2>{{job.name}}
               <v-btn
@@ -39,6 +38,7 @@
           <v-col cols="12">
             <!--    <pre>{{internalJob}}</pre> -->
             <v-data-table
+              class="job-dt"
               dense
               v-model="internalJob"
               single-select
@@ -56,7 +56,7 @@
               <template v-slot:expanded-item="{ headers }">
                 <td
                   :colspan="headers.length"
-                  class="px-0 py-0"
+                  class="px-0 pt-0 pb-6"
                 >
                   <v-row>
                     <v-col
@@ -70,7 +70,7 @@
                       <v-tabs-items v-model="tabs">
                         <v-tab-item>
                           <v-textarea
-                            auto-grow
+                            rows="12"
                             filled
                             :dark="$store.getters.dark"
                             label=""
@@ -80,7 +80,10 @@
 
                         </v-tab-item>
                         <v-tab-item>
-                          <args-display v-if="tabs === 1" :job-id="internalJob[0]._id"></args-display>
+                          <args-display
+                            v-if="tabs === 1"
+                            :job-id="internalJob[0]._id"
+                          ></args-display>
                         </v-tab-item>
                       </v-tabs-items>
                     </v-col>
@@ -141,7 +144,7 @@ import JobManagmentButtons from '@/components/job/JobManagmentButtons.vue'
 import ArgsDisplay from '@/components/ArgsDisplay.vue'
 import JobStateFilter from '@/components/job/JobStateFilter.vue'
 import { mapGetters } from 'vuex'
-
+let ti
 const headers = [
   {
     text: 'JobId',
@@ -233,7 +236,19 @@ export default {
           this.close()
         })
       } else {
+        this.$store.dispatch('jobs/setJobManagerBusy')
         this.dialog = true
+      }
+    },
+    internalLogMessage (newVal) {
+      if (newVal != null && newVal.length > 200) {
+        clearTimeout(ti)
+        ti = setTimeout(() => {
+          try {
+            const textarea = document.querySelector('.job-dt').querySelector('textarea')
+            textarea.scrollTop = textarea.scrollHeight
+          } catch (err) {}
+        }, 1)
       }
     }
   },
@@ -241,9 +256,6 @@ export default {
     jobsAvail () {
       return this.jobs.length > 0
     },
-    /*     jobs () {
-      return this.$store.getters.filteredJobs
-    }, */
     ...mapGetters('jobs', [
       'job', 'log', 'jobs', 'filter', 'filteredJobs'
     ]),
@@ -251,7 +263,7 @@ export default {
       return this.job._id
     },
     internalLogMessage () {
-      return this.log// .map(val => val.date + ' | ' + val.message).join('\n')
+      return this.log
     },
     internalJobs () {
       return this.filteredJobs.map(val => {
@@ -264,8 +276,10 @@ export default {
         return [this.job]
       },
       set (newVal) {
-        if (newVal[0]._id !== this.job._id) {
-          this.$store.dispatch('jobs/setJob', newVal[0])
+        if ((newVal || []).length > 0) {
+          if (newVal[0]._id !== this.job._id) {
+            this.$store.dispatch('jobs/setJob', newVal[0])
+          }
         }
       }
     }

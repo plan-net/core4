@@ -27,10 +27,10 @@
       :large="jobCount > 1"
     >Remove</v-btn>
     <template v-if="jobManagerBusy">
-      <v-progress-circular
+      <v-progress-circular class="mt-2"
         indeterminate
-        :size="70"
-        :width="7"
+        :size="50"
+        :width="5"
         color="grey"
       ></v-progress-circular>
     </template>
@@ -69,7 +69,7 @@ export default {
     },
     async beforeRemove () {
       if (await this.$root.$confirm.open('Remove selected job?', 'The selected job will be removed. Are you sure?', { color: 'primary darken-1', yes: 'Remove' })) {
-        this.$store.dispatch('jobs/manageJob', 'delete')
+        this.$store.dispatch('jobs/manageJob', 'remove')
       } else {
         // cancel
       }

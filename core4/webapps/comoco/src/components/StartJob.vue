@@ -91,7 +91,7 @@
                     large
                     :loading="isLoading"
                     :disabled="isLoading"
-                    color="secondary lighten-3"
+                    color="accent"
                   >
                     Enqueue
                     <template v-slot:loader>

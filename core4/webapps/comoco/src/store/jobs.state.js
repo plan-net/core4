@@ -9,11 +9,11 @@ let sses = []
 // let ti,
 let tiFetchJobs
 function clearSSE (e) {
-  // console.log('clearSSE')
   try {
     if (e != null) {
       e.source.removeEventListener('log')
       e.source.removeEventListener('update')
+      e.source.removeEventListener('state')
       e.source.removeEventListener('close')
       e.source.removeEventListener('error')
       e.source.close()
@@ -21,6 +21,7 @@ function clearSSE (e) {
       sses.forEach(sse => {
         sse.removeEventListener('log')
         sse.removeEventListener('update')
+        sse.removeEventListener('state')
         sse.removeEventListener('close')
         sse.removeEventListener('error')
         sse.close()
@@ -73,23 +74,40 @@ const actions = {
   setJob (context, job) {
     context.commit('setJob', job)
     context.dispatch('logJob', job._id)
-    // context.dispatch('fetchArgs', job._id)
-    // TODO fetch args
   },
   async fetchJob (context, id) {
-    const job = await api.get(`jobs/${id}`)
+    const job = await api.get(`job/${id}`)
     context.commit('setJob', job.data)
     return job.data
   },
   async fetchJobArgs (context, id) {
     const job = await api.get(`job/${id}`)
     context.commit('setJobArgs', job.data.args)
-    /*     context.commit('setJob', job.data)
-    return job.data */
   },
   logJob (context, jobId = null) {
     context.commit('clearLog')
-    // clearSSE()
+    const id = jobId || state.job._id
+    const token = JSON.parse(localStorage.getItem('user')).token
+    const sse = getSSE({
+      endpoint: `job/follow/${id}?token=${token}`,
+      json: null,
+      GET: true
+    })
+    sses.push(sse)
+    sse.addEventListener('log', e => {
+      const json = JSON.parse(e.data)
+      const { message, epoch } = json
+      context.dispatch('addLog', {
+        message,
+        date: formatDate(new Date(epoch * 1000))
+      })
+    })
+    sse.addEventListener('error', onSseError)
+    sse.addEventListener('close', clearSSE)
+    sse.stream()
+  },
+  /*   logJob2 (context, jobId = null) {
+    context.commit('clearLog')
     const id = jobId || state.job._id
     const token = JSON.parse(localStorage.getItem('user')).token
     const json = {
@@ -113,34 +131,44 @@ const actions = {
     sse.addEventListener('error', onSseError)
     sse.addEventListener('close', clearSSE)
     sse.stream()
-  },
+  }, */
   updateJob (context, delta) {
     context.commit('updateJob', delta)
   },
   /**
-   * Used for sse on new enqueud job
-   * Use on existion job group
+   * Used for sse on new enqueued job
+   * Use on existing job group
    *
    */
   pollEnqueuedJob (
     context,
     conf = {
-      job: null
+      job: null,
+      follow: true
     }
   ) {
     return new Promise((resolve, reject) => {
       context.commit('addError', null)
       context.commit('clearJob')
       const token = JSON.parse(localStorage.getItem('user')).token
-      const endpoint = `jobs/poll/${conf.job._id || conf.job}?token=${token}`
+      let endpoint
+      if (conf.follow === true) {
+        endpoint = `job/follow/${conf.job._id}?token=${token}`
+      } else {
+        endpoint = `job/${conf.job._id}?token=${token}`
+      }
       const sse = getSSE({
         endpoint
       })
 
-      sse.addEventListener('update', function (e) {
+      sse.addEventListener('state', function (e) {
         const delta = JSON.parse(e.data)
         context.dispatch('updateJob', delta)
       })
+      /*     sse.addEventListener('update', function (e) {
+        const delta = JSON.parse(e.data)
+        context.dispatch('updateJob', delta)
+      }) */
       sse.addEventListener('log', function (e) {
         const json = JSON.parse(e.data)
         const message = {
@@ -162,27 +190,30 @@ const actions = {
     context.dispatch('clearJob')
     const name = payload.job
     const args = payload.args
-    const dto = Object.assign({}, args, { name })
-    console.log(dto)
-    let job
-    /*     try {
-      const ret = await api.post('jobs', dto)
-      job = ret.data
-      context.commit('setJob', job) // only name, id, triggers dialog to open, starts logging
-      context.dispatch('fetchJob', job._id).then(val => {
+    const dto = Object.assign({}, { args }, { qual_name: name, follow: false })
+    let jobId
+
+    try {
+      const ret = await api.post('job', dto)
+      jobId = ret.data
+      const jobPre = { _id: jobId, name, qual_name: name }
+      context.commit('setJob', jobPre) // only name, id, triggers dialog to open, starts logging
+      context.dispatch('fetchJob', jobId).then(val => {
         context.commit('setJobs', [val])
       })
       context.dispatch('pollEnqueuedJob', {
-        job
+        job: jobPre,
+        follow: true
       })
       context.dispatch('pollEnqueuedJob', {
-        job: job.name
+        job: jobPre,
+        follow: false
       })
       return true
     } catch (error) {
       const errorRaw = extractError(error.response.data.error)
       store.commit('jobs/addError', errorRaw)
-    } */
+    }
   },
   async fetchJobsByName (context, payload) {
     const json = {
@@ -202,9 +233,6 @@ const actions = {
       return 0
     })
     context.commit('setJobs', sortedJobs)
-    context.dispatch('pollEnqueuedJob', {
-      job: payload.name
-    })
     if (jobs.data.length > 0) {
       // select by state
       const selected = jobs.data.find(val => val.state === payload.state)
@@ -214,12 +242,16 @@ const actions = {
   async addStateFilter (context, states) {
     context.commit('addStateFilter', states)
   },
+  async setJobManagerBusy (context, val) {
+    context.commit('setJobManagerBusy', val)
+  },
   async manageJob (context, action = 'restart') {
     context.commit('setJobManagerBusy', true)
     window.clearTimeout(tiFetchJobs)
     const current = _.cloneDeep(context.state.job)
     try {
-      await api.put(`jobs/${action}/${context.state.job._id}`)
+      const param = action === 'restart' ? '?follow=false' : ''
+      await api.put(`job/${action}/${context.state.job._id}${param}`)
       tiFetchJobs = window.setTimeout(function () {
         context.dispatch('fetchJobsByName', current)
       }, 500)
@@ -241,7 +273,6 @@ const mutations = {
   addLog (state, payload) {
     state.log =
       (state.log || '') + payload.date + ' | ' + payload.message + '\n'
-    // state.log = (state.log || []).concat([payload])
   },
   clearLog (state, payload) {
     state.log = []
@@ -283,7 +314,6 @@ const mutations = {
     state.job = payload
   },
   setJobArgs (state, args) {
-    console.log(args)
     state.job.args = args
   }
 }
