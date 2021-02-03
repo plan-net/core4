@@ -73,7 +73,7 @@ export default {
   methods: {
     onClick () {
       this.$store.dispatch('jobs/clearJob')
-      this.$store.dispatch('jobs/fetchJobsByName', this.job)
+      this.$store.dispatch('jobs/openJobsDialog', this.job)
     }
   }
 }

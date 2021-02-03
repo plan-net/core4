@@ -10,12 +10,12 @@
           <div>
 
             <h5 class="grey--text">Qualname</h5>
-            <h2>{{job.name}}
+            <h2>{{job.qual_name || job.name}}
               <v-btn
                 style="margin-top: -4px;"
                 icon
                 small
-                @click="copy(job.name)"
+                @click="copy(job.qual_name || job.name)"
               >
                 <v-icon small>mdi-content-copy</v-icon>
               </v-btn>
@@ -36,7 +36,6 @@
 
         <v-row>
           <v-col cols="12">
-            <!--    <pre>{{internalJob}}</pre> -->
             <v-data-table
               class="job-dt"
               dense
@@ -48,9 +47,12 @@
               :item-class="itemClass"
               :items="internalJobs"
               xxxclass="elevation-1"
-              :hide-default-footer="jobs.length < 10"
+              xxhide-default-footer="jobs.length < 10"
               single-expand
               :expanded.sync="internalJob"
+                    :server-items-length="totalJobs"
+              :options.sync="options"
+              :footer-props="{itemsPerPageOptions:jobRowsPerPageItems}"
               show-expand
             >
               <template v-slot:expanded-item="{ headers }">
@@ -92,7 +94,7 @@
                       justify="center"
                       align="center"
                       class="pr-6"
-                      style="margin-top:100px;"
+                      style="margin-top:65px;"
                     >
                       <job-managment-buttons :job-count="jobs.length" />
                     </v-col>
@@ -210,17 +212,22 @@ export default {
       tabs: null,
       dialog: false,
       headers,
-      expanded: null
+      expanded: null,
+      options: {},
+      loading: false
+
     }
   },
+
   methods: {
     itemClass (val) {
       const c1 = val.state + '-border'
       return c1
     },
     copy (text) {
-      text = text || this.job.name
-      window.navigator.clipboard.writeText(text)
+      window.navigator.clipboard.writeText(
+        text || this.job.qual_name || this.job.name
+      )
     },
     close () {
       this.$store.dispatch('jobs/clearJob', true)
@@ -229,17 +236,26 @@ export default {
   mounted () {
   },
   watch: {
-    jobsAvail (newValue, oldValue) {
+    options: {
+      async handler () {
+        this.loading = true
+        await this.$nextTick()
+        // await this.$store.dispatch('audit/getAudits', { options: this.options })
+        this.loading = false
+      },
+      deep: true
+    },
+    /*     jobsAvail (newValue, oldValue) {
       if (newValue === false) {
         this.dialog = false
         this.$nextTick(function () {
           this.close()
         })
       } else {
-        this.$store.dispatch('jobs/setJobManagerBusy')
-        this.dialog = true
+        // this.$store.dispatch('jobs/setJobManagerBusy', false)
+        // this.dialog = true
       }
-    },
+    }, */
     internalLogMessage (newVal) {
       if (newVal != null && newVal.length > 200) {
         clearTimeout(ti)
@@ -257,7 +273,7 @@ export default {
       return this.jobs.length > 0
     },
     ...mapGetters('jobs', [
-      'job', 'log', 'jobs', 'filter', 'filteredJobs'
+      'job', 'log', 'jobs', 'filter', 'filteredJobs', 'jobRowsPerPageItems', 'totalJobs', 'jobDetailDialogOpen'
     ]),
     id () {
       return this.job._id

@@ -178,28 +178,6 @@ const actions = {
     }
     return widget
   },
-  /*   async fetchHtmlWidget (
-    context,
-    config = {
-      id: -1,
-      accept: 'application/json',
-      endpoint: ''
-    }
-  ) {
-    const { id, accept, endpoint } = config
-    try {
-      const ret = await axiosInstance.get(`${endpoint}/_info/card/${id}`, {
-        headers: { common: { Accept: accept } }
-      })
-      return ret.data
-    } catch (error) {
-      return {
-        rsc_id: id,
-        error
-      }
-    }
-  }, */
-
   async fixWidget (context, widget) {
     const params = {
       search: widget.title,

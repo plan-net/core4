@@ -38,11 +38,18 @@ function onSseError (e) {
   }
 }
 const state = {
+  pagination: {
+    descending: true,
+    page: 0,
+    itemsPerPage: 10,
+    rowsPerPageItems: [10, 25, 50, -1],
+    totalJobs: 0
+  },
+  jobDetailDialogOpen: false,
   filter: null,
   log: '',
   error: null,
   job: { _id: null, args: '' },
-
   jobs: [],
   jobManagerBusy: false
 }
@@ -215,19 +222,33 @@ const actions = {
       store.commit('jobs/addError', errorRaw)
     }
   },
-  async fetchJobsByName (context, payload) {
-    const json = {
+  async openJobsDialog (context, job) {
+    context.dispatch('setJob', _.cloneDeep(job))
+    context.commit('setJobsDialogOpen', true)
+  },
+  async fetchJobsByName (context, job) {
+    let name
+    try {
+      name = (job || {}).name || context.state.job.qual_name || context.state.job.name
+    } catch (err) {
+      name = ''
+    }
+
+    const params = {
+      per_page: 1000,
+      page: 0,
       filter: {
-        name: payload.name
+        name
       }
     }
-    const jobs = await api.post('jobs?per_page=1000&page=0', json)
+    /// const jobs = await api.post('jobs?per_page=1000&page=0', json)
+    const jobs = await api.get('job/queue', params)
     // clicked state first, then other states
     const sortedJobs = jobs.data.sort(function compare (a, b) {
-      if (a.state === payload.state) {
+      if (a.state === job.state) {
         return -1
       }
-      if (a.state !== payload.state) {
+      if (a.state !== job.state) {
         return 1
       }
       return 0
@@ -235,7 +256,7 @@ const actions = {
     context.commit('setJobs', sortedJobs)
     if (jobs.data.length > 0) {
       // select by state
-      const selected = jobs.data.find(val => val.state === payload.state)
+      const selected = jobs.data.find(val => val.state === job.state)
       context.dispatch('setJob', _.cloneDeep(selected || jobs.data[0]))
     }
   },
@@ -319,6 +340,16 @@ const mutations = {
 }
 
 const getters = {
+  jobDetailDialogOpen (state) {
+    return state.jobDetailDialogOpen
+  },
+  totalJobs (state) {
+    return state.pagination.totalJobs
+  },
+  jobRowsPerPageItems (state) {
+    return state.pagination.rowsPerPageItems
+  },
+  //
   job (state) {
     return state.job
   },

@@ -28,10 +28,10 @@ const ApiService = {
     }
     return ret
   },
-  async get (resource) {
+  async get (resource, params) {
     on()
     try {
-      const ret = await axios.get(resource)
+      const ret = await axios.get(resource, params)
       return ret
     } catch (err) {
       if (ApiService.errorHandlerCaught(err) === false) {
