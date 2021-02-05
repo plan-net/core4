@@ -8,14 +8,14 @@
       class="mb-4"
       block
       color="secondary lighten-3"
-      :disabled="'running_complete'.includes(job.state) || jobManagerBusy"
+      :disabled="'running_complete'.includes(job.state) || jobManagerBusy || job.$removed"
       :large="jobCount > 1"
     >Restart</v-btn>
     <v-btn
       @click="beforeKill"
       class="mb-4"
       block
-      :disabled="'error_complete_killed'.includes(job.state) || jobManagerBusy"
+      :disabled="'error_complete_killed'.includes(job.state) || jobManagerBusy || job.$removed"
       color="secondary lighten-3"
       :large="jobCount > 1"
     >Kill</v-btn>
@@ -23,7 +23,7 @@
       @click="beforeRemove"
       block
       color="secondary lighten-3"
-      :disabled="'running_complete'.includes(job.state) || jobManagerBusy"
+      :disabled="'running_complete'.includes(job.state) || jobManagerBusy || job.$removed"
       :large="jobCount > 1"
     >Remove</v-btn>
     <template v-if="jobManagerBusy">

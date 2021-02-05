@@ -53,7 +53,8 @@
           :key="dark"
         ></stock-chart>
       </v-flex>
-      <v-btn v-else
+      <v-btn
+        v-else
         class="toggleIcon"
         @click="$store.dispatch('app/toggleChartVis')"
         large
@@ -62,7 +63,7 @@
         <v-icon large>mdi-chevron-up</v-icon>
       </v-btn>
     </v-layout>
-    <job-detail />
+    <job-detail :job-detail-dialog-open="jobDetailDialogOpen" />
     <confirm-dialog ref="confirm" />
   </c4-page>
 </template>
@@ -94,6 +95,7 @@ export default {
     StockChart,
     StartJob
   },
+
   data () {
     return {
       groupsJobsByStates: groupsJobsByStates, // {waiting: [pending, ..., failed], running: [running], stopped: [error, ..., killed]
@@ -113,6 +115,9 @@ export default {
       notifications: (state) => state.history.notifications,
       socketConnected: (state) => state.history.socket.isConnected
     }),
+    ...mapGetters('jobs', [
+      'jobDetailDialogOpen'
+    ]),
     ...mapGetters(['dark']),
     ...mapGetters('app', [
       'stockChartVisible'
@@ -140,7 +145,7 @@ export default {
 .flex-equal-size {
   flex: 1 1 0;
 }
-.toggleIcon{
+.toggleIcon {
   position: absolute;
   right: 12px;
   bottom: 15px;

@@ -1,5 +1,6 @@
 <template>
   <v-dialog v-model="dialog">
+
     <v-card class="pb-5 pt-1">
       <v-toolbar
         class="pl-5"
@@ -23,7 +24,6 @@
           </div>
           <h2 class="job-count">{{jobs.length}}</h2>
         </v-row>
-        <job-state-filter v-if="jobs.length" />
         <v-spacer></v-spacer>
         <v-btn
           icon
@@ -36,8 +36,9 @@
 
         <v-row>
           <v-col cols="12">
+
             <v-data-table
-              class="job-dt"
+              class="job-dt elevation-1"
               dense
               v-model="internalJob"
               single-select
@@ -46,11 +47,10 @@
               xxxshow-select
               :item-class="itemClass"
               :items="internalJobs"
-              xxxclass="elevation-1"
-              xxhide-default-footer="jobs.length < 10"
+              :loading="loading"
               single-expand
               :expanded.sync="internalJob"
-                    :server-items-length="totalJobs"
+              :server-items-length="totalJobs"
               :options.sync="options"
               :footer-props="{itemsPerPageOptions:jobRowsPerPageItems}"
               show-expand
@@ -111,6 +111,9 @@
                   <v-icon small>mdi-content-copy</v-icon>
                 </v-btn>
               </template>
+              <template v-slot:item.state="{ item }">
+               {{item.$removed ? '-': item.state}}
+              </template>
               <template v-slot:item.started_at="{ item }">
                 {{ item.started_at | date }}
               </template>
@@ -142,9 +145,10 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import JobManagmentButtons from '@/components/job/JobManagmentButtons.vue'
 import ArgsDisplay from '@/components/ArgsDisplay.vue'
-import JobStateFilter from '@/components/job/JobStateFilter.vue'
+// import JobStateFilter from '@/components/job/JobStateFilter.vue'
 import { mapGetters } from 'vuex'
 let ti
 const headers = [
@@ -186,6 +190,14 @@ const headers = [
   }
 ]
 export default {
+
+  props: {
+    jobDetailDialogOpen: {
+      type: Boolean,
+      default: false,
+      required: true
+    }
+  },
   filters: {
     number: function (value) {
       const formatConfig = {
@@ -204,23 +216,24 @@ export default {
   },
   components: {
     JobManagmentButtons,
-    JobStateFilter,
+    // JobStateFilter,
     ArgsDisplay
   },
   data () {
     return {
       tabs: null,
-      dialog: false,
       headers,
       expanded: null,
       options: {},
       loading: false
-
     }
   },
 
   methods: {
     itemClass (val) {
+      if (val.$removed) {
+        return 'black-border'
+      }
       const c1 = val.state + '-border'
       return c1
     },
@@ -231,31 +244,34 @@ export default {
     },
     close () {
       this.$store.dispatch('jobs/clearJob', true)
+    },
+    throttledLoad: _.debounce(function () {
+      this.load()
+    }, 500),
+    async load () {
+      this.loading = true
+      await this.$nextTick()
+      await this.$store.dispatch('jobs/fetchJobsByName', {
+        options: this.options,
+        job: this.job
+      })
+      this.loading = false
     }
   },
   mounted () {
   },
   watch: {
     options: {
-      async handler () {
-        this.loading = true
-        await this.$nextTick()
-        // await this.$store.dispatch('audit/getAudits', { options: this.options })
-        this.loading = false
+      handler () {
+        this.throttledLoad()
       },
       deep: true
     },
-    /*     jobsAvail (newValue, oldValue) {
-      if (newValue === false) {
-        this.dialog = false
-        this.$nextTick(function () {
-          this.close()
-        })
-      } else {
-        // this.$store.dispatch('jobs/setJobManagerBusy', false)
-        // this.dialog = true
+    jobDetailDialogOpen (newValue, oldValue) {
+      if (newValue) {
+        this.throttledLoad()
       }
-    }, */
+    },
     internalLogMessage (newVal) {
       if (newVal != null && newVal.length > 200) {
         clearTimeout(ti)
@@ -269,11 +285,9 @@ export default {
     }
   },
   computed: {
-    jobsAvail () {
-      return this.jobs.length > 0
-    },
     ...mapGetters('jobs', [
-      'job', 'log', 'jobs', 'filter', 'filteredJobs', 'jobRowsPerPageItems', 'totalJobs', 'jobDetailDialogOpen'
+      'job', 'log', 'jobs', 'filter',
+      'filteredJobs', 'jobRowsPerPageItems', 'totalJobs'
     ]),
     id () {
       return this.job._id
@@ -285,6 +299,18 @@ export default {
       return this.filteredJobs.map(val => {
         return Object.assign(val, { isSelectable: val._id !== this.job._id })
       })
+    },
+    dialog: {
+      // selected job in datatable
+      get () {
+        return this.jobDetailDialogOpen
+      },
+      set (newVal) {
+        console.log(newVal)
+        if (newVal === false) {
+          this.close()
+        }
+      }
     },
     internalJob: {
       // selected job in datatable
@@ -299,9 +325,7 @@ export default {
         }
       }
     }
-
   }
-
 }
 </script>
 <style lang="css">
@@ -345,6 +369,14 @@ tr.prog {
       font-size: 13px !important;
       line-height: 15px !important;
     }
+  }
+  .black-border td {
+    color: grey !important;
+    text-decoration: line-through;
+  }
+  .black-border td:first-child {
+    border-left: 7px solid #010101 !important;
+     text-decoration: none;
   }
   .pending-border td:first-child {
     border-left: 7px solid #ffc107 !important;

@@ -178,7 +178,9 @@ export default {
             args: yaml.safeLoad(this.args)
           })
           this.isLoading = false
+
           if (ret) {
+            // await this.$store.dispatch('jobs/openJobsDialog', true)
             this.dialog = false
           }
         }
