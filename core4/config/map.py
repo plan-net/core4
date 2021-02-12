@@ -9,7 +9,7 @@
 Implements :class:`.ConfigMap`.
 """
 
-import collections
+import collections.abc
 
 import core4.error
 
@@ -25,7 +25,7 @@ class ConfigMap(dict):
     def __init__(self, dct):
         self.__dict__["__ro__"] = False
         for key, value in dct.items():
-            if isinstance(value, collections.MutableMapping):
+            if isinstance(value, collections.abc.MutableMapping):
                 value = ConfigMap(value)
             self[key] = value
         self.__dict__["__ro__"] = True
