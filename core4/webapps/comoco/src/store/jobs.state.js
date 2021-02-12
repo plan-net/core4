@@ -9,11 +9,11 @@ let sses = []
 // let ti,
 let tiFetchJobs
 function clearSSE (e) {
-  // console.log('clearSSE')
   try {
     if (e != null) {
       e.source.removeEventListener('log')
       e.source.removeEventListener('update')
+      e.source.removeEventListener('state')
       e.source.removeEventListener('close')
       e.source.removeEventListener('error')
       e.source.close()
@@ -21,6 +21,7 @@ function clearSSE (e) {
       sses.forEach(sse => {
         sse.removeEventListener('log')
         sse.removeEventListener('update')
+        sse.removeEventListener('state')
         sse.removeEventListener('close')
         sse.removeEventListener('error')
         sse.close()
@@ -37,11 +38,18 @@ function onSseError (e) {
   }
 }
 const state = {
-  filter: null,
+  pagination: {
+    descending: true,
+    page: 0,
+    itemsPerPage: 10,
+    rowsPerPageItems: [10, 25, 50, 100, -1],
+    totalJobs: 0
+  },
+  jobDetailDialogOpen: false,
+  // filter: null,
   log: '',
   error: null,
   job: { _id: null, args: '' },
-
   jobs: [],
   jobManagerBusy: false
 }
@@ -55,11 +63,18 @@ const actions = {
   clearJobError (context) {
     context.commit('addError', null)
   },
-  clearJob (context, sse) {
+  clearJob (
+    context,
+    conf = {
+      dialog: false
+    }
+  ) {
     context.commit('clearJob', null)
     context.commit('clearJobs')
     context.commit('clearLog')
-    context.commit('addStateFilter', null)
+    context.commit('clearJobPagination')
+    context.commit('setJobsDialogOpen', conf.dialog)
+    // context.commit('addStateFilter', null)
     // window.clearTimeout(ti)
     window.clearTimeout(tiFetchJobs)
     if (sses.length > 0) {
@@ -67,38 +82,35 @@ const actions = {
     }
     return true
   },
+  /*   setJobsDialogOpen (context, payload) {
+    context.commit('setJobsDialogOpen', payload)
+  }, */
   addLog (context, payload) {
     context.commit('addLog', payload)
   },
   setJob (context, job) {
     context.commit('setJob', job)
-    context.dispatch('logJob', job._id)
-    // context.dispatch('fetchArgs', job._id)
-    // TODO fetch args
+    if (job._id != null) {
+      context.dispatch('logJob', job._id)
+    }
   },
   async fetchJob (context, id) {
-    const job = await api.get(`jobs/${id}`)
+    const job = await api.get(`job/${id}`)
     context.commit('setJob', job.data)
     return job.data
   },
   async fetchJobArgs (context, id) {
     const job = await api.get(`job/${id}`)
     context.commit('setJobArgs', job.data.args)
-    /*     context.commit('setJob', job.data)
-    return job.data */
   },
   logJob (context, jobId = null) {
     context.commit('clearLog')
-    // clearSSE()
     const id = jobId || state.job._id
     const token = JSON.parse(localStorage.getItem('user')).token
-    const json = {
-      identifier: id,
-      start: state.job.started_at
-    }
     const sse = getSSE({
-      endpoint: `log?token=${token}`,
-      json
+      endpoint: `job/follow/${id}?token=${token}`,
+      json: null,
+      GET: true
     })
     sses.push(sse)
     sse.addEventListener('log', e => {
@@ -107,7 +119,6 @@ const actions = {
       context.dispatch('addLog', {
         message,
         date: formatDate(new Date(epoch * 1000))
-        // level
       })
     })
     sse.addEventListener('error', onSseError)
@@ -118,26 +129,31 @@ const actions = {
     context.commit('updateJob', delta)
   },
   /**
-   * Used for sse on new enqueud job
-   * Use on existion job group
+   * Used for sse on new enqueued job
+   * Use on existing job group
    *
    */
   pollEnqueuedJob (
     context,
     conf = {
-      job: null
+      job: null,
+      follow: true
     }
   ) {
     return new Promise((resolve, reject) => {
       context.commit('addError', null)
       context.commit('clearJob')
       const token = JSON.parse(localStorage.getItem('user')).token
-      const endpoint = `jobs/poll/${conf.job._id || conf.job}?token=${token}`
+      let endpoint
+      if (conf.follow === true) {
+        endpoint = `job/follow/${conf.job._id}?token=${token}`
+      } else {
+        endpoint = `job/${conf.job._id}?token=${token}`
+      }
       const sse = getSSE({
         endpoint
       })
-
-      sse.addEventListener('update', function (e) {
+      sse.addEventListener('state', function (e) {
         const delta = JSON.parse(e.data)
         context.dispatch('updateJob', delta)
       })
@@ -162,67 +178,104 @@ const actions = {
     context.dispatch('clearJob')
     const name = payload.job
     const args = payload.args
-    const dto = Object.assign({}, args, { name })
-    console.log(dto)
-    let job
-    /*     try {
-      const ret = await api.post('jobs', dto)
-      job = ret.data
-      context.commit('setJob', job) // only name, id, triggers dialog to open, starts logging
-      context.dispatch('fetchJob', job._id).then(val => {
+    const dto = Object.assign({}, { args }, { qual_name: name, follow: false })
+    let jobId
+
+    try {
+      const ret = await api.post('job', dto)
+      jobId = ret.data
+      const jobPre = { _id: jobId, name, qual_name: name }
+      context.commit('setJob', jobPre)
+
+      context.dispatch('fetchJob', jobId).then(val => {
         context.commit('setJobs', [val])
+        context.commit('setJobPagination', {
+          page: 0,
+          count: 1,
+          total_count: 1
+        })
+        context.commit('setJobsDialogOpen', true)
       })
       context.dispatch('pollEnqueuedJob', {
-        job
+        job: jobPre,
+        follow: true
       })
       context.dispatch('pollEnqueuedJob', {
-        job: job.name
+        job: jobPre,
+        follow: false
       })
+
       return true
     } catch (error) {
       const errorRaw = extractError(error.response.data.error)
       store.commit('jobs/addError', errorRaw)
-    } */
+    }
   },
-  async fetchJobsByName (context, payload) {
-    const json = {
+  async openJobsDialog (context, job) {
+    context.dispatch('setJob', _.cloneDeep(job))
+    context.commit('setJobsDialogOpen', true)
+  },
+  async fetchJobsByName (context, conf) {
+    console.log('fetchJobsByName', conf)
+    if (context.state.jobs.length > 0 && !conf.force) {
+      // magic happens in enqueueJob
+      // polling a newly created job
+      // context.state.jobs already exist
+      return
+    }
+    const job = conf.job || context.state.job || context.state.job
+    const name = job.qual_name || job.name || ''
+    const page = (conf.options || {}).page - 1 || context.state.pagination.page
+    const perPage =
+      (conf.options || {}).itemsPerPage ||
+      context.state.pagination.itemsPerPage
+    const params = {
+      per_page: perPage,
+      page,
       filter: {
-        name: payload.name
+        name,
+        state: job.state
       }
     }
-    const jobs = await api.post('jobs?per_page=1000&page=0', json)
-    // clicked state first, then other states
-    const sortedJobs = jobs.data.sort(function compare (a, b) {
-      if (a.state === payload.state) {
-        return -1
-      }
-      if (a.state !== payload.state) {
-        return 1
-      }
-      return 0
-    })
-    context.commit('setJobs', sortedJobs)
-    context.dispatch('pollEnqueuedJob', {
-      job: payload.name
-    })
+    const jobs = await api.get('job/queue', params)
+    context.commit('setJobs', jobs.data)
+    context.commit('setJobPagination', jobs)
     if (jobs.data.length > 0) {
       // select by state
-      const selected = jobs.data.find(val => val.state === payload.state)
+      const selected = jobs.data.find(val => val.state === job.state)
       context.dispatch('setJob', _.cloneDeep(selected || jobs.data[0]))
     }
+    return true
   },
-  async addStateFilter (context, states) {
+  /*   async addStateFilter (context, states) {
     context.commit('addStateFilter', states)
+  }, */
+  async setJobManagerBusy (context, val) {
+    context.commit('setJobManagerBusy', val)
+  },
+  async markJobRemoved (context, job) {
+    context.commit('markJobRemoved', job)
   },
   async manageJob (context, action = 'restart') {
     context.commit('setJobManagerBusy', true)
     window.clearTimeout(tiFetchJobs)
     const current = _.cloneDeep(context.state.job)
     try {
-      await api.put(`jobs/${action}/${context.state.job._id}`)
-      tiFetchJobs = window.setTimeout(function () {
-        context.dispatch('fetchJobsByName', current)
-      }, 500)
+      const param = action === 'restart' ? '?follow=false' : ''
+      await api.put(`job/${action}/${context.state.job._id}${param}`)
+      if (action === 'remove' || action === 'restart') {
+        context.dispatch('markJobRemoved', current)
+      } else if (action === 'kill') {
+        tiFetchJobs = window.setTimeout(function () {
+          context.dispatch('fetchJobsByName', {
+            job: current,
+            force: true,
+            options: {
+              page: context.state.pagination.page - 1
+            }
+          })
+        }, 300)
+      }
     } catch (err) {
       Vue.prototype.raiseError(err)
     } finally {
@@ -232,16 +285,33 @@ const actions = {
 }
 
 const mutations = {
+  clearJobPagination (state, payload) {
+    state.pagination = {
+      descending: true,
+      page: 0,
+      itemsPerPage: 10,
+      rowsPerPageItems: [10, 25, 50, 100, -1],
+      totalJobs: 0
+    }
+  },
+  setJobPagination (state, payload) {
+    console.log(payload)
+    state.pagination.page = payload.page + 1
+    state.pagination.itemsPerPage = payload.count
+    state.pagination.totalJobs = payload.total_count
+  },
+  setJobsDialogOpen (state, val) {
+    state.jobDetailDialogOpen = val
+  },
   setJobManagerBusy (state, payload) {
     state.jobManagerBusy = payload
   },
-  addStateFilter (state, payload) {
+  /*   addStateFilter (state, payload) {
     state.filter = payload
-  },
+  }, */
   addLog (state, payload) {
     state.log =
       (state.log || '') + payload.date + ' | ' + payload.message + '\n'
-    // state.log = (state.log || []).concat([payload])
   },
   clearLog (state, payload) {
     state.log = []
@@ -261,6 +331,15 @@ const mutations = {
     if (state.job._id === id) {
       state.job = state.jobs[0] || null
     }
+  },
+  markJobRemoved (state, job) {
+    state.job.$removed = true
+    state.jobs = state.jobs.map(val => {
+      if (val._id === job._id) {
+        val.$removed = true
+      }
+      return val
+    })
   },
   updateJob (state, delta) {
     state.jobs = state.jobs.map(val => {
@@ -283,22 +362,30 @@ const mutations = {
     state.job = payload
   },
   setJobArgs (state, args) {
-    console.log(args)
     state.job.args = args
   }
 }
 
 const getters = {
+  jobDetailDialogOpen (state) {
+    return state.jobDetailDialogOpen
+  },
+  totalJobs (state) {
+    return state.pagination.totalJobs
+  },
+  jobRowsPerPageItems (state) {
+    return state.pagination.rowsPerPageItems
+  },
+  //
   job (state) {
     return state.job
   },
   jobManagerBusy (state) {
     return state.jobManagerBusy
   },
-
-  filter (state) {
+  /*   filter (state) {
     return state.filter
-  },
+  }, */
   jobs (state) {
     return state.jobs
   },

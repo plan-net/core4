@@ -178,31 +178,10 @@ const actions = {
     }
     return widget
   },
-  /*   async fetchHtmlWidget (
-    context,
-    config = {
-      id: -1,
-      accept: 'application/json',
-      endpoint: ''
-    }
-  ) {
-    const { id, accept, endpoint } = config
-    try {
-      const ret = await axiosInstance.get(`${endpoint}/_info/card/${id}`, {
-        headers: { common: { Accept: accept } }
-      })
-      return ret.data
-    } catch (error) {
-      return {
-        rsc_id: id,
-        error
-      }
-    }
-  }, */
-
   async fixWidget (context, widget) {
     const params = {
       search: widget.title,
+      tags: [],
       page: 0,
       per_page: 1
     }
@@ -229,7 +208,9 @@ const actions = {
       } else {
         window.alert('Not possible to fix the broken widget.')
       }
-    } catch (err) {}
+    } catch (err) {
+      console.log(err)
+    }
     return false
   },
   async createBoard ({ commit }, dto) {

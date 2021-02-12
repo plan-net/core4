@@ -4,14 +4,16 @@ import { SSE } from '@/components/misc/sse.modified.js'
 
 const on = () => {}
 const off = () => {}
-export function getSSE (
-  options = { endpoint: 'jobs/poll', json: {} }
-) {
+export function getSSE (options = { endpoint: '', json: {}, GET: false }) {
   const path = `${process.env.VUE_APP_APIBASE_CORE}/${options.endpoint}` // token necessary here because stream handling
-  return new SSE(path, {
+  const dto = {
     headers: { 'Content-Type': 'text/plain' },
     payload: JSON.stringify(options.json) // dont touch, or sse will become GET ...
-  })
+  }
+  if (options.GET === true) {
+    delete dto.payload
+  }
+  return new SSE(path, dto)
 }
 
 const ApiService = {
@@ -24,10 +26,11 @@ const ApiService = {
     }
     return ret
   },
-  async get (resource) {
+
+  async get (resource, params) {
     on()
     try {
-      const ret = await axios.get(resource)
+      const ret = await axios.get(resource, { params })
       return ret
     } catch (err) {
       if (ApiService.errorHandlerCaught(err) === false) {

@@ -51,7 +51,6 @@ export default {
           var ret = data.data.map(function (item) {
             return { id: item._id, text: item._id }
           })
-          console.log(ret)
           return {
             results: ret,
             pagination: {

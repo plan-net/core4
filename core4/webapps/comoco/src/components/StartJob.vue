@@ -91,7 +91,7 @@
                     large
                     :loading="isLoading"
                     :disabled="isLoading"
-                    color="secondary lighten-3"
+                    color="accent"
                   >
                     Enqueue
                     <template v-slot:loader>
@@ -178,7 +178,9 @@ export default {
             args: yaml.safeLoad(this.args)
           })
           this.isLoading = false
+
           if (ret) {
+            // await this.$store.dispatch('jobs/openJobsDialog', true)
             this.dialog = false
           }
         }

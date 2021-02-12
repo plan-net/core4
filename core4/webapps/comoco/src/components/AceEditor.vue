@@ -104,11 +104,6 @@ export default {
         fontSize: '13px',
         wrap: true
       })
-      /*       if (this.disabled === true) {
-        editor.setReadonly(true)
-        console.log(editor.setReadonly)
-      } */
-
       require('brace/ext/language_tools') // language extension prerequsite...
       require(`brace/mode/${this.language}`)
       require(`brace/theme/${this.theme}`)
