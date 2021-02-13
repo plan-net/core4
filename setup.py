@@ -2,10 +2,11 @@ try:
     from pip import __version__ as pip_version
 except:
     pip_version = "0"
+import sys
 if [int(i) for i in pip_version.split(".")][0] < 20:
     print("upgrading pip")
     from subprocess import call
-    call(["pip", "install", "--upgrade", "pip"])
+    call([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
 
 try:
     from pip._internal.cli.main import main
