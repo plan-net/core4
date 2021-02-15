@@ -11,10 +11,8 @@ from core4.queue.query import QueryMixin
 
 class SystemHandler(CoreRequestHandler, QueryMixin):
     """
-    Retrieves system state, i.e.
-
-    * alive time of workers, scheduler and app nodes
-    * maintenance modes (global and project specific)
+    Retrieves system state, i.e. alive time of workers, scheduler and app nodes
+    and maintenance modes (global and project specific).
     """
     author = "mra"
     title = "System Information"
