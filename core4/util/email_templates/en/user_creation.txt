@@ -8,7 +8,7 @@ Using the username: {{ username }}.
 
 You can set your password here:
 
-{{ domain }}/#/reset/{{ token }}
+{{ domain }}/core4/api/v1/reset?token={{ token }}
 
 If you did not create the user yourself, please contact core operations at {{ contact_email }}.
 
