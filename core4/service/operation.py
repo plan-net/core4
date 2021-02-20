@@ -581,7 +581,7 @@ def dist(purge=True, dryrun=False, quiet=False):
                 body.append(include)
         with open(manifest_file, "w", encoding="utf-8") as fh:
             fh.write("\n".join(body))
-    return uptodatse
+    return uptodate
 
 def find_manifest():
     path = os.path.abspath(os.curdir).split(os.path.sep)
