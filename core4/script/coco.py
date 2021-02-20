@@ -37,6 +37,7 @@ Usage:
   coco --mode
   coco --build
   coco --release
+  coco --dist [--force]
   coco --who
   coco --jobs [--introspect]
   coco --home
@@ -60,6 +61,7 @@ Options:
   -c --container   enumerate available API container
   -m --home        enumerate available core4 projects in home folder
   -y --yes         Assume yes on all requests.
+  -f --force       Force dist build.
 """
 
 import datetime
@@ -84,7 +86,7 @@ import core4.service.introspect.main
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.operation import build, release
+from core4.service.operation import build, release, dist
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -485,6 +487,8 @@ def main():
         mode()
     elif args["--build"]:
         build()
+    elif args["--dist"]:
+        dist(args["--force"] or False)
     elif args["--release"]:
         release()
     elif args["--who"]:
