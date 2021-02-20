@@ -544,9 +544,9 @@ def dist(purge=True, dryrun=False, quiet=False):
                 mx_time = max(mtime, mx_time or mtime)
         if last_dist:
             mx_dist = max(last_dist.values())
-            po("latest change inside/outside {}: {} {} {}".format(
-                webapp["dist"], mx_dist, ">" if mx_dist > mx_time else "<",
-                mx_time))
+            po("latest change inside/outside\n  {}:\n    {} {} {}".format(
+                os.path.join(webapp["base"], webapp["dist"]), mx_dist,
+                ">" if mx_dist > mx_time else "<", mx_time))
         if os.path.exists(dist_path):
             if (not dryrun) and (not last_dist or mx_dist < mx_time or purge):
                 po("purge", dist_path)
