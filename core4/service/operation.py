@@ -18,6 +18,7 @@ import datetime
 from subprocess import Popen, STDOUT, PIPE
 import pathlib
 import shutil
+from rpy2.robjects.packages import importr, isinstalled
 
 NO_PROJECT = "WARNING!\nThis is not a core4 project."
 
@@ -49,9 +50,11 @@ NOT_MERGED = "WARNING!\nThe pending release has not been merged into " \
              "[{branch:s}]. You have to `git merge {release:s}`, first."
 
 DIST_OUT_OF_DATE = "WARNING!\nWebapps have been found " \
-             "with ./dist folder not up-to-date. Run coco --dist, first."
+                   "with ./dist folder not up-to-date. Run coco --dist, first."
 
 MANIFEST = "MANIFEST.in"
+RLIB = "../lib/R"
+R_REQUIREMENTS = "r.txt"
 
 
 class CoreBuilder(CoreBase):
@@ -515,6 +518,7 @@ def find_webapps(folder):
                             "name": pkg_json.get("name", None)
                         }
 
+
 def max_modtime(folder):
     ret = {}
     for path, directories, filenames in os.walk(folder):
@@ -524,10 +528,12 @@ def max_modtime(folder):
             ret[fn] = datetime.datetime.fromtimestamp(fname.stat().st_mtime)
     return ret
 
+
 def dist(purge=True, dryrun=False, quiet=False):
     def po(*args, **kwargs):
         if not quiet:
             print(*args, **kwargs)
+
     curdir = os.path.abspath(os.curdir)
     manifest = set()
     po(curdir)
@@ -584,6 +590,7 @@ def dist(purge=True, dryrun=False, quiet=False):
             fh.write("\n".join(body))
     return uptodate
 
+
 def find_manifest():
     path = os.path.abspath(os.curdir).split(os.path.sep)
     while True:
@@ -595,3 +602,27 @@ def find_manifest():
             return manifest
         path.pop(-1)
     return None
+
+
+def cran():
+    print("install R packages")
+    if not os.path.exists(R_REQUIREMENTS):
+        print("  {} not found".format(R_REQUIREMENTS))
+        return False
+    rlib = os.path.abspath(os.path.join(os.path.dirname(sys.executable), RLIB))
+    if not os.path.isdir(rlib):
+        os.makedirs(rlib)
+        print("  {} created".format(rlib))
+    with open(R_REQUIREMENTS, 'r') as file:
+        data = file.read()
+    packages_required = data.split(sep='\n')
+    utils = importr('utils')
+    utils.chooseCRANmirror(ind=0)
+    for package in packages_required:
+        if package:
+            if not isinstalled(package, lib_loc=rlib):
+                print("  install", package)
+                utils.install_packages(
+                    package, lib=rlib, verbose=False, quiet=True)
+            else:
+                print("  requirement", package, "already satisfied")

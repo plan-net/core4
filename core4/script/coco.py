@@ -38,6 +38,7 @@ Usage:
   coco --build
   coco --release
   coco --dist [--force]
+  coco --cran
   coco --who
   coco --jobs [--introspect]
   coco --home
@@ -86,7 +87,7 @@ import core4.service.introspect.main
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.operation import build, release, dist
+from core4.service.operation import build, release, dist, cran
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -489,6 +490,8 @@ def main():
         build()
     elif args["--dist"]:
         dist(args["--force"] or False)
+    elif args["--cran"]:
+        cran()
     elif args["--release"]:
         release()
     elif args["--who"]:
