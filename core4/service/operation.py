@@ -361,10 +361,9 @@ def build(*args):
     b.ok()
 
     b.step("webapps are up-to-date")
-    if not dist(False, dryrun=True):
+    if not dist(False, dryrun=True, quiet=True):
         b.exit(DIST_OUT_OF_DATE)
     b.ok()
-
     print()
     b.headline("define next release version")
     print("current local release: [%d.%d.%d]\n" % (b.major, b.minor, b.patch))
@@ -524,13 +523,16 @@ def max_modtime(folder):
             ret[fn] = datetime.datetime.fromtimestamp(fname.stat().st_mtime)
     return ret
 
-def dist(purge=True, dryrun=False):
+def dist(purge=True, dryrun=False, quiet=False):
+    def po(*args, **kwargs):
+        if not quiet:
+            print(*args, **kwargs)
     curdir = os.path.abspath(os.curdir)
     manifest = set()
-    print(curdir)
+    po(curdir)
     uptodate = True
     for webapp in find_webapps(curdir):
-        print("build", webapp.get("name", None))
+        po("build", webapp.get("name", None))
         base_path = os.path.abspath(os.path.join(webapp["base"]))
         dist_path = os.path.abspath(
             os.path.join(webapp["base"], webapp["dist"]))
@@ -541,31 +543,31 @@ def dist(purge=True, dryrun=False):
                 mx_time = max(mtime, mx_time or mtime)
         if last_dist:
             mx_dist = max(last_dist.values())
-            print("latest change inside/outside {}: {} {} {}".format(
+            po("latest change inside/outside {}: {} {} {}".format(
                 webapp["dist"], mx_dist, ">" if mx_dist > mx_time else "<",
                 mx_time))
         if os.path.exists(dist_path):
             if (not dryrun) and (not last_dist or mx_dist < mx_time or purge):
-                print("purge", dist_path)
+                po("purge", dist_path)
                 shutil.rmtree(dist_path)
         if not os.path.exists(dist_path) or not last_dist or mx_dist < mx_time:
             for cmd in webapp["command"]:
                 os.chdir(webapp["base"])
-                print("$ {}".format(cmd))
+                po("$ {}".format(cmd))
                 uptodate = False
                 if not dryrun:
                     cmd = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE,
                                 close_fds=True, encoding="utf-8")
                     ret = cmd.wait()
                     if ret != 0:
-                        print("ERROR!")
-                        print(cmd.stdout.read())
+                        po("ERROR!")
+                        po(cmd.stdout.read())
                     else:
                         if os.path.exists(webapp["dist"]):
                             manifest.add(dist_path)
                 os.chdir(curdir)
         else:
-            print("nothing to do")
+            po("nothing to do")
     manifest_file = find_manifest()
     if not dryrun and manifest_file:
         dirname = os.path.dirname(manifest_file) + os.path.sep
@@ -575,11 +577,11 @@ def dist(purge=True, dryrun=False):
             relpath = dist[len(dirname):]
             include = "recursive-include {}/ *".format(relpath)
             if include not in body:
-                print("add {} to MANIFEST".format(relpath))
+                po("add {} to MANIFEST".format(relpath))
                 body.append(include)
         with open(manifest_file, "w", encoding="utf-8") as fh:
             fh.write("\n".join(body))
-    return uptodate
+    return uptodatse
 
 def find_manifest():
     path = os.path.abspath(os.curdir).split(os.path.sep)
@@ -592,12 +594,3 @@ def find_manifest():
             return manifest
         path.pop(-1)
     return None
-
-
-if __name__ == '__main__':
-    utd = dist(purge=False)
-    print(utd)
-    # curdir = os.path.abspath(os.curdir)
-    # mx = max_modtime(curdir)
-    # print(max(mx.values()))
-
