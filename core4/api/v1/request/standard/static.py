@@ -12,11 +12,12 @@ core4 :class:`.CoreStaticFileHandler`, based on :mod:`tornado`
 
 """
 import os
-
-import tornado.routing
+import json
+from core4.util.data import json_encode
 from tornado.web import StaticFileHandler
 from typing import Generator
 from core4.api.v1.request.main import CoreBaseHandler
+import core4.util.node
 
 DEFAULT_FILENAME = "index.html"
 
@@ -34,6 +35,34 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
     path = None
     default_filename = DEFAULT_FILENAME
     perm_base = "container"
+
+    def prepare(self):
+        if self.request.query == "_" or self.request.query == "__":
+            self.absolute_path = ""
+            project = self.application.container.project
+            conf = dict(self.application.container.raw_config.get(
+                project, {}).get("app", {}))
+            for k, v in os.environ.items():
+                if k.startswith("CORE4_APP_"):
+                    conf[k[len("CORE4_APP") + 1:].lower()] = v
+            chunk = {
+                "project": {
+                    "name": project,
+                    "version": self.application.container.version()
+                },
+                "timestamp": core4.util.node.now(),
+                "config": conf,
+                "core": self.version(),
+                "code": 200
+            }
+            if self.request.query == "__":
+                self.set_header("Content-Type", "text/javascript")
+                return self.finish(
+                    "const core4_app = {};".format(json_encode(chunk)))
+            else:
+                self.set_header("Content-Type", "application/json")
+                return self.finish(chunk)
+        return super().prepare()
 
     def __init__(self, *args, **kwargs):
         try:
@@ -85,12 +114,11 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
 
     @classmethod
     def get_content(
-        cls, abspath: str, start: int = None, end: int = None
+            cls, abspath: str, start: int = None, end: int = None
     ) -> Generator[bytes, None, None]:
         if abspath != "":
             return StaticFileHandler.get_content(abspath, start, end)
-        return
-
+        return ""
 
     async def verify_access(self):
         """
@@ -103,4 +131,3 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
         if self.user and await self.user.has_api_access(container):
             return True
         return False
-
