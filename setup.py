@@ -1,5 +1,4 @@
 from setuptools import find_packages, setup
-
 import core4
 
 setup(
@@ -30,7 +29,8 @@ setup(
         "docopt>=0.6",
         "croniter>=0.3",
         "python-mimeparse>=1.6",
-        "PyJWT>=2.0.0a",  # see https://github.com/jpadilla/pyjwt/issues/391#issuecomment-515427821
+        "PyJWT>=2.0.0a",
+        # see https://github.com/jpadilla/pyjwt/issues/391#issuecomment-515427821
         "tornado>=5.1",
         "pandas>=0.23",
         "motor>=2.0",
