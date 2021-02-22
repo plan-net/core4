@@ -1,7 +1,6 @@
 from setuptools import find_packages, setup
 import core4
 
-
 setup(
     name='core4',
     version=core4.__version__,
