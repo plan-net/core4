@@ -54,7 +54,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.startup = core4.util.node.mongo_now()
 
         self.setup_logging()
-        core4.service.setup.CoreSetup().make_all()
+        core4.service.setup.CoreSetup().make_all(api=True)
 
         # http server settings
         http_args = {}
