@@ -1,19 +1,13 @@
 <template>
-  <v-container fluid>
+  <v-container
+    fluid
+    class="boards-container"
+  >
     <v-row
       column
       no-gutters
     >
-      <!--  <v-col
-        class="mt-16 pt-8"
-        cols="12"
-      >
-        <img
-          class="client"
-          src="img/targobank-logo.svg"
-          alt=""
-        >
-      </v-col> -->
+
       <v-col
         cols="12"
         class=" px-3"
@@ -43,50 +37,51 @@
               v-else
             >mdi-menu-down</v-icon>
           </v-subheader>
-          <v-list-item-group
-            v-if="boardsVisible"
-            color="primary"
-          >
-            <template v-if="boards != null">
-              <template v-for="brd in boards">
-                <v-list-item
-                  class="pr-0"
-                  :mouse-over="brd.over=true"
-                  :mouse-out="brd.over=false"
-                  xxxdisabled="(brd.name === board)"
-                  :key="brd.name"
-                  @click="setActiveBoard(brd.name)"
-                >
-                  <v-list-item-icon>
-                    <v-icon>mdi-view-dashboard-variant</v-icon>
-                  </v-list-item-icon>
-                  <v-list-item-content>
-                    <v-list-item-title>
-                      {{brd.name}}
-                    </v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-action>
-                    <v-icon
-                      @click="onEditBoard(brd.name)"
-                      ripple
-                      small
-                      color="grey"
-                    >mdi-pencil</v-icon>
-                  </v-list-item-action>
-                </v-list-item>
+          <div class="boards-group">
+            <v-list-item-group
+              class="sub-boards-group"
+              v-if="boardsVisible"
+              color="primary"
+            >
+              <template v-if="boards != null">
+                <template v-for="brd in boards">
+                  <v-list-item
+                    class="pr-0"
+                    :mouse-over="brd.over=true"
+                    :mouse-out="brd.over=false"
+                    :key="brd.name"
+                    @click="setActiveBoard(brd.name)"
+                  >
+                    <v-list-item-icon>
+                      <v-icon>mdi-view-dashboard-variant</v-icon>
+                    </v-list-item-icon>
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        {{brd.name}}
+                      </v-list-item-title>
+                    </v-list-item-content>
+                    <v-list-item-action>
+                      <v-icon
+                        @click="onEditBoard(brd.name)"
+                        ripple
+                        small
+                        color="grey"
+                      >mdi-pencil</v-icon>
+                    </v-list-item-action>
+                  </v-list-item>
+                </template>
               </template>
-            </template>
-            <template v-else>
-
-              <v-boilerplate
-                v-for="i in 2"
-                :key="i"
-                class="pt-3"
-                :loading="boards == null"
-                type="list-item-avatar"
-              ></v-boilerplate>
-            </template>
-          </v-list-item-group>
+              <template v-else>
+                <v-boilerplate
+                  v-for="i in 2"
+                  :key="i"
+                  class="pt-3"
+                  :loading="boards == null"
+                  type="list-item-avatar"
+                ></v-boilerplate>
+              </template>
+            </v-list-item-group>
+          </div>
           <v-list-item-group v-model="selected">
             <v-list-item @click.stop.prevent="dialogOpen = true">
               <v-list-item-icon>
@@ -181,8 +176,11 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import { ValidationProvider, ValidationObserver } from 'vee-validate'
-
+import _ from 'lodash'
 export default {
+  mounted () {
+    window.addEventListener('resize', _.debounce(this.update, 250))
+  },
   components: {
     ValidationProvider,
     ValidationObserver,
@@ -238,6 +236,38 @@ export default {
       setActiveBoard: 'setActiveBoard',
       delBoard: 'deleteBoard'
     }),
+    async update () {
+      await this.$nextTick()
+
+      const logoCnt = document.querySelector('.c4-navigation-logo-container')
+      const logoCntHeight = logoCnt.offsetHeight
+
+      const footerCnt = document.querySelector('.c4-navigation-footer')
+      const footerCntHeight = footerCnt.offsetHeight
+
+      const snav = document.querySelector('.c4-navigation')
+      const snavHeight = snav.offsetHeight
+
+      const targetHeight = snavHeight - footerCntHeight - logoCntHeight
+
+      /*       console.log(elem.offsetHeight)
+      console.log(logoCntHeight, footerCntHeight)
+      console.log(snavHeight) */
+      /// ///////////////
+      this.$el.style.height = `${targetHeight}px`
+      const boardsGroupHeight = (targetHeight - 56 - 100)
+      const subHeight = this.$el.querySelector('.sub-boards-group').offsetHeight
+      console.log(boardsGroupHeight, subHeight)
+      const el = this.$el.querySelector('.boards-group')
+      if (subHeight >= boardsGroupHeight) {
+        el.style.height = boardsGroupHeight + 'px'
+        el.classList.add('shadow')
+      } else {
+        el.style.height = 'auto'
+        el.classList.remove('shadow')
+      }
+      // this.$el.querySelector('.boards-group').style.height = (targetHeight - 56 - 100) + 'px'
+    },
     deleteBoard (name) {
       this.delBoard(this.name)
       this.dialogOpen = false
@@ -289,6 +319,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.boards-group {
+  &.shadow {
+    box-shadow: inset -5px -7px 28px -16px #666;
+  }
+}
 img.client {
   width: 90%;
   height: auto;
@@ -297,5 +332,8 @@ img.client {
 }
 ::v-deep .v-skeleton-loader__list-item-avatar {
   padding-left: 9px;
+}
+.boards-group {
+  overflow-x: auto;
 }
 </style>
