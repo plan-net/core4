@@ -64,7 +64,7 @@ Install R to build and run R scripts:
     add-apt-repository 'deb https://cloud.r-project.org/bin/linux/debian stretch-cran35/'
     apt update
     apt install r-base --yes
-
+    apt install libssl-dev libsasl2-dev
 
 Install nodejs, yarn and npm to build and setup web tools:
 

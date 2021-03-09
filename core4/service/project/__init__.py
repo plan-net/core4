@@ -237,6 +237,10 @@ def make_project(package_name=None, package_description=None, auto=False,
     print("-----------\n")
     subprocess.check_call([pipexe, "install", "--upgrade", "pip"], env=env)
 
+    print("\ninstall wheel")
+    print("-----------\n")
+    subprocess.check_call([pipexe, "install", "wheel"], env=env)
+
     print("\ninstall project")
     print("---------------\n")
     curr_dir = os.path.abspath(os.path.curdir)
