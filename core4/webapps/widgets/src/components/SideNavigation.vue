@@ -180,6 +180,7 @@ import _ from 'lodash'
 export default {
   mounted () {
     window.addEventListener('resize', _.debounce(this.update, 250))
+    console.log('init app manger', new Date())
   },
   components: {
     ValidationProvider,
