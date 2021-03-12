@@ -51,6 +51,7 @@ from core4.api.v1.request.standard.static import CoreStaticFileHandler
 from core4.api.v1.request.standard.avatar import AvatarHandler
 from core4.api.v1.request.store.handler import StoreHandler
 from core4.api.v1.request.standard.about import AboutHandler
+from core4.api.v1.request.standard.welcome import WelcomeHandler
 
 
 class CoreAppManager(CoreApiContainer):
@@ -128,6 +129,8 @@ class CoreApiServer(CoreApiContainer):
 
         (r'/store', StoreHandler),
         (r'/store(\/.*)', StoreHandler),
+
+        (r'/welcome', WelcomeHandler),
     ]
 
     def on_enter(self):

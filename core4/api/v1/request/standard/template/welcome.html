@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@4.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <style>
+        [v-cloak] { display: none };
+    </style>
+</head>
+<body>
+<div id="app">
+    <div v-cloak>
+        <v-app>
+            <v-main>
+                <v-container>
+                    <v-sheet class="pa-6 mt-6" elevation="3">
+
+                        <h3 class="text-h3 ma-4">
+                            core4os {{ version }}
+                        </h3>
+
+                        <p class="ma-4">
+                            We introduce core4os version {{ version }} with a
+                            completely revised app management system and look
+                            and feel. Under the hood the job automation
+                            framework/API integration has been refactored and
+                            multiple minor and not so minor improvements have
+                            been implemented.
+                        </p>
+
+                        <p class="ma-4">
+                            These changes have been delivered and tested
+                            throughout the last year. It has been a tremendous
+                            team effort.
+                        </p>
+
+                        <p class="ma-4">
+                            <b>NOTE</b> that it was not possible to migrate your
+                            existing boards. Therefore we kindly ask you to
+                            create and setup new boards.
+                        </p>
+
+                        <hr/>
+                        <h5 class="text-h5 ma-4">
+                            App/API Framework
+                        </h5>
+
+                        <ul class="ma-4">
+                            <li>improved job api, previous job management API is deprecated</li>
+                            <li>new <code>CoreStore</code> class for cross-user storage based on user <code>app://store</code></li>
+                            <li>custom card handling and description, <code>.card</code> method depreciation</li>
+                            <li>refactored <code>/_info</code> endpoint with pagination</li>
+                            <li>refactored <code>/about</code> handler with general system information</li>
+                            <li>Install Python package wheel by default with <code>coco --init</code></li>
+                            <li>default target for links is "blank"</li>
+                            <li>Improved docstrings</li>
+                            <li>changed default route from 0.0.0.0 to localhost</li>
+                            <li>retrieve menu items, contact, profile link from configuration/store</li>
+                            <li>retrieve theming default values from store</li>
+                            <li>retrieve default contact email from store</li>
+                            <li>retrieve menu from store</li>
+                            <li>fix email message (password URL)</li>
+                            <li>fix collections depreciation</li>
+                            <li>reset password must not fail if email not exists</li>
+                        </ul>
+
+                        <hr/>
+                        <h5 class="text-h5 ma-4">
+                            Deployment System
+                        </h5>
+
+                        <ul class="ma-4">
+                            <li>Deploy webapps with built distribution directory (<code>./dist</code>)</li>
+                            <li>Build distribution directory <code>./dist</code> with <code>coco --dist</code></li>
+                            <li>No default R packages, mongolite/feather are not installed by default</li>
+                            <li><code>coco --cran</code> to install R package requirements with <code>r.txt</code></li>
+                            <li>Deploy with pip package manager; core4build is deprecated</li>
+                            <li>improved installation and testing guidelines</li>
+                        </ul>
+
+                        <hr/>
+                        <h5 class="text-h5 ma-4">
+                            App/Widget Manager
+                        </h5>
+
+                        <ul class="ma-4">
+                            <li>new layout</li>
+                            <li>Scrollbar with board list</li>
+                            <li>improved handling of tags with default tags and search dialog</li>
+                            <li>widget search syntax based on pql</li>
+                            <li>support user avatar</li>
+                            <li>SVG image for system label and icon</li>
+                            <li>dark styling for profile page</li>
+                            <li>default icon</li>
+                        </ul>
+
+                        <hr/>
+                        <h5 class="text-h5 ma-4">
+                            Job Monitoring (Comoco)
+                        </h5>
+
+                        <ul class="ma-4">
+                            <li>refactored job handling</li>
+                            <li>display job args to job detail view</li>
+                        </ul>
+
+                        <hr/>
+                        <h5 class="text-h5 ma-4">
+                            Role Management
+                        </h5>
+
+                        <ul class="ma-4">
+                            <li>add confirmation dialog before user deletion</li>
+                            <li>allow all characters with username except whitespace</li>
+                        </ul>
+
+                        <hr/>
+                        <h5 class="text-h5 ma-4">
+                            Help Screens
+                        </h5>
+
+                        <ul class="ma-4">
+                            <li>always show <code>qual_name</code>, short title</li>
+                        </ul>
+
+                    </v-sheet>
+                </v-container>
+            </v-main>
+        </v-app>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+<script>
+    const vm = new Vue({
+      el: "#app",
+      vuetify: new Vuetify(),
+      data() {
+        return {
+        }
+      },
+    })
+</script>
+</script>
+</body>
+</html>
