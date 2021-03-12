@@ -20,7 +20,7 @@ class WelcomeHandler(CoreRequestHandler):
     Release Notes
     """
     author = "mra"
-    title = "core4os " + core4.__version__
+    title = "core4os 4.1"
     subtitle = "Welcome Message"
     tag = ["settings"]
     icon = "mdi-star"
