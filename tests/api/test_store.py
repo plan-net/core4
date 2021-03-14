@@ -225,14 +225,14 @@ async def test_base_store():
     r = await CoreRole().load_one(_id="admin")
     data = await CoreStore.load(r)
     assert data["doc"]["logout"] == "/core4/api/v1/login"
-    assert data["doc"]["reset"] == "/core4/api/v1/login/reset"
+    assert data["doc"]["reset"] == "/core4/api/v1/reset"
 
 
 async def test_dyn_login(core4api):
     rv = await core4api.get("/core4/api/v1/roles",
                             headers={"Accept": "text/html"})
     body = rv.body.decode("utf-8")
-    assert "/core4/api/v1/login/reset" in body
+    assert "/core4/api/v1/reset" in body
     assert "/core4/api/v1/login" in body
     rv = await core4api.get("/core4/api/v1/roles", follow_redirects=False)
     print(dict(rv.headers))

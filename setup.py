@@ -16,8 +16,7 @@ setup(
     entry_points={
         'console_scripts': [
             'coco=core4.script.coco:main',
-            'chist=core4.script.chist:main',
-            'cadmin=core4.script.cadmin:main'
+            'chist=core4.script.chist:main'
         ],
     },
     install_requires=[
