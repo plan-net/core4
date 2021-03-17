@@ -108,6 +108,30 @@ You should drop root privileges.
     pip install --edit .
     
 
+core4 configuration
+-------------------
+
+Create a ``local.yaml`` configuration file in your home folder ``~/.core4`` with
+
+    DEFAULT:
+      mongo_url: mongodb://core:654321@localhost:27017
+      mongo_database: core4dev
+    
+    logging:
+      mongodb: INFO
+      stderr: DEBUG
+      stdout: ~
+    
+    worker:
+      min_free_ram: 32
+    
+    api:
+      setting:
+        debug: True
+        cookie_secret: very secret
+      admin_password: hans
+
+
 MongoDB setup
 -------------
 
@@ -135,7 +159,11 @@ test your installation
 ----------------------
 
 Launch a core4os worker and in a second terminal enqueue a DummyJob. This 
-DummyJob just waits for let's say 30 seconds.
+DummyJob just waits for let's say 30 seconds. Be sure you have a working 
+MongoDB setup and core4os configuration file at ``~/.core4/local.yaml`` as
+describe above.
+
+Then test core4os by running a job.
 
     # first shell in Python virtual environment
     coco --worker
@@ -162,9 +190,9 @@ login and call the API handler info resource.
     # first shell in Python virtual environment
     coco --app --filter core4.api.v1    
     
-    # second shell to visit the API info endpoint 
-    # with default username/password
-    firefox "http://localhost:5001/core4/api/v1/_info?username=admin&password=admin"
+    # second shell to visit the app manager 
+    # with default username/password (admin/hans with the local.yaml above)
+    firefox "http://localhost:5001/"
 
 
 web app installation
