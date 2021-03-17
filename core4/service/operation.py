@@ -18,7 +18,6 @@ import datetime
 from subprocess import Popen, STDOUT, PIPE
 import pathlib
 import shutil
-from rpy2.robjects.packages import importr, isinstalled
 
 NO_PROJECT = "WARNING!\nThis is not a core4 project."
 
@@ -606,6 +605,7 @@ def find_manifest():
 
 def cran():
     print("install R packages")
+    from rpy2.robjects.packages import importr, isinstalled
     if not os.path.exists(R_REQUIREMENTS):
         print("  {} not found".format(R_REQUIREMENTS))
         return False
