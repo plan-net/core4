@@ -1,101 +1,81 @@
 <!DOCTYPE html>
 <!-- LOGIN -->
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
-    <title>Login</title>
-    <link
-      href="//cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css"
-      rel="stylesheet"
-    />
-    <style>
-        body {
-          opacity: 0;
-        }
-        .row.main-row{
-          height: 100%;
-        }
-        .v-form{
-          width: 100%;
-        }
-        .client-logo-container{
 
-          box-shadow: inset 17px 0px 50px 0px var(--v-accent-darken2);
-          overflow: hidden;
-          background-color: var(--v-accent-base);
-          position: relative;
-        }
-        .logo-main svg{
-          width: 260px !important;
-        }
-        .logo-second svg{
-          width: 70% !important;
-          opacity: .6
-        }
-        .logo-third{
-          position: absolute;
-          top: -50vh;
-          left: -70vw;
-        }
-        .logo-third svg{
-          width: 450vw !important;
-          opacity: .2
-        }
-    </style>
-  </head>
-  <body>
-    <div id="app">
-      <v-app>
-        <v-container fluid fill-height class="pa-0">
-          <v-row no-gutters class="main-row">
-            <v-col cols="12" sm="6" md="5" lg="4" class="left-col">
-              <v-container fluid fill-height>
-              <v-form @submit.prevent="onLogin" ref="form" class="px-12" >
+<head>
+  <meta charset="UTF-8" />
+  <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+  <title>Login</title>
+  <link href="//cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet" />
+  <link href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css" rel="stylesheet" />
+  <style>
+    body {
+      opacity: 0;
+    }
+
+    .row.main-row {
+      height: 100%;
+    }
+
+    .v-form {
+      width: 100%;
+    }
+
+    .client-logo-container {
+
+      box-shadow: inset 17px 0px 50px 0px var(--v-accent-darken2);
+      overflow: hidden;
+      background-color: var(--v-accent-base);
+      position: relative;
+    }
+
+    .logo-main svg {
+      width: 260px !important;
+    }
+
+    .logo-second svg {
+      width: 70% !important;
+      opacity: .6
+    }
+
+    .logo-third {
+      position: absolute;
+      top: -50vh;
+      left: -70vw;
+    }
+
+    .logo-third svg {
+      width: 450vw !important;
+      opacity: .2
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <v-app>
+      <v-container fluid fill-height class="pa-0">
+        <v-row no-gutters class="main-row">
+          <v-col cols="12" sm="6" md="5" lg="4" class="left-col">
+            <v-container fluid fill-height>
+              <v-form @submit.prevent="onLogin" ref="form" class="px-12">
                 <v-card flat>
                   <v-card-title class="justify-center pt-0 pb-9">
-                  <c4-logo :dark="dark" class="logo-main"></c4-logo>
+                    <c4-logo :dark="dark" class="logo-main"></c4-logo>
                   </v-card-title>
                   <v-card-text class="pt-2">
-                    <v-text-field
-                      outlined
-                      clearable
-                      clear-icon="mdi-close"
-                      label="Username"
-                      v-model="username"
-                      :error-messages="errors.collect('Username')"
-                      data-vv-as="Username"
-                      :data-vv-name="'Username'"
-                      v-validate="'required|min:3|auth'"
-                    ></v-text-field>
-                    <v-text-field
-                    clearable
-                      :clear-icon="'mdi-close'"
-                      outlined
-                      label="Password"
-                      v-model="password"
-                      :error-messages="errors.collect('Password')"
-                      data-vv-as="Password"
-                      data-vv-name="Password"
-                      v-validate="'required|min:3|auth'"
-                      :append-icon="iconEye"
-                      @click:append="passwordVisible = !passwordVisible"
-                      :type="passwordVisible ? 'text' : 'password'">
+                    <v-text-field outlined clearable clear-icon="mdi-close" label="Username" v-model="username"
+                      :error-messages="errors.collect('Username')" data-vv-as="Username" :data-vv-name="'Username'"
+                      v-validate="'required|min:3|auth'"></v-text-field>
+                    <v-text-field clearable :clear-icon="'mdi-close'" outlined label="Password" v-model="password"
+                      :error-messages="errors.collect('Password')" data-vv-as="Password" data-vv-name="Password"
+                      v-validate="'required|min:3|auth'" :append-icon="iconEye"
+                      @click:append="passwordVisible = !passwordVisible" :type="passwordVisible ? 'text' : 'password'">
                   </v-card-text>
                   <v-card-actions>
                     <v-layout column>
-                      <v-btn
-                        class="mb-3"
-                        ref="button"
-                        color="primary"
-                        block
-                        :disabled="errors.any()"
-                        type="submit"
-                        >Login
+                      <v-btn class="mb-3" ref="button" color="primary" block :disabled="errors.any()" type="submit">
+                        Login
                       </v-btn>
                       <div></div>
                       <v-btn @click="toReset()" text block>Forgot password</v-btn>
@@ -103,126 +83,137 @@
                   </v-card-actions>
                 </v-card>
               </v-form>
-              </v-container>
-            </v-col>
-            <v-col cols="7" sm="6" md="7" lg="8" class="d-none d-sm-block client-logo-container" align="end">
-              <c4-logo :dark="true" class="logo-third"></c4-logo>
-              <v-row align="end" justify="end" style="width: inherit; height: 100%;">
-                <v-col style="position: relative;">
-                  <c4-logo :dark="true" class="logo-second"></c4-logo>
-                </v-col>
-              </v-row>
-              </div>
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-app>
-    </div>
-    <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js">
-    </script>    
-    <script src="//cdnjs.cloudflare.com/ajax/libs/vee-validate/2.2.15/vee-validate.js"></script>
-    <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/core4ui/C4Logo.min.js"></script>
-    <script>
-      Vue.use(VeeValidate, {
-        mode: "eager",
-        aria: false,
-        locale: "en"
-      });
-      new Vue({
-        el: "#app",
-        vuetify: window.c4Vuetify, // from widgets-4.0.min.js
-        created() {
-          this.$validator.extend("auth", {
-            getMessage: field => "Please check your name and password.",
-            validate: () => {
-              const valid = this.errorLogin === false;
-              return {
-                valid
-              };
-            }
-          });
-          this.dark
-        },
-        data() {
-          return {
-            //dialogLogin: true,
-            passwordVisible: false,
-            errorLogin: false,
-            username: null,
-            password: null
-          };
-        },
-        computed: {
-          up: function(){
-            return String(this.username) + String(this.password);
-          },
-          iconEye: function(){
-            return this.passwordVisible ? 'mdi-eye-off' : 'mdi-eye' 
-          } 
-        },
-        mounted() {
-          document.querySelector("body").style.opacity = 1;
-          console.log(this.$vuetify)
-        },
-        watch: {
-          up() {
-            if (this.errorLogin) {
-              this.errorLogin = false;
-              this.$validator.validateAll();
-            }
+            </v-container>
+          </v-col>
+          <v-col cols="7" sm="6" md="7" lg="8" class="d-none d-sm-block client-logo-container" align="end">
+            <c4-logo :dark="true" class="logo-third"></c4-logo>
+            <v-row align="end" justify="end" style="width: inherit; height: 100%;">
+              <v-col style="position: relative;">
+                <c4-logo :dark="true" class="logo-second"></c4-logo>
+              </v-col>
+            </v-row>
+  </div>
+  </v-col>
+  </v-row>
+  </v-container>
+  </v-app>
+  </div>
+  <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js">
+  </script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/vee-validate/2.2.15/vee-validate.js"></script>
+  <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/core4ui/C4Logo.min.js"></script>
+  <script>
+    Vue.use(VeeValidate, {
+      mode: "eager",
+      aria: false,
+      locale: "en"
+    });
+    new Vue({
+      el: "#app",
+      vuetify: window.c4Vuetify, // from widgets-4.0.min.js
+      created() {
+        this.$validator.extend("auth", {
+          getMessage: field => "Please check your name and password.",
+          validate: () => {
+            const valid = this.errorLogin === false;
+            return {
+              valid
+            };
           }
+        });
+        this.dark
+      },
+      data() {
+        return {
+          //dialogLogin: true,
+          passwordVisible: false,
+          errorLogin: false,
+          username: null,
+          password: null
+        };
+      },
+      computed: {
+        up: function () {
+          return String(this.username) + String(this.password);
         },
-        methods: {
-          toReset(){
-            window.location.assign('{{ reset_url }}');
-          },
-          login() {
-            const { username, password } = this;
-            var instance = axios.create();
-            delete instance.defaults.headers.common['Authorization'];
-            console.log(instance)
-            return instance
-              .post("{{ login_url }}", { username, password })
-              .then(result => {
-                window.localStorage.setItem(
-                  "user",
-                  JSON.stringify(result.data.data)
-                );
-                return result.data.data;
-              })
-              .catch(error => Promise.reject(error));
-          },
-          onLogin() {
-            function getParameterByName(name, url) {
-              // URLSearchParams dont work here #  in next is cut off
-                if (!url) url = window.location.href;
-                name = name.replace(/[\[\]]/g, '\\$&');
-                var regex = new RegExp('[?&]' + name + '(=([^&]*)|&|$)'),
-                    results = regex.exec(url);
-                if (!results) return null;
-                if (!results[2]) return '';
-                return decodeURIComponent(results[2].replace(/\+/g, ' '));
-            }
-            this.$refs.button.$el.focus();
+        iconEye: function () {
+          return this.passwordVisible ? 'mdi-eye-off' : 'mdi-eye'
+        }
+      },
+      mounted() {
+        document.querySelector("body").style.opacity = 1;
+        console.log(this.$vuetify)
+      },
+      watch: {
+        up() {
+          if (this.errorLogin) {
             this.errorLogin = false;
-            this.login().then(
-              val => {
-                let next = getParameterByName('next') || '/'
-                 if (next != null) {
-                  next += "?token=" + val.token;
-                  this.$nextTick(function() {
-                    window.location.assign(next);
-                  });
-                } 
-              },
-              error => {
-                this.errorLogin = true;
-                this.$validator.validateAll();
-              }
-            );
+            this.$validator.validateAll();
           }
         }
-      });
-    </script>
-  </body>
+      },
+      methods: {
+        toReset() {
+          window.location.assign('{{ reset_url }}');
+        },
+        login() {
+          const { username, password } = this;
+          var instance = axios.create();
+          delete instance.defaults.headers.common['Authorization'];
+          console.log(instance)
+          return instance
+            .post("{{ login_url }}", { username, password })
+            .then(result => {
+              window.localStorage.setItem(
+                "user",
+                JSON.stringify(result.data.data)
+              );
+              return result.data.data;
+            })
+            .catch(error => Promise.reject(error));
+        },
+        onLogin() {
+          function getParameterByName(name, url) {
+            // URLSearchParams dont work here #  in next is cut off
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&]*)|&|$)'),
+              results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+          }
+          this.$refs.button.$el.focus();
+          this.errorLogin = false;
+          this.$validator.validateAll().then(valid => {
+            console.log(valid, 'valid');
+            
+            if (valid) {
+
+
+              this.login().then(
+                val => {
+                  let next = getParameterByName('next') || '/'
+                  if (next != null) {
+                    next += "?token=" + val.token;
+                    this.$nextTick(function () {
+                      window.location.assign(next);
+                    });
+                  }
+                },
+                error => {
+                  this.errorLogin = true;
+                  this.$validator.validateAll();
+                }
+              );
+            }
+
+
+          })
+        }
+      }
+    });
+  </script>
+</body>
+
 </html>
