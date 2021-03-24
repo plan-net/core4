@@ -116,6 +116,11 @@ async def test_static_info(info_server):
     url = "/core4/api/v1/_info/help/" + rscid
     rv = await info_server.get(url)
     assert rv.ok
+    assert rv.json()["data"]["qual_name"] == "core4.api.v1.request.standard.system.SystemHandler"
+    assert "retrieves system state" in rv.json()["data"]["description"].lower()
+    print(rv.body)
+    rv = await info_server.get("/core4/api/v1/system?_help")
+    assert rv.ok
 
 
 async def test_link_info(info_server):
@@ -150,6 +155,13 @@ async def test_version_info(info_server):
     pprint(ep)
     v = [i for i in ep if i["qual_name"] == t][0]
     assert v["version"] == core4.__version__
+
+async def test_help(info_server):
+    # rv1 = await info_server.get("/core4/api/v1/profile?_help")
+    # assert rv1.code == 200
+    await info_server.login()
+    rv1 = await info_server.get("/core4/api/v1/profile?_help=1")
+    assert rv1.code == 200
 
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve

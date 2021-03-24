@@ -143,7 +143,7 @@ class HTTPTestServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):
 
     def get_url(self, path):
         p, *q = path.split("?")
-        elems = urllib.parse.parse_qs("?".join(q))
+        elems = urllib.parse.parse_qs("?".join(q), keep_blank_values=True)
         if q:
             p += "?" + urllib.parse.urlencode(elems, doseq=True)
         url = "http://127.0.0.1:%s%s" % (self._http_port, p)

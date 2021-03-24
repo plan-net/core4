@@ -421,6 +421,8 @@ class CoreApplication(tornado.web.Application):
                         return self.get_handler_delegate(request,
                                                          handler.target,
                                                          handler.target_kwargs)
+        elif "_help" in request.arguments:
+            request.method = core4.const.QUICK_HELP_METHOD
         return super().find_handler(request, **kwargs)
 
     def handler_help(self, cls):

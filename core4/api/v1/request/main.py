@@ -460,13 +460,17 @@ class CoreBaseHandler(CoreBase):
         doc = await self.meta()
         return self.help(**doc)
 
-    # async def card(self, **data):
-    #     """
-    #     Returns the classes properties in json format.
-    #     May be overwritten for a custom html implementation.
-    #     """
-    #     self.reply(data)
-    #     #return self.render(self.card_html_page, **data)
+    async def xhelp2(self, *args, **kwargs):
+        """
+        Redirect with query ``?_help`` to the help page.
+
+        :return: redirect
+        """
+        url = (self.application.container.root
+               + core4.const.INFO_URL
+               + "/" + core4.const.HELP_MODE
+               + '/' + str(self.rsc_id))
+        self.redirect(url)
 
     def enter(self):
         """
@@ -827,7 +831,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
 
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT",
-                         "OPTIONS", "XCARD", "XHELP", "XENTER")
+                         "OPTIONS", "XCARD", "XHELP", "XENTER", "XHELP2")
 
     supported_types = [
         "text/html",
