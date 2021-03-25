@@ -114,7 +114,7 @@ core4 configuration
 Create a ``local.yaml`` configuration file in your home folder ``~/.core4`` with
 
     DEFAULT:
-      mongo_url: mongodb://core:654321@localhost:27017
+      mongo_url: mongodb://localhost:27017
       mongo_database: core4dev
     
     logging:
@@ -130,6 +130,10 @@ Create a ``local.yaml`` configuration file in your home folder ``~/.core4`` with
         debug: True
         cookie_secret: very secret
       admin_password: hans
+
+Please note that this configuration file assumes that your local MongoDB requires
+no authentication. If you have secured your local MongoDB then ensure to provide
+the correct username and password in the mongo_url.
 
 
 MongoDB setup
