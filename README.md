@@ -17,7 +17,7 @@ or hardware.
 core4os takes care of everything that is essential to using and operating such a 
 distributed system, from central logging and configuration to deployment, all 
 while scaling to hundreds of servers, allowing for rapid progress from 
-development to production deployment and even enabling the developer to deploy a 
+development to production deployment and even enabling the developer to deploy an 
 HTTP API quickly based on the output of the data-processing, which provides a 
 shortcut for creating beautiful, frontend applications.
 
@@ -64,7 +64,7 @@ Install R to build and run R scripts:
     add-apt-repository 'deb https://cloud.r-project.org/bin/linux/debian stretch-cran35/'
     apt update
     apt install r-base --yes
-    apt install libssl-dev libsasl2-dev
+    apt install libssl-dev libsasl2-dev --yes
 
 Install nodejs, yarn and npm to build and setup web tools:
 
@@ -90,8 +90,8 @@ You should drop root privileges.
 
     exit  # exit root
 
-    cd
     mkdir dev
+    cd dev
     
     # clone core4
     git clone https://github.com/plan-net/core4.git
@@ -138,9 +138,9 @@ MongoDB setup
 MongoDB requires further configuration to setup a replica set. core4os uses some 
 special features of MongoDB which are only available with replica set.
 
-The interactive script ``local_setup.py`` simplifies this configuration. Start 
-the script with ``python local_setup.py`` in the Python virtual environment 
-created above. 
+The interactive script ``local_setup.py`` located in ``~dev/core4`` simplifies this
+configuration. Start the script with ``python local_setup.py`` in the Python virtual
+environment created above. 
 
 
 further reads
