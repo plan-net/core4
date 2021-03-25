@@ -95,7 +95,19 @@ core_config = {
         "mongo_database": "core4dev"
     },
     "logging": {
-        "mongodb": "INFO"
+        "mongodb": "INFO",
+        "stderr": "DEBUG",
+        "stdout": "~"
+    },
+    "worker": {
+        "min_free_ram": "32"
+    },
+    "api": {
+        "setting": {
+            "debug": "True",
+            "cookie_secret": "very secret"
+        },
+        "admin_password": "hans"
     }
 }
 
