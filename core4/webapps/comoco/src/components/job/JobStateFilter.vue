@@ -20,8 +20,8 @@
           v-for="(state, index) in internalStates"
           :key="state[0]"
         >
-          <v-icon v-if="selected.includes(index)">check_box</v-icon>
-          <v-icon v-else>check_box_outline_blank</v-icon>
+          <v-icon v-if="selected.includes(index)">mdi-check-box-outline</v-icon>
+          <v-icon v-else>mdi-square-outline</v-icon>
         </v-btn>
       </v-btn-toggle>
     </template>

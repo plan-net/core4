@@ -701,14 +701,15 @@ async def test_grant_xmethods(info_server):
 
     rv = await info_server.get("/core4/api/v1/profile")
     assert rv.code == 200
-    rv1 = await info_server.get("/core4/api/v1/_info")
+    rv1 = await info_server.get("/core4/api/v1/_info?search=!&per_page=1000")
     assert rv1.code == 200
-    rv2 = await info_server.get("/test/_info")
+    rv2 = await info_server.get("/test/_info?search=!&per_page=1000")
     assert rv2.code == 200
     assert len(rv1.json()["data"]) == len(rv2.json()["data"])
     ih1 = [i for i in rv1.json()["data"] if "SimpleHandler" in i["qual_name"]]
     ih2 = [i for i in rv2.json()["data"] if "SimpleHandler" in i["qual_name"]]
     assert ih1 == ih2
+    from pprint import pprint
     r1 = ih1[0]["rsc_id"]
     for mode in ("card", "help", "enter"):
         rv = await info_server._fetch("X" + mode.upper(),

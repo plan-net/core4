@@ -1,14 +1,4 @@
-try:
-    from pip._internal.cli.main import main
-except:
-    from pip import main
-
-main(["install", "-U", "--quiet",
-      "git+https://github.com/plan-net/core4build.git"])
-
-from core4build import setup
-from setuptools import find_packages
-
+from setuptools import find_packages, setup
 import core4
 
 setup(
@@ -26,8 +16,7 @@ setup(
     entry_points={
         'console_scripts': [
             'coco=core4.script.coco:main',
-            'chist=core4.script.chist:main',
-            'cadmin=core4.script.cadmin:main'
+            'chist=core4.script.chist:main'
         ],
     },
     install_requires=[
@@ -39,7 +28,8 @@ setup(
         "docopt>=0.6",
         "croniter>=0.3",
         "python-mimeparse>=1.6",
-        "PyJWT>=1.6",
+        "PyJWT>=2.0.0a",
+        # see https://github.com/jpadilla/pyjwt/issues/391#issuecomment-515427821
         "tornado>=5.1",
         "pandas>=0.23",
         "motor>=2.0",
@@ -52,7 +42,8 @@ setup(
         "pytz>=2018.9",
         "tzlocal>=1.5.1",
         "feather-format==0.4.0",
-        "rpy2==3.0.5"
+        "rpy2==3.0.5",
+        "pql @ git+https://github.com/comfuture/pql.git"
     ],
     extras_require={
         "tests": [

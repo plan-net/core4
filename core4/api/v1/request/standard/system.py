@@ -11,15 +11,14 @@ from core4.queue.query import QueryMixin
 
 class SystemHandler(CoreRequestHandler, QueryMixin):
     """
-    Retrieves system state, i.e.
-
-    * alive time of workers, scheduler and app nodes
-    * maintenance modes (global and project specific)
+    Retrieves system state, i.e. alive time of workers, scheduler and app nodes
+    and maintenance modes (global and project specific).
     """
     author = "mra"
-    title = "system information"
-    tag = "info"  # idea is to have a system info app, remove api by then
-    icon = "settings_applications"
+    title = "System Information"
+    tag = ["api"]
+    icon = "mdi-cog-outline"
+    res = 11
 
     async def get(self):
         """

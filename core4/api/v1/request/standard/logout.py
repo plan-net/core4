@@ -9,30 +9,28 @@
 Implements core4 standard :class:`LogoutHandler`.
 """
 
-from core4.api.v1.request.main import CoreRequestHandler
+from core4.api.v1.request.standard.login import LoginHandler
 
 
-class LogoutHandler(CoreRequestHandler):
-    title = "logout"
+class LogoutHandler(LoginHandler):
+    """
+    core4os standard Logout Handler.
+    """
+    title = "Logout Handler"
     author = "mra"
+    protected = True
 
     async def get(self):
         """
-        Same as :meth:`.post`
-        """
-        await self.post()
-
-    async def post(self):
-        """
         Logout an authenticated user.
 
-        .. note:: This request resets the secure cookie. Further actions have
-                  to be taken by the client itself, e.g. resetting the token
-                  or resetting client basic authentication. The latter
-                  typically requires to restart the client.
+        This request resets the secure cookie. Further actions have
+        to be taken by the client itself, e.g. resetting the token
+        or resetting client basic authentication. The latter
+        typically requires to restart the client.
 
         Methods:
-            POST /
+            POST /core4/api/v1/logout
 
         Parameters:
             None
@@ -60,6 +58,12 @@ class LogoutHandler(CoreRequestHandler):
                 'timestamp': '2018-10-31T14:09:26.114443'
             }
         """
+        self.clear_all_cookies()
+        await self.getter(True)
         self.current_user = None
-        self.set_secure_cookie("token", "")
-        self.reply("OK")
+
+    async def post(self):
+        """
+        Same as :meth:`.post`
+        """
+        await self.get()

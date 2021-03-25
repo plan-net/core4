@@ -657,6 +657,7 @@ the :class:`.CoreApiContainer` class. These are the following properties:
 
 * ``protected``
 * ``title``
+* ``subtitle``
 * ``author``
 * ``tag``
 * ``template_path``
@@ -664,6 +665,9 @@ the :class:`.CoreApiContainer` class. These are the following properties:
 * ``default_filename``
 * ``enter_url``
 * ``icon``
+* ``doc``
+* ``spa``
+* ``res``
 
 This is especially useful when serving static files with
 :class:`.CoreStaticFileHandler`::

@@ -55,6 +55,7 @@ def reset(tmpdir):
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
     os.environ["CORE4_OPTION_logging__write_concern"] = "!!int 1"
     os.environ["CORE4_OPTION_worker__min_free_ram"] = "!!int 32"
+    os.environ["CORE4_OPTION_worker__max_cpu"] = "!!int 100"
 
     class LogOn(core4.base.CoreBase,
                 core4.logger.mixin.CoreLoggerMixin):
@@ -181,7 +182,7 @@ def test_progress1(queue, worker):
     worker.wait_queue()
     data = list(queue.config.sys.log.find())
     assert sum([1 for d in data
-                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 1
 
 
 @pytest.mark.timeout(120)
@@ -623,9 +624,9 @@ def test_progress3(queue, worker):
     worker.start(1)
     worker.wait_queue()
     data = list(queue.config.sys.log.find())
+    print([(d["level"], d["message"]) for d in data])
     assert sum([1 for d in data
-                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 2
-
+                if "progress" in d["message"] and d["level"] == "DEBUG"]) == 1
 
 class NoProgressJob(core4.queue.job.CoreJob):
     author = "mra"
@@ -927,7 +928,8 @@ def test_project_maintenance(queue, worker):
 
 @pytest.mark.timeout(120)
 def test_no_resources(queue):
-    job = queue.enqueue(core4.queue.helper.job.example.DummyJob)
+    os.environ["CORE4_OPTION_worker__max_cpu"] = "!!int 95"
+    queue.enqueue(core4.queue.helper.job.example.DummyJob)
     worker1 = WorkerNoCPU(name="testRes_1")
     worker2 = WorkerNoCPU(name="testRes_2")
     worker3 = WorkerNoRAM(name="testRes_3")

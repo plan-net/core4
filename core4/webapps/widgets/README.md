@@ -1,4 +1,4 @@
-# core-widgets
+# widgets
 
 ## Project setup
 ```

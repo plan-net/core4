@@ -20,6 +20,7 @@ HELP_MODE = "help"
 ASSET_URL = "_asset"
 CARD_METHOD = "XCARD"
 HELP_METHOD = "XHELP"
+QUICK_HELP_METHOD = "XHELP2"
 ENTER_METHOD = "XENTER"
 
 VENV = ".venv"
@@ -30,3 +31,5 @@ VENV_PIP = VENV + "/bin/pip3"
 QUEUE_CHANNEL = "queue"
 DEFAULT_CHANNEL = "system"
 MESSAGE_CHANNEL = "message"
+
+CORE4_REPOSITORY = "https://github.com/plan-net/core4.git"

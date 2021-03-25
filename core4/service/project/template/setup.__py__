@@ -17,7 +17,7 @@ setup(
     packages=find_packages(exclude=['docs*', 'tests*']),
     include_package_data=True,
     zip_safe=False,
-    core4="https://github.com/plan-net/core4.git",
+    core4="{{ core4_source }}",
     install_requires=[
     ]
 )

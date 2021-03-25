@@ -1,0 +1,4 @@
+DEFAULT:
+  mongo_url: ~
+api:
+  admin_password: hans

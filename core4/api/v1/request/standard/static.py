@@ -28,8 +28,7 @@ class CoreStaticFileHandler(CoreBaseHandler, StaticFileHandler):
     """
     SUPPORTED_METHODS = ("GET", "HEAD", "OPTIONS", "XCARD", "XHELP", "XENTER")
     propagate = ("protected", "title", "author", "tag", "static_path",
-                 "icon", "doc", "spa", "default_filename", "subtitle")
-
+                 "icon", "doc", "spa", "default_filename", "subtitle", "target")
     title = "core4 static file handler"
     author = "mra"
     path = None

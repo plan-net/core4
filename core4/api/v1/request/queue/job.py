@@ -42,7 +42,7 @@ STATE_STOPPED = (
 
 class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
     """
-    Get job listing, job details, kill, delete and restart jobs.
+    **DEPRECATED!** Get job listing, job details, kill, delete and restart jobs.
     """
 
     author = "mra"
@@ -66,6 +66,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
     async def get(self, _id=None):
         """
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
+
         Paginated job listing with ``/jobs``,  and single job details with
         ``/jobs/<_id>``. Only jobs with read/execute access permissions granted
         to the current user are returned.
@@ -74,11 +76,11 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             GET /core4/api/v1/jobs - jobs listing
 
         Parameters:
-            per_page (int): number of jobs per page
-            page (int): requested page (starts counting with ``0``)
-            sort (str): sort field
-            order (int): sort direction (``1`` for ascending, ``-1`` for
-                         descending)
+            - per_page (int): number of jobs per page
+            - page (int): requested page (starts counting with ``0``)
+            - sort (str): sort field
+            - order (int): sort direction (``1`` for ascending, ``-1`` for
+              descending)
 
         Returns:
             data element with list of job attributes as dictionaries. For
@@ -197,18 +199,16 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             POST /core4/api/v1/jobs - jobs listing
 
         Parameters:
-            per_page (int): number of jobs per page
-            page (int): requested page (starts counting with ``0``)
-            sort (str): sort field
-            order (int): sort direction (``1`` for ascending, ``-1`` for
-                         descending)
-            filter (dict): MongoDB query
+            - per_page (int): number of jobs per page
+            - page (int): requested page (starts counting with ``0``)
+            - sort (str): sort field
+            - order (int): sort direction (``1`` for ascending, ``-1`` for
+              descending)
+            - filter (dict): MongoDB query
 
-        Returns:
-            see :meth:`.get`
+        **Returns:** see ``GET``
 
-        Raises:
-            see :meth:`.get`
+        **Raises:** see ``GET``
 
         Examples:
             >>> # example continues from above
@@ -301,7 +301,7 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             DELETE /core4/api/v1/jobs/<_id> - delete job from ``sys.queue``
 
         Parameters:
-            _id (str): job _id to delete
+            - _id (str): job _id to delete
 
         Returns:
             data element with ``True`` for success, else ``False``
@@ -343,8 +343,8 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
             PUT /core4/api/v1/jobs/<action>/<_id> - manage job in ``sys.queue``
 
         Parameters:
-            action(str): ``delete``, ``kill`` or ``restart``
-            _id (str): job _id
+            - action(str): ``delete``, ``kill`` or ``restart``
+            - _id (str): job _id
 
         Returns:
             data element with
@@ -599,15 +599,17 @@ class JobHandler(CoreRequestHandler, core4.queue.query.QueryMixin):
 
 class JobPost(JobHandler):
     """
-    Post new job.
+    **DEPRECATED!** Post new job.
     """
 
     author = "mra"
-    title = "enqueue job"
+    title = "Enqueue Job"
     tag = "api jobs"
 
     async def post(self, _id=None):
         """
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
+
         Only jobs with execute access permissions granted to the current user
         can be posted.
 
@@ -615,31 +617,31 @@ class JobPost(JobHandler):
             POST /core4/api/v1/enqueue - enqueue job
 
         Parameters:
-            args (dict): arguments to be passed to the job
-            attempts (int): maximum number of execution attempts after job
-                            failure before the job enters the final ``error``
-                            state
-            chain (list of str): list of jobs to be started after successful
-                                 job completion
-            defer_time (int): seconds to wait before restart after defer
-            defer_max (int): maximum number of seconds to defer the job before
-                             the job turns inactive
-            dependency (list of str): jobs which need to be completed before
-                                      execution start
-            error_time (int): seconds to wait before job restart after failure
-            force (bool): if ``True`` then ignore worker resource limits and
-                          launch the job
-            max_parallel (int): maximum number jobs to run in parallel on the
-                                same node
-            priority (int): to execute the job with >0 higher and <0 lower
-                            priority (defaults to 0)
-            python (str): Python executable to be used for dedicated Python
-                          virtual environment
-            wall_time (int): number of seconds before a running job turns into
-                             a non-stopping job
-            worker (list of str): eligable to execute the job
-            zombie_time (int): number of seconds before a job turns into a
-                               zombie non-stopping job
+            - args (dict): arguments to be passed to the job
+            - attempts (int): maximum number of execution attempts after job
+                              failure before the job enters the final ``error``
+                              state
+            - chain (list of str): list of jobs to be started after successful
+                                   job completion
+            - defer_time (int): seconds to wait before restart after defer
+            - defer_max (int): maximum number of seconds to defer the job before
+                               the job turns inactive
+            - dependency (list of str): jobs which need to be completed before
+                                        execution start
+            - error_time (int): seconds to wait before job restart after failure
+            - force (bool): if ``True`` then ignore worker resource limits and
+                            launch the job
+            - max_parallel (int): maximum number jobs to run in parallel on the
+                                  same node
+            - priority (int): to execute the job with >0 higher and <0 lower
+                              priority (defaults to 0)
+            - python (str): Python executable to be used for dedicated Python
+                            virtual environment
+            - wall_time (int): number of seconds before a running job turns into
+                               a non-stopping job
+            - worker (list of str): eligable to execute the job
+            - zombie_time (int): number of seconds before a job turns into a
+                                 zombie non-stopping job
 
         Returns:
             data element with
@@ -721,12 +723,12 @@ class JobPost(JobHandler):
 
 class JobStream(JobPost):
     """
-    Stream job attributes until job reached final state (``ERROR``,
-    ``INACTIVE``, ``KILLED``).
+    **DEPRECATED!** Stream job attributes until job reaches final state
+    (``ERROR``, ``INACTIVE``, ``KILLED``).
     """
 
     author = "mra"
-    title = "job state stream"
+    title = "Job State Stream"
     tag = "api jobs"
 
     def initialise_object(self):
@@ -739,26 +741,28 @@ class JobStream(JobPost):
 
     async def get(self, _id=None):
         """
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
+
         Only jobs with execute access permissions granted to the current user
         can be streamed.
 
         Methods:
-            GET /jobs/poll/:job - stream job attributes and logging
+            GET /jobs/poll/<job> - stream job attributes and logging
 
         Parameters:
-            job (ObjectId): job _id
-            job (str): job qual_name
+            - job (ObjectId): job _id
+            - job (str): job qual_name
 
         Returns:
             JSON stream with job attributes (event ``state``) and job logging
-                messages (event ``log``). If a job ``qual_name`` is passed then
-                the logging event ``log`` is not available.
+            messages (event ``log``). If a job ``qual_name`` is passed then the
+            logging event ``log`` is not available.
 
         Raises:
-            401 Bad Request: failed to parse job _id
-            401 Unauthorized
-            403 Forbidden
-            404 cannot instantiate job
+            401: Bad Request (failed to parse job _id)
+            401: Unauthorized
+            403: Forbidden
+            404: cannot instantiate job
 
         Examples:
             >>> from requests import post, get
@@ -880,6 +884,8 @@ class JobStream(JobPost):
 
     async def post(self, _id=None):
         """
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
+
         Only jobs with execute access permissions granted to the current user
         can be enqueued and streamed.
 
@@ -887,37 +893,37 @@ class JobStream(JobPost):
             POST /jobs/poll - enqueue job and stream job progress
 
         Parameters:
-            args (dict): arguments to be passed to the job
-            attempts (int): maximum number of execution attempts after job
-                            failure before the job enters the final ``error``
-                            state
-            chain (list of str): list of jobs to be started after successful
-                                 job completion
-            defer_time (int): seconds to wait before restart after defer
-            defer_max (int): maximum number of seconds to defer the job before
-                             the job turns inactive
-            dependency (list of str): jobs which need to be completed before
-                                      execution start
-            error_time (int): seconds to wait before job restart after failure
-            force (bool): if ``True`` then ignore worker resource limits and
-                          launch the job
-            max_parallel (int): maximum number jobs to run in parallel on the
-                                same node
-            priority (int): to execute the job with >0 higher and <0 lower
-                            priority (defaults to 0)
-            python (str): Python executable to be used for dedicated Python
-                          virtual environment
-            wall_time (int): number of seconds before a running job turns into
-                             a non-stopping job
-            worker (list of str): eligable to execute the job
-            zombie_time (int): number of seconds before a job turns into a
-                               zombie non-stopping job
+            - args (dict): arguments to be passed to the job
+            - attempts (int): maximum number of execution attempts after job
+                              failure before the job enters the final ``error``
+                              state
+            - chain (list of str): list of jobs to be started after successful
+                                   job completion
+            - defer_time (int): seconds to wait before restart after defer
+            - defer_max (int): maximum number of seconds to defer the job before
+                               the job turns inactive
+            - dependency (list of str): jobs which need to be completed before
+                                        execution start
+            - error_time (int): seconds to wait before job restart after failure
+            - force (bool): if ``True`` then ignore worker resource limits and
+                            launch the job
+            - max_parallel (int): maximum number jobs to run in parallel on the
+                                  same node
+            - priority (int): to execute the job with >0 higher and <0 lower
+                              priority (defaults to 0)
+            - python (str): Python executable to be used for dedicated Python
+                            virtual environment
+            - wall_time (int): number of seconds before a running job turns into
+                               a non-stopping job
+            - worker (list of str): eligable to execute the job
+            - zombie_time (int): number of seconds before a job turns into a
+                                 zombie non-stopping job
 
         Returns:
             JSON stream with job attributes
 
         Raises:
-            400: failed to parse job _id
+            400: Bad Request (failed to parse job _id)
             401: Unauthorized
             403: Forbidden
             404: job not found
@@ -949,35 +955,34 @@ class JobStream(JobPost):
 
 class JobList(CoreRequestHandler):
     """
-    Job Listing
+    **DEPRECATED!** List of existing jobs
     """
     author = "mra"
-    title = "job listing"
+    title = "Job Listing"
     tag = "api jobs"
-    icon = "build"
 
     async def get(self):
         """
+        **DEPRECATED!** Use :class:`core4.api.v1.request.job.JobRequest`.
+
         Paginated list of jobs the currently logged in user is allowed to
-        execute. If client accepts ``text/html``, then this endpoint renders
-        ``template/enqueue`` to list, parameterise and enqueue jobs using
-        ``/core4/api/v1/enqueue`` endpoint.
+        launch.
 
         Methods:
             GET /jobs/list
 
         Parameters:
-            per_page (int): number of jobs per page
-            page (int): requested page (starts counting with ``0``)
-            sort (list): of tuples with sort field and direction (1, -1)
-            filter (dict): MongoDB query
-            search (str): parsing wildcards ``?`` and ``*``
+            - per_page (int): number of jobs per page
+            - page (int): requested page (starts counting with ``0``)
+            - sort (list): of tuples with sort field and direction (1, -1)
+            - filter (dict): MongoDB query
+            - search (str): parsing wildcards ``?`` and ``*``
 
         Returns:
-            pagination information with **total_count** (int), **count** (int),
-            **page** (int), **page_count** (int), **per_page** (int)
+            pagination information with ``total_count`` (int), ``count`` (int),
+            ``page`` (int), ``page_count`` (int), ``per_page`` (int)
             
-            - **_id** (ObjectId)
+            - **_id** (str)
             - **author** (str)
             - **created_at** (datetime)
             - **doc** (str)
@@ -997,18 +1002,13 @@ class JobList(CoreRequestHandler):
             >>> rv = get("http://0.0.0.0:5001/core4/api/v1/jobs/list",
                          headers=h)
         """
-        if self.wants_html():
-            return self.render("template/enqueue/main.html")
-        per_page = int(self.get_argument(
-            "per_page", as_type=int, default=10))
-        current_page = int(self.get_argument(
-            "page", as_type=int, default=0))
-        query_filter = self.get_argument(
-            "filter", as_type=dict, default={})
-        sort_order = self.get_argument(
-            "sort", as_type=list, default=None)
-        search = self.get_argument(
-            "search", as_type=str, default=None)
+        # if self.wants_html():
+        #     return self.render("template/enqueue/main.html")
+        per_page = int(self.get_argument("per_page", as_type=int, default=10))
+        current_page = int(self.get_argument("page", as_type=int, default=0))
+        query_filter = self.get_argument("filter", as_type=dict, default={})
+        sort_order = self.get_argument("sort", as_type=list, default=None)
+        search = self.get_argument("search", as_type=str, default=None)
         query_filter["valid"] = True
         if "name" in query_filter:
             query_filter["_id"] = query_filter["name"]
@@ -1047,10 +1047,3 @@ class JobList(CoreRequestHandler):
             if await self.user.has_job_exec_access(doc["_id"]):
                 data.append(doc)
         return data
-
-    async def card(self, **data):
-        jobs = await self.get_job({})
-        projects = set([j["_id"].split(".", 1)[0] for j in jobs])
-        data["job_count"] = len(jobs)
-        data["project_count"] = len(projects)
-        return self.render("template/enqueue/card.html", **data)

@@ -23,6 +23,7 @@ import core4.error
 import core4.service
 import core4.service.setup
 import core4.util.node
+import core4.util.data
 from core4.api.v1.request.main import CoreBaseHandler
 from core4.api.v1.server import CoreApiServer, CoreAppManager
 from core4.base import CoreBase
@@ -53,7 +54,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         self.startup = core4.util.node.mongo_now()
 
         self.setup_logging()
-        core4.service.setup.CoreSetup().make_all()
+        core4.service.setup.CoreSetup().make_all(api=True)
 
         # http server settings
         http_args = {}
@@ -63,7 +64,7 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
         name = name or str(os.getpid()) # self.project # "app"
         self.identifier = "@".join([name, core4.util.node.get_hostname()])
         self.port = int(port or self.config.api.port)
-        self.address = address or "0.0.0.0"
+        self.address = address or self.config.api.route
         self.hostname = core4.util.node.get_hostname()
         if cert_file and key_file:
             self.logger.info("securing server with [%s]", cert_file)
@@ -274,6 +275,13 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
             for rule in app.target.wildcard_router.rules:
                 handler = rule.target
                 if issubclass(handler, CoreBaseHandler):
+                    description = rule.target_kwargs.get(
+                        "doc", handler.doc or handler.__doc__) or "None"
+                    description_html = core4.util.data.rst2html(description)
+                    if "card" in handler.__dict__:
+                        custom_card = callable(handler.__dict__["card"])
+                    else:
+                        custom_card = False
                     doc = dict(
                         hostname=self.hostname,
                         port=self.port,
@@ -288,24 +296,32 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                         project=handler.get_project(),
                         protected=handler.protected,
                         qual_name=handler.qual_name(),
-                        tag=handler.tag,
                         title=handler.title,
                         subtitle=handler.subtitle,
                         enter_url=handler.enter_url,
                         target=handler.target,
                         spa=handler.spa,
-                        perm_base=handler.perm_base
+                        perm_base=handler.perm_base,
+                        res=handler.res,
+                        tag=handler.tag,
+                        icon=handler.icon,
+                        description=description,
+                        description_html=description_html,
+                        custom_card=custom_card
                     )
                     # respect and populate handler arguments to overwrite
                     for attr, value in rule.target_kwargs.items():
                         if attr in handler.propagate and attr in doc:
                             doc[attr] = value
+                    if isinstance(doc["tag"], str):
+                        doc["tag"] = doc["tag"].split()
                     data.setdefault(rule.rsc_id, doc)
                     data[rule.rsc_id]["container"].append(
                         (app.target.container.qual_name(),
                          rule.matcher.regex.pattern,
                          app.target.container.get_root(),
                          rule.name))
+        age = self.config.api.new_range * 24. * 60. * 60.
         for rsc_id, doc in data.items():
             ret = coll.update_one(
                 filter={
@@ -325,10 +341,39 @@ class CoreApiServerTool(CoreBase, CoreLoggerMixin):
                 created += 1
             else:
                 updated += 1
-
-        self.logger.info("found [%s] application, handlers registered [%d], "
-                         "reset [%d], updated [%d], created [%d]",
-                         len(router.rules), total, reset, updated, created)
+            # update new
+            dbdoc = coll.find_one({
+                "hostname": self.hostname,
+                "port": self.port,
+                "rsc_id": rsc_id
+            })
+            if ((dbdoc["started_at"] - dbdoc["created_at"]).total_seconds()
+                    < age):
+                if "new" not in dbdoc["tag"]:
+                    doc["tag"].append("new")
+            else:
+                try:
+                    doc["tag"].remove("new")
+                except ValueError:
+                    pass
+                except:
+                    raise
+            coll.update_one(
+                filter={
+                    "hostname": self.hostname,
+                    "port": self.port,
+                    "rsc_id": rsc_id,
+                },
+                update={
+                    "$set": {
+                        "tag": doc["tag"]
+                    }
+                }
+            )
+        self.logger.info(
+            "found [%s] application, handlers registered [%d], reset [%d], "
+            "updated [%d], created [%d]", len(router.rules), total, reset,
+            updated, created)
 
     def reset_handler(self):
         """

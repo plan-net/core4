@@ -40,15 +40,17 @@ def setup(tmpdir):
     os.environ["CORE4_OPTION_DEFAULT__mongo_url"] = MONGO_URL
     os.environ["CORE4_OPTION_DEFAULT__mongo_database"] = MONGO_DATABASE
     os.environ["CORE4_OPTION_logging__mongodb"] = "DEBUG"
+    os.environ["CORE4_OPTION_logging__stderr"] = "DEBUG"
     os.environ["CORE4_OPTION_api__token__expiration"] = "!!int 60"
     os.environ["CORE4_OPTION_api__setting__debug"] = "!!bool True"
     os.environ["CORE4_OPTION_api__setting__cookie_secret"] = "blabla"
     os.environ["CORE4_OPTION_worker__min_free_ram"] = "!!int 32"
+    os.environ["CORE4_OPTION_worker__max_cpu"] = "!!int 101"
     conn = pymongo.MongoClient(MONGO_URL)
     conn.drop_database(MONGO_DATABASE)
     core4.logger.mixin.logon()
     yield
-    conn.drop_database(MONGO_DATABASE)
+    #conn.drop_database(MONGO_DATABASE)
     for i, j in core4.service.setup.CoreSetup.__dict__.items():
         if callable(j):
             if "has_run" in j.__dict__:
@@ -141,7 +143,7 @@ class HTTPTestServerClient(tornado.simple_httpclient.SimpleAsyncHTTPClient):
 
     def get_url(self, path):
         p, *q = path.split("?")
-        elems = urllib.parse.parse_qs("?".join(q))
+        elems = urllib.parse.parse_qs("?".join(q), keep_blank_values=True)
         if q:
             p += "?" + urllib.parse.urlencode(elems, doseq=True)
         url = "http://127.0.0.1:%s%s" % (self._http_port, p)

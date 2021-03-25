@@ -34,6 +34,7 @@ from core4.api.v1.request.queue.job import JobHandler
 from core4.api.v1.request.queue.job import JobPost
 from core4.api.v1.request.queue.job import JobStream
 from core4.api.v1.request.queue.job import JobList
+from core4.api.v1.request.job import JobRequest
 from core4.api.v1.request.standard.system import SystemHandler
 from core4.api.v1.request.role.main import RoleHandler
 from core4.api.v1.request.standard.access import AccessHandler
@@ -47,8 +48,10 @@ from core4.api.v1.request.standard.logout import LogoutHandler
 from core4.api.v1.request.standard.profile import ProfileHandler
 from core4.api.v1.request.standard.setting import SettingHandler
 from core4.api.v1.request.standard.static import CoreStaticFileHandler
-
-from core4.api.v1.request.link import CoreLinkHandler
+from core4.api.v1.request.standard.avatar import AvatarHandler
+from core4.api.v1.request.store.handler import StoreHandler
+from core4.api.v1.request.standard.about import AboutHandler
+from core4.api.v1.request.standard.welcome import WelcomeHandler
 
 
 class CoreAppManager(CoreApiContainer):
@@ -57,23 +60,22 @@ class CoreAppManager(CoreApiContainer):
         (r'/comoco', CoreStaticFileHandler, {
             "path": "/webapps/comoco/dist",
             "static_path": "/webapps/comoco/dist",
-            "title": "monitoring and control (comoco)",
-            "tag": "jobs app",
-            "protected": True
-        }),
-        (r'/about', CoreLinkHandler, {
-            "enter_url": "https://core4os.readthedocs.io/en/latest/about.html",
-            "doc":  "About core4os at readthedocs",
-            "author": "mra",
-            "tag": ["info"],
-            "title": "about core4os"
+            "title": "comoco",
+            "subtitle": "Job Monitoring and Control",
+            "tag": ["operations", "jobs"],
+            "icon": "mdi-electron-framework",
+            "doc": "Review and manage automation jobs"
         }),
         # the following static file handler must be the last handler
         (r'/', CoreStaticFileHandler, {
             "path": "/webapps/widgets/dist",
             "static_path": "/webapps/widgets/dist",
-            "title": "root",
-            "protected": True
+            "title": "App Manager",
+            "subtitle": "core4os Suite",
+            "tag": ["api"],
+            "icon": "mdi-application",
+            "doc": "Start Apps and Manage Boards",
+            "target": "blank"
         })
     ]
 
@@ -85,11 +87,14 @@ class CoreApiServer(CoreApiContainer):
     """
     root = "/core4/api/v1"
     rules = [
+
+        (r'/job', JobRequest),
+        (r'/job/(.+)', JobRequest),
+
         (r'/jobs/poll', JobStream),
         (r'/jobs/poll/(.*)', JobStream, None, "JobStream"),
         (r'/jobs/list', JobList, None, "JobList"),
-        (r'/jobs/history', JobHistoryHandler),
-        (r'/jobs/history/(.*)', JobHistoryHandler, None, "JobHistory"),
+        (r'/jobs/history', JobHistoryHandler, None, "JobHistory"),
         (r'/jobs/enqueue/?', JobPost),
         (r'/jobs', JobHandler),
         (r'/jobs/(.*)', JobHandler, None, "JobHandler"),
@@ -115,10 +120,17 @@ class CoreApiServer(CoreApiContainer):
         (r"/logout", LogoutHandler),
 
         (r"/profile", ProfileHandler),
+        (r"/about", AboutHandler),
 
         (r'/setting', SettingHandler),
         (r'/setting/(.*)', SettingHandler),
 
+        (r'/avatar', AvatarHandler),
+
+        (r'/store', StoreHandler),
+        (r'/store(\/.*)', StoreHandler),
+
+        (r'/welcome', WelcomeHandler),
     ]
 
     def on_enter(self):
@@ -130,9 +142,10 @@ class CoreApiServer(CoreApiContainer):
     def on_exit(self):
         QueueWatch.stop = True
         if EventWatch.change_stream is not None:
-            EventWatch.change_stream.close()
+            IOLoop.current().run_sync(EventWatch.change_stream.close)
 
 
 if __name__ == '__main__':
     from core4.api.v1.tool.functool import serve
+
     serve(CoreAppManager, CoreApiServer)

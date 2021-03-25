@@ -1,108 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- https://fezvrasta.github.io/bootstrap-material-design/docs/4.0/utilities/ -->
+
 
 <head>
     <meta charset="UTF-8">
     <title>CARD {{ handler.__class__.__name__ }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('bootstrap-material-design.custom.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ default_static('widget.css') }}">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css" rel="stylesheet" />
+    <link href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css" rel="stylesheet" />
     <style>
-        .offline {
-            color: #d70f14;
-            font-size: 28pt;
-        }
-        .online {
-            font-size: 28pt;
-        }
     </style>
-    <script type="text/javascript" src="{{ default_static('assets/jquery-3.4.0.min.js') }}"></script>
-    <script type="text/javascript">
-        $(document).ready(function(){
-            update();
-        });
-
-        function update() {
-            var d = new Date();
-            $.ajax({
-                url: '/core4/api/v1/system',
-                type: 'GET',
-                success: function(data) {
-                    if (data["data"]["maintenance"]["system"]) {
-                        $("#system_text").text("OFFLINE at " + d.toLocaleTimeString());
-                        $("#system_state").text("pause_circle_filled");
-                        $("#system_state").removeClass("text-success");
-                    }
-                    else {
-                        $("#system_text").text("ONLINE at " + d.toLocaleTimeString());
-                        $("#system_state").text("play_circle_filled");
-                        $("#system_state").addClass("text-success");
-                    }
-                    setTimeout(update, 1000);
-                }
-            })
-        }
-    </script>
 </head>
 
-<body class="theme-dark widget-card-container">
-    <div class="container widget-card d-flex flex-row ">
-        <!--<div class="d-flex flex-row widget-card__inner">-->
-        <div class="pr-1">
-            <i class="material-icons widget-icon text-primary">{{ icon }}</i>
-        </div>
-        <div class="d-flex flex-column pl-1">
-            <h1 class="widget-title pt-1">{{ title }}</h1>
-            <h2 class="widget-subtitle text-muted">{{ qual_name.rsplit('.')[0]+'…'+qual_name.rsplit('.')[-1] }}
-            </h2>
+<body style="opacity: 0;">
+    <div id="app">
+        <v-app class="c4-card-widget">
+            <v-container fluid>
+                <v-card flat class="c4-card pt-4">
+                    <v-card-title class="pa-0">
+                        <v-avatar color="accent" size="80" class="c4-avatar mx-auto mb-3">
+                            <v-icon dark large>{{icon}}</v-icon>
+                        </v-avatar>
+                        <div style="display:block; width: 100%;"
+                            class="text-center c4-card--widget-title grey--text text--darken-1 mx-auto body-1">{{title}}
+                        </div>
+                    </v-card-title>
+                    <v-card-text class="px-0 pt-8">
+                        <v-row no-gutters>
+                            <v-col align="center" justify="center">
 
-            <div class="md-chips pt-0 pb-0">
-                {% for t in tag[:3] %}
-                <div class="md-chip">
-                    {{t}}
-                </div>
-                {% end %}
-            </div>
-            <p class="widget-description text-muted">
-                <div class="d-flex flex-row">
-                    <small class="d-flex flex-row">
-                        <i id="system_state" class="material-icons offline"></i>
-                        <span id="system_text" style="font-size: 12pt;" class="text-muted pl-1 pt-2"></span>
-                    </small>
-                </div>
+                                <h6 class="text-h6 mb-5">
+                                    <v-icon x-large color="error" v-if="maintenance">mdi-pause-octagon</v-icon>
+                                    <v-icon x-large color="accent" v-else>mdi-play-circle</v-icon>
+                                    <span class="ml-1">{{! sysText}}</span>
+                                </h6>
+                            </v-col>
 
-            </p>
-            <div class="d-flex flex-row widget-footer">
-                <small class="d-flex flex-row mr-3">
-                    <i class="material-icons text-success">person</i>
-                    <span class="text-muted pl-1 pt-1">{{author}}</span>
-                </small>
-                <small class="d-flex flex-row">
-                    <i class="material-icons text-success">date_range</i>
-                    <span class="text-muted pl-1 pt-1">{{created_at.strftime("%d.%m.%Y %H:%M")}}</span>
-                </small>
-            </div>
-
-        </div>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+            </v-container>
+        </v-app>
     </div>
-
-
-
 </body>
-<script>
-    (function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const dark = urlParams.get('dark') === 'true';
-        if (dark) {
-            document.querySelector('body').classList.add('theme-dark')
-        } else {
-            document.querySelector('body').classList.remove('theme-dark')
-            document.querySelector('body').classList.add('theme-light')
-        }
 
-    })();
+<script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js">
+</script>
+<script type="text/javascript">
+    /*  $(document).ready(function(){
+        update();
+    });
+
+    function update() {
+        var d = new Date();
+        $.ajax({
+            url: '/core4/api/v1/system',
+            type: 'GET',
+            success: function(data) {
+                if (data["data"]["maintenance"]["system"]) {
+                    $("#system_text").text("OFFLINE at " + d.toLocaleTimeString());
+                    $("#system_state").text("pause_circle_filled");
+                    $("#system_state").removeClass("text-success");
+                }
+                else {
+                    $("#system_text").text("ONLINE at " + d.toLocaleTimeString());
+                    $("#system_state").text("play_circle_filled");
+                    $("#system_state").addClass("text-success");
+                }
+                setTimeout(update, 1000);
+            }
+        })
+    } */
+</script>
+<script>
+    var app = new Vue({
+        el: "#app",
+        vuetify: window.c4Vuetify,
+        data: function () {
+            return {
+                sysText: null,
+                maintenance: false
+            }
+        },
+        mounted: function () {
+            this.update()
+        },
+        computed: {},
+        methods: {
+            async update() {
+                const ret = await axios.get('/core4/api/v1/system')
+                const maintenance = ret.data.data.maintenance.system
+                var d = new Date()
+                if (maintenance) {
+                    this.sysText = "OFFLINE at " + d.toLocaleTimeString()
+                } else {
+                    this.sysText = "ONLINE at " + d.toLocaleTimeString()
+                }
+                this.maintenance = maintenance
+                setTimeout(this.update.bind(this), 1000);
+            }
+            /*           submit: function () {
+                          window.parent.postMessage({
+                              event: 'WidgetOpen'
+                          }, '*');
+
+                      } */
+        }
+    });
 </script>
 
 </body>

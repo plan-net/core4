@@ -24,16 +24,18 @@ class ProfileHandler(CoreRequestHandler):
     View and edit your profile.
     """
 
-    title = "user profile"
+    title = "Profile"
+    subtitle = "User Profile Information"
     author = "mra"
-    tag = "roles"
+    tag = ["settings"]
+    icon = "mdi-account-circle"
 
     async def get(self):
         """
         User and role details for the current logged in user.
 
         Methods:
-            GET / - get current user details
+            GET /core4/api/v1/profile - get current user details
 
         Parameters:
             None
@@ -54,11 +56,9 @@ class ProfileHandler(CoreRequestHandler):
             - **created** (*str*): in ISO format
             - **updated** (*str*): in ISO format
             - **last_login** (*str*): in ISO format
-            - **token_expires** (*str*): in ISO format
-
-        .. note:: The attribute ``token_expires`` is not extracted from
-                  ``sys.user`` but from the user token exchanged between
-                  client and server.
+            - **token_expires** (*str*): in ISO format. The attribute
+              ``token_expires`` is not extracted from ``sys.user`` but from the
+              user token exchanged between client and server.
 
         Raises:
             401: Unauthorized
@@ -106,26 +106,26 @@ class ProfileHandler(CoreRequestHandler):
         Update user data, i.e. email, real name and password.
 
         Methods:
-            PUT / - udpdate current user data
+            PUT /core4/api/v1/profile - udpdate current user data
 
         Parameters:
-            etag (str): to handle concurrency
-            email (str): new email
-            realname (str): new real name
-            password (str): new password
+            - etag (str): to handle concurrency
+            - email (str): new email
+            - realname (str): new real name
+            - password (str): new password
 
         Returns:
             data element with ``no changes`` (str) or updated user data, see
             :meth:`.get`.
 
         Raises:
-            400 Bad Request: AttributeError
-            400 Bad Request: TypeError
-            400 Bad Request: name or email exists
-            404 Bad Request: role not found
-            404 Bad Request: update with etag failed
-            401 Unauthorized:
-            500 Gateway Error: unknown user
+            400: Bad Request (AttributeError)
+            400: Bad Request (TypeError)
+            400: Bad Request (name or email exists)
+            404: Bad Request (role not found)
+            404: Bad Request (update with etag failed)
+            401: Unauthorized
+            500: Gateway Error (unknown user)
 
         Examples:
             >>> from requests import put

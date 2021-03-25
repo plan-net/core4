@@ -18,7 +18,7 @@ Use coco to interact with the core4 backend and frontend in the areas of
 * release management
 
 Usage:
-  coco --init [PROJECT] [DESCRIPTION] [--yes]
+  coco --init [PROJECT] [--core4 CORE4_SOURCE] [DESCRIPTION] [--yes]
   coco --halt
   coco --worker [IDENTIFIER]
   coco --application [IDENTIFIER] [--routing=ROUTING] [--port=PORT] \
@@ -37,6 +37,8 @@ Usage:
   coco --mode
   coco --build
   coco --release
+  coco --dist [--force]
+  coco --cran
   coco --who
   coco --jobs [--introspect]
   coco --home
@@ -60,6 +62,7 @@ Options:
   -c --container   enumerate available API container
   -m --home        enumerate available core4 projects in home folder
   -y --yes         Assume yes on all requests.
+  -f --force       Force dist build.
 """
 
 import datetime
@@ -84,7 +87,7 @@ import core4.service.introspect.main
 import core4.service.project
 import core4.util.data
 import core4.util.node
-from core4.service.operation import build, release
+from core4.service.operation import build, release, dist, cran
 
 QUEUE = core4.queue.main.CoreQueue()
 
@@ -361,8 +364,8 @@ def enqueue(qual_name, *args):
     print(job_id)
 
 
-def init(name, description, yes):
-    core4.service.project.make_project(name, description, yes)
+def init(name, description, yes, core4_source):
+    core4.service.project.make_project(name, description, yes, core4_source)
 
 
 def jobs(introspect=False):
@@ -463,7 +466,8 @@ def main():
     elif args["--enqueue"]:
         enqueue(args["QUAL_NAME"], *args["ARGS"])
     elif args["--init"]:
-        init(args["PROJECT"], args["DESCRIPTION"], args["--yes"])
+        init(args["PROJECT"], args["DESCRIPTION"],
+             args["--yes"], args["CORE4_SOURCE"])
     elif args["--alive"]:
         alive()
     elif args["--info"]:
@@ -484,6 +488,10 @@ def main():
         mode()
     elif args["--build"]:
         build()
+    elif args["--dist"]:
+        dist(args["--force"] or False)
+    elif args["--cran"]:
+        cran()
     elif args["--release"]:
         release()
     elif args["--who"]:

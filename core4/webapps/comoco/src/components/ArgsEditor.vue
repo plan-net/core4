@@ -6,7 +6,7 @@
     <!-- , nlcerror: customErrors -->
     <validation-provider
       v-slot="{ errors }"
-      :rules="{ required: args.length > 0}"
+      :rules="{ required: (args || '').length > 0}"
       name="Args"
     >
       <v-row
@@ -17,7 +17,7 @@
       >
         <v-col
           cols="12"
-          class="py-0"
+          style="margin-top: -22px;"
         >
           Args
           <span class="pl-3 error--text">{{ errors[0] }}</span>
@@ -33,10 +33,11 @@
               language="yaml"
               v-model="args"
             />
-            <v-chip class="language-chip"
-            small
-            label
-          >yaml</v-chip>
+            <v-chip
+              class="language-chip"
+              small
+              label
+            >yaml</v-chip>
           </v-col>
           <v-col
             style="pointer-events: none;"
@@ -107,11 +108,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.ace-container{
+.ace-container {
   position: relative;
 }
 
-.language-chip{
+.language-chip {
   position: absolute;
   bottom: 3px;
   right: 28px;

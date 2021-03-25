@@ -20,13 +20,6 @@ dates = ['year', 'month', 'day', 'hour', 'minute', 'second']
 class JobHistoryHandler(CoreRequestHandler):
     """
     Retrieves the paginated job state history from ``sys.event``.
-
-    This provides
-    total and aggregated job counts with the following dimensions:
-
-    * job qual_name
-    * job state
-    * job flags non-stopper, zombie, killed and removed
     """
     author = "mra"
     title = "job history"
@@ -38,12 +31,11 @@ class JobHistoryHandler(CoreRequestHandler):
             GET /core4/api/v1/jobs/history
 
         Parameters:
-            per_page (int): number of jobs per page
-            page (int): requested page (starts counting with ``0``)
-            filter (dict): optional mongodb filter
-            sort (str): 1 - for ascending sorting,
-                        -1 - for descending sorting
-                        by default -1 (desc) sorting
+            - per_page (int): number of jobs per page
+            - page (int): requested page (starts counting with ``0``)
+            - filter (dict): optional mongodb filter
+            - sort (str): ``1`` for ascending sorting, ``1`` for descending
+              sorting, by default ``-1`` (desc) sorting
 
         Returns:
             data element with list of aggregated job counts For pagination the
@@ -64,13 +56,14 @@ class JobHistoryHandler(CoreRequestHandler):
             >>> signin = get("http://localhost:5001/core4/api/v1/login?username=admin&password=hans")
             >>> signin
             <Response [200]>
-            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?token=" + signin.json()["data"]["token"])
+            >>> token = signin.json()["data"]["token"]
+            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?token=" + token)
             >>> rv
             <Response [200]>
-            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?page=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?page=1&token=" + token)
             >>> rv
             <Response [200]>
-            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?sort=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/jobs/history?sort=1&token=" + token)
             >>> rv
             <Response [200]>
         """
@@ -153,11 +146,7 @@ class JobHistoryHandler(CoreRequestHandler):
 
 class QueueHistoryHandler(CoreRequestHandler):
     """
-    Retrieves the paginated job state history from ``sys.event``. This provides
-    total and aggregated job counts with the following dimensions:
-
-    * job state
-    * job flags non-stopper, zombie, killed and removed
+    Retrieves the paginated job state aggregates from ``sys.event``.
     """
     author = "oto"
     title = "queue history"
@@ -169,13 +158,12 @@ class QueueHistoryHandler(CoreRequestHandler):
             GET /core4/api/v1/queue/history
 
         Parameters:
-            per_page (int): number of jobs per page
-            current_page (int): requested page (starts counting with ``0``)
-            start_date (str): start date for mongoDB $gte query
-            end_data (str): end date for mongoDB $lte query
-            sort (str): 1 - for ascending sorting,
-                        -1 - for descending sorting
-                        by default -1 (desc) sorting
+            - per_page (int): number of jobs per page
+            - current_page (int): requested page (starts counting with ``0``)
+            - start_date (str): start date for MongoDB $gte query
+            - end_data (str): end date for MongoDB $lte query
+            - sort (str): ``1`` for ascending sorting, ``-1`` for descending
+              sorting, by default -1 (desc) sorting
 
         Returns:
             data element with list of aggregated job counts For pagination the
@@ -196,35 +184,23 @@ class QueueHistoryHandler(CoreRequestHandler):
             >>> signin = get("http://localhost:5001/core4/api/v1/login?username=admin&password=hans")
             >>> signin
             <Response [200]>
-            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?token=" + signin.json()["data"]["token"])
+            >>> token = signin.json()["data"]["token"]
+            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?token=" + token)
             >>> rv
             <Response [200]>
-            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?page=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?page=1&token=" + token)
             >>> rv
             <Response [200]>
-            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?sort=1&token=" + signin.json()["data"]["token"])
+            >>> rv = get("http://localhost:5001/core4/api/v1/queue/history?sort=1&token=" + token)
             >>> rv
             <Response [200]>
-
         """
-        sort = self.get_argument("sort",
-                                 as_type=int,
-                                 default=-1)
-
-        per_page = self.get_argument("perPage",
-                                     as_type=int,
-                                     default=10)
-
-        current_page = self.get_argument("page",
-                                         as_type=int,
-                                         default=0)
-
-        start_date = self.get_argument("startDate",
-                                       as_type=datetime.datetime,
+        sort = self.get_argument("sort", as_type=int, default=-1)
+        per_page = self.get_argument("perPage", as_type=int, default=10)
+        current_page = self.get_argument("page", as_type=int, default=0)
+        start_date = self.get_argument("startDate", as_type=datetime.datetime,
                                        default=self._default_start_date())
-
-        end_date = self.get_argument("endDate",
-                                     as_type=datetime.datetime,
+        end_date = self.get_argument("endDate", as_type=datetime.datetime,
                                      default=None)
 
         coll = self.config.sys.event
@@ -382,7 +358,6 @@ class QueueHistoryHandler(CoreRequestHandler):
 
     def _group_by(self, start_date, end_date=None):
         """
-
         Parameters:
             start (str): - start date
             end (str| None): - end date

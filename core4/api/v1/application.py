@@ -287,7 +287,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
         """
         pass
 
-    async def get_handler(self, rsc_id=None):
+    async def get_handler(self, **kwargs):
         """
         Delivers resource handler infos based on registered data in
         ``sys.handler``. This data is saved at server startup and provides the
@@ -302,7 +302,6 @@ class CoreApiContainer(CoreBase, QueryMixin):
           handler has been published first
         * rsc_id
         * project
-        * pattern (list) - of dist with key ``name`` if defined and ``regex``
         * container (str) - of the parent :class:`.CoreApiContainer`
         * protected (bool) - defaults to ``True``
         * created_at (str) - in iso format indicating when the resource has
@@ -314,9 +313,9 @@ class CoreApiContainer(CoreBase, QueryMixin):
         * endpoint (list) - of str representing all available endpoints for
           this handler
 
-        If no parameter ``rsc_id`` is passed, then a list for all alive
-        request handlers is returned. If a parameter ``rsc_id`` is passed to
-        the method, then the attributes for this resource is returned.
+        If no kwargs are passed, then a list for all alive request handlers is
+        returned. If kwargs are passed to the method, then the key/values are
+        applied as a query filter for ``sys.handler``.
 
         :param rsc_id: filter for
         :return: dict or list of ``rsc_id`` is provided.
@@ -325,11 +324,7 @@ class CoreApiContainer(CoreBase, QueryMixin):
                  for d in await self.get_daemon_async(kind="app")]
         handler = {}
         inactive = 0
-        if rsc_id is None:
-            query = {}
-        else:
-            query = {"rsc_id": rsc_id}
-        async for doc in self.config.sys.handler.find(query):
+        async for doc in self.config.sys.handler.find(kwargs):
             if ((doc["routing"], doc["hostname"], doc["port"]) in alive) \
                     and (doc["started_at"] is not None):
                 del doc["_id"]
@@ -346,50 +341,28 @@ class CoreApiContainer(CoreBase, QueryMixin):
                 del first[attr]
             first["endpoint"] = []
             first["container"] = []
+            first["pattern"] = []
             info = set()
             container = set()
+            pattern = set()
             for d in data:
                 for c in d["container"]:
                     url = "{}{}".format(
                         d["routing"], c[2])
-                    container.add(c[0])
                     info.add(url)
+                    container.add(c[0])
+                    pattern.add((d["routing"] + c[1], c[3]))
                 for k in ("started_at", "created_at"):
                     first[k] = min(first[k], d[k])
             first["endpoint"] += sorted(list(info))
             first["container"] += sorted(list(container))
-            date_range = self.get_date_range(first["created_at"])
+            first["pattern"] += sorted(list(pattern))
             if first["tag"] is None:
                 first["tag"] = []
-            elif isinstance(first["tag"], str):
-                first["tag"] = first["tag"].split()
-            if date_range:
-                first["tag"].append(date_range)
             first["subtitle"] = first["subtitle"] or first["qual_name"]
             ret.append(first)
         ret.sort(key=lambda r: (str(r["title"]), r["qual_name"]))
-        if rsc_id is not None:
-            assert len(ret) == 1
-            return ret[0]
         return ret
-
-    def get_date_range(self, timestamp):
-        """
-        Translates the passed :class:`datetime.datetime` into a textual
-        representation of date ranges as defined in core4 configuration setting
-        ``api.age_range``.
-
-        :param timestamp: :class:`datetime.datetime`
-        :return: str representation or ``None``
-        """
-        config = self.raw_config["api"].get("age_range", None)
-        if config:
-            age = core4.util.node.mongo_now() - timestamp
-            age = age.total_seconds() / 60. / 60. / 24.
-            age_text = [t for s, t in config.items() if age <= s]
-            if age_text:
-                return age_text[-1]
-        return None
 
 
 class CoreApplication(tornado.web.Application):
@@ -448,6 +421,8 @@ class CoreApplication(tornado.web.Application):
                         return self.get_handler_delegate(request,
                                                          handler.target,
                                                          handler.target_kwargs)
+        elif "_help" in request.arguments:
+            request.method = core4.const.QUICK_HELP_METHOD
         return super().find_handler(request, **kwargs)
 
     def handler_help(self, cls):

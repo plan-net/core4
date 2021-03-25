@@ -27,11 +27,13 @@ class DummyJob(CoreJob):
         while core4.util.node.now() <= until:
             n += 1
             print("line %d at %s" % (n, core4.util.node.now()))
+            if kwargs.get("logging", False):
+                self.logger.info("line %d at %s", n, core4.util.node.now())
             p = float(
                 sleep - (until
                          - core4.util.node.now()).total_seconds()) / sleep
             self.progress(p, "running")
-            time.sleep(0.5)
+            time.sleep(kwargs.get("loop_time", 0.5))
 
 
 class EmailJob(MailMixin, CoreJob):

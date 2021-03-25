@@ -23,13 +23,21 @@ def info_server():
 
 class SimpleHandler(CoreRequestHandler):
 
+    title = "Simple Handler"
     async def get(self):
+        self.reply("OK")
+
+    async def card(self, **kwargs):
         self.reply("OK")
 
 
 class LinkHandler1(CoreRequestHandler):
     enter_url = "http://www.google.de"
     title = "goto"
+    target = "blank"
+
+    def get(self):
+        return self.redirect(self.enter_url)
 
 
 class InfoServer1(CoreApiContainer):
@@ -57,9 +65,9 @@ async def test_simple(info_server):
     await info_server.login()
     rv = await info_server.get("/core4/api/v1/profile")
     assert rv.code == 200
-    rv1 = await info_server.get("/core4/api/v1/_info")
+    rv1 = await info_server.get("/core4/api/v1/_info?search=!&per_page=1000")
     assert rv1.code == 200
-    rv2 = await info_server.get("/test/_info")
+    rv2 = await info_server.get("/test/_info?search=!&per_page=1000")
     assert rv2.code == 200
     assert len(rv1.json()["data"]) == len(rv2.json()["data"])
     ih1 = [i for i in rv1.json()["data"] if "SimpleHandler" in i["qual_name"]]
@@ -75,7 +83,7 @@ async def test_simple(info_server):
 
 
 async def get_info(server, qn, key="qual_name"):
-    rv = await server.get("/core4/api/v1/_info")
+    rv = await server.get("/core4/api/v1/_info?search=!&per_page=1000")
     assert rv.code == 200
     return [i for i in rv.json()["data"] if i[key] and qn in i[key]]
 
@@ -92,21 +100,26 @@ async def test_info_listing(info_server):
 
 async def test_static_info(info_server):
     await info_server.login()
-    handler = await get_info(info_server, 'static info', key="title")
+    handler = await get_info(info_server, 'System Information', key="title")
     assert len(handler) == 1
     rscid = handler[0]["rsc_id"]
-    url = "/test/_info/card/" + rscid
+    # url = "/test/_info/card/" + rscid
+    # rv = await info_server.get(url)
+    # assert rv.ok
+    # css = "/test/_asset/default/" + rscid + "/bootstrap-material-design.custom.css"
+    # assert css in rv.body.decode("utf-8")
+    # rv = await info_server.get(css)
+    # assert rv.ok
+    # rv = await info_server.get(url, headers={"accept": "application/json"})
+    # assert rv.ok
+    # assert isinstance(rv.json(), dict)
+    url = "/core4/api/v1/_info/help/" + rscid
     rv = await info_server.get(url)
     assert rv.ok
-    css = "/test/_asset/default/" + rscid + "/bootstrap-material-design.custom.css"
-    assert css in rv.body.decode("utf-8")
-    pprint(rv.body)
-    rv = await info_server.get(css)
-    assert rv.ok
-
-    url = "/test/_info/help/" + rscid
-    rv = await info_server.get(url)
-    # print(rv.body)
+    assert rv.json()["data"]["qual_name"] == "core4.api.v1.request.standard.system.SystemHandler"
+    assert "retrieves system state" in rv.json()["data"]["description"].lower()
+    print(rv.body)
+    rv = await info_server.get("/core4/api/v1/system?_help")
     assert rv.ok
 
 
@@ -115,14 +128,14 @@ async def test_link_info(info_server):
     handler = await get_info(info_server, 'goto google', key="title")
     assert len(handler) == 1
     rscid = handler[0]["rsc_id"]
-    url = "/test/_info/card/" + rscid
-    rv = await info_server.get(url)
-    assert rv.ok
-    css = "/test/_asset/default/" + rscid + "/bootstrap-material-design.custom.css"
-    assert css in rv.body.decode("utf-8")
-    pprint(rv.body)
-    rv = await info_server.get(css)
-    assert rv.ok
+    # url = "/core4/api/v1/_info/card/" + rscid
+    # rv = await info_server.get(url)
+    # assert rv.ok
+    # css = "/test/_asset/default/" + rscid + "/bootstrap-material-design.custom.css"
+    # assert css in rv.body.decode("utf-8")
+    # pprint(rv.body)
+    # rv = await info_server.get(css)
+    # assert rv.ok
 
     url = "/test/_info/help/" + rscid
     rv = await info_server.get(url)
@@ -130,13 +143,26 @@ async def test_link_info(info_server):
 
     url = "/test/_info/enter/" + rscid
     rv = await info_server.get(url)
-    assert rv.code == 405  # todo: requires improvement == redirect
+    assert rv.code == 200
 
 async def test_version_info(info_server):
     await info_server.login()
-    rv1 = await info_server.get("/core4/api/v1/_info")
+    rv1 = await info_server.get("/core4/api/v1/_info?per_page=1000&search=!")
     assert rv1.code == 200
     ep = rv1.json()["data"]
     t = 'core4.api.v1.request.standard.login.LoginHandler'
+    from pprint import pprint
+    pprint(ep)
     v = [i for i in ep if i["qual_name"] == t][0]
     assert v["version"] == core4.__version__
+
+async def test_help(info_server):
+    # rv1 = await info_server.get("/core4/api/v1/profile?_help")
+    # assert rv1.code == 200
+    await info_server.login()
+    rv1 = await info_server.get("/core4/api/v1/profile?_help=1")
+    assert rv1.code == 200
+
+if __name__ == '__main__':
+    from core4.api.v1.tool.functool import serve
+    serve(InfoServer1, InfoServer2)

@@ -18,7 +18,7 @@ from core4.api.v1.request.role.field import *
 from core4.base.main import CoreBase
 from os import urandom
 
-ALPHANUM = re.compile(r'^[a-zA-Z0-9_.-]+$')
+USERNAME = re.compile(r'^[^\s]+$')
 EMAIL = re.compile(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*'
                    r'@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$')
 CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -60,7 +60,7 @@ class CoreRole(CoreBase):
         super().__init__()
         fields = [
             ObjectIdField("_id", **kwargs),
-            StringField("name", required=True, regex=ALPHANUM, **kwargs),
+            StringField("name", required=True, regex=USERNAME, **kwargs),
             StringField("realname", **kwargs),
             BoolField("is_active", **kwargs),
             TimestampField("created", **kwargs),
@@ -258,10 +258,10 @@ class CoreRole(CoreBase):
         self.data["etag"].set(ObjectId())
         if "email" in self.data:
             # so we have a user
-            if "password" not in self.data:
+            if self.data["password"].value is None:
                 # but no password, so set one
-                self.data["password"] = "".join(
-                    [CHARS[c % len(CHARS)] for c in urandom(32)])
+                self.data["password"].set("".join(
+                    [CHARS[c % len(CHARS)] for c in urandom(32)]))
         ret = await self.role_collection.insert_one(self.to_doc())
         if ret.inserted_id is None:
             raise RuntimeError("failed to insert role [{}]".format(self.name))
@@ -344,7 +344,7 @@ class CoreRole(CoreBase):
         """
         filter = await self.manage_filter(filter)
 
-        cur = self.role_collection.find(filter) \
+        cur = self.role_collection.find(filter, projection={"avatar": 0}) \
             .sort(*sort_by) \
             .skip(skip) \
             .limit(limit)

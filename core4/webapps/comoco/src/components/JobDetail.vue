@@ -1,5 +1,6 @@
 <template>
   <v-dialog v-model="dialog">
+
     <v-card class="pb-5 pt-1">
       <v-toolbar
         class="pl-5"
@@ -10,33 +11,34 @@
           <div>
 
             <h5 class="grey--text">Qualname</h5>
-            <h2>{{job.name}}
+            <h2>{{job.qual_name || job.name}}
               <v-btn
                 style="margin-top: -4px;"
                 icon
                 small
-                @click="copy(job.name)"
+                @click="copy(job.qual_name || job.name)"
               >
-                <v-icon small>content_copy</v-icon>
+                <v-icon small>mdi-content-copy</v-icon>
               </v-btn>
             </h2>
           </div>
           <h2 class="job-count">{{jobs.length}}</h2>
         </v-row>
-        <job-state-filter v-if="jobs.length" />
         <v-spacer></v-spacer>
         <v-btn
           icon
           @click="close()"
         >
-          <v-icon large>close</v-icon>
+          <v-icon large>mdi-close</v-icon>
         </v-btn>
       </v-toolbar>
       <v-card-text>
 
         <v-row>
           <v-col cols="12">
+
             <v-data-table
+              class="job-dt elevation-1"
               dense
               v-model="internalJob"
               single-select
@@ -45,49 +47,56 @@
               xxxshow-select
               :item-class="itemClass"
               :items="internalJobs"
-              xxxclass="elevation-1"
-              :hide-default-footer="jobs.length < 10"
+              :loading="loading"
               single-expand
               :expanded.sync="internalJob"
+              :server-items-length="totalJobs"
+              :options.sync="options"
+              :footer-props="{itemsPerPageOptions:jobRowsPerPageItems}"
               show-expand
             >
               <template v-slot:expanded-item="{ headers }">
                 <td
                   :colspan="headers.length"
-                  class="px-0 py-0"
+                  class="px-0 pt-0 pb-6"
                 >
                   <v-row>
                     <v-col
                       cols="10"
-                      class="pr-1 pl-8 py-0"
+                      class="pr-1 pl-8 pb-0 pt-4"
                     >
-                      <!--                  <ace-editor
-                        disabled
-                        :height="'400px'"
-                        label="Log"
-                        language="rdoc"
-                        font-family="monospace"
-                        :value="internalLogMessage"
-                      /> -->
-                      <v-textarea
-                      auto-grow
-                        filled
-                        :dark="$store.getters.dark"
-                        label=""
-                        :value="internalLogMessage"
-                        readonly
-                      ></v-textarea>
+                      <v-tabs v-model="tabs">
+                        <v-tab>Log</v-tab>
+                        <v-tab>Args</v-tab>
+                      </v-tabs>
+                      <v-tabs-items v-model="tabs">
+                        <v-tab-item>
+                          <v-textarea
+                            rows="12"
+                            filled
+                            :dark="$store.getters.dark"
+                            label=""
+                            :value="internalLogMessage"
+                            readonly
+                          ></v-textarea>
+
+                        </v-tab-item>
+                        <v-tab-item>
+                          <args-display
+                            v-if="tabs === 1"
+                            :job-id="internalJob[0]._id"
+                          ></args-display>
+                        </v-tab-item>
+                      </v-tabs-items>
                     </v-col>
                     <v-col
                       cols="2"
                       justify="center"
                       align="center"
                       class="pr-6"
-                      style="margin-top:100px;"
+                      style="margin-top:65px;"
                     >
-
                       <job-managment-buttons :job-count="jobs.length" />
-
                     </v-col>
                   </v-row>
                 </td>
@@ -99,8 +108,11 @@
                   small
                   @click="copy(item._id)"
                 >
-                  <v-icon small>content_copy</v-icon>
+                  <v-icon small>mdi-content-copy</v-icon>
                 </v-btn>
+              </template>
+              <template v-slot:item.state="{ item }">
+               {{item.$removed ? '-': item.state}}
               </template>
               <template v-slot:item.started_at="{ item }">
                 {{ item.started_at | date }}
@@ -133,10 +145,12 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import JobManagmentButtons from '@/components/job/JobManagmentButtons.vue'
-import JobStateFilter from '@/components/job/JobStateFilter.vue'
+import ArgsDisplay from '@/components/ArgsDisplay.vue'
+// import JobStateFilter from '@/components/job/JobStateFilter.vue'
 import { mapGetters } from 'vuex'
-
+let ti
 const headers = [
   {
     text: 'JobId',
@@ -175,18 +189,15 @@ const headers = [
     value: 'prog'
   }
 ]
-/* let int
-const adjustProg = () => {
-  const prog = document.querySelectorAll('.prog')
-  prog.forEach(val => {
-    let progress = val.className.substring(val.className.indexOf('prog-') + 5)
-    progress = Number(progress) * 100
-
-         const td = val.querySelector('td')
-    td.setAttribute('data-width', `${progress}%`)
-  })
-} */
 export default {
+
+  props: {
+    jobDetailDialogOpen: {
+      type: Boolean,
+      default: false,
+      required: true
+    }
+  },
   filters: {
     number: function (value) {
       const formatConfig = {
@@ -205,72 +216,101 @@ export default {
   },
   components: {
     JobManagmentButtons,
-    JobStateFilter
+    // JobStateFilter,
+    ArgsDisplay
   },
   data () {
     return {
-      dialog: false,
+      tabs: null,
       headers,
-      expanded: null
+      expanded: null,
+      options: {},
+      loading: false
     }
   },
-  beforeDestroy () {
 
-  },
   methods: {
     itemClass (val) {
+      if (val.$removed) {
+        return 'black-border'
+      }
       const c1 = val.state + '-border'
-      /*      const prog = val.prog.value
-      let c2 = ''
-      if (prog) {
-        c2 = ' prog prog-' + prog
-      } */
-      return c1 // + c2
+      return c1
     },
     copy (text) {
-      text = text || this.job.name
-      window.navigator.clipboard.writeText(text)
+      window.navigator.clipboard.writeText(
+        text || this.job.qual_name || this.job.name
+      )
     },
     close () {
       this.$store.dispatch('jobs/clearJob', true)
-      /*       await this.$nextTick()
-      this.dialog = false */
+    },
+    throttledLoad: _.debounce(function () {
+      this.load()
+    }, 500),
+    async load () {
+      this.loading = true
+      await this.$nextTick()
+      await this.$store.dispatch('jobs/fetchJobsByName', {
+        options: this.options,
+        job: this.job
+      })
+      this.loading = false
     }
   },
   mounted () {
   },
   watch: {
-    jobsAvail (newValue, oldValue) {
-      if (newValue === false) {
-        this.dialog = false
-        this.$nextTick(function () {
-          this.close()
-        })
-      } else {
-        this.dialog = true
+    options: {
+      handler () {
+        this.throttledLoad()
+      },
+      deep: true
+    },
+    jobDetailDialogOpen (newValue, oldValue) {
+      if (newValue) {
+        this.throttledLoad()
+      }
+    },
+    internalLogMessage (newVal) {
+      if (newVal != null && newVal.length > 200) {
+        clearTimeout(ti)
+        ti = setTimeout(() => {
+          try {
+            const textarea = document.querySelector('.job-dt').querySelector('textarea')
+            textarea.scrollTop = textarea.scrollHeight
+          } catch (err) {}
+        }, 1)
       }
     }
   },
   computed: {
-    jobsAvail () {
-      return this.jobs.length > 0
-    },
-    /*     jobs () {
-      return this.$store.getters.filteredJobs
-    }, */
     ...mapGetters('jobs', [
-      'job', 'log', 'jobs', 'filter', 'filteredJobs'
+      'job', 'log', 'jobs', 'filter',
+      'filteredJobs', 'jobRowsPerPageItems', 'totalJobs'
     ]),
     id () {
       return this.job._id
     },
     internalLogMessage () {
-      return this.log// .map(val => val.date + ' | ' + val.message).join('\n')
+      return this.log
     },
     internalJobs () {
       return this.filteredJobs.map(val => {
         return Object.assign(val, { isSelectable: val._id !== this.job._id })
       })
+    },
+    dialog: {
+      // selected job in datatable
+      get () {
+        return this.jobDetailDialogOpen
+      },
+      set (newVal) {
+        console.log(newVal)
+        if (newVal === false) {
+          this.close()
+        }
+      }
     },
     internalJob: {
       // selected job in datatable
@@ -278,14 +318,14 @@ export default {
         return [this.job]
       },
       set (newVal) {
-        if (newVal[0]._id !== this.job._id) {
-          this.$store.dispatch('jobs/setJob', newVal[0])
+        if ((newVal || []).length > 0) {
+          if (newVal[0]._id !== this.job._id) {
+            this.$store.dispatch('jobs/setJob', newVal[0])
+          }
         }
       }
     }
-
   }
-
 }
 </script>
 <style lang="css">
@@ -293,7 +333,6 @@ tr.prog {
   position: relative;
   box-shadow: 0px 24px 3px -24px magenta !important;
 }
-
 </style>
 <style lang="scss" scoped>
 .job-count {
@@ -326,11 +365,18 @@ tr.prog {
 ::v-deep {
   .v-textarea {
     font-family: monospace !important;
-    textarea{
-
-    font-size: 13px !important;
-    line-height: 15px !important;
+    textarea {
+      font-size: 13px !important;
+      line-height: 15px !important;
     }
+  }
+  .black-border td {
+    color: grey !important;
+    text-decoration: line-through;
+  }
+  .black-border td:first-child {
+    border-left: 7px solid #010101 !important;
+     text-decoration: none;
   }
   .pending-border td:first-child {
     border-left: 7px solid #ffc107 !important;

@@ -8,6 +8,7 @@
 """
 General purpose data management helpers.
 """
+import datetime
 import gzip
 import json
 import os
@@ -15,17 +16,15 @@ import textwrap
 from io import StringIO
 
 import bson.objectid
-import datetime
 import docutils.parsers.rst.directives.body
 import docutils.parsers.rst.roles
 import numpy as np
 import pandas as pd
+import pytz
 import sphinx.ext.napoleon
-import time
+import tzlocal
 from docutils import core
 from docutils.parsers.rst.directives import register_directive
-import pytz, tzlocal
-
 
 LOCAL_TZ = lambda: pytz.timezone(tzlocal.get_localzone().zone)
 
@@ -129,10 +128,12 @@ class JsonEncoder(json.JSONEncoder):
             # http://stackoverflow.com/questions/13703720/converting-between-datetime-timestamp-and-datetime64/13753918
             # we only observe this conversion requirements for dataframes with one and only one datetime column
             obj = pd.to_datetime(str(obj)).replace(tzinfo=None)
-        if isinstance(obj, datetime.datetime):
+        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
             return obj.isoformat()
         elif isinstance(obj, bson.objectid.ObjectId):
             return str(obj)
+        elif isinstance(obj, datetime.timedelta):
+            return obj.total_seconds()
         # what follows is based on
         # http://stackoverflow.com/questions/27050108/convert-numpy-type-to-python
         elif isinstance(obj, np.bool_):

@@ -2,368 +2,365 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>user settings</title>
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-          rel="stylesheet">
-    <link href="https://bi.plan-net.com/cdn/assets/css/vuetify.css"
-          rel="stylesheet">
-    <style>
-    </style>
+  <meta charset="UTF-8">
+  <title>Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css" rel="stylesheet" />
+  <link href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css" rel="stylesheet" />
+
+  <style>
+    .v-avatar {
+      border: 4px solid var(--v-primary-base);
+      position: relative;
+
+    }
+
+    .border-1 {
+      border: 1px solid;
+      border-color: #e6e6e6 !important;
+
+    }
+    .theme--dark .border-1 {
+      border-color: #333 !important;
+
+    }
+  </style>
 </head>
 <body>
 
-<div id="app">
-    <v-app class="ma-2">
-        <v-container>
-            <v-layout align-start justify-start row/>
-            <v-avatar>
-                <v-icon x-large color="accent">account_circle</v-icon>
-            </v-avatar>
-            <v-layout class="ml-2" column>
-                <h1 class="headline">{{ handler.user.name }}</h1>
-                <h2 class="title">{{ handler.user.realname }}</h2>
-            </v-layout>
-            </v-layout>
-            <v-layout class="mt-4" align-start justify-start row/>
-            <v-divider></v-divider>
-            </v-layout>
-            <v-layout class="mt-4" align-start row/>
-            <v-text-field v-model="username" label="Username" box
-                          readonly></v-text-field>
-            </v-layout>
-            <v-layout align-start row/>
-            <v-text-field v-model="realname" :rules="[rules.required]"
-                          label="Real Name" box></v-text-field>
-            </v-layout>
-            <v-layout align-start row/>
-            <v-text-field v-model="email" :rules="[rules.required, rules.email]"
-                          label="E-Mail" box></v-text-field>
-            </v-layout>
-            <v-layout align-start row/>
-            <v-text-field v-model="created" label="Created" box readonly></v-text-field>
-            </v-layout>
-            <v-layout align-start row/>
-            <v-text-field :type="'password'" v-model="password"
-                          label="New Password" box></v-text-field>
-            </v-layout>
-            <v-layout align-start row/>
-            <v-text-field :type="'password'" :error-messages='passwordMatch()'
-                          v-model="password2" label="Confirm Password" box
-                          v-show="password != ''"></v-text-field>
-            </v-layout>
-            <v-layout align-start row/>
-            <v-btn color="primary" :disabled="!this.valid" @click="send">Save
-                Changes
-            </v-btn>
-            </v-layout>
-            <v-layout class="mt-4" align-start justify-start row/>
-            <v-divider></v-divider>
-            </v-layout>
-            <v-layout class="mt-4" align-start justify-start row/>
-            <h1 class="headline">Roles</h1>
-            </v-layout>
-            <v-layout class="mt-4" align-start justify-start row/>
-            {% if "cop" in perm %}
-            <v-chip color="primary" text-color="white">cop</v-chip>
-            {% end if %}
-            {% for p in role %}
-            <v-chip color="accent" text-color="white">{{ p }}</v-chip>
-            {% end for %}
-            </v-layout>
-            <v-layout class="mt-4" align-start justify-start row/>
-            <v-divider></v-divider>
-            </v-layout>
-            <v-layout class="mt-4" align-start justify-start row/>
-            <h1 class="headline">Access Permissions</h1>
-            </v-layout>
-            <v-layout class="mt-4" align-start row>
-                <v-flex>
-                    <v-card>
-                        <v-toolbar>
-                            <v-toolbar-title>Job Access</v-toolbar-title>
-                            <v-spacer></v-spacer>
-                        </v-toolbar>
-                        <v-list>
-                            {% set missing = True %}
-                            {% for p in perm %}
-                                {% if p.startswith("job://") %}
-                                    {% set missing = False %}
-                                    {% set part = p.split("/") %}
-                            <v-list-tile>
-                                <v-list-tile-action>
-                                        {% if part[3] == "x" %}
-                                    <v-icon color="accent">remove_red_eye
-                                    </v-icon>
-                                        {% else %}
-                                    <v-icon color="primary">edit</v-icon>
-                                        {% end if %}
-                                </v-list-tile-action>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>{{ part[2] }}
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                                {% end if %}
-                            {% end for %}
-                            {% if missing %}
-                            <v-list-tile>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>None
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                            {% end if %}
-                        </v-list>
-                    </v-card>
-                </v-flex>
-            </v-layout>
-            <v-layout class="mt-4" align-start row>
-                <v-flex>
-                    <v-card>
-                        <v-toolbar>
-                            <v-toolbar-title>HTTP API Access</v-toolbar-title>
-                            <v-spacer></v-spacer>
-                        </v-toolbar>
-                        <v-list>
-                            {% set missing = True %}
-                            {% for p in perm %}
-                                {% if p.startswith("api://") %}
-                                    {% set missing = False %}
-                            <v-list-tile>
-                                <v-list-tile-action>
-                                    <v-icon>launch</v-icon>
-                                </v-list-tile-action>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>{{ p[6:] }}
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                                {% end if %}
-                            {% end for %}
-                            {% if missing %}
-                            <v-list-tile>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>None
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                            {% end if %}
-                        </v-list>
-                    </v-card>
-                </v-flex>
-            </v-layout>
-            <v-layout class="mt-4" align-start row fill-height>
-                <v-flex xs6>
-                    <v-card>
-                        <v-toolbar>
-                            <v-toolbar-title>Database Access</v-toolbar-title>
-                            <v-spacer></v-spacer>
-                            <v-btn icon>
-                                <v-icon @click="db_access">arrow_forward</v-icon>
-                            </v-btn>
-                        </v-toolbar>
-                        <v-list>
-                            {% for p in perm %}
-                                {% if p.startswith("mongodb://") %}
-                            <v-list-tile>
-                                <v-list-tile-action>
-                                    <v-icon>album</v-icon>
-                                </v-list-tile-action>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>{{ p[10:] }}
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                                {% end if %}
-                            {% end for %}
-                            <v-list-tile>
-                                <v-list-tile-action>
-                                    <v-icon color="red">album</v-icon>
-                                </v-list-tile-action>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>user!{{ current_user }}
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                        </v-list>
-                    </v-card>
-                </v-flex>
-                <v-flex class="ml-2" xs6>
-                    <v-card>
-                        <v-toolbar>
-                            <v-toolbar-title>Application Specials
-                            </v-toolbar-title>
-                            <v-spacer></v-spacer>
-                        </v-toolbar>
-                        <v-list>
-                            {% set missing = True %}
-                            {% for p in perm %}
-                                {% if p.startswith("app://") %}
-                                    {% set missing = False %}
-                            <v-list-tile>
-                                <v-list-tile-action>
-                                    <v-icon>apps</v-icon>
-                                </v-list-tile-action>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>{{ p[5:] }}
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                                {% end if %}
-                            {% end for %}
-                            {% if missing %}
-                            <v-list-tile>
-                                <v-list-tile-content>
-                                    <v-list-tile-title>None
-                                    </v-list-tile-title>
-                                </v-list-tile-content>
-                            </v-list-tile>
-                            {% end if %}
-                        </v-list>
-                    </v-card>
-                </v-flex>
-            </v-layout>
-            <v-snackbar v-model="snackbar" :bottom="true" :multi-line="false" :timeout=3000 :vertical=true>
-                Your profile has been saved.
-                <v-btn color="primary" flat @click="snackbar = false">Close</v-btn>
-            </v-snackbar>
-            <v-dialog v-model="dialog" persistent max-width="290">
-                <v-card>
-                    <v-card-title class="title">ERROR</v-card-title>
-                    <v-card-text v-html="dialog_message"></v-card-text>
-                    <v-card-actions>
-                        <v-spacer></v-spacer>
-                        <v-btn color="green darken-1" flat @click="dialog = false">CLOSE</v-btn>
-                    </v-card-actions>
-                </v-card>
-            </v-dialog>
-        </v-container>
+  <div id="app">
+    <v-app>
+      <v-container class="py-12 px-12" style="max-width: 1200px;">
+        <v-card class="border-1" flat rounded-lg>
+          <v-card-text>
+
+            <v-row align="center" justify="center">
+              <v-avatar size="112" class="mr-5">
+                <v-icon style="font-size: 116px;" color="primary">
+                  mdi-account-circle
+                </v-icon>
+
+              </v-avatar>
+           <!--    <v-btn color="primary" @click="()=>{}">
+                <v-icon left>mdi-cloud-upload</v-icon>
+                Upload picture
+              </v-btn> -->
+            </v-row>
+            <v-row class="mt-6">
+              <v-col cols="6" cols-xs="12">
+                <v-text-field prepend-inner-icon="mdi-account" v-model="username" label="Username" outlined readonly></v-text-field>
+              </v-col>
+              <v-col cols="6" cols-xs="12">
+                <v-text-field prepend-inner-icon="mdi-account" v-model="realname" :rules="[rules.required]" label="Real Name" outlined clearable></v-text-field>
+              </v-col>
+              <v-col cols="6" cols-xs="12">
+                <v-text-field v-model="email" :rules="[rules.required, rules.email]" label="E-Mail" outlined clearable
+                prepend-inner-icon="mdi-at"></v-text-field>
+              </v-col>
+              <v-col cols="6" cols-xs="12">
+                <v-text-field prepend-inner-icon="mdi-form-textbox-password" :type="'password'" v-model="password" label="New Password" outlined clearable></v-text-field>
+
+              </v-col>
+              <v-col cols="6" cols-xs="12">
+                <v-text-field prepend-inner-icon="mdi-clock-time-ten" v-model="created" label="User created" outlined readonly disabled></v-text-field>
+
+              </v-col>
+              <v-col cols="6" cols-xs="12">
+                <v-text-field  prepend-inner-icon="mdi-form-textbox-password" :type="'password'" :error-messages='passwordMatch()' v-model="password2" label="Confirm Password"
+                outlined v-show="password != ''" outlined clearable></v-text-field>
+              </v-col>
+            </v-row>
+            <v-row align="end" justify="end" no-gutters>
+              <v-btn color="primary" :disabled="!valid" @click="send">
+                <v-icon left>mdi-content-save</v-icon>Save Changes
+              </v-btn>
+            </v-row>
+          </v-card-text>
+        </v-card>
+        <v-divider class="my-5"></v-divider>
+        <v-expansion-panels class="mt-10" accordion tile>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              Roles
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <v-layout class="mt-4" align-start justify-start row />
+              {% if "cop" in perm %}
+              <v-chip color="primary" text-color="white">cop</v-chip>
+              {% end if %}
+              {% for p in role %}
+              <v-chip color="accent" text-color="white">{{ p }}</v-chip>
+              {% end for %}
+              </v-layout>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              Job access 
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <v-list>
+                {% set missing = True %}
+                {% for p in perm %}
+                {% if p.startswith("job://") %}
+                {% set missing = False %}
+                {% set part = p.split("/") %}
+                <v-list-tile>
+                  <v-list-tile-action>
+                    {% if part[3] == "x" %}
+                    <v-icon color="accent">remove_red_eye
+                    </v-icon>
+                    {% else %}
+                    <v-icon color="primary">edit</v-icon>
+                    {% end if %}
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>{{ part[2] }}
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                {% end if %}
+                {% end for %}
+                {% if missing %}
+                <v-list-tile>
+                  <v-list-tile-content>
+                    <v-list-tile-title>None
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                {% end if %}
+              </v-list>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              HTTP API Access
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <v-list>
+                {% set missing = True %}
+                {% for p in perm %}
+                {% if p.startswith("api://") %}
+                {% set missing = False %}
+                <v-list-tile>
+                  <v-list-tile-action>
+                    <v-icon>launch</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>{{ p[6:] }}
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                {% end if %}
+                {% end for %}
+                {% if missing %}
+                <v-list-tile>
+                  <v-list-tile-content>
+                    <v-list-tile-title>None
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                {% end if %}
+              </v-list>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              <span>
+                Database Access
+                <v-tooltip bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-icon ripple @click.stop="toDbAccess" color="primary" 
+                    v-bind="attrs"
+                    v-on="on">mdi-microsoft-access</v-icon>
+                  </template>
+                  <span>Generate access token</span>
+                </v-tooltip>
+   
+              </span>
+        <!--       <v-btn text color="primary" >Access Token</v-btn> -->
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <v-list>
+                {% for p in perm %}
+                {% if p.startswith("mongodb://") %}
+                <v-list-tile>
+                  <v-list-tile-action>
+                    <v-icon>mdi-database</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>{{ p[10:] }}
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                {% end if %}
+                {% end for %}
+                <v-list-tile>
+                  <v-list-tile-action>
+                    <v-icon color="red">mdi-database</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>user!{{ current_user }}
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+              </v-list>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              Application Specials
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <v-list>
+                {% set missing = True %}
+                {% for p in perm %}
+                {% if p.startswith("app://") %}
+                {% set missing = False %}
+                <v-list-tile>
+                  <v-list-tile-action>
+                    <v-icon>apps</v-icon>
+                  </v-list-tile-action>
+                  <v-list-tile-content>
+                    <v-list-tile-title>{{ p[5:] }}
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                {% end if %}
+                {% end for %}
+                {% if missing %}
+                <v-list-tile>
+                  <v-list-tile-content>
+                    <v-list-tile-title>None
+                    </v-list-tile-title>
+                  </v-list-tile-content>
+                </v-list-tile>
+                {% end if %}
+              </v-list>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>       
+
+        <v-snackbar v-model="snackbar" :bottom="true" :multi-line="false" :timeout=3000 :vertical=true>
+          Your profile has been saved.
+          <v-btn color="primary" text @click="snackbar = false">Close</v-btn>
+        </v-snackbar>
+
+        <v-dialog v-model="dialog" persistent max-width="290">
+          <v-card>
+            <v-card-title class="title">ERROR</v-card-title>
+            <v-card-text v-html="dialog_message"></v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="green darken-1" text @click="dialog = false">CLOSE</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-container>
     </v-app>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.10/vue.min.js"></script>
-<script src="https://bi.plan-net.com/cdn/assets/js/vue-assets.js"></script>
-
+  </div>
+  <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js"></script>
 </body>
 <script>
-
-function checkMail(value) {
-    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  
+</script>
+<script>
+  function checkMail(value) {
+    const pattern =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     return pattern.test(value) || 'Invalid e-mail.'
-}
+  }
 
 
-var ERROR = {
+  var ERROR = {
     'HTTPError(400, "name or email exists")': "This E-Mail already exists!"
-}
+  }
 
-
-var app = new Vue({
+  var app = new Vue({
 
     el: '#app',
-
+    vuetify: window.c4Vuetify, // from widgets-4.0.min.js
     data() {
-        return {
-            snackbar: false,
-            dialog: false,
-            email: "{{ handler.user.email }}",
-            realname: "{{ handler.user.realname }}",
-            username: "{{ handler.user.name }}",
-            password: "",
-            password2: "",
-            created: "{{ created.strftime("%d.%m.%Y %H:%M") }}",
-            rules: {
-                required: value => !!value || 'Required.',
-                email: value => checkMail(value)
-            },
-            etag: "{{ etag }}",
-            dialog_message: ""
-        }
+      // eslint-disable-next-line
+      return {
+        snackbar: false,
+        dialog: false,
+        email: "{{ handler.user.email }}",
+        realname: "{{ handler.user.realname }}",
+        username: "{{ handler.user.name }}",
+        password: "",
+        password2: "",
+        created: "{{ created.strftime("%d.%m.%Y %H:%M")}}",
+        rules: {
+          required: value => !!value || 'Required.',
+          email: value => checkMail(value)
+        },
+        etag: "{{ etag }}",
+        dialog_message: ""
+      }
     },
 
-    created() {
-        this.$vuetify.theme = window.PNBI_THEME;
-        axios.interceptors.request.use(
-            request => {
-                request.headers['Accept'] = 'application/json'
-                request.withCredentials = true
-                return request
-            },
-            error => {
-                return Promise.reject(error)
-        })
-    },
 
     computed: {
-        valid: function() {
-            if (this.realname == "") {
-                return false;
-            }
-            if ((this.password != "") && (this.password != this.password2)) {
-                return false;
-            }
-            if (checkMail(this.email) != true) {
-                return false;
-            }
-            return true;
+      valid: function () {
+        if (this.realname == "") {
+          return false;
         }
-    },
-
-    delimiters: ['[[', ']]'],
-
-    mounted(){
-    },
-
-    methods:{
-        passwordMatch: function() {
-            return (this.password == this.password2) ? '' : "Passwords do not match"
-        },
-        db_access: function() {
-            location.href = "/core4/api/v1/access";
-        },
-        send: function() {
-            var data = {
-                email: this.email,
-                realname: this.realname,
-                etag: this.etag
-            };
-            if (this.password != "") {
-                data["passwd"] = this.password;
-            }
-            axios.put('/core4/api/v1/profile', data).then(
-                function (response) {
-                    if (response.data.data == "no changes") {
-                    }
-                    else {
-                        this.password = "";
-                        this.password2 = "";
-                        this.realname = response.data.data.realname;
-                        this.email = response.data.data.email;
-                        this.etag = response.data.data.etag;
-                        // location.href = "/core4/api/v1/profile";
-                        this.snackbar = true;
-                    }
-                }.bind(this))
-                    .catch(function (error) {
-                        if (error.response.status == 400) {
-                            for (var e in ERROR) {
-                                if (error.response.data.error.includes(e)) {
-                                    this.dialog_message = ERROR[e];
-                                    this.dialog = true;
-                                }
-                            }
-                        }
-                        else {
-                            console.log(error);
-                        }
-                    }.bind(this)
-                );
+        if ((this.password != "") && (this.password != this.password2)) {
+          return false;
         }
+        if (checkMail(this.email) != true) {
+          return false;
+        }
+        return true;
+      }
+    },
+    mounted() {},
+    methods: {
+      passwordMatch: function () {
+        return (this.password == this.password2) ? '' : "Passwords do not match"
+      },
+      toDbAccess: function () {
+        location.href = "/core4/api/v1/access?dark=" + window.c4Vuetify.preset.theme.dark;
+      },
+      send: function () {
+        var data = {
+          email: this.email,
+          realname: this.realname,
+          etag: this.etag
+        };
+        if (this.password != "") {
+          data["passwd"] = this.password;
+        }
+        axios.put('/core4/api/v1/profile', data).then(
+            (response) => {
+              console.log(response)
+              if (response.data.data !== "no changes") {
+                this.password = "";
+                this.password2 = "";
+                this.realname = response.data.data.realname;
+                this.email = response.data.data.email;
+                this.etag = response.data.data.etag;
+                // location.href = "/core4/api/v1/profile";
+                this.snackbar = true;
+              }
+            }).catch(function (error) {
+            console.log(error)
+            if (error.response.status == 400) {
+              for (var e in ERROR) {
+                if (error.response.data.error.includes(e)) {
+                  this.dialog_message = ERROR[e];
+                  this.dialog = true;
+                }
+              }
+            } else {
+              console.log(error);
+            }
+          }.bind(this));
+      }
     }
-})
-
+  })
 </script>
+
 </html>

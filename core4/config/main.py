@@ -9,11 +9,9 @@
 Implements core4 configuration management with :class:`.CoreConfig`.
 """
 
-import collections
 import collections.abc
 import os
 import pprint
-import copy
 
 import dateutil.parser
 import pkg_resources
@@ -58,7 +56,7 @@ def type_ident(a, b):
     return True
 
 
-class CoreConfig(collections.MutableMapping):
+class CoreConfig(collections.abc.MutableMapping):
     """
     :class:`.CoreConfig` is the gateway into core4 configuration. Please note
     that you normally do not instantiate this class yourself, since

@@ -70,7 +70,8 @@ class EventHandler(CoreWebSocketHandler):
     *events* and an example about *messages*.
     """
     author = "mra"
-    title = "event web socket"
+    title = "Event Web Socket"
+    doc = "Web socket handler to process channel interests"
     waiters = {}
     last = []
 
@@ -208,20 +209,21 @@ class EventHandler(CoreWebSocketHandler):
 
 class EventHistoryHandler(CoreRequestHandler):
     """
+    Paginated event history with ``channel``, ``author``, ``created`` and
+    ``data`` attributes.
     """
+    title = "Event History"
     author = "mra"
-    title = "event history"
 
-    # todo: write documentation
     async def get(self):
         """
         Methods:
             GET /core4/api/v1/event/history
 
         Parameters:
-            per_page (int): number of events per page
-            page (int): requested page (starts counting with ``0``)
-            filter (dict): optional mongodb filter
+            - per_page (int): number of events per page
+            - page (int): requested page (starts counting with ``0``)
+            - filter (dict): optional mongodb filter
 
         Returns:
             data element with list of events with

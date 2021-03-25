@@ -45,33 +45,31 @@ featured endpoints
 The following list of request handlers implement specific functionalities.
 These request handlers are delivered through the standard ``CoreApiServer``.
 
-``core4.api.v1.request.queue.history.JobHistoryHandler``
+:class:`core4.api.v1.request.job.JobRequest`
+    enqueue and control core4 jobs, see also :doc:`job_api`
+:class:`core4.api.v1.request.queue.history.JobHistoryHandler`
     retrieves the paginated job state history from ``sys.event``
-``core4.api.v1.request.queue.history.QueueHistoryHandler``
+:class:`core4.api.v1.request.queue.history.QueueHistoryHandler`
     retrieves total and aggregated job counts for past job execution
-``core4.api.v1.request.queue.job.JobHandler``
-    retrieves job listing, job details, kills, deletes and restarts jobs
-``core4.api.v1.request.queue.job.JobPost``
-    post a new job
-``core4.api.v1.request.queue.job.JobStream``
-    streams job attributes until the job reaches a final state
-``core4.api.v1.request.role.main.RoleHandler``
+:class:`core4.api.v1.request.role.main.RoleHandler`
     manages users and roles
-``core4.api.v1.request.standard.access.AccessHandler``
+:class:`core4.api.v1.request.standard.access.AccessHandler`
     manages database access token
-``core4.api.v1.request.standard.event.EventHandler``
+:class:`core4.api.v1.request.standard.event.EventHandler`
     handles event channel interests and delivers events using web sockets
-``core4.api.v1.request.standard.event.EventHistoryHandler``
+:class:`core4.api.v1.request.standard.event.EventHistoryHandler`
     delivers event history
-``core4.api.v1.request.standard.info.InfoHandler``
+:class:`core4.api.v1.request.standard.info.InfoHandler`
     retrieves API endpoint details and help
-``core4.api.v1.request.standard.login.LoginHandler``
+:class:`core4.api.v1.request.standard.login.LoginHandler`
     authenticates users
-``core4.api.v1.request.standard.logout.LogoutHandler``
+:class:`core4.api.v1.request.standard.logout.LogoutHandler`
     delivers user logout
-``core4.api.v1.request.standard.profile.ProfileHandler``
+:class:`core4.api.v1.request.standard.profile.ProfileHandler`
     delivers details of the current user
-``core4.api.v1.request.standard.setting.SettingHandler``
+:class:`core4.api.v1.request.standard.setting.SettingHandler`
     manages user setting data
-``core4.api.v1.request.standard.system.SystemHandler``
+:class:`core4.api.v1.request.standard.system.SystemHandler`
     retrieves system state of daemons and operations modes
+:class:`core4.api.v1.request.store.StoreHandler`
+    general purpose document store based on user permission (app-key)

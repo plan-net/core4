@@ -38,7 +38,7 @@ export default {
       placeholder: 'Search for a job',
       allowClear: false,
       ajax: {
-        url: '/core4/api/v1/jobs/list',
+        url: '/core4/api/v1/job/list',
         data: function (params) {
           var query = {
             search: params.term,
@@ -66,8 +66,8 @@ export default {
       that.$emit('input', item.id)
     })
     $('.select2-selection__arrow')
-      .addClass('material-icons')
-      .html('arrow_drop_down')
+      // .addClass('material-icons')
+      .html('↓')
   }
 }
 </script>

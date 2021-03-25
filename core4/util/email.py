@@ -1,3 +1,10 @@
+#
+# Copyright 2018 Plan.Net Business Intelligence GmbH & Co. KG
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -121,6 +128,6 @@ class RoleEmail(MailMixin, CoreJob):
             realname=realname, username=username,
             domain=self.config.email.template[language.lower()]['domain'],
             token=token,
-            contact_email=self.config.user_setting._general.contact)
+            contact_email=self.config.store.default.contact)
 
         self.send_mail(to=recipients, subject=subject, message=message)

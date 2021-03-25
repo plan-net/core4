@@ -5,40 +5,50 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-"""
-Implements core4 standard :class:`LoginHandler`.
-"""
 from tornado.web import HTTPError
 
 import core4.queue.helper.functool
 import core4.queue.helper.job
 from core4.api.v1.request.main import CoreRequestHandler
 from core4.api.v1.request.role.model import CoreRole
+from core4.api.v1.request.store import CoreStore
+
+
 from core4.util.email import RoleEmail
 
 class LoginHandler(CoreRequestHandler):
-    title = "authentication"
+    """
+    core4os standard Login Handler.
+    """
+    title = "Login Handler"
     author = "mra"
-    tag = "roles"  # idea is to have a login, password, logout page
-                       # remove api by then
     protected = False
 
     async def get(self):
         """
         Same as :meth:`.post`
         """
+        login = True
+        if "reset" in self.request.path:
+            login = False
+        await self.getter(login)
+
+    async def getter(self, login=True):
         if self.wants_html():
-            root = self.config.api.auth_url.rstrip()
-            if "login" in self.request.path:
-                return self.render("template/login.html", auth_url=root)
-            return self.render("template/reset.html", auth_url=root)
+            store = await CoreStore.load(self.user)
+            params = {
+                "login_url": store["doc"]["login"],
+                "reset_url": store["doc"]["reset"]
+            }
+            if login:
+                return self.render("template/login.html", **params)
+            return self.render("template/reset.html", **params)
         token = await self._login()
         if token:
             return self.reply({"token": token})
-        # self.set_header('WWW-Authenticate', 'Basic realm=Restricted')
-        # raise HTTPError(401)
         self.set_status(401)
         self.write_error(401)
+
 
     async def post(self):
         """
@@ -46,11 +56,11 @@ class LoginHandler(CoreRequestHandler):
         token cookie or username/password parameter.
 
         Methods:
-            POST /
+            POST /core4/api/v1/login
 
         Parameters:
-            username (str): requesting login
-            password (str): requesting login
+            - username (str): requesting login
+            - password (str): requesting login
 
         Returns:
             data element with
@@ -119,28 +129,28 @@ class LoginHandler(CoreRequestHandler):
         """
         User password reset.
 
-        Methods:
-            PUT /
-
-        Parameters:
-            email (str): of the user who requests to reset his password
-            token (str): of the authenticated user
-            password (str): the new password to set
-
         ``PUT`` with an existing ``email`` parameter starts the password  reset
         workflow and sends a password reset token by email. ``PUT`` with this
         ``token`` and a new ``password`` updates the user's password and
         finishes the password reset workflow.
 
-        .. note:: The email with the reset password token is sent with a
-                  seperate job. Check core4 logging or ``sys.queue`` regarding
-                  the email and token (see :ref:`tools`)
+        The email with the reset password token is sent with a seperate job.
+        Check core4 logging or ``sys.queue`` regarding the email and token
+        (see :ref:`tools`)
+
+        Methods:
+            PUT /core4/api/v1/login
+
+        Parameters:
+            - email (str): of the user who requests to reset his password
+            - token (str): of the authenticated user
+            - password (str): the new password to set
 
         Returns:
             dict with empty data element
 
         Raises:
-            400 Bad Request: if no email or token/password is sent
+            400: Bad Request (if no email or token/password is sent)
 
         Examples:
             >>> from requests import get, put
@@ -177,9 +187,8 @@ class LoginHandler(CoreRequestHandler):
     async def _start_password_reset(self, email):
         # internal method to create and send the password reset token
         self.logger.debug("enter password reset for [%s]", email)
-        try:
-            user = await CoreRole().find_one(email=email)
-        except:
+        user = await CoreRole().find_one(email=email)
+        if user is None:
             self.logger.warning("email [%s] not found", email)
         else:
             username = user.name
@@ -216,16 +225,3 @@ class LoginHandler(CoreRequestHandler):
         self.logger.debug(
             "finish password reset for user [%s]", payload["name"])
         self.reply("OK")
-
-    # def _send_mail(self, email, realname, token):
-    #     # internal method to send the password reset token
-    #     core4.queue.helper.functool.enqueue(
-    #         PasswordEmailJob,
-    #         template="",
-    #         recipients=email,
-    #         subject="core4: your password reset request",
-    #         realname=realname,
-    #         token=token,
-    #         username=username
-    #     )
-

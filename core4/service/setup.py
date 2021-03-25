@@ -40,20 +40,21 @@ class CoreSetup(CoreBase, metaclass=Singleton):
     Setup core4 environment including
 
     * folders
-    * users and roles
+    * users and roles (one api/app server)
     * collection index of ``sys.queue``
     * collection TTL of ``sys.stdout``
     """
 
-    def make_all(self):
+    def make_all(self, api=False):
         """
         setup *all* core4 environment prerequisites
         """
         self.make_folder()
         self.make_queue()
         self.make_stdout()
-        self.make_role()
-        self.make_user()
+        if api:
+            self.make_role()
+            self.make_user()
 
     @once
     def make_folder(self):
@@ -82,7 +83,7 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         * ``api.admin_username``
         * ``api.admin_realname``
         * ``api.admin_password``
-        * ``user_setting._general.contact``
+        * ``store.default.contact``
 
         and a user default role as defined in core4 configuration settings
 
@@ -92,30 +93,23 @@ class CoreSetup(CoreBase, metaclass=Singleton):
         """
         if ((self.config.api.admin_username is None)
                 or (self.config.api.admin_password is None)
-                or (self.config.user_setting._general.contact is None)):
+                or (self.config.store.default.contact is None)):
             raise TypeError("admin _username, _realname, _password or contact "
                             "not set")
-        data = dict(
-            name=self.config.api.admin_username,
-            realname=self.config.api.admin_realname,
-            is_active=True,
-            created=core4.util.node.mongo_now(),
-            updated=None,
-            password=core4.util.crypt.pwd_context.hash(
-                self.config.api.admin_password),
-            email=self.config.user_setting._general.contact,
-            etag=ObjectId(),
-            perm=[core4.const.COP],
-        )
-
-        try:
-            self.config.sys.role.insert_one(data)
-            self.logger.info("created user [%s]",
-                             self.config.api.admin_username)
-        except pymongo.errors.DuplicateKeyError:
-            pass
-        try:
-            self.config.sys.role.insert_one(dict(
+        data = (
+            dict(
+                name=self.config.api.admin_username,
+                realname=self.config.api.admin_realname,
+                is_active=True,
+                created=core4.util.node.mongo_now(),
+                updated=None,
+                password=core4.util.crypt.pwd_context.hash(
+                    self.config.api.admin_password),
+                email=self.config.store.default.contact,
+                etag=ObjectId(),
+                perm=[core4.const.COP],
+            ),
+            dict(
                 name=self.config.api.user_rolename,
                 realname=self.config.api.user_realname,
                 etag=ObjectId(),
@@ -124,10 +118,12 @@ class CoreSetup(CoreBase, metaclass=Singleton):
                 created=core4.util.node.mongo_now(),
                 updated=None
             ))
-            self.logger.info("created user [%s]",
-                             self.config.api.user_rolename)
-        except pymongo.errors.DuplicateKeyError:
-            pass
+        for rec in data:
+            try:
+                self.config.sys.role.insert_one(rec)
+                self.logger.info("created user [%s]", rec["name"])
+            except pymongo.errors.DuplicateKeyError:
+                pass
 
     @once
     def make_queue(self):

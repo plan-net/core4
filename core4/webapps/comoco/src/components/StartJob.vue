@@ -12,10 +12,10 @@
         small
         v-bind="attrs"
         v-on="on"
-        xxxcolor="primary darken-1"
         color="secondary lighten-3"
+        style="margin-top: -7px; margin-bottom: 8px;"
       >
-        <v-icon dark>add</v-icon>
+        <v-icon dark>mdi-plus</v-icon>
       </v-btn>
 
     </template>
@@ -41,7 +41,7 @@
               icon
               @click="dialog = false"
             >
-              <v-icon large>close</v-icon>
+              <v-icon large>mdi-close</v-icon>
             </v-btn>
           </v-toolbar>
           <v-card-text class="pt-0 pb-2">
@@ -91,7 +91,7 @@
                     large
                     :loading="isLoading"
                     :disabled="isLoading"
-                    color="secondary lighten-3"
+                    color="accent"
                   >
                     Enqueue
                     <template v-slot:loader>
@@ -99,7 +99,7 @@
                         <v-icon
                           large
                           light
-                        >cached</v-icon>
+                        >mdi-cached</v-icon>
                       </span>
                     </template>
                   </v-btn>
@@ -178,7 +178,9 @@ export default {
             args: yaml.safeLoad(this.args)
           })
           this.isLoading = false
+
           if (ret) {
+            // await this.$store.dispatch('jobs/openJobsDialog', true)
             this.dialog = false
           }
         }

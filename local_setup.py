@@ -8,16 +8,19 @@ import yaml
 
 if os.getuid() != 0:
     print("requires root privileges, switch now ...")
-    print()
     os.execv(
-        "/usr/bin/sudo",
-        ["/usr/bin/sudo", sys.executable]
-        + sys.argv
-        + [
-            str(os.getuid()),
-            str(os.getgid()),
-            os.path.expanduser("~")
-        ])
+        "/bin/su",
+        [
+            "/bin/su", "-c",
+            '"{}" "{}" {} {} "{}"'.format(
+                sys.executable,
+                " ".join(sys.argv),
+                os.getuid(),
+                os.getgid(),
+                os.path.expanduser("~")
+            )
+        ]
+    )
 
 if len(sys.argv) < 2:
     print("must not start local_setup.py as root")
@@ -55,7 +58,7 @@ def yn(prompt, default):
         elif resp.strip().lower() in ("n", "no"):
             return False
 
-
+print()
 print("MongoDB setup")
 hostname = ask("  hostname", "localhost")
 port = ask("  port", 27017)
@@ -122,10 +125,6 @@ if not replica:
         while True:
             mongo = pymongo.MongoClient(url)
             try:
-                mongo.list_database_names()
-            except pymongo.errors.OperationFailure:
-                pass
-            else:
                 js = {
                     "_id": "rs0",
                     "members": [
@@ -136,6 +135,9 @@ if not replica:
                     ]
                 }
                 mongo.admin.command('replSetInitiate', js)
+            except pymongo.errors.OperationFailure:
+                pass
+            else:
                 break
 
 print("done.")

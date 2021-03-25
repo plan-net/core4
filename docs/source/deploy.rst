@@ -81,75 +81,8 @@ local and remote repository.
           to the core4 framework itself.
 
 
-deploy a new release
-####################
-
-Use ``cadmin`` tool to deploy a new release (see :doc:`tools`). With the
-initial deployment you must specify the project and the core4 repository
-location. For example::
-
-    cadmin install --repository https://github.com/m-rau/test.git \
-                   --core4 https://github.com/m-rau/core4.git \
-                   test
-
-
-This creates a Python virtual environment, the latest release (master branch)
-of the core4 framework, the latest release (master branch) of core4 project
-*test* including all requirements.
-
-You can upgrade this or all installed project with::
-
-    cadmin --upgrade test  # upgrade single project
-    cadmin --upgrade       # upgrade all installed projects
-
-
-If you want to freeze a specific version of core4 framework or project you must
-specifiy the version, tag or branch with the regular syntax::
-
-    cadmin install --repository https://github.com/m-rau/test.git==1.2.3 \
-                   --core4 https://github.com/m-rau/core4.git==4.5.6 \
-                   test
-
-
-.. note:: Note that the deployment with ``cadmin`` requires the setting of the
-          core4 home folder with core4 configuration setting ``folder.home``.
-          ``cadmin`` manages installations and upgrades inside this folder.
-
-
-deployment architecture
-#######################
-
-The ``cadmin`` tool described above supports the installation and upgrade of
-multiple projects operated with core4os worker, scheduler and application
-server. Each core4os project runs in its own Python virtual environment with
-dedicated requirements as defined in the projects' ``setup.py`` file.
-
-A core4os worker, scheduler and application server needs to be aware of the
-projects' packages and modules to operate each projects' jobs and application
-containers.
-
-The relevant core4os configuration setting is ``folder.home``. All projects
-installed in the directory addressed by this setting registers are registered
-to provide objects, i.e. jobs and application containers.
-
-**example:**
-
-Given that ``folder.home`` addresses ``/srv/core4/home``, all projects managed
-with ``cadmin`` are installed in this folder and reflect the following basic
-folder structure::
-
-    .
-    └── srv
-        └── core4
-            └── home           # core4os folder.home
-                ├── project1   # core4os project1
-                │   ├── .orig  # git working tree of project1
-                │   └── .venv  # Python environment with core4os and project
-                └── core4      # core4os repository
-                    ├── .orig  # git working tree of core4os
-                    └── .venv  # Python environment with core4os
-
-
-A worker in environment ``/srv/core4/home/core4/.venv`` delivers jobs of all
-projects located in ``/srv/core4/home``. Similarily an application server in
-this environment delivers all containers.
+``coco --dist`` is a utility command to build all webapps. Web applications are
+identified with a ``package.json`` file in their base folder. If this file
+contains the following attributes, the ``--dist`` option executes the specified
+build commands and includes the ``./dist`` directory into the ``MANIFEST.in``
+file.

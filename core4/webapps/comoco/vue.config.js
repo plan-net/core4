@@ -12,16 +12,13 @@ module.exports = {
         secure: false
       }
     },
-    port: 8090
+    port: 8081
   },
   configureWebpack: {
     resolve: {
       alias: {
         vue$: 'vue/dist/vue.esm.js'
       }
-    },
-    plugins: [
-
-    ]
+    }
   }
 }

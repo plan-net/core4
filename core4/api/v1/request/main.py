@@ -36,11 +36,13 @@ from core4.base.main import CoreBase
 from core4.util.data import parse_boolean, json_encode, json_decode, rst2html
 from core4.util.pager import PageResult
 from tornado.web import RequestHandler, HTTPError
+from core4.api.v1.request.store import CoreStore
+
 
 tornado.escape.json_encode = json_encode
 try:
     ARG_DEFAULT = tornado.web.RequestHandler._ARG_DEFAULT
-except:
+except Exception:
     ARG_DEFAULT = tornado.web._ARG_DEFAULT
 
 FLASH_LEVEL = ("DEBUG", "INFO", "WARNING", "ERROR")
@@ -70,17 +72,22 @@ class CoreBaseHandler(CoreBase):
     #: link to api (can be overwritten)
     enter_url = None
     #: default material icon
-    icon = "copyright"
+    icon = "mdi-circle-medium"
     #: open in new window/tab
     target = None
     #: open as single page application; this hides the app managers header
     spa = False
+    # widget size, resolution
+    res = 11
+    # temp
     default_headers = DEFAULT_HEADERS
     upwind = ["log_level", "template_path", "static_path"]
     propagate = ("protected", "title", "author", "tag", "template_path",
-                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle")
+                 "static_path", "enter_url", "icon", "doc", "spa", "subtitle",
+                 "res", "target")
     supported_types = [
         "text/html",
+        "application/json"
     ]
     concurr = True
     doc = None
@@ -99,7 +106,7 @@ class CoreBaseHandler(CoreBase):
 
         self.error_html_page = rel(self.config.api.error_html_page)
         self.error_text_page = rel(self.config.api.error_text_page)
-        self.card_html_page = rel(self.config.api.card_html_page)
+        #self.card_html_page = rel(self.config.api.card_html_page)
         self.help_html_page = rel(self.config.api.help_html_page)
         self.info_html_page = rel(self.config.api.info_html_page)
         self.started = core4.util.node.now()
@@ -109,9 +116,9 @@ class CoreBaseHandler(CoreBase):
     def propagate_property(self, source, kwargs):
         """
         Merge the attributes ``protected``, ``title``, ``author``, ``tag``,
-        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc`` and
-        ``spa`` from the passed class/object (``source`` parameter) and
-        ``kwargs``.
+        ``template_path``, ``static_path``, ``enter_url``, ``icon``, ``doc``,
+        ``spa``, ``subtitle``, ``res``, and ``target`` from the passed
+        class/object (``source`` parameter) and ``kwargs``.
 
         :param source: class or object based on :class:`.CoreRequestHandler` or
             :class:`.CoreStaticFileHandler`
@@ -176,11 +183,11 @@ class CoreBaseHandler(CoreBase):
                 if await self.verify_access():
                     return
                 raise HTTPError(403)
-            url = "".join([
-                self.config.api.auth_url.strip(),
-                "/login?h={uuid}&next={next}".format(
-                    uuid=str(uuid4()),
-                    next=urllib.parse.quote(self.request.full_url()))])
+            auth_url = await CoreStore.load(self.user)
+            url = "{url}?h={uuid}&next={next}".format(
+                url=auth_url["doc"]["login"],
+                uuid=str(uuid4()),
+                next=urllib.parse.quote(self.request.full_url()))
             self.redirect(url)
 
     async def verify_access(self):
@@ -264,7 +271,7 @@ class CoreBaseHandler(CoreBase):
         elif username and password:
             try:
                 user = await CoreRole.find_one(name=username)
-            except:
+            except Exception:
                 self.logger.warning(
                     "failed to load [%s] by [%s] from [%s]", username, *source)
             else:
@@ -315,7 +322,7 @@ class CoreBaseHandler(CoreBase):
                           + expires).replace(microsecond=0)
         payload["exp"] = self.token_exp
         token = jwt.encode(payload, secret, algorithm)
-        return token.decode("utf-8")
+        return token
 
     def parse_token(self, token):
         """
@@ -393,7 +400,8 @@ class CoreBaseHandler(CoreBase):
         self.card_url = "/".join(path + [core4.const.CARD_MODE, rsc_id])
         handler = self.application.lookup[self.rsc_id]["handler"]
         pattern = self.application.lookup[self.rsc_id]["pattern"]
-        doc = await self.application.container.get_handler(rsc_id)
+        docs = await self.application.container.get_handler(rsc_id=rsc_id)
+        doc = docs[0]
         description = str(self.doc or self.__doc__)
         doc.update(dict(
             args=handler.target_kwargs,
@@ -415,12 +423,20 @@ class CoreBaseHandler(CoreBase):
 
     async def xcard(self, *args, **kwargs):
         """
-        Prepares the ``card`` page and triggers :meth:`.card` which is to be
-        overwritten for custom card implementations.
+        Prepares the ``card`` page and either returns the classes properties if
+        called with header accept: application/json or
+        triggers :meth:`.card` otherwise, which
+         is to be overwritten for custom
+        card implementations.
 
         :return: result of :meth:`.card`
         """
         doc = await self.meta()
+        if self.wants_json():
+            # check if the subclass has its own card method.
+            # if it has not, the default-card method will be called.
+            doc['custom_card'] = callable(getattr(self, "card", None))
+            return self.finish(doc)
         return await self.card(**doc)
 
     def xenter(self, *args, **kwargs):
@@ -444,12 +460,17 @@ class CoreBaseHandler(CoreBase):
         doc = await self.meta()
         return self.help(**doc)
 
-    async def card(self, **data):
+    async def xhelp2(self, *args, **kwargs):
         """
-        Renders the default card page. This method is to be overwritten for
-        custom card page impelementation.
+        Redirect with query ``?_help`` to the help page.
+
+        :return: redirect
         """
-        return self.render(self.card_html_page, **data)
+        url = (self.application.container.root
+               + core4.const.INFO_URL
+               + "/" + core4.const.HELP_MODE
+               + '/' + str(self.rsc_id))
+        self.redirect(url)
 
     def enter(self):
         """
@@ -589,7 +610,7 @@ class CoreBaseHandler(CoreBase):
             var["error"] = kwargs["error"]
         ret = self._build_json(**var)
         if self.wants_html():
-            ret["contact"] = self.config.user_setting._general.contact
+            ret["contact"] = self.config.store.default.contact
             return self.render(self.error_html_page, **ret)
         elif self.wants_text() or self.wants_csv():
             return self.render(self.error_text_page, **var)
@@ -739,13 +760,63 @@ class CoreBaseHandler(CoreBase):
                         return ret
                     return ObjectId(ret)
                 return as_type(ret)
-            except:
+            except Exception:
                 raise core4.error.ArgumentParsingError(
                     "parameter [%s] expected as_type [%s]", name,
                     as_type.__name__) from None
         if remove and name in self.request.arguments:
             del self.request.arguments[name]
         return ret
+
+    def flash(self, level, message, *vars):
+        """
+        Add a flash message with
+
+        :param level: DEBUG, INFO, WARNING or ERROR
+        :param message: str or dict to flash
+        """
+        level = level.upper().strip()
+        assert level in FLASH_LEVEL
+        if isinstance(message, dict):
+            self._flash.append({"level": level, "data": message})
+        else:
+            self._flash.append({"level": level, "message": message % vars})
+
+    def flash_debug(self, message, *vars):
+        """
+        Add a DEBUG flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("DEBUG", message, *vars)
+
+    def flash_info(self, message, *vars):
+        """
+        Add a INFO flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("INFO", message, *vars)
+
+    def flash_warning(self, message, *vars):
+        """
+        Add a WARNING flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("WARNING", message, *vars)
+
+    def flash_error(self, message, *vars):
+        """
+        Add a ERROR flash message.
+
+        :param message: str or dict to flash
+        :param vars: optional str template variables
+        """
+        self.flash("ERROR", message, *vars)
 
 
 class CoreRequestHandler(CoreBaseHandler, RequestHandler):
@@ -760,7 +831,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
     """
 
     SUPPORTED_METHODS = ("GET", "HEAD", "POST", "DELETE", "PATCH", "PUT",
-                         "OPTIONS", "XCARD", "XHELP", "XENTER")
+                         "OPTIONS", "XCARD", "XHELP", "XENTER", "XHELP2")
 
     supported_types = [
         "text/html",
@@ -790,13 +861,17 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
 
         * ``protected`` - authentication/authorization required
         * ``title`` - api title
+        * ``subtitle`` - api subtitle
+        * ``res`` - card resolution
         * ``author`` - author
         * ``tag`` - list of tags
-        * ``template_path`` - absolte from project root, relative from request
+        * ``template_path`` - absolute from project root, relative from request
         * ``static_path`` - absolute from project root, relative from request
         * ``enter_url`` - custom target url
         * ``icon`` - material icon
         * ``doc`` - handler docstring (introduction)
+        * ``spa`` - single page application (bool)
+        * ``target`` - href target
         """
         for attr, value in self.propagate_property(self, kwargs):
             self.__dict__[attr] = value
@@ -977,7 +1052,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
                 chunk = chunk.to_string()
                 content_type = "text/plain"
             else:
-                chunk = chunk.to_dict('rec')
+                chunk = chunk.to_dict('records')
                 content_type = None
             if content_type is not None:
                 self.set_header("Content-Type", content_type)
@@ -1002,53 +1077,6 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         )
         self.finish(chunk)
 
-    def flash(self, level, message, *vars):
-        """
-        Add a flash message with
-
-        :param level: DEBUG, INFO, WARNING or ERROR
-        :param message: str to flash
-        """
-        level = level.upper().strip()
-        assert level in FLASH_LEVEL
-        self._flash.append({"level": level, "message": message % vars})
-
-    def flash_debug(self, message, *vars):
-        """
-        Add a DEBUG flash message.
-
-        :param message: str.
-        :param vars: optional str template variables
-        """
-        self.flash("DEBUG", message % vars)
-
-    def flash_info(self, message, *vars):
-        """
-        Add a INFO flash message.
-
-        :param message: str.
-        :param vars: optional str template variables
-        """
-        self.flash("INFO", message % vars)
-
-    def flash_warning(self, message, *vars):
-        """
-        Add a WARNING flash message.
-
-        :param message: str.
-        :param vars: optional str template variables
-        """
-        self.flash("WARNING", message % vars)
-
-    def flash_error(self, message, *vars):
-        """
-        Add a ERROR flash message.
-
-        :param message: str.
-        :param vars: optional str template variables
-        """
-        self.flash("ERROR", message % vars)
-
     def parse_objectid(self, _id):
         """
         Helper method to translate a str into a
@@ -1061,7 +1089,7 @@ class CoreRequestHandler(CoreBaseHandler, RequestHandler):
         """
         try:
             return ObjectId(_id)
-        except:
+        except Exception:
             raise HTTPError(400, "failed to parse ObjectId [%s]", _id)
 
     async def download(self, source, filename, chunk_size=MB):

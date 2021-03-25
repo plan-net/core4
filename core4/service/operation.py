@@ -9,11 +9,15 @@ import os
 import re
 import sys
 import textwrap
-
+import json
 import sh
-
+from warnings import warn
 import core4.util.node
 from core4.base.main import CoreBase
+import datetime
+from subprocess import Popen, STDOUT, PIPE
+import pathlib
+import shutil
 
 NO_PROJECT = "WARNING!\nThis is not a core4 project."
 
@@ -43,6 +47,13 @@ NO_RELEASE_COMMITS = "WARNING!\nNo unreleased commits/changes found. Why " \
 
 NOT_MERGED = "WARNING!\nThe pending release has not been merged into " \
              "[{branch:s}]. You have to `git merge {release:s}`, first."
+
+DIST_OUT_OF_DATE = "WARNING!\nWebapps have been found " \
+                   "with ./dist folder not up-to-date. Run coco --dist, first."
+
+MANIFEST = "MANIFEST.in"
+RLIB = "../lib/R"
+R_REQUIREMENTS = "r.txt"
 
 
 class CoreBuilder(CoreBase):
@@ -351,6 +362,11 @@ def build(*args):
         b.exit(NO_BUILD_COMMITS.format(), 5)
     b.ok()
 
+    b.step("webapps are up-to-date")
+    if not dist(False, dryrun=True, quiet=True):
+        b.exit(DIST_OUT_OF_DATE)
+    b.ok()
+
     print()
     b.headline("define next release version")
     print("current local release: [%d.%d.%d]\n" % (b.major, b.minor, b.patch))
@@ -476,3 +492,137 @@ def release():
     b.ok()
 
     print()
+
+
+def find_webapps(folder):
+    for path, directories, filenames in os.walk(folder):
+        pkg_json_file = os.path.join(path, "package.json")
+        if os.path.exists(pkg_json_file):
+            try:
+                pkg_json = json.load(
+                    open(pkg_json_file, "r", encoding="utf-8"))
+            except:
+                warn("failed to parse {}", pkg_json_file)
+            else:
+                if "core4" in pkg_json:
+                    command = pkg_json["core4"].get(
+                        "build_command", None)
+                    dist = pkg_json["core4"].get(
+                        "dist", None)
+                    if command is not None and dist is not None:
+                        yield {
+                            "base": path,
+                            "command": command,
+                            "dist": dist,
+                            "name": pkg_json.get("name", None)
+                        }
+
+
+def max_modtime(folder):
+    ret = {}
+    for path, directories, filenames in os.walk(folder):
+        for filename in filenames:
+            fn = os.path.join(folder, path, filename)
+            fname = pathlib.Path(fn)
+            ret[fn] = datetime.datetime.fromtimestamp(fname.stat().st_mtime)
+    return ret
+
+
+def dist(purge=True, dryrun=False, quiet=False):
+    def po(*args, **kwargs):
+        if not quiet:
+            print(*args, **kwargs)
+
+    curdir = os.path.abspath(os.curdir)
+    manifest = set()
+    po(curdir)
+    uptodate = True
+    for webapp in find_webapps(curdir):
+        po("build", webapp.get("name", None))
+        base_path = os.path.abspath(os.path.join(webapp["base"]))
+        dist_path = os.path.abspath(
+            os.path.join(webapp["base"], webapp["dist"]))
+        last_dist = max_modtime(dist_path)
+        mx_time = None
+        for filename, mtime in max_modtime(base_path).items():
+            if filename not in last_dist:
+                mx_time = max(mtime, mx_time or mtime)
+        if last_dist:
+            mx_dist = max(last_dist.values())
+            po("latest change inside/outside\n  {}:\n    {} {} {}".format(
+                os.path.join(webapp["base"], webapp["dist"]), mx_dist,
+                ">" if mx_dist > mx_time else "<", mx_time))
+        if os.path.exists(dist_path):
+            if (not dryrun) and (not last_dist or mx_dist < mx_time or purge):
+                po("purge", dist_path)
+                shutil.rmtree(dist_path)
+        if not os.path.exists(dist_path) or not last_dist or mx_dist < mx_time:
+            for cmd in webapp["command"]:
+                os.chdir(webapp["base"])
+                po("$ {}".format(cmd))
+                uptodate = False
+                if not dryrun:
+                    cmd = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE,
+                                close_fds=True, encoding="utf-8")
+                    ret = cmd.wait()
+                    if ret != 0:
+                        po("ERROR!")
+                        po(cmd.stdout.read())
+                    else:
+                        if os.path.exists(webapp["dist"]):
+                            manifest.add(dist_path)
+                os.chdir(curdir)
+        else:
+            po("nothing to do")
+    manifest_file = find_manifest()
+    if not dryrun and manifest_file:
+        dirname = os.path.dirname(manifest_file) + os.path.sep
+        with open(manifest_file, "r", encoding="utf-8") as fh:
+            body = fh.read().split("\n")
+        for dist in manifest:
+            relpath = dist[len(dirname):]
+            include = "recursive-include {}/ *".format(relpath)
+            if include not in body:
+                po("add {} to MANIFEST".format(relpath))
+                body.append(include)
+        with open(manifest_file, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(body))
+    return uptodate
+
+
+def find_manifest():
+    path = os.path.abspath(os.curdir).split(os.path.sep)
+    while True:
+        if not path:
+            break
+        curdir = os.path.sep.join(path)
+        manifest = os.path.join(curdir, MANIFEST)
+        if os.path.exists(manifest):
+            return manifest
+        path.pop(-1)
+    return None
+
+
+def cran():
+    print("install R packages")
+    from rpy2.robjects.packages import importr, isinstalled
+    if not os.path.exists(R_REQUIREMENTS):
+        print("  {} not found".format(R_REQUIREMENTS))
+        return False
+    rlib = os.path.abspath(os.path.join(os.path.dirname(sys.executable), RLIB))
+    if not os.path.isdir(rlib):
+        os.makedirs(rlib)
+        print("  {} created".format(rlib))
+    with open(R_REQUIREMENTS, 'r') as file:
+        data = file.read()
+    packages_required = data.split(sep='\n')
+    utils = importr('utils')
+    utils.chooseCRANmirror(ind=0)
+    for package in packages_required:
+        if package:
+            if not isinstalled(package, lib_loc=rlib):
+                print("  install", package)
+                utils.install_packages(
+                    package, lib=rlib, verbose=False, quiet=True)
+            else:
+                print("  requirement", package, "already satisfied")
