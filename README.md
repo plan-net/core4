@@ -108,10 +108,22 @@ You should drop root privileges.
     pip install --edit .
     
 
+MongoDB setup
+-------------
+
+MongoDB requires further configuration to setup a replica set. core4os uses some 
+special features of MongoDB which are only available with replica set.
+
+The interactive script ``local_setup.py`` simplifies this configuration. Start 
+the script with ``python local_setup.py`` in the Python virtual environment 
+created above. 
+
+
 core4 configuration
 -------------------
 
-Create a ``local.yaml`` configuration file in your home folder ``~/.core4`` with
+In your home folder ``~/.core4/``, create a ``local.yaml`` file if it doesn't
+already exist. 
 
     DEFAULT:
       mongo_url: mongodb://localhost:27017
@@ -134,17 +146,6 @@ Create a ``local.yaml`` configuration file in your home folder ``~/.core4`` with
 Please note that this configuration file assumes that your local MongoDB requires
 no authentication. If you have secured your local MongoDB then ensure to provide
 the correct username and password in the mongo_url.
-
-
-MongoDB setup
--------------
-
-MongoDB requires further configuration to setup a replica set. core4os uses some 
-special features of MongoDB which are only available with replica set.
-
-The interactive script ``local_setup.py`` simplifies this configuration. Start 
-the script with ``python local_setup.py`` in the Python virtual environment 
-created above. 
 
 
 further reads
