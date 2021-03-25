@@ -18,7 +18,7 @@
     "core4ui": "git://github.com/plan-net/core4ui.git#oto.error"
   },
   "dependencies": {
-    "core4ui": "https://github.com/plan-net/core4ui.git#mmr.next",
+    "core4ui": "^2.0.0",
     "highcharts": "^8.1.2",
     "highcharts-vue": "^1.2.0",
     "jquery": "^3.5.1",
