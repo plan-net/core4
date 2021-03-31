@@ -100,7 +100,7 @@ class CoreBuilder(CoreBase):
                 match = re.match(
                     r"""^__version__\s*\=\s*["']\s*(.+?)\s*["'].*""", line)
                 if match is not None:
-                    nums = re.split("\D", match.groups()[0])
+                    nums = re.split(r"\D", match.groups()[0])
                     (self.major, self.minor, self.patch) = [int(i) for i in
                                                             nums]
                     self._version_line = lno
@@ -453,7 +453,7 @@ def release():
     #     b.exit(NO_RELEASE_COMMITS.format(release=pending_release))
     # b.ok()
 
-    (_, next_major, next_minor, next_build) = re.split("\D+", pending_release)
+    (_, next_major, next_minor, next_build) = re.split(r"\D+", pending_release)
 
     b.step("release [{:s}.{:s}.{:s}] has been merged into [master]".format(
         next_major, next_minor, next_build
