@@ -256,7 +256,7 @@ class CoreRole(CoreBase):
         """
         self.created = core4.util.node.mongo_now()
         self.data["etag"].set(ObjectId())
-        if "email" in self.data:
+        if "email" in self.data and self.data["email"].value:
             # so we have a user
             if self.data["password"].value is None:
                 # but no password, so set one
