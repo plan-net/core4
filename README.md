@@ -90,7 +90,6 @@ You should drop root privileges.
 
     exit  # exit root
 
-    cd
     mkdir dev
     cd dev
     
