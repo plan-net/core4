@@ -97,14 +97,14 @@ core_config = {
     "logging": {
         "mongodb": "INFO",
         "stderr": "DEBUG",
-        "stdout": "~"
+        "stdout": None
     },
     "worker": {
-        "min_free_ram": "32"
+        "min_free_ram": 32
     },
     "api": {
         "setting": {
-            "debug": "True",
+            "debug": True,
             "cookie_secret": "very secret"
         },
         "admin_password": "hans"
