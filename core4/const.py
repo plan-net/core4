@@ -32,4 +32,4 @@ QUEUE_CHANNEL = "queue"
 DEFAULT_CHANNEL = "system"
 MESSAGE_CHANNEL = "message"
 
-CORE4_REPOSITORY = "https://github.com/plan-net/core4.git"
+CORE4_REPOSITORY = "git+https://github.com/plan-net/core4.git"
