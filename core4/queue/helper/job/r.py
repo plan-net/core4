@@ -10,7 +10,6 @@ import shutil
 import sys
 from subprocess import Popen, PIPE
 
-import feather
 import numpy as np
 import pandas as pd
 from jinja2 import Environment, BaseLoader
@@ -47,6 +46,7 @@ return <- function(v){
 class CoreRJob(CoreLoadJob, CoreAbstractMixin):
 
     def r(self, source=None, code=None, **kwargs):
+        import feather
         tempdir = self.make_temp_folder()
         script = os.path.join(tempdir, "script.r")
         exchange = {}
