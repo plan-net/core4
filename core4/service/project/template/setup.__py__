@@ -1,13 +1,4 @@
-try:
-    from pip._internal.cli.main import main
-except:
-    from pip import main
-
-main(["install", "-U", "--quiet",
-      "git+https://github.com/plan-net/core4build.git"])
-
-from core4build import setup
-from setuptools import find_packages
+from setuptools import find_packages, setup
 
 import {{ package_name }}
 
@@ -17,7 +8,18 @@ setup(
     packages=find_packages(exclude=['docs*', 'tests*']),
     include_package_data=True,
     zip_safe=False,
-    core4="{{ core4_source }}",
     install_requires=[
-    ]
+        "core4 @ git+https://github.com/plan-net/core4.git#egg=core4",
+        'openpyxl',
+        'bokeh==2.3.2'
+    ],
+    extras_require={
+        "tests": [
+            "pytest",
+            "pytest-timeout",
+            "pytest-runner",
+            "pytest-tornasync",
+            "coverage"
+        ]
+    }
 )
