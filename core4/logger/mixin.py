@@ -94,6 +94,9 @@ class CoreLoggerMixin:
                                 ("created", pymongo.DESCENDING),
                                 (idx, pymongo.DESCENDING)],
                                 name=idx)
+                        conn.create_index([
+                            ("identifier", pymongo.DESCENDING)],
+                            name="identifier2")
                     except:
                         self.logger.warning("failed to create [sys.log]")
                 level = getattr(logging, mongodb)
