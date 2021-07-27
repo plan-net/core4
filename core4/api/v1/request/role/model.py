@@ -607,13 +607,13 @@ class CoreRole(CoreBase):
                         "Can not parse regex" + filter)
                 filter = query_filter
             else:
-                filter = re.compile(filter)
+                filter = re.compile(filter, re.IGNORECASE)
                 query_filter = \
                     {
                         "$or": [
-                            {"name": {"$regex": filter, '$options': 'i'}},
-                            {"realname": {"$regex": filter, '$options': 'i'}},
-                            {"perm": {"$regex": filter, '$options': 'i'}}
+                            {"name": {"$regex": filter}},
+                            {"realname": {"$regex": filter}},
+                            {"perm": {"$regex": filter}}
                         ]
                     }
                 filter = query_filter
