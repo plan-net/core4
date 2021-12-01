@@ -21,7 +21,7 @@ setup(
     },
     install_requires=[
         "wheel>=0.32.3",
-        "pymongo>=3.7",
+        "pymongo<4,>=3.12",
         "python-dateutil>=2.7",
         "PyYaml>=3.12",
         "psutil>=5.4",
