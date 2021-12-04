@@ -19,6 +19,7 @@ setup(
             'chist=core4.script.chist:main'
         ],
     },
+    python_requires='>=3.8',
     install_requires=[
         "wheel>=0.32.3",
         "pymongo<4,>=3.12",
