@@ -33,7 +33,7 @@ setup(
         # see https://github.com/jpadilla/pyjwt/issues/391#issuecomment-515427821
         "tornado>=5.1",
         "pandas>=0.23",
-        "motor>=2.0",
+        "motor==2.5.1",
         "passlib>=1.7",
         "python-magic>=0.4",
         "docutils==0.16",
