@@ -23,7 +23,7 @@
     "highcharts-vue": "^1.2.0",
     "jquery": "^3.5.1",
     "js-yaml": "^3.14.0",
-    "moment": "^2.27.0",
+    "moment": "^2.29.4",
     "select2": "^4.0.13",
     "vee-validate": "^3.3.2",
     "vue-native-websocket": "2.0.14",
