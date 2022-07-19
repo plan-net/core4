@@ -59,7 +59,6 @@ class LogoutHandler(LoginHandler):
             }
         """
         self.clear_all_cookies()
-        await self.getter(True)
         self.current_user = None
 
     async def post(self):

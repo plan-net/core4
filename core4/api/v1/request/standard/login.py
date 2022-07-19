@@ -6,6 +6,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 from tornado.web import HTTPError
+import re
 
 import core4.queue.helper.functool
 import core4.queue.helper.job
@@ -217,7 +218,9 @@ class LoginHandler(CoreRequestHandler):
         # internal method to set the updated password
         payload = self.parse_token(token)
         try:
-            user = await CoreRole().find_one(name=payload["name"])
+            username = payload["name"]
+            username = re.compile(username, re.IGNORECASE)
+            user = await CoreRole().find_one(name=username)
         except:
             self.logger.warning("user [%s] not found", payload["name"])
         user.password = password

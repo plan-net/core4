@@ -12,6 +12,7 @@ Implements core4 standard :class:`ProfileHandler`.
 import pymongo.errors
 from bson.objectid import ObjectId
 from tornado.web import HTTPError
+import re
 
 import core4.error
 from core4.api.v1.request.main import CoreRequestHandler
@@ -89,7 +90,9 @@ class ProfileHandler(CoreRequestHandler):
                 }
             }
         """
-        user = await CoreRole().find_one(name=self.current_user)
+        username = self.current_user
+        username = re.compile(username, re.IGNORECASE)
+        user = await CoreRole().find_one(name=username)
         if user is None:
             raise Core4RoleNotFound("unknown user [{}]".format(
                 self.current_user
@@ -133,7 +136,9 @@ class ProfileHandler(CoreRequestHandler):
             >>> signin = post(url + "/login", json={"username": "admin", "password": "hans"})
             >>> put(url + "/profile?etag=5bd9a6b0de8b6925021dc2b9&realname=Humphrey", cookies=signin.cookies).json()
         """
-        user = await CoreRole().find_one(name=self.current_user)
+        username = self.current_user
+        username = re.compile(username, re.IGNORECASE)
+        user = await CoreRole().find_one(name=username)
         if user is None:
             raise Core4RoleNotFound("unknown user [{}]".format(
                 self.current_user
