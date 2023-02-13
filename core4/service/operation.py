@@ -118,7 +118,8 @@ class CoreBuilder(CoreBase):
 
         :return: boold indicating if a release exists and is pending.
         """
-        for line in sh.git(["branch", "-a", "--no-color"]).split("\n"):
+        for line in sh.git(["--no-pager", "branch", "-a",
+                            "--no-color"]).split("\n"):
             match = re.match(r".+\s+(release-\d+\.\d+\.\d+)", line)
             if match:
                 return match.groups()[0]
@@ -130,7 +131,7 @@ class CoreBuilder(CoreBase):
 
         :return: branch (str)
         """
-        for line in sh.git(["branch", "--no-color"]).split("\n"):
+        for line in sh.git(["--no-pager", "branch", "--no-color"]).split("\n"):
             if line.strip().startswith("*"):
                 return line[2:]
         raise RuntimeError("no branch found")
@@ -141,7 +142,7 @@ class CoreBuilder(CoreBase):
 
         :return: ``True`` if clean, else ``False``
         """
-        return sh.git(["status", "--porcelain"]) == ""
+        return sh.git(["--no-pager", "status", "--porcelain"]) == ""
 
     def is_merged(self, release):
         """
@@ -150,7 +151,8 @@ class CoreBuilder(CoreBase):
         :param release: branch to check
         :return: ``True`` if passed branch is merged, else ``False``
         """
-        for line in sh.git(["branch", "-a", "--no-color", "--merged"]):
+        for line in sh.git(["--no-pager", "branch", "-a", "--no-color",
+                            "--merged"]):
             if line.strip() == release.strip():
                 return True
         return False
@@ -163,7 +165,8 @@ class CoreBuilder(CoreBase):
         :param right: right branch (str)
         :return: ``True`` if there are commits, else ``False``
         """
-        out = sh.git(["rev-list", "--count", "%s..%s" % (left, right)])
+        out = sh.git(["--no-pager", "rev-list", "--count",
+                      "%s..%s" % (left, right)])
         return int(out) > 0
 
     def create_release(self, major, minor, patch):
