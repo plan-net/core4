@@ -31,7 +31,7 @@ setup(
         "python-mimeparse>=1.6",
         "PyJWT>=2.0.0a",
         # see https://github.com/jpadilla/pyjwt/issues/391#issuecomment-515427821
-        "tornado>=5.1",
+        "tornado>=5.1,<6.3",
         "pandas>=0.23",
         "motor==2.5.1",
         "passlib>=1.7",
