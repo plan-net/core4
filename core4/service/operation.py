@@ -505,7 +505,7 @@ def find_webapps(folder):
                 pkg_json = json.load(
                     open(pkg_json_file, "r", encoding="utf-8"))
             except:
-                warn("failed to parse {}", pkg_json_file)
+                warn(f'failed to parse "{pkg_json_file}"')
             else:
                 if "core4" in pkg_json:
                     command = pkg_json["core4"].get(
@@ -575,6 +575,7 @@ def dist(purge=True, dryrun=False, quiet=False):
                         if os.path.exists(webapp["dist"]):
                             manifest.add(dist_path)
                 os.chdir(curdir)
+                po("done", webapp.get("name", None))
         else:
             po("nothing to do")
     manifest_file = find_manifest()
