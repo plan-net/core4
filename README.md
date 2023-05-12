@@ -116,7 +116,15 @@ special features of MongoDB which are only available with replica set.
 
 The interactive script ``local_setup.py`` simplifies this configuration. Start 
 the script with ``python local_setup.py`` in the Python virtual environment 
-created above. 
+created above.
+
+**Note.** If and only if you installed the Plan.Net Business Intelligence Appliance
+(https://github.com/plan-net/appliance) onto your machine before starting the core4os
+installation, on running ``python local_setup.py``, enter the following when prompted: 
+
+    authentication required [no]: yes
+    username: core
+    password: 654321
 
 
 core4 configuration
@@ -151,13 +159,15 @@ the correct username and password in the mongo_url.
 further reads
 -------------
 
-Find the latest core4os documentation at https://core4os.readthedocs.io/en/latest/ 
-or build the sphinx documentation with
+Find the latest core4os documentation at https://core4os.readthedocs.io/en/latest/. 
+Alternatively, you can build the sphinx documentation locally and view it with
+the following commands.
 
     cd core4
     pip install -e ".[tests]" 
     cd docs
     make html
+    firefox build/html/index.html
     
     
 test your installation
@@ -166,7 +176,7 @@ test your installation
 Launch a core4os worker and in a second terminal enqueue a DummyJob. This 
 DummyJob just waits for let's say 30 seconds. Be sure you have a working 
 MongoDB setup and core4os configuration file at ``~/.core4/local.yaml`` as
-describe above.
+described above.
 
 Then test core4os by running a job.
 
@@ -182,11 +192,6 @@ Then test core4os by running a job.
     
     # stop the worker
     coco -x
-    
-
-View the documentation
-
-    firefox docs/build/html/index.html
 
     
 Launch the core4os HTTP server and in a second terminal 
