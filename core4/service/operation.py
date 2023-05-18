@@ -152,7 +152,7 @@ class CoreBuilder(CoreBase):
         :return: ``True`` if passed branch is merged, else ``False``
         """
         for line in sh.git(["--no-pager", "branch", "-a", "--no-color",
-                            "--merged"]):
+                            "--merged"]).split("\n"):
             if line.strip() == release.strip():
                 return True
         return False
