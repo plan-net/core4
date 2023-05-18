@@ -261,12 +261,12 @@ class CoreBaseHandler(CoreBase):
                     if (core4.util.node.now()
                         - datetime.datetime.fromtimestamp(
                                 payload["timestamp"])).total_seconds() > renew:
-                        token = self.create_token(username)
+                        token = self.create_token(user.name)
                         self.logger.debug("refresh token [%s] to [%s]",
-                                          username, self.token_exp)
+                                          user.name, self.token_exp)
                     self.logger.debug(
                         "successfully loaded [%s] by [%s] from [%s] "
-                        "expiring [%s]", username, *source, self.token_exp)
+                        "expiring [%s]", user.name, *source, self.token_exp)
                     self.set_secure_cookie("token", token)
                     # self.set_header("token", token)
                     return user
