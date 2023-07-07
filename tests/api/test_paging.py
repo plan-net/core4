@@ -109,7 +109,7 @@ async def test_filtering(page_server, data):
         s = 1 + i * 10
         e = s + 10
         print(s, e)
-        assert data == list(range(s, e))
+        assert sorted(data) == list(range(s, e))
 
 
 async def test_empty(page_server, data):

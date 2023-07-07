@@ -220,7 +220,7 @@ class LoginHandler(CoreRequestHandler):
         payload = self.parse_token(token)
         try:
             username = payload["name"]
-            username = re.compile(username, re.IGNORECASE)
+            username = re.compile("^" + re.escape(username), re.IGNORECASE)
             user = await CoreRole().find_one(name=username)
         except:
             self.logger.warning("user [%s] not found", payload["name"])

@@ -91,7 +91,7 @@ class ProfileHandler(CoreRequestHandler):
             }
         """
         username = self.current_user
-        username = re.compile(username, re.IGNORECASE)
+        username = re.compile("^" + re.escape(username), re.IGNORECASE)
         user = await CoreRole().find_one(name=username)
         if user is None:
             raise Core4RoleNotFound("unknown user [{}]".format(
@@ -137,7 +137,7 @@ class ProfileHandler(CoreRequestHandler):
             >>> put(url + "/profile?etag=5bd9a6b0de8b6925021dc2b9&realname=Humphrey", cookies=signin.cookies).json()
         """
         username = self.current_user
-        username = re.compile(username, re.IGNORECASE)
+        username = re.compile("^" + re.escape(username), re.IGNORECASE)
         user = await CoreRole().find_one(name=username)
         if user is None:
             raise Core4RoleNotFound("unknown user [{}]".format(

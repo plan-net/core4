@@ -64,11 +64,11 @@ def test_create(tmpdir):
     core4.service.project.make_project("test_project", "test project",
                                        auto=True)
     os.chdir(os.path.join(tmpdir.strpath, "test_project"))
-    out = sh.git(["status"])
+    out = sh.git(["status"]).split("\n")
 
     assert "On branch master" in out
-    assert "Your branch is up-to-date with 'origin/master'" in out
-    assert "nothing to commit" in out
+    assert "Your branch is up to date with 'origin/master'." in out
+    assert "nothing to commit, working tree clean" in out
 
     os.chdir(tmpdir.strpath)
     core4.service.project.make_project("test_project", "test project",
@@ -114,7 +114,7 @@ def test_build(tmpdir):
     # success
     core4.service.operation.build(0, 0, 1)
     # check release
-    out = sh.git(["branch", "-a"])
+    out = sh.git(["--no-pager", "branch", "-a"])
     "* release-0.0.2" in out
     "remotes/origin/release-0.0.2" in out
 
@@ -164,5 +164,5 @@ def test_release(tmpdir):
     sh.git(["checkout", "master"])
     core4.service.operation.release()
 
-    assert sh.git(["tag"]).strip() == "0.0.2"
+    assert sh.git(["--no-pager","tag"]).strip() == "0.0.2"
 
