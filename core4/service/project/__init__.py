@@ -153,7 +153,7 @@ def make_project(package_name=None, package_description=None, auto=False,
         curr_dir = os.path.abspath(os.path.curdir)
         os.chdir(os.path.abspath(os.path.dirname(git_path)))
         origin_url = None
-        for line in sh.git("config", "--list").split("\n"):
+        for line in sh.git("--no-pager", "config", "--list").split("\n"):
             if line.startswith("remote.origin.url="):
                 origin_url = line[len("remote.origin.url="):]
                 break

@@ -188,8 +188,8 @@ class LoginHandler(CoreRequestHandler):
     async def _start_password_reset(self, email):
         # internal method to create and send the password reset token
         self.logger.debug("enter password reset for [%s]", email)
-        email = re.compile(email, re.IGNORECASE)
-        user = await CoreRole().find_one(email=email)
+        regex_email = email.lower()
+        user = await CoreRole().find_one(email=regex_email)
         if user is None:
             self.logger.warning("email [%s] not found", email)
         else:
@@ -220,7 +220,7 @@ class LoginHandler(CoreRequestHandler):
         payload = self.parse_token(token)
         try:
             username = payload["name"]
-            username = re.compile(username, re.IGNORECASE)
+            username = re.compile("^" + re.escape(username), re.IGNORECASE)
             user = await CoreRole().find_one(name=username)
         except:
             self.logger.warning("user [%s] not found", payload["name"])

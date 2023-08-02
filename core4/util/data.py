@@ -26,7 +26,7 @@ import tzlocal
 from docutils import core
 from docutils.parsers.rst.directives import register_directive
 
-LOCAL_TZ = lambda: pytz.timezone(tzlocal.get_localzone().zone)
+LOCAL_TZ = lambda: pytz.timezone(tzlocal.get_localzone().key)
 
 NAPOLEON = sphinx.ext.napoleon.Config(
     napoleon_use_param=False,

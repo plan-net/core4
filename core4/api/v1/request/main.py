@@ -248,7 +248,7 @@ class CoreBaseHandler(CoreBase):
             payload = self.parse_token(token)
             username = payload.get("name")
             if username:
-                username = re.compile(username, re.IGNORECASE)
+                username = re.compile("^" + re.escape(username), re.IGNORECASE)
                 user = await CoreRole.find_one(name=username)
                 if user is None:
                     self.logger.warning(
@@ -271,7 +271,7 @@ class CoreBaseHandler(CoreBase):
                     # self.set_header("token", token)
                     return user
         elif username and password:
-            username = re.compile(username, re.IGNORECASE)
+            username = re.compile("^" + re.escape(username), re.IGNORECASE)
             try:
                 user = await CoreRole.find_one(name=username)
             except Exception:
