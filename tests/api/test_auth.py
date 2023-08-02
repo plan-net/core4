@@ -244,6 +244,26 @@ async def test_password_reset(core4api):
     rv = await core4api.put("/core4/api/v1/login?token=" + token + "&password=world")
     assert rv.code == 200
 
+    q.config.sys.queue.drop()
+    q.config.sys.log.drop()
+
+    rv = await core4api.put("/core4/api/v1/login?email=TEST@user.com")
+    assert rv.code == 200
+    data = list(q.config.sys.log.find())
+    msg = [d for d in data if "send token [" in d["message"]][0]
+    token = re.search(r"token \[(.+?)\]", msg["message"]).groups()[0]
+    rv = await core4api.put("/core4/api/v1/login?token=" + token + "&password=world")
+    assert rv.code == 200
+
+    q.config.sys.queue.drop()
+    q.config.sys.log.drop()
+
+    rv = await core4api.put("/core4/api/v1/login?email=TE.*@user.com")
+    assert rv.code == 200
+    data = list(q.config.sys.log.find())
+    msg = [d for d in data if "send token [" in d["message"]]
+    assert len(msg) == 0
+
     core4api.token = None
     rv = await core4api.get("/core4/api/v1/login?username=user&password=password")
     assert rv.code == 401
