@@ -558,7 +558,7 @@ def dist(purge=True, dryrun=False, quiet=False):
         if os.path.exists(dist_path):
             if (not dryrun) and (not last_dist or mx_dist < mx_time or purge):
                 po("purge", dist_path)
-                shutil.rmtree(dist_path)
+                shutil.move(dist_path, dist_path + '_backup')
         if not os.path.exists(dist_path) or not last_dist or mx_dist < mx_time:
             for cmd in webapp["command"]:
                 os.chdir(webapp["base"])
@@ -575,7 +575,14 @@ def dist(purge=True, dryrun=False, quiet=False):
                         if os.path.exists(webapp["dist"]):
                             manifest.add(dist_path)
                 os.chdir(curdir)
+
                 po("done", webapp.get("name", None))
+
+            if os.path.exists(dist_path + "_backup") and not os.path.exists(dist_path):
+                shutil.move(dist_path + '_backup', dist_path)
+                po("Warning: FrontEnd build error use the old one")
+            if os.path.exists(dist_path + "_backup"):
+                shutil.rmtree(dist_path + "_backup")
         else:
             po("nothing to do")
     manifest_file = find_manifest()
