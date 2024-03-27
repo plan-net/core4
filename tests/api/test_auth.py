@@ -95,15 +95,20 @@ async def test_pass_auth(core4api):
 
 
 async def test_login_expired(short_expire, core4api):
+    t0 = datetime.datetime.now()
     await core4api.login()
     rv = await core4api.get('/core4/api/v1/profile')
     assert rv.code == 200
-    t0 = datetime.datetime.now()
     while True:
         rv = await core4api.get('/core4/api/v1/profile')
         if rv.code != 200:
+            # the difference between t0 and now (the time at which the token seems to have expired)
+            expired_in = round((datetime.datetime.now() - t0).total_seconds(), 0)
             break
-    assert round((datetime.datetime.now() - t0).total_seconds(), 0) >= 8
+    # jwt tokens consider only seconds and discard milli-/microseconds
+    # rounding errors can make `expired_in` smaller than the 8 seconds we defined in `short_expire`
+    # that is why we are checking the value of expired in against >= 7 and not >= 8
+    assert expired_in >= 7
     assert rv.code == 401
 
 
