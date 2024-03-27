@@ -25,7 +25,7 @@
   "dependencies": {
     "axios": "0.21.1",
     "core4ui": "^2.0.0",
-    "muuri": "0.9.2",
+    "muuri": "0.9.5",
     "vee-validate": "^3.3.11",
     "vue-friendly-iframe": "^0.18.0",
     "vue-infinite-loading": "^2.4.5"
