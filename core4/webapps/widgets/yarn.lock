@@ -8518,10 +8518,10 @@ vue-eslint-parser@^7.0.0:
     esquery "^1.4.0"
     lodash "^4.17.15"
 
-vue-friendly-iframe@^0.18.0:
-  version "0.18.0"
-  resolved "https://registry.yarnpkg.com/vue-friendly-iframe/-/vue-friendly-iframe-0.18.0.tgz#c81b4ca1e3b41fd9f28454fe4f031b873681cba2"
-  integrity sha512-RHDxKEnlFhtcf7mie7/4s1o1j4qac/vzcb5kvuKIo1daTkvfZEGTx0Irri15wfl1MCi9loCSSvuVgeUxlArHhA==
+vue-friendly-iframe@^0.20.0:
+  version "0.20.0"
+  resolved "https://registry.yarnpkg.com/vue-friendly-iframe/-/vue-friendly-iframe-0.20.0.tgz#36ffa5413fca8d92c62f93f37cf73fc886833aa2"
+  integrity sha512-aspddnbCg3i+tEkknuYwyn7NbpQuRhMMkaXdch+kY1RrAzh+YGXcxL3xCq5lmtfKiV5owG911fEgPEQNkq+tlw==
   dependencies:
     uuid "3.1.0"
 
