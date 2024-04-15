@@ -763,7 +763,7 @@ class JobRequest(CoreRequestHandler):
         try:
             self.write("event: " + event + "\n")
             self.write("data: " + js + "\n\n")
-            await self.flush()
+            await self.flush(include_footers=True)
             self._count.setdefault(event, 0)
             self._count[event] += 1
         except StreamClosedError:
