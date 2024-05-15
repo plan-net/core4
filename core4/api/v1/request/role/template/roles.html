@@ -5,149 +5,152 @@
     <meta charset="UTF-8">
     <title>Role Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css" rel="stylesheet" />
-    <link href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css" rel="stylesheet" />
+    <link href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css" rel="stylesheet"/>
+    <link href="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.css" rel="stylesheet"/>
     <style>
     </style>
 </head>
 
 <body style="opacity: 0;">
-    <div id="app">
-        <v-app>
-            <v-container class="c4-container" class="pt-15">
-                <v-row no-gutters class="py-3" justify="end" align="center" class="pb-10">
-                    <v-col cols="4" xs="8">
-                        <v-text-field outlined v-model="searchData" dense          class="mr-5"                
-                        prepend-inner-icon="mdi-account-search" append-icon="mdi-magnify" label="Search users or roles"
-                        @keyup.enter="update" clearable hide-details @click:append="update"></v-text-field>
-                        
-                    </v-col>
-                        <v-btn @click="isCreateDialogOpen=true; currentRole={'is_active': true}; getSelectRoles()"
-                        color="primary">
-                        <v-icon class="mr-1" small>
-                            mdi-plus-circle
-                        </v-icon>
-                        Create Role
-                    </v-btn>
-                </v-row>
-                    <v-data-table v-if="roles" :loading="loading"
-                        :hide-default-footer="pagination.totalItems < footerProps.itemsPerPageOptions[0]"
-                        :server-items-length="pagination.totalItems" :page.sync="pagination.page"
-                        :footer-props="footerProps" :headers="headers" :items="roles" @update:options="update">
-                        <template v-slot:item.is_active="{ item }">
-                            <v-icon v-if="item.is_active" small class="success--text">
-                                mdi-check
-                            </v-icon>
-                            <v-icon v-else small class="warning--text">
-                                remove_circle_outline
-                            </v-icon>
-                        </template>
+<div id="app">
+    <v-app>
+        <v-container class="c4-container" class="pt-15">
+            <v-row no-gutters class="py-3" justify="end" align="center" class="pb-10">
+                <v-col cols="4" xs="8">
+                    <v-text-field outlined v-model="searchData" dense class="mr-5"
+                                  prepend-inner-icon="mdi-account-search" append-icon="mdi-magnify"
+                                  label="Search users or roles"
+                                  @keyup.enter="update" clearable hide-details @click:append="update"></v-text-field>
 
-                        <template v-slot:item.perm="{ item }">
-                            <div v-if="item.perm.length">
-                                <template v-if="item.perm.length >= 1">
-                                    {{! item.perm[0] }}
-                                    <template v-if="item.perm.length > 1">
-                                        &nbsp;(+{{!item.perm.length - 1}})
-                                    </template>
+                </v-col>
+                <v-btn @click="isCreateDialogOpen=true; currentRole={'is_active': true}; getSelectRoles()"
+                       color="primary">
+                    <v-icon class="mr-1" small>
+                        mdi-plus-circle
+                    </v-icon>
+                    Create Role
+                </v-btn>
+            </v-row>
+            <v-data-table v-if="roles" :loading="loading"
+                          :hide-default-footer="pagination.totalItems < footerProps.itemsPerPageOptions[0]"
+                          :server-items-length="pagination.totalItems" :page.sync="pagination.page"
+                          :footer-props="footerProps" :headers="headers" :items="roles" @update:options="update">
+                <template v-slot:item.is_active="{ item }">
+                    <v-icon v-if="item.is_active" small class="success--text">
+                        mdi-check-circle-outline
+                    </v-icon>
+                    <v-icon v-else small class="warning--text">
+                        mdi-close-circle-outline
+                    </v-icon>
+                </template>
+
+                <template v-slot:item.perm="{ item }">
+                    <div v-if="item.perm.length">
+                        <template v-if="item.perm.length >= 1">
+                            {{! item.perm[0] }}
+                            <template v-if="item.perm.length > 1">
+                                &nbsp;(+{{!item.perm.length - 1}})
+                            </template>
+                        </template>
+                    </div>
+                </template>
+                <template v-slot:no-data>
+                    <v-container fluid class="px-10 pt-5">
+                        <v-alert :value="true" color="grey" dark icon="mdi-alert-decagram">
+                            Sorry, nothing found.
+                        </v-alert>
+                    </v-container>
+                </template>
+                <template v-slot:item.actions="{ item }">
+                    <v-row align="center" justify="end" class="pr-3">
+                        <v-btn @click="onCreateDialogOpen(item)" text icon>
+                            <v-icon class="grey--text">
+                                mdi-account-edit
+                            </v-icon>
+
+
+                        </v-btn>
+                        <v-btn @click="deleteRole(item)" icon>
+                            <v-icon class="grey--text">mdi-delete
+                            </v-icon>
+                        </v-btn>
+                    </v-row>
+                </template>
+
+                <template v-slot:pageText="props">
+                    {{! props.pageStart + 1 }} - {{! props.pageStop +1 }} of {{! props.itemsLength }}
+                </template>
+            </v-data-table>
+            <div>
+                <v-alert :value="error" type="error" dismissible>
+                    {{! error}}</br>
+                </v-alert>
+            </div>
+        </v-container>
+        <v-dialog v-if="currentRole" v-model="isCreateDialogOpen" persistent max-width="600px">
+
+            <v-card>
+                <v-card-title v-if="currentRole._id">
+                    Edit role
+                </v-card-title>
+                <v-card-title v-else>
+                    Create Role
+                </v-card-title>
+                <v-card-text class="pb-0">
+
+                    <v-form>
+                        <v-layout class="pa-3" column>
+                            <v-text-field v-model="currentRole.name" label="Name*" required></v-text-field>
+                            <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
+                            <v-text-field v-model="currentRole.email" label="E-Mail  " name="email-field"
+                                          aria-autocomplete="none" autocomplete="new-email"></v-text-field>
+                            <v-combobox clearable multiple deletable-chips small-chips hide-selected
+                                        :search-input.sync="search1" v-model="currentRole.perm" label="Permissions"
+                                        @change="search1 = null">
+                            </v-combobox>
+                            <v-combobox clearable v-model="currentRole.role" :items="distinctRoles" attach
+                                        hide-selected deletable-chips small-chips multiple label="Roles"
+                                        :search-input.sync="search2" @change="search2 = null" flat>
+                                <template v-slot:no-data>
+                                    <v-list-item>
+                                        <v-list-item-content>
+                                            <v-list-item-title>
+                                                No results matching "<strong>{{! search2 }}</strong>".
+                                            </v-list-item-title>
+                                        </v-list-item-content>
+                                    </v-list-item>
                                 </template>
-                            </div>
-                        </template>
-                        <template v-slot:no-data>
-                            <v-container fluid class="px-10 pt-5">
-                                <v-alert :value="true" color="grey" dark icon="mdi-alert-decagram">
-                                    Sorry, nothing found.
-                                </v-alert>
-                            </v-container>
-                          </template>
-                        <template v-slot:item.actions="{ item }">
-                            <v-row align="center" justify="end" class="pr-3">
-                                <v-btn @click="onCreateDialogOpen(item)" text icon>
-                                    <v-icon class="grey--text">
-                                        mdi-account-edit
-                                    </v-icon>
-
-
-
-                                </v-btn>
-                                <v-btn @click="deleteRole(item)" icon>
-                                    <v-icon class="grey--text">mdi-delete
-                                    </v-icon>
-                                </v-btn>
-                            </v-row>
-                        </template>
-
-                        <template v-slot:pageText="props">
-                            {{! props.pageStart + 1 }} - {{! props.pageStop +1 }} of {{! props.itemsLength }}
-                        </template>
-                    </v-data-table>
-                <div>
+                            </v-combobox>
+                            <v-text-field v-model="currentRole.passwd" aria-autocomplete="none"
+                                          autocomplete="new-password" label="Password  " name="input-10-1"
+                                          :append-icon="showPw ? 'mdi-eye' : 'mdi-eye-off'"
+                                          :type="showPw ? 'text': 'password'"
+                                          @click:append="showPw= !showPw"></v-text-field>
+                            <v-checkbox color="primary" v-model="currentRole.is_active" label="Active"></v-checkbox>
+                        </v-layout>
+                    </v-form>
                     <v-alert :value="error" type="error" dismissible>
                         {{! error}}</br>
                     </v-alert>
-                </div>
-            </v-container>
-            <v-dialog v-if="currentRole" v-model="isCreateDialogOpen" persistent max-width="600px">
 
-                <v-card>
-                    <v-card-title v-if="currentRole._id">
-                        Edit role
-                    </v-card-title>
-                    <v-card-title v-else>
-                        Create Role
-                    </v-card-title>
-                    <v-card-text class="pb-0">
+                </v-card-text>
+                <v-card-actions class="pb-4">
+                    <v-spacer></v-spacer>
+                    <v-btn color="accent" small @click="isCreateDialogOpen=false;currentRole=null;error=null;">
+                        Cancel
+                    </v-btn>
+                    <!--<v-btn color="primary" @click="deleteRole(currentRole)">Delete</v-btn>-->
+                    <v-btn color="primary" small @click="submit(currentRole)"
+                           :disabled="(currentRole || {}).name == null">Submit
+                    </v-btn>
 
-                        <v-form>
-                            <v-layout class="pa-3" column>
-                                <v-text-field v-model="currentRole.name" label="Name*" required> </v-text-field>
-                                <v-text-field v-model="currentRole.realname" label="Realname" required></v-text-field>
-                                <v-text-field v-model="currentRole.email" label="E-Mail  " name="email-field"
-                                    aria-autocomplete="none" autocomplete="new-email"></v-text-field>
-                                <v-combobox clearable multiple deletable-chips small-chips hide-selected
-                                    :search-input.sync="search1" v-model="currentRole.perm" label="Permissions"
-                                    @change="search1 = null">
-                                </v-combobox>
-                                <v-combobox clearable v-model="currentRole.role" :items="distinctRoles" attach
-                                    hide-selected deletable-chips small-chips multiple label="Roles"
-                                    :search-input.sync="search2" @change="search2 = null" flat>
-                                    <template v-slot:no-data>
-                                        <v-list-item>
-                                            <v-list-item-content>
-                                                <v-list-item-title>
-                                                    No results matching "<strong>{{! search2 }}</strong>".
-                                                </v-list-item-title>
-                                            </v-list-item-content>
-                                        </v-list-item>
-                                    </template>
-                                </v-combobox>
-                                <v-text-field v-model="currentRole.passwd" aria-autocomplete="none"
-                                    autocomplete="new-password" label="Password  " name="input-10-1"
-                                    :append-icon="showPw ? 'mdi-eye' : 'mdi-eye-off'"
-                                    :type="showPw ? 'text': 'password'" @click:append="showPw= !showPw"></v-text-field>
-                                <v-checkbox color="primary" v-model="currentRole.is_active" label="Active"></v-checkbox>
-                            </v-layout>
-                        </v-form>
-                        <v-alert :value="error" type="error" dismissible>
-                            {{! error}}</br>
-                        </v-alert>
-
-                    </v-card-text>
-                    <v-card-actions class="pb-4">
-                        <v-spacer></v-spacer>
-                        <v-btn color="accent" small @click="isCreateDialogOpen=false;currentRole=null;error=null;">
-                            Cancel</v-btn>
-                        <!--<v-btn color="primary" @click="deleteRole(currentRole)">Delete</v-btn>-->
-                        <v-btn color="primary" small @click="submit(currentRole)"
-                            :disabled="(currentRole || {}).name == null">submit</v-btn>
-
-                        <v-card-actions>
-                </v-card>
-            </v-dialog>
-        </v-app>
+                    <v-card-actions>
+            </v-card>
+        </v-dialog>
+    </v-app>
 
 
-    </div>
+</div>
 </body>
 
 <script src="//core4.bi.plan-net.com/assets/api/v1/cdn/widgets-4.0.min.js"></script>
@@ -345,11 +348,11 @@
                 this.loading = true;
                 api.getRoles(this.internalPagination).then(function (success) {
 
-                        this.pagination.totalItems = success.data.total_count
-                        this.roles = success.data.data
-                        this.loading = false;
-                        this.getSelectRoles();
-                    }.bind(this))
+                    this.pagination.totalItems = success.data.total_count
+                    this.roles = success.data.data
+                    this.loading = false;
+                    this.getSelectRoles();
+                }.bind(this))
                     .catch(function (error) {
                         this.error = error.response.data.error.split("File")[0];
                         this.loading = false;
@@ -358,8 +361,8 @@
             },
             getSelectRoles: function () {
                 api.distinctRoles().then(function (success) {
-                        this.distinctRoles = success.data.data;
-                    }.bind(this))
+                    this.distinctRoles = success.data.data;
+                }.bind(this))
                     .catch(function (error) {
                         this.error = error.response.data.error.split("File")[0];
                         this.loading = false
