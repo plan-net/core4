@@ -46,10 +46,10 @@
                           :items="roles" @update:options="update">
                 <template v-slot:item.is_active="{ item }">
                     <v-icon v-if="item.is_active" small class="success--text">
-                        mdi-check
+                        mdi-check-bold
                     </v-icon>
                     <v-icon v-else small class="warning--text">
-                        remove_circle_outline
+                        mdi-close-thick
                     </v-icon>
                 </template>
 
@@ -215,7 +215,7 @@
                     </v-btn>
                     <!--<v-btn color="primary" @click="deleteRole(currentRole)">Delete</v-btn>-->
                     <v-btn color="primary" small @click="submit(currentRole)"
-                           :disabled="(currentRole || {}).name == null">submit
+                           :disabled="(currentRole || {}).name == null">Submit
                     </v-btn>
 
                     <v-card-actions>
