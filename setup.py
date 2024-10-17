@@ -32,7 +32,7 @@ setup(
         "PyJWT>=2.0.0a",
         # see https://github.com/jpadilla/pyjwt/issues/391#issuecomment-515427821
         "tornado>=5.1,<6.3",
-        "pandas>=2.0.3", # installed with alpine on docker
+        "pandas>=2.0.3-r2", # installed with alpine on docker
         "motor==2.5.1",
         "passlib>=1.7",
         "python-magic>=0.4",
@@ -45,7 +45,7 @@ setup(
         "feather-format==0.4.1",
         "cffi",
         "rpy2==3.0.5",
-        "pql @ git+https://github.com/comfuture/pql.git"
+        # "pql @ git+https://github.com/comfuture/pql.git"
     ],
     extras_require={
         "tests": [
