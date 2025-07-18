@@ -27,8 +27,6 @@ import core4.queue.main
 import core4.util.node
 
 libc = ctypes.CDLL(None)
-c_stdout = ctypes.c_void_p.in_dll(libc, 'stdout')
-c_stderr = ctypes.c_void_p.in_dll(libc, 'stderr')
 
 # fix for running with MacOs
 try:
