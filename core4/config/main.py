@@ -265,7 +265,7 @@ class CoreConfig(collections.abc.MutableMapping):
         * all top-level keys/options must not start with underscore (``_``)
         """
         for k in dct.keys():
-            if k.startswith("_"):
+            if k.startswith("_") and k != "__main__":
                 raise Core4ConfigurationError(
                     "top-level key/section "
                     "must not start with underscore [{}]".format(k))
