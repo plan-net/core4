@@ -30,6 +30,15 @@ libc = ctypes.CDLL(None)
 c_stdout = ctypes.c_void_p.in_dll(libc, 'stdout')
 c_stderr = ctypes.c_void_p.in_dll(libc, 'stderr')
 
+# fix for running with MacOs
+try:
+    c_stdout = ctypes.c_void_p.in_dll(libc, 'stdout')
+    c_stderr = ctypes.c_void_p.in_dll(libc, 'stderr')
+except OSError:
+    # 2. Fallback für macOS (wenn Linux-Symbole nicht verfügbar)
+    c_stdout = ctypes.c_void_p.in_dll(libc, '__stdoutp')
+    c_stderr = ctypes.c_void_p.in_dll(libc, '__stderrp')
+
 
 class CoreWorkerProcess(core4.base.main.CoreBase,
                         core4.logger.mixin.CoreLoggerMixin):
