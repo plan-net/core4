@@ -29,13 +29,20 @@ import core4.util.node
 libc = ctypes.CDLL(None)
 
 # fix for running with MacOs
+
 try:
+    # 1. linux
     c_stdout = ctypes.c_void_p.in_dll(libc, 'stdout')
     c_stderr = ctypes.c_void_p.in_dll(libc, 'stderr')
-except OSError:
-    # 2. Fallback für macOS (wenn Linux-Symbole nicht verfügbar)
-    c_stdout = ctypes.c_void_p.in_dll(libc, '__stdoutp')
-    c_stderr = ctypes.c_void_p.in_dll(libc, '__stderrp')
+except (OSError, ValueError):
+    # 2. Fallback for macOS - if linux symbols not available
+    try:
+        c_stdout = ctypes.c_void_p.in_dll(libc, '__stdoutp')
+        c_stderr = ctypes.c_void_p.in_dll(libc, '__stderrp')
+    except (OSError, ValueError):
+        # 3. Fallback: use None (deactivate stdout/stderr Redirect)
+        c_stdout = None
+        c_stderr = None
 
 
 class CoreWorkerProcess(core4.base.main.CoreBase,
